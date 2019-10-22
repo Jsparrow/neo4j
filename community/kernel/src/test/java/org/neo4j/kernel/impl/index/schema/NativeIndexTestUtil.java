@@ -159,7 +159,8 @@ public abstract class NativeIndexTestUtil<KEY extends NativeIndexKey<KEY>,VALUE 
         {
             Hit<KEY,VALUE> expected = expectedHits[i];
             Hit<KEY,VALUE> actual = actualHits[i];
-            assertEquals( "Hits differ on item number " + i + ". Expected " + expected + " but was " + actual, 0, comparator.compare( expected, actual ) );
+            assertEquals( new StringBuilder().append("Hits differ on item number ").append(i).append(". Expected ").append(expected).append(" but was ").append(actual)
+					.toString(), 0, comparator.compare( expected, actual ) );
         }
     }
 

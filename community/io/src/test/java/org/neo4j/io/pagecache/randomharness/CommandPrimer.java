@@ -121,29 +121,28 @@ class CommandPrimer
 
     private Action flushFile()
     {
-        if ( mappedFiles.size() > 0 )
-        {
-            final File file = mappedFiles.get( rng.nextInt( mappedFiles.size() ) );
-            return new Action( Command.FlushFile, "[file=%s]", file.getName() )
-            {
-                @Override
-                public void perform() throws Exception
-                {
-                    PagedFile pagedFile = fileMap.get( file );
-                    if ( pagedFile != null )
-                    {
-                        pagedFile.flushAndForce();
-                    }
-                }
-            };
-        }
-        return new Action( Command.FlushFile, "[no files mapped to flush]" )
-        {
-            @Override
-            public void perform()
-            {
-            }
-        };
+        if (mappedFiles.size() <= 0) {
+			return new Action( Command.FlushFile, "[no files mapped to flush]" )
+			{
+			    @Override
+			    public void perform()
+			    {
+			    }
+			};
+		}
+		final File file = mappedFiles.get( rng.nextInt( mappedFiles.size() ) );
+		return new Action( Command.FlushFile, "[file=%s]", file.getName() )
+		{
+		    @Override
+		    public void perform() throws Exception
+		    {
+		        PagedFile pagedFile = fileMap.get( file );
+		        if ( pagedFile != null )
+		        {
+		            pagedFile.flushAndForce();
+		        }
+		    }
+		};
     }
 
     private Action mapFile()
@@ -163,19 +162,18 @@ class CommandPrimer
 
     private Action unmapFile()
     {
-        if ( mappedFiles.size() > 0 )
-        {
-            final File file = mappedFiles.remove( rng.nextInt( mappedFiles.size() ) );
-            return new Action( Command.UnmapFile, "[file=%s]", file )
-            {
-                @Override
-                public void perform() throws Exception
-                {
-                    fileMap.get( file ).close();
-                }
-            };
-        }
-        return null;
+        if (mappedFiles.size() <= 0) {
+			return null;
+		}
+		final File file = mappedFiles.remove( rng.nextInt( mappedFiles.size() ) );
+		return new Action( Command.UnmapFile, "[file=%s]", file )
+		{
+		    @Override
+		    public void perform() throws Exception
+		    {
+		        fileMap.get( file ).close();
+		    }
+		};
     }
 
     private Action readRecord()

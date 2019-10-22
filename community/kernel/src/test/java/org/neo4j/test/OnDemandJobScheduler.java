@@ -47,7 +47,7 @@ public class OnDemandJobScheduler extends JobSchedulerAdapter
     @Override
     public Executor executor( Group group )
     {
-        return command -> jobs.add( command );
+        return jobs::add;
     }
 
     @Override
@@ -86,14 +86,13 @@ public class OnDemandJobScheduler extends JobSchedulerAdapter
 
     public void runJob()
     {
-        for ( Runnable job : jobs )
-        {
+        jobs.forEach(job -> {
             job.run();
             if ( removeJobsAfterExecution )
             {
                 jobs.remove( job );
             }
-        }
+        });
     }
 
     private class OnDemandJobHandle implements JobHandle

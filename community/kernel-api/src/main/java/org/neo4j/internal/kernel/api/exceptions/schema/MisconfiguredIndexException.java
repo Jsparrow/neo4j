@@ -27,18 +27,18 @@ import org.neo4j.kernel.api.exceptions.Status;
  */
 public class MisconfiguredIndexException extends SchemaKernelException
 {
-    protected MisconfiguredIndexException( Status statusCode, Throwable cause, String message, Object... parameters )
-    {
-        super( statusCode, cause, message, parameters );
-    }
-
     public MisconfiguredIndexException( Status statusCode, String message, Throwable cause )
     {
         super( statusCode, message, cause );
     }
 
-    public MisconfiguredIndexException( Status statusCode, String message )
+	public MisconfiguredIndexException( Status statusCode, String message )
     {
         super( statusCode, message );
+    }
+
+	protected MisconfiguredIndexException( Status statusCode, Throwable cause, String message, Object... parameters )
+    {
+        super( statusCode, cause, message, parameters );
     }
 }

@@ -129,9 +129,6 @@ public class ProcessRelationshipCountsDataStep extends ProcessorStep<Relationshi
             all.done();
         }
 
-        for ( RelationshipCountsProcessor processor : processors.values() )
-        {
-            processor.close();
-        }
+        processors.values().forEach(RelationshipCountsProcessor::close);
     }
 }

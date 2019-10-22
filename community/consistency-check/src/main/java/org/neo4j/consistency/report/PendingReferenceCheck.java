@@ -60,11 +60,11 @@ public class PendingReferenceCheck<REFERENCED extends AbstractBaseRecord>
 
     public synchronized void skip()
     {
-        if ( engine != null )
-        {
-            ConsistencyReporter.dispatchSkip( engine );
-            engine = null;
-        }
+        if (engine == null) {
+			return;
+		}
+		ConsistencyReporter.dispatchSkip( engine );
+		engine = null;
     }
 
     private synchronized CheckerEngine engine()

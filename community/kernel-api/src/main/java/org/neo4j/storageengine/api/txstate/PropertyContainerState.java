@@ -39,23 +39,23 @@ import static java.util.Collections.emptyIterator;
  */
 public interface PropertyContainerState
 {
-    Iterator<StorageProperty> addedProperties();
-
-    Iterator<StorageProperty> changedProperties();
-
-    IntIterable removedProperties();
-
-    Iterator<StorageProperty> addedAndChangedProperties();
-
-    boolean hasPropertyChanges();
-
-    boolean isPropertyChangedOrRemoved( int propertyKey );
-
-    Value propertyValue( int propertyKey );
-
     PropertyContainerState EMPTY = new EmptyPropertyContainerState();
 
-    class EmptyPropertyContainerState implements PropertyContainerState
+	Iterator<StorageProperty> addedProperties();
+
+	Iterator<StorageProperty> changedProperties();
+
+	IntIterable removedProperties();
+
+	Iterator<StorageProperty> addedAndChangedProperties();
+
+	boolean hasPropertyChanges();
+
+	boolean isPropertyChangedOrRemoved( int propertyKey );
+
+	Value propertyValue( int propertyKey );
+
+	class EmptyPropertyContainerState implements PropertyContainerState
     {
         @Override
         public Iterator<StorageProperty> addedProperties()

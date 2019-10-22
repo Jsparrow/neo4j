@@ -140,14 +140,13 @@ public class NeoStoreIndexStoreView implements IndexStoreView
             return null; // no labels => no updates (it's not going to be in any index)
         }
         EntityUpdates.Builder update = EntityUpdates.forEntity( nodeId, true ).withTokens( labels );
-        for ( PropertyRecord propertyRecord : propertyStore.getPropertyRecordChain( firstPropertyId ) )
-        {
+        propertyStore.getPropertyRecordChain( firstPropertyId ).forEach(propertyRecord -> {
             for ( PropertyBlock property : propertyRecord )
             {
                 Value value = property.getType().value( property, propertyStore );
                 update.added( property.getKeyIndexId(), value );
             }
-        }
+        });
         return update.build();
     }
 
@@ -196,8 +195,7 @@ public class NeoStoreIndexStoreView implements IndexStoreView
         {
             return;
         }
-        for ( PropertyRecord propertyRecord : propertyStore.getPropertyRecordChain( firstPropertyId ) )
-        {
+        propertyStore.getPropertyRecordChain( firstPropertyId ).forEach(propertyRecord -> {
             for ( PropertyBlock block : propertyRecord )
             {
                 int currentPropertyId = block.getKeyIndexId();
@@ -207,6 +205,6 @@ public class NeoStoreIndexStoreView implements IndexStoreView
                     sink.onProperty( currentPropertyId, currentValue );
                 }
             }
-        }
+        });
     }
 }

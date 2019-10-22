@@ -95,6 +95,334 @@ public abstract class IndexType
             return "EXACT";
         }
     };
+	final Analyzer analyzer;
+	private final boolean toLowerCase;
+
+	private IndexType( Analyzer analyzer, boolean toLowerCase )
+    {
+        this.analyzer = analyzer;
+        this.toLowerCase = toLowerCase;
+    }
+
+	abstract void removeFieldsFromDocument( Document document, String key, Object value );
+
+	abstract void removeFieldFromDocument( Document document, String name );
+
+	abstract void addNewFieldToDocument( Document document, String key, Object value );
+
+	abstract Query get( String key, Object value );
+
+	static IndexType getIndexType( Map<String, String> config )
+    {
+        String type = config.get( LuceneIndexImplementation.KEY_TYPE );
+        IndexType result = null;
+        Similarity similarity = getCustomSimilarity( config );
+        Boolean toLowerCaseUnbiased = config.get( LuceneIndexImplementation.KEY_TO_LOWER_CASE ) != null ?
+                                      parseBoolean( config.get( LuceneIndexImplementation.KEY_TO_LOWER_CASE ), true ) : null;
+        Analyzer customAnalyzer = getCustomAnalyzer( config );
+        if ( type != null )
+        {
+            // Use the built in alternatives... "exact" or "fulltext"
+            if ( "exact".equals( type ) )
+            {
+                // In the exact case we default to false
+                boolean toLowerCase = TRUE.equals( toLowerCaseUnbiased );
+
+                result = toLowerCase ? new CustomType( new LowerCaseKeywordAnalyzer(), true, similarity ) : EXACT;
+            }
+            else if ( "fulltext".equals( type ) )
+            {
+                // In the fulltext case we default to true
+                boolean toLowerCase = !FALSE.equals( toLowerCaseUnbiased );
+
+                Analyzer analyzer = customAnalyzer;
+                if ( analyzer == null )
+                {
+                    analyzer = TRUE.equals( toLowerCase ) ? LuceneDataSource.LOWER_CASE_WHITESPACE_ANALYZER :
+                               LuceneDataSource.WHITESPACE_ANALYZER;
+                }
+                result = new CustomType( analyzer, toLowerCase, similarity );
+            }
+            else
+            {
+                throw new IllegalArgumentException( new StringBuilder().append("The given type was not recognized: ").append(type).append(". Known types are 'fulltext' and 'exact'").toString() );
+            }
+        }
+        else
+        {
+            // In the custom case we default to true
+            boolean toLowerCase = !FALSE.equals( toLowerCaseUnbiased );
+
+            // Use custom analyzer
+            if ( customAnalyzer == null )
+            {
+                throw new IllegalArgumentException( new StringBuilder().append("No 'type' was given (which can point out ").append("built-in analyzers, such as 'exact' and 'fulltext')").append(" and no 'analyzer' was given either (which can point out a custom ").append(Analyzer.class.getName()).append(" to use)").toString() );
+            }
+            result = new CustomType( customAnalyzer, toLowerCase, similarity );
+        }
+        return result;
+    }
+
+	public void addToDocument( Document document, String key, Object value )
+    {
+        addNewFieldToDocument( document, key, value );
+        restoreSortFields( document );
+    }
+
+	protected boolean isStoredField( IndexableField field )
+    {
+        return isValidKey( field.name() ) &&
+                field.fieldType().stored() && !FullTxData.TX_STATE_KEY.equals( field.name() );
+    }
+
+	private static boolean parseBoolean( String string, boolean valueIfNull )
+    {
+        return string == null ? valueIfNull : Boolean.parseBoolean( string );
+    }
+
+	private static Similarity getCustomSimilarity( Map<String, String> config )
+    {
+        return getByClassName( config, LuceneIndexImplementation.KEY_SIMILARITY, Similarity.class );
+    }
+
+	private static Analyzer getCustomAnalyzer( Map<String, String> config )
+    {
+        return getByClassName( config, LuceneIndexImplementation.KEY_ANALYZER, Analyzer.class );
+    }
+
+	private static <T> T getByClassName( Map<String, String> config, String configKey, Class<T> cls )
+    {
+        String className = config.get( configKey );
+        if ( className != null )
+        {
+            try
+            {
+                return Class.forName( className ).asSubclass( cls ).newInstance();
+            }
+            catch ( Exception e )
+            {
+                throw new RuntimeException( e );
+            }
+        }
+        return null;
+    }
+
+	TxData newTxData( LuceneExplicitIndex index )
+    {
+        return new ExactTxData( index );
+    }
+
+	Query query( String keyOrNull, Object value, QueryContext contextOrNull )
+    {
+        if ( value instanceof Query )
+        {
+            return (Query) value;
+        }
+
+        QueryParser parser = new QueryParser( keyOrNull, analyzer );
+        parser.setAllowLeadingWildcard( true );
+        parser.setLowercaseExpandedTerms( toLowerCase );
+        if ( contextOrNull != null && contextOrNull.getDefaultOperator() != null )
+        {
+            parser.setDefaultOperator( contextOrNull.getDefaultOperator() );
+        }
+        try
+        {
+            return parser.parse( value.toString() );
+        }
+        catch ( ParseException e )
+        {
+            throw new RuntimeException( e );
+        }
+    }
+
+	public static IndexableField instantiateField( String key, Object value, FieldType fieldType )
+    {
+        IndexableField field;
+        if ( value instanceof Number )
+        {
+            Number number = (Number) value;
+            if ( value instanceof Long )
+            {
+                field = new LongField( key, number.longValue(), Store.YES );
+            }
+            else if ( value instanceof Float )
+            {
+                field = new FloatField( key, number.floatValue(), Store.YES );
+            }
+            else if ( value instanceof Double )
+            {
+                field = new DoubleField( key, number.doubleValue(), Store.YES );
+            }
+            else
+            {
+                field = new IntField( key, number.intValue(), Store.YES );
+            }
+        }
+        else
+        {
+            field = new Field( key, value.toString(), fieldType );
+        }
+        return field;
+    }
+
+	public static IndexableField instantiateSortField( String key, Object value )
+    {
+        IndexableField field;
+        if ( value instanceof Number )
+        {
+            Number number = (Number) value;
+            if ( value instanceof Float )
+            {
+                field = new SortedNumericDocValuesField( key, NumericUtils.floatToSortableInt( number.floatValue() ) );
+            }
+            else if ( value instanceof Double )
+            {
+                field = new SortedNumericDocValuesField( key, NumericUtils.doubleToSortableLong( number.doubleValue() ) );
+            }
+            else
+            {
+                field = new SortedNumericDocValuesField( key, number.longValue() );
+            }
+        }
+        else
+        {
+            if ( LuceneExplicitIndex.KEY_DOC_ID.equals( key ) )
+            {
+                field = new NumericDocValuesField( key, Long.parseLong( value.toString() ) );
+            }
+            else
+            {
+                field = new SortedSetDocValuesField( key, new BytesRef( value.toString() ) );
+            }
+        }
+        return field;
+    }
+
+	final void removeFromDocument( Document document, String key, Object value )
+    {
+        if ( key == null && value == null )
+        {
+            clearDocument( document );
+        }
+        else
+        {
+            removeFieldsFromDocument( document, key, value );
+            restoreSortFields( document );
+        }
+    }
+
+	private void clearDocument( Document document )
+    {
+        Set<String> names = new HashSet<>();
+        document.getFields().stream().map(IndexableField::name).forEach(name -> {
+			if ( LuceneExplicitIndex.isValidKey( name ) )
+            {
+                names.add( name );
+            }
+		});
+        names.forEach(document::removeFields);
+    }
+
+	// Re-add field since their index info is lost after reading the fields from the index store
+    void restoreSortFields( Document document )
+    {
+        Collection<IndexableField> notIndexedStoredFields = getNotIndexedStoredFields( document );
+        notIndexedStoredFields.forEach(field -> {
+            Object fieldValue = getFieldValue( field );
+            String name = field.name();
+            removeFieldsFromDocument( document, name, fieldValue );
+            addNewFieldToDocument( document, name, fieldValue );
+        });
+    }
+
+	private Collection<IndexableField> getNotIndexedStoredFields( Document document )
+    {
+        Map<String,IndexableField> nameFieldMap = new HashMap<>();
+        List<String> indexedFields = new ArrayList<>();
+        document.getFields().forEach(field -> {
+            if ( isStoredField( field ) )
+            {
+                nameFieldMap.put( field.name(), field );
+            }
+            else if ( DocValuesType.NONE != field.fieldType().docValuesType() )
+            {
+                indexedFields.add( field.name() );
+            }
+        });
+        indexedFields.forEach( nameFieldMap::remove );
+        return nameFieldMap.values();
+    }
+
+	void removeFieldsFromDocument( Document document, String key, String exactKey, Object value )
+    {
+        Set<String> values = null;
+        if ( value != null )
+        {
+            String stringValue = value.toString();
+            values = new HashSet<>( Arrays.asList( document.getValues( exactKey ) ) );
+            if ( !values.remove( stringValue ) )
+            {
+                return;
+            }
+        }
+        removeFieldFromDocument( document, key );
+
+        if ( value != null )
+        {
+            values.forEach(existingValue -> addNewFieldToDocument(document, key, existingValue));
+        }
+    }
+
+	private Object getFieldValue( IndexableField field )
+    {
+        Number numericFieldValue = field.numericValue();
+        return numericFieldValue != null ? numericFieldValue : field.stringValue();
+    }
+
+	public static Document newBaseDocument( long entityId )
+    {
+        Document doc = new Document();
+        doc.add( new StringField( LuceneExplicitIndex.KEY_DOC_ID, Long.toString(entityId), Store.YES ) );
+        doc.add( new NumericDocValuesField( LuceneExplicitIndex.KEY_DOC_ID, entityId ) );
+        return doc;
+    }
+
+	public static Document newDocument( EntityId entityId )
+    {
+        Document document = newBaseDocument( entityId.id() );
+        entityId.enhance( document );
+        return document;
+    }
+
+	public Term idTerm( long entityId )
+    {
+        return new Term( LuceneExplicitIndex.KEY_DOC_ID, Long.toString(entityId) );
+    }
+
+	Query idTermQuery( long entityId )
+    {
+        return new TermQuery( idTerm( entityId ) );
+    }
+
+	Similarity getSimilarity()
+    {
+        return null;
+    }
+
+	Query queryForGet( String key, Object value )
+    {
+        if ( value instanceof ValueContext )
+        {
+            Object realValue = ((ValueContext)value).getValue();
+            if ( realValue instanceof Number )
+            {
+                Number number = (Number) realValue;
+                return LuceneUtil.rangeQuery( key, number, number, true, true );
+            }
+        }
+        return new TermQuery( new Term( key, value.toString() ) );
+    }
 
     private static class CustomType extends IndexType
     {
@@ -160,348 +488,5 @@ public abstract class IndexType
         {
             return "FULLTEXT";
         }
-    }
-
-    final Analyzer analyzer;
-    private final boolean toLowerCase;
-
-    private IndexType( Analyzer analyzer, boolean toLowerCase )
-    {
-        this.analyzer = analyzer;
-        this.toLowerCase = toLowerCase;
-    }
-
-    abstract void removeFieldsFromDocument( Document document, String key, Object value );
-
-    abstract void removeFieldFromDocument( Document document, String name );
-
-    abstract void addNewFieldToDocument( Document document, String key, Object value );
-
-    abstract Query get( String key, Object value );
-
-    static IndexType getIndexType( Map<String, String> config )
-    {
-        String type = config.get( LuceneIndexImplementation.KEY_TYPE );
-        IndexType result = null;
-        Similarity similarity = getCustomSimilarity( config );
-        Boolean toLowerCaseUnbiased = config.get( LuceneIndexImplementation.KEY_TO_LOWER_CASE ) != null ?
-                                      parseBoolean( config.get( LuceneIndexImplementation.KEY_TO_LOWER_CASE ), true ) : null;
-        Analyzer customAnalyzer = getCustomAnalyzer( config );
-        if ( type != null )
-        {
-            // Use the built in alternatives... "exact" or "fulltext"
-            if ( "exact".equals( type ) )
-            {
-                // In the exact case we default to false
-                boolean toLowerCase = TRUE.equals( toLowerCaseUnbiased );
-
-                result = toLowerCase ? new CustomType( new LowerCaseKeywordAnalyzer(), true, similarity ) : EXACT;
-            }
-            else if ( "fulltext".equals( type ) )
-            {
-                // In the fulltext case we default to true
-                boolean toLowerCase = !FALSE.equals( toLowerCaseUnbiased );
-
-                Analyzer analyzer = customAnalyzer;
-                if ( analyzer == null )
-                {
-                    analyzer = TRUE.equals( toLowerCase ) ? LuceneDataSource.LOWER_CASE_WHITESPACE_ANALYZER :
-                               LuceneDataSource.WHITESPACE_ANALYZER;
-                }
-                result = new CustomType( analyzer, toLowerCase, similarity );
-            }
-            else
-            {
-                throw new IllegalArgumentException( "The given type was not recognized: " + type +
-                        ". Known types are 'fulltext' and 'exact'" );
-            }
-        }
-        else
-        {
-            // In the custom case we default to true
-            boolean toLowerCase = !FALSE.equals( toLowerCaseUnbiased );
-
-            // Use custom analyzer
-            if ( customAnalyzer == null )
-            {
-                throw new IllegalArgumentException( "No 'type' was given (which can point out " +
-                        "built-in analyzers, such as 'exact' and 'fulltext')" +
-                        " and no 'analyzer' was given either (which can point out a custom " +
-                        Analyzer.class.getName() + " to use)" );
-            }
-            result = new CustomType( customAnalyzer, toLowerCase, similarity );
-        }
-        return result;
-    }
-
-    public void addToDocument( Document document, String key, Object value )
-    {
-        addNewFieldToDocument( document, key, value );
-        restoreSortFields( document );
-    }
-
-    protected boolean isStoredField( IndexableField field )
-    {
-        return isValidKey( field.name() ) &&
-                field.fieldType().stored() && !FullTxData.TX_STATE_KEY.equals( field.name() );
-    }
-
-    private static boolean parseBoolean( String string, boolean valueIfNull )
-    {
-        return string == null ? valueIfNull : Boolean.parseBoolean( string );
-    }
-
-    private static Similarity getCustomSimilarity( Map<String, String> config )
-    {
-        return getByClassName( config, LuceneIndexImplementation.KEY_SIMILARITY, Similarity.class );
-    }
-
-    private static Analyzer getCustomAnalyzer( Map<String, String> config )
-    {
-        return getByClassName( config, LuceneIndexImplementation.KEY_ANALYZER, Analyzer.class );
-    }
-
-    private static <T> T getByClassName( Map<String, String> config, String configKey, Class<T> cls )
-    {
-        String className = config.get( configKey );
-        if ( className != null )
-        {
-            try
-            {
-                return Class.forName( className ).asSubclass( cls ).newInstance();
-            }
-            catch ( Exception e )
-            {
-                throw new RuntimeException( e );
-            }
-        }
-        return null;
-    }
-
-    TxData newTxData( LuceneExplicitIndex index )
-    {
-        return new ExactTxData( index );
-    }
-
-    Query query( String keyOrNull, Object value, QueryContext contextOrNull )
-    {
-        if ( value instanceof Query )
-        {
-            return (Query) value;
-        }
-
-        QueryParser parser = new QueryParser( keyOrNull, analyzer );
-        parser.setAllowLeadingWildcard( true );
-        parser.setLowercaseExpandedTerms( toLowerCase );
-        if ( contextOrNull != null && contextOrNull.getDefaultOperator() != null )
-        {
-            parser.setDefaultOperator( contextOrNull.getDefaultOperator() );
-        }
-        try
-        {
-            return parser.parse( value.toString() );
-        }
-        catch ( ParseException e )
-        {
-            throw new RuntimeException( e );
-        }
-    }
-
-    public static IndexableField instantiateField( String key, Object value, FieldType fieldType )
-    {
-        IndexableField field;
-        if ( value instanceof Number )
-        {
-            Number number = (Number) value;
-            if ( value instanceof Long )
-            {
-                field = new LongField( key, number.longValue(), Store.YES );
-            }
-            else if ( value instanceof Float )
-            {
-                field = new FloatField( key, number.floatValue(), Store.YES );
-            }
-            else if ( value instanceof Double )
-            {
-                field = new DoubleField( key, number.doubleValue(), Store.YES );
-            }
-            else
-            {
-                field = new IntField( key, number.intValue(), Store.YES );
-            }
-        }
-        else
-        {
-            field = new Field( key, value.toString(), fieldType );
-        }
-        return field;
-    }
-
-    public static IndexableField instantiateSortField( String key, Object value )
-    {
-        IndexableField field;
-        if ( value instanceof Number )
-        {
-            Number number = (Number) value;
-            if ( value instanceof Float )
-            {
-                field = new SortedNumericDocValuesField( key, NumericUtils.floatToSortableInt( number.floatValue() ) );
-            }
-            else if ( value instanceof Double )
-            {
-                field = new SortedNumericDocValuesField( key, NumericUtils.doubleToSortableLong( number.doubleValue() ) );
-            }
-            else
-            {
-                field = new SortedNumericDocValuesField( key, number.longValue() );
-            }
-        }
-        else
-        {
-            if ( LuceneExplicitIndex.KEY_DOC_ID.equals( key ) )
-            {
-                field = new NumericDocValuesField( key, Long.parseLong( value.toString() ) );
-            }
-            else
-            {
-                field = new SortedSetDocValuesField( key, new BytesRef( value.toString() ) );
-            }
-        }
-        return field;
-    }
-
-    final void removeFromDocument( Document document, String key, Object value )
-    {
-        if ( key == null && value == null )
-        {
-            clearDocument( document );
-        }
-        else
-        {
-            removeFieldsFromDocument( document, key, value );
-            restoreSortFields( document );
-        }
-    }
-
-    private void clearDocument( Document document )
-    {
-        Set<String> names = new HashSet<>();
-        for ( IndexableField field : document.getFields() )
-        {
-            String name = field.name();
-            if ( LuceneExplicitIndex.isValidKey( name ) )
-            {
-                names.add( name );
-            }
-        }
-        for ( String name : names )
-        {
-            document.removeFields( name );
-        }
-    }
-
-    // Re-add field since their index info is lost after reading the fields from the index store
-    void restoreSortFields( Document document )
-    {
-        Collection<IndexableField> notIndexedStoredFields = getNotIndexedStoredFields( document );
-        for ( IndexableField field : notIndexedStoredFields )
-        {
-            Object fieldValue = getFieldValue( field );
-            String name = field.name();
-            removeFieldsFromDocument( document, name, fieldValue );
-            addNewFieldToDocument( document, name, fieldValue );
-        }
-    }
-
-    private Collection<IndexableField> getNotIndexedStoredFields( Document document )
-    {
-        Map<String,IndexableField> nameFieldMap = new HashMap<>();
-        List<String> indexedFields = new ArrayList<>();
-        for ( IndexableField field : document.getFields() )
-        {
-            if ( isStoredField( field ) )
-            {
-                nameFieldMap.put( field.name(), field );
-            }
-            else if ( !DocValuesType.NONE.equals( field.fieldType().docValuesType() ) )
-            {
-                indexedFields.add( field.name() );
-            }
-        }
-        indexedFields.forEach( nameFieldMap::remove );
-        return nameFieldMap.values();
-    }
-
-    void removeFieldsFromDocument( Document document, String key, String exactKey, Object value )
-    {
-        Set<String> values = null;
-        if ( value != null )
-        {
-            String stringValue = value.toString();
-            values = new HashSet<>( Arrays.asList( document.getValues( exactKey ) ) );
-            if ( !values.remove( stringValue ) )
-            {
-                return;
-            }
-        }
-        removeFieldFromDocument( document, key );
-
-        if ( value != null )
-        {
-            for ( String existingValue : values )
-            {
-                addNewFieldToDocument( document, key, existingValue );
-            }
-        }
-    }
-
-    private Object getFieldValue( IndexableField field )
-    {
-        Number numericFieldValue = field.numericValue();
-        return numericFieldValue != null ? numericFieldValue : field.stringValue();
-    }
-
-    public static Document newBaseDocument( long entityId )
-    {
-        Document doc = new Document();
-        doc.add( new StringField( LuceneExplicitIndex.KEY_DOC_ID, "" + entityId, Store.YES ) );
-        doc.add( new NumericDocValuesField( LuceneExplicitIndex.KEY_DOC_ID, entityId ) );
-        return doc;
-    }
-
-    public static Document newDocument( EntityId entityId )
-    {
-        Document document = newBaseDocument( entityId.id() );
-        entityId.enhance( document );
-        return document;
-    }
-
-    public Term idTerm( long entityId )
-    {
-        return new Term( LuceneExplicitIndex.KEY_DOC_ID, "" + entityId );
-    }
-
-    Query idTermQuery( long entityId )
-    {
-        return new TermQuery( idTerm( entityId ) );
-    }
-
-    Similarity getSimilarity()
-    {
-        return null;
-    }
-
-    Query queryForGet( String key, Object value )
-    {
-        if ( value instanceof ValueContext )
-        {
-            Object realValue = ((ValueContext)value).getValue();
-            if ( realValue instanceof Number )
-            {
-                Number number = (Number) realValue;
-                return LuceneUtil.rangeQuery( key, number, number, true, true );
-            }
-        }
-        return new TermQuery( new Term( key, value.toString() ) );
     }
 }

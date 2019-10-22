@@ -131,19 +131,6 @@ public interface SchemaDescriptor extends SchemaDescriptorSupplier
     boolean isAffected( long[] entityTokenIds );
 
     /**
-     * This enum signifies how this schema should behave in regards to updates.
-     * {@link PropertySchemaType#COMPLETE_ALL_TOKENS} signifies that this schema unit only should be affected by updates that match the entire schema,
-     * i.e. when all properties are present. If you are unsure then this is probably what you want.
-     * {@link PropertySchemaType#PARTIAL_ANY_TOKEN} signifies that this schema unit should be affected by any update that is partial match of the schema,
-     *  i.e. at least one of the properties of this schema unit is present.
-     */
-    enum PropertySchemaType
-    {
-        COMPLETE_ALL_TOKENS,
-        PARTIAL_ANY_TOKEN
-    }
-
-    /**
      * Computes some value by feeding this object into the given SchemaComputer.
      *
      * Note that implementers of this method just need to call `return computer.compute( this );`.
@@ -154,7 +141,7 @@ public interface SchemaDescriptor extends SchemaDescriptorSupplier
      */
     <R> R computeWith( SchemaComputer<R> computer );
 
-    /**
+	/**
      * Performs some side-effect type logic by processing this object using the given SchemaProcessor.
      *
      * Note that implementers of this method just need to call `return processor.process( this );`.
@@ -163,13 +150,13 @@ public interface SchemaDescriptor extends SchemaDescriptorSupplier
      */
     void processWith( SchemaProcessor processor );
 
-    /**
+	/**
      * @param tokenNameLookup used for looking up names for token ids.
      * @return a user friendly description of what this index indexes.
      */
     String userDescription( TokenNameLookup tokenNameLookup );
 
-    /**
+	/**
      * This method return the property ids that are relevant to this Schema Descriptor.
      *
      * Putting this method here is a convenience that will break if/when we introduce more complicated schema
@@ -179,7 +166,7 @@ public interface SchemaDescriptor extends SchemaDescriptorSupplier
      */
     int[] getPropertyIds();
 
-    /**
+	/**
      * Assume that this schema descriptor describes a schema that includes a single property id, and return that id.
      *
      * @return The presumed single property id of this schema.
@@ -196,39 +183,39 @@ public interface SchemaDescriptor extends SchemaDescriptorSupplier
         return propertyIds[0];
     }
 
-    /**
+	/**
      * This method returns the entity token ids handled by this descriptor.
      * @return the entity token ids that this schema descriptor represents
      */
     int[] getEntityTokenIds();
 
-    /**
+	/**
      * Id of underlying schema descriptor key.
      * Key is part of schema unit that determines which resources with specified properties are applicable.
      * @return id of underlying key
      */
     int keyId();
 
-    /**
+	/**
      * Type of underlying schema descriptor key.
      * Key is part of schema unit that determines which resources with specified properties are applicable.
      * @return type of underlying key
      */
     ResourceType keyType();
 
-    /**
+	/**
      * Type of entities this schema represents.
      * @return entity type
      */
     EntityType entityType();
 
-    /**
+	/**
      * Returns the type of this schema. See {@link PropertySchemaType}.
      * @return PropertySchemaType of this schema unit.
      */
     PropertySchemaType propertySchemaType();
 
-    /**
+	/**
      * Create a predicate that checks whether a schema descriptor Supplier supplies the given schema descriptor.
      * @param descriptor The schema descriptor to check equality with.
      * @return A predicate that returns {@code true} if it is given a schema descriptor supplier that supplies the
@@ -237,5 +224,18 @@ public interface SchemaDescriptor extends SchemaDescriptorSupplier
     static <T extends SchemaDescriptorSupplier> Predicate<T> equalTo( SchemaDescriptor descriptor )
     {
         return supplier -> descriptor.equals( supplier.schema() );
+    }
+
+	/**
+     * This enum signifies how this schema should behave in regards to updates.
+     * {@link PropertySchemaType#COMPLETE_ALL_TOKENS} signifies that this schema unit only should be affected by updates that match the entire schema,
+     * i.e. when all properties are present. If you are unsure then this is probably what you want.
+     * {@link PropertySchemaType#PARTIAL_ANY_TOKEN} signifies that this schema unit should be affected by any update that is partial match of the schema,
+     *  i.e. at least one of the properties of this schema unit is present.
+     */
+    enum PropertySchemaType
+    {
+        COMPLETE_ALL_TOKENS,
+        PARTIAL_ANY_TOKEN
     }
 }

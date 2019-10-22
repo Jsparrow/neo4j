@@ -28,19 +28,13 @@ abstract class NativeIndexKey<SELF extends NativeIndexKey<SELF>> extends Tempora
 {
     static final int ENTITY_ID_SIZE = Long.BYTES;
 
-    enum Inclusion
-    {
-        LOW,
-        NEUTRAL,
-        HIGH;
-    }
+	private static final boolean DEFAULT_COMPARE_ID = true;
 
-    private static final boolean DEFAULT_COMPARE_ID = true;
+	private long entityId;
 
-    private long entityId;
-    private boolean compareId = DEFAULT_COMPARE_ID;
+	private boolean compareId = DEFAULT_COMPARE_ID;
 
-    /**
+	/**
      * Marks that comparisons with this key requires also comparing entityId, this allows functionality
      * of inclusive/exclusive bounds of range queries.
      * This is because {@link GBPTree} only support from inclusive and to exclusive.
@@ -52,32 +46,32 @@ abstract class NativeIndexKey<SELF extends NativeIndexKey<SELF>> extends Tempora
         this.compareId = compareId;
     }
 
-    boolean getCompareId()
+	boolean getCompareId()
     {
         return compareId;
     }
 
-    long getEntityId()
+	long getEntityId()
     {
         return entityId;
     }
 
-    void setEntityId( long entityId )
+	void setEntityId( long entityId )
     {
         this.entityId = entityId;
     }
 
-    final void initFromValue( int stateSlot, Value value, Inclusion inclusion )
+	final void initFromValue( int stateSlot, Value value, Inclusion inclusion )
     {
         assertValidValue( stateSlot, value );
         writeValue( stateSlot, value, inclusion );
     }
 
-    abstract void writeValue( int stateSlot, Value value, Inclusion inclusion );
+	abstract void writeValue( int stateSlot, Value value, Inclusion inclusion );
 
-    abstract void assertValidValue( int stateSlot, Value value );
+	abstract void assertValidValue( int stateSlot, Value value );
 
-    /**
+	/**
      * Initializes this key with entity id and resets other flags to default values.
      * Doesn't touch value data.
      *
@@ -89,15 +83,15 @@ abstract class NativeIndexKey<SELF extends NativeIndexKey<SELF>> extends Tempora
         setEntityId( entityId );
     }
 
-    abstract Value[] asValues();
+	abstract Value[] asValues();
 
-    abstract void initValueAsLowest( int stateSlot, ValueGroup valueGroup );
+	abstract void initValueAsLowest( int stateSlot, ValueGroup valueGroup );
 
-    abstract void initValueAsHighest( int stateSlot, ValueGroup valueGroup );
+	abstract void initValueAsHighest( int stateSlot, ValueGroup valueGroup );
 
-    abstract int numberOfStateSlots();
+	abstract int numberOfStateSlots();
 
-    final void initValuesAsLowest()
+	final void initValuesAsLowest()
     {
         int slots = numberOfStateSlots();
         for ( int i = 0; i < slots; i++ )
@@ -106,7 +100,7 @@ abstract class NativeIndexKey<SELF extends NativeIndexKey<SELF>> extends Tempora
         }
     }
 
-    final void initValuesAsHighest()
+	final void initValuesAsHighest()
     {
         int slots = numberOfStateSlots();
         for ( int i = 0; i < slots; i++ )
@@ -115,7 +109,7 @@ abstract class NativeIndexKey<SELF extends NativeIndexKey<SELF>> extends Tempora
         }
     }
 
-    /**
+	/**
      * Compares the value of this key to that of another key.
      * This method is expected to be called in scenarios where inconsistent reads may happen (and later retried).
      *
@@ -123,4 +117,11 @@ abstract class NativeIndexKey<SELF extends NativeIndexKey<SELF>> extends Tempora
      * @return comparison against the {@code other} key.
      */
     abstract int compareValueTo( SELF other );
+
+	enum Inclusion
+    {
+        LOW,
+        NEUTRAL,
+        HIGH;
+    }
 }

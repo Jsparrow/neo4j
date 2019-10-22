@@ -41,22 +41,22 @@ public enum DiagnosticsPhase
 
     void emitStart( Log log )
     {
-        log.info( "--- " + this + " START ---" );
+        log.info( new StringBuilder().append("--- ").append(this).append(" START ---").toString() );
     }
 
     void emitDone( Log log )
     {
-        log.info( "--- " + this + " END ---" );
+        log.info( new StringBuilder().append("--- ").append(this).append(" END ---").toString() );
     }
 
     void emitStart( Log log, DiagnosticsProvider provider )
     {
-        log.info( "--- " + this + " for " + provider.getDiagnosticsIdentifier() + " START ---" );
+        log.info( new StringBuilder().append("--- ").append(this).append(" for ").append(provider.getDiagnosticsIdentifier()).append(" START ---").toString() );
     }
 
     void emitDone( Log log, DiagnosticsProvider provider )
     {
-        log.info( "--- " + this + " for " + provider.getDiagnosticsIdentifier() + " END ---" );
+        log.info( new StringBuilder().append("--- ").append(this).append(" for ").append(provider.getDiagnosticsIdentifier()).append(" END ---").toString() );
     }
 
     public boolean isInitialization()

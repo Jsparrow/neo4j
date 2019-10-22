@@ -62,10 +62,7 @@ class LinkedQueuePoolTest
 
         // WHEN
         List<FlyweightHolder<Object>> flyweightHolders = acquireFromPool( pool, 5 );
-        for ( FlyweightHolder<Object> flyweightHolder : flyweightHolders )
-        {
-            flyweightHolder.release();
-        }
+        flyweightHolders.forEach(FlyweightHolder::release);
 
         // THEN
         // clock didn't tick, these two are not set
@@ -85,10 +82,7 @@ class LinkedQueuePoolTest
 
         // WHEN
         List<FlyweightHolder<Object>> flyweightHolders = acquireFromPool( pool, 15 );
-        for ( FlyweightHolder<Object> flyweightHolder : flyweightHolders )
-        {
-            flyweightHolder.release();
-        }
+        flyweightHolders.forEach(FlyweightHolder::release);
 
         // THEN
         // The clock hasn't ticked, so these two should be unset
@@ -260,7 +254,7 @@ class LinkedQueuePoolTest
 
         // then
         // currentPeakSize should be at MIN_SIZE / 5
-        assertTrue( stateMonitor.currentPeakSize.get() <= BELOW_MIN_SIZE, "Expected " + stateMonitor.currentPeakSize.get() + " <= " + BELOW_MIN_SIZE );
+        assertTrue( stateMonitor.currentPeakSize.get() <= BELOW_MIN_SIZE, new StringBuilder().append("Expected ").append(stateMonitor.currentPeakSize.get()).append(" <= ").append(BELOW_MIN_SIZE).toString() );
         // target size should remain at MIN_SIZE
         assertEquals( MIN_SIZE, stateMonitor.targetSize.get() );
         // only the excess from the MAX_SIZE down to min size must have been disposed
@@ -387,7 +381,7 @@ class LinkedQueuePoolTest
 
         public void forward( long amount, TimeUnit timeUnit )
         {
-            time = time + timeUnit.toMillis( amount );
+            time += timeUnit.toMillis(amount);
         }
     }
 }

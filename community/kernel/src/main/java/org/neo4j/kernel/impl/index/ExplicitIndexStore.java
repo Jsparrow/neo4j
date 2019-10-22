@@ -130,9 +130,8 @@ public class ExplicitIndexStore
     {
         if ( suppliedConfig != null && !indexProvider.configMatches( storedConfig, suppliedConfig ) )
         {
-            throw new IllegalArgumentException( "Supplied index configuration:\n" +
-                    suppliedConfig + "\ndoesn't match stored config in a valid way:\n" + storedConfig +
-                    "\nfor '" + indexName + "'" );
+            throw new IllegalArgumentException( new StringBuilder().append("Supplied index configuration:\n").append(suppliedConfig).append("\ndoesn't match stored config in a valid way:\n").append(storedConfig).append("\nfor '").append(indexName)
+					.append("'").toString() );
         }
     }
 
@@ -197,7 +196,7 @@ public class ExplicitIndexStore
                 catch ( Exception ex )
                 {
                     throw new TransactionFailureException(
-                            "Index creation failed for " + indexName + ", " + config, ex );
+                            new StringBuilder().append("Index creation failed for ").append(indexName).append(", ").append(config).toString(), ex );
                 }
             }
         }
@@ -255,7 +254,7 @@ public class ExplicitIndexStore
         Map<String, String> config = indexStore.get( Node.class, indexName );
         if ( config == null )
         {
-            throw new ExplicitIndexNotFoundKernelException( "No node index '" + indexName + "' found" );
+            throw new ExplicitIndexNotFoundKernelException( new StringBuilder().append("No node index '").append(indexName).append("' found").toString() );
         }
         return config;
     }
@@ -266,7 +265,7 @@ public class ExplicitIndexStore
         Map<String, String> config = indexStore.get( Relationship.class, indexName );
         if ( config == null )
         {
-            throw new ExplicitIndexNotFoundKernelException( "No relationship index '" + indexName + "' found" );
+            throw new ExplicitIndexNotFoundKernelException( new StringBuilder().append("No relationship index '").append(indexName).append("' found").toString() );
         }
         return config;
     }
@@ -275,7 +274,7 @@ public class ExplicitIndexStore
     {
         if ( key.equals( PROVIDER ) )
         {
-            throw new IllegalArgumentException( "'" + key + "' cannot be modified" );
+            throw new IllegalArgumentException( new StringBuilder().append("'").append(key).append("' cannot be modified").toString() );
         }
     }
 

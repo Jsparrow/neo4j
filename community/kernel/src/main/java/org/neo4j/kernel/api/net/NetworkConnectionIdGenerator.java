@@ -27,6 +27,6 @@ public final class NetworkConnectionIdGenerator
 
     public String newConnectionId( String connector )
     {
-        return connector + '-' + idGenerator.getAndIncrement();
+        return new StringBuilder().append(connector).append('-').append(idGenerator.getAndIncrement()).toString();
     }
 }

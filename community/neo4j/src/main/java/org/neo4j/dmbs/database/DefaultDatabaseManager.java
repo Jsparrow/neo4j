@@ -89,11 +89,11 @@ public final class DefaultDatabaseManager extends LifecycleAdapter implements Da
 
     private void shutdownDatabase()
     {
-        if ( database != null )
-        {
-            log.log( "Shutting down '%s' database.", database.databaseLayout().getDatabaseName() );
-            database.shutdown();
-        }
+        if (database == null) {
+			return;
+		}
+		log.log( "Shutting down '%s' database.", database.databaseLayout().getDatabaseName() );
+		database.shutdown();
     }
 
     @Override

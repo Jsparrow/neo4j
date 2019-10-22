@@ -25,13 +25,13 @@ import static org.mockito.Mockito.mock;
 
 public abstract class StatementOperationsTestHelper
 {
-    public static StatementOperationParts mockedParts()
+    private StatementOperationsTestHelper()
+    {   // Singleton
+    }
+
+	public static StatementOperationParts mockedParts()
     {
         return new StatementOperationParts(
                 mock( QueryRegistrationOperations.class ) );
-    }
-
-    private StatementOperationsTestHelper()
-    {   // Singleton
     }
 }

@@ -94,16 +94,15 @@ class DefaultNodeExplicitIndexCursor extends IndexCursor<IndexProgressor>
     @Override
     public void close()
     {
-        if ( !isClosed() )
-        {
-            super.close();
-            node = NO_ID;
-            score = 0;
-            expectedSize = 0;
-            read = null;
-
-            pool.accept( this );
-        }
+        if (isClosed()) {
+			return;
+		}
+		super.close();
+		node = NO_ID;
+		score = 0;
+		expectedSize = 0;
+		read = null;
+		pool.accept( this );
     }
 
     @Override
@@ -121,8 +120,8 @@ class DefaultNodeExplicitIndexCursor extends IndexCursor<IndexProgressor>
         }
         else
         {
-            return "NodeExplicitIndexCursor[node=" + node + ", expectedSize=" + expectedSize + ", score=" + score +
-                    ", underlying record=" + super.toString() + "]";
+            return new StringBuilder().append("NodeExplicitIndexCursor[node=").append(node).append(", expectedSize=").append(expectedSize).append(", score=").append(score)
+					.append(", underlying record=").append(super.toString()).append("]").toString();
         }
     }
 

@@ -63,21 +63,20 @@ import org.neo4j.logging.LogProvider;
  */
 public class StoreUpgrader
 {
-    private final Pattern MIGRATION_LEFTOVERS_PATTERN = Pattern.compile( MIGRATION_LEFT_OVERS_DIRECTORY + "(_\\d*)?" );
     public static final String MIGRATION_DIRECTORY = "upgrade";
-    public static final String MIGRATION_LEFT_OVERS_DIRECTORY = "upgrade_backup";
-    private static final String MIGRATION_STATUS_FILE = "_status";
+	public static final String MIGRATION_LEFT_OVERS_DIRECTORY = "upgrade_backup";
+	private static final String MIGRATION_STATUS_FILE = "_status";
+	private final Pattern migrationLeftoversPattern = Pattern.compile( MIGRATION_LEFT_OVERS_DIRECTORY + "(_\\d*)?" );
+	private final UpgradableDatabase upgradableDatabase;
+	private final MigrationProgressMonitor progressMonitor;
+	private final List<StoreMigrationParticipant> participants = new ArrayList<>();
+	private final Config config;
+	private final FileSystemAbstraction fileSystem;
+	private final PageCache pageCache;
+	private final Log log;
+	private final LogProvider logProvider;
 
-    private final UpgradableDatabase upgradableDatabase;
-    private final MigrationProgressMonitor progressMonitor;
-    private final List<StoreMigrationParticipant> participants = new ArrayList<>();
-    private final Config config;
-    private final FileSystemAbstraction fileSystem;
-    private final PageCache pageCache;
-    private final Log log;
-    private final LogProvider logProvider;
-
-    public StoreUpgrader( UpgradableDatabase upgradableDatabase, MigrationProgressMonitor progressMonitor, Config
+	public StoreUpgrader( UpgradableDatabase upgradableDatabase, MigrationProgressMonitor progressMonitor, Config
             config, FileSystemAbstraction fileSystem, PageCache pageCache, LogProvider logProvider )
     {
         this.upgradableDatabase = upgradableDatabase;
@@ -89,7 +88,7 @@ public class StoreUpgrader
         this.log = logProvider.getLog( getClass() );
     }
 
-    /**
+	/**
      * Add migration participant into a participants list.
      * Participant will be added into the end of a list and will be executed only after all predecessors.
      * @param participant - participant to add into migration
@@ -103,7 +102,7 @@ public class StoreUpgrader
         }
     }
 
-    public void migrateIfNeeded( DatabaseLayout layout )
+	public void migrateIfNeeded( DatabaseLayout layout )
     {
         DatabaseLayout migrationStructure = DatabaseLayout.of( layout.databaseDirectory(), MIGRATION_DIRECTORY );
 
@@ -127,7 +126,7 @@ public class StoreUpgrader
         }
     }
 
-    private void migrateStore( DatabaseLayout dbDirectoryLayout, DatabaseLayout migrationLayout, File migrationStateFile )
+	private void migrateStore( DatabaseLayout dbDirectoryLayout, DatabaseLayout migrationLayout, File migrationStateFile )
     {
         // One or more participants would like to do migration
         progressMonitor.started( participants.size() );
@@ -158,20 +157,20 @@ public class StoreUpgrader
         progressMonitor.completed();
     }
 
-    List<StoreMigrationParticipant> getParticipants()
+	List<StoreMigrationParticipant> getParticipants()
     {
         return participants;
     }
 
-    private boolean isUpgradeAllowed()
+	private boolean isUpgradeAllowed()
     {
         return config.get( GraphDatabaseSettings.allow_upgrade );
     }
 
-    private void cleanupLegacyLeftOverDirsIn( File databaseDirectory )
+	private void cleanupLegacyLeftOverDirsIn( File databaseDirectory )
     {
         File[] leftOverDirs = databaseDirectory.listFiles(
-                ( file, name ) -> file.isDirectory() && MIGRATION_LEFTOVERS_PATTERN.matcher( name ).matches() );
+                ( file, name ) -> file.isDirectory() && migrationLeftoversPattern.matcher( name ).matches() );
         if ( leftOverDirs != null )
         {
             for ( File leftOverDir : leftOverDirs )
@@ -181,7 +180,7 @@ public class StoreUpgrader
         }
     }
 
-    private static void cleanup( Iterable<StoreMigrationParticipant> participants, DatabaseLayout migrationStructure )
+	private static void cleanup( Iterable<StoreMigrationParticipant> participants, DatabaseLayout migrationStructure )
     {
         try
         {
@@ -196,7 +195,7 @@ public class StoreUpgrader
         }
     }
 
-    private static void moveMigratedFilesToStoreDirectory( Iterable<StoreMigrationParticipant> participants, DatabaseLayout migrationLayout,
+	private static void moveMigratedFilesToStoreDirectory( Iterable<StoreMigrationParticipant> participants, DatabaseLayout migrationLayout,
             DatabaseLayout directoryLayout, String versionToMigrateFrom, String versionToMigrateTo )
     {
         try
@@ -213,7 +212,7 @@ public class StoreUpgrader
         }
     }
 
-    private void migrateToIsolatedDirectory( DatabaseLayout directoryLayout, DatabaseLayout migrationLayout, String versionToMigrateFrom )
+	private void migrateToIsolatedDirectory( DatabaseLayout directoryLayout, DatabaseLayout migrationLayout, String versionToMigrateFrom )
     {
         try
         {
@@ -231,7 +230,7 @@ public class StoreUpgrader
         }
     }
 
-    private void cleanMigrationDirectory( File migrationDirectory )
+	private void cleanMigrationDirectory( File migrationDirectory )
     {
         try
         {
@@ -247,7 +246,7 @@ public class StoreUpgrader
         fileSystem.mkdir( migrationDirectory );
     }
 
-    private void deleteSilently( File dir )
+	private void deleteSilently( File dir )
     {
         try
         {
@@ -259,7 +258,7 @@ public class StoreUpgrader
         }
     }
 
-    public static class UnableToUpgradeException extends RuntimeException
+	public static class UnableToUpgradeException extends RuntimeException
     {
         public UnableToUpgradeException( String message, Throwable cause )
         {

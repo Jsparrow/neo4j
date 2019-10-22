@@ -212,10 +212,7 @@ public class SchemaStoreTest
                 constraintExistsRule( store.nextId(), 5, 1 )
             );
 
-        for ( SchemaRule rule : rules )
-        {
-            storeRule( rule );
-        }
+        rules.forEach(this::storeRule);
 
         // WHEN
         Collection<SchemaRule> readRules = asCollection( store.loadAllSchemaRules() );
@@ -227,10 +224,7 @@ public class SchemaStoreTest
     private long storeRule( SchemaRule rule )
     {
         Collection<DynamicRecord> records = store.allocateFrom( rule );
-        for ( DynamicRecord record : records )
-        {
-            store.updateRecord( record );
-        }
+        records.forEach(store::updateRecord);
         return Iterables.first( records ).getId();
     }
 

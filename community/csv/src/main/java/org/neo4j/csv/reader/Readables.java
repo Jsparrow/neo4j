@@ -54,11 +54,6 @@ import org.neo4j.function.ThrowingFunction;
  */
 public class Readables
 {
-    private Readables()
-    {
-        throw new AssertionError( "No instances allowed" );
-    }
-
     public static final CharReadable EMPTY = new CharReadable.Adapter()
     {
         @Override
@@ -91,13 +86,18 @@ public class Readables
         }
     };
 
-    public static CharReadable wrap( final InputStream stream, final String sourceName, Charset charset )
+	private Readables()
+    {
+        throw new AssertionError( "No instances allowed" );
+    }
+
+	public static CharReadable wrap( final InputStream stream, final String sourceName, Charset charset )
             throws IOException
     {
         return wrap( stream, sourceName, charset, 0 );
     }
 
-    /**
+	/**
      * Wraps a {@link InputStream} in a {@link CharReadable}.
      *
      * @param stream {@link Reader} to wrap.
@@ -137,12 +137,12 @@ public class Readables
         }, length );
     }
 
-    public static CharReadable wrap( String data )
+	public static CharReadable wrap( String data )
     {
         return wrap( new StringReader( data ), data.length() );
     }
 
-    /**
+	/**
      * Wraps a {@link Reader} in a {@link CharReadable}.
      * Remember that the {@link Reader#toString()} must provide a description of the data source.
      *
@@ -155,7 +155,104 @@ public class Readables
         return new WrappedCharReadable( length, reader );
     }
 
-    private static class FromFile implements IOFunction<File,CharReadable>
+	private static boolean invalidZipEntry( String name )
+    {
+        return name.contains( "__MACOSX" ) ||
+               name.startsWith( "." ) ||
+               name.contains( "/." );
+    }
+
+	public static RawIterator<CharReadable,IOException> individualFiles( Charset charset, File... files )
+    {
+        return iterator( new FromFile( charset ), files );
+    }
+
+	public static CharReadable files( Charset charset, File... files ) throws IOException
+    {
+        IOFunction<File,CharReadable> opener = new FromFile( charset );
+        switch ( files.length )
+        {
+        case 0:  return EMPTY;
+        case 1:  return opener.apply( files[0] );
+        default: return new MultiReadable( iterator( opener, files ) );
+        }
+    }
+
+	@SafeVarargs
+    public static <IN,OUT> RawIterator<OUT,IOException> iterator( ThrowingFunction<IN,OUT,IOException> converter, IN... items )
+    {
+        if ( items.length == 0 )
+        {
+            throw new IllegalStateException( "No source items specified" );
+        }
+
+        return new RawIterator<OUT,IOException>()
+        {
+            private int cursor;
+
+            @Override
+            public boolean hasNext()
+            {
+                return cursor < items.length;
+            }
+
+            @Override
+            public OUT next() throws IOException
+            {
+                if ( !hasNext() )
+                {
+                    throw new IllegalStateException();
+                }
+                return converter.apply( items[cursor++] );
+            }
+
+            @Override
+            public void remove()
+            {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+	/**
+     * Extracts the first line, i.e characters until the first newline or end of stream.
+     * Reads one character at a time to be sure not to read too far ahead. The stream is left
+     * in a state of either exhausted or at the beginning of the next line of data.
+     *
+     * @param source {@link CharReadable} to read from.
+     * @return char[] containing characters until the first newline character or end of stream.
+     * @throws IOException on I/O reading error.
+     */
+    public static char[] extractFirstLineFrom( CharReadable source ) throws IOException
+    {
+        char[] result = new char[100];
+        int cursor = 0;
+        int read;
+        boolean foundEol = false;
+        do
+        {
+            // Grow on demand
+            if ( cursor >= result.length )
+            {
+                result = Arrays.copyOf( result, cursor * 2 );
+            }
+
+            // Read one character
+            read = source.read( result, cursor, 1 );
+            if ( read > 0 )
+            {
+                foundEol = BufferedCharSeeker.isEolChar( result[cursor] );
+                if ( !foundEol )
+                {
+                    cursor++;
+                }
+            }
+        }
+        while ( read > 0 && !foundEol );
+        return Arrays.copyOf( result, cursor );
+    }
+
+	private static class FromFile implements IOFunction<File,CharReadable>
     {
         private final Charset charset;
 
@@ -234,117 +331,19 @@ public class Readables
 
                 if ( found != null )
                 {
-                    throw new IOException( "Multiple suitable files found in zip file " + zipFile.getName() +
-                            ", at least " + found.getName() + " and " + entry.getName() +
-                            ". Only a single file per zip file is supported" );
+                    throw new IOException( new StringBuilder().append("Multiple suitable files found in zip file ").append(zipFile.getName()).append(", at least ").append(found.getName()).append(" and ")
+							.append(entry.getName()).append(". Only a single file per zip file is supported").toString() );
                 }
                 found = entry;
             }
 
             if ( found == null )
             {
-                throw new IOException( "No suitable file found in zip file " + zipFile.getName() + "." +
-                        (!unsuitableEntries.isEmpty() ?
-                                " Although found these unsuitable entries " + unsuitableEntries : "" ) );
+                throw new IOException( new StringBuilder().append("No suitable file found in zip file ").append(zipFile.getName()).append(".").append(!unsuitableEntries.isEmpty() ?
+				        " Although found these unsuitable entries " + unsuitableEntries : "")
+						.toString() );
             }
             return found;
         }
-    }
-
-    private static boolean invalidZipEntry( String name )
-    {
-        return name.contains( "__MACOSX" ) ||
-               name.startsWith( "." ) ||
-               name.contains( "/." );
-    }
-
-    public static RawIterator<CharReadable,IOException> individualFiles( Charset charset, File... files )
-    {
-        return iterator( new FromFile( charset ), files );
-    }
-
-    public static CharReadable files( Charset charset, File... files ) throws IOException
-    {
-        IOFunction<File,CharReadable> opener = new FromFile( charset );
-        switch ( files.length )
-        {
-        case 0:  return EMPTY;
-        case 1:  return opener.apply( files[0] );
-        default: return new MultiReadable( iterator( opener, files ) );
-        }
-    }
-
-    @SafeVarargs
-    public static <IN,OUT> RawIterator<OUT,IOException> iterator( ThrowingFunction<IN,OUT,IOException> converter, IN... items )
-    {
-        if ( items.length == 0 )
-        {
-            throw new IllegalStateException( "No source items specified" );
-        }
-
-        return new RawIterator<OUT,IOException>()
-        {
-            private int cursor;
-
-            @Override
-            public boolean hasNext()
-            {
-                return cursor < items.length;
-            }
-
-            @Override
-            public OUT next() throws IOException
-            {
-                if ( !hasNext() )
-                {
-                    throw new IllegalStateException();
-                }
-                return converter.apply( items[cursor++] );
-            }
-
-            @Override
-            public void remove()
-            {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
-
-    /**
-     * Extracts the first line, i.e characters until the first newline or end of stream.
-     * Reads one character at a time to be sure not to read too far ahead. The stream is left
-     * in a state of either exhausted or at the beginning of the next line of data.
-     *
-     * @param source {@link CharReadable} to read from.
-     * @return char[] containing characters until the first newline character or end of stream.
-     * @throws IOException on I/O reading error.
-     */
-    public static char[] extractFirstLineFrom( CharReadable source ) throws IOException
-    {
-        char[] result = new char[100];
-        int cursor = 0;
-        int read;
-        boolean foundEol = false;
-        do
-        {
-            // Grow on demand
-            if ( cursor >= result.length )
-            {
-                result = Arrays.copyOf( result, cursor * 2 );
-            }
-
-            // Read one character
-            read = source.read( result, cursor, 1 );
-            if ( read > 0 )
-            {
-                foundEol = BufferedCharSeeker.isEolChar( result[cursor] );
-                if ( !foundEol )
-                {
-                    cursor++;
-                }
-            }
-        }
-        while ( read > 0 && !foundEol );
-        return Arrays.copyOf( result, cursor );
     }
 }

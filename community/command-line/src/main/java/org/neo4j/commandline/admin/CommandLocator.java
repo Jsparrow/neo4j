@@ -38,7 +38,7 @@ public interface CommandLocator
      * @param name The name of the provider to look for.
      * @return Any matching command provider.
      */
-    AdminCommand.Provider findProvider( String name ) throws NoSuchElementException;
+    AdminCommand.Provider findProvider( String name );
 
     /**
      * Get an iterable of all of the command providers that are available through this command locator instance.

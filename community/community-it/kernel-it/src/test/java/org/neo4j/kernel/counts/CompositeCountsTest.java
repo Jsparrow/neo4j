@@ -46,8 +46,9 @@ public class CompositeCountsTest
 {
     @Rule
     public final DatabaseRule db = new ImpermanentDatabaseRule();
+	private Supplier<KernelTransaction> transactionSupplier;
 
-    @Test
+	@Test
     public void shouldReportNumberOfRelationshipsFromNodesWithGivenLabel()
     {
         // given
@@ -80,7 +81,7 @@ public class CompositeCountsTest
         numberOfRelationshipsMatching( null, withName( "GAMMA" ), label( "Bar" ) ).shouldBe( 0 );
     }
 
-    @Test
+	@Test
     public void shouldMaintainCountsOnRelationshipCreate()
     {
         // given
@@ -109,7 +110,7 @@ public class CompositeCountsTest
         numberOfRelationshipsMatching( label( "Bar" ), withName( "KNOWS" ), null ).shouldBe( 0 );
     }
 
-    @Test
+	@Test
     public void shouldMaintainCountsOnRelationshipDelete()
     {
         // given
@@ -137,7 +138,7 @@ public class CompositeCountsTest
         numberOfRelationshipsMatching( label( "Bar" ), withName( "KNOWS" ), null ).shouldBe( 0 );
     }
 
-    @Test
+	@Test
     public void shouldMaintainCountsOnLabelAdd()
     {
         // given
@@ -167,7 +168,7 @@ public class CompositeCountsTest
         numberOfRelationshipsMatching( label( "Bar" ), withName( "KNOWS" ), null ).shouldBe( 0 );
     }
 
-    @Test
+	@Test
     public void shouldMaintainCountsOnLabelRemove()
     {
         // given
@@ -197,7 +198,7 @@ public class CompositeCountsTest
         numberOfRelationshipsMatching( label( "Bar" ), withName( "KNOWS" ), null ).shouldBe( 0 );
     }
 
-    @Test
+	@Test
     public void shouldMaintainCountsOnLabelAddAndRelationshipCreate()
     {
         // given
@@ -228,7 +229,7 @@ public class CompositeCountsTest
         numberOfRelationshipsMatching( label( "Bar" ), withName( "KNOWS" ), null ).shouldBe( 2 );
     }
 
-    @Test
+	@Test
     public void shouldMaintainCountsOnLabelRemoveAndRelationshipDelete()
     {
         // given
@@ -261,7 +262,7 @@ public class CompositeCountsTest
         numberOfRelationshipsMatching( label( "Bar" ), withName( "KNOWS" ), null ).shouldBe( 0 );
     }
 
-    @Test
+	@Test
     public void shouldMaintainCountsOnLabelAddAndRelationshipDelete()
     {
         // given
@@ -294,7 +295,7 @@ public class CompositeCountsTest
         numberOfRelationshipsMatching( label( "Bar" ), withName( "KNOWS" ), null ).shouldBe( 1 );
     }
 
-    @Test
+	@Test
     public void shouldMaintainCountsOnLabelRemoveAndRelationshipCreate()
     {
         // given
@@ -325,7 +326,7 @@ public class CompositeCountsTest
         numberOfRelationshipsMatching( label( "Bar" ), withName( "KNOWS" ), null ).shouldBe( 0 );
     }
 
-    @Test
+	@Test
     public void shouldNotUpdateCountsIfCreatedRelationshipIsDeletedInSameTransaction()
     {
         // given
@@ -354,7 +355,7 @@ public class CompositeCountsTest
         numberOfRelationshipsMatching( null, withName( "KNOWS" ), label( "Bar" ) ).shouldBe( 0 );
     }
 
-    /**
+	/**
      * Transactional version of {@link #countsForRelationship(Label, RelationshipType, Label)}
      */
     private MatchingRelationships numberOfRelationshipsMatching( Label lhs, RelationshipType type, Label rhs )
@@ -365,29 +366,13 @@ public class CompositeCountsTest
             tx.success();
             return new MatchingRelationships( String.format( "(%s)-%s->(%s)",
                                                              lhs == null ? "" : ":" + lhs.name(),
-                                                             type == null ? "" : "[:" + type.name() + "]",
+                                                             type == null ? "" : new StringBuilder().append("[:").append(type.name()).append("]")
+																	.toString(),
                                                              rhs == null ? "" : ":" + rhs.name() ), nodeCount );
         }
     }
 
-    private static class MatchingRelationships
-    {
-        private final String message;
-        private final long count;
-
-        MatchingRelationships( String message, long count )
-        {
-            this.message = message;
-            this.count = count;
-        }
-
-        public void shouldBe( long expected )
-        {
-            assertEquals( message, expected, count );
-        }
-    }
-
-    /**
+	/**
      * @param start the label of the start node of relationships to get the number of, or {@code null} for "any".
      * @param type  the type of the relationships to get the number of, or {@code null} for "any".
      * @param end   the label of the end node of relationships to get the number of, or {@code null} for "any".
@@ -441,12 +426,27 @@ public class CompositeCountsTest
         }
     }
 
-    private Supplier<KernelTransaction> transactionSupplier;
-
-    @Before
+	@Before
     public void exposeGuts()
     {
         transactionSupplier = () -> db.getGraphDatabaseAPI().getDependencyResolver()
                               .resolveDependency( ThreadToStatementContextBridge.class ).getKernelTransactionBoundToThisThread( true );
+    }
+
+    private static class MatchingRelationships
+    {
+        private final String message;
+        private final long count;
+
+        MatchingRelationships( String message, long count )
+        {
+            this.message = message;
+            this.count = count;
+        }
+
+        public void shouldBe( long expected )
+        {
+            assertEquals( message, expected, count );
+        }
     }
 }

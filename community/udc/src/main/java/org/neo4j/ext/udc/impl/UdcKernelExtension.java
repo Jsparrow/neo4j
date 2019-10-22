@@ -73,11 +73,11 @@ public class UdcKernelExtension extends LifecycleAdapter
     @Override
     public void stop()
     {
-        if ( timer != null )
-        {
-            timer.cancel();
-            timer = null;
-        }
+        if (timer == null) {
+			return;
+		}
+		timer.cancel();
+		timer = null;
     }
 
 }

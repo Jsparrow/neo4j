@@ -109,9 +109,7 @@ public class BoltRequestMessageTest
         NodeValue nodeValue = nodeValue( 12L, stringArray( "User", "Banana" ), map( new String[]{"name", "age"},
                 new AnyValue[]{stringValue( "Bob" ), intValue( 14 )} ) );
         assertThat( serialized( nodeValue ),
-                equalTo( "B1 71 91 B3 4E 0C 92 84 55 73 65 72 86 42 61 6E" + lineSeparator() +
-                         "61 6E 61 A2 84 6E 61 6D 65 83 42 6F 62 83 61 67" + lineSeparator() +
-                         "65 0E" ) );
+                equalTo( new StringBuilder().append("B1 71 91 B3 4E 0C 92 84 55 73 65 72 86 42 61 6E").append(lineSeparator()).append("61 6E 61 A2 84 6E 61 6D 65 83 42 6F 62 83 61 67").append(lineSeparator()).append("65 0E").toString() ) );
     }
 
     @Test
@@ -123,8 +121,7 @@ public class BoltRequestMessageTest
                 stringValue( "KNOWS" ), map( new String[]{"name", "age"},
                         new AnyValue[]{stringValue( "Bob" ), intValue( 14 )} ) );
         assertThat( serialized( rel ),
-                equalTo( "B1 71 91 B5 52 0C 01 02 85 4B 4E 4F 57 53 A2 84" + lineSeparator() +
-                         "6E 61 6D 65 83 42 6F 62 83 61 67 65 0E" ) );
+                equalTo( new StringBuilder().append("B1 71 91 B5 52 0C 01 02 85 4B 4E 4F 57 53 A2 84").append(lineSeparator()).append("6E 61 6D 65 83 42 6F 62 83 61 67 65 0E").toString() ) );
     }
 
     private String serialized( AnyValue object ) throws IOException
@@ -176,7 +173,7 @@ public class BoltRequestMessageTest
         }
         catch ( Throwable e )
         {
-            throw new AssertionError( "Failed to unpack message, wire data was:\n" + serialized + "[" + bytes.length + "b]", e );
+            throw new AssertionError( new StringBuilder().append("Failed to unpack message, wire data was:\n").append(serialized).append("[").append(bytes.length).append("b]").toString(), e );
         }
 
         return (T) messages.get( 0 );

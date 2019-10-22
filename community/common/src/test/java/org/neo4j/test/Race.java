@@ -40,27 +40,21 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class Race
 {
     private static final int UNLIMITED = 0;
+	private final List<Contestant> contestants = new ArrayList<>();
+	private volatile CountDownLatch readySet;
+	private final CountDownLatch go = new CountDownLatch( 1 );
+	private volatile boolean addSomeMinorRandomStartDelays;
+	private volatile BooleanSupplier endCondition;
+	private volatile boolean failure;
+	private boolean asyncExecution;
 
-    public interface ThrowingRunnable
-    {
-        void run() throws Throwable;
-    }
-
-    private final List<Contestant> contestants = new ArrayList<>();
-    private volatile CountDownLatch readySet;
-    private final CountDownLatch go = new CountDownLatch( 1 );
-    private volatile boolean addSomeMinorRandomStartDelays;
-    private volatile BooleanSupplier endCondition;
-    private volatile boolean failure;
-    private boolean asyncExecution;
-
-    public Race withRandomStartDelays()
+	public Race withRandomStartDelays()
     {
         this.addSomeMinorRandomStartDelays = true;
         return this;
     }
 
-    /**
+	/**
      * Adds an end condition to this race. The race will end whenever an end condition is met
      * or when there's one contestant failing (throwing any sort of exception).
      *
@@ -77,7 +71,7 @@ public class Race
         return this;
     }
 
-    /**
+	/**
      * Convenience for adding an end condition which is based on time. This will have contestants
      * end after the given duration (time + unit).
      *
@@ -92,14 +86,14 @@ public class Race
         return this;
     }
 
-    private BooleanSupplier mergeEndCondition( BooleanSupplier additionalEndCondition )
+	private BooleanSupplier mergeEndCondition( BooleanSupplier additionalEndCondition )
     {
         BooleanSupplier existingEndCondition = endCondition;
         return existingEndCondition == null ? additionalEndCondition :
             () -> existingEndCondition.getAsBoolean() || additionalEndCondition.getAsBoolean();
     }
 
-    /**
+	/**
      * Convenience for wrapping contestants, especially for lambdas, which throws any sort of
      * checked exception.
      *
@@ -121,12 +115,12 @@ public class Race
         };
     }
 
-    public void addContestants( int count, Runnable contestant )
+	public void addContestants( int count, Runnable contestant )
     {
         addContestants( count, contestant, UNLIMITED );
     }
 
-    public void addContestants( int count, Runnable contestant, int maxNumberOfRuns )
+	public void addContestants( int count, Runnable contestant, int maxNumberOfRuns )
     {
         for ( int i = 0; i < count; i++ )
         {
@@ -134,17 +128,17 @@ public class Race
         }
     }
 
-    public void addContestant( Runnable contestant )
+	public void addContestant( Runnable contestant )
     {
         addContestant( contestant, UNLIMITED );
     }
 
-    public void addContestant( Runnable contestant, int maxNumberOfRuns )
+	public void addContestant( Runnable contestant, int maxNumberOfRuns )
     {
         contestants.add( new Contestant( contestant, contestants.size(), maxNumberOfRuns ) );
     }
 
-    /**
+	/**
      * Starts the race and returns without waiting for contestants to complete.
      * Any exception thrown by contestant will be lost.
      */
@@ -154,7 +148,7 @@ public class Race
         go( 0, TimeUnit.MILLISECONDS );
     }
 
-    /**
+	/**
      * Starts the race and waits indefinitely for all contestants to either fail or succeed.
      *
      * @throws Throwable on any exception thrown from any contestant.
@@ -164,7 +158,7 @@ public class Race
         go( 0, TimeUnit.MILLISECONDS );
     }
 
-    /**
+	/**
      * Starts the race and waits {@code maxWaitTime} for all contestants to either fail or succeed.
      *
      * @param maxWaitTime max time to wait for all contestants, 0 means indefinite wait.
@@ -180,10 +174,7 @@ public class Race
         }
 
         readySet = new CountDownLatch( contestants.size() );
-        for ( Contestant contestant : contestants )
-        {
-            contestant.start();
-        }
+        contestants.forEach(Contestant::start);
         readySet.await();
         go.countDown();
 
@@ -208,7 +199,7 @@ public class Race
                 waitedSoFar += currentTimeMillis() - time;
                 if ( waitedSoFar >= maxWaitTimeMillis )
                 {
-                    throw new TimeoutException( "Didn't complete after " + maxWaitTime + " " + unit );
+                    throw new TimeoutException( new StringBuilder().append("Didn't complete after ").append(maxWaitTime).append(" ").append(unit).toString() );
                 }
             }
             if ( contestant.error != null )
@@ -220,13 +211,7 @@ public class Race
         if ( errorCount > 1 )
         {
             Throwable errors = new Throwable( "Multiple errors found" );
-            for ( Contestant contestant : contestants )
-            {
-                if ( contestant.error != null )
-                {
-                    errors.addSuppressed( contestant.error );
-                }
-            }
+            contestants.stream().filter(contestant -> contestant.error != null).forEach(contestant -> errors.addSuppressed(contestant.error));
             throw errors;
         }
         if ( errorCount == 1 )
@@ -239,6 +224,11 @@ public class Race
                 }
             }
         }
+    }
+
+    public interface ThrowingRunnable
+    {
+        void run() throws Throwable;
     }
 
     private class Contestant extends Thread

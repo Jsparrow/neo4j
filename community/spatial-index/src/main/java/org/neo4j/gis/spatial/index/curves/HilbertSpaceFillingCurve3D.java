@@ -34,7 +34,47 @@ import static org.neo4j.gis.spatial.index.curves.HilbertSpaceFillingCurve3D.Dire
 public class HilbertSpaceFillingCurve3D extends SpaceFillingCurve
 {
 
-    /**
+    // this is left accessible to make debugging easier
+    static Map<SubCurve3D,HilbertCurve3D> curves = new LinkedHashMap<>();
+
+	private static final HilbertCurve3D THE_CURVE = buildTheCurve();
+
+	public static final int MAX_LEVEL = 63 / 3 - 1;
+
+	public HilbertSpaceFillingCurve3D( Envelope range )
+    {
+        this( range, MAX_LEVEL );
+    }
+
+	public HilbertSpaceFillingCurve3D( Envelope range, int maxLevel )
+    {
+        super( range, maxLevel );
+        assert maxLevel <= MAX_LEVEL;
+        assert range.getDimension() == 3;
+    }
+
+	private static HilbertCurve3D buildTheCurve()
+    {
+        // We start with a UFR curve
+        int[] npointValues = {0b000, 0b010, 0b011, 0b001, 0b101, 0b111, 0b110, 0b100};
+        HilbertCurve3D theCurve = new HilbertCurve3D( npointValues );
+
+        theCurve.buildCurveTree( curves );
+        return theCurve;
+    }
+
+	@Override
+    protected CurveRule rootCurve()
+    {
+        return THE_CURVE;
+    }
+
+	enum Direction3D
+    {
+        UP, RIGHT, LEFT, DOWN, FRONT, BACK
+    }
+
+	/**
      * Utilities for rotating point values in binary about various axes
      */
     static class BinaryCoordinateRotationUtils3D
@@ -182,16 +222,15 @@ public class HilbertSpaceFillingCurve3D extends SpaceFillingCurve
 
         private void buildCurveTree( Map<SubCurve3D,HilbertCurve3D> curves )
         {
-            if ( children == null )
-            {
-                makeChildren( curves );
-                curves.put( name(), this );
-
-                for ( HilbertCurve3D child : children )
-                {
-                    child.buildCurveTree( curves );
-                }
-            }
+            if (children != null) {
+				return;
+			}
+			makeChildren( curves );
+			curves.put( name(), this );
+			for ( HilbertCurve3D child : children )
+			{
+			    child.buildCurveTree( curves );
+			}
         }
 
         private void makeChildren( Map<SubCurve3D,HilbertCurve3D> curves )
@@ -211,11 +250,6 @@ public class HilbertSpaceFillingCurve3D extends SpaceFillingCurve
         {
             return curves.computeIfAbsent( newCurve.name(), key -> newCurve );
         }
-    }
-
-    enum Direction3D
-    {
-        UP, RIGHT, LEFT, DOWN, FRONT, BACK
     }
 
     static class SubCurve3D
@@ -251,42 +285,7 @@ public class HilbertSpaceFillingCurve3D extends SpaceFillingCurve
         @Override
         public String toString()
         {
-            return firstMove.toString() + secondMove.toString() + overallDirection.toString();
+            return new StringBuilder().append(firstMove.toString()).append(secondMove.toString()).append(overallDirection.toString()).toString();
         }
-    }
-
-    // this is left accessible to make debugging easier
-    static Map<SubCurve3D,HilbertCurve3D> curves = new LinkedHashMap<>();
-
-    private static HilbertCurve3D buildTheCurve()
-    {
-        // We start with a UFR curve
-        int[] npointValues = {0b000, 0b010, 0b011, 0b001, 0b101, 0b111, 0b110, 0b100};
-        HilbertCurve3D theCurve = new HilbertCurve3D( npointValues );
-
-        theCurve.buildCurveTree( curves );
-        return theCurve;
-    }
-
-    private static final HilbertCurve3D THE_CURVE = buildTheCurve();
-
-    public static final int MAX_LEVEL = 63 / 3 - 1;
-
-    public HilbertSpaceFillingCurve3D( Envelope range )
-    {
-        this( range, MAX_LEVEL );
-    }
-
-    public HilbertSpaceFillingCurve3D( Envelope range, int maxLevel )
-    {
-        super( range, maxLevel );
-        assert maxLevel <= MAX_LEVEL;
-        assert range.getDimension() == 3;
-    }
-
-    @Override
-    protected CurveRule rootCurve()
-    {
-        return THE_CURVE;
     }
 }

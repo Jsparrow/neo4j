@@ -36,18 +36,18 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
     private Set<T> removedElements;
     private Predicate<T> filter;
 
-    private MutableDiffSetsImpl( Set<T> addedElements, Set<T> removedElements )
-    {
-        this.addedElements = addedElements;
-        this.removedElements = removedElements;
-    }
-
     public MutableDiffSetsImpl()
     {
         this( null, null );
     }
 
-    @Override
+	private MutableDiffSetsImpl( Set<T> addedElements, Set<T> removedElements )
+    {
+        this.addedElements = addedElements;
+        this.removedElements = removedElements;
+    }
+
+	@Override
     public boolean add( T elem )
     {
         boolean wasRemoved = removed( false ).remove( elem );
@@ -55,7 +55,7 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
         return wasRemoved || added( true ).add( elem );
     }
 
-    @Override
+	@Override
     public void addAll( Iterator<T> elems )
     {
         while ( elems.hasNext() )
@@ -64,7 +64,7 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
         }
     }
 
-    @Override
+	@Override
     public boolean remove( T elem )
     {
         boolean removedFromAddedElements = added( false ).remove( elem );
@@ -72,7 +72,7 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
         return removedFromAddedElements || removed( true ).add( elem );
     }
 
-    @Override
+	@Override
     public void removeAll( Iterator<T> elems )
     {
         while ( elems.hasNext() )
@@ -81,7 +81,7 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
         }
     }
 
-    @Override
+	@Override
     public void clear()
     {
         if ( addedElements != null )
@@ -94,13 +94,13 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
         }
     }
 
-    @Override
+	@Override
     public boolean unRemove( T item )
     {
         return removed( false ).remove( item );
     }
 
-    protected Set<T> added( boolean create )
+	protected Set<T> added( boolean create )
     {
         if ( addedElements == null )
         {
@@ -113,7 +113,7 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
         return addedElements;
     }
 
-    private void ensureFilterHasBeenCreated()
+	private void ensureFilterHasBeenCreated()
     {
         if ( filter == null )
         {
@@ -121,43 +121,43 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
         }
     }
 
-    @Override
+	@Override
     public String toString()
     {
         return format( "{+%s, -%s}", added( false ), removed( false ) );
     }
 
-    @Override
+	@Override
     public boolean isAdded( T elem )
     {
         return added( false ).contains( elem );
     }
 
-    @Override
+	@Override
     public boolean isRemoved( T elem )
     {
         return removed( false ).contains( elem );
     }
 
-    @Override
+	@Override
     public Set<T> getAdded()
     {
         return resultSet( addedElements );
     }
 
-    @Override
+	@Override
     public Set<T> getRemoved()
     {
         return resultSet( removedElements );
     }
 
-    @Override
+	@Override
     public boolean isEmpty()
     {
         return added( false ).isEmpty() && removed( false ).isEmpty();
     }
 
-    @Override
+	@Override
     public Iterator<T> apply( Iterator<? extends T> source )
     {
         Iterator<T> result = (Iterator) source;
@@ -174,13 +174,13 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
         return result;
     }
 
-    @Override
+	@Override
     public int delta()
     {
         return added( false ).size() - removed( false ).size();
     }
 
-    @Override
+	@Override
     public MutableDiffSetsImpl<T> filterAdded( Predicate<T> addedFilter )
     {
         return new MutableDiffSetsImpl<>(
@@ -188,7 +188,7 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
                 Iterables.asSet( removed( false ) ) );
     }
 
-    protected Set<T> removed( boolean create )
+	protected Set<T> removed( boolean create )
     {
         if ( removedElements == null )
         {
@@ -201,7 +201,7 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
         return removedElements;
     }
 
-    public void replace( T toRemove, T toAdd )
+	public void replace( T toRemove, T toAdd )
     {
         Set<T> added = added( true ); // we're doing both add and remove on it, so pass in true
         boolean removedFromAdded = added.remove( toRemove );
@@ -214,7 +214,7 @@ public class MutableDiffSetsImpl<T> implements MutableDiffSets<T>
         }
     }
 
-    private Set<T> resultSet( Set<T> coll )
+	private Set<T> resultSet( Set<T> coll )
     {
         return coll == null ? Collections.emptySet() : Collections.unmodifiableSet( coll );
     }

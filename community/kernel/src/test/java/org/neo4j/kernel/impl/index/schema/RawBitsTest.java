@@ -46,20 +46,7 @@ public class RawBitsTest
     @Parameterized.Parameter( 1 )
     public NumberLayout layout;
 
-    @Parameterized.Parameters( name = "{0}" )
-    public static List<Object[]> layouts()
-    {
-        return asList(
-                new Object[]{"Unique",
-                        new NumberLayoutUnique()
-                },
-                new Object[]{"NonUnique",
-                        new NumberLayoutNonUnique()
-                }
-        );
-    }
-
-    final List<Object> objects = Arrays.asList(
+	final List<Object> objects = Arrays.asList(
             Double.NEGATIVE_INFINITY,
             -Double.MAX_VALUE,
             Long.MIN_VALUE,
@@ -107,7 +94,20 @@ public class RawBitsTest
             Math.nextUp( Math.PI )
     );
 
-    @Test
+	@Parameterized.Parameters( name = "{0}" )
+    public static List<Object[]> layouts()
+    {
+        return asList(
+                new Object[]{"Unique",
+                        new NumberLayoutUnique()
+                },
+                new Object[]{"NonUnique",
+                        new NumberLayoutNonUnique()
+                }
+        );
+    }
+
+	@Test
     public void mustSortInSameOrderAsValueComparator()
     {
         // given
@@ -125,7 +125,7 @@ public class RawBitsTest
         assertSameOrder( actual, values );
     }
 
-    @Test
+	@Test
     public void shouldCompareAllValuesToAllOtherValuesLikeValueComparator()
     {
         // given
@@ -134,8 +134,7 @@ public class RawBitsTest
         values.sort( Values.COMPARATOR );
 
         // when
-        for ( NumberIndexKey numberKey : numberIndexKeys )
-        {
+		numberIndexKeys.forEach(numberKey -> {
             List<NumberIndexKey> withoutThisOne = new ArrayList<>( numberIndexKeys );
             assertTrue( withoutThisOne.remove( numberKey ) );
             withoutThisOne = unmodifiableList( withoutThisOne );
@@ -149,10 +148,10 @@ public class RawBitsTest
                 // then
                 assertSameOrder( actual, values );
             }
-        }
+        });
     }
 
-    @Test
+	@Test
     public void shouldHaveSameCompareResultsAsValueCompare()
     {
         // given
@@ -177,14 +176,14 @@ public class RawBitsTest
         }
     }
 
-    private List<Value> asValues( List<NumberIndexKey> numberIndexKeys )
+	private List<Value> asValues( List<NumberIndexKey> numberIndexKeys )
     {
         return numberIndexKeys.stream()
                 .map( k -> RawBits.asNumberValue( k.rawValueBits, k.type ) )
                 .collect( Collectors.toList() );
     }
 
-    private void assertSameOrder( List<Value> actual, List<Value> values )
+	private void assertSameOrder( List<Value> actual, List<Value> values )
     {
         assertEquals( actual.size(), values.size() );
         for ( int i = 0; i < actual.size(); i++ )
@@ -203,25 +202,21 @@ public class RawBitsTest
         }
     }
 
-    private List<Value> asValueObjects( List<Object> objects )
+	private List<Value> asValueObjects( List<Object> objects )
     {
         List<Value> values = new ArrayList<>();
-        for ( Object object : objects )
-        {
-            values.add( Values.of( object ) );
-        }
+        objects.forEach(object -> values.add(Values.of(object)));
         return values;
     }
 
-    private List<NumberIndexKey> asNumberIndexKeys( List<Value> values )
+	private List<NumberIndexKey> asNumberIndexKeys( List<Value> values )
     {
         List<NumberIndexKey> numberIndexKeys = new ArrayList<>();
-        for ( Value value : values )
-        {
+        values.forEach(value -> {
             NumberIndexKey key = new NumberIndexKey();
             key.from( value );
             numberIndexKeys.add( key );
-        }
+        });
         return numberIndexKeys;
     }
 }

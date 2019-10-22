@@ -113,12 +113,11 @@ public class RelationTypeSchemaDescriptor implements org.neo4j.internal.kernel.a
     @Override
     public boolean equals( Object o )
     {
-        if ( o instanceof RelationTypeSchemaDescriptor )
-        {
-            RelationTypeSchemaDescriptor that = (RelationTypeSchemaDescriptor)o;
-            return relTypeId == that.getRelTypeId() && Arrays.equals( propertyIds, that.getPropertyIds() );
-        }
-        return false;
+        if (!(o instanceof RelationTypeSchemaDescriptor)) {
+			return false;
+		}
+		RelationTypeSchemaDescriptor that = (RelationTypeSchemaDescriptor)o;
+		return relTypeId == that.getRelTypeId() && Arrays.equals( propertyIds, that.getPropertyIds() );
     }
 
     @Override

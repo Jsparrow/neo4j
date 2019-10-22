@@ -52,8 +52,7 @@ public class IntegrityValidator
         if ( !record.inUse() && record.getNextRel() != Record.NO_NEXT_RELATIONSHIP.intValue() )
         {
             throw new ConstraintViolationTransactionFailureException(
-                    "Cannot delete node<" + record.getId() + ">, because it still has relationships. " +
-                    "To delete this node, you must first delete its relationships." );
+                    new StringBuilder().append("Cannot delete node<").append(record.getId()).append(">, because it still has relationships. ").append("To delete this node, you must first delete its relationships.").toString() );
         }
     }
 
@@ -70,38 +69,36 @@ public class IntegrityValidator
             // replicating the constraint validation logic down here, or rethinking where we validate constraints.
             // For now, we just kill these transactions.
             throw new TransactionFailureException( Status.Transaction.ConstraintsChanged,
-                            "Database constraints have changed (txId=%d) after this transaction (txId=%d) started, " +
-                            "which is not yet supported. Please retry your transaction to ensure all " +
-                            "constraints are executed.", latestConstraintIntroducingTx,
+                            new StringBuilder().append("Database constraints have changed (txId=%d) after this transaction (txId=%d) started, ").append("which is not yet supported. Please retry your transaction to ensure all ").append("constraints are executed.").toString(), latestConstraintIntroducingTx,
                             lastCommittedTxWhenTransactionStarted );
         }
     }
 
     public void validateSchemaRule( SchemaRule schemaRule ) throws TransactionFailureException
     {
-        if ( schemaRule instanceof ConstraintRule )
-        {
-            ConstraintRule constraintRule = (ConstraintRule) schemaRule;
-            if ( constraintRule.getConstraintDescriptor().enforcesUniqueness() )
-            {
-                try
-                {
-                    indexes.validateIndex( constraintRule.getOwnedIndex() );
-                }
-                catch ( UniquePropertyValueValidationException e )
-                {
-                    throw new TransactionFailureException( Status.Transaction.TransactionValidationFailed, e,
-                            "Index validation failed" );
-                }
-                catch ( IndexNotFoundKernelException | IndexPopulationFailedKernelException e )
-                {
-                    // We don't expect this to occur, and if they do, it is because we are in a very bad state - out of
-                    // disk or index corruption, or similar. This will kill the database such that it can be shut down
-                    // and have recovery performed. It's the safest bet to avoid loosing data.
-                    throw new TransactionFailureException( Status.Transaction.TransactionValidationFailed, e,
-                            "Index population failure" );
-                }
-            }
-        }
+        if (!(schemaRule instanceof ConstraintRule)) {
+			return;
+		}
+		ConstraintRule constraintRule = (ConstraintRule) schemaRule;
+		if ( constraintRule.getConstraintDescriptor().enforcesUniqueness() )
+		{
+		    try
+		    {
+		        indexes.validateIndex( constraintRule.getOwnedIndex() );
+		    }
+		    catch ( UniquePropertyValueValidationException e )
+		    {
+		        throw new TransactionFailureException( Status.Transaction.TransactionValidationFailed, e,
+		                "Index validation failed" );
+		    }
+		    catch ( IndexNotFoundKernelException | IndexPopulationFailedKernelException e )
+		    {
+		        // We don't expect this to occur, and if they do, it is because we are in a very bad state - out of
+		        // disk or index corruption, or similar. This will kill the database such that it can be shut down
+		        // and have recovery performed. It's the safest bet to avoid loosing data.
+		        throw new TransactionFailureException( Status.Transaction.TransactionValidationFailed, e,
+		                "Index population failure" );
+		    }
+		}
     }
 }

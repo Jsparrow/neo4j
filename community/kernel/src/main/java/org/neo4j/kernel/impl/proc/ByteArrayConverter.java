@@ -42,7 +42,7 @@ public class ByteArrayConverter implements Function<String,DefaultParameterValue
     public DefaultParameterValue apply( String s )
     {
         String value = s.trim();
-        if ( value.equalsIgnoreCase( "null" ) )
+        if ( "null".equalsIgnoreCase( value ) )
         {
             return ntByteArray( null );
         }
@@ -78,7 +78,7 @@ public class ByteArrayConverter implements Function<String,DefaultParameterValue
                 }
                 else
                 {
-                    throw new IllegalArgumentException( "Cannot convert " + value + " to byte for input to procedure" );
+                    throw new IllegalArgumentException( new StringBuilder().append("Cannot convert ").append(value).append(" to byte for input to procedure").toString() );
                 }
             }
             return bytes;
@@ -86,7 +86,7 @@ public class ByteArrayConverter implements Function<String,DefaultParameterValue
         else
         {
             throw new IllegalArgumentException(
-                    "Cannot convert " + input.getClass().getSimpleName() + " to byte[] for input to procedure" );
+                    new StringBuilder().append("Cannot convert ").append(input.getClass().getSimpleName()).append(" to byte[] for input to procedure").toString() );
         }
     }
 
@@ -126,7 +126,7 @@ public class ByteArrayConverter implements Function<String,DefaultParameterValue
         else
         {
             throw new IllegalArgumentException(
-                    "Cannot convert " + input.getClass().getSimpleName() + " to byte[] for input to procedure" );
+                    new StringBuilder().append("Cannot convert ").append(input.getClass().getSimpleName()).append(" to byte[] for input to procedure").toString() );
         }
     }
 
@@ -139,7 +139,7 @@ public class ByteArrayConverter implements Function<String,DefaultParameterValue
         else
         {
             throw new IllegalArgumentException(
-                    "Cannot convert " + value.map( new DefaultValueMapper( null ) ) + " to byte for input to procedure" );
+                    new StringBuilder().append("Cannot convert ").append(value.map( new DefaultValueMapper( null ) )).append(" to byte for input to procedure").toString() );
         }
     }
 }

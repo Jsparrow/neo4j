@@ -77,7 +77,7 @@ public class PhysicalTransactionCursor<T extends ReadableClosablePositionAwareCh
                 continue;
             }
 
-            assert entry instanceof LogEntryStart : "Expected Start entry, read " + entry + " instead";
+            assert entry instanceof LogEntryStart : new StringBuilder().append("Expected Start entry, read ").append(entry).append(" instead").toString();
             LogEntryStart startEntry = entry.as();
             LogEntryCommit commitEntry;
 

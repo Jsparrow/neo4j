@@ -40,19 +40,19 @@ public class LogVersionUpgradeChecker
         throw new AssertionError( "No instances allowed" );
     }
 
-    public static void check( LogTailScanner tailScanner, Config config ) throws UpgradeNotAllowedByConfigurationException
+    public static void check( LogTailScanner tailScanner, Config config )
     {
-        if ( !config.get( GraphDatabaseSettings.allow_upgrade ) )
-        {
-            // The user doesn't want us to upgrade the store.
-            LogEntryVersion latestLogEntryVersion = tailScanner.getTailInformation().latestLogEntryVersion;
-            if ( latestLogEntryVersion != null && LogEntryVersion.moreRecentVersionExists( latestLogEntryVersion ) )
-            {
-                String message = "The version you're upgrading to is using a new transaction log format. This is a " +
-                        "non-reversible upgrade and you wont be able to downgrade after starting";
+        if (config.get( GraphDatabaseSettings.allow_upgrade )) {
+			return;
+		}
+		// The user doesn't want us to upgrade the store.
+		LogEntryVersion latestLogEntryVersion = tailScanner.getTailInformation().latestLogEntryVersion;
+		if ( latestLogEntryVersion != null && LogEntryVersion.moreRecentVersionExists( latestLogEntryVersion ) )
+		{
+		    String message = "The version you're upgrading to is using a new transaction log format. This is a " +
+		            "non-reversible upgrade and you wont be able to downgrade after starting";
 
-                throw new UpgradeNotAllowedByConfigurationException( message );
-            }
-        }
+		    throw new UpgradeNotAllowedByConfigurationException( message );
+		}
     }
 }

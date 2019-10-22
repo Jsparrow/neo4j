@@ -41,14 +41,18 @@ public class CommunitySecurityModule extends SecurityModule
 {
     public static final String COMMUNITY_SECURITY_MODULE_ID = "community-security-module";
 
-    private BasicAuthManager authManager;
+	public static final String USER_STORE_FILENAME = "auth";
 
-    public CommunitySecurityModule()
+	public static final String INITIAL_USER_STORE_FILENAME = "auth.ini";
+
+	private BasicAuthManager authManager;
+
+	public CommunitySecurityModule()
     {
         super( COMMUNITY_SECURITY_MODULE_ID );
     }
 
-    @Override
+	@Override
     public void setup( Dependencies dependencies ) throws KernelException
     {
         Config config = dependencies.config();
@@ -69,44 +73,41 @@ public class CommunitySecurityModule extends SecurityModule
         procedures.registerProcedure( AuthProcedures.class );
     }
 
-    @Override
+	@Override
     public AuthManager authManager()
     {
         return authManager;
     }
 
-    @Override
+	@Override
     public UserManagerSupplier userManagerSupplier()
     {
         return authManager;
     }
 
-    public static final String USER_STORE_FILENAME = "auth";
-    public static final String INITIAL_USER_STORE_FILENAME = "auth.ini";
-
-    public static FileUserRepository getUserRepository( Config config, LogProvider logProvider,
+	public static FileUserRepository getUserRepository( Config config, LogProvider logProvider,
             FileSystemAbstraction fileSystem )
     {
         return new FileUserRepository( fileSystem, getUserRepositoryFile( config ), logProvider );
     }
 
-    public static FileUserRepository getInitialUserRepository( Config config, LogProvider logProvider,
+	public static FileUserRepository getInitialUserRepository( Config config, LogProvider logProvider,
             FileSystemAbstraction fileSystem )
     {
         return new FileUserRepository( fileSystem, getInitialUserRepositoryFile( config ), logProvider );
     }
 
-    public static File getUserRepositoryFile( Config config )
+	public static File getUserRepositoryFile( Config config )
     {
         return getUserRepositoryFile( config, USER_STORE_FILENAME );
     }
 
-    public static File getInitialUserRepositoryFile( Config config )
+	public static File getInitialUserRepositoryFile( Config config )
     {
         return getUserRepositoryFile( config, INITIAL_USER_STORE_FILENAME );
     }
 
-    private static File getUserRepositoryFile( Config config, String fileName )
+	private static File getUserRepositoryFile( Config config, String fileName )
     {
         // Resolve auth store file names
         File authStoreDir = config.get( DatabaseManagementSystemSettings.auth_store_directory );

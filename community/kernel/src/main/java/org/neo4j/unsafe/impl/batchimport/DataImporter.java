@@ -71,55 +71,6 @@ public class DataImporter
     public static final String NODE_IMPORT_NAME = "Nodes";
     public static final String RELATIONSHIP_IMPORT_NAME = "Relationships";
 
-    public static class Monitor
-    {
-        private final LongAdder nodes = new LongAdder();
-        private final LongAdder relationships = new LongAdder();
-        private final LongAdder properties = new LongAdder();
-
-        public void nodesImported( long nodes )
-        {
-            this.nodes.add( nodes );
-        }
-
-        public void nodesRemoved( long nodes )
-        {
-            this.nodes.add( -nodes );
-        }
-
-        public void relationshipsImported( long relationships )
-        {
-            this.relationships.add( relationships );
-        }
-
-        public void propertiesImported( long properties )
-        {
-            this.properties.add( properties );
-        }
-
-        public void propertiesRemoved( long properties )
-        {
-            this.properties.add( -properties );
-        }
-
-        public long nodesImported()
-        {
-            return this.nodes.sum();
-        }
-
-        public long propertiesImported()
-        {
-            return this.properties.sum();
-        }
-
-        @Override
-        public String toString()
-        {
-            return format( "Imported:%n  %d nodes%n  %d relationships%n  %d properties",
-                    nodes.sum(), relationships.sum(), properties.sum() );
-        }
-    }
-
     private static long importData( String title, int numRunners, InputIterable data, BatchingNeoStores stores,
             Supplier<EntityImporter> visitors, ExecutionMonitor executionMonitor, StatsProvider memoryStatsProvider )
             throws IOException
@@ -167,7 +118,7 @@ public class DataImporter
         return roughEntityCountProgress.sum();
     }
 
-    public static void importNodes( int numRunners, Input input, BatchingNeoStores stores, IdMapper idMapper,
+	public static void importNodes( int numRunners, Input input, BatchingNeoStores stores, IdMapper idMapper,
             ExecutionMonitor executionMonitor, Monitor monitor )
                     throws IOException
     {
@@ -176,7 +127,7 @@ public class DataImporter
                 new MemoryUsageStatsProvider( stores, idMapper ) );
     }
 
-    public static DataStatistics importRelationships( int numRunners, Input input,
+	public static DataStatistics importRelationships( int numRunners, Input input,
             BatchingNeoStores stores, IdMapper idMapper, Collector badCollector, ExecutionMonitor executionMonitor,
             Monitor monitor, boolean validateRelationshipData )
                     throws IOException
@@ -187,6 +138,55 @@ public class DataImporter
         importData( RELATIONSHIP_IMPORT_NAME, numRunners, input.relationships(), stores, importers, executionMonitor,
                 new MemoryUsageStatsProvider( stores, idMapper ) );
         return typeDistribution;
+    }
+
+	public static class Monitor
+    {
+        private final LongAdder nodes = new LongAdder();
+        private final LongAdder relationships = new LongAdder();
+        private final LongAdder properties = new LongAdder();
+
+        public void nodesImported( long nodes )
+        {
+            this.nodes.add( nodes );
+        }
+
+        public void nodesRemoved( long nodes )
+        {
+            this.nodes.add( -nodes );
+        }
+
+        public void relationshipsImported( long relationships )
+        {
+            this.relationships.add( relationships );
+        }
+
+        public void propertiesImported( long properties )
+        {
+            this.properties.add( properties );
+        }
+
+        public void propertiesRemoved( long properties )
+        {
+            this.properties.add( -properties );
+        }
+
+        public long nodesImported()
+        {
+            return this.nodes.sum();
+        }
+
+        public long propertiesImported()
+        {
+            return this.properties.sum();
+        }
+
+        @Override
+        public String toString()
+        {
+            return format( "Imported:%n  %d nodes%n  %d relationships%n  %d properties",
+                    nodes.sum(), relationships.sum(), properties.sum() );
+        }
     }
 
     /**

@@ -82,48 +82,63 @@ import static org.neo4j.helpers.Numbers.safeCastLongToShort;
  */
 public class Extractors
 {
-    private final Map<String, Extractor<?>> instances = new HashMap<>();
-    private final Extractor<String> string;
-    private final LongExtractor long_;
-    private final IntExtractor int_;
-    private final CharExtractor char_;
-    private final ShortExtractor short_;
-    private final ByteExtractor byte_;
-    private final BooleanExtractor boolean_;
-    private final FloatExtractor float_;
-    private final DoubleExtractor double_;
-    private final Extractor<String[]> stringArray;
-    private final Extractor<boolean[]> booleanArray;
-    private final Extractor<byte[]> byteArray;
-    private final Extractor<short[]> shortArray;
-    private final Extractor<int[]> intArray;
-    private final Extractor<long[]> longArray;
-    private final Extractor<float[]> floatArray;
-    private final Extractor<double[]> doubleArray;
-    private final PointExtractor point;
-    private final DateExtractor date;
-    private final TimeExtractor time;
-    private final DateTimeExtractor dateTime;
-    private final LocalTimeExtractor localTime;
-    private final LocalDateTimeExtractor localDateTime;
-    private final DurationExtractor duration;
+    private static final char[] BOOLEAN_MATCH;
+	static
+    {
+        BOOLEAN_MATCH = new char[Boolean.TRUE.toString().length()];
+        Boolean.TRUE.toString().getChars( 0, BOOLEAN_MATCH.length, BOOLEAN_MATCH, 0 );
+    }
 
-    public Extractors( char arrayDelimiter )
+	private static final Supplier<ZoneId> inUTC = () -> UTC;
+	private static final char[] BOOLEAN_TRUE_CHARACTERS;
+	static
+    {
+        BOOLEAN_TRUE_CHARACTERS = new char[Boolean.TRUE.toString().length()];
+        Boolean.TRUE.toString().getChars( 0, BOOLEAN_TRUE_CHARACTERS.length, BOOLEAN_TRUE_CHARACTERS, 0 );
+    }
+
+	private final Map<String, Extractor<?>> instances = new HashMap<>();
+	private final Extractor<String> string;
+	private final LongExtractor long_;
+	private final IntExtractor int_;
+	private final CharExtractor char_;
+	private final ShortExtractor short_;
+	private final ByteExtractor byte_;
+	private final BooleanExtractor boolean_;
+	private final FloatExtractor float_;
+	private final DoubleExtractor double_;
+	private final Extractor<String[]> stringArray;
+	private final Extractor<boolean[]> booleanArray;
+	private final Extractor<byte[]> byteArray;
+	private final Extractor<short[]> shortArray;
+	private final Extractor<int[]> intArray;
+	private final Extractor<long[]> longArray;
+	private final Extractor<float[]> floatArray;
+	private final Extractor<double[]> doubleArray;
+	private final PointExtractor point;
+	private final DateExtractor date;
+	private final TimeExtractor time;
+	private final DateTimeExtractor dateTime;
+	private final LocalTimeExtractor localTime;
+	private final LocalDateTimeExtractor localDateTime;
+	private final DurationExtractor duration;
+
+	public Extractors( char arrayDelimiter )
     {
         this( arrayDelimiter, Configuration.DEFAULT.emptyQuotedStringsAsNull(), Configuration.DEFAULT.trimStrings(), inUTC );
     }
 
-    public Extractors( char arrayDelimiter, boolean emptyStringsAsNull )
+	public Extractors( char arrayDelimiter, boolean emptyStringsAsNull )
     {
         this( arrayDelimiter, emptyStringsAsNull, Configuration.DEFAULT.trimStrings(), inUTC );
     }
 
-    public Extractors( char arrayDelimiter, boolean emptyStringsAsNull, boolean trimStrings )
+	public Extractors( char arrayDelimiter, boolean emptyStringsAsNull, boolean trimStrings )
     {
         this( arrayDelimiter, emptyStringsAsNull, trimStrings, inUTC );
     }
 
-    /**
+	/**
      * Why do we have a public constructor here and why isn't this class an enum?
      * It's because the array extractors can be configured with an array delimiter,
      * something that would be impossible otherwise. There's an equivalent {@link #valueOf(String)}
@@ -176,142 +191,233 @@ public class Extractors
         }
     }
 
-    public void add( Extractor<?> extractor )
+	public void add( Extractor<?> extractor )
     {
         instances.put( extractor.name().toUpperCase(), extractor );
     }
 
-    public Extractor<?> valueOf( String name )
+	public Extractor<?> valueOf( String name )
     {
         Extractor<?> instance = instances.get( name.toUpperCase() );
         if ( instance == null )
         {
-            throw new IllegalArgumentException( "'" + name + "'" );
+            throw new IllegalArgumentException( new StringBuilder().append("'").append(name).append("'").toString() );
         }
         return instance;
     }
 
-    public Extractor<String> string()
+	public Extractor<String> string()
     {
         return string;
     }
 
-    public LongExtractor long_()
+	public LongExtractor long_()
     {
         return long_;
     }
 
-    public IntExtractor int_()
+	public IntExtractor int_()
     {
         return int_;
     }
 
-    public CharExtractor char_()
+	public CharExtractor char_()
     {
         return char_;
     }
 
-    public ShortExtractor short_()
+	public ShortExtractor short_()
     {
         return short_;
     }
 
-    public ByteExtractor byte_()
+	public ByteExtractor byte_()
     {
         return byte_;
     }
 
-    public BooleanExtractor boolean_()
+	public BooleanExtractor boolean_()
     {
         return boolean_;
     }
 
-    public FloatExtractor float_()
+	public FloatExtractor float_()
     {
         return float_;
     }
 
-    public DoubleExtractor double_()
+	public DoubleExtractor double_()
     {
         return double_;
     }
 
-    public Extractor<String[]> stringArray()
+	public Extractor<String[]> stringArray()
     {
         return stringArray;
     }
 
-    public Extractor<boolean[]> booleanArray()
+	public Extractor<boolean[]> booleanArray()
     {
         return booleanArray;
     }
 
-    public Extractor<byte[]> byteArray()
+	public Extractor<byte[]> byteArray()
     {
         return byteArray;
     }
 
-    public Extractor<short[]> shortArray()
+	public Extractor<short[]> shortArray()
     {
         return shortArray;
     }
 
-    public Extractor<int[]> intArray()
+	public Extractor<int[]> intArray()
     {
         return intArray;
     }
 
-    public Extractor<long[]> longArray()
+	public Extractor<long[]> longArray()
     {
         return longArray;
     }
 
-    public Extractor<float[]> floatArray()
+	public Extractor<float[]> floatArray()
     {
         return floatArray;
     }
 
-    public Extractor<double[]> doubleArray()
+	public Extractor<double[]> doubleArray()
     {
         return doubleArray;
     }
 
-    public PointExtractor point()
+	public PointExtractor point()
     {
         return point;
     }
 
-    public DateExtractor date()
+	public DateExtractor date()
     {
         return date;
     }
 
-    public TimeExtractor time()
+	public TimeExtractor time()
     {
         return time;
     }
 
-    public DateTimeExtractor dateTime()
+	public DateTimeExtractor dateTime()
     {
         return dateTime;
     }
 
-    public LocalTimeExtractor localTime()
+	public LocalTimeExtractor localTime()
     {
         return localTime;
     }
 
-    public LocalDateTimeExtractor localDateTime()
+	public LocalDateTimeExtractor localDateTime()
     {
         return localDateTime;
     }
 
-    public DurationExtractor duration()
+	public DurationExtractor duration()
     {
         return duration;
     }
 
-    private abstract static class AbstractExtractor<T> implements Extractor<T>
+	private static long extractLong( char[] data, int originalOffset, int fullLength )
+    {
+        long result = 0;
+        boolean negate = false;
+        int offset = originalOffset;
+        int length = fullLength;
+
+        // Leading whitespace can be ignored
+        while ( length > 0 && isWhitespace( data[offset] ) )
+        {
+            offset++;
+            length--;
+        }
+        // Trailing whitespace can be ignored
+        while ( length > 0 && isWhitespace( data[offset + length - 1] ) )
+        {
+            length--;
+        }
+
+        if ( length > 0 && data[offset] == '-' )
+        {
+            negate = true;
+            offset++;
+            length--;
+        }
+
+        if ( length < 1 )
+        {
+            throw new NumberFormatException(
+                    new StringBuilder().append("Not an integer: \"").append(String.valueOf( data, originalOffset, fullLength )).append("\"").toString() );
+        }
+
+        try
+        {
+            for ( int i = 0; i < length; i++ )
+            {
+                result = result * 10 + digit( data[offset + i] );
+            }
+        }
+        catch ( NumberFormatException ignored )
+        {
+            throw new NumberFormatException(
+                    new StringBuilder().append("Not an integer: \"").append(String.valueOf( data, originalOffset, fullLength )).append("\"").toString() );
+        }
+
+        return negate ? -result : result;
+    }
+
+	private static int digit( char ch )
+    {
+        int digit = ch - '0';
+        if ( (digit < 0) || (digit > 9) )
+        {
+            throw new NumberFormatException();
+        }
+        return digit;
+    }
+
+	private static boolean extractBoolean( char[] data, int originalOffset, int fullLength )
+    {
+        int offset = originalOffset;
+        int length = fullLength;
+        // Leading whitespace can be ignored
+        while ( length > 0 && isWhitespace( data[offset] ) )
+        {
+            offset++;
+            length--;
+        }
+        // Trailing whitespace can be ignored
+        while ( length > 0 && isWhitespace( data[offset + length - 1] ) )
+        {
+            length--;
+        }
+
+        // See if the rest exactly match "true"
+        if ( length != BOOLEAN_TRUE_CHARACTERS.length )
+        {
+            return false;
+        }
+
+        for ( int i = 0; i < BOOLEAN_TRUE_CHARACTERS.length && i < length; i++ )
+        {
+            if ( data[offset + i] != BOOLEAN_TRUE_CHARACTERS[i] )
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+	private abstract static class AbstractExtractor<T> implements Extractor<T>
     {
         private final String name;
 
@@ -336,8 +442,7 @@ public class Extractors
             }
             catch ( CloneNotSupportedException e )
             {
-                throw new AssertionError( Extractor.class.getName() + " implements " + Cloneable.class.getSimpleName() +
-                        ", at least this implementation assumes that. This doesn't seem to be the case anymore", e );
+                throw new AssertionError( new StringBuilder().append(Extractor.class.getName()).append(" implements ").append(Cloneable.class.getSimpleName()).append(", at least this implementation assumes that. This doesn't seem to be the case anymore").toString(), e );
             }
         }
     }
@@ -352,12 +457,11 @@ public class Extractors
         @Override
         public final boolean extract( char[] data, int offset, int length, boolean hadQuotes, CSVHeaderInformation optionalData )
         {
-            if ( nullValue( length, hadQuotes ) )
-            {
-                clear();
-                return false;
-            }
-            return extract0( data, offset, length, optionalData );
+            if (!nullValue( length, hadQuotes )) {
+				return extract0( data, offset, length, optionalData );
+			}
+			clear();
+			return false;
         }
 
         @Override
@@ -587,13 +691,6 @@ public class Extractors
         }
     }
 
-    private static final char[] BOOLEAN_MATCH;
-    static
-    {
-        BOOLEAN_MATCH = new char[Boolean.TRUE.toString().length()];
-        Boolean.TRUE.toString().getChars( 0, BOOLEAN_MATCH.length, BOOLEAN_MATCH, 0 );
-    }
-
     public static class BooleanExtractor extends AbstractSingleValueExtractor<Boolean>
     {
         private boolean value;
@@ -692,7 +789,7 @@ public class Extractors
             }
             catch ( NumberFormatException ignored )
             {
-                throw new NumberFormatException( "Not a number: \"" + String.valueOf( data, offset, length ) + "\"" );
+                throw new NumberFormatException( new StringBuilder().append("Not a number: \"").append(String.valueOf( data, offset, length )).append("\"").toString() );
             }
             return true;
         }
@@ -735,7 +832,7 @@ public class Extractors
             }
             catch ( NumberFormatException ignored )
             {
-                throw new NumberFormatException( "Not a number: \"" + String.valueOf( data, offset, length ) + "\"" );
+                throw new NumberFormatException( new StringBuilder().append("Not a number: \"").append(String.valueOf( data, offset, length )).append("\"").toString() );
             }
             return true;
         }
@@ -1016,268 +1113,166 @@ public class Extractors
 
     public static class PointExtractor extends AbstractSingleAnyValueExtractor
     {
-        PointExtractor()
+        public static final String NAME = "Point";
+
+		PointExtractor()
         {
             super( NAME );
         }
 
-        @Override
+		@Override
         protected boolean extract0( char[] data, int offset, int length, CSVHeaderInformation optionalData )
         {
             value = PointValue.parse( CharBuffer.wrap( data, offset, length ), optionalData );
             return true;
         }
 
-        @Override
+		@Override
         public AnyValue value()
         {
             return value;
         }
-
-        public static final String NAME = "Point";
     }
 
     public static class DateExtractor extends AbstractSingleAnyValueExtractor
     {
-        DateExtractor()
+        public static final String NAME = "Date";
+
+		DateExtractor()
         {
             super( NAME );
         }
 
-        @Override
+		@Override
         protected boolean extract0( char[] data, int offset, int length, CSVHeaderInformation optionalData )
         {
             value = DateValue.parse( CharBuffer.wrap( data, offset, length ) );
             return true;
         }
 
-        @Override
+		@Override
         public AnyValue value()
         {
             return value;
         }
-
-        public static final String NAME = "Date";
     }
 
     public static class TimeExtractor extends AbstractSingleAnyValueExtractor
     {
-        private Supplier<ZoneId> defaultTimeZone;
+        public static final String NAME = "Time";
+		private Supplier<ZoneId> defaultTimeZone;
 
-        TimeExtractor( Supplier<ZoneId> defaultTimeZone )
+		TimeExtractor( Supplier<ZoneId> defaultTimeZone )
         {
             super( NAME );
             this.defaultTimeZone = defaultTimeZone;
         }
 
-        @Override
+		@Override
         protected boolean extract0( char[] data, int offset, int length, CSVHeaderInformation optionalData )
         {
             value = TimeValue.parse( CharBuffer.wrap( data, offset, length ), defaultTimeZone, optionalData );
             return true;
         }
 
-        @Override
+		@Override
         public AnyValue value()
         {
             return value;
         }
-
-        public static final String NAME = "Time";
     }
 
     public static class DateTimeExtractor extends AbstractSingleAnyValueExtractor
     {
-        private Supplier<ZoneId> defaultTimeZone;
+        public static final String NAME = "DateTime";
+		private Supplier<ZoneId> defaultTimeZone;
 
-        DateTimeExtractor( Supplier<ZoneId> defaultTimeZone )
+		DateTimeExtractor( Supplier<ZoneId> defaultTimeZone )
         {
             super( NAME );
             this.defaultTimeZone = defaultTimeZone;
         }
 
-        @Override
+		@Override
         protected boolean extract0( char[] data, int offset, int length, CSVHeaderInformation optionalData )
         {
             value = DateTimeValue.parse( CharBuffer.wrap( data, offset, length ), defaultTimeZone, optionalData );
             return true;
         }
 
-        @Override
+		@Override
         public AnyValue value()
         {
             return value;
         }
-
-        public static final String NAME = "DateTime";
     }
 
     public static class LocalTimeExtractor extends AbstractSingleAnyValueExtractor
     {
-        LocalTimeExtractor()
+        public static final String NAME = "LocalTime";
+
+		LocalTimeExtractor()
         {
             super( NAME );
         }
 
-        @Override
+		@Override
         protected boolean extract0( char[] data, int offset, int length, CSVHeaderInformation optionalData )
         {
             value = LocalTimeValue.parse( CharBuffer.wrap( data, offset, length ) );
             return true;
         }
 
-        @Override
+		@Override
         public AnyValue value()
         {
             return value;
         }
-
-        public static final String NAME = "LocalTime";
     }
 
     public static class LocalDateTimeExtractor extends AbstractSingleAnyValueExtractor
     {
-        LocalDateTimeExtractor()
+        public static final String NAME = "LocalDateTime";
+
+		LocalDateTimeExtractor()
         {
             super( NAME );
         }
 
-        @Override
+		@Override
         protected boolean extract0( char[] data, int offset, int length, CSVHeaderInformation optionalData )
         {
             value = LocalDateTimeValue.parse( CharBuffer.wrap( data, offset, length ) );
             return true;
         }
 
-        @Override
+		@Override
         public AnyValue value()
         {
             return value;
         }
-
-        public static final String NAME = "LocalDateTime";
     }
 
     public static class DurationExtractor extends AbstractSingleAnyValueExtractor
     {
-        DurationExtractor()
+        public static final String NAME = "Duration";
+
+		DurationExtractor()
         {
             super( NAME );
         }
 
-        @Override
+		@Override
         protected boolean extract0( char[] data, int offset, int length, CSVHeaderInformation optionalData )
         {
             value = DurationValue.parse( CharBuffer.wrap( data, offset, length ) );
             return true;
         }
 
-        @Override
+		@Override
         public AnyValue value()
         {
             return value;
         }
-
-        public static final String NAME = "Duration";
-    }
-
-    private static final Supplier<ZoneId> inUTC = () -> UTC;
-
-    private static long extractLong( char[] data, int originalOffset, int fullLength )
-    {
-        long result = 0;
-        boolean negate = false;
-        int offset = originalOffset;
-        int length = fullLength;
-
-        // Leading whitespace can be ignored
-        while ( length > 0 && isWhitespace( data[offset] ) )
-        {
-            offset++;
-            length--;
-        }
-        // Trailing whitespace can be ignored
-        while ( length > 0 && isWhitespace( data[offset + length - 1] ) )
-        {
-            length--;
-        }
-
-        if ( length > 0 && data[offset] == '-' )
-        {
-            negate = true;
-            offset++;
-            length--;
-        }
-
-        if ( length < 1 )
-        {
-            throw new NumberFormatException(
-                    "Not an integer: \"" + String.valueOf( data, originalOffset, fullLength ) + "\"" );
-        }
-
-        try
-        {
-            for ( int i = 0; i < length; i++ )
-            {
-                result = result * 10 + digit( data[offset + i] );
-            }
-        }
-        catch ( NumberFormatException ignored )
-        {
-            throw new NumberFormatException(
-                    "Not an integer: \"" + String.valueOf( data, originalOffset, fullLength ) + "\"" );
-        }
-
-        return negate ? -result : result;
-    }
-
-    private static int digit( char ch )
-    {
-        int digit = ch - '0';
-        if ( (digit < 0) || (digit > 9) )
-        {
-            throw new NumberFormatException();
-        }
-        return digit;
-    }
-
-    private static final char[] BOOLEAN_TRUE_CHARACTERS;
-    static
-    {
-        BOOLEAN_TRUE_CHARACTERS = new char[Boolean.TRUE.toString().length()];
-        Boolean.TRUE.toString().getChars( 0, BOOLEAN_TRUE_CHARACTERS.length, BOOLEAN_TRUE_CHARACTERS, 0 );
-    }
-
-    private static boolean extractBoolean( char[] data, int originalOffset, int fullLength )
-    {
-        int offset = originalOffset;
-        int length = fullLength;
-        // Leading whitespace can be ignored
-        while ( length > 0 && isWhitespace( data[offset] ) )
-        {
-            offset++;
-            length--;
-        }
-        // Trailing whitespace can be ignored
-        while ( length > 0 && isWhitespace( data[offset + length - 1] ) )
-        {
-            length--;
-        }
-
-        // See if the rest exactly match "true"
-        if ( length != BOOLEAN_TRUE_CHARACTERS.length )
-        {
-            return false;
-        }
-
-        for ( int i = 0; i < BOOLEAN_TRUE_CHARACTERS.length && i < length; i++ )
-        {
-            if ( data[offset + i] != BOOLEAN_TRUE_CHARACTERS[i] )
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

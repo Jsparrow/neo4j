@@ -63,8 +63,7 @@ public class PropertyTraverser
 
         if ( strict )
         {
-            throw new IllegalStateException( "No property record in property chain for " + primitive +
-                    " contained property with key " + propertyKey );
+            throw new IllegalStateException( new StringBuilder().append("No property record in property chain for ").append(primitive).append(" contained property with key ").append(propertyKey).toString() );
         }
 
         return Record.NO_NEXT_PROPERTY.intValue();
@@ -94,9 +93,8 @@ public class PropertyTraverser
         {
             PropertyRecord propRecord = propertyRecords.getOrLoad( nextIdToFetch, primitive ).forReadingLinkage();
             toCheck.add( propRecord );
-            assert propRecord.inUse() : primitive + "->"
-                                        + Arrays.toString( toCheck.toArray() );
-            assert propRecord.size() <= PropertyType.getPayloadSize() : propRecord + " size " + propRecord.size();
+            assert propRecord.inUse() : new StringBuilder().append(primitive).append("->").append(Arrays.toString( toCheck.toArray() )).toString();
+            assert propRecord.size() <= PropertyType.getPayloadSize() : new StringBuilder().append(propRecord).append(" size ").append(propRecord.size()).toString();
             nextIdToFetch = propRecord.getNextProp();
         }
         if ( toCheck.isEmpty() )
@@ -106,23 +104,15 @@ public class PropertyTraverser
         }
         PropertyRecord first = toCheck.get( 0 );
         PropertyRecord last = toCheck.get( toCheck.size() - 1 );
-        assert first.getPrevProp() == Record.NO_PREVIOUS_PROPERTY.intValue() : primitive
-                                                                               + "->"
-                                                                               + Arrays.toString( toCheck.toArray() );
-        assert last.getNextProp() == Record.NO_NEXT_PROPERTY.intValue() : primitive
-                                                                          + "->"
-                                                                          + Arrays.toString( toCheck.toArray() );
+        assert first.getPrevProp() == Record.NO_PREVIOUS_PROPERTY.intValue() : new StringBuilder().append(primitive).append("->").append(Arrays.toString( toCheck.toArray() )).toString();
+        assert last.getNextProp() == Record.NO_NEXT_PROPERTY.intValue() : new StringBuilder().append(primitive).append("->").append(Arrays.toString( toCheck.toArray() )).toString();
         PropertyRecord current;
         PropertyRecord previous = first;
         for ( int i = 1; i < toCheck.size(); i++ )
         {
             current = toCheck.get( i );
-            assert current.getPrevProp() == previous.getId() : primitive
-                                                               + "->"
-                                                               + Arrays.toString( toCheck.toArray() );
-            assert previous.getNextProp() == current.getId() : primitive
-                                                               + "->"
-                                                               + Arrays.toString( toCheck.toArray() );
+            assert current.getPrevProp() == previous.getId() : new StringBuilder().append(primitive).append("->").append(Arrays.toString( toCheck.toArray() )).toString();
+            assert previous.getNextProp() == current.getId() : new StringBuilder().append(primitive).append("->").append(Arrays.toString( toCheck.toArray() )).toString();
             previous = current;
         }
         return true;

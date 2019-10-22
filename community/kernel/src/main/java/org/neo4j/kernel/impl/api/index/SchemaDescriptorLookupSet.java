@@ -219,7 +219,19 @@ public class SchemaDescriptorLookupSet<T extends SchemaDescriptorSupplier>
         }
     }
 
-    /**
+    private static int[] sortedPropertyKeyIds( SchemaDescriptor schemaDescriptor )
+    {
+        int[] tokenIds = schemaDescriptor.getPropertyIds();
+        if ( tokenIds.length > 1 )
+        {
+            // Clone it because we don't know if the array was an internal array that the descriptor handed out
+            tokenIds = tokenIds.clone();
+            Arrays.sort( tokenIds );
+        }
+        return tokenIds;
+    }
+
+	/**
      * A starting point for traversal of property key tokens. Contains starting points of property key id chains
      * as well as lookup by any property in the chain.
      * Roughly like this:
@@ -433,17 +445,5 @@ public class SchemaDescriptorLookupSet<T extends SchemaDescriptorSupplier>
                 }
             }
         }
-    }
-
-    private static int[] sortedPropertyKeyIds( SchemaDescriptor schemaDescriptor )
-    {
-        int[] tokenIds = schemaDescriptor.getPropertyIds();
-        if ( tokenIds.length > 1 )
-        {
-            // Clone it because we don't know if the array was an internal array that the descriptor handed out
-            tokenIds = tokenIds.clone();
-            Arrays.sort( tokenIds );
-        }
-        return tokenIds;
     }
 }

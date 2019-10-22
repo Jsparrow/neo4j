@@ -157,7 +157,7 @@ public class TraversalAStar implements PathFinder<WeightedPath>
         @Override
         public String toString()
         {
-            return "g:" + wayLengthG + ", h:" + estimateH;
+            return new StringBuilder().append("g:").append(wayLengthG).append(", h:").append(estimateH).toString();
         }
     }
 

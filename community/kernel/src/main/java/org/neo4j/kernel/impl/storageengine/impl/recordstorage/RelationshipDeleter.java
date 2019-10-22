@@ -97,7 +97,7 @@ class RelationshipDeleter
         }
         if ( !changed )
         {
-            throw new InvalidRecordException( otherRel + " don't match " + rel );
+            throw new InvalidRecordException( new StringBuilder().append(otherRel).append(" don't match ").append(rel).toString() );
         }
     }
 
@@ -128,7 +128,7 @@ class RelationshipDeleter
             RecordProxy<RelationshipGroupRecord, Integer> groupChange =
                     relGroupGetter.getRelationshipGroup( startNode, rel.getType(),
                             recordChanges.getRelGroupRecords() ).group();
-            assert groupChange != null : "Relationship group " + rel.getType() + " should have existed here";
+            assert groupChange != null : new StringBuilder().append("Relationship group ").append(rel.getType()).append(" should have existed here").toString();
             RelationshipGroupRecord group = groupChange.forReadingData();
             DirectionWrapper dir = DirectionIdentifier.wrapDirection( rel, startNode );
             if ( rel.isFirstInFirstChain() )
@@ -203,11 +203,11 @@ class RelationshipDeleter
             firstRel.setFirstPrevRel( firstInChain ? relCount( nodeId, rel ) - 1 : relCount( nodeId, firstRel ) - 1 );
             firstRel.setFirstInFirstChain( true );
         }
-        if ( nodeId == firstRel.getSecondNode() )
-        {
-            firstRel.setSecondPrevRel( firstInChain ? relCount( nodeId, rel ) - 1 : relCount( nodeId, firstRel ) - 1 );
-            firstRel.setFirstInSecondChain( true );
-        }
+        if (nodeId != firstRel.getSecondNode()) {
+			return;
+		}
+		firstRel.setSecondPrevRel( firstInChain ? relCount( nodeId, rel ) - 1 : relCount( nodeId, firstRel ) - 1 );
+		firstRel.setFirstInSecondChain( true );
     }
 
     private void deleteGroup( RecordProxy<NodeRecord, Void> nodeChange,

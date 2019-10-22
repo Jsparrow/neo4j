@@ -40,7 +40,10 @@ import static org.neo4j.helpers.collection.Iterables.count;
 
 public class SpatialIndexCacheTest
 {
-    @SuppressWarnings( "Duplicates" )
+    private static final CoordinateReferenceSystem[] coordinateReferenceSystems =
+            Iterators.stream( CoordinateReferenceSystem.all().iterator() ).toArray( CoordinateReferenceSystem[]::new );
+
+	@SuppressWarnings( "Duplicates" )
     @Test
     public void stressCache() throws Exception
     {
@@ -73,7 +76,7 @@ public class SpatialIndexCacheTest
         }
     }
 
-    @Test
+	@Test
     public void stressInstantiationWithClose() throws Throwable
     {
         // given
@@ -115,10 +118,7 @@ public class SpatialIndexCacheTest
         assertEquals( instantiatedAtClose.intValue(), count( cache ) );
     }
 
-    private static final CoordinateReferenceSystem[] coordinateReferenceSystems =
-            Iterators.stream( CoordinateReferenceSystem.all().iterator() ).toArray( CoordinateReferenceSystem[]::new );
-
-    static class CacheStresser implements Runnable
+	static class CacheStresser implements Runnable
     {
         private final SpatialIndexCache<String> cache;
         private final AtomicBoolean shouldContinue;

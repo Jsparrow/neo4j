@@ -72,7 +72,7 @@ class IndexUpdaterMap implements AutoCloseable, Iterable<IndexUpdater>
     }
 
     @Override
-    public void close() throws UnderlyingStorageException
+    public void close()
     {
         Set<Pair<SchemaDescriptor,UnderlyingStorageException>> exceptions = null;
 

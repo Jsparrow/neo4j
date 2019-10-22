@@ -140,17 +140,17 @@ public class RecordChangeSet implements RecordAccessSet
     @Override
     public void close()
     {
-        if ( hasChanges() )
-        {
-            nodeRecords.close();
-            propertyRecords.close();
-            relRecords.close();
-            schemaRuleChanges.close();
-            relGroupRecords.close();
-            propertyKeyTokenChanges.close();
-            labelTokenChanges.close();
-            relationshipTypeTokenChanges.close();
-            changeCounter.clear();
-        }
+        if (!hasChanges()) {
+			return;
+		}
+		nodeRecords.close();
+		propertyRecords.close();
+		relRecords.close();
+		schemaRuleChanges.close();
+		relGroupRecords.close();
+		propertyKeyTokenChanges.close();
+		labelTokenChanges.close();
+		relationshipTypeTokenChanges.close();
+		changeCounter.clear();
     }
 }

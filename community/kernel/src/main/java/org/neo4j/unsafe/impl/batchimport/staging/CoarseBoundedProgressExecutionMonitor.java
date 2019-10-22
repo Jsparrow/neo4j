@@ -70,11 +70,11 @@ public abstract class CoarseBoundedProgressExecutionMonitor extends ExecutionMon
         diff += doneBatches - prevDoneBatches;
         prevDoneBatches = doneBatches;
 
-        if ( diff > 0 )
-        {
-            totalReportedBatches += diff;
-            progress( diff );
-        }
+        if (diff <= 0) {
+			return;
+		}
+		totalReportedBatches += diff;
+		progress( diff );
     }
 
     /**

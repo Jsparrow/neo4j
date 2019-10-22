@@ -73,17 +73,16 @@ public class MultiReadable implements CharReadable
 
     private boolean goToNextSource() throws IOException
     {
-        if ( actual.hasNext() )
-        {
-            if ( current != null )
-            {
-                previousPosition += current.position();
-            }
-            closeCurrent();
-            current = actual.next();
-            return true;
-        }
-        return false;
+        if (!actual.hasNext()) {
+			return false;
+		}
+		if ( current != null )
+		{
+		    previousPosition += current.position();
+		}
+		closeCurrent();
+		current = actual.next();
+		return true;
     }
 
     @Override

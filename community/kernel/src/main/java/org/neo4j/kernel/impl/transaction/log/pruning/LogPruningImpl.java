@@ -64,7 +64,39 @@ public class LogPruningImpl implements LogPruning
                 ( prev, update ) -> updateConfiguration( update ) );
     }
 
-    private static class CountingDeleter implements LongConsumer
+    private void updateConfiguration( String pruningConf )
+    {
+        this.pruneStrategy = strategyFactory.strategyFromConfigValue( fs, logFiles, clock, pruningConf );
+        msgLog.info( "Retention policy updated, value will take effect during the next evaluation." );
+    }
+
+	@Override
+    public void pruneLogs( long upToVersion )
+    {
+        // Only one is allowed to do pruning at any given time,
+        // and it's OK to skip pruning if another one is doing so right now.
+        if ( pruneLock.tryLock() )
+        {
+            try
+            {
+                CountingDeleter deleter = new CountingDeleter( logFiles, fs, upToVersion );
+                pruneStrategy.findLogVersionsToDelete( upToVersion ).forEachOrdered( deleter );
+                msgLog.info( deleter.describeResult() );
+            }
+            finally
+            {
+                pruneLock.unlock();
+            }
+        }
+    }
+
+	@Override
+    public boolean mightHaveLogsToPrune()
+    {
+        return pruneStrategy.findLogVersionsToDelete( logFiles.getHighestLogVersion() ).count() > 0;
+    }
+
+	private static class CountingDeleter implements LongConsumer
     {
         private static final int NO_VERSION = -1;
         private final LogFiles logFiles;
@@ -99,41 +131,9 @@ public class LogPruningImpl implements LogPruning
             }
             else
             {
-                return "Pruned log versions " + fromVersion + "-" + toVersion +
-                       ", last checkpoint was made in version " + upToVersion;
+                return new StringBuilder().append("Pruned log versions ").append(fromVersion).append("-").append(toVersion).append(", last checkpoint was made in version ").append(upToVersion)
+						.toString();
             }
         }
-    }
-
-    private void updateConfiguration( String pruningConf )
-    {
-        this.pruneStrategy = strategyFactory.strategyFromConfigValue( fs, logFiles, clock, pruningConf );
-        msgLog.info( "Retention policy updated, value will take effect during the next evaluation." );
-    }
-
-    @Override
-    public void pruneLogs( long upToVersion )
-    {
-        // Only one is allowed to do pruning at any given time,
-        // and it's OK to skip pruning if another one is doing so right now.
-        if ( pruneLock.tryLock() )
-        {
-            try
-            {
-                CountingDeleter deleter = new CountingDeleter( logFiles, fs, upToVersion );
-                pruneStrategy.findLogVersionsToDelete( upToVersion ).forEachOrdered( deleter );
-                msgLog.info( deleter.describeResult() );
-            }
-            finally
-            {
-                pruneLock.unlock();
-            }
-        }
-    }
-
-    @Override
-    public boolean mightHaveLogsToPrune()
-    {
-        return pruneStrategy.findLogVersionsToDelete( logFiles.getHighestLogVersion() ).count() > 0;
     }
 }

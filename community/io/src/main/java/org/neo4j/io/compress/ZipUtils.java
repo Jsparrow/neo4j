@@ -79,11 +79,10 @@ public class ZipUtils
 
     private static boolean isEmptyDirectory( FileSystemAbstraction fileSystem, File sourceToCompress )
     {
-        if ( fileSystem.isDirectory( sourceToCompress ) )
-        {
-            File[] files = fileSystem.listFiles( sourceToCompress );
-            return files == null || files.length == 0;
-        }
-        return false;
+        if (!fileSystem.isDirectory( sourceToCompress )) {
+			return false;
+		}
+		File[] files = fileSystem.listFiles( sourceToCompress );
+		return files == null || files.length == 0;
     }
 }

@@ -77,13 +77,10 @@ class RecordPropertyCursor extends PropertyRecord implements StoragePropertyCurs
 
         //Set to high value to force a read
         this.block = Integer.MAX_VALUE;
-        if ( reference != NO_ID )
-        {
-            if ( page == null )
-            {
-                page = propertyPage( reference );
-            }
-        }
+        boolean condition = reference != NO_ID && page == null;
+		if ( condition ) {
+		    page = propertyPage( reference );
+		}
 
         // Store state
         this.next = reference;
@@ -143,11 +140,11 @@ class RecordPropertyCursor extends PropertyRecord implements StoragePropertyCurs
     @Override
     public void reset()
     {
-        if ( open )
-        {
-            open = false;
-            clear();
-        }
+        if (!open) {
+			return;
+		}
+		open = false;
+		clear();
     }
 
     @Override
@@ -337,7 +334,8 @@ class RecordPropertyCursor extends PropertyRecord implements StoragePropertyCurs
         return Values.booleanValue( PropertyBlock.fetchByte( currentBlock() ) == 1 );
     }
 
-    public String toString()
+    @Override
+	public String toString()
     {
         if ( !open )
         {
@@ -345,8 +343,8 @@ class RecordPropertyCursor extends PropertyRecord implements StoragePropertyCurs
         }
         else
         {
-            return "PropertyCursor[id=" + getId() + ", open state with: block=" + block + ", next=" + next +
-                   ", underlying record=" + super.toString() + "]";
+            return new StringBuilder().append("PropertyCursor[id=").append(getId()).append(", open state with: block=").append(block).append(", next=").append(next)
+					.append(", underlying record=").append(super.toString()).append("]").toString();
         }
     }
 
@@ -363,11 +361,11 @@ class RecordPropertyCursor extends PropertyRecord implements StoragePropertyCurs
             arrayPage.close();
             arrayPage = null;
         }
-        if ( page != null )
-        {
-            page.close();
-            page = null;
-        }
+        if (page == null) {
+			return;
+		}
+		page.close();
+		page = null;
     }
 
     private PageCursor propertyPage( long reference )

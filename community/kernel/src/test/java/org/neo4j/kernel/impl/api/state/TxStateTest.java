@@ -100,23 +100,26 @@ public class TxStateTest
 
     public final RandomRule random = new RandomRule();
 
-    @Rule
+	private final IndexDescriptor indexOn11 = TestIndexDescriptorFactory.forLabel( 1, 1 );
+
+	private final IndexDescriptor indexOn21 = TestIndexDescriptorFactory.forLabel( 2, 1 );
+
+	private final IndexDescriptor indexOnRels = IndexDescriptorFactory.forSchema( SchemaDescriptorFactory.forRelType( 3, 1 ) );
+
+	private CollectionsFactory collectionsFactory;
+
+	private TxState state;
+
+	@Parameter
+    public CollectionsFactorySupplier collectionsFactorySupplier;
+
+	@Rule
     public final TestRule repeatWithDifferentRandomization()
     {
         return RuleChain.outerRule( new RepeatRule() ).around( random );
     }
 
-    private final IndexDescriptor indexOn_1_1 = TestIndexDescriptorFactory.forLabel( 1, 1 );
-    private final IndexDescriptor indexOn_2_1 = TestIndexDescriptorFactory.forLabel( 2, 1 );
-    private final IndexDescriptor indexOnRels = IndexDescriptorFactory.forSchema( SchemaDescriptorFactory.forRelType( 3, 1 ) );
-
-    private CollectionsFactory collectionsFactory;
-    private TxState state;
-
-    @Parameter
-    public CollectionsFactorySupplier collectionsFactorySupplier;
-
-    @Parameters( name = "{0}" )
+	@Parameters( name = "{0}" )
     public static List<CollectionsFactorySupplier> data()
     {
         return asList( new CollectionsFactorySupplier()
@@ -148,27 +151,27 @@ public class TxStateTest
         } );
     }
 
-    @AfterClass
+	@AfterClass
     public static void afterAll()
     {
         BLOCK_ALLOCATOR.release();
     }
 
-    @Before
+	@Before
     public void before()
     {
         collectionsFactory = spy( collectionsFactorySupplier.create() );
         state = new TxState( collectionsFactory );
     }
 
-    @After
+	@After
     public void after()
     {
         collectionsFactory.release();
         assertEquals( "Seems like native memory is leaking", 0L, collectionsFactory.getMemoryTracker().usedDirectMemory() );
     }
 
-    //region node label update tests
+	//region node label update tests
 
     @Test
     public void shouldGetAddedLabels()
@@ -185,7 +188,7 @@ public class TxStateTest
         assertEquals( newSetWith( 1, 2 ), addedLabels );
     }
 
-    @Test
+	@Test
     public void shouldGetRemovedLabels()
     {
         // GIVEN
@@ -200,7 +203,7 @@ public class TxStateTest
         assertEquals( newSetWith( 1, 2 ), removedLabels );
     }
 
-    @Test
+	@Test
     public void removeAddedLabelShouldRemoveFromAdded()
     {
         // GIVEN
@@ -215,7 +218,7 @@ public class TxStateTest
         assertEquals( newSetWith( 2 ), state.nodeStateLabelDiffSets( 1 ).getAdded() );
     }
 
-    @Test
+	@Test
     public void addRemovedLabelShouldRemoveFromRemoved()
     {
         // GIVEN
@@ -230,7 +233,7 @@ public class TxStateTest
         assertEquals( newSetWith( 2 ), state.nodeStateLabelDiffSets( 1 ).getRemoved() );
     }
 
-    @Test
+	@Test
     public void shouldMapFromRemovedLabelToNodes()
     {
         // GIVEN
@@ -247,7 +250,7 @@ public class TxStateTest
         assertEquals( newSetWith( 0L, 2L ), nodes );
     }
 
-    //endregion
+	//endregion
 
     //region index updates
 
@@ -255,58 +258,58 @@ public class TxStateTest
     public void shouldComputeIndexUpdatesOnUninitializedTxState()
     {
         // WHEN
-        UnmodifiableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getIndexUpdates( indexOn_1_1.schema() );
+        UnmodifiableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getIndexUpdates( indexOn11.schema() );
 
         // THEN
         assertNull( diffSets );
     }
 
-    @Test
+	@Test
     public void shouldComputeSortedIndexUpdatesOnUninitializedTxState()
     {
         // WHEN
-        NavigableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getSortedIndexUpdates( indexOn_1_1.schema() );
+        NavigableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getSortedIndexUpdates( indexOn11.schema() );
 
         // THEN
         assertNull( diffSets );
     }
 
-    @Test
+	@Test
     public void shouldComputeIndexUpdatesOnEmptyTxState()
     {
         // GIVEN
-        addNodesToIndex( indexOn_2_1 ).withDefaultStringProperties( 42L );
+        addNodesToIndex( indexOn21 ).withDefaultStringProperties( 42L );
 
         // WHEN
-        UnmodifiableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getIndexUpdates( indexOn_1_1.schema() );
+        UnmodifiableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getIndexUpdates( indexOn11.schema() );
 
         // THEN
         assertNull( diffSets );
     }
 
-    @Test
+	@Test
     public void shouldComputeSortedIndexUpdatesOnEmptyTxState()
     {
         // GIVEN
-        addNodesToIndex( indexOn_2_1 ).withDefaultStringProperties( 42L );
+        addNodesToIndex( indexOn21 ).withDefaultStringProperties( 42L );
 
         // WHEN
-        NavigableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getSortedIndexUpdates( indexOn_1_1.schema() );
+        NavigableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getSortedIndexUpdates( indexOn11.schema() );
 
         // THEN
         assertNull( diffSets );
     }
 
-    @Test
+	@Test
     public void shouldComputeIndexUpdatesOnTxStateWithAddedNodes()
     {
         // GIVEN
-        addNodesToIndex( indexOn_1_1 ).withDefaultStringProperties( 42L );
-        addNodesToIndex( indexOn_1_1 ).withDefaultStringProperties( 43L );
-        addNodesToIndex( indexOn_1_1 ).withDefaultStringProperties( 41L );
+        addNodesToIndex( indexOn11 ).withDefaultStringProperties( 42L );
+        addNodesToIndex( indexOn11 ).withDefaultStringProperties( 43L );
+        addNodesToIndex( indexOn11 ).withDefaultStringProperties( 41L );
 
         // WHEN
-        UnmodifiableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getIndexUpdates( indexOn_1_1.schema() );
+        UnmodifiableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getIndexUpdates( indexOn11.schema() );
 
         // THEN
         assertEqualDiffSets( addedNodes( 42L ), diffSets.get( ValueTuple.of( stringValue( "value42" ) ) ) );
@@ -314,27 +317,24 @@ public class TxStateTest
         assertEqualDiffSets( addedNodes( 41L ), diffSets.get( ValueTuple.of( stringValue( "value41" ) ) ) );
     }
 
-    @Test
+	@Test
     public void shouldComputeSortedIndexUpdatesOnTxStateWithAddedNodes()
     {
         // GIVEN
-        addNodesToIndex( indexOn_1_1 ).withDefaultStringProperties( 42L );
-        addNodesToIndex( indexOn_1_1 ).withDefaultStringProperties( 43L );
-        addNodesToIndex( indexOn_1_1 ).withDefaultStringProperties( 41L );
+        addNodesToIndex( indexOn11 ).withDefaultStringProperties( 42L );
+        addNodesToIndex( indexOn11 ).withDefaultStringProperties( 43L );
+        addNodesToIndex( indexOn11 ).withDefaultStringProperties( 41L );
 
         // WHEN
-        NavigableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getSortedIndexUpdates( indexOn_1_1.schema() );
+        NavigableMap<ValueTuple,? extends LongDiffSets> diffSets = state.getSortedIndexUpdates( indexOn11.schema() );
 
         TreeMap<ValueTuple,LongDiffSets> expected = sortedAddedNodesDiffSets( 42, 41, 43 );
         // THEN
         assertEquals( expected.keySet(), diffSets.keySet() );
-        for ( final ValueTuple key : expected.keySet() )
-        {
-            assertEqualDiffSets( expected.get( key ), diffSets.get( key ) );
-        }
+        expected.keySet().forEach((final ValueTuple key) -> assertEqualDiffSets(expected.get(key), diffSets.get(key)));
     }
 
-    // endregion
+	// endregion
 
     //region index rule tests
 
@@ -342,35 +342,35 @@ public class TxStateTest
     public void shouldAddAndGetByLabel()
     {
         // WHEN
-        state.indexDoAdd( indexOn_1_1 );
-        state.indexDoAdd( indexOn_2_1 );
+        state.indexDoAdd( indexOn11 );
+        state.indexDoAdd( indexOn21 );
 
         // THEN
-        assertEquals( asSet( indexOn_1_1 ), state.indexDiffSetsByLabel( indexOn_1_1.schema().keyId() ).getAdded() );
+        assertEquals( asSet( indexOn11 ), state.indexDiffSetsByLabel( indexOn11.schema().keyId() ).getAdded() );
     }
 
-    @Test
+	@Test
     public void shouldAddAndGetByRelType()
     {
         // WHEN
         state.indexDoAdd( indexOnRels );
-        state.indexDoAdd( indexOn_2_1 );
+        state.indexDoAdd( indexOn21 );
 
         // THEN
         assertEquals( asSet( indexOnRels ), state.indexDiffSetsByRelationshipType( indexOnRels.schema().keyId() ).getAdded() );
     }
 
-    @Test
+	@Test
     public void shouldAddAndGetByRuleId()
     {
         // GIVEN
-        state.indexDoAdd( indexOn_1_1 );
+        state.indexDoAdd( indexOn11 );
 
         // THEN
-        assertEquals( asSet( indexOn_1_1 ), state.indexChanges().getAdded() );
+        assertEquals( asSet( indexOn11 ), state.indexChanges().getAdded() );
     }
 
-    // endregion
+	// endregion
 
     //region miscellaneous
 
@@ -387,7 +387,7 @@ public class TxStateTest
         assertThat( state.addedAndRemovedNodes().getRemoved(), equalTo( newSetWith( nodeId ) ) );
     }
 
-    @Test
+	@Test
     public void shouldAddUniquenessConstraint()
     {
         // when
@@ -401,7 +401,7 @@ public class TxStateTest
         assertTrue( diff.getRemoved().isEmpty() );
     }
 
-    @Test
+	@Test
     public void addingUniquenessConstraintShouldBeIdempotent()
     {
         // given
@@ -417,7 +417,7 @@ public class TxStateTest
         assertEquals( singleton( constraint1 ), state.constraintsChangesForLabel( 1 ).getAdded() );
     }
 
-    @Test
+	@Test
     public void shouldDifferentiateBetweenUniquenessConstraintsForDifferentLabels()
     {
         // when
@@ -431,7 +431,7 @@ public class TxStateTest
         assertEquals( singleton( constraint2 ), state.constraintsChangesForLabel( 2 ).getAdded() );
     }
 
-    @Test
+	@Test
     public void shouldAddRelationshipPropertyExistenceConstraint()
     {
         // Given
@@ -444,7 +444,7 @@ public class TxStateTest
         assertEquals( singleton( constraint ), state.constraintsChangesForRelationshipType( 1 ).getAdded() );
     }
 
-    @Test
+	@Test
     public void addingRelationshipPropertyExistenceConstraintConstraintShouldBeIdempotent()
     {
         // Given
@@ -460,7 +460,7 @@ public class TxStateTest
         assertEquals( singleton( constraint1 ), state.constraintsChangesForRelationshipType( 1 ).getAdded() );
     }
 
-    @Test
+	@Test
     public void shouldDropRelationshipPropertyExistenceConstraint()
     {
         // Given
@@ -474,7 +474,7 @@ public class TxStateTest
         assertTrue( state.constraintsChangesForRelationshipType( 1 ).isEmpty() );
     }
 
-    @Test
+	@Test
     public void shouldDifferentiateRelationshipPropertyExistenceConstraints()
     {
         // Given
@@ -495,7 +495,7 @@ public class TxStateTest
         assertEquals( singleton( constraint3 ), state.constraintsChangesForSchema( constraint3.schema() ).getAdded() );
     }
 
-    @Test
+	@Test
     public void shouldListRelationshipsAsCreatedIfCreated()
     {
         // When
@@ -507,7 +507,7 @@ public class TxStateTest
         assertTrue( state.relationshipIsAddedInThisTx( relId ) );
     }
 
-    @Test
+	@Test
     public void shouldNotChangeRecordForCreatedAndDeletedNode() throws Exception
     {
         // GIVEN
@@ -532,7 +532,7 @@ public class TxStateTest
         } );
     }
 
-    @Test
+	@Test
     public void shouldVisitDeletedNode() throws Exception
     {
         // Given
@@ -550,7 +550,7 @@ public class TxStateTest
         } );
     }
 
-    @Test
+	@Test
     public void shouldReportDeletedNodeIfItWasCreatedAndDeletedInSameTx()
     {
         // Given
@@ -564,7 +564,7 @@ public class TxStateTest
         assertTrue( state.nodeIsDeletedInThisTx( nodeId ) );
     }
 
-    @Test
+	@Test
     public void shouldNotReportDeletedNodeIfItIsNotDeleted()
     {
         // Given
@@ -577,7 +577,7 @@ public class TxStateTest
         assertFalse( state.nodeIsDeletedInThisTx( nodeId ) );
     }
 
-    @Test
+	@Test
     public void shouldNotChangeRecordForCreatedAndDeletedRelationship() throws Exception
     {
         // GIVEN
@@ -602,7 +602,7 @@ public class TxStateTest
         } );
     }
 
-    @Test
+	@Test
     public void doNotVisitNotModifiedPropertiesOnModifiedNodes() throws ConstraintValidationException, CreateConstraintFailureException
     {
         state.nodeDoAddLabel( 5, 1 );
@@ -628,7 +628,7 @@ public class TxStateTest
         assertTrue( labelsChecked.booleanValue() );
     }
 
-    @Test
+	@Test
     public void doNotVisitNotModifiedLabelsOnModifiedNodes() throws ConstraintValidationException, CreateConstraintFailureException
     {
         state.nodeDoAddProperty( 1, 2, stringValue( "propertyValue" ) );
@@ -654,7 +654,7 @@ public class TxStateTest
         assertTrue( propertiesChecked.booleanValue() );
     }
 
-    @Test
+	@Test
     public void shouldVisitDeletedRelationship() throws Exception
     {
         // Given
@@ -672,7 +672,7 @@ public class TxStateTest
         } );
     }
 
-    @Test
+	@Test
     public void shouldReportDeletedRelationshipIfItWasCreatedAndDeletedInSameTx()
     {
         // Given
@@ -689,7 +689,7 @@ public class TxStateTest
         assertTrue( state.relationshipIsDeletedInThisTx( relationshipId ) );
     }
 
-    @Test
+	@Test
     public void shouldNotReportDeletedRelationshipIfItIsNotDeleted()
     {
         // Given
@@ -705,7 +705,7 @@ public class TxStateTest
         assertFalse( state.relationshipIsDeletedInThisTx( relationshipId ) );
     }
 
-    @Test
+	@Test
     @RepeatRule.Repeat( times = 100 )
     public void shouldVisitCreatedNodesBeforeDeletedNodes() throws Exception
     {
@@ -742,7 +742,7 @@ public class TxStateTest
         } );
     }
 
-    @Test
+	@Test
     @RepeatRule.Repeat( times = 100 )
     public void shouldVisitCreatedNodesBeforeCreatedRelationships() throws Exception
     {
@@ -782,7 +782,7 @@ public class TxStateTest
         } );
     }
 
-    @Test
+	@Test
     @RepeatRule.Repeat( times = 100 )
     public void shouldVisitCreatedRelationshipsBeforeDeletedRelationships() throws Exception
     {
@@ -824,7 +824,7 @@ public class TxStateTest
         } );
     }
 
-    @Test
+	@Test
     @RepeatRule.Repeat( times = 100 )
     public void shouldVisitDeletedNodesAfterDeletedRelationships() throws Exception
     {
@@ -864,23 +864,23 @@ public class TxStateTest
         } );
     }
 
-//    getOrCreateLabelStateNodeDiffSets
+	//    getOrCreateLabelStateNodeDiffSets
+	
+	    @Test
+	    public void getOrCreateNodeState_props_useCollectionsFactory()
+	    {
+	        final NodeStateImpl nodeState = state.getOrCreateNodeState( 1 );
+	
+	        nodeState.addProperty( 2, stringValue( "foo" ) );
+	        nodeState.removeProperty( 3 );
+	        nodeState.changeProperty( 4, stringValue( "bar" ) );
+	
+	        verify( collectionsFactory, times( 2 ) ).newValuesMap();
+	        verify( collectionsFactory, times( 1 ) ).newLongSet();
+	        verifyNoMoreInteractions( collectionsFactory );
+	    }
 
-    @Test
-    public void getOrCreateNodeState_props_useCollectionsFactory()
-    {
-        final NodeStateImpl nodeState = state.getOrCreateNodeState( 1 );
-
-        nodeState.addProperty( 2, stringValue( "foo" ) );
-        nodeState.removeProperty( 3 );
-        nodeState.changeProperty( 4, stringValue( "bar" ) );
-
-        verify( collectionsFactory, times( 2 ) ).newValuesMap();
-        verify( collectionsFactory, times( 1 ) ).newLongSet();
-        verifyNoMoreInteractions( collectionsFactory );
-    }
-
-    @Test
+	@Test
     public void getOrCreateGraphState_useCollectionsFactory()
     {
         final GraphStateImpl graphState = state.getOrCreateGraphState();
@@ -895,7 +895,7 @@ public class TxStateTest
         verifyNoMoreInteractions( collectionsFactory );
     }
 
-    @Test
+	@Test
     public void getOrCreateLabelStateNodeDiffSets_useCollectionsFactory()
     {
         final MutableLongDiffSets diffSets = state.getOrCreateLabelStateNodeDiffSets(1);
@@ -907,7 +907,7 @@ public class TxStateTest
         verifyNoMoreInteractions( collectionsFactory );
     }
 
-    @Test
+	@Test
     public void getOrCreateIndexUpdatesForSeek_useCollectionsFactory()
     {
         final MutableLongDiffSets diffSets = state.getOrCreateIndexUpdatesForSeek( new HashMap<>(), ValueTuple.of( stringValue( "test" ) ) );
@@ -917,12 +917,12 @@ public class TxStateTest
         verifyNoMoreInteractions( collectionsFactory );
     }
 
-    private LongDiffSets addedNodes( long... added )
+	private LongDiffSets addedNodes( long... added )
     {
         return new MutableLongDiffSetsImpl( LongSets.mutable.of( added ), LongSets.mutable.empty(), collectionsFactory );
     }
 
-    private TreeMap<ValueTuple,LongDiffSets> sortedAddedNodesDiffSets( long... added )
+	private TreeMap<ValueTuple,LongDiffSets> sortedAddedNodesDiffSets( long... added )
     {
         TreeMap<ValueTuple,LongDiffSets> map = new TreeMap<>( ValueTuple.COMPARATOR );
         for ( long node : added )
@@ -933,11 +933,49 @@ public class TxStateTest
         return map;
     }
 
+	private IndexUpdater addNodesToIndex( final IndexDescriptor descriptor )
+    {
+        return new IndexUpdater()
+        {
+            @Override
+            public void withDefaultStringProperties( long... nodeIds )
+            {
+                Collection<Pair<Long,String>> entries = new ArrayList<>( nodeIds.length );
+                for ( long nodeId : nodeIds )
+                {
+                    entries.add( of( nodeId, "value" + nodeId ) );
+                }
+                withProperties( entries );
+            }
+
+            private <T> void withProperties( Collection<Pair<Long,T>> nodesWithValues )
+            {
+                final int labelId = descriptor.schema().keyId();
+                final int propertyKeyId = descriptor.schema().getPropertyId();
+                nodesWithValues.forEach(entry -> {
+                    long nodeId = entry.first();
+                    state.nodeDoCreate( nodeId );
+                    state.nodeDoAddLabel( labelId, nodeId );
+                    Value valueAfter = Values.of( entry.other() );
+                    state.nodeDoAddProperty( nodeId, propertyKeyId, valueAfter );
+                    state.indexDoUpdateEntry( descriptor.schema(), nodeId, null, ValueTuple.of( valueAfter ) );
+                });
+            }
+        };
+    }
+
+	private static void assertEqualDiffSets( LongDiffSets expected, LongDiffSets actual )
+    {
+        assertEquals( expected.getRemoved(), actual.getRemoved() );
+        assertEquals( expected.getAdded(), actual.getAdded() );
+    }
+
     abstract class VisitationOrder extends TxStateVisitor.Adapter
     {
         private final Set<String> visitMethods = new HashSet<>();
+		private boolean late;
 
-        VisitationOrder( int size )
+		VisitationOrder( int size )
         {
             for ( Method method : getClass().getDeclaredMethods() )
             {
@@ -961,38 +999,36 @@ public class TxStateTest
             while ( size-- > 0 );
         }
 
-        abstract void createEarlyState();
+		abstract void createEarlyState();
 
-        abstract void createLateState();
+		abstract void createLateState();
 
-        private boolean late;
-
-        final void visitEarly()
+		final void visitEarly()
         {
-            if ( late )
-            {
-                String early = "the early visit*-method";
-                String late = "the late visit*-method";
-                for ( StackTraceElement trace : Thread.currentThread().getStackTrace() )
-                {
-                    if ( visitMethods.contains( trace.getMethodName() ) )
-                    {
-                        early = trace.getMethodName();
-                        for ( String method : visitMethods )
-                        {
-                            if ( !method.equals( early ) )
-                            {
-                                late = method;
-                            }
-                        }
-                        break;
-                    }
-                }
-                fail( early + "(...) should not be invoked after " + late + "(...)" );
-            }
+            if (!late) {
+				return;
+			}
+			String early = "the early visit*-method";
+			String late = "the late visit*-method";
+			for ( StackTraceElement trace : Thread.currentThread().getStackTrace() )
+			{
+			    if ( visitMethods.contains( trace.getMethodName() ) )
+			    {
+			        early = trace.getMethodName();
+			        for ( String method : visitMethods )
+			        {
+			            if ( !method.equals( early ) )
+			            {
+			                late = method;
+			            }
+			        }
+			        break;
+			    }
+			}
+			fail( new StringBuilder().append(early).append("(...) should not be invoked after ").append(late).append("(...)").toString() );
         }
 
-        final void visitLate()
+		final void visitLate()
         {
             late = true;
         }
@@ -1001,43 +1037,5 @@ public class TxStateTest
     private interface IndexUpdater
     {
         void withDefaultStringProperties( long... nodeIds );
-    }
-
-    private IndexUpdater addNodesToIndex( final IndexDescriptor descriptor )
-    {
-        return new IndexUpdater()
-        {
-            @Override
-            public void withDefaultStringProperties( long... nodeIds )
-            {
-                Collection<Pair<Long,String>> entries = new ArrayList<>( nodeIds.length );
-                for ( long nodeId : nodeIds )
-                {
-                    entries.add( of( nodeId, "value" + nodeId ) );
-                }
-                withProperties( entries );
-            }
-
-            private <T> void withProperties( Collection<Pair<Long,T>> nodesWithValues )
-            {
-                final int labelId = descriptor.schema().keyId();
-                final int propertyKeyId = descriptor.schema().getPropertyId();
-                for ( Pair<Long,T> entry : nodesWithValues )
-                {
-                    long nodeId = entry.first();
-                    state.nodeDoCreate( nodeId );
-                    state.nodeDoAddLabel( labelId, nodeId );
-                    Value valueAfter = Values.of( entry.other() );
-                    state.nodeDoAddProperty( nodeId, propertyKeyId, valueAfter );
-                    state.indexDoUpdateEntry( descriptor.schema(), nodeId, null, ValueTuple.of( valueAfter ) );
-                }
-            }
-        };
-    }
-
-    private static void assertEqualDiffSets( LongDiffSets expected, LongDiffSets actual )
-    {
-        assertEquals( expected.getRemoved(), actual.getRemoved() );
-        assertEquals( expected.getAdded(), actual.getAdded() );
     }
 }

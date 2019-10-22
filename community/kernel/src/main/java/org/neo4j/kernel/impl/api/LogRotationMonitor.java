@@ -21,10 +21,6 @@ package org.neo4j.kernel.impl.api;
 
 public interface LogRotationMonitor
 {
-    long numberOfLogRotationEvents();
-
-    long logRotationAccumulatedTotalTimeMillis();
-
     LogRotationMonitor NULL = new LogRotationMonitor()
     {
         @Override
@@ -39,4 +35,8 @@ public interface LogRotationMonitor
             return 0;
         }
     };
+
+	long numberOfLogRotationEvents();
+
+	long logRotationAccumulatedTotalTimeMillis();
 }

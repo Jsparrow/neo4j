@@ -51,37 +51,31 @@ public class LockManagerImpl
     }
 
     public boolean getReadLock( LockTracer tracer, LockResource resource, Object tx )
-            throws DeadlockDetectedException, IllegalResourceException
     {
         return unusedResourceGuard( resource, tx, getRWLockForAcquiring( resource, tx ).acquireReadLock( tracer, tx ) );
     }
 
     public boolean tryReadLock( LockResource resource, Object tx )
-            throws IllegalResourceException
     {
         return unusedResourceGuard( resource, tx, getRWLockForAcquiring( resource, tx ).tryAcquireReadLock( tx ) );
     }
 
     public boolean getWriteLock( LockTracer tracer, LockResource resource, Object tx )
-            throws DeadlockDetectedException, IllegalResourceException
     {
         return unusedResourceGuard( resource, tx, getRWLockForAcquiring( resource, tx ).acquireWriteLock( tracer, tx ) );
     }
 
     public boolean tryWriteLock( LockResource resource, Object tx )
-            throws IllegalResourceException
     {
         return unusedResourceGuard( resource, tx, getRWLockForAcquiring( resource, tx ).tryAcquireWriteLock( tx ) );
     }
 
     public void releaseReadLock( Object resource, Object tx )
-            throws LockNotFoundException, IllegalResourceException
     {
         getRWLockForReleasing( resource, tx, 1, 0, true ).releaseReadLock( tx );
     }
 
     public void releaseWriteLock( Object resource, Object tx )
-            throws LockNotFoundException, IllegalResourceException
     {
         getRWLockForReleasing( resource, tx, 0, 1, true ).releaseWriteLock( tx );
     }
@@ -129,7 +123,7 @@ public class LockManagerImpl
     {
         if ( resource == null || tx == null )
         {
-            throw new IllegalResourceException( "Null parameter: resource = " + resource + ", tx = " + tx );
+            throw new IllegalResourceException( new StringBuilder().append("Null parameter: resource = ").append(resource).append(", tx = ").append(tx).toString() );
         }
     }
 
@@ -163,8 +157,7 @@ public class LockManagerImpl
                 {
                     return null;
                 }
-                throw new LockNotFoundException( "Lock not found for: "
-                                                 + resource + " tx:" + tx );
+                throw new LockNotFoundException( new StringBuilder().append("Lock not found for: ").append(resource).append(" tx:").append(tx).toString() );
             }
             // we need to get info from a couple of synchronized methods
             // to make it info consistent we need to synchronized lock to make sure it will not change between

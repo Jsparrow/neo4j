@@ -185,7 +185,7 @@ class JumpVisitor implements ExpressionVisitor
     @Override
     public void loadThis( String sourceName )
     {
-        throw new IllegalArgumentException( "'" + sourceName + "' is not a boolean expression" );
+        throw new IllegalArgumentException( new StringBuilder().append("'").append(sourceName).append("' is not a boolean expression").toString() );
     }
 
     @Override

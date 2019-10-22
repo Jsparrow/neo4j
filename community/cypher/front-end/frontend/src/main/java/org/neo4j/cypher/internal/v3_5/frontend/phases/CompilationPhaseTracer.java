@@ -18,7 +18,22 @@ package org.neo4j.cypher.internal.v3_5.frontend.phases;
 
 public interface CompilationPhaseTracer
 {
-    enum CompilationPhase
+    CompilationPhaseTracer NO_TRACING = new CompilationPhaseTracer()
+    {
+        @Override
+        public CompilationPhaseEvent beginPhase( CompilationPhase phase )
+        {
+            return NONE_PHASE;
+        }
+    };
+
+	CompilationPhaseEvent NONE_PHASE = () ->
+    {
+    };
+
+	CompilationPhaseEvent beginPhase( CompilationPhase phase );
+
+	enum CompilationPhase
     {
         PARSING,
         DEPRECATION_WARNINGS,
@@ -29,24 +44,9 @@ public interface CompilationPhaseTracer
         PIPE_BUILDING,
     }
 
-    CompilationPhaseEvent beginPhase( CompilationPhase phase );
-
-    interface CompilationPhaseEvent extends AutoCloseable
+	interface CompilationPhaseEvent extends AutoCloseable
     {
         @Override
         void close();
     }
-
-    CompilationPhaseTracer NO_TRACING = new CompilationPhaseTracer()
-    {
-        @Override
-        public CompilationPhaseEvent beginPhase( CompilationPhase phase )
-        {
-            return NONE_PHASE;
-        }
-    };
-
-    CompilationPhaseEvent NONE_PHASE = () ->
-    {
-    };
 }

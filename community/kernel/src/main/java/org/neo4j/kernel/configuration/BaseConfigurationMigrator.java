@@ -34,7 +34,35 @@ import org.neo4j.logging.Log;
  */
 public class BaseConfigurationMigrator implements ConfigurationMigrator
 {
-    public interface Migration
+    private final List<Migration> migrations = new ArrayList<>();
+
+	public void add( Migration migration )
+    {
+        migrations.add( migration );
+    }
+
+	@Override
+    @Nonnull
+    public Map<String,String> apply( @Nonnull Map<String,String> rawConfiguration, @Nonnull Log log )
+    {
+        boolean printedDeprecationMessage = false;
+        for ( Migration migration : migrations )
+        {
+            if ( migration.appliesTo( rawConfiguration ) )
+            {
+                if ( !printedDeprecationMessage )
+                {
+                    printedDeprecationMessage = true;
+                    log.warn( "WARNING! Deprecated configuration options used. See manual for details" );
+                }
+                rawConfiguration = migration.apply( rawConfiguration );
+                log.warn( migration.getDeprecationMessage() );
+            }
+        }
+        return rawConfiguration;
+    }
+
+	public interface Migration
     {
         boolean appliesTo( Map<String,String> rawConfiguration );
 
@@ -82,33 +110,5 @@ public class BaseConfigurationMigrator implements ConfigurationMigrator
         }
 
         public abstract void setValueWithOldSetting( String value, Map<String,String> rawConfiguration );
-    }
-
-    private final List<Migration> migrations = new ArrayList<>();
-
-    public void add( Migration migration )
-    {
-        migrations.add( migration );
-    }
-
-    @Override
-    @Nonnull
-    public Map<String,String> apply( @Nonnull Map<String,String> rawConfiguration, @Nonnull Log log )
-    {
-        boolean printedDeprecationMessage = false;
-        for ( Migration migration : migrations )
-        {
-            if ( migration.appliesTo( rawConfiguration ) )
-            {
-                if ( !printedDeprecationMessage )
-                {
-                    printedDeprecationMessage = true;
-                    log.warn( "WARNING! Deprecated configuration options used. See manual for details" );
-                }
-                rawConfiguration = migration.apply( rawConfiguration );
-                log.warn( migration.getDeprecationMessage() );
-            }
-        }
-        return rawConfiguration;
     }
 }

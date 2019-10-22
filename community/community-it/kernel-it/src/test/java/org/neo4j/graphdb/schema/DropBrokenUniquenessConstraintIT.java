@@ -181,10 +181,7 @@ public class DropBrokenUniquenessConstraintIT
     {
         rule = rule.withOwningConstraint( null );
         List<DynamicRecord> dynamicRecords = schemaStore.allocateFrom( rule );
-        for ( DynamicRecord record : dynamicRecords )
-        {
-            schemaStore.updateRecord( record );
-        }
+        dynamicRecords.forEach(schemaStore::updateRecord);
     }
 
     private void setSchemaRecordNotInUse( SchemaStore schemaStore, long id )

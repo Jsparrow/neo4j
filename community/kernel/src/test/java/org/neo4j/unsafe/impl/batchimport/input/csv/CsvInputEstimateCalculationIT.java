@@ -75,7 +75,6 @@ import org.neo4j.unsafe.impl.batchimport.staging.ExecutionMonitors;
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.abs;
 import static java.lang.Math.toIntExact;
-import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -90,6 +89,7 @@ import static org.neo4j.unsafe.impl.batchimport.input.RandomEntityDataGenerator.
 import static org.neo4j.unsafe.impl.batchimport.input.csv.Configuration.COMMAS;
 import static org.neo4j.unsafe.impl.batchimport.input.csv.DataFactories.defaultFormatNodeFileHeader;
 import static org.neo4j.unsafe.impl.batchimport.input.csv.DataFactories.defaultFormatRelationshipFileHeader;
+import java.util.Collections;
 
 public class CsvInputEstimateCalculationIT
 {
@@ -142,8 +142,8 @@ public class CsvInputEstimateCalculationIT
     {
         // given
         Groups groups = new Groups();
-        Collection<DataFactory> nodeData = asList( generateData( defaultFormatNodeFileHeader(), new MutableLong(), 0, 0, ":ID", "nodes-1.csv", groups ) );
-        Collection<DataFactory> relationshipData = asList( generateData( defaultFormatRelationshipFileHeader(), new MutableLong(),
+        Collection<DataFactory> nodeData = Collections.singletonList( generateData( defaultFormatNodeFileHeader(), new MutableLong(), 0, 0, ":ID", "nodes-1.csv", groups ) );
+        Collection<DataFactory> relationshipData = Collections.singletonList( generateData( defaultFormatRelationshipFileHeader(), new MutableLong(),
                 0, 0, ":START_ID,:TYPE,:END_ID", "rels-1.csv", groups ) );
         Input input = new CsvInput( nodeData, defaultFormatNodeFileHeader(), relationshipData, defaultFormatRelationshipFileHeader(),
                 IdType.INTEGER, COMMAS, Collector.EMPTY, CsvInput.NO_MONITOR, groups );

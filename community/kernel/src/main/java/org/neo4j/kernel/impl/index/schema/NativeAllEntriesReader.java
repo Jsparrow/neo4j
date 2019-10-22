@@ -79,11 +79,11 @@ public class NativeAllEntriesReader<KEY extends NativeIndexKey<KEY>,VALUE extend
 
     private void closeSeeker() throws IOException
     {
-        if ( seeker != null )
-        {
-            seeker.close();
-            seeker = null;
-        }
+        if (seeker == null) {
+			return;
+		}
+		seeker.close();
+		seeker = null;
     }
 
     @Override

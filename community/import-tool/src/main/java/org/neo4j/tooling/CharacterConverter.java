@@ -31,7 +31,7 @@ class CharacterConverter implements Function<String,Character>
 {
 
     @Override
-    public Character apply( String value ) throws RuntimeException
+    public Character apply( String value )
     {
         // Parse "raw" ASCII character style characters:
         // - \123 --> character with id 123
@@ -45,14 +45,14 @@ class CharacterConverter implements Function<String,Character>
             }
             catch ( NumberFormatException e )
             {
-                if ( raw.equals( "t" ) )
+                if ( "t".equals( raw ) )
                 {
                     return Configuration.TABS.delimiter();
                 }
             }
         }
         // hard coded TAB --> tab character
-        else if ( value.equals( "TAB" ) )
+        else if ( "TAB".equals( value ) )
         {
             return Configuration.TABS.delimiter();
         }
@@ -61,6 +61,6 @@ class CharacterConverter implements Function<String,Character>
             return value.charAt( 0 );
         }
 
-        throw new IllegalArgumentException( "Unsupported character '" + value + "'" );
+        throw new IllegalArgumentException( new StringBuilder().append("Unsupported character '").append(value).append("'").toString() );
     }
 }

@@ -100,7 +100,7 @@ public class RecordFormatSelector
                 return format;
             }
         }
-        throw new IllegalArgumentException( "Unknown store version '" + storeVersion + "'" );
+        throw new IllegalArgumentException( new StringBuilder().append("Unknown store version '").append(storeVersion).append("'").toString() );
     }
 
     /**
@@ -156,7 +156,7 @@ public class RecordFormatSelector
                     {
                         if ( format.storeVersion().equals( storeVersion ) )
                         {
-                            info( logProvider, "Selected " + format + " record format from store " + databaseLayout.databaseDirectory() );
+                            info( logProvider, new StringBuilder().append("Selected ").append(format).append(" record format from store ").append(databaseLayout.databaseDirectory()).toString() );
                             return format;
                         }
                     }
@@ -210,13 +210,11 @@ public class RecordFormatSelector
             return currentFormat;
         }
 
-        if ( formatConfigured )
-        {
-            info( logProvider, "Selected configured format: " + configuredFormat );
-            return configuredFormat;
-        }
-
-        return DEFAULT_FORMAT;
+        if (!formatConfigured) {
+			return DEFAULT_FORMAT;
+		}
+		info( logProvider, "Selected configured format: " + configuredFormat );
+		return configuredFormat;
     }
 
     /**
@@ -269,7 +267,7 @@ public class RecordFormatSelector
             if ( result == null )
             {
                 // format was not explicitly configured and store does not exist, select default format
-                info( logProvider, "Selected format '" + DEFAULT_FORMAT + "' for the new store" );
+                info( logProvider, new StringBuilder().append("Selected format '").append(DEFAULT_FORMAT).append("' for the new store").toString() );
                 result = DEFAULT_FORMAT;
             }
             else if ( FormatFamily.isHigherFamilyFormat( DEFAULT_FORMAT, result ) ||
@@ -278,7 +276,7 @@ public class RecordFormatSelector
                 // format was not explicitly configured and store has lower format
                 // select default format, upgrade is intended
                 info( logProvider,
-                        "Selected format '" + DEFAULT_FORMAT + "' for existing store with format '" + result + "'" );
+                        new StringBuilder().append("Selected format '").append(DEFAULT_FORMAT).append("' for existing store with format '").append(result).append("'").toString() );
                 result = DEFAULT_FORMAT;
             }
             return result;
@@ -317,7 +315,7 @@ public class RecordFormatSelector
         RecordFormats formats = loadRecordFormat( recordFormat );
         if ( formats == null )
         {
-            throw new IllegalArgumentException( "No record format found with the name '" + recordFormat + "'." );
+            throw new IllegalArgumentException( new StringBuilder().append("No record format found with the name '").append(recordFormat).append("'.").toString() );
         }
         return formats;
     }

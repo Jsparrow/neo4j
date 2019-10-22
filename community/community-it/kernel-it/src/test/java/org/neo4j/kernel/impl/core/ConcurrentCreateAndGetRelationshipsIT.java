@@ -54,11 +54,11 @@ import static org.neo4j.graphdb.Direction.OUTGOING;
  */
 public class ConcurrentCreateAndGetRelationshipsIT
 {
-    @Rule
-    public final ImpermanentDatabaseRule dbRule = new ImpermanentDatabaseRule();
     private static final RelationshipType RELTYPE = MyRelTypes.TEST;
+	@Rule
+    public final ImpermanentDatabaseRule dbRule = new ImpermanentDatabaseRule();
 
-    @Test
+	@Test
     public void tryToReproduceTheIssue() throws Exception
     {
         // GIVEN
@@ -82,7 +82,7 @@ public class ConcurrentCreateAndGetRelationshipsIT
         }
     }
 
-    private void awaitWorkersToEnd( Collection<Worker> workers ) throws InterruptedException
+	private void awaitWorkersToEnd( Collection<Worker> workers ) throws InterruptedException
     {
         for ( Worker worker : workers )
         {
@@ -90,7 +90,7 @@ public class ConcurrentCreateAndGetRelationshipsIT
         }
     }
 
-    private Collection<Worker> createWorkers( GraphDatabaseService db, CountDownLatch startSignal,
+	private Collection<Worker> createWorkers( GraphDatabaseService db, CountDownLatch startSignal,
             AtomicBoolean stopSignal, AtomicReference<Exception> failure, Node parentNode )
     {
         Collection<Worker> workers = new ArrayList<>();
@@ -101,7 +101,7 @@ public class ConcurrentCreateAndGetRelationshipsIT
         return workers;
     }
 
-    private Worker newWorker( GraphDatabaseService db, CountDownLatch startSignal, AtomicBoolean stopSignal,
+	private Worker newWorker( GraphDatabaseService db, CountDownLatch startSignal, AtomicBoolean stopSignal,
             AtomicReference<Exception> failure, Node parentNode )
     {
         Worker worker = new Worker( db, startSignal, stopSignal, failure, parentNode );
@@ -109,7 +109,7 @@ public class ConcurrentCreateAndGetRelationshipsIT
         return worker;
     }
 
-    private Node createNode( GraphDatabaseService db )
+	private Node createNode( GraphDatabaseService db )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -119,7 +119,7 @@ public class ConcurrentCreateAndGetRelationshipsIT
         }
     }
 
-    private static class Worker extends Thread
+	private static class Worker extends Thread
     {
         private final GraphDatabaseService db;
         private final CountDownLatch startSignal;

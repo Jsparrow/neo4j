@@ -46,12 +46,11 @@ public class ThreadToStatementContextBridge implements Supplier<Statement>
     public boolean hasTransaction()
     {
         KernelTransaction kernelTransaction = threadToTransactionMap.get();
-        if ( kernelTransaction != null )
-        {
-            assertInUnterminatedTransaction( kernelTransaction );
-            return true;
-        }
-        return false;
+        if (kernelTransaction == null) {
+			return false;
+		}
+		assertInUnterminatedTransaction( kernelTransaction );
+		return true;
     }
 
     public void bindTransactionToCurrentThread( KernelTransaction transaction )

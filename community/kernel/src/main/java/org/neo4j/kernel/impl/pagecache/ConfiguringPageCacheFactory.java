@@ -101,11 +101,9 @@ public class ConfiguringPageCacheFactory
         if ( pageCacheMemorySetting == null )
         {
             long heuristic = defaultHeuristicPageCacheMemory();
-            log.warn( "The " + pagecache_memory.name() + " setting has not been configured. It is recommended that this " +
-                      "setting is always explicitly configured, to ensure the system has a balanced configuration. " +
-                      "Until then, a computed heuristic value of " + heuristic + " bytes will be used instead. " +
-                      "Run `neo4j-admin memrec` for memory configuration suggestions." );
-            pageCacheMemorySetting = "" + heuristic;
+            log.warn( new StringBuilder().append("The ").append(pagecache_memory.name()).append(" setting has not been configured. It is recommended that this ").append("setting is always explicitly configured, to ensure the system has a balanced configuration. ").append("Until then, a computed heuristic value of ").append(heuristic).append(" bytes will be used instead. ")
+					.append("Run `neo4j-admin memrec` for memory configuration suggestions.").toString() );
+            pageCacheMemorySetting = Long.toString(heuristic);
         }
 
         return MemoryAllocator.createAllocator( pageCacheMemorySetting, GlobalMemoryTracker.INSTANCE );
@@ -172,11 +170,10 @@ public class ConfiguringPageCacheFactory
         String pageCacheMemory = config.get( pagecache_memory );
         long totalPhysicalMemory = OsBeanUtil.getTotalPhysicalMemory();
         String totalPhysicalMemMb = (totalPhysicalMemory == OsBeanUtil.VALUE_UNAVAILABLE)
-                                    ? "?" : "" + ByteUnit.Byte.toMebiBytes( totalPhysicalMemory );
+                                    ? "?" : Long.toString(ByteUnit.Byte.toMebiBytes( totalPhysicalMemory ));
         long maxVmUsageMb = ByteUnit.Byte.toMebiBytes( Runtime.getRuntime().maxMemory() );
-        String msg = "Physical mem: " + totalPhysicalMemMb + " MiB," +
-                     " Heap size: " + maxVmUsageMb + " MiB," +
-                     " Page cache: " + pageCacheMemory + ".";
+        String msg = new StringBuilder().append("Physical mem: ").append(totalPhysicalMemMb).append(" MiB,").append(" Heap size: ").append(maxVmUsageMb).append(" MiB,").append(" Page cache: ")
+				.append(pageCacheMemory).append(".").toString();
 
         log.info( msg );
     }
@@ -197,7 +194,7 @@ public class ConfiguringPageCacheFactory
             {
                 if ( factory.implementationName().equals( desiredImplementation ) )
                 {
-                    log.info( "Configured " + pagecache_swapper.name() + ": " + desiredImplementation );
+                    log.info( new StringBuilder().append("Configured ").append(pagecache_swapper.name()).append(": ").append(desiredImplementation).toString() );
                     return factory;
                 }
             }

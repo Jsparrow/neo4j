@@ -70,14 +70,14 @@ import static org.neo4j.values.storable.Values.stringValue;
         " errors or warnings in some IDEs about test classes needing a public zero-arg constructor." )
 public class SimpleIndexPopulatorCompatibility extends IndexProviderCompatibilityTestSuite.Compatibility
 {
-    public SimpleIndexPopulatorCompatibility( IndexProviderCompatibilityTestSuite testSuite, IndexDescriptor descriptor )
+    final IndexSamplingConfig indexSamplingConfig = new IndexSamplingConfig( Config.defaults() );
+
+	public SimpleIndexPopulatorCompatibility( IndexProviderCompatibilityTestSuite testSuite, IndexDescriptor descriptor )
     {
         super( testSuite, descriptor );
     }
 
-    final IndexSamplingConfig indexSamplingConfig = new IndexSamplingConfig( Config.defaults() );
-
-    @Test
+	@Test
     public void shouldStorePopulationFailedForRetrievalFromProviderLater() throws Exception
     {
         // GIVEN
@@ -89,7 +89,7 @@ public class SimpleIndexPopulatorCompatibility extends IndexProviderCompatibilit
         assertThat( indexProvider.getPopulationFailure( descriptor ), containsString( failure ) );
     }
 
-    @Test
+	@Test
     public void shouldReportInitialStateAsFailedIfPopulationFailed() throws Exception
     {
         // GIVEN
@@ -107,7 +107,7 @@ public class SimpleIndexPopulatorCompatibility extends IndexProviderCompatibilit
         }, false );
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToDropAClosedIndexPopulator() throws Exception
     {
         // GIVEN
@@ -121,7 +121,7 @@ public class SimpleIndexPopulatorCompatibility extends IndexProviderCompatibilit
         // THEN - no exception should be thrown (it's been known to!)
     }
 
-    @Test
+	@Test
     public void shouldApplyUpdatesIdempotently() throws Exception
     {
         // GIVEN
@@ -153,7 +153,7 @@ public class SimpleIndexPopulatorCompatibility extends IndexProviderCompatibilit
         }
     }
 
-    @Test
+	@Test
     public void shouldPopulateWithAllValues() throws Exception
     {
         // GIVEN
@@ -163,7 +163,7 @@ public class SimpleIndexPopulatorCompatibility extends IndexProviderCompatibilit
         assertHasAllValues( valueSet1 );
     }
 
-    @Test
+	@Test
     public void shouldUpdateWithAllValuesDuringPopulation() throws Exception
     {
         // GIVEN
@@ -182,7 +182,7 @@ public class SimpleIndexPopulatorCompatibility extends IndexProviderCompatibilit
         assertHasAllValues( valueSet1 );
     }
 
-    @Test
+	@Test
     public void shouldPopulateAndUpdate() throws Exception
     {
         // GIVEN
@@ -215,7 +215,7 @@ public class SimpleIndexPopulatorCompatibility extends IndexProviderCompatibilit
         }
     }
 
-    /**
+	/**
      * This test target a bug around minimal splitter in gbpTree and unique index populator. It goes like this:
      * Given a set of updates (value,entityId):
      * - ("A01",1), ("A90",3), ("A9",2)
@@ -253,7 +253,7 @@ public class SimpleIndexPopulatorCompatibility extends IndexProviderCompatibilit
         List<NodeAndValue> firstBatch = new ArrayList<>();
         for ( int i = 0; i < nbrOfNodes; i++ )
         {
-            firstBatch.add( new NodeAndValue( nodeId++, stringValue( prefix + i + " " + i ) ) );
+            firstBatch.add( new NodeAndValue( nodeId++, stringValue( new StringBuilder().append(prefix).append(i).append(" ").append(i).toString() ) ) );
         }
 
         withPopulator( indexProvider.getPopulator( descriptor, indexSamplingConfig, heapBufferFactory( 1024 ) ), p ->
@@ -303,19 +303,13 @@ public class SimpleIndexPopulatorCompatibility extends IndexProviderCompatibilit
         }
     }
 
-    private Value valueSet1Lookup( long nodeId, int propertyId )
+	private Value valueSet1Lookup( long nodeId )
     {
-        for ( NodeAndValue x : valueSet1 )
-        {
-            if ( x.nodeId == nodeId )
-            {
-                return x.value;
-            }
-        }
-        return Values.NO_VALUE;
+        return valueSet1.stream().filter(x -> x.nodeId == nodeId).findFirst().map(x -> x.value)
+				.orElse(Values.NO_VALUE);
     }
 
-    private void assertHasAllValues( List<NodeAndValue> values ) throws IOException, IndexNotApplicableKernelException
+	private void assertHasAllValues( List<NodeAndValue> values ) throws IOException, IndexNotApplicableKernelException
     {
         try ( IndexAccessor accessor = indexProvider.getOnlineAccessor( descriptor, indexSamplingConfig ) )
         {
@@ -333,7 +327,7 @@ public class SimpleIndexPopulatorCompatibility extends IndexProviderCompatibilit
         }
     }
 
-    @Ignore( "Not a test. This is a compatibility suite" )
+	@Ignore( "Not a test. This is a compatibility suite" )
     public static class General extends SimpleIndexPopulatorCompatibility
     {
         public General( IndexProviderCompatibilityTestSuite testSuite )

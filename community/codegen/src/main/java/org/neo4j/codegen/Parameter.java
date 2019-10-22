@@ -25,22 +25,13 @@ import static org.neo4j.codegen.TypeReference.typeReference;
 
 public class Parameter
 {
-    public static Parameter param( Class<?> type, String name )
-    {
-        return param( typeReference( type ), name );
-    }
-
-    public static Parameter param( TypeReference type, String name )
-    {
-        return new Parameter( requireNonNull( type, "TypeReference" ), requireValidName( name ) );
-    }
-
     static final Parameter[] NO_PARAMETERS = new Parameter[0];
 
-    private final TypeReference type;
-    private final String name;
+	private final TypeReference type;
 
-    private Parameter( TypeReference type, String name )
+	private final String name;
+
+	private Parameter( TypeReference type, String name )
     {
         if ( type == VOID )
         {
@@ -50,30 +41,40 @@ public class Parameter
         this.name = name;
     }
 
-    @Override
+	public static Parameter param( Class<?> type, String name )
+    {
+        return param( typeReference( type ), name );
+    }
+
+	public static Parameter param( TypeReference type, String name )
+    {
+        return new Parameter( requireNonNull( type, "TypeReference" ), requireValidName( name ) );
+    }
+
+	@Override
     public String toString()
     {
         return writeTo( new StringBuilder() ).toString();
     }
 
-    StringBuilder writeTo( StringBuilder result )
+	StringBuilder writeTo( StringBuilder result )
     {
         result.append( "Parameter[ " );
         type.writeTo( result );
         return result.append( " " ).append( name ).append( " ]" );
     }
 
-    public TypeReference type()
+	public TypeReference type()
     {
         return type;
     }
 
-    public String name()
+	public String name()
     {
         return name;
     }
 
-    static String requireValidName( String name )
+	static String requireValidName( String name )
     {
         if ( name == null )
         {
@@ -94,7 +95,7 @@ public class Parameter
         return name;
     }
 
-    private static void notKeyword( String name )
+	private static void notKeyword( String name )
     {
         switch ( name )
         {
@@ -147,18 +148,18 @@ public class Parameter
         case "native":
         case "super":
         case "while":
-            throw new IllegalArgumentException( "'" + name + "' is a java keyword" );
+            throw new IllegalArgumentException( new StringBuilder().append("'").append(name).append("' is a java keyword").toString() );
         case "this":
         case "null":
         case "true":
         case "false":
-            throw new IllegalArgumentException( "'" + name + "' is a reserved name" );
+            throw new IllegalArgumentException( new StringBuilder().append("'").append(name).append("' is a reserved name").toString() );
         default:
             break;
         }
     }
 
-    boolean isVarArg()
+	boolean isVarArg()
     {
         return false;
     }

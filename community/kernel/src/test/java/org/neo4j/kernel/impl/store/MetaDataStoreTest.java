@@ -461,7 +461,8 @@ public class MetaDataStoreTest
         if ( id != checksum )
         {
             throw new AssertionError(
-                    "id (" + id + ") and checksum (" + checksum + ") from " + source + " should be identical" );
+                    new StringBuilder().append("id (").append(id).append(") and checksum (").append(checksum).append(") from ").append(source)
+							.append(" should be identical").toString() );
         }
     }
 
@@ -603,8 +604,8 @@ public class MetaDataStoreTest
         if ( logVersion != byteOffset )
         {
             throw new AssertionError(
-                    "logVersion (" + logVersion + ") and byteOffset (" + byteOffset + ") from " + source +
-                    " should be identical" );
+                    new StringBuilder().append("logVersion (").append(logVersion).append(") and byteOffset (").append(byteOffset).append(") from ").append(source)
+							.append(" should be identical").toString() );
         }
     }
 

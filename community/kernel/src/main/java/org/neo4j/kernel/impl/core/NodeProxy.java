@@ -117,8 +117,7 @@ public class NodeProxy implements Node, RelationshipFactory<Relationship>
             boolean deleted = transaction.dataWrite().nodeDelete( getId() );
             if ( !deleted )
             {
-                throw new NotFoundException( "Unable to delete Node[" + nodeId +
-                                             "] since it has already been deleted." );
+                throw new NotFoundException( new StringBuilder().append("Unable to delete Node[").append(nodeId).append("] since it has already been deleted.").toString() );
             }
         }
         catch ( InvalidTransactionTypeKernelException e )
@@ -229,8 +228,8 @@ public class NodeProxy implements Node, RelationshipFactory<Relationship>
                 Relationship other = rels.next();
                 if ( !other.equals( rel ) )
                 {
-                    throw new NotFoundException( "More than one relationship[" +
-                                                 type + ", " + dir + "] found for " + this );
+                    throw new NotFoundException( new StringBuilder().append("More than one relationship[").append(type).append(", ").append(dir).append("] found for ").append(this)
+							.toString() );
                 }
             }
             return rel;
@@ -270,10 +269,6 @@ public class NodeProxy implements Node, RelationshipFactory<Relationship>
         {
             throw new NotFoundException( e );
         }
-        catch ( InvalidTransactionTypeKernelException e )
-        {
-            throw new ConstraintViolationException( e.getMessage(), e );
-        }
         catch ( AutoIndexingKernelException e )
         {
             throw new IllegalStateException( "Auto indexing encountered a failure while setting property: "
@@ -286,7 +281,7 @@ public class NodeProxy implements Node, RelationshipFactory<Relationship>
     }
 
     @Override
-    public Object removeProperty( String key ) throws NotFoundException
+    public Object removeProperty( String key )
     {
         KernelTransaction transaction = spi.kernelTransaction();
         try ( Statement ignore = transaction.acquireStatement() )
@@ -444,7 +439,7 @@ public class NodeProxy implements Node, RelationshipFactory<Relationship>
     }
 
     @Override
-    public Object getProperty( String key ) throws NotFoundException
+    public Object getProperty( String key )
     {
         if ( null == key )
         {
@@ -537,7 +532,7 @@ public class NodeProxy implements Node, RelationshipFactory<Relationship>
     @Override
     public String toString()
     {
-        return "Node[" + this.getId() + "]";
+        return new StringBuilder().append("Node[").append(this.getId()).append("]").toString();
     }
 
     @Override
@@ -567,8 +562,7 @@ public class NodeProxy implements Node, RelationshipFactory<Relationship>
         }
         catch ( EntityNotFoundException e )
         {
-            throw new NotFoundException( "Node[" + e.entityId() +
-                                         "] is deleted and cannot be used to create a relationship" );
+            throw new NotFoundException( new StringBuilder().append("Node[").append(e.entityId()).append("] is deleted and cannot be used to create a relationship").toString() );
         }
         catch ( InvalidTransactionTypeKernelException e )
         {
@@ -600,7 +594,7 @@ public class NodeProxy implements Node, RelationshipFactory<Relationship>
         }
         catch ( EntityNotFoundException e )
         {
-            throw new NotFoundException( "No node with id " + getId() + " found.", e );
+            throw new NotFoundException( new StringBuilder().append("No node with id ").append(getId()).append(" found.").toString(), e );
         }
         catch ( KernelException e )
         {
@@ -622,7 +616,7 @@ public class NodeProxy implements Node, RelationshipFactory<Relationship>
         }
         catch ( EntityNotFoundException e )
         {
-            throw new NotFoundException( "No node with id " + getId() + " found.", e );
+            throw new NotFoundException( new StringBuilder().append("No node with id ").append(getId()).append(" found.").toString(), e );
         }
         catch ( KernelException e )
         {

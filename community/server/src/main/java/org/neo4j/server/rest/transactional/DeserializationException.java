@@ -28,6 +28,6 @@ public class DeserializationException extends Exception
 
     DeserializationException( String message, Throwable cause )
     {
-        super( message + ": " + cause.getMessage(), cause );
+        super( new StringBuilder().append(message).append(": ").append(cause.getMessage()).toString(), cause );
     }
 }

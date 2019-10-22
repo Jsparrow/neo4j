@@ -151,8 +151,7 @@ public class CachingIterator<T> implements ListIterator<T>
                 }
                 else
                 {
-                    throw new NoSuchElementException( "Requested position " + newPosition +
-                            ", but didn't get further than to " + visited.size() );
+                    throw new NoSuchElementException( new StringBuilder().append("Requested position ").append(newPosition).append(", but didn't get further than to ").append(visited.size()).toString() );
                 }
             }
         }

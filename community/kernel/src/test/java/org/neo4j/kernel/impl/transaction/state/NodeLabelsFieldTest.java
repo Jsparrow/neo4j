@@ -461,7 +461,7 @@ public class NodeLabelsFieldTest
                 nodeStore.getDynamicLabelStore() ) );
 
         // THEN
-        assertTrue( "initial:" + initialRecords + ", reallocated:" + reallocatedRecords ,
+        assertTrue( new StringBuilder().append("initial:").append(initialRecords).append(", reallocated:").append(reallocatedRecords).toString() ,
                 initialRecords.containsAll( used( reallocatedRecords ) ) );
         assertTrue( used( reallocatedRecords ).size() < initialRecords.size() );
     }
@@ -587,13 +587,7 @@ public class NodeLabelsFieldTest
     private Set<DynamicRecord> used( Set<DynamicRecord> reallocatedRecords )
     {
         Set<DynamicRecord> used = new HashSet<>();
-        for ( DynamicRecord record : reallocatedRecords )
-        {
-            if ( record.inUse() )
-            {
-                used.add( record );
-            }
-        }
+        reallocatedRecords.stream().filter(DynamicRecord::inUse).forEach(used::add);
         return used;
     }
 

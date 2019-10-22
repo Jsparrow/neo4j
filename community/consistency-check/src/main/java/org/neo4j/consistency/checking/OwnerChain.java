@@ -67,7 +67,7 @@ public enum OwnerChain
     };
 
     private final ComparativeRecordChecker<PropertyRecord, PrimitiveRecord, ConsistencyReport.PropertyConsistencyReport>
-            OWNER_CHECK =
+            ownerCheck =
             ( record, owner, engine, records ) ->
             {
                 if ( !owner.inUse() && !record.inUse() )
@@ -107,7 +107,7 @@ public enum OwnerChain
                 CheckerEngine<PropertyRecord, ConsistencyReport.PropertyConsistencyReport> engine,
                 RecordAccess records )
     {
-        engine.comparativeCheck( ownerOf( record, records ), OWNER_CHECK );
+        engine.comparativeCheck( ownerOf( record, records ), ownerCheck );
     }
 
     private RecordReference<? extends PrimitiveRecord> ownerOf( PropertyRecord record, RecordAccess records )

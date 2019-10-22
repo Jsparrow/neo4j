@@ -68,8 +68,7 @@ public final class DefaultPluginManager implements PluginManager
                         old.first().getClass(), plugin.getClass() ) );
             }
         }
-        for ( Pair<ServerPlugin,ServerExtender> extension : extensions.values() )
-        {
+        extensions.values().forEach(extension -> {
             log.info( String.format( "Loaded server plugin \"%s\"", extension.first().name ) );
             for ( PluginPoint point : extension.other().all() )
             {
@@ -77,7 +76,7 @@ public final class DefaultPluginManager implements PluginManager
                         point.getDescription() ) );
             }
             this.extensions.put( extension.first().name, extension.other() );
-        }
+        });
     }
 
     @Deprecated
@@ -85,8 +84,7 @@ public final class DefaultPluginManager implements PluginManager
     public Map<String,List<String>> getExensionsFor( Class<?> type )
     {
         Map<String,List<String>> result = new HashMap<>();
-        for ( Map.Entry<String,ServerExtender> extension : extensions.entrySet() )
-        {
+        extensions.entrySet().forEach(extension -> {
             List<String> methods = new ArrayList<>();
             for ( PluginPoint method : extension.getValue()
                     .getExtensionsFor( type ) )
@@ -97,7 +95,7 @@ public final class DefaultPluginManager implements PluginManager
             {
                 result.put( extension.getKey(), methods );
             }
-        }
+        });
         return result;
     }
 
@@ -106,7 +104,7 @@ public final class DefaultPluginManager implements PluginManager
         ServerExtender extender = extensions.get( name );
         if ( extender == null )
         {
-            throw new PluginLookupException( "No such ServerPlugin: \"" + name + "\"" );
+            throw new PluginLookupException( new StringBuilder().append("No such ServerPlugin: \"").append(name).append("\"").toString() );
         }
         return extender.getExtensionPoint( type, method );
     }
@@ -134,7 +132,7 @@ public final class DefaultPluginManager implements PluginManager
         ServerExtender extender = extensions.get( name );
         if ( extender == null )
         {
-            throw new PluginLookupException( "No such ServerPlugin: \"" + name + "\"" );
+            throw new PluginLookupException( new StringBuilder().append("No such ServerPlugin: \"").append(name).append("\"").toString() );
         }
         List<ExtensionPointRepresentation> result = new ArrayList<>();
         for ( PluginPoint plugin : extender.all() )

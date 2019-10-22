@@ -24,12 +24,11 @@ package org.neo4j.unsafe.impl.batchimport;
  */
 public class Utils
 {
-    public enum CompareType
-    {
-        EQ, GT, GE, LT, LE, NE
+    private Utils()
+    {   // No instances allowed
     }
 
-    public static boolean unsignedCompare( long dataA, long dataB, CompareType compareType )
+	public static boolean unsignedCompare( long dataA, long dataB, CompareType compareType )
     {   // works for signed and unsigned values
         switch ( compareType )
         {
@@ -59,7 +58,7 @@ public class Utils
         }
     }
 
-    /**
+	/**
      * Like {@link #unsignedCompare(long, long, CompareType)} but reversed in that you get {@link CompareType}
      * from comparing data A and B, i.e. the difference between them.
      */
@@ -72,7 +71,7 @@ public class Utils
         return ((dataA < dataB) ^ ((dataA < 0) != (dataB < 0))) ? CompareType.LT : CompareType.GT;
     }
 
-    // Values in the arrays are assumed to be sorted
+	// Values in the arrays are assumed to be sorted
     public static boolean anyIdCollides( long[] first, int firstLength, long[] other, int otherLength )
     {
         int f = 0;
@@ -101,7 +100,7 @@ public class Utils
         return false;
     }
 
-    public static void mergeSortedInto( long[] values, long[] into, int intoLengthBefore )
+	public static void mergeSortedInto( long[] values, long[] into, int intoLengthBefore )
     {
         int v = values.length - 1;
         int i = intoLengthBefore - 1;
@@ -127,7 +126,8 @@ public class Utils
         }
     }
 
-    private Utils()
-    {   // No instances allowed
+	public enum CompareType
+    {
+        EQ, GT, GE, LT, LE, NE
     }
 }

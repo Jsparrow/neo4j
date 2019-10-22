@@ -63,10 +63,6 @@ public abstract class AbstractKernelExtensions extends DependencyResolver.Adapte
                 Objects.requireNonNull( dependency, kernelExtensionFactory.toString() + " returned a null KernelExtension" );
                 life.add( dependencies.satisfyDependency( dependency ) );
             }
-            catch ( UnsatisfiedDependencyException exception )
-            {
-                kernelExtensionFailureStrategy.handle( kernelExtensionFactory, exception );
-            }
             catch ( Throwable throwable )
             {
                 kernelExtensionFailureStrategy.handle( kernelExtensionFactory, throwable );
@@ -95,14 +91,14 @@ public abstract class AbstractKernelExtensions extends DependencyResolver.Adapte
     }
 
     @Override
-    public <T> T resolveDependency( Class<T> type, SelectionStrategy selector ) throws IllegalArgumentException
+    public <T> T resolveDependency( Class<T> type, SelectionStrategy selector )
     {
         Iterable<? extends T> typeDependencies = resolveTypeDependencies( type );
         return selector.select( type, typeDependencies );
     }
 
     @Override
-    public <T> Iterable<? extends T> resolveTypeDependencies( Class<T> type ) throws IllegalArgumentException
+    public <T> Iterable<? extends T> resolveTypeDependencies( Class<T> type )
     {
         return life.getLifecycleInstances().stream().filter( type::isInstance ).map( type::cast ).collect( toList() );
     }

@@ -55,35 +55,18 @@ public class FulltextIndexProviderFactory extends KernelExtensionFactory<Fulltex
     private static final String KEY = "fulltext";
     public static final IndexProviderDescriptor DESCRIPTOR = new IndexProviderDescriptor( KEY, "1.0" );
 
-    public interface Dependencies
-    {
-        Config getConfig();
-
-        FileSystemAbstraction fileSystem();
-
-        JobScheduler scheduler();
-
-        TokenHolders tokenHolders();
-
-        Procedures procedures();
-
-        LogService getLogService();
-
-        AuxiliaryTransactionStateManager auxiliaryTransactionStateManager();
-    }
-
     public FulltextIndexProviderFactory()
     {
         super( ExtensionType.DATABASE, KEY );
     }
 
-    private static IndexDirectoryStructure.Factory subProviderDirectoryStructure( File storeDir )
+	private static IndexDirectoryStructure.Factory subProviderDirectoryStructure( File storeDir )
     {
         IndexDirectoryStructure parentDirectoryStructure = directoriesByProvider( storeDir ).forProvider( DESCRIPTOR );
         return directoriesBySubProvider( parentDirectoryStructure );
     }
 
-    @Override
+	@Override
     public Lifecycle newInstance( KernelContext context, Dependencies dependencies )
     {
         Config config = dependencies.getConfig();
@@ -102,9 +85,7 @@ public class FulltextIndexProviderFactory extends KernelExtensionFactory<Fulltex
         }
         catch ( UnsatisfiedDependencyException e )
         {
-            String message = "Fulltext indexes failed to register as transaction state providers. This means that, if queried, they will not be able to " +
-                    "uncommitted transactional changes into account. This is fine if the indexes are opened for non-transactional work, such as for " +
-                    "consistency checking. The reason given is: " + e.getMessage();
+            String message = new StringBuilder().append("Fulltext indexes failed to register as transaction state providers. This means that, if queried, they will not be able to ").append("uncommitted transactional changes into account. This is fine if the indexes are opened for non-transactional work, such as for ").append("consistency checking. The reason given is: ").append(e.getMessage()).toString();
             logDependencyException( context, log.errorLogger(), message );
             auxiliaryTransactionStateManager = new NullAuxiliaryTransactionStateManager();
         }
@@ -136,7 +117,7 @@ public class FulltextIndexProviderFactory extends KernelExtensionFactory<Fulltex
         return provider;
     }
 
-    private void logDependencyException( KernelContext context, Logger dbmsLog, String message )
+	private void logDependencyException( KernelContext context, Logger dbmsLog, String message )
     {
         // We can for instance get unsatisfied dependency exceptions when the kernel extension is created as part of a consistency check run.
         // In such cases, we will be running in a TOOL context, and we ignore such exceptions since they are harmless.
@@ -146,5 +127,22 @@ public class FulltextIndexProviderFactory extends KernelExtensionFactory<Fulltex
             // If we are not in a "TOOL" context, then we log this at the "DBMS" level, since it might be important for correctness.
             dbmsLog.log( message );
         }
+    }
+
+	public interface Dependencies
+    {
+        Config getConfig();
+
+        FileSystemAbstraction fileSystem();
+
+        JobScheduler scheduler();
+
+        TokenHolders tokenHolders();
+
+        Procedures procedures();
+
+        LogService getLogService();
+
+        AuxiliaryTransactionStateManager auxiliaryTransactionStateManager();
     }
 }

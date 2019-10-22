@@ -50,7 +50,7 @@ public class ParallelRecordScanner<RECORD> extends RecordScanner<RECORD>
         cacheAccess.prepareForProcessingOfSingleStore( recordsPerCPU );
 
         QueueDistributor<RECORD> distributor = distribution.distributor( recordsPerCPU, numberOfThreads );
-        distributeRecords( numberOfThreads, getClass().getSimpleName() + "-" + name,
+        distributeRecords( numberOfThreads, new StringBuilder().append(getClass().getSimpleName()).append("-").append(name).toString(),
                 DEFAULT_QUEUE_SIZE, store.iterator(), progress, processor, distributor );
     }
 }

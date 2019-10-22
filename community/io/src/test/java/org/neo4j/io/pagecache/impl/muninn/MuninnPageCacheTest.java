@@ -711,7 +711,48 @@ public class MuninnPageCacheTest extends PageCacheTest<MuninnPageCache>
         } );
     }
 
-    private static class FlushRendezvousTracer extends DefaultPageCacheTracer
+    private void evictAllPages( MuninnPageCache pageCache ) throws IOException
+    {
+        PageList pages = pageCache.pages;
+        for ( int pageId = 0; pageId < pages.getPageCount(); pageId++ )
+        {
+            long pageReference = pages.deref( pageId );
+            while ( pages.isLoaded( pageReference ) )
+            {
+                pages.tryEvict( pageReference, EvictionRunEvent.NULL );
+            }
+        }
+        for ( int pageId = 0; pageId < pages.getPageCount(); pageId++ )
+        {
+            long pageReference = pages.deref( pageId );
+            pageCache.addFreePageToFreelist( pageReference );
+        }
+    }
+
+	private void writeInitialDataTo( File file ) throws IOException
+    {
+        try ( StoreChannel channel = fs.create( file ) )
+        {
+            ByteBuffer buf = ByteBuffer.allocate( 16 );
+            buf.putLong( x );
+            buf.putLong( y );
+            buf.flip();
+            channel.writeAll( buf );
+        }
+    }
+
+	private ByteBuffer readIntoBuffer( String fileName ) throws IOException
+    {
+        ByteBuffer buffer = ByteBuffer.allocate( 16 );
+        try ( StoreChannel channel = fs.open( file( fileName ), OpenMode.READ ) )
+        {
+            channel.readAll( buffer );
+        }
+        buffer.flip();
+        return buffer;
+    }
+
+	private static class FlushRendezvousTracer extends DefaultPageCacheTracer
     {
         private final CountDownLatch latch;
 
@@ -734,47 +775,6 @@ public class MuninnPageCacheTest extends PageCacheTest<MuninnPageCache>
             }
             return MajorFlushEvent.NULL;
         }
-    }
-
-    private void evictAllPages( MuninnPageCache pageCache ) throws IOException
-    {
-        PageList pages = pageCache.pages;
-        for ( int pageId = 0; pageId < pages.getPageCount(); pageId++ )
-        {
-            long pageReference = pages.deref( pageId );
-            while ( pages.isLoaded( pageReference ) )
-            {
-                pages.tryEvict( pageReference, EvictionRunEvent.NULL );
-            }
-        }
-        for ( int pageId = 0; pageId < pages.getPageCount(); pageId++ )
-        {
-            long pageReference = pages.deref( pageId );
-            pageCache.addFreePageToFreelist( pageReference );
-        }
-    }
-
-    private void writeInitialDataTo( File file ) throws IOException
-    {
-        try ( StoreChannel channel = fs.create( file ) )
-        {
-            ByteBuffer buf = ByteBuffer.allocate( 16 );
-            buf.putLong( x );
-            buf.putLong( y );
-            buf.flip();
-            channel.writeAll( buf );
-        }
-    }
-
-    private ByteBuffer readIntoBuffer( String fileName ) throws IOException
-    {
-        ByteBuffer buffer = ByteBuffer.allocate( 16 );
-        try ( StoreChannel channel = fs.open( file( fileName ), OpenMode.READ ) )
-        {
-            channel.readAll( buffer );
-        }
-        buffer.flip();
-        return buffer;
     }
 
     private static class ConfiguredVersionContextSupplier implements VersionContextSupplier

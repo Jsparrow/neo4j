@@ -28,12 +28,12 @@ import org.neo4j.storageengine.api.lock.ResourceType;
 public class NoOpClient implements Locks.Client
 {
     @Override
-    public void acquireShared( LockTracer tracer, ResourceType resourceType, long... resourceIds ) throws AcquireLockTimeoutException
+    public void acquireShared( LockTracer tracer, ResourceType resourceType, long... resourceIds )
     {
     }
 
     @Override
-    public void acquireExclusive( LockTracer tracer, ResourceType resourceType, long... resourceIds ) throws AcquireLockTimeoutException
+    public void acquireExclusive( LockTracer tracer, ResourceType resourceType, long... resourceIds )
     {
     }
 

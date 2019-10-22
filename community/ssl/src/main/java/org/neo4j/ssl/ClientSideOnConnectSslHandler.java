@@ -78,12 +78,12 @@ public class ClientSideOnConnectSslHandler extends ChannelDuplexHandler
     public void handlerAdded( ChannelHandlerContext ctx ) throws Exception
     {
         // Sometimes the connect event will have happened before adding, the channel will be active then
-        if ( ctx.channel().isActive() )
-        {
-            SslHandler sslHandler = createSslHandler( ctx, (InetSocketAddress) ctx.channel().remoteAddress() );
-            replaceSelfWith( sslHandler );
-            sslHandler.handlerAdded( ctx );
-        }
+		if (!ctx.channel().isActive()) {
+			return;
+		}
+		SslHandler sslHandler = createSslHandler( ctx, (InetSocketAddress) ctx.channel().remoteAddress() );
+		replaceSelfWith( sslHandler );
+		sslHandler.handlerAdded( ctx );
     }
 
     @Override

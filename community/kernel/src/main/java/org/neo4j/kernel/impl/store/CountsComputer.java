@@ -36,41 +36,15 @@ import static org.neo4j.unsafe.impl.batchimport.staging.ExecutionSupervisors.sup
 
 public class CountsComputer implements DataInitializer<CountsAccessor.Updater>
 {
-    public static void recomputeCounts( NeoStores stores, PageCache pageCache, DatabaseLayout databaseLayout )
-    {
-        MetaDataStore metaDataStore = stores.getMetaDataStore();
-        CountsTracker counts = stores.getCounts();
-        try ( CountsAccessor.Updater updater = counts.reset( metaDataStore.getLastCommittedTransactionId() ) )
-        {
-            new CountsComputer( stores, pageCache, databaseLayout ).initialize( updater );
-        }
-    }
-
     private final NodeStore nodes;
-    private final RelationshipStore relationships;
-    private final int highLabelId;
-    private final int highRelationshipTypeId;
-    private final long lastCommittedTransactionId;
-    private final ProgressReporter progressMonitor;
-    private final NumberArrayFactory numberArrayFactory;
+	private final RelationshipStore relationships;
+	private final int highLabelId;
+	private final int highRelationshipTypeId;
+	private final long lastCommittedTransactionId;
+	private final ProgressReporter progressMonitor;
+	private final NumberArrayFactory numberArrayFactory;
 
-    CountsComputer( NeoStores stores, PageCache pageCache, DatabaseLayout databaseLayout )
-    {
-        this( stores.getMetaDataStore().getLastCommittedTransactionId(),
-                stores.getNodeStore(), stores.getRelationshipStore(),
-                (int) stores.getLabelTokenStore().getHighId(),
-                (int) stores.getRelationshipTypeTokenStore().getHighId(),
-                NumberArrayFactory.auto( pageCache, databaseLayout.databaseDirectory(), true, NumberArrayFactory.NO_MONITOR ) );
-    }
-
-    private CountsComputer( long lastCommittedTransactionId, NodeStore nodes, RelationshipStore relationships, int highLabelId, int highRelationshipTypeId,
-            NumberArrayFactory numberArrayFactory )
-    {
-        this( lastCommittedTransactionId, nodes, relationships, highLabelId, highRelationshipTypeId,
-                numberArrayFactory, SilentProgressReporter.INSTANCE );
-    }
-
-    public CountsComputer( long lastCommittedTransactionId, NodeStore nodes, RelationshipStore relationships,
+	public CountsComputer( long lastCommittedTransactionId, NodeStore nodes, RelationshipStore relationships,
             int highLabelId, int highRelationshipTypeId, NumberArrayFactory numberArrayFactory, ProgressReporter progressMonitor )
     {
         this.lastCommittedTransactionId = lastCommittedTransactionId;
@@ -82,7 +56,33 @@ public class CountsComputer implements DataInitializer<CountsAccessor.Updater>
         this.progressMonitor = progressMonitor;
     }
 
-    @Override
+	CountsComputer( NeoStores stores, PageCache pageCache, DatabaseLayout databaseLayout )
+    {
+        this( stores.getMetaDataStore().getLastCommittedTransactionId(),
+                stores.getNodeStore(), stores.getRelationshipStore(),
+                (int) stores.getLabelTokenStore().getHighId(),
+                (int) stores.getRelationshipTypeTokenStore().getHighId(),
+                NumberArrayFactory.auto( pageCache, databaseLayout.databaseDirectory(), true, NumberArrayFactory.NO_MONITOR ) );
+    }
+
+	private CountsComputer( long lastCommittedTransactionId, NodeStore nodes, RelationshipStore relationships, int highLabelId, int highRelationshipTypeId,
+            NumberArrayFactory numberArrayFactory )
+    {
+        this( lastCommittedTransactionId, nodes, relationships, highLabelId, highRelationshipTypeId,
+                numberArrayFactory, SilentProgressReporter.INSTANCE );
+    }
+
+	public static void recomputeCounts( NeoStores stores, PageCache pageCache, DatabaseLayout databaseLayout )
+    {
+        MetaDataStore metaDataStore = stores.getMetaDataStore();
+        CountsTracker counts = stores.getCounts();
+        try ( CountsAccessor.Updater updater = counts.reset( metaDataStore.getLastCommittedTransactionId() ) )
+        {
+            new CountsComputer( stores, pageCache, databaseLayout ).initialize( updater );
+        }
+    }
+
+	@Override
     public void initialize( CountsAccessor.Updater countsUpdater )
     {
         if ( hasNotEmptyNodesOrRelationshipsStores() )
@@ -93,12 +93,12 @@ public class CountsComputer implements DataInitializer<CountsAccessor.Updater>
         progressMonitor.completed();
     }
 
-    private boolean hasNotEmptyNodesOrRelationshipsStores()
+	private boolean hasNotEmptyNodesOrRelationshipsStores()
     {
         return (nodes.getHighestPossibleIdInUse() != -1) || (relationships.getHighestPossibleIdInUse() != -1);
     }
 
-    private void populateCountStore( CountsAccessor.Updater countsUpdater )
+	private void populateCountStore( CountsAccessor.Updater countsUpdater )
     {
         try ( NodeLabelsCache cache = new NodeLabelsCache( numberArrayFactory, highLabelId ) )
         {
@@ -111,7 +111,7 @@ public class CountsComputer implements DataInitializer<CountsAccessor.Updater>
         }
     }
 
-    @Override
+	@Override
     public long initialVersion()
     {
         return lastCommittedTransactionId;

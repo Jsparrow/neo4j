@@ -157,7 +157,7 @@ public final class ValueUtils
 
     public static PointValue asGeometryValue( Geometry geometry )
     {
-        if ( !geometry.getGeometryType().equals( "Point" ) )
+        if ( !"Point".equals( geometry.getGeometryType() ) )
         {
             throw new IllegalArgumentException( "Cannot handle geometry type: " + geometry.getCRS().getType() );
         }
@@ -179,10 +179,7 @@ public final class ValueUtils
     public static ListValue asListValue( List<?> collection )
     {
         ArrayList<AnyValue> values = new ArrayList<>( collection.size() );
-        for ( Object o : collection )
-        {
-            values.add( ValueUtils.of( o ) );
-        }
+        collection.forEach(o -> values.add(ValueUtils.of(o)));
         return VirtualValues.fromList( values );
     }
 
@@ -232,18 +229,14 @@ public final class ValueUtils
     public static MapValue asMapValue( Map<String,Object> map )
     {
         MapValueBuilder builder = new MapValueBuilder( map.size() );
-        for ( Map.Entry<String,Object> entry : map.entrySet() )
-        {
-            builder.add( entry.getKey(), ValueUtils.of( entry.getValue() ) );
-        }
+        map.entrySet().forEach(entry -> builder.add(entry.getKey(), ValueUtils.of(entry.getValue())));
         return builder.build();
     }
 
     public static MapValue asParameterMapValue( Map<String,Object> map )
     {
         MapValueBuilder builder = new MapValueBuilder( map.size() );
-        for ( Map.Entry<String,Object> entry : map.entrySet() )
-        {
+        map.entrySet().forEach(entry -> {
             try
             {
                 builder.add( entry.getKey(), ValueUtils.of( entry.getValue() ) );
@@ -252,7 +245,7 @@ public final class ValueUtils
             {
                 builder.add( entry.getKey(), VirtualValues.error( e ) );
             }
-        }
+        });
 
         return builder.build();
     }

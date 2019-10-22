@@ -81,11 +81,11 @@ public class DocToIdIterator extends AbstractExplicitIndexHits
     @Override
     public void close()
     {
-        if ( !isClosed() )
-        {
-            this.searcherOrNull.close();
-            this.searcherOrNull = null;
-        }
+        if (isClosed()) {
+			return;
+		}
+		this.searcherOrNull.close();
+		this.searcherOrNull = null;
     }
 
     @Override

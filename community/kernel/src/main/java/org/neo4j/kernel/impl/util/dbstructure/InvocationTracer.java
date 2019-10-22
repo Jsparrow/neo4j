@@ -99,7 +99,7 @@ public class InvocationTracer<C> implements InvocationHandler, AutoCloseable
     {
         String interfaceSimpleName = interfaceClass.getSimpleName();
         String interfaceClassName =
-            interfaceSimpleName.length() == 0 ? interfaceClass.getCanonicalName() : interfaceSimpleName;
+            interfaceSimpleName.isEmpty() ? interfaceClass.getCanonicalName() : interfaceSimpleName;
         if ( generatedClassPackage.length() > 0 )
         {
             formatln( builder, "package %s;", generatedClassPackage );

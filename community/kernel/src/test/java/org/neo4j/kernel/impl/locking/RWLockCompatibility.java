@@ -210,106 +210,6 @@ public class RWLockCompatibility extends LockingCompatibilityTestSuite.Compatibi
         }
     }
 
-    public class StressThread extends Thread
-    {
-        private final Random rand = new Random( currentTimeMillis() );
-        private final Object READ = new Object();
-        private final Object WRITE = new Object();
-
-        private final String name;
-        private final int numberOfIterations;
-        private final int depthCount;
-        private final float readWriteRatio;
-        private final CountDownLatch startSignal;
-        private final Locks.Client client;
-        private final long nodeId;
-        private Exception error;
-
-        StressThread( String name, int numberOfIterations, int depthCount,
-            float readWriteRatio, long nodeId, CountDownLatch startSignal )
-        {
-            super();
-            this.nodeId = nodeId;
-            this.client = locks.newClient();
-            this.name = name;
-            this.numberOfIterations = numberOfIterations;
-            this.depthCount = depthCount;
-            this.readWriteRatio = readWriteRatio;
-            this.startSignal = startSignal;
-        }
-
-        @Override
-        public void run()
-        {
-            try
-            {
-                startSignal.await();
-                java.util.Stack<Object> lockStack = new java.util.Stack<>();
-                for ( int i = 0; i < numberOfIterations; i++ )
-                {
-                    try
-                    {
-                        int depth = depthCount;
-                        do
-                        {
-                            float f = rand.nextFloat();
-                            if ( f < readWriteRatio )
-                            {
-                                client.acquireShared( LockTracer.NONE, NODE, nodeId );
-                                lockStack.push( READ );
-                            }
-                            else
-                            {
-                                client.acquireExclusive( LockTracer.NONE, NODE, nodeId );
-                                lockStack.push( WRITE );
-                            }
-                        }
-                        while ( --depth > 0 );
-
-                        while ( !lockStack.isEmpty() )
-                        {
-                            if ( lockStack.pop() == READ )
-                            {
-                                client.releaseShared( NODE, nodeId );
-                            }
-                            else
-                            {
-                                client.releaseExclusive( NODE, nodeId );
-                            }
-                        }
-                    }
-                    catch ( DeadlockDetectedException ignored )
-                    {
-                    }
-                    finally
-                    {
-                        while ( !lockStack.isEmpty() )
-                        {
-                            if ( lockStack.pop() == READ )
-                            {
-                                client.releaseShared( NODE, nodeId );
-                            }
-                            else
-                            {
-                                client.releaseExclusive( NODE, nodeId );
-                            }
-                        }
-                    }
-                }
-            }
-            catch ( Exception e )
-            {
-                error = e;
-            }
-        }
-
-        @Override
-        public String toString()
-        {
-            return this.name;
-        }
-    }
-
     @Test
     public void testStressMultipleThreads() throws Exception
     {
@@ -354,7 +254,7 @@ public class RWLockCompatibility extends LockingCompatibilityTestSuite.Compatibi
 
     }
 
-    private void sleepALittle()
+	private void sleepALittle()
     {
         try
         {
@@ -366,7 +266,7 @@ public class RWLockCompatibility extends LockingCompatibilityTestSuite.Compatibi
         }
     }
 
-    private boolean anyAliveAndAllWell( StressThread[] stressThreads )
+	private boolean anyAliveAndAllWell( StressThread[] stressThreads )
     {
         for ( StressThread stressThread : stressThreads )
         {
@@ -380,5 +280,104 @@ public class RWLockCompatibility extends LockingCompatibilityTestSuite.Compatibi
             }
         }
         return false;
+    }
+
+	public class StressThread extends Thread
+    {
+        private final Random rand = new Random( currentTimeMillis() );
+        private final Object read = new Object();
+        private final Object write = new Object();
+
+        private final String name;
+        private final int numberOfIterations;
+        private final int depthCount;
+        private final float readWriteRatio;
+        private final CountDownLatch startSignal;
+        private final Locks.Client client;
+        private final long nodeId;
+        private Exception error;
+
+        StressThread( String name, int numberOfIterations, int depthCount,
+            float readWriteRatio, long nodeId, CountDownLatch startSignal )
+        {
+            this.nodeId = nodeId;
+            this.client = locks.newClient();
+            this.name = name;
+            this.numberOfIterations = numberOfIterations;
+            this.depthCount = depthCount;
+            this.readWriteRatio = readWriteRatio;
+            this.startSignal = startSignal;
+        }
+
+        @Override
+        public void run()
+        {
+            try
+            {
+                startSignal.await();
+                java.util.Stack<Object> lockStack = new java.util.Stack<>();
+                for ( int i = 0; i < numberOfIterations; i++ )
+                {
+                    try
+                    {
+                        int depth = depthCount;
+                        do
+                        {
+                            float f = rand.nextFloat();
+                            if ( f < readWriteRatio )
+                            {
+                                client.acquireShared( LockTracer.NONE, NODE, nodeId );
+                                lockStack.push( read );
+                            }
+                            else
+                            {
+                                client.acquireExclusive( LockTracer.NONE, NODE, nodeId );
+                                lockStack.push( write );
+                            }
+                        }
+                        while ( --depth > 0 );
+
+                        while ( !lockStack.isEmpty() )
+                        {
+                            if ( lockStack.pop() == read )
+                            {
+                                client.releaseShared( NODE, nodeId );
+                            }
+                            else
+                            {
+                                client.releaseExclusive( NODE, nodeId );
+                            }
+                        }
+                    }
+                    catch ( DeadlockDetectedException ignored )
+                    {
+                    }
+                    finally
+                    {
+                        while ( !lockStack.isEmpty() )
+                        {
+                            if ( lockStack.pop() == read )
+                            {
+                                client.releaseShared( NODE, nodeId );
+                            }
+                            else
+                            {
+                                client.releaseExclusive( NODE, nodeId );
+                            }
+                        }
+                    }
+                }
+            }
+            catch ( Exception e )
+            {
+                error = e;
+            }
+        }
+
+        @Override
+        public String toString()
+        {
+            return this.name;
+        }
     }
 }

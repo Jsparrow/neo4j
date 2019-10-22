@@ -43,14 +43,6 @@ public abstract class ParameterList
         this.data = data;
     }
 
-    private abstract static class Converter<T>
-    {
-        abstract T convert( GraphDatabaseAPI graphDb, Object value )
-                throws BadInputException;
-
-        abstract T[] newArray( int size );
-    }
-
     private <T> T[] getList( String name, GraphDatabaseAPI graphDb,
             Converter<T> converter ) throws BadInputException
     {
@@ -81,7 +73,7 @@ public abstract class ParameterList
         return result.toArray( converter.newArray( result.size() ) );
     }
 
-    @Deprecated
+	@Deprecated
     public String getString( String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -92,7 +84,7 @@ public abstract class ParameterList
         return convertString( value );
     }
 
-    @Deprecated
+	@Deprecated
     public String[] getStringList( String name ) throws BadInputException
     {
         return getList( name, null, new Converter<String>()
@@ -112,11 +104,11 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected abstract String convertString( Object value )
             throws BadInputException;
 
-    @Deprecated
+	@Deprecated
     public Integer getInteger( String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -127,7 +119,7 @@ public abstract class ParameterList
         return convertInteger( value );
     }
 
-    @Deprecated
+	@Deprecated
     public Integer[] getIntegerList( String name ) throws BadInputException
     {
         return getList( name, null, new Converter<Integer>()
@@ -147,11 +139,11 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected abstract Integer convertInteger( Object value )
             throws BadInputException;
 
-    @Deprecated
+	@Deprecated
     public Long getLong( String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -162,7 +154,7 @@ public abstract class ParameterList
         return convertLong( value );
     }
 
-    @Deprecated
+	@Deprecated
     public Long[] getLongList( String name ) throws BadInputException
     {
         return getList( name, null, new Converter<Long>()
@@ -182,11 +174,11 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected abstract Long convertLong( Object value )
             throws BadInputException;
 
-    @Deprecated
+	@Deprecated
     public Byte getByte( String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -197,7 +189,7 @@ public abstract class ParameterList
         return convertByte( value );
     }
 
-    @Deprecated
+	@Deprecated
     public Byte[] getByteList( String name ) throws BadInputException
     {
         return getList( name, null, new Converter<Byte>()
@@ -217,11 +209,11 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected abstract Byte convertByte( Object value )
             throws BadInputException;
 
-    @Deprecated
+	@Deprecated
     public Character getCharacter( String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -232,7 +224,7 @@ public abstract class ParameterList
         return convertCharacter( value );
     }
 
-    @Deprecated
+	@Deprecated
     public Character[] getCharacterList( String name ) throws BadInputException
     {
         return getList( name, null, new Converter<Character>()
@@ -252,11 +244,11 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected abstract Character convertCharacter( Object value )
             throws BadInputException;
 
-    @Deprecated
+	@Deprecated
     public Boolean getBoolean( String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -267,7 +259,7 @@ public abstract class ParameterList
         return convertBoolean( value );
     }
 
-    @Deprecated
+	@Deprecated
     public Boolean[] getBooleanList( String name ) throws BadInputException
     {
         return getList( name, null, new Converter<Boolean>()
@@ -287,11 +279,11 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected abstract Boolean convertBoolean( Object value )
             throws BadInputException;
 
-    @Deprecated
+	@Deprecated
     public Short getShort( String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -302,7 +294,7 @@ public abstract class ParameterList
         return convertShort( value );
     }
 
-    @Deprecated
+	@Deprecated
     public Short[] getShortList( String name ) throws BadInputException
     {
         return getList( name, null, new Converter<Short>()
@@ -322,11 +314,11 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected abstract Short convertShort( Object value )
             throws BadInputException;
 
-    @Deprecated
+	@Deprecated
     public Float getFloat( String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -337,7 +329,7 @@ public abstract class ParameterList
         return convertFloat( value );
     }
 
-    @Deprecated
+	@Deprecated
     public Float[] getFloatList( String name ) throws BadInputException
     {
         return getList( name, null, new Converter<Float>()
@@ -357,11 +349,11 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected abstract Float convertFloat( Object value )
             throws BadInputException;
 
-    @Deprecated
+	@Deprecated
     public Double getDouble( String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -372,7 +364,7 @@ public abstract class ParameterList
         return convertDouble( value );
     }
 
-    @Deprecated
+	@Deprecated
     public Double[] getDoubleList( String name ) throws BadInputException
     {
         return getList( name, null, new Converter<Double>()
@@ -392,11 +384,11 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected abstract Double convertDouble( Object value )
             throws BadInputException;
 
-    @Deprecated
+	@Deprecated
     public Node getNode( GraphDatabaseAPI graphDb, String name )
             throws BadInputException
     {
@@ -408,7 +400,7 @@ public abstract class ParameterList
         return convertNode( graphDb, value );
     }
 
-    @Deprecated
+	@Deprecated
     public Node[] getNodeList( GraphDatabaseAPI graphDb, String name )
             throws BadInputException
     {
@@ -429,10 +421,10 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected abstract Node convertNode( GraphDatabaseAPI graphDb, Object value ) throws BadInputException;
 
-    @Deprecated
+	@Deprecated
     public Relationship getRelationship( GraphDatabaseAPI graphDb, String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -443,7 +435,7 @@ public abstract class ParameterList
         return convertRelationship( graphDb, value );
     }
 
-    @Deprecated
+	@Deprecated
     public Relationship[] getRelationshipList( GraphDatabaseAPI graphDb, String name ) throws BadInputException
     {
         return getList( name, graphDb, new Converter<Relationship>()
@@ -463,11 +455,11 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected abstract Relationship convertRelationship( GraphDatabaseAPI graphDb, Object value )
             throws BadInputException;
 
-    @Deprecated
+	@Deprecated
     public URI getUri( String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -478,7 +470,7 @@ public abstract class ParameterList
         return convertURI( value );
     }
 
-    @Deprecated
+	@Deprecated
     public URI[] getUriList( String name ) throws BadInputException
     {
         return getList( name, null, new Converter<URI>()
@@ -498,7 +490,7 @@ public abstract class ParameterList
         } );
     }
 
-    @Deprecated
+	@Deprecated
     protected URI convertURI( Object value ) throws BadInputException
     {
         try
@@ -511,7 +503,7 @@ public abstract class ParameterList
         }
     }
 
-    @Deprecated
+	@Deprecated
     public Map getMap( String name ) throws BadInputException
     {
         Object value = data.get( name );
@@ -524,5 +516,13 @@ public abstract class ParameterList
             throw new BadInputException( "Maps encoded as Strings not supported" );
         }
         return null;
+    }
+
+	private abstract static class Converter<T>
+    {
+        abstract T convert( GraphDatabaseAPI graphDb, Object value )
+                throws BadInputException;
+
+        abstract T[] newArray( int size );
     }
 }

@@ -62,9 +62,7 @@ import static org.neo4j.values.virtual.VirtualValues.EMPTY_MAP;
 class TransactionStateMachineTest
 {
     private static final String PERIODIC_COMMIT_QUERY =
-            "USING PERIODIC COMMIT 1 " +
-            "LOAD CSV FROM ''https://neo4j.com/test.csv'' AS line " +
-            "CREATE (:Node {id: line[0], name: line[1]})";
+            new StringBuilder().append("USING PERIODIC COMMIT 1 ").append("LOAD CSV FROM ''https://neo4j.com/test.csv'' AS line ").append("CREATE (:Node {id: line[0], name: line[1]})").toString();
 
     private TransactionStateMachineV1SPI stateMachineSPI;
     private TransactionStateMachine.MutableTransactionState mutableState;
@@ -330,11 +328,8 @@ class TransactionStateMachineTest
         stateMachine.ctx.pendingTerminationNotice = Status.Transaction.TransactionTimedOut;
 
         TransactionTerminatedException e = assertThrows( TransactionTerminatedException.class, () ->
-        {
-            stateMachine.streamResult( boltResult ->
-            {
-            } );
-        } );
+        stateMachine.streamResult(boltResult -> {
+		}) );
         assertEquals( Status.Transaction.TransactionTimedOut, e.status() );
     }
 
@@ -367,12 +362,9 @@ class TransactionStateMachineTest
         assertNotNull( stateMachine.ctx.currentResult );
 
         RuntimeException e = assertThrows( RuntimeException.class, () ->
-        {
-            stateMachine.streamResult( boltResult ->
-            {
-                throw new RuntimeException( "some error" );
-            } );
-        } );
+        stateMachine.streamResult(boltResult -> {
+			throw new RuntimeException("some error");
+		}) );
         assertEquals( "some error", e.getMessage() );
 
         assertNull( stateMachine.ctx.currentResultHandle );
@@ -422,12 +414,9 @@ class TransactionStateMachineTest
         assertNotNull( stateMachine.ctx.currentResult );
 
         RuntimeException e = assertThrows( RuntimeException.class, () ->
-        {
-            stateMachine.streamResult( boltResult ->
-            {
-                throw new RuntimeException( "some error" );
-            } );
-        } );
+        stateMachine.streamResult(boltResult -> {
+			throw new RuntimeException("some error");
+		}) );
         assertEquals( "some error", e.getMessage() );
 
         assertNull( stateMachine.ctx.currentResultHandle );

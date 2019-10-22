@@ -26,16 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NamedThreadFactory implements ThreadFactory
 {
     @Deprecated
-    public interface Monitor
-    {
-        @Deprecated
-        void threadCreated( String threadNamePrefix );
-
-        @Deprecated
-        void threadFinished( String threadNamePrefix );
-    }
-
-    @Deprecated
     public static final Monitor NO_OP_MONITOR = new Monitor()
     {
         @Override
@@ -49,52 +39,57 @@ public class NamedThreadFactory implements ThreadFactory
         }
     };
 
-    private static final int DEFAULT_THREAD_PRIORITY = Thread.NORM_PRIORITY;
+	private static final int DEFAULT_THREAD_PRIORITY = Thread.NORM_PRIORITY;
 
-    private final ThreadGroup group;
-    private final AtomicInteger threadCounter = new AtomicInteger( 1 );
-    private String threadNamePrefix;
-    private final int priority;
-    private final boolean daemon;
-    private final Monitor monitor;
+	private final ThreadGroup group;
 
-    @Deprecated
+	private final AtomicInteger threadCounter = new AtomicInteger( 1 );
+
+	private String threadNamePrefix;
+
+	private final int priority;
+
+	private final boolean daemon;
+
+	private final Monitor monitor;
+
+	@Deprecated
     public NamedThreadFactory( String threadNamePrefix )
     {
         this( threadNamePrefix, DEFAULT_THREAD_PRIORITY );
     }
 
-    @Deprecated
+	@Deprecated
     public NamedThreadFactory( String threadNamePrefix, int priority )
     {
         this( threadNamePrefix, priority, NO_OP_MONITOR );
     }
 
-    @Deprecated
+	@Deprecated
     public NamedThreadFactory( String threadNamePrefix, Monitor monitor )
     {
         this( threadNamePrefix, DEFAULT_THREAD_PRIORITY, monitor );
     }
 
-    @Deprecated
+	@Deprecated
     public NamedThreadFactory( String threadNamePrefix, int priority, Monitor monitor )
     {
         this( threadNamePrefix, priority, monitor, false );
     }
 
-    @Deprecated
+	@Deprecated
     public NamedThreadFactory( String threadNamePrefix, int priority, boolean daemon )
     {
         this( threadNamePrefix, priority, NO_OP_MONITOR, daemon );
     }
 
-    @Deprecated
+	@Deprecated
     public NamedThreadFactory( String threadNamePrefix, boolean daemon )
     {
         this( threadNamePrefix, DEFAULT_THREAD_PRIORITY, NO_OP_MONITOR, daemon );
     }
 
-    @Deprecated
+	@Deprecated
     public NamedThreadFactory( String threadNamePrefix, int priority, Monitor monitor, boolean daemon )
     {
         this.threadNamePrefix = threadNamePrefix;
@@ -107,12 +102,12 @@ public class NamedThreadFactory implements ThreadFactory
         this.monitor = monitor;
     }
 
-    @Override
+	@Override
     public Thread newThread( Runnable runnable )
     {
         int id = threadCounter.getAndIncrement();
 
-        Thread result = new Thread( group, runnable, threadNamePrefix + "-" + id )
+        Thread result = new Thread( group, runnable, new StringBuilder().append(threadNamePrefix).append("-").append(id).toString() )
         {
             @Override
             public void run()
@@ -134,27 +129,37 @@ public class NamedThreadFactory implements ThreadFactory
         return result;
     }
 
-    @Deprecated
+	@Deprecated
     public static NamedThreadFactory named( String threadNamePrefix )
     {
         return new NamedThreadFactory( threadNamePrefix );
     }
 
-    @Deprecated
+	@Deprecated
     public static NamedThreadFactory named( String threadNamePrefix, int priority )
     {
         return new NamedThreadFactory( threadNamePrefix, priority );
     }
 
-    @Deprecated
+	@Deprecated
     public static NamedThreadFactory daemon( String threadNamePrefix )
     {
         return daemon( threadNamePrefix, NO_OP_MONITOR );
     }
 
-    @Deprecated
+	@Deprecated
     public static NamedThreadFactory daemon( String threadNamePrefix, Monitor monitor )
     {
         return new NamedThreadFactory( threadNamePrefix, DEFAULT_THREAD_PRIORITY, monitor, true );
+    }
+
+	@Deprecated
+    public interface Monitor
+    {
+        @Deprecated
+        void threadCreated( String threadNamePrefix );
+
+        @Deprecated
+        void threadFinished( String threadNamePrefix );
     }
 }

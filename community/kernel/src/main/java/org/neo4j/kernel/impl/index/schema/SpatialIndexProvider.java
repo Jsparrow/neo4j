@@ -95,7 +95,7 @@ public class SpatialIndexProvider extends IndexProvider
     }
 
     @Override
-    public String getPopulationFailure( StoreIndexDescriptor descriptor ) throws IllegalStateException
+    public String getPopulationFailure( StoreIndexDescriptor descriptor )
     {
         SpatialIndexFiles spatialIndexFiles = new SpatialIndexFiles( directoryStructure(), descriptor.getId(), fs, configuredSettings );
 
@@ -114,7 +114,7 @@ public class SpatialIndexProvider extends IndexProvider
         {
             throw new RuntimeException( e );
         }
-        throw new IllegalStateException( "Index " + descriptor.getId() + " isn't failed" );
+        throw new IllegalStateException( new StringBuilder().append("Index ").append(descriptor.getId()).append(" isn't failed").toString() );
     }
 
     @Override

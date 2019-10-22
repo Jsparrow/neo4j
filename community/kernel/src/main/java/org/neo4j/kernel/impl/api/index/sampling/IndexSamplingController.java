@@ -46,25 +46,24 @@ import static org.neo4j.kernel.impl.api.index.sampling.IndexSamplingMode.BACKGRO
 
 public class IndexSamplingController
 {
-    private final IndexSamplingJobFactory jobFactory;
-    private final IndexSamplingJobQueue<Long> jobQueue;
-    private final IndexSamplingJobTracker jobTracker;
-    private final IndexMapSnapshotProvider indexMapSnapshotProvider;
-    private final JobScheduler scheduler;
-    private final RecoveryCondition indexRecoveryCondition;
-    private final boolean backgroundSampling;
-    private final Lock samplingLock = new ReentrantLock();
-    private final Log log;
     static final String LOG_RECOVER_INDEX_SAMPLES_NAME = "log_recover_index_samples";
-    static final String ASYNC_RECOVER_INDEX_SAMPLES_NAME = "async_recover_index_samples";
-    static final String ASYNC_RECOVER_INDEX_SAMPLES_WAIT_NAME = "async_recover_index_samples_wait";
-    private final boolean logRecoverIndexSamples;
-    private final boolean asyncRecoverIndexSamples;
-    private final boolean asyncRecoverIndexSamplesWait;
+	static final String ASYNC_RECOVER_INDEX_SAMPLES_NAME = "async_recover_index_samples";
+	static final String ASYNC_RECOVER_INDEX_SAMPLES_WAIT_NAME = "async_recover_index_samples_wait";
+	private final IndexSamplingJobFactory jobFactory;
+	private final IndexSamplingJobQueue<Long> jobQueue;
+	private final IndexSamplingJobTracker jobTracker;
+	private final IndexMapSnapshotProvider indexMapSnapshotProvider;
+	private final JobScheduler scheduler;
+	private final RecoveryCondition indexRecoveryCondition;
+	private final boolean backgroundSampling;
+	private final Lock samplingLock = new ReentrantLock();
+	private final Log log;
+	private final boolean logRecoverIndexSamples;
+	private final boolean asyncRecoverIndexSamples;
+	private final boolean asyncRecoverIndexSamplesWait;
+	private JobHandle backgroundSamplingHandle;
 
-    private JobHandle backgroundSamplingHandle;
-
-    // use IndexSamplingControllerFactory.create do not instantiate directly
+	// use IndexSamplingControllerFactory.create do not instantiate directly
     IndexSamplingController( IndexSamplingConfig config,
                              IndexSamplingJobFactory jobFactory,
                              IndexSamplingJobQueue<Long> jobQueue,
@@ -88,21 +87,21 @@ public class IndexSamplingController
                 FeatureToggles.flag( IndexSamplingController.class, ASYNC_RECOVER_INDEX_SAMPLES_WAIT_NAME, asyncRecoverIndexSamples );
     }
 
-    public void sampleIndexes( IndexSamplingMode mode )
+	public void sampleIndexes( IndexSamplingMode mode )
     {
         IndexMap indexMap = indexMapSnapshotProvider.indexMapSnapshot();
         jobQueue.addAll( !mode.sampleOnlyIfUpdated, PrimitiveLongCollections.toIterator( indexMap.indexIds() ) );
         scheduleSampling( mode, indexMap );
     }
 
-    public void sampleIndex( long indexId, IndexSamplingMode mode )
+	public void sampleIndex( long indexId, IndexSamplingMode mode )
     {
         IndexMap indexMap = indexMapSnapshotProvider.indexMapSnapshot();
         jobQueue.add( !mode.sampleOnlyIfUpdated, indexId );
         scheduleSampling( mode, indexMap );
     }
 
-    public void recoverIndexSamples()
+	public void recoverIndexSamples()
     {
         samplingLock.lock();
         try
@@ -149,7 +148,7 @@ public class IndexSamplingController
         }
     }
 
-    private void waitForAsyncIndexSamples( List<IndexSamplingJobHandle> asyncSamplingJobs )
+	private void waitForAsyncIndexSamples( List<IndexSamplingJobHandle> asyncSamplingJobs )
     {
         for ( IndexSamplingJobHandle asyncSamplingJob : asyncSamplingJobs )
         {
@@ -165,12 +164,7 @@ public class IndexSamplingController
         }
     }
 
-    public interface RecoveryCondition
-    {
-        boolean test( StoreIndexDescriptor descriptor );
-    }
-
-    private void scheduleSampling( IndexSamplingMode mode, IndexMap indexMap )
+	private void scheduleSampling( IndexSamplingMode mode, IndexMap indexMap )
     {
         if ( mode.blockUntilAllScheduled )
         {
@@ -184,7 +178,7 @@ public class IndexSamplingController
         }
     }
 
-    private void tryScheduleSampling( IndexMap indexMap )
+	private void tryScheduleSampling( IndexMap indexMap )
     {
         if ( tryEmptyLock() )
         {
@@ -208,7 +202,7 @@ public class IndexSamplingController
         }
     }
 
-    private boolean tryEmptyLock()
+	private boolean tryEmptyLock()
     {
         try
         {
@@ -221,7 +215,7 @@ public class IndexSamplingController
         }
     }
 
-    private void scheduleAllSampling( IndexMap indexMap )
+	private void scheduleAllSampling( IndexMap indexMap )
     {
         samplingLock.lock();
         try
@@ -240,7 +234,7 @@ public class IndexSamplingController
         }
     }
 
-    private IndexSamplingJobHandle sampleIndexOnTracker( IndexMap indexMap, long indexId )
+	private IndexSamplingJobHandle sampleIndexOnTracker( IndexMap indexMap, long indexId )
     {
         IndexSamplingJob job = createSamplingJob( indexMap, indexId );
         if ( job != null )
@@ -250,7 +244,7 @@ public class IndexSamplingController
         return new IndexSamplingJobHandle( job, JobHandle.nullInstance );
     }
 
-    private void sampleIndexOnCurrentThread( IndexMap indexMap, long indexId )
+	private void sampleIndexOnCurrentThread( IndexMap indexMap, long indexId )
     {
         IndexSamplingJob job = createSamplingJob( indexMap, indexId );
         if ( job != null )
@@ -259,7 +253,7 @@ public class IndexSamplingController
         }
     }
 
-    private IndexSamplingJob createSamplingJob( IndexMap indexMap, long indexId )
+	private IndexSamplingJob createSamplingJob( IndexMap indexMap, long indexId )
     {
         IndexProxy proxy = indexMap.getIndexProxy( indexId );
         if ( proxy == null || proxy.getState() != InternalIndexState.ONLINE )
@@ -269,22 +263,27 @@ public class IndexSamplingController
         return jobFactory.create( indexId, proxy );
     }
 
-    public void start()
+	public void start()
     {
-        if ( backgroundSampling )
-        {
-            Runnable samplingRunner = () -> sampleIndexes( BACKGROUND_REBUILD_UPDATED );
-            backgroundSamplingHandle = scheduler.scheduleRecurring( Group.INDEX_SAMPLING, samplingRunner, 10, SECONDS );
-        }
+        if (!backgroundSampling) {
+			return;
+		}
+		Runnable samplingRunner = () -> sampleIndexes( BACKGROUND_REBUILD_UPDATED );
+		backgroundSamplingHandle = scheduler.scheduleRecurring( Group.INDEX_SAMPLING, samplingRunner, 10, SECONDS );
     }
 
-    public void stop()
+	public void stop()
     {
         if ( backgroundSamplingHandle != null )
         {
             backgroundSamplingHandle.cancel( true );
         }
         jobTracker.stopAndAwaitAllJobs();
+    }
+
+	public interface RecoveryCondition
+    {
+        boolean test( StoreIndexDescriptor descriptor );
     }
 
     private static class IndexSamplingJobHandle

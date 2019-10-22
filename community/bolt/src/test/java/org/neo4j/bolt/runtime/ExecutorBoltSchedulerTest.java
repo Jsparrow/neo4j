@@ -198,7 +198,7 @@ public class ExecutorBoltSchedulerTest
         boltScheduler.created( connection );
         boltScheduler.enqueued( connection, Jobs.noop() );
 
-        Predicates.await( () -> stopped.get(), 1, MINUTES );
+        Predicates.await( stopped::get, 1, MINUTES );
 
         assertFalse( boltScheduler.isActive( connection ) );
         verify( connection ).processNextBatch();

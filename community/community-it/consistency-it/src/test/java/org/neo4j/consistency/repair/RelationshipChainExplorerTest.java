@@ -52,29 +52,31 @@ public class RelationshipChainExplorerTest
 {
     private static final int degreeTwoNodes = 10;
 
-    private final TestDirectory testDirectory = TestDirectory.testDirectory();
-    private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
-
-    @ClassRule
+	@ClassRule
     public static PageCacheRule pageCacheRule = new PageCacheRule();
-    @Rule
+
+	private final TestDirectory testDirectory = TestDirectory.testDirectory();
+
+	private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
+
+	@Rule
     public RuleChain ruleChain = RuleChain.outerRule( testDirectory ).around( fileSystemRule );
 
-    private StoreAccess store;
+	private StoreAccess store;
 
-    @Before
+	@Before
     public void setupStoreAccess()
     {
         store = createStoreWithOneHighDegreeNodeAndSeveralDegreeTwoNodes( degreeTwoNodes );
     }
 
-    @After
+	@After
     public void tearDownStoreAccess()
     {
         store.close();
     }
 
-    @Test
+	@Test
     public void shouldLoadAllConnectedRelationshipRecordsAndTheirFullChainsOfRelationshipRecords()
     {
         // given
@@ -90,7 +92,7 @@ public class RelationshipChainExplorerTest
         assertEquals( degreeTwoNodes * 2, records.size() );
     }
 
-    @Test
+	@Test
     public void shouldCopeWithAChainThatReferencesNotInUseZeroValueRecords()
     {
         // given
@@ -108,7 +110,7 @@ public class RelationshipChainExplorerTest
         assertEquals( degreeTwoNodes * 2 - recordsInaccessibleBecauseOfBrokenChain, records.size() );
     }
 
-    private static void breakTheChain( RecordStore<RelationshipRecord> relationshipStore )
+	private static void breakTheChain( RecordStore<RelationshipRecord> relationshipStore )
     {
         RelationshipRecord record = relationshipStore.getRecord( 10, relationshipStore.newRecord(), NORMAL );
         long relationshipTowardsEndOfChain = record.getFirstNode();
@@ -121,12 +123,7 @@ public class RelationshipChainExplorerTest
         relationshipStore.updateRecord( new RelationshipRecord( relationshipTowardsEndOfChain, 0, 0, 0 ) );
     }
 
-    enum TestRelationshipType implements RelationshipType
-    {
-        CONNECTED
-    }
-
-    private StoreAccess createStoreWithOneHighDegreeNodeAndSeveralDegreeTwoNodes( int nDegreeTwoNodes )
+	private StoreAccess createStoreWithOneHighDegreeNodeAndSeveralDegreeTwoNodes( int nDegreeTwoNodes )
     {
         File storeDirectory = testDirectory.databaseDir();
         GraphDatabaseService database = new TestGraphDatabaseFactory()
@@ -161,8 +158,13 @@ public class RelationshipChainExplorerTest
         return storeAccess.initialize();
     }
 
-    protected String getRecordFormatName()
+	protected String getRecordFormatName()
     {
         return StringUtils.EMPTY;
+    }
+
+	enum TestRelationshipType implements RelationshipType
+    {
+        CONNECTED
     }
 }

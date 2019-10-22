@@ -313,16 +313,15 @@ public final class ParseUtil
             return;
         }
         //Since type erasure has already happened here we cannot verify ParameterizedType
-        if ( type instanceof Class<?> )
-        {
-            Class<?> clazz = (Class<?>) type;
-            if ( !clazz.isAssignableFrom( obj.getClass() ) )
-            {
-                throw new IllegalArgumentException(
-                        String.format( "Expects a list of %s but got a list of %s", clazz.getSimpleName(),
-                                obj.getClass().getSimpleName() ) );
-            }
-
-        }
+		if (!(type instanceof Class<?>)) {
+			return;
+		}
+		Class<?> clazz = (Class<?>) type;
+		if ( !clazz.isAssignableFrom( obj.getClass() ) )
+		{
+		    throw new IllegalArgumentException(
+		            String.format( "Expects a list of %s but got a list of %s", clazz.getSimpleName(),
+		                    obj.getClass().getSimpleName() ) );
+		}
     }
 }

@@ -119,12 +119,9 @@ public abstract class FormatCompatibilityVerifier
 
     private void tellDeveloperToCommitThisFormatVersion( String zipName )
     {
-        fail( String.format( "This is merely a notification to developer. Format has changed and its version has also " +
-                        "been properly incremented. A store file with this new format has been generated and should be committed. " +
-                        "Please move:%n  %s%ninto %n  %s, %nreplacing the existing file there",
+        fail( String.format( new StringBuilder().append("This is merely a notification to developer. Format has changed and its version has also ").append("been properly incremented. A store file with this new format has been generated and should be committed. ").append("Please move:%n  %s%ninto %n  %s, %nreplacing the existing file there").toString(),
                 globalDir.file( zipName ),
-                "<corresponding-module>" + pathify( ".src.test.resources." ) +
-                        pathify( getClass().getPackage().getName() + "." ) + zipName ) );
+                new StringBuilder().append("<corresponding-module>").append(pathify( ".src.test.resources." )).append(pathify( getClass().getPackage().getName() + "." )).append(zipName).toString() ) );
     }
 
     private void unzip( String zipName, File storeFile ) throws IOException

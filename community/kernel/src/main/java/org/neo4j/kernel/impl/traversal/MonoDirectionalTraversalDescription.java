@@ -181,14 +181,11 @@ public final class MonoDirectionalTraversalDescription implements TraversalDescr
 
     protected static <T> void nullCheck( T parameter, Class<T> parameterType, String defaultName )
     {
-        if ( parameter == null )
-        {
-            String typeName = parameterType.getSimpleName();
-            throw new IllegalArgumentException( typeName
-                                                + " may not be null, use "
-                                                + typeName + "." + defaultName
-                                                + " instead." );
-        }
+        if (parameter != null) {
+			return;
+		}
+		String typeName = parameterType.getSimpleName();
+		throw new IllegalArgumentException( new StringBuilder().append(typeName).append(" may not be null, use ").append(typeName).append(".").append(defaultName).append(" instead.").toString() );
     }
 
     /* (non-Javadoc)

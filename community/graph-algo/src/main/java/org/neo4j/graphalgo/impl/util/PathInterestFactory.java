@@ -34,26 +34,7 @@ public class PathInterestFactory
 {
     public static final Comparator<Comparable> STANDARD_COMPARATOR = Comparable::compareTo;
 
-    private PathInterestFactory()
-    {
-    }
-
-    public static PathInterest<? extends Comparable> single()
-    {
-        return SINGLE;
-    }
-
-    public static PathInterest<? extends Comparable> allShortest()
-    {
-        return ALL_SHORTEST;
-    }
-
-    public static PathInterest<? extends Comparable> all()
-    {
-        return ALL;
-    }
-
-    private static final PathInterest<? extends Comparable> SINGLE = new PathInterest<Comparable>()
+	private static final PathInterest<? extends Comparable> SINGLE = new PathInterest<Comparable>()
     {
         @Override
         public Comparator<Comparable> comparator()
@@ -80,7 +61,7 @@ public class PathInterestFactory
         }
     };
 
-    private static final PathInterest<? extends Comparable> ALL_SHORTEST =
+	private static final PathInterest<? extends Comparable> ALL_SHORTEST =
             new PriorityBasedPathInterest<Comparable>()
             {
                 private BiFunction<Comparable,Comparable,Boolean> interestFunction;
@@ -102,7 +83,7 @@ public class PathInterestFactory
                 }
             };
 
-    private static final PathInterest<? extends Comparable> ALL = new PathInterest<Comparable>()
+	private static final PathInterest<? extends Comparable> ALL = new PathInterest<Comparable>()
     {
         @Override
         public Comparator<Comparable> comparator()
@@ -129,7 +110,26 @@ public class PathInterestFactory
         }
     };
 
-    public static <P extends Comparable<? super P>> PathInterest<P> numberOfShortest( final int numberOfWantedPaths )
+	private PathInterestFactory()
+    {
+    }
+
+	public static PathInterest<? extends Comparable> single()
+    {
+        return SINGLE;
+    }
+
+	public static PathInterest<? extends Comparable> allShortest()
+    {
+        return ALL_SHORTEST;
+    }
+
+	public static PathInterest<? extends Comparable> all()
+    {
+        return ALL;
+    }
+
+	public static <P extends Comparable<? super P>> PathInterest<P> numberOfShortest( final int numberOfWantedPaths )
     {
         if ( numberOfWantedPaths < 1 )
         {
@@ -154,22 +154,22 @@ public class PathInterestFactory
         };
     }
 
-    public static PathInterest<Double> allShortest( double epsilon )
+	public static PathInterest<Double> allShortest( double epsilon )
     {
         return new PriorityBasedTolerancePathInterest( epsilon );
     }
 
-    public static PathInterest<Double> all( double epsilon )
+	public static PathInterest<Double> all( double epsilon )
     {
         return new AllTolerancePathInterest( epsilon );
     }
 
-    public static PathInterest<Double> numberOfShortest( double epsilon, int numberOfWantedPaths )
+	public static PathInterest<Double> numberOfShortest( double epsilon, int numberOfWantedPaths )
     {
         return new VisitCountBasedTolerancePathInterest( epsilon, numberOfWantedPaths );
     }
 
-    public static PathInterest<Double> single( double epsilon )
+	public static PathInterest<Double> single( double epsilon )
     {
         return new SingleTolerancePathInterest( epsilon );
     }

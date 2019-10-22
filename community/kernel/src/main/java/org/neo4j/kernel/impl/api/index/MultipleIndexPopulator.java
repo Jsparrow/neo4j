@@ -205,10 +205,7 @@ public class MultipleIndexPopulator implements IndexPopulator
      */
     public void fail( Throwable failure )
     {
-        for ( IndexPopulation population : populations )
-        {
-            fail( population, failure );
-        }
+        populations.forEach(population -> fail(population, failure));
     }
 
     protected void fail( IndexPopulation population, Throwable failure )
@@ -397,37 +394,35 @@ public class MultipleIndexPopulator implements IndexPopulator
     boolean populateFromQueue( int queueThreshold, long currentlyIndexedNodeId )
     {
         int queueSize = updatesQueue.size();
-        if ( queueSize > 0 && queueSize >= queueThreshold )
-        {
-            if ( PRINT_DEBUG )
-            {
-                log.info( "Populating from queue at %d", currentlyIndexedNodeId );
-            }
-            // Before applying updates from the updates queue any pending scan updates needs to be applied, i.e. flushed.
-            // This is because 'currentlyIndexedNodeId' is based on how far the scan has come.
-            flushAll();
-
-            try ( MultipleIndexUpdater updater = newPopulatingUpdater( storeView ) )
-            {
-                do
-                {
-                    // no need to check for null as nobody else is emptying this queue
-                    IndexEntryUpdate<?> update = updatesQueue.poll();
-                    storeScan.acceptUpdate( updater, update, currentlyIndexedNodeId );
-                    if ( PRINT_DEBUG )
-                    {
-                        log.info( "Applied %s from queue" + update );
-                    }
-                }
-                while ( !updatesQueue.isEmpty() );
-            }
-            if ( PRINT_DEBUG )
-            {
-                log.info( "Done applying updates from queue" );
-            }
-            return true;
-        }
-        return false;
+        if (!(queueSize > 0 && queueSize >= queueThreshold)) {
+			return false;
+		}
+		if ( PRINT_DEBUG )
+		{
+		    log.info( "Populating from queue at %d", currentlyIndexedNodeId );
+		}
+		// Before applying updates from the updates queue any pending scan updates needs to be applied, i.e. flushed.
+		// This is because 'currentlyIndexedNodeId' is based on how far the scan has come.
+		flushAll();
+		try ( MultipleIndexUpdater updater = newPopulatingUpdater( storeView ) )
+		{
+		    do
+		    {
+		        // no need to check for null as nobody else is emptying this queue
+		        IndexEntryUpdate<?> update = updatesQueue.poll();
+		        storeScan.acceptUpdate( updater, update, currentlyIndexedNodeId );
+		        if ( PRINT_DEBUG )
+		        {
+		            log.info( "Applied %s from queue" + update );
+		        }
+		    }
+		    while ( !updatesQueue.isEmpty() );
+		}
+		if ( PRINT_DEBUG )
+		{
+		    log.info( "Done applying updates from queue" );
+		}
+		return true;
     }
 
     private void forEachPopulation( ThrowingConsumer<IndexPopulation,Exception> action )
@@ -463,30 +458,29 @@ public class MultipleIndexPopulator implements IndexPopulator
         public void process( IndexEntryUpdate<?> update )
         {
             Pair<IndexPopulation,IndexUpdater> pair = populationsWithUpdaters.get( update.indexKey().schema() );
-            if ( pair != null )
-            {
-                IndexPopulation population = pair.first();
-                IndexUpdater updater = pair.other();
-
-                try
-                {
-                    population.populator.includeSample( update );
-                    updater.process( update );
-                }
-                catch ( Throwable t )
-                {
-                    try
-                    {
-                        updater.close();
-                    }
-                    catch ( Throwable ce )
-                    {
-                        log.error( format( "Failed to close index updater: [%s]", updater ), ce );
-                    }
-                    populationsWithUpdaters.remove( update.indexKey().schema() );
-                    multipleIndexPopulator.fail( population, t );
-                }
-            }
+            if (pair == null) {
+				return;
+			}
+			IndexPopulation population = pair.first();
+			IndexUpdater updater = pair.other();
+			try
+			{
+			    population.populator.includeSample( update );
+			    updater.process( update );
+			}
+			catch ( Throwable t )
+			{
+			    try
+			    {
+			        updater.close();
+			    }
+			    catch ( Throwable ce )
+			    {
+			        log.error( format( "Failed to close index updater: [%s]", updater ), ce );
+			    }
+			    populationsWithUpdaters.remove( update.indexKey().schema() );
+			    multipleIndexPopulator.fail( population, t );
+			}
         }
 
         @Override

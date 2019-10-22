@@ -96,7 +96,69 @@ public final class GrabAllocator implements MemoryAllocator
         }
     }
 
-    private static class Grab
+    private static Object globalCleaner()
+    {
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        try
+        {
+            Class<?> newCleaner = Class.forName( "java.lang.ref.Cleaner" );
+            MethodHandle createInstance = lookup.findStatic( newCleaner, "create", MethodType.methodType( newCleaner ) );
+            return createInstance.invoke();
+        }
+        catch ( Throwable throwable )
+        {
+            return null;
+        }
+    }
+
+	private static CleanerHandles findCleanerHandles()
+    {
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        return globalCleanerInstance == null ? findHandlesForOldCleaner( lookup ) : findHandlesForNewCleaner( lookup );
+    }
+
+	private static CleanerHandles findHandlesForNewCleaner( MethodHandles.Lookup lookup )
+    {
+        try
+        {
+            Objects.requireNonNull( globalCleanerInstance );
+            Class<?> newCleaner = globalCleanerInstance.getClass();
+            Class<?> newCleanable = Class.forName( "java.lang.ref.Cleaner$Cleanable" );
+            MethodHandle registerHandle = findCreationMethod( "register", lookup, newCleaner );
+            registerHandle = registerHandle.bindTo( globalCleanerInstance );
+            return CleanerHandles.of( registerHandle, findCleanMethod( lookup, newCleanable ) );
+        }
+        catch ( ClassNotFoundException | NoSuchMethodException | IllegalAccessException newCleanerException )
+        {
+            throw new LinkageError( "Unable to find cleaner methods.", newCleanerException );
+        }
+    }
+
+	private static CleanerHandles findHandlesForOldCleaner( MethodHandles.Lookup lookup )
+    {
+        try
+        {
+            Class<?> oldCleaner = Class.forName( "sun.misc.Cleaner" );
+            return CleanerHandles.of( findCreationMethod( "create", lookup, oldCleaner ), findCleanMethod( lookup, oldCleaner ) );
+        }
+        catch ( ClassNotFoundException | NoSuchMethodException | IllegalAccessException oldCleanerException )
+        {
+            throw new LinkageError( "Unable to find cleaner methods.", oldCleanerException );
+        }
+    }
+
+	private static MethodHandle findCleanMethod( MethodHandles.Lookup lookup, Class<?> cleaner ) throws IllegalAccessException, NoSuchMethodException
+    {
+        return lookup.unreflect( cleaner.getDeclaredMethod( "clean" ) );
+    }
+
+	private static MethodHandle findCreationMethod( String methodName, MethodHandles.Lookup lookup, Class<?> cleaner )
+            throws IllegalAccessException, NoSuchMethodException
+    {
+        return lookup.unreflect( cleaner.getDeclaredMethod( methodName, Object.class, Runnable.class ) );
+    }
+
+	private static class Grab
     {
         public final Grab next;
         private final long address;
@@ -224,7 +286,7 @@ public final class GrabAllocator implements MemoryAllocator
         {
             if ( alignment <= 0 )
             {
-                throw new IllegalArgumentException( "Invalid alignment: " + alignment + ". Alignment must be positive." );
+                throw new IllegalArgumentException( new StringBuilder().append("Invalid alignment: ").append(alignment).append(". Alignment must be positive.").toString() );
             }
             long grabSize = Math.min( GRAB_SIZE, expectedMaxMemory );
             if ( bytes > GRAB_SIZE )
@@ -267,82 +329,20 @@ public final class GrabAllocator implements MemoryAllocator
         }
     }
 
-    private static Object globalCleaner()
-    {
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        try
-        {
-            Class<?> newCleaner = Class.forName( "java.lang.ref.Cleaner" );
-            MethodHandle createInstance = lookup.findStatic( newCleaner, "create", MethodType.methodType( newCleaner ) );
-            return createInstance.invoke();
-        }
-        catch ( Throwable throwable )
-        {
-            return null;
-        }
-    }
-
-    private static CleanerHandles findCleanerHandles()
-    {
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        return globalCleanerInstance == null ? findHandlesForOldCleaner( lookup ) : findHandlesForNewCleaner( lookup );
-    }
-
-    private static CleanerHandles findHandlesForNewCleaner( MethodHandles.Lookup lookup )
-    {
-        try
-        {
-            Objects.requireNonNull( globalCleanerInstance );
-            Class<?> newCleaner = globalCleanerInstance.getClass();
-            Class<?> newCleanable = Class.forName( "java.lang.ref.Cleaner$Cleanable" );
-            MethodHandle registerHandle = findCreationMethod( "register", lookup, newCleaner );
-            registerHandle = registerHandle.bindTo( globalCleanerInstance );
-            return CleanerHandles.of( registerHandle, findCleanMethod( lookup, newCleanable ) );
-        }
-        catch ( ClassNotFoundException | NoSuchMethodException | IllegalAccessException newCleanerException )
-        {
-            throw new LinkageError( "Unable to find cleaner methods.", newCleanerException );
-        }
-    }
-
-    private static CleanerHandles findHandlesForOldCleaner( MethodHandles.Lookup lookup )
-    {
-        try
-        {
-            Class<?> oldCleaner = Class.forName( "sun.misc.Cleaner" );
-            return CleanerHandles.of( findCreationMethod( "create", lookup, oldCleaner ), findCleanMethod( lookup, oldCleaner ) );
-        }
-        catch ( ClassNotFoundException | NoSuchMethodException | IllegalAccessException oldCleanerException )
-        {
-            throw new LinkageError( "Unable to find cleaner methods.", oldCleanerException );
-        }
-    }
-
-    private static MethodHandle findCleanMethod( MethodHandles.Lookup lookup, Class<?> cleaner ) throws IllegalAccessException, NoSuchMethodException
-    {
-        return lookup.unreflect( cleaner.getDeclaredMethod( "clean" ) );
-    }
-
-    private static MethodHandle findCreationMethod( String methodName, MethodHandles.Lookup lookup, Class<?> cleaner )
-            throws IllegalAccessException, NoSuchMethodException
-    {
-        return lookup.unreflect( cleaner.getDeclaredMethod( methodName, Object.class, Runnable.class ) );
-    }
-
     private static final class CleanerHandles
     {
         private final MethodHandle creator;
         private final MethodHandle cleaner;
 
-        static CleanerHandles of( MethodHandle creator, MethodHandle cleaner )
-        {
-            return new CleanerHandles( creator, cleaner );
-        }
-
         private CleanerHandles( MethodHandle creator, MethodHandle cleaner )
         {
             this.creator = creator;
             this.cleaner = cleaner;
+        }
+
+		static CleanerHandles of( MethodHandle creator, MethodHandle cleaner )
+        {
+            return new CleanerHandles( creator, cleaner );
         }
     }
 

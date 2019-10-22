@@ -38,7 +38,7 @@ public class NoSuchTransactionException extends MissingLogDataException
 
     private static String combinedMessage( long missingTxId, String additionalInformation )
     {
-        String result = "Unable to find transaction " + missingTxId + " in any of my logical logs";
+        String result = new StringBuilder().append("Unable to find transaction ").append(missingTxId).append(" in any of my logical logs").toString();
         if ( additionalInformation != null )
         {
             result += ": " + additionalInformation;

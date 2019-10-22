@@ -40,11 +40,10 @@ public class ConfiguredSpaceFillingCurveSettingsCache
     {
         this.maxBits = config.get( SpatialIndexSettings.space_filling_curve_max_bits );
         HashMap<CoordinateReferenceSystem,EnvelopeSettings> env = EnvelopeSettings.envelopeSettingsFromConfig( config );
-        for ( Map.Entry<CoordinateReferenceSystem,EnvelopeSettings> entry : env.entrySet() )
-        {
+        env.entrySet().forEach(entry -> {
             CoordinateReferenceSystem crs = entry.getKey();
             settings.put( crs, SpaceFillingCurveSettingsFactory.fromConfig( this.maxBits, entry.getValue() ) );
-        }
+        });
     }
 
     /**

@@ -70,62 +70,89 @@ public final class DateTimeValue extends TemporalValue<ZonedDateTime,DateTimeVal
             new DateTimeValue( ZonedDateTime.of( LocalDateTime.MIN, ZoneOffset.MIN ) );
     public static final DateTimeValue MAX_VALUE =
             new DateTimeValue( ZonedDateTime.of( LocalDateTime.MAX, ZoneOffset.MAX ) );
+	private static final String ZONE_NAME = "(?<zoneName>[a-zA-Z0-9~._ /+-]+)";
+	private static final Pattern PATTERN = Pattern.compile(
+            new StringBuilder().append(DATE_PATTERN).append("(?<time>T").append(TIME_PATTERN).append("(?:\\[").append(ZONE_NAME).append("\\])?")
+					.append(")?").toString(),
+            Pattern.CASE_INSENSITIVE );
+	private static final DateTimeFormatter ZONE_NAME_PARSER = new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .appendZoneRegionId()
+            .toFormatter();
+	private final ZonedDateTime value;
+	private final long epochSeconds;
 
-    public static DateTimeValue datetime( DateValue date, LocalTimeValue time, ZoneId zone )
+	private DateTimeValue( ZonedDateTime value )
+    {
+        ZoneId zone = value.getZone();
+        if ( zone instanceof ZoneOffset )
+        {
+            this.value = value;
+        }
+        else
+        {
+            // Do a 2-way lookup of the zone to make sure we only use the new name of renamed zones
+            ZoneId mappedZone = ZoneId.of( TimeZones.map( TimeZones.map( zone.getId() ) ) );
+            this.value = value.withZoneSameInstant( mappedZone );
+        }
+        this.epochSeconds = this.value.toEpochSecond();
+    }
+
+	public static DateTimeValue datetime( DateValue date, LocalTimeValue time, ZoneId zone )
     {
         return new DateTimeValue( ZonedDateTime.of( date.temporal(), time.temporal(), zone ) );
     }
 
-    public static DateTimeValue datetime( DateValue date, TimeValue time )
+	public static DateTimeValue datetime( DateValue date, TimeValue time )
     {
         OffsetTime t = time.temporal();
         return new DateTimeValue( ZonedDateTime.of( date.temporal(), t.toLocalTime(), t.getOffset() ) );
     }
 
-    public static DateTimeValue datetime(
+	public static DateTimeValue datetime(
             int year, int month, int day, int hour, int minute, int second, int nanoOfSecond, String zone )
     {
         return datetime( year, month, day, hour, minute, second, nanoOfSecond, parseZoneName( zone ) );
     }
 
-    public static DateTimeValue datetime(
+	public static DateTimeValue datetime(
             int year, int month, int day, int hour, int minute, int second, int nanoOfSecond, ZoneId zone )
     {
         return new DateTimeValue( assertValidArgument(
                 () -> ZonedDateTime.of( year, month, day, hour, minute, second, nanoOfSecond, zone ) ) );
     }
 
-    public static DateTimeValue datetime( long epochSecond, long nano, ZoneOffset zoneOffset )
+	public static DateTimeValue datetime( long epochSecond, long nano, ZoneOffset zoneOffset )
     {
         return new DateTimeValue( datetimeRaw( epochSecond, nano, zoneOffset ) );
     }
 
-    public static ZonedDateTime datetimeRaw( long epochSecond, long nano, ZoneOffset zoneOffset )
+	public static ZonedDateTime datetimeRaw( long epochSecond, long nano, ZoneOffset zoneOffset )
     {
         return datetimeRaw( epochSecond, nano, (ZoneId) zoneOffset );
     }
 
-    public static DateTimeValue datetime( ZonedDateTime datetime )
+	public static DateTimeValue datetime( ZonedDateTime datetime )
     {
         return new DateTimeValue( requireNonNull( datetime, "ZonedDateTime" ) );
     }
 
-    public static DateTimeValue datetime( OffsetDateTime datetime )
+	public static DateTimeValue datetime( OffsetDateTime datetime )
     {
         return new DateTimeValue( requireNonNull( datetime, "OffsetDateTime" ).toZonedDateTime() );
     }
 
-    public static DateTimeValue datetime( long epochSecondUTC, long nano, ZoneId zone )
+	public static DateTimeValue datetime( long epochSecondUTC, long nano, ZoneId zone )
     {
         return new DateTimeValue( datetimeRaw( epochSecondUTC, nano, zone ) );
     }
 
-    public static ZonedDateTime datetimeRaw( long epochSecondUTC, long nano, ZoneId zone )
+	public static ZonedDateTime datetimeRaw( long epochSecondUTC, long nano, ZoneId zone )
     {
         return assertValidArgument( () -> ofInstant( ofEpochSecond( epochSecondUTC, nano ), zone ) );
     }
 
-    public static DateTimeValue ofEpoch( IntegralValue epochSecondUTC, IntegralValue nano )
+	public static DateTimeValue ofEpoch( IntegralValue epochSecondUTC, IntegralValue nano )
     {
         long ns = safeCastIntegral( "nanosecond", nano, 0 );
         if ( ns < 0 || ns >= 1000_000_000 )
@@ -135,13 +162,13 @@ public final class DateTimeValue extends TemporalValue<ZonedDateTime,DateTimeVal
         return new DateTimeValue( datetimeRaw( epochSecondUTC.longValue(), ns, UTC ) );
     }
 
-    public static DateTimeValue ofEpochMillis( IntegralValue millisUTC )
+	public static DateTimeValue ofEpochMillis( IntegralValue millisUTC )
     {
         return new DateTimeValue(
                 assertValidArgument( () -> ofInstant( ofEpochMilli( millisUTC.longValue() ), UTC ) ) );
     }
 
-    public static DateTimeValue parse( CharSequence text, Supplier<ZoneId> defaultZone,
+	public static DateTimeValue parse( CharSequence text, Supplier<ZoneId> defaultZone,
             CSVHeaderInformation fieldsFromHeader )
     {
         if ( fieldsFromHeader != null )
@@ -156,42 +183,42 @@ public final class DateTimeValue extends TemporalValue<ZonedDateTime,DateTimeVal
         return parse( DateTimeValue.class, PATTERN, DateTimeValue::parse, text, defaultZone );
     }
 
-    public static DateTimeValue parse( CharSequence text, Supplier<ZoneId> defaultZone )
+	public static DateTimeValue parse( CharSequence text, Supplier<ZoneId> defaultZone )
     {
         return parse( DateTimeValue.class, PATTERN, DateTimeValue::parse, text, defaultZone );
     }
 
-    public static DateTimeValue parse( TextValue text, Supplier<ZoneId> defaultZone )
+	public static DateTimeValue parse( TextValue text, Supplier<ZoneId> defaultZone )
     {
         return parse( DateTimeValue.class, PATTERN, DateTimeValue::parse, text, defaultZone );
     }
 
-    public static DateTimeValue now( Clock clock )
+	public static DateTimeValue now( Clock clock )
     {
         return new DateTimeValue( ZonedDateTime.now( clock ) );
     }
 
-    public static DateTimeValue now( Clock clock, String timezone )
+	public static DateTimeValue now( Clock clock, String timezone )
     {
         return now( clock.withZone( parseZoneName( timezone ) ) );
     }
 
-    public static DateTimeValue now( Clock clock, Supplier<ZoneId> defaultZone )
+	public static DateTimeValue now( Clock clock, Supplier<ZoneId> defaultZone )
     {
         return now( clock.withZone( defaultZone.get() ) );
     }
 
-    public static DateTimeValue build( MapValue map, Supplier<ZoneId> defaultZone )
+	public static DateTimeValue build( MapValue map, Supplier<ZoneId> defaultZone )
     {
         return StructureBuilder.build( builder( defaultZone ), map );
     }
 
-    public static DateTimeValue select( AnyValue from, Supplier<ZoneId> defaultZone )
+	public static DateTimeValue select( AnyValue from, Supplier<ZoneId> defaultZone )
     {
         return builder( defaultZone ).selectDateTime( from );
     }
 
-    public static DateTimeValue truncate(
+	public static DateTimeValue truncate(
             TemporalUnit unit,
             TemporalValue input,
             MapValue fields,
@@ -235,7 +262,7 @@ public final class DateTimeValue extends TemporalValue<ZonedDateTime,DateTimeVal
         }
     }
 
-    static DateTimeBuilder<DateTimeValue> builder( Supplier<ZoneId> defaultZone )
+	static DateTimeBuilder<DateTimeValue> builder( Supplier<ZoneId> defaultZone )
     {
         return new DateTimeBuilder<DateTimeValue>( defaultZone )
         {
@@ -411,44 +438,25 @@ public final class DateTimeValue extends TemporalValue<ZonedDateTime,DateTimeVal
         };
     }
 
-    private final ZonedDateTime value;
-    private final long epochSeconds;
-
-    private DateTimeValue( ZonedDateTime value )
-    {
-        ZoneId zone = value.getZone();
-        if ( zone instanceof ZoneOffset )
-        {
-            this.value = value;
-        }
-        else
-        {
-            // Do a 2-way lookup of the zone to make sure we only use the new name of renamed zones
-            ZoneId mappedZone = ZoneId.of( TimeZones.map( TimeZones.map( zone.getId() ) ) );
-            this.value = value.withZoneSameInstant( mappedZone );
-        }
-        this.epochSeconds = this.value.toEpochSecond();
-    }
-
-    @Override
+	@Override
     ZonedDateTime temporal()
     {
         return value;
     }
 
-    @Override
+	@Override
     LocalDate getDatePart()
     {
         return value.toLocalDate();
     }
 
-    @Override
+	@Override
     LocalTime getLocalTimePart()
     {
         return value.toLocalTime();
     }
 
-    @Override
+	@Override
     OffsetTime getTimePart( Supplier<ZoneId> defaultZone )
     {
         ZoneOffset offset = value.getOffset();
@@ -456,75 +464,73 @@ public final class DateTimeValue extends TemporalValue<ZonedDateTime,DateTimeVal
         return OffsetTime.of( localTime, offset );
     }
 
-    @Override
+	@Override
     ZoneId getZoneId( Supplier<ZoneId> defaultZone )
     {
         return value.getZone();
     }
 
-    @Override
+	@Override
     ZoneId getZoneId()
     {
         return value.getZone();
     }
 
-    @Override
+	@Override
     ZoneOffset getZoneOffset()
     {
         return value.getOffset();
     }
 
-    @Override
+	@Override
     public boolean supportsTimeZone()
     {
         return true;
     }
 
-    @Override
+	@Override
     boolean hasTime()
     {
         return true;
     }
 
-    @Override
+	@Override
     public boolean equals( Value other )
     {
-        if ( other instanceof DateTimeValue )
-        {
-            ZonedDateTime that = ((DateTimeValue) other).value;
-            boolean res = value.toLocalDateTime().equals( that.toLocalDateTime() );
-            if ( res )
-            {
-                ZoneId thisZone = value.getZone();
-                ZoneId thatZone = that.getZone();
-                boolean thisIsOffset = thisZone instanceof ZoneOffset;
-                boolean thatIsOffset = thatZone instanceof ZoneOffset;
-                if ( thisIsOffset && thatIsOffset )
-                {
-                    res = thisZone.equals( thatZone );
-                }
-                else if ( !thisIsOffset && !thatIsOffset )
-                {
-                    res = TimeZones.map( thisZone.getId() ) == TimeZones.map( thatZone.getId() );
-                }
-                else
-                {
-                    res = false;
-                }
-            }
-            return res;
-
-        }
-        return false;
+        if (!(other instanceof DateTimeValue)) {
+			return false;
+		}
+		ZonedDateTime that = ((DateTimeValue) other).value;
+		boolean res = value.toLocalDateTime().equals( that.toLocalDateTime() );
+		if ( res )
+		{
+		    ZoneId thisZone = value.getZone();
+		    ZoneId thatZone = that.getZone();
+		    boolean thisIsOffset = thisZone instanceof ZoneOffset;
+		    boolean thatIsOffset = thatZone instanceof ZoneOffset;
+		    if ( thisIsOffset && thatIsOffset )
+		    {
+		        res = thisZone.equals( thatZone );
+		    }
+		    else if ( !thisIsOffset && !thatIsOffset )
+		    {
+		        res = TimeZones.map( thisZone.getId() ) == TimeZones.map( thatZone.getId() );
+		    }
+		    else
+		    {
+		        res = false;
+		    }
+		}
+		return res;
     }
 
-    @Override
+	@Override
     public <E extends Exception> void writeTo( ValueWriter<E> writer ) throws E
     {
         writer.writeDateTime( value );
     }
 
-    @Override
+	@Override
     int unsafeCompareTo( Value other )
     {
         DateTimeValue that = (DateTimeValue) other;
@@ -546,13 +552,11 @@ public final class DateTimeValue extends TemporalValue<ZonedDateTime,DateTimeVal
                     boolean thatIsOffset = thatZone instanceof ZoneOffset;
                     // non-named timezone (just offset) before named-time zones, alphabetically
                     cmp = Boolean.compare( thatIsOffset, thisIsOffset );
-                    if ( cmp == 0 )
-                    {
-                        if ( !thisIsOffset ) // => also means !thatIsOffset
-                        {
-                            cmp = compareNamedZonesWithMapping( thisZone, thatZone );
-                        }
-                    }
+                    boolean condition = cmp == 0 && !thisIsOffset;
+					// => also means !thatIsOffset
+					if ( condition ) {
+					    cmp = compareNamedZonesWithMapping( thisZone, thatZone );
+					}
                     if ( cmp == 0 )
                     {
                         cmp = value.getChronology().compareTo( that.value.getChronology() );
@@ -563,71 +567,62 @@ public final class DateTimeValue extends TemporalValue<ZonedDateTime,DateTimeVal
         return cmp;
     }
 
-    private int compareNamedZonesWithMapping( ZoneId thisZone, ZoneId thatZone )
+	private int compareNamedZonesWithMapping( ZoneId thisZone, ZoneId thatZone )
     {
         String thisZoneNormalized = TimeZones.map( TimeZones.map( thisZone.getId() ) );
         String thatZoneNormalized = TimeZones.map( TimeZones.map( thatZone.getId() ) );
         return thisZoneNormalized.compareTo( thatZoneNormalized );
     }
 
-    @Override
+	@Override
     public String prettyPrint()
     {
         return assertPrintable( () -> value.format( DateTimeFormatter.ISO_DATE_TIME ) );
     }
 
-    @Override
+	@Override
     public ValueGroup valueGroup()
     {
         return ValueGroup.ZONED_DATE_TIME;
     }
 
-    @Override
+	@Override
     protected int computeHash()
     {
         return value.toInstant().hashCode();
     }
 
-    @Override
+	@Override
     public String getTypeName()
     {
         return "DateTime";
     }
 
-    @Override
+	@Override
     public <T> T map( ValueMapper<T> mapper )
     {
         return mapper.mapDateTime( this );
     }
 
-    @Override
+	@Override
     public DateTimeValue add( DurationValue duration )
     {
         return replacement( assertValidArithmetic( () -> value.plus( duration ) ) );
     }
 
-    @Override
+	@Override
     public DateTimeValue sub( DurationValue duration )
     {
         return replacement( assertValidArithmetic( () -> value.minus( duration ) ) );
     }
 
-    @Override
+	@Override
     DateTimeValue replacement( ZonedDateTime datetime )
     {
         return value == datetime ? this : new DateTimeValue( datetime );
     }
 
-    private static final String ZONE_NAME = "(?<zoneName>[a-zA-Z0-9~._ /+-]+)";
-    private static final Pattern PATTERN = Pattern.compile(
-            DATE_PATTERN + "(?<time>T" + TIME_PATTERN + "(?:\\[" + ZONE_NAME + "\\])?" + ")?",
-            Pattern.CASE_INSENSITIVE );
-    private static final DateTimeFormatter ZONE_NAME_PARSER = new DateTimeFormatterBuilder()
-            .parseCaseInsensitive()
-            .appendZoneRegionId()
-            .toFormatter();
-
-    private static DateTimeValue parse( Matcher matcher, Supplier<ZoneId> defaultZone )
+	private static DateTimeValue parse( Matcher matcher, Supplier<ZoneId> defaultZone )
     {
         LocalDateTime local = LocalDateTime.of( parseDate( matcher ), optTime( matcher ) );
         String zoneName = matcher.group( "zoneName" );
@@ -664,7 +659,7 @@ public final class DateTimeValue extends TemporalValue<ZonedDateTime,DateTimeVal
         return new DateTimeValue( ZonedDateTime.of( local, zone ) );
     }
 
-    static ZoneId parseZoneName( String zoneName )
+	static ZoneId parseZoneName( String zoneName )
     {
         ZoneId parsedName;
         try
@@ -679,7 +674,7 @@ public final class DateTimeValue extends TemporalValue<ZonedDateTime,DateTimeVal
         return parsedName;
     }
 
-    public static ZoneId parseZoneOffsetOrZoneName( String zoneName )
+	public static ZoneId parseZoneOffsetOrZoneName( String zoneName )
     {
         Matcher matcher = OFFSET.matcher( zoneName );
         if ( matcher.matches() )

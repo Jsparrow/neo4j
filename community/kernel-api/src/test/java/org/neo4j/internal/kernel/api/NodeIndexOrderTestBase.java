@@ -48,17 +48,16 @@ public abstract class NodeIndexOrderTestBase<G extends KernelAPIWriteTestSupport
 {
     @Rule
     public ExpectedException exception = ExpectedException.none();
+	@Parameterized.Parameter
+    public IndexOrder indexOrder;
 
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static Iterable<Object[]> data()
     {
         return Arrays.asList( new Object[][]{{IndexOrder.ASCENDING}} );
     }
 
-    @Parameterized.Parameter
-    public IndexOrder indexOrder;
-
-    @Test
+	@Test
     public void shouldRangeScanInOrder() throws Exception
     {
         List<Pair<Long,Value>> expected = new ArrayList<>();
@@ -100,7 +99,7 @@ public abstract class NodeIndexOrderTestBase<G extends KernelAPIWriteTestSupport
         }
     }
 
-    @Test
+	@Test
     public void shouldPrefixScanInOrder() throws Exception
     {
         List<Pair<Long,Value>> expected = new ArrayList<>();
@@ -142,7 +141,7 @@ public abstract class NodeIndexOrderTestBase<G extends KernelAPIWriteTestSupport
         }
     }
 
-    private void assertResultsInOrder( List<Pair<Long,Value>> expected, NodeValueIndexCursor cursor )
+	private void assertResultsInOrder( List<Pair<Long,Value>> expected, NodeValueIndexCursor cursor )
     {
         Comparator<Pair<Long,Value>> comparator = indexOrder == IndexOrder.ASCENDING ? ( a, b ) -> Values.COMPARATOR.compare( a.other(), b.other() )
                                                                                      : ( a, b ) -> Values.COMPARATOR.compare( b.other(), a.other() );
@@ -164,7 +163,7 @@ public abstract class NodeIndexOrderTestBase<G extends KernelAPIWriteTestSupport
         assertFalse( cursor.next() );
     }
 
-    private void createIndex()
+	private void createIndex()
     {
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
@@ -178,7 +177,7 @@ public abstract class NodeIndexOrderTestBase<G extends KernelAPIWriteTestSupport
         }
     }
 
-    private Pair<Long,Value> nodeWithProp( Transaction tx, Object value ) throws Exception
+	private Pair<Long,Value> nodeWithProp( Transaction tx, Object value ) throws Exception
     {
         Write write = tx.dataWrite();
         long node = write.nodeCreate();

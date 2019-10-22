@@ -48,7 +48,7 @@ class Pinger
 
         Map<String, String> usageDataMap = collector.getUdcParams();
 
-        StringBuilder uri = new StringBuilder( "http://" + address + "/" + "?" );
+        StringBuilder uri = new StringBuilder( new StringBuilder().append("http://").append(address).append("/").append("?").toString() );
 
         for ( Map.Entry<String,String> entry : usageDataMap.entrySet() )
         {

@@ -86,28 +86,6 @@ public class DijkstraDirectionTest extends Neo4jAlgoTestCase
         dijkstra.getCost();
     }
 
-    // This saves the first direction observed
-    class directionSavingCostEvaluator implements CostEvaluator<Double>
-    {
-        HashMap<Relationship, Direction> dirs;
-
-        directionSavingCostEvaluator( HashMap<Relationship,Direction> dirs )
-        {
-            super();
-            this.dirs = dirs;
-        }
-
-        @Override
-        public Double getCost( Relationship relationship, Direction direction )
-        {
-            if ( !dirs.containsKey( relationship ) )
-            {
-                dirs.put( relationship, direction );
-            }
-            return 1.0;
-        }
-    }
-
     @Test
     public void testDijkstraDirection3()
     {
@@ -130,5 +108,26 @@ public class DijkstraDirectionTest extends Neo4jAlgoTestCase
         assertEquals( Direction.OUTGOING, dirs.get( r5 ) );
         assertEquals( Direction.INCOMING, dirs.get( r6 ) );
         assertEquals( Direction.OUTGOING, dirs.get( r7 ) );
+    }
+
+	// This saves the first direction observed
+    class directionSavingCostEvaluator implements CostEvaluator<Double>
+    {
+        HashMap<Relationship, Direction> dirs;
+
+        directionSavingCostEvaluator( HashMap<Relationship,Direction> dirs )
+        {
+            this.dirs = dirs;
+        }
+
+        @Override
+        public Double getCost( Relationship relationship, Direction direction )
+        {
+            if ( !dirs.containsKey( relationship ) )
+            {
+                dirs.put( relationship, direction );
+            }
+            return 1.0;
+        }
     }
 }

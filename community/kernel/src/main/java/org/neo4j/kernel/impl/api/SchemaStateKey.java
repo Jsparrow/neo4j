@@ -28,19 +28,18 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SchemaStateKey
 {
     private static AtomicLong keyId = new AtomicLong();
-    public static SchemaStateKey newKey()
-    {
-        return new SchemaStateKey( keyId.getAndIncrement() );
-    }
-
-    public final long id;
-
-    private SchemaStateKey( long id )
+	public final long id;
+	private SchemaStateKey( long id )
     {
         this.id = id;
     }
 
-    @Override
+	public static SchemaStateKey newKey()
+    {
+        return new SchemaStateKey( keyId.getAndIncrement() );
+    }
+
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -55,15 +54,15 @@ public class SchemaStateKey
         return id == that.id;
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return Long.hashCode( id );
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return "SchemaStateKey(" + id + ")";
+        return new StringBuilder().append("SchemaStateKey(").append(id).append(")").toString();
     }
 }

@@ -47,9 +47,7 @@ public class HexPrinterTest
         // THEN
         out.flush();
         assertEquals( format(
-                "00 01 02 03 04 05 06 07    08 09 0A 0B 0C 0D 0E 0F    " +
-                "10 11 12 13 14 15 16 17    18 19 1A 1B 1C 1D 1E 1F%n" +
-                "20 21 22 23 24 25 26 27" ),
+                new StringBuilder().append("00 01 02 03 04 05 06 07    08 09 0A 0B 0C 0D 0E 0F    ").append("10 11 12 13 14 15 16 17    18 19 1A 1B 1C 1D 1E 1F%n").append("20 21 22 23 24 25 26 27").toString() ),
                 outStream.toString() );
     }
 
@@ -70,9 +68,7 @@ public class HexPrinterTest
         // THEN
         out.flush();
         assertEquals( format(
-                "00 01 02 03, 04 05 06 07, 08 09 0A 0B%n" +
-                "0C 0D 0E 0F, 10 11 12 13, 14 15 16 17%n" +
-                "18 19 1A 1B, 1C 1D" ),
+                new StringBuilder().append("00 01 02 03, 04 05 06 07, 08 09 0A 0B%n").append("0C 0D 0E 0F, 10 11 12 13, 14 15 16 17%n").append("18 19 1A 1B, 1C 1D").toString() ),
                 outStream.toString() );
     }
 
@@ -93,9 +89,7 @@ public class HexPrinterTest
         // THEN
         out.flush();
         assertEquals( format(
-                "00 01 02 03 04 05 06 07 08 09 0A 0B%n" +
-                "0C 0D 0E 0F 10 11 12 13 14 15 16 17%n" +
-                "18 19 1A 1B 1C 1D" ),
+                new StringBuilder().append("00 01 02 03 04 05 06 07 08 09 0A 0B%n").append("0C 0D 0E 0F 10 11 12 13 14 15 16 17%n").append("18 19 1A 1B 1C 1D").toString() ),
                 outStream.toString() );
     }
 
@@ -116,11 +110,7 @@ public class HexPrinterTest
         // THEN
         out.flush();
         assertEquals( format(
-                "[0x00000]" +
-                "00 01 02 03 04 05 06 07    08 09 0A 0B 0C 0D 0E 0F    " +
-                "10 11 12 13 14 15 16 17    18 19 1A 1B 1C 1D 1E 1F%n" +
-                "[0x00001]" +
-                "20 21 22 23 24 25 26 27" ),
+                new StringBuilder().append("[0x00000]").append("00 01 02 03 04 05 06 07    08 09 0A 0B 0C 0D 0E 0F    ").append("10 11 12 13 14 15 16 17    18 19 1A 1B 1C 1D 1E 1F%n").append("[0x00001]").append("20 21 22 23 24 25 26 27").toString() ),
                 outStream.toString() );
     }
 
@@ -141,11 +131,7 @@ public class HexPrinterTest
         // THEN
         out.flush();
         assertEquals( format(
-                "@ 0xA8: " +
-                "00 01 02 03 04 05 06 07    08 09 0A 0B 0C 0D 0E 0F    " +
-                "10 11 12 13 14 15 16 17    18 19 1A 1B 1C 1D 1E 1F%n" +
-                "@ 0xA9: " +
-                "20 21 22 23 24 25 26 27"  ),
+                new StringBuilder().append("@ 0xA8: ").append("00 01 02 03 04 05 06 07    08 09 0A 0B 0C 0D 0E 0F    ").append("10 11 12 13 14 15 16 17    18 19 1A 1B 1C 1D 1E 1F%n").append("@ 0xA9: ").append("20 21 22 23 24 25 26 27").toString()  ),
                 outStream.toString() );
     }
 

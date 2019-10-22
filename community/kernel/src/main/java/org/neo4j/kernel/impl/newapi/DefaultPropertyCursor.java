@@ -56,11 +56,11 @@ public class DefaultPropertyCursor implements PropertyCursor
         init( reference, read, assertOpen );
 
         // Transaction state
-        if ( read.hasTxStateWithChanges() )
-        {
-            this.propertiesState = read.txState().getNodeState( nodeReference );
-            this.txStateChangedProperties = this.propertiesState.addedAndChangedProperties();
-        }
+		if (!read.hasTxStateWithChanges()) {
+			return;
+		}
+		this.propertiesState = read.txState().getNodeState( nodeReference );
+		this.txStateChangedProperties = this.propertiesState.addedAndChangedProperties();
     }
 
     void initRelationship( long relationshipReference, long reference, Read read, AssertOpen assertOpen )
@@ -70,11 +70,11 @@ public class DefaultPropertyCursor implements PropertyCursor
         init( reference, read, assertOpen );
 
         // Transaction state
-        if ( read.hasTxStateWithChanges() )
-        {
-            this.propertiesState = read.txState().getRelationshipState( relationshipReference );
-            this.txStateChangedProperties = this.propertiesState.addedAndChangedProperties();
-        }
+		if (!read.hasTxStateWithChanges()) {
+			return;
+		}
+		this.propertiesState = read.txState().getRelationshipState( relationshipReference );
+		this.txStateChangedProperties = this.propertiesState.addedAndChangedProperties();
     }
 
     void initGraph( long reference, Read read, AssertOpen assertOpen )
@@ -82,14 +82,14 @@ public class DefaultPropertyCursor implements PropertyCursor
         init( reference, read, assertOpen );
 
         // Transaction state
-        if ( read.hasTxStateWithChanges() )
-        {
-            this.propertiesState = read.txState().getGraphState( );
-            if ( this.propertiesState != null )
-            {
-                this.txStateChangedProperties = this.propertiesState.addedAndChangedProperties();
-            }
-        }
+		if (!read.hasTxStateWithChanges()) {
+			return;
+		}
+		this.propertiesState = read.txState().getGraphState( );
+		if ( this.propertiesState != null )
+		{
+		    this.txStateChangedProperties = this.propertiesState.addedAndChangedProperties();
+		}
     }
 
     private void init( long reference, Read read, AssertOpen assertOpen )
@@ -145,16 +145,15 @@ public class DefaultPropertyCursor implements PropertyCursor
     @Override
     public void close()
     {
-        if ( !isClosed() )
-        {
-            propertiesState = null;
-            txStateChangedProperties = null;
-            txStateValue = null;
-            read = null;
-            storeCursor.reset();
-
-            pool.accept( this );
-        }
+        if (isClosed()) {
+			return;
+		}
+		propertiesState = null;
+		txStateChangedProperties = null;
+		txStateValue = null;
+		read = null;
+		storeCursor.reset();
+		pool.accept( this );
     }
 
     @Override
@@ -308,8 +307,7 @@ public class DefaultPropertyCursor implements PropertyCursor
         }
         else
         {
-            return "PropertyCursor[id=" + propertyKey() +
-                   ", " + storeCursor.toString() + " ]";
+            return new StringBuilder().append("PropertyCursor[id=").append(propertyKey()).append(", ").append(storeCursor.toString()).append(" ]").toString();
         }
     }
 

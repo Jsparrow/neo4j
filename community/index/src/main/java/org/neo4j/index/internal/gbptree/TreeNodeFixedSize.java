@@ -338,13 +338,12 @@ class TreeNodeFixedSize<KEY,VALUE> extends TreeNode<KEY,VALUE>
     @Override
     int canRebalanceLeaves( PageCursor leftCursor, int leftKeyCount, PageCursor rightCursor, int rightKeyCount )
     {
-        if ( leftKeyCount + rightKeyCount >= leafMaxKeyCount() )
-        {
-            int totalKeyCount = rightKeyCount + leftKeyCount;
-            int moveFromPosition = totalKeyCount / 2;
-            return leftKeyCount - moveFromPosition;
-        }
-        return -1;
+        if (!(leftKeyCount + rightKeyCount >= leafMaxKeyCount())) {
+			return -1;
+		}
+		int totalKeyCount = rightKeyCount + leftKeyCount;
+		int moveFromPosition = totalKeyCount / 2;
+		return leftKeyCount - moveFromPosition;
     }
 
     @Override
@@ -591,7 +590,7 @@ class TreeNodeFixedSize<KEY,VALUE> extends TreeNode<KEY,VALUE>
     @Override
     public String toString()
     {
-        return "TreeNodeFixedSize[pageSize:" + pageSize + ", internalMax:" + internalMaxKeyCount() + ", leafMax:" + leafMaxKeyCount() + ", " +
-                "keySize:" + keySize() + ", valueSize:" + valueSize + "]";
+        return new StringBuilder().append("TreeNodeFixedSize[pageSize:").append(pageSize).append(", internalMax:").append(internalMaxKeyCount()).append(", leafMax:").append(leafMaxKeyCount())
+				.append(", ").append("keySize:").append(keySize()).append(", valueSize:").append(valueSize).append("]").toString();
     }
 }

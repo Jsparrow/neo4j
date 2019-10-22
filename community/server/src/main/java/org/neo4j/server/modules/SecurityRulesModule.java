@@ -49,18 +49,16 @@ public class SecurityRulesModule implements ServerModule
     public void start()
     {
         Iterable<SecurityRule> securityRules = getSecurityRules();
-        if ( Iterables.count( securityRules ) > 0 )
-        {
-            mountedFilter = new SecurityFilter( securityRules );
-
-            webServer.addFilter( mountedFilter, "/*" );
-
-            for ( SecurityRule rule : securityRules )
-            {
-                log.info( "Security rule [%s] installed on server",
-                        rule.getClass().getCanonicalName() );
-            }
-        }
+        if (Iterables.count( securityRules ) <= 0) {
+			return;
+		}
+		mountedFilter = new SecurityFilter( securityRules );
+		webServer.addFilter( mountedFilter, "/*" );
+		for ( SecurityRule rule : securityRules )
+		{
+		    log.info( "Security rule [%s] installed on server",
+		            rule.getClass().getCanonicalName() );
+		}
     }
 
     @Override

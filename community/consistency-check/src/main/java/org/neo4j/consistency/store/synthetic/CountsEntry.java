@@ -52,7 +52,7 @@ public class CountsEntry extends AbstractBaseRecord
     @Override
     public String toString()
     {
-        return "CountsEntry[" + key + ": " + count + "]";
+        return new StringBuilder().append("CountsEntry[").append(key).append(": ").append(count).append("]").toString();
     }
 
     @Override

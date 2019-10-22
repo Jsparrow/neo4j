@@ -90,14 +90,14 @@ public abstract class LonelyProcessingStep extends AbstractStep<Void>
     protected void progress( long amount )
     {
         batch += amount;
-        if ( batch >= batchSize )
-        {
-            int batches = batch / batchSize;
-            batch %= batchSize;
-            doneBatches.addAndGet( batches );
-            long time = nanoTime();
-            totalProcessingTime.add( time - lastProcessingTimestamp );
-            lastProcessingTimestamp = time;
-        }
+        if (batch < batchSize) {
+			return;
+		}
+		int batches = batch / batchSize;
+		batch %= batchSize;
+		doneBatches.addAndGet( batches );
+		long time = nanoTime();
+		totalProcessingTime.add( time - lastProcessingTimestamp );
+		lastProcessingTimestamp = time;
     }
 }

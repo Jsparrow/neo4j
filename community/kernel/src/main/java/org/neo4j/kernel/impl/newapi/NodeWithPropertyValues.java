@@ -53,7 +53,7 @@ public class NodeWithPropertyValues
     @Override
     public String toString()
     {
-        return "NodeWithPropertyValues{" + "nodeId=" + nodeId + ", values=" + Arrays.toString( values ) + '}';
+        return new StringBuilder().append("NodeWithPropertyValues{").append("nodeId=").append(nodeId).append(", values=").append(Arrays.toString( values )).append('}').toString();
     }
 
     @Override

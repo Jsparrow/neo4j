@@ -59,49 +59,53 @@ class NativeLabelScanWriter implements LabelScanWriter
     private static final Comparator<NodeLabelUpdate> UPDATE_SORTER =
             Comparator.comparingLong( NodeLabelUpdate::getNodeId );
 
-    /**
+	static WriteMonitor EMPTY = new WriteMonitor()
+    {
+    };
+
+	/**
      * {@link ValueMerger} used for adding label->node mappings, see {@link LabelScanValue#add(LabelScanValue)}.
      */
     private final ValueMerger<LabelScanKey,LabelScanValue> addMerger;
 
-    /**
+	/**
      * {@link ValueMerger} used for removing label->node mappings, see {@link LabelScanValue#remove(LabelScanValue)}.
      */
     private final ValueMerger<LabelScanKey,LabelScanValue> removeMerger;
 
-    private final WriteMonitor monitor;
+	private final WriteMonitor monitor;
 
-    /**
+	/**
      * {@link Writer} acquired when acquiring this {@link NativeLabelScanWriter},
      * acquired from {@link GBPTree#writer()}.
      */
     private Writer<LabelScanKey,LabelScanValue> writer;
 
-    /**
+	/**
      * Instance of {@link LabelScanKey} acting as place to read keys into and also to set for each applied update.
      */
     private final LabelScanKey key = new LabelScanKey();
 
-    /**
+	/**
      * Instance of {@link LabelScanValue} acting as place to read values into and also to update
      * for each applied update.
      */
     private final LabelScanValue value = new LabelScanValue();
 
-    /**
+	/**
      * Batch currently building up as {@link #write(NodeLabelUpdate) updates} come in. Cursor for where
      * to place new updates is {@link #pendingUpdatesCursor}. Length of this queue is decided in constructor
      * and defines the maximum batch size.
      */
     private final NodeLabelUpdate[] pendingUpdates;
 
-    /**
+	/**
      * Cursor into {@link #pendingUpdates}, where to place new {@link #write(NodeLabelUpdate) updates}.
      * When full the batch is applied and this cursor reset to {@code 0}.
      */
     private int pendingUpdatesCursor;
 
-    /**
+	/**
      * There are two levels of batching, one for {@link NodeLabelUpdate updates} and one when applying.
      * This variable helps keeping track of the second level where updates to the actual {@link GBPTree}
      * are batched per node id range, i.e. to add several labelId->nodeId mappings falling into the same
@@ -110,7 +114,7 @@ class NativeLabelScanWriter implements LabelScanWriter
      */
     private boolean addition;
 
-    /**
+	/**
      * When applying {@link NodeLabelUpdate updates} (when batch full or in {@link #close()}), updates are
      * applied labelId by labelId. All updates are scanned through multiple times, with one label in mind at a time.
      * For each round the current round tries to figure out which is the closest higher labelId to apply
@@ -118,50 +122,7 @@ class NativeLabelScanWriter implements LabelScanWriter
      */
     private long lowestLabelId;
 
-    interface WriteMonitor
-    {
-        default void range( long range, int labelId )
-        {
-        }
-
-        default void prepareAdd( long txId, int offset )
-        {
-        }
-
-        default void prepareRemove( long txId, int offset )
-        {
-        }
-
-        default void mergeAdd( LabelScanValue existingValue, LabelScanValue newValue )
-        {
-        }
-
-        default void mergeRemove( LabelScanValue existingValue, LabelScanValue newValue )
-        {
-        }
-
-        default void flushPendingUpdates()
-        {
-        }
-
-        default void writeSessionEnded()
-        {
-        }
-
-        default void force()
-        {
-        }
-
-        default void close()
-        {
-        }
-    }
-
-    static WriteMonitor EMPTY = new WriteMonitor()
-    {
-    };
-
-    NativeLabelScanWriter( int batchSize, WriteMonitor monitor )
+	NativeLabelScanWriter( int batchSize, WriteMonitor monitor )
     {
         this.pendingUpdates = new NodeLabelUpdate[batchSize];
         this.addMerger = ( existingKey, newKey, existingValue, newValue ) ->
@@ -177,7 +138,7 @@ class NativeLabelScanWriter implements LabelScanWriter
         this.monitor = monitor;
     }
 
-    NativeLabelScanWriter initialize( Writer<LabelScanKey,LabelScanValue> writer )
+	NativeLabelScanWriter initialize( Writer<LabelScanKey,LabelScanValue> writer )
     {
         this.writer = writer;
         this.pendingUpdatesCursor = 0;
@@ -186,7 +147,7 @@ class NativeLabelScanWriter implements LabelScanWriter
         return this;
     }
 
-    /**
+	/**
      * Queues a {@link NodeLabelUpdate} to this writer for applying when batch gets full,
      * or when {@link #close() closing}.
      */
@@ -204,7 +165,7 @@ class NativeLabelScanWriter implements LabelScanWriter
         checkNextLabelId( update.getLabelsAfter() );
     }
 
-    private void checkNextLabelId( long[] labels )
+	private void checkNextLabelId( long[] labels )
     {
         if ( labels.length > 0 && labels[0] != -1 )
         {
@@ -212,7 +173,7 @@ class NativeLabelScanWriter implements LabelScanWriter
         }
     }
 
-    private void flushPendingChanges() throws IOException
+	private void flushPendingChanges() throws IOException
     {
         Arrays.sort( pendingUpdates, 0, pendingUpdatesCursor, UPDATE_SORTER );
         monitor.flushPendingUpdates();
@@ -235,7 +196,7 @@ class NativeLabelScanWriter implements LabelScanWriter
         pendingUpdatesCursor = 0;
     }
 
-    private long extractChange( long[] labels, long currentLabelId, long nodeId, long nextLabelId, boolean addition, long txId )
+	private long extractChange( long[] labels, long currentLabelId, long nodeId, long nextLabelId, boolean addition, long txId )
             throws IOException
     {
         long foundNextLabelId = nextLabelId;
@@ -278,7 +239,7 @@ class NativeLabelScanWriter implements LabelScanWriter
         return foundNextLabelId;
     }
 
-    private void change( long currentLabelId, long nodeId, boolean add, long txId ) throws IOException
+	private void change( long currentLabelId, long nodeId, boolean add, long txId ) throws IOException
     {
         int labelId = toIntExact( currentLabelId );
         long idRange = rangeOf( nodeId );
@@ -305,24 +266,24 @@ class NativeLabelScanWriter implements LabelScanWriter
         }
     }
 
-    private void flushPendingRange() throws IOException
+	private void flushPendingRange() throws IOException
     {
-        if ( value.bits != 0 )
-        {
-            // There are changes in the current range, flush them
-            writer.merge( key, value, addition ? addMerger : removeMerger );
-            // TODO: after a remove we could check if the tree value is empty and if so remove it from the index
-            // hmm, or perhaps that could be a feature of ValueAmender?
-            value.clear();
-        }
+        if (value.bits == 0) {
+			return;
+		}
+		// There are changes in the current range, flush them
+		writer.merge( key, value, addition ? addMerger : removeMerger );
+		// TODO: after a remove we could check if the tree value is empty and if so remove it from the index
+		// hmm, or perhaps that could be a feature of ValueAmender?
+		value.clear();
     }
 
-    static long rangeOf( long nodeId )
+	static long rangeOf( long nodeId )
     {
         return nodeId / RANGE_SIZE;
     }
 
-    /**
+	/**
      * Applies {@link #write(NodeLabelUpdate) queued updates} which has not not yet been applied.
      * After this call no more {@link #write(NodeLabelUpdate)} can be applied.
      */
@@ -337,6 +298,45 @@ class NativeLabelScanWriter implements LabelScanWriter
         finally
         {
             writer.close();
+        }
+    }
+
+    interface WriteMonitor
+    {
+        default void range( long range, int labelId )
+        {
+        }
+
+        default void prepareAdd( long txId, int offset )
+        {
+        }
+
+        default void prepareRemove( long txId, int offset )
+        {
+        }
+
+        default void mergeAdd( LabelScanValue existingValue, LabelScanValue newValue )
+        {
+        }
+
+        default void mergeRemove( LabelScanValue existingValue, LabelScanValue newValue )
+        {
+        }
+
+        default void flushPendingUpdates()
+        {
+        }
+
+        default void writeSessionEnded()
+        {
+        }
+
+        default void force()
+        {
+        }
+
+        default void close()
+        {
         }
     }
 }

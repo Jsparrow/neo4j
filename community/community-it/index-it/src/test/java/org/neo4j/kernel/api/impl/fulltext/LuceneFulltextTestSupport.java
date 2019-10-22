@@ -173,12 +173,12 @@ public class LuceneFulltextTestSupport
             long next = result.next().entityId();
             assertTrue( format( "Result returned node id %d, expected one of %s", next, Arrays.toString( ids ) ), set.remove( next ) );
         }
-        if ( !set.isEmpty() )
-        {
-            List<Long> list = new ArrayList<>();
-            set.visitKeys( k -> !list.add( k ) );
-            fail( "Number of results differ from expected. " + set.size() + " IDs were not found in the result: " + list );
-        }
+        if (set.isEmpty()) {
+			return;
+		}
+		List<Long> list = new ArrayList<>();
+		set.visitKeys( k -> !list.add( k ) );
+		fail( new StringBuilder().append("Number of results differ from expected. ").append(set.size()).append(" IDs were not found in the result: ").append(list).toString() );
     }
 
     private static void assertQueryResultsMatchInOrder( ScoreEntityIterator result, long[] ids )

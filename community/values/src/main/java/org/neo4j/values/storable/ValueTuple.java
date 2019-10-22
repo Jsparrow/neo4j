@@ -26,14 +26,39 @@ import java.util.Comparator;
  */
 public class ValueTuple
 {
-    public static ValueTuple of( Value... values )
+    public static final Comparator<ValueTuple> COMPARATOR = ( left, right ) ->
+    {
+        if ( left.values.length != right.values.length )
+        {
+            throw new IllegalStateException( "Comparing two ValueTuples of different lengths!" );
+        }
+
+        int compare = 0;
+        for ( int i = 0; i < left.values.length; i++ )
+        {
+            compare = Values.COMPARATOR.compare( left.valueAt( i ), right.valueAt( i ) );
+            if ( compare != 0 )
+            {
+                return compare;
+            }
+        }
+        return compare;
+    };
+	private final Value[] values;
+
+	protected ValueTuple( Value[] values )
+    {
+        this.values = values;
+    }
+
+	public static ValueTuple of( Value... values )
     {
         assert values.length > 0 : "Empty ValueTuple is not allowed";
         assert noNulls( values );
         return new ValueTuple( values );
     }
 
-    public static ValueTuple of( Object... objects )
+	public static ValueTuple of( Object... objects )
     {
         assert objects.length > 0 : "Empty ValueTuple is not allowed";
         assert noNulls( objects );
@@ -45,24 +70,17 @@ public class ValueTuple
         return new ValueTuple( values );
     }
 
-    private final Value[] values;
-
-    protected ValueTuple( Value[] values )
-    {
-        this.values = values;
-    }
-
-    public int size()
+	public int size()
     {
         return values.length;
     }
 
-    public Value valueAt( int offset )
+	public Value valueAt( int offset )
     {
         return values[offset];
     }
 
-    /**
+	/**
      * WARNING: this method does not create a defensive copy. Do not modify the returned array.
      */
     public Value[] getValues()
@@ -70,7 +88,7 @@ public class ValueTuple
         return values;
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -99,7 +117,7 @@ public class ValueTuple
         return true;
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         int result = 1;
@@ -110,13 +128,13 @@ public class ValueTuple
         return result;
     }
 
-    public Value getOnlyValue()
+	public Value getOnlyValue()
     {
         assert values.length == 1 : "Assumed single value tuple, but had " + values.length;
         return values[0];
     }
 
-    @Override
+	@Override
     public String toString()
     {
         StringBuilder sb = new StringBuilder();
@@ -131,7 +149,7 @@ public class ValueTuple
         return sb.toString();
     }
 
-    private static boolean noNulls( Object[] values )
+	private static boolean noNulls( Object[] values )
     {
         for ( Object v : values )
         {
@@ -142,23 +160,4 @@ public class ValueTuple
         }
         return true;
     }
-
-    public static final Comparator<ValueTuple> COMPARATOR = ( left, right ) ->
-    {
-        if ( left.values.length != right.values.length )
-        {
-            throw new IllegalStateException( "Comparing two ValueTuples of different lengths!" );
-        }
-
-        int compare = 0;
-        for ( int i = 0; i < left.values.length; i++ )
-        {
-            compare = Values.COMPARATOR.compare( left.valueAt( i ), right.valueAt( i ) );
-            if ( compare != 0 )
-            {
-                return compare;
-            }
-        }
-        return compare;
-    };
 }

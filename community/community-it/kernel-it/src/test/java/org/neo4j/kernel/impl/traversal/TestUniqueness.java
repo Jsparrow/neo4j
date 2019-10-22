@@ -67,7 +67,7 @@ public class TestUniqueness extends TraversalTestBase
 
             assertEquals( "a,e", pathRepresentation.represent( paths[1] ) );
             String levelTwoPathRepresentation = pathRepresentation.represent( paths[2] );
-            assertTrue( levelTwoPathRepresentation.equals( "a,b,e" ) || levelTwoPathRepresentation.equals( "a,d,e" ) );
+            assertTrue( "a,b,e".equals( levelTwoPathRepresentation ) || "a,d,e".equals( levelTwoPathRepresentation ) );
             assertEquals( "a,c,b,e", pathRepresentation.represent( paths[3] ) );
             tx.success();
         }

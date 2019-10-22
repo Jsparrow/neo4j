@@ -45,7 +45,47 @@ import static org.neo4j.unsafe.impl.batchimport.cache.idmapping.string.TrackerFa
  */
 public class IdMappers
 {
-    private static class ActualIdMapper implements IdMapper
+    private IdMappers()
+    {
+    }
+
+	/**
+     * An {@link IdMapper} that doesn't touch the input ids, but just asserts that node ids arrive in ascending order.
+     * This is for advanced usage and puts constraints on the input in that all node ids given as input
+     * must be valid. There will not be further checks, other than that for order of the ids.
+     */
+    public static IdMapper actual()
+    {
+        return new ActualIdMapper();
+    }
+
+	/**
+     * An {@link IdMapper} capable of mapping {@link String strings} to long ids.
+     *
+     * @param cacheFactory {@link NumberArrayFactory} for allocating memory for the cache used by this index.
+     * @param groups {@link Groups} containing all id groups.
+     * @return {@link IdMapper} for when input ids are strings.
+     */
+    public static IdMapper strings( NumberArrayFactory cacheFactory, Groups groups )
+    {
+        return new EncodingIdMapper( cacheFactory, new StringEncoder(), Radix.STRING, NO_MONITOR, dynamic(), groups,
+                numberOfCollisions -> new StringCollisionValues( cacheFactory, numberOfCollisions ) );
+    }
+
+	/**
+     * An {@link IdMapper} capable of mapping {@link Long arbitrary longs} to long ids.
+     *
+     * @param cacheFactory {@link NumberArrayFactory} for allocating memory for the cache used by this index.
+     * @param groups {@link Groups} containing all id groups.
+     * @return {@link IdMapper} for when input ids are numbers.
+     */
+    public static IdMapper longs( NumberArrayFactory cacheFactory, Groups groups )
+    {
+        return new EncodingIdMapper( cacheFactory, new LongEncoder(), Radix.LONG, NO_MONITOR, dynamic(), groups,
+                numberOfCollisions -> new LongCollisionValues( cacheFactory, numberOfCollisions ) );
+    }
+
+	private static class ActualIdMapper implements IdMapper
     {
         @Override
         public void put( Object inputId, long actualId, Group group )
@@ -96,45 +136,5 @@ public class IdMappers
         {
             return ImmutableEmptyLongIterator.INSTANCE;
         }
-    }
-
-    private IdMappers()
-    {
-    }
-
-    /**
-     * An {@link IdMapper} that doesn't touch the input ids, but just asserts that node ids arrive in ascending order.
-     * This is for advanced usage and puts constraints on the input in that all node ids given as input
-     * must be valid. There will not be further checks, other than that for order of the ids.
-     */
-    public static IdMapper actual()
-    {
-        return new ActualIdMapper();
-    }
-
-    /**
-     * An {@link IdMapper} capable of mapping {@link String strings} to long ids.
-     *
-     * @param cacheFactory {@link NumberArrayFactory} for allocating memory for the cache used by this index.
-     * @param groups {@link Groups} containing all id groups.
-     * @return {@link IdMapper} for when input ids are strings.
-     */
-    public static IdMapper strings( NumberArrayFactory cacheFactory, Groups groups )
-    {
-        return new EncodingIdMapper( cacheFactory, new StringEncoder(), Radix.STRING, NO_MONITOR, dynamic(), groups,
-                numberOfCollisions -> new StringCollisionValues( cacheFactory, numberOfCollisions ) );
-    }
-
-    /**
-     * An {@link IdMapper} capable of mapping {@link Long arbitrary longs} to long ids.
-     *
-     * @param cacheFactory {@link NumberArrayFactory} for allocating memory for the cache used by this index.
-     * @param groups {@link Groups} containing all id groups.
-     * @return {@link IdMapper} for when input ids are numbers.
-     */
-    public static IdMapper longs( NumberArrayFactory cacheFactory, Groups groups )
-    {
-        return new EncodingIdMapper( cacheFactory, new LongEncoder(), Radix.LONG, NO_MONITOR, dynamic(), groups,
-                numberOfCollisions -> new LongCollisionValues( cacheFactory, numberOfCollisions ) );
     }
 }

@@ -260,14 +260,10 @@ public class ConsistencyCheckTasks
         @Override
         public void run()
         {
-            if ( labelScanStore instanceof NativeLabelScanStore )
-            {
-                if ( ((NativeLabelScanStore)labelScanStore).isDirty() )
-                {
-                    reporter.report( new LabelScanIndex( labelScanStore.getLabelScanStoreFile() ), ConsistencyReport.LabelScanConsistencyReport.class,
-                            RecordType.LABEL_SCAN_DOCUMENT ).dirtyIndex();
-                }
-            }
+            if ( labelScanStore instanceof NativeLabelScanStore && ((NativeLabelScanStore)labelScanStore).isDirty() ) {
+			    reporter.report( new LabelScanIndex( labelScanStore.getLabelScanStoreFile() ), ConsistencyReport.LabelScanConsistencyReport.class,
+			            RecordType.LABEL_SCAN_DOCUMENT ).dirtyIndex();
+			}
         }
     }
 

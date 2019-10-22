@@ -110,7 +110,7 @@ public class FusionIndexProvider extends IndexProvider
     }
 
     @Override
-    public String getPopulationFailure( StoreIndexDescriptor descriptor ) throws IllegalStateException
+    public String getPopulationFailure( StoreIndexDescriptor descriptor )
     {
         StringBuilder builder = new StringBuilder();
         providers.forAll( p -> writeFailure( p.getClass().getSimpleName(), builder, p, descriptor ) );

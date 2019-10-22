@@ -19,13 +19,13 @@
  */
 package org.neo4j.server.rest.domain;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
 import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.PathExpanderBuilder;
 import org.neo4j.graphdb.RelationshipType;
+import java.util.Collections;
 
 public class RelationshipExpanderBuilder
 {
@@ -48,7 +48,7 @@ public class RelationshipExpanderBuilder
             }
             else
             {
-                pairDescriptions = Arrays.asList( relationshipsDescription );
+                pairDescriptions = Collections.singletonList( relationshipsDescription );
             }
 
             for ( Object pairDescription : pairDescriptions )
@@ -92,6 +92,6 @@ public class RelationshipExpanderBuilder
                 }
             }
         }
-        throw new RuntimeException( "Unrecognized " + enumClass.getSimpleName() + " '" + name + "'" );
+        throw new RuntimeException( new StringBuilder().append("Unrecognized ").append(enumClass.getSimpleName()).append(" '").append(name).append("'").toString() );
     }
 }

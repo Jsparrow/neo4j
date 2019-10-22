@@ -53,7 +53,7 @@ public final class EditionLocksFactories
             else if ( "".equals( key ) )
             {
                 logging.getInternalLog( CommunityEditionModule.class )
-                        .info( "No locking implementation specified, defaulting to '" + candidateId + "'" );
+                        .info( new StringBuilder().append("No locking implementation specified, defaulting to '").append(candidateId).append("'").toString() );
                 return candidate;
             }
         }
@@ -69,6 +69,6 @@ public final class EditionLocksFactories
             return new CommunityLocksFactory();
         }
 
-        throw new IllegalArgumentException( "No lock manager found with the name '" + key + "'." );
+        throw new IllegalArgumentException( new StringBuilder().append("No lock manager found with the name '").append(key).append("'.").toString() );
     }
 }

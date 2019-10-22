@@ -128,7 +128,7 @@ public class CheckConsistencyCommand implements AdminCommand
         {
             if ( arguments.has( ARG_DATABASE ) )
             {
-                throw new IncorrectUsage( "Only one of '--" + ARG_DATABASE + "' and '--backup' can be specified." );
+                throw new IncorrectUsage( new StringBuilder().append("Only one of '--").append(ARG_DATABASE).append("' and '--backup' can be specified.").toString() );
             }
             if ( !backupPath.get().toFile().isDirectory() )
             {

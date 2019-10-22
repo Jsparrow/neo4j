@@ -368,18 +368,17 @@ public class KernelTransactionImplementation implements KernelTransaction, TxSta
 
     private boolean markForTerminationIfPossible( Status reason )
     {
-        if ( canBeTerminated() )
-        {
-            failure = true;
-            terminationReason = reason;
-            if ( statementLocks != null )
-            {
-                statementLocks.stop();
-            }
-            transactionMonitor.transactionTerminated( hasTxStateWithChanges() );
-            return true;
-        }
-        return false;
+        if (!canBeTerminated()) {
+			return false;
+		}
+		failure = true;
+		terminationReason = reason;
+		if ( statementLocks != null )
+		{
+		    statementLocks.stop();
+		}
+		transactionMonitor.transactionTerminated( hasTxStateWithChanges() );
+		return true;
     }
 
     @Override
@@ -519,10 +518,7 @@ public class KernelTransactionImplementation implements KernelTransaction, TxSta
 
     private void notifyListeners( long txId )
     {
-        for ( CloseListener closeListener : closeListeners )
-        {
-            closeListener.notify( txId );
-        }
+        closeListeners.forEach(closeListener -> closeListener.notify(txId));
     }
 
     private void closeCurrentStatementIfAny()
@@ -1071,7 +1067,7 @@ public class KernelTransactionImplementation implements KernelTransaction, TxSta
                                ? "statementLocks == null"
                                : String.valueOf( statementLocks.pessimistic().getLockSessionId() );
 
-        return "KernelTransaction[" + lockSessionId + "]";
+        return new StringBuilder().append("KernelTransaction[").append(lockSessionId).append("]").toString();
     }
 
     public void dispose()
@@ -1120,7 +1116,72 @@ public class KernelTransactionImplementation implements KernelTransaction, TxSta
         return hasDataChanges() ? txState.getDataRevision() : 0;
     }
 
-    public static class Statistics
+    @Override
+    public ClockContext clocks()
+    {
+        return clocks;
+    }
+
+	@Override
+    public NodeCursor ambientNodeCursor()
+    {
+        return operations.nodeCursor();
+    }
+
+	@Override
+    public RelationshipScanCursor ambientRelationshipCursor()
+    {
+        return operations.relationshipCursor();
+    }
+
+	@Override
+    public PropertyCursor ambientPropertyCursor()
+    {
+        return operations.propertyCursor();
+    }
+
+	/**
+     * It is not allowed for the same transaction to perform database writes as well as schema writes.
+     * This enum tracks the current write transactionStatus of the transaction, allowing it to transition from
+     * no writes (NONE) to data writes (DATA) or schema writes (SCHEMA), but it cannot transition between
+     * DATA and SCHEMA without throwing an InvalidTransactionTypeKernelException. Note that this behavior
+     * is orthogonal to the SecurityContext which manages what the transaction or statement is allowed to do
+     * based on authorization.
+     */
+    private enum TransactionWriteState
+    {
+        NONE,
+        DATA
+                {
+                    @Override
+                    TransactionWriteState upgradeToSchemaWrites() throws InvalidTransactionTypeKernelException
+                    {
+                        throw new InvalidTransactionTypeKernelException(
+                                "Cannot perform schema updates in a transaction that has performed data updates." );
+                    }
+                },
+        SCHEMA
+                {
+                    @Override
+                    TransactionWriteState upgradeToDataWrites() throws InvalidTransactionTypeKernelException
+                    {
+                        throw new InvalidTransactionTypeKernelException(
+                                "Cannot perform data updates in a transaction that has performed schema updates." );
+                    }
+                };
+
+        TransactionWriteState upgradeToDataWrites() throws InvalidTransactionTypeKernelException
+        {
+            return DATA;
+        }
+
+        TransactionWriteState upgradeToSchemaWrites() throws InvalidTransactionTypeKernelException
+        {
+            return SCHEMA;
+        }
+    }
+
+	public static class Statistics
     {
         private volatile long cpuTimeNanosWhenQueryStarted;
         private volatile long heapAllocatedBytesWhenQueryStarted;
@@ -1234,71 +1295,6 @@ public class KernelTransactionImplementation implements KernelTransaction, TxSta
             heapAllocatedBytesWhenQueryStarted = 0;
             waitingTimeNanos = 0;
             transactionThreadId = -1;
-        }
-    }
-
-    @Override
-    public ClockContext clocks()
-    {
-        return clocks;
-    }
-
-    @Override
-    public NodeCursor ambientNodeCursor()
-    {
-        return operations.nodeCursor();
-    }
-
-    @Override
-    public RelationshipScanCursor ambientRelationshipCursor()
-    {
-        return operations.relationshipCursor();
-    }
-
-    @Override
-    public PropertyCursor ambientPropertyCursor()
-    {
-        return operations.propertyCursor();
-    }
-
-    /**
-     * It is not allowed for the same transaction to perform database writes as well as schema writes.
-     * This enum tracks the current write transactionStatus of the transaction, allowing it to transition from
-     * no writes (NONE) to data writes (DATA) or schema writes (SCHEMA), but it cannot transition between
-     * DATA and SCHEMA without throwing an InvalidTransactionTypeKernelException. Note that this behavior
-     * is orthogonal to the SecurityContext which manages what the transaction or statement is allowed to do
-     * based on authorization.
-     */
-    private enum TransactionWriteState
-    {
-        NONE,
-        DATA
-                {
-                    @Override
-                    TransactionWriteState upgradeToSchemaWrites() throws InvalidTransactionTypeKernelException
-                    {
-                        throw new InvalidTransactionTypeKernelException(
-                                "Cannot perform schema updates in a transaction that has performed data updates." );
-                    }
-                },
-        SCHEMA
-                {
-                    @Override
-                    TransactionWriteState upgradeToDataWrites() throws InvalidTransactionTypeKernelException
-                    {
-                        throw new InvalidTransactionTypeKernelException(
-                                "Cannot perform data updates in a transaction that has performed schema updates." );
-                    }
-                };
-
-        TransactionWriteState upgradeToDataWrites() throws InvalidTransactionTypeKernelException
-        {
-            return DATA;
-        }
-
-        TransactionWriteState upgradeToSchemaWrites() throws InvalidTransactionTypeKernelException
-        {
-            return SCHEMA;
         }
     }
 }

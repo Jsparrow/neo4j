@@ -23,9 +23,7 @@ import org.neo4j.kernel.api.exceptions.Status;
 
 public class ReadAndDeleteTransactionConflictException extends RuntimeException implements Status.HasStatus
 {
-    private static final String CONCURRENT_DELETE_MESSAGE = "Database elements (nodes, relationships, properties) were observed during query execution, " +
-            "but got deleted by an overlapping committed transaction before the query results could be serialised. " +
-            "The transaction might succeed if it is retried.";
+    private static final String CONCURRENT_DELETE_MESSAGE = new StringBuilder().append("Database elements (nodes, relationships, properties) were observed during query execution, ").append("but got deleted by an overlapping committed transaction before the query results could be serialised. ").append("The transaction might succeed if it is retried.").toString();
     private static final String DELETED_IN_TRANSACTION_MESSAGE = "Database elements (nodes, relationships, properties) were deleted in this transaction, " +
             "but were also included in the result set.";
 

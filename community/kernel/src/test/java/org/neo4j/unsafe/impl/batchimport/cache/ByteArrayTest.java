@@ -51,8 +51,11 @@ public class ByteArrayTest extends NumberArrayPageCacheTestSupport
     private static final byte[] DEFAULT = new byte[50];
     private static final int LENGTH = 1_000;
     private static Fixture fixture;
+	@Parameter
+    public Supplier<ByteArray> factory;
+	private ByteArray array;
 
-    @Parameters
+	@Parameters
     public static Collection<Supplier<ByteArray>> data() throws IOException
     {
         fixture = prepareDirectoryAndPageCache( ByteArrayTest.class );
@@ -75,29 +78,25 @@ public class ByteArrayTest extends NumberArrayPageCacheTestSupport
         );
     }
 
-    @AfterClass
+	@AfterClass
     public static void closeFixture() throws Exception
     {
         fixture.close();
     }
 
-    @Parameter
-    public Supplier<ByteArray> factory;
-    private ByteArray array;
-
-    @Before
+	@Before
     public void before()
     {
         array = factory.get();
     }
 
-    @After
+	@After
     public void after()
     {
         array.close();
     }
 
-    @Test
+	@Test
     public void shouldSetAndGetBasicTypes()
     {
         int index = 0;
@@ -125,7 +124,7 @@ public class ByteArrayTest extends NumberArrayPageCacheTestSupport
         }
     }
 
-    private void setSimpleValues( int index )
+	private void setSimpleValues( int index )
     {
         array.setByte( index, 0, (byte) 123 );
         array.setShort( index, 1, (short) 1234 );
@@ -136,7 +135,7 @@ public class ByteArrayTest extends NumberArrayPageCacheTestSupport
         array.set6ByteLong( index, 25, 0b10101010_10101010_10101010_10101010_10101010_10101010L );
     }
 
-    private void verifySimpleValues( int index )
+	private void verifySimpleValues( int index )
     {
         assertEquals( (byte) 123, array.getByte( index, 0 ) );
         assertEquals( (short) 1234, array.getShort( index, 1 ) );
@@ -147,18 +146,18 @@ public class ByteArrayTest extends NumberArrayPageCacheTestSupport
         assertEquals( 0b10101010_10101010_10101010_10101010_10101010_10101010L, array.get6ByteLong( index, 25 ) );
     }
 
-    private void setArray( int index, byte[] bytes )
+	private void setArray( int index, byte[] bytes )
     {
         array.set( index, bytes );
     }
 
-    private void verifyArray( int index, byte[] actualBytes, byte[] scratchBuffer )
+	private void verifyArray( int index, byte[] actualBytes, byte[] scratchBuffer )
     {
         array.get( index, scratchBuffer );
         assertArrayEquals( actualBytes, scratchBuffer );
     }
 
-    @Test
+	@Test
     public void shouldDetectMinusOneFor3ByteInts()
     {
         // WHEN
@@ -170,7 +169,7 @@ public class ByteArrayTest extends NumberArrayPageCacheTestSupport
         assertEquals( -1L, array.get3ByteInt( 10, 5 ) );
     }
 
-    @Test
+	@Test
     public void shouldDetectMinusOneFor5ByteLongs()
     {
         // WHEN
@@ -182,7 +181,7 @@ public class ByteArrayTest extends NumberArrayPageCacheTestSupport
         assertEquals( -1L, array.get5ByteLong( 10, 7 ) );
     }
 
-    @Test
+	@Test
     public void shouldDetectMinusOneFor6ByteLongs()
     {
         // WHEN
@@ -194,7 +193,7 @@ public class ByteArrayTest extends NumberArrayPageCacheTestSupport
         assertEquals( -1L, array.get6ByteLong( 10, 8 ) );
     }
 
-    @Test
+	@Test
     public void shouldHandleMultipleCallsToClose()
     {
         // WHEN

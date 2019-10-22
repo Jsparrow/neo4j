@@ -126,7 +126,7 @@ public enum Group
      */
     public String threadName()
     {
-        return "neo4j." + groupName() + "-" + threadCounter.incrementAndGet();
+        return new StringBuilder().append("neo4j.").append(groupName()).append("-").append(threadCounter.incrementAndGet()).toString();
     }
 
     public ExecutorService buildExecutorService( SchedulerThreadFactory factory )

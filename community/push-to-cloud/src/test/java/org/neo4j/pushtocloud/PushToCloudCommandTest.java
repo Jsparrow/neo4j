@@ -58,10 +58,14 @@ import static org.neo4j.pushtocloud.PushToCloudCommand.ARG_DUMP_TO;
 import static org.neo4j.pushtocloud.PushToCloudCommand.ARG_PASSWORD;
 import static org.neo4j.pushtocloud.PushToCloudCommand.ARG_USERNAME;
 import static org.neo4j.pushtocloud.PushToCloudCommand.ARG_OVERWRITE;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PushToCloudCommandTest
 {
-    private static final String SOME_EXAMPLE_BOLT_URI = "bolt+routing://database_id.databases.neo4j.io";
+    private static final Logger logger = LoggerFactory.getLogger(PushToCloudCommandTest.class);
+
+	private static final String SOME_EXAMPLE_BOLT_URI = "bolt+routing://database_id.databases.neo4j.io";
 
     @Rule
     public final TestDirectory directory = TestDirectory.testDirectory();
@@ -229,6 +233,7 @@ public class PushToCloudCommandTest
         }
         catch ( IncorrectUsage incorrectUsage )
         {
+			logger.error(incorrectUsage.getMessage(), incorrectUsage);
             // then good
         }
     }
@@ -259,6 +264,7 @@ public class PushToCloudCommandTest
         }
         catch ( IncorrectUsage incorrectUsage )
         {
+			logger.error(incorrectUsage.getMessage(), incorrectUsage);
             // then good
         }
 
@@ -272,6 +278,7 @@ public class PushToCloudCommandTest
         }
         catch ( IncorrectUsage incorrectUsage )
         {
+			logger.error(incorrectUsage.getMessage(), incorrectUsage);
             // then good
         }
     }
@@ -303,6 +310,7 @@ public class PushToCloudCommandTest
         }
         catch ( IncorrectUsage incorrectUsage )
         {
+			logger.error(incorrectUsage.getMessage(), incorrectUsage);
             // then good
         }
 
@@ -317,6 +325,7 @@ public class PushToCloudCommandTest
         }
         catch ( IncorrectUsage incorrectUsage )
         {
+			logger.error(incorrectUsage.getMessage(), incorrectUsage);
             // then good
         }
     }
@@ -350,6 +359,7 @@ public class PushToCloudCommandTest
         }
         catch ( IncorrectUsage incorrectUsage )
         {
+			logger.error(incorrectUsage.getMessage(), incorrectUsage);
             // then good
         }
 
@@ -390,6 +400,7 @@ public class PushToCloudCommandTest
         }
         catch ( CommandFailed commandFailed )
         {
+			logger.error(commandFailed.getMessage(), commandFailed);
             // then good
         }
     }

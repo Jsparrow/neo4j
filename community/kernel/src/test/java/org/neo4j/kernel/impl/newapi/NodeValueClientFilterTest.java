@@ -263,7 +263,37 @@ public class NodeValueClientFilterTest implements IndexProgressor, NodeValueClie
 
     private abstract static class Event
     {
-        static class Initialize extends Event
+        static final Event CLOSE = new Event()
+        {
+            @Override
+            public String toString()
+            {
+                return "CLOSE";
+            }
+        };
+
+		static final Event NEXT = new Event()
+        {
+            @Override
+            public String toString()
+            {
+                return "NEXT";
+            }
+        };
+
+		@Override
+        public final boolean equals( Object other )
+        {
+            return toString().equals( other.toString() );
+        }
+
+		@Override
+        public final int hashCode()
+        {
+            return toString().hashCode();
+        }
+
+		static class Initialize extends Event
         {
             final transient IndexProgressor progressor;
             final int[] keys;
@@ -277,27 +307,9 @@ public class NodeValueClientFilterTest implements IndexProgressor, NodeValueClie
             @Override
             public String toString()
             {
-                return "INITIALIZE(" + Arrays.toString( keys ) + ")";
+                return new StringBuilder().append("INITIALIZE(").append(Arrays.toString( keys )).append(")").toString();
             }
         }
-
-        static final Event CLOSE = new Event()
-        {
-            @Override
-            public String toString()
-            {
-                return "CLOSE";
-            }
-        };
-
-        static final Event NEXT = new Event()
-        {
-            @Override
-            public String toString()
-            {
-                return "NEXT";
-            }
-        };
 
         static class Node extends Event
         {
@@ -313,20 +325,8 @@ public class NodeValueClientFilterTest implements IndexProgressor, NodeValueClie
             @Override
             public String toString()
             {
-                return "Node(" + reference + "," + Arrays.toString( values ) + ")";
+                return new StringBuilder().append("Node(").append(reference).append(",").append(Arrays.toString( values )).append(")").toString();
             }
-        }
-
-        @Override
-        public final boolean equals( Object other )
-        {
-            return toString().equals( other.toString() );
-        }
-
-        @Override
-        public final int hashCode()
-        {
-            return toString().hashCode();
         }
     }
 }

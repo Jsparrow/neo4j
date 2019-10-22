@@ -28,30 +28,20 @@ import org.neo4j.util.FeatureToggles;
 public class LockWrapper implements AutoCloseable
 {
     private static final boolean debugLocking = FeatureToggles.flag( AbstractKeyValueStore.class, "debugLocking", false );
+	private Lock lock;
 
-    public static LockWrapper readLock( UpdateLock lock, Logger logger )
-    {
-        return new LockWrapper( lock.readLock(), lock, logger );
-    }
-
-    public static LockWrapper writeLock( UpdateLock lock, Logger logger )
-    {
-        return new LockWrapper( lock.writeLock(), lock, logger );
-    }
-
-    private Lock lock;
-
-    private LockWrapper( Lock lock, UpdateLock managingLock, Logger logger )
+	private LockWrapper( Lock lock, UpdateLock managingLock, Logger logger )
     {
         this.lock = lock;
         if ( debugLocking )
         {
             if ( !lock.tryLock() )
             {
-                logger.log( Thread.currentThread() + " may block on " + lock + " of " + managingLock );
+                logger.log( new StringBuilder().append(Thread.currentThread()).append(" may block on ").append(lock).append(" of ").append(managingLock).toString() );
                 while ( !tryLockBlocking( lock, managingLock, logger ) )
                 {
-                    logger.log( Thread.currentThread() + " still blocked on " + lock + " of " + managingLock );
+                    logger.log( new StringBuilder().append(Thread.currentThread()).append(" still blocked on ").append(lock).append(" of ").append(managingLock)
+							.toString() );
                 }
             }
         }
@@ -61,7 +51,17 @@ public class LockWrapper implements AutoCloseable
         }
     }
 
-    private static boolean tryLockBlocking( Lock lock, UpdateLock managingLock, Logger logger )
+	public static LockWrapper readLock( UpdateLock lock, Logger logger )
+    {
+        return new LockWrapper( lock.readLock(), lock, logger );
+    }
+
+	public static LockWrapper writeLock( UpdateLock lock, Logger logger )
+    {
+        return new LockWrapper( lock.writeLock(), lock, logger );
+    }
+
+	private static boolean tryLockBlocking( Lock lock, UpdateLock managingLock, Logger logger )
     {
         try
         {
@@ -69,22 +69,22 @@ public class LockWrapper implements AutoCloseable
         }
         catch ( InterruptedException e )
         {
-            logger.log( Thread.currentThread() + " ignoring interrupt while blocked on " + lock + " of " + managingLock );
+            logger.log( new StringBuilder().append(Thread.currentThread()).append(" ignoring interrupt while blocked on ").append(lock).append(" of ").append(managingLock).toString() );
         }
         return false;
     }
 
-    @Override
+	@Override
     public void close()
     {
-        if ( lock != null )
-        {
-            lock.unlock();
-            lock = null;
-        }
+        if (lock == null) {
+			return;
+		}
+		lock.unlock();
+		lock = null;
     }
 
-    public Lock get()
+	public Lock get()
     {
         return lock;
     }

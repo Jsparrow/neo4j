@@ -30,16 +30,6 @@ import org.neo4j.kernel.impl.store.record.RelationshipRecord;
  */
 public interface QueueDistribution
 {
-    <RECORD> QueueDistributor<RECORD> distributor( long recordsPerCpu, int numberOfThreads );
-
-    /**
-     * Distributes records into {@link RecordConsumer}.
-     */
-    interface QueueDistributor<RECORD>
-    {
-        void distribute( RECORD record, RecordConsumer<RECORD> consumer ) throws InterruptedException;
-    }
-
     /**
      * Distributes records round-robin style to all queues.
      */
@@ -52,17 +42,20 @@ public interface QueueDistribution
         }
     };
 
-    /**
+	/**
      * Distributes {@link RelationshipRecord} depending on the start/end node ids.
      */
-    QueueDistribution RELATIONSHIPS = new QueueDistribution()
+    QueueDistribution RELATIONSHIPS = RelationshipNodesQueueDistributor::new;
+
+	<RECORD> QueueDistributor<RECORD> distributor( long recordsPerCpu, int numberOfThreads );
+
+	/**
+     * Distributes records into {@link RecordConsumer}.
+     */
+    interface QueueDistributor<RECORD>
     {
-        @Override
-        public QueueDistributor<RelationshipRecord> distributor( long recordsPerCpu, int numberOfThreads )
-        {
-            return new RelationshipNodesQueueDistributor( recordsPerCpu, numberOfThreads );
-        }
-    };
+        void distribute( RECORD record, RecordConsumer<RECORD> consumer ) throws InterruptedException;
+    }
 
     class RoundRobinQueueDistributor<RECORD> implements QueueDistributor<RECORD>
     {
@@ -117,9 +110,8 @@ public interface QueueDistribution
             }
             catch ( ArrayIndexOutOfBoundsException e )
             {
-                throw Exceptions.withMessage( e, e.getMessage() + ", recordsPerCPU:" + recordsPerCpu +
-                        ", relationship:" + relationship +
-                        ", number of threads: " + numberOfThreads );
+                throw Exceptions.withMessage( e, new StringBuilder().append(e.getMessage()).append(", recordsPerCPU:").append(recordsPerCpu).append(", relationship:").append(relationship).append(", number of threads: ")
+						.append(numberOfThreads).toString() );
             }
         }
     }

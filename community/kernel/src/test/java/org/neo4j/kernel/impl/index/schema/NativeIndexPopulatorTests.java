@@ -499,7 +499,135 @@ public abstract class NativeIndexPopulatorTests<KEY extends NativeIndexKey<KEY>,
         }
     }
 
-    public abstract static class Unique<K extends NativeIndexKey<K>, V extends NativeIndexValue> extends NativeIndexPopulatorTests<K,V>
+    private int interleaveLargeAmountOfUpdates( Random updaterRandom,
+            Iterator<IndexEntryUpdate<IndexDescriptor>> updates ) throws IndexEntryConflictException
+    {
+        int count = 0;
+        for ( int i = 0; i < LARGE_AMOUNT_OF_UPDATES; i++ )
+        {
+            if ( updaterRandom.nextFloat() < 0.1 )
+            {
+                try ( IndexUpdater indexUpdater = populator.newPopulatingUpdater( null_property_accessor ) )
+                {
+                    int numberOfUpdaterUpdates = updaterRandom.nextInt( 100 );
+                    for ( int j = 0; j < numberOfUpdaterUpdates; j++ )
+                    {
+                        indexUpdater.process( updates.next() );
+                        count++;
+                    }
+                }
+            }
+            populator.add( Collections.singletonList( updates.next() ) );
+            count++;
+        }
+        return count;
+    }
+
+	private void assertHeader( InternalIndexState expectedState, String failureMessage, boolean messageTruncated ) throws IOException
+    {
+        NativeIndexHeaderReader headerReader = new NativeIndexHeaderReader( NO_HEADER_READER );
+        try ( GBPTree<KEY,VALUE> ignored = new GBPTreeBuilder<>( pageCache, getIndexFile(), layout ).with( headerReader ).build() )
+        {
+            switch ( expectedState )
+            {
+            case ONLINE:
+                assertEquals( "Index was not marked as online when expected not to be.", BYTE_ONLINE, headerReader.state );
+                assertNull( "Expected failure message to be null when marked as online.", headerReader.failureMessage );
+                break;
+            case FAILED:
+                assertEquals( "Index was marked as online when expected not to be.", BYTE_FAILED, headerReader.state );
+                if ( messageTruncated )
+                {
+                    assertTrue( headerReader.failureMessage.length() < failureMessage.length() );
+                    assertTrue( failureMessage.startsWith( headerReader.failureMessage ) );
+                }
+                else
+                {
+                    assertEquals( failureMessage, headerReader.failureMessage );
+                }
+                break;
+            case POPULATING:
+                assertEquals( "Index was not left as populating when expected to be.", BYTE_POPULATING, headerReader.state );
+                assertNull( "Expected failure message to be null when marked as populating.", headerReader.failureMessage );
+                break;
+            default:
+                throw new UnsupportedOperationException( "Unexpected index state " + expectedState );
+            }
+        }
+    }
+
+	private String longString( int length )
+    {
+        return RandomStringUtils.random( length, true, true );
+    }
+
+	private void applyInterleaved( IndexEntryUpdate<IndexDescriptor>[] updates, NativeIndexPopulator<KEY,VALUE> populator )
+            throws IndexEntryConflictException
+    {
+        boolean useUpdater = true;
+        Collection<IndexEntryUpdate<IndexDescriptor>> populatorBatch = new ArrayList<>();
+        IndexUpdater updater = populator.newPopulatingUpdater( null_property_accessor );
+        for ( IndexEntryUpdate<IndexDescriptor> update : updates )
+        {
+            if ( random.nextInt( 100 ) < 20 )
+            {
+                if ( useUpdater )
+                {
+                    updater.close();
+                    populatorBatch = new ArrayList<>();
+                }
+                else
+                {
+                    populator.add( populatorBatch );
+                    updater = populator.newPopulatingUpdater( null_property_accessor );
+                }
+                useUpdater = !useUpdater;
+            }
+            if ( useUpdater )
+            {
+                updater.process( update );
+            }
+            else
+            {
+                populatorBatch.add( update );
+            }
+        }
+        if ( useUpdater )
+        {
+            updater.close();
+        }
+        else
+        {
+            populator.add( populatorBatch );
+        }
+    }
+
+	private void verifyUpdates( Iterator<IndexEntryUpdate<IndexDescriptor>> indexEntryUpdateIterator, int count )
+            throws IOException
+    {
+        @SuppressWarnings( "unchecked" )
+        IndexEntryUpdate<IndexDescriptor>[] updates = new IndexEntryUpdate[count];
+        for ( int i = 0; i < count; i++ )
+        {
+            updates[i] = indexEntryUpdateIterator.next();
+        }
+        verifyUpdates( updates );
+    }
+
+	private byte[] fileWithContent() throws IOException
+    {
+        int size = 1000;
+        fs.mkdirs( getIndexFile().getParentFile() );
+        try ( StoreChannel storeChannel = fs.create( getIndexFile() ) )
+        {
+            byte[] someBytes = new byte[size];
+            random.nextBytes( someBytes );
+            storeChannel.writeAll( ByteBuffer.wrap( someBytes ) );
+            return someBytes;
+        }
+    }
+
+	public abstract static class Unique<K extends NativeIndexKey<K>, V extends NativeIndexValue> extends NativeIndexPopulatorTests<K,V>
     {
         @Test
         public void addShouldThrowOnDuplicateValues()
@@ -669,134 +797,6 @@ public abstract class NativeIndexPopulatorTests<KEY extends NativeIndexKey<KEY>,
                 values[i] = updates[i].values()[0];
             }
             return values;
-        }
-    }
-
-    private int interleaveLargeAmountOfUpdates( Random updaterRandom,
-            Iterator<IndexEntryUpdate<IndexDescriptor>> updates ) throws IndexEntryConflictException
-    {
-        int count = 0;
-        for ( int i = 0; i < LARGE_AMOUNT_OF_UPDATES; i++ )
-        {
-            if ( updaterRandom.nextFloat() < 0.1 )
-            {
-                try ( IndexUpdater indexUpdater = populator.newPopulatingUpdater( null_property_accessor ) )
-                {
-                    int numberOfUpdaterUpdates = updaterRandom.nextInt( 100 );
-                    for ( int j = 0; j < numberOfUpdaterUpdates; j++ )
-                    {
-                        indexUpdater.process( updates.next() );
-                        count++;
-                    }
-                }
-            }
-            populator.add( Collections.singletonList( updates.next() ) );
-            count++;
-        }
-        return count;
-    }
-
-    private void assertHeader( InternalIndexState expectedState, String failureMessage, boolean messageTruncated ) throws IOException
-    {
-        NativeIndexHeaderReader headerReader = new NativeIndexHeaderReader( NO_HEADER_READER );
-        try ( GBPTree<KEY,VALUE> ignored = new GBPTreeBuilder<>( pageCache, getIndexFile(), layout ).with( headerReader ).build() )
-        {
-            switch ( expectedState )
-            {
-            case ONLINE:
-                assertEquals( "Index was not marked as online when expected not to be.", BYTE_ONLINE, headerReader.state );
-                assertNull( "Expected failure message to be null when marked as online.", headerReader.failureMessage );
-                break;
-            case FAILED:
-                assertEquals( "Index was marked as online when expected not to be.", BYTE_FAILED, headerReader.state );
-                if ( messageTruncated )
-                {
-                    assertTrue( headerReader.failureMessage.length() < failureMessage.length() );
-                    assertTrue( failureMessage.startsWith( headerReader.failureMessage ) );
-                }
-                else
-                {
-                    assertEquals( failureMessage, headerReader.failureMessage );
-                }
-                break;
-            case POPULATING:
-                assertEquals( "Index was not left as populating when expected to be.", BYTE_POPULATING, headerReader.state );
-                assertNull( "Expected failure message to be null when marked as populating.", headerReader.failureMessage );
-                break;
-            default:
-                throw new UnsupportedOperationException( "Unexpected index state " + expectedState );
-            }
-        }
-    }
-
-    private String longString( int length )
-    {
-        return RandomStringUtils.random( length, true, true );
-    }
-
-    private void applyInterleaved( IndexEntryUpdate<IndexDescriptor>[] updates, NativeIndexPopulator<KEY,VALUE> populator )
-            throws IndexEntryConflictException
-    {
-        boolean useUpdater = true;
-        Collection<IndexEntryUpdate<IndexDescriptor>> populatorBatch = new ArrayList<>();
-        IndexUpdater updater = populator.newPopulatingUpdater( null_property_accessor );
-        for ( IndexEntryUpdate<IndexDescriptor> update : updates )
-        {
-            if ( random.nextInt( 100 ) < 20 )
-            {
-                if ( useUpdater )
-                {
-                    updater.close();
-                    populatorBatch = new ArrayList<>();
-                }
-                else
-                {
-                    populator.add( populatorBatch );
-                    updater = populator.newPopulatingUpdater( null_property_accessor );
-                }
-                useUpdater = !useUpdater;
-            }
-            if ( useUpdater )
-            {
-                updater.process( update );
-            }
-            else
-            {
-                populatorBatch.add( update );
-            }
-        }
-        if ( useUpdater )
-        {
-            updater.close();
-        }
-        else
-        {
-            populator.add( populatorBatch );
-        }
-    }
-
-    private void verifyUpdates( Iterator<IndexEntryUpdate<IndexDescriptor>> indexEntryUpdateIterator, int count )
-            throws IOException
-    {
-        @SuppressWarnings( "unchecked" )
-        IndexEntryUpdate<IndexDescriptor>[] updates = new IndexEntryUpdate[count];
-        for ( int i = 0; i < count; i++ )
-        {
-            updates[i] = indexEntryUpdateIterator.next();
-        }
-        verifyUpdates( updates );
-    }
-
-    private byte[] fileWithContent() throws IOException
-    {
-        int size = 1000;
-        fs.mkdirs( getIndexFile().getParentFile() );
-        try ( StoreChannel storeChannel = fs.create( getIndexFile() ) )
-        {
-            byte[] someBytes = new byte[size];
-            random.nextBytes( someBytes );
-            storeChannel.writeAll( ByteBuffer.wrap( someBytes ) );
-            return someBytes;
         }
     }
 }

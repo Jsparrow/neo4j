@@ -70,8 +70,8 @@ class RequestData
     @Override
     public String toString()
     {
-        return "DocumentationData [payload=" + payload
-               + ", uri=" + uri + ", method=" + method + ", status=" + status + ", entity=" + entity
-               + ", requestHeaders=" + requestHeaders + ", responseHeaders=" + responseHeaders + "]";
+        return new StringBuilder().append("DocumentationData [payload=").append(payload).append(", uri=").append(uri).append(", method=").append(method).append(", status=")
+				.append(status).append(", entity=").append(entity).append(", requestHeaders=").append(requestHeaders).append(", responseHeaders=").append(responseHeaders)
+				.append("]").toString();
     }
 }

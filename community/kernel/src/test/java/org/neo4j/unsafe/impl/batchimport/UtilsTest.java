@@ -130,11 +130,9 @@ public class UtilsTest
 
     private boolean actuallyCollides( long[] b1, long[] b2 )
     {
-        for ( int i = 0; i < b1.length; i++ )
-        {
-            for ( int j = 0; j < b2.length; j++ )
-            {
-                if ( b1[i] == b2[j] )
+        for (long aB1 : b1) {
+            for (long aB2 : b2) {
+                if ( aB1 == aB2 )
                 {
                     return true;
                 }

@@ -170,26 +170,26 @@ public class Jetty9WebServer implements WebServer
     @Override
     public void stop()
     {
-        if ( jetty != null )
-        {
-            try
-            {
-                jetty.stop();
-            }
-            catch ( Exception e )
-            {
-                throw new RuntimeException( e );
-            }
-            try
-            {
-                jetty.join();
-            }
-            catch ( InterruptedException e )
-            {
-                log.warn( "Interrupted while waiting for Jetty to stop" );
-            }
-            jetty = null;
-        }
+        if (jetty == null) {
+			return;
+		}
+		try
+		{
+		    jetty.stop();
+		}
+		catch ( Exception e )
+		{
+		    throw new RuntimeException( e );
+		}
+		try
+		{
+		    jetty.join();
+		}
+		catch ( InterruptedException e )
+		{
+		    log.warn( "Interrupted while waiting for Jetty to stop" );
+		}
+		jetty = null;
     }
 
     @Override
@@ -409,7 +409,7 @@ public class Jetty9WebServer implements WebServer
 
     private String trimTrailingSlashToKeepJettyHappy( String mountPoint )
     {
-        if ( mountPoint.equals( "/" ) )
+        if ( "/".equals( mountPoint ) )
         {
             return mountPoint;
         }
@@ -509,12 +509,8 @@ public class Jetty9WebServer implements WebServer
 
     private void addFiltersTo( ServletContextHandler context )
     {
-        for ( FilterDefinition filterDef : filters )
-        {
-            context.addFilter( new FilterHolder( filterDef.getFilter() ),
-                    filterDef.getPathSpec(), EnumSet.allOf( DispatcherType.class )
-            );
-        }
+        filters.forEach(filterDef -> context.addFilter(new FilterHolder(filterDef.getFilter()), filterDef.getPathSpec(),
+				EnumSet.allOf(DispatcherType.class)));
     }
 
     private static InetSocketAddress getAddress( String name, ServerConnector connector )

@@ -33,7 +33,61 @@ import static java.lang.String.format;
 public class BufferAnyValueWriter extends BufferValueWriter implements AnyValueWriter<RuntimeException>
 {
 
-    enum SpecialKind
+    @Override
+    public void writeNodeReference( long nodeId )
+    {
+        buffer.add( Specials.writeNodeReference( nodeId ) );
+    }
+
+	@Override
+    public void writeNode( long nodeId, TextArray labels, MapValue properties )
+    {
+        buffer.add( Specials.writeNode( nodeId, labels, properties ) );
+    }
+
+	@Override
+    public void writeRelationshipReference( long relId )
+    {
+        buffer.add( Specials.writeRelationshipReference( relId ) );
+    }
+
+	@Override
+    public void writeRelationship( long relId, long startNodeId, long endNodeId, TextValue type, MapValue properties )
+    {
+        buffer.add( Specials.writeRelationship( relId, startNodeId, endNodeId, type, properties ) );
+    }
+
+	@Override
+    public void beginMap( int size )
+    {
+        buffer.add( Specials.beginMap( size ) );
+    }
+
+	@Override
+    public void endMap()
+    {
+        buffer.add( Specials.endMap() );
+    }
+
+	@Override
+    public void beginList( int size )
+    {
+        buffer.add( Specials.beginList( size ) );
+    }
+
+	@Override
+    public void endList()
+    {
+        buffer.add( Specials.endList() );
+    }
+
+	@Override
+    public void writePath( NodeValue[] nodes, RelationshipValue[] relationships )
+    {
+        buffer.add( Specials.writePath( nodes, relationships ) );
+    }
+
+	enum SpecialKind
     {
         WriteNode,
         WriteNodeReference,
@@ -51,12 +105,24 @@ public class BufferAnyValueWriter extends BufferValueWriter implements AnyValueW
         EndList,
     }
 
-    public static class Special
+	public static class Special
     {
         final SpecialKind kind;
         final String key;
 
-        @Override
+        Special( SpecialKind kind, String key )
+        {
+            this.kind = kind;
+            this.key = key;
+        }
+
+		Special( SpecialKind kind, int key )
+        {
+            this.kind = kind;
+            this.key = Integer.toString( key );
+        }
+
+		@Override
         public boolean equals( Object o )
         {
             if ( o == null || getClass() != o.getClass() )
@@ -68,84 +134,17 @@ public class BufferAnyValueWriter extends BufferValueWriter implements AnyValueW
             return kind == special.kind && key.equals( special.key );
         }
 
-        @Override
+		@Override
         public int hashCode()
         {
             return 31 * kind.hashCode() + key.hashCode();
         }
 
-        Special( SpecialKind kind, String key )
-        {
-            this.kind = kind;
-            this.key = key;
-        }
-
-        Special( SpecialKind kind, int key )
-        {
-            this.kind = kind;
-            this.key = Integer.toString( key );
-        }
-
-        @Override
+		@Override
         public String toString()
         {
             return format( "Special(%s)", key );
         }
-    }
-
-    @Override
-    public void writeNodeReference( long nodeId )
-    {
-        buffer.add( Specials.writeNodeReference( nodeId ) );
-    }
-
-    @Override
-    public void writeNode( long nodeId, TextArray labels, MapValue properties ) throws RuntimeException
-    {
-        buffer.add( Specials.writeNode( nodeId, labels, properties ) );
-    }
-
-    @Override
-    public void writeRelationshipReference( long relId )
-    {
-        buffer.add( Specials.writeRelationshipReference( relId ) );
-    }
-
-    @Override
-    public void writeRelationship( long relId, long startNodeId, long endNodeId, TextValue type, MapValue properties )
-            throws RuntimeException
-    {
-        buffer.add( Specials.writeRelationship( relId, startNodeId, endNodeId, type, properties ) );
-    }
-
-    @Override
-    public void beginMap( int size )
-    {
-        buffer.add( Specials.beginMap( size ) );
-    }
-
-    @Override
-    public void endMap()
-    {
-        buffer.add( Specials.endMap() );
-    }
-
-    @Override
-    public void beginList( int size )
-    {
-        buffer.add( Specials.beginList( size ) );
-    }
-
-    @Override
-    public void endList()
-    {
-        buffer.add( Specials.endList() );
-    }
-
-    @Override
-    public void writePath( NodeValue[] nodes, RelationshipValue[] relationships ) throws RuntimeException
-    {
-        buffer.add( Specials.writePath( nodes, relationships ) );
     }
 
     @SuppressWarnings( "WeakerAccess" )

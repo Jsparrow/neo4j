@@ -30,30 +30,6 @@ import org.neo4j.values.virtual.MapValue;
 
 public interface StatementProcessor
 {
-    void beginTransaction( Bookmark bookmark ) throws KernelException;
-
-    void beginTransaction( Bookmark bookmark, Duration txTimeout, Map<String,Object> txMetadata ) throws KernelException;
-
-    StatementMetadata run( String statement, MapValue params ) throws KernelException;
-
-    StatementMetadata run( String statement, MapValue params, Bookmark bookmark, Duration txTimeout, Map<String,Object> txMetaData ) throws KernelException;
-
-    Bookmark streamResult( ThrowingConsumer<BoltResult,Exception> resultConsumer ) throws Exception;
-
-    Bookmark commitTransaction() throws KernelException;
-
-    void rollbackTransaction() throws KernelException;
-
-    void reset() throws TransactionFailureException;
-
-    void markCurrentTransactionForTermination();
-
-    boolean hasTransaction();
-
-    boolean hasOpenStatement();
-
-    void validateTransaction() throws KernelException;
-
     StatementProcessor EMPTY = new StatementProcessor()
     {
         @Override
@@ -126,4 +102,28 @@ public interface StatementProcessor
         {
         }
     };
+
+	void beginTransaction( Bookmark bookmark ) throws KernelException;
+
+	void beginTransaction( Bookmark bookmark, Duration txTimeout, Map<String,Object> txMetadata ) throws KernelException;
+
+	StatementMetadata run( String statement, MapValue params ) throws KernelException;
+
+	StatementMetadata run( String statement, MapValue params, Bookmark bookmark, Duration txTimeout, Map<String,Object> txMetaData ) throws KernelException;
+
+	Bookmark streamResult( ThrowingConsumer<BoltResult,Exception> resultConsumer ) throws Exception;
+
+	Bookmark commitTransaction() throws KernelException;
+
+	void rollbackTransaction() throws KernelException;
+
+	void reset() throws TransactionFailureException;
+
+	void markCurrentTransactionForTermination();
+
+	boolean hasTransaction();
+
+	boolean hasOpenStatement();
+
+	void validateTransaction() throws KernelException;
 }

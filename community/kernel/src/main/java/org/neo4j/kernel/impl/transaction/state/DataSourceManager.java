@@ -41,26 +41,19 @@ import org.neo4j.kernel.lifecycle.LifecycleStatus;
 public class DataSourceManager implements Lifecycle, Supplier<Kernel>
 {
     private final Config config;
+	private LifeSupport life = new LifeSupport();
+	private final Listeners<Listener> dsRegistrationListeners = new Listeners<>();
+	private final List<NeoStoreDataSource> dataSources = new ArrayList<>();
 
-    public DataSourceManager( Config config )
+	public DataSourceManager( Config config )
     {
         this.config = config;
     }
 
-    public interface Listener
+	public void addListener( Listener listener )
     {
-        void registered( NeoStoreDataSource dataSource );
-
-        void unregistered( NeoStoreDataSource dataSource );
-    }
-
-    private LifeSupport life = new LifeSupport();
-    private final Listeners<Listener> dsRegistrationListeners = new Listeners<>();
-    private final List<NeoStoreDataSource> dataSources = new ArrayList<>();
-
-    public void addListener( Listener listener )
-    {
-        if ( life.getStatus().equals( LifecycleStatus.STARTED ) )
+        // OK
+		if ( life.getStatus() == LifecycleStatus.STARTED )
         {
             try
             {
@@ -73,24 +66,24 @@ public class DataSourceManager implements Lifecycle, Supplier<Kernel>
         dsRegistrationListeners.add( listener );
     }
 
-    public void register( NeoStoreDataSource dataSource )
+	public void register( NeoStoreDataSource dataSource )
     {
         dataSources.add( dataSource );
-        if ( life.getStatus().equals( LifecycleStatus.STARTED ) )
-        {
-            life.add( dataSource );
-            dsRegistrationListeners.notify( listener -> listener.registered( dataSource ) );
-        }
+        if (life.getStatus() != LifecycleStatus.STARTED) {
+			return;
+		}
+		life.add( dataSource );
+		dsRegistrationListeners.notify( listener -> listener.registered( dataSource ) );
     }
 
-    public void unregister( NeoStoreDataSource dataSource )
+	public void unregister( NeoStoreDataSource dataSource )
     {
         dataSources.remove( dataSource );
         dsRegistrationListeners.notify( listener -> listener.unregistered( dataSource ) );
         life.remove( dataSource );
     }
 
-    public NeoStoreDataSource getDataSource()
+	public NeoStoreDataSource getDataSource()
     {
         String activeDatabase = config.get( GraphDatabaseSettings.active_database );
         for ( NeoStoreDataSource dataSource : dataSources )
@@ -103,14 +96,14 @@ public class DataSourceManager implements Lifecycle, Supplier<Kernel>
         throw new IllegalStateException( "Default database not found" );
     }
 
-    @Override
+	@Override
     public void init()
     {
         life = new LifeSupport();
         dataSources.forEach( life::add );
     }
 
-    @Override
+	@Override
     public void start()
     {
         life.start();
@@ -127,22 +120,29 @@ public class DataSourceManager implements Lifecycle, Supplier<Kernel>
         }
     }
 
-    @Override
+	@Override
     public void stop()
     {
         life.stop();
     }
 
-    @Override
+	@Override
     public void shutdown()
     {
         life.shutdown();
         dataSources.clear();
     }
 
-    @Override
+	@Override
     public Kernel get()
     {
         return getDataSource().getKernel();
+    }
+
+    public interface Listener
+    {
+        void registered( NeoStoreDataSource dataSource );
+
+        void unregistered( NeoStoreDataSource dataSource );
     }
 }

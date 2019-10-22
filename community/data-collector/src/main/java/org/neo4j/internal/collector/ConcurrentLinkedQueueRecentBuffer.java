@@ -46,11 +46,11 @@ public class ConcurrentLinkedQueueRecentBuffer<T> implements RecentBuffer<T>
     {
         queue.add( t );
         int newSize = size.incrementAndGet();
-        if ( newSize > maxSize )
-        {
-            queue.poll();
-            size.decrementAndGet();
-        }
+        if (newSize <= maxSize) {
+			return;
+		}
+		queue.poll();
+		size.decrementAndGet();
     }
 
     /* ---- single consumer ---- */

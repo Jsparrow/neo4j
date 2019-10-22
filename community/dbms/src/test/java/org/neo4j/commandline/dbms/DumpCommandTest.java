@@ -336,23 +336,9 @@ class DumpCommandTest
             Usage usage = new Usage( "neo4j-admin", mock( CommandLocator.class ) );
             usage.printUsageForCommand( new DumpCommandProvider(), ps::println );
 
-            assertEquals( String.format( "usage: neo4j-admin dump [--database=<name>] --to=<destination-path>%n" +
-                            "%n" +
-                            "environment variables:%n" +
-                            "    NEO4J_CONF    Path to directory which contains neo4j.conf.%n" +
-                            "    NEO4J_DEBUG   Set to anything to enable debug output.%n" +
-                            "    NEO4J_HOME    Neo4j home directory.%n" +
-                            "    HEAP_SIZE     Set JVM maximum heap size during command execution.%n" +
-                            "                  Takes a number and a unit, for example 512m.%n" +
-                            "%n" +
-                            "Dump a database into a single-file archive. The archive can be used by the load%n" +
-                            "command. <destination-path> can be a file or directory (in which case a file%n" +
-                            "called <database>.dump will be created). It is not possible to dump a database%n" +
-                            "that is mounted in a running Neo4j server.%n" +
-                            "%n" +
-                            "options:%n" +
-                            "  --database=<name>         Name of database. [default:" + GraphDatabaseSettings.DEFAULT_DATABASE_NAME + "]%n" +
-                            "  --to=<destination-path>   Destination (file or folder) of database dump.%n" ),
+            assertEquals( String.format( new StringBuilder().append("usage: neo4j-admin dump [--database=<name>] --to=<destination-path>%n").append("%n").append("environment variables:%n").append("    NEO4J_CONF    Path to directory which contains neo4j.conf.%n").append("    NEO4J_DEBUG   Set to anything to enable debug output.%n").append("    NEO4J_HOME    Neo4j home directory.%n").append("    HEAP_SIZE     Set JVM maximum heap size during command execution.%n").append("                  Takes a number and a unit, for example 512m.%n")
+					.append("%n").append("Dump a database into a single-file archive. The archive can be used by the load%n").append("command. <destination-path> can be a file or directory (in which case a file%n").append("called <database>.dump will be created). It is not possible to dump a database%n").append("that is mounted in a running Neo4j server.%n").append("%n").append("options:%n").append("  --database=<name>         Name of database. [default:")
+					.append(GraphDatabaseSettings.DEFAULT_DATABASE_NAME).append("]%n").append("  --to=<destination-path>   Destination (file or folder) of database dump.%n").toString() ),
                     baos.toString() );
         }
     }

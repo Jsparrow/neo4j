@@ -73,12 +73,12 @@ import static org.neo4j.test.mockito.matcher.Neo4jMatchers.inTx;
 
 public class TestTransactionEvents
 {
-    @Rule
-    public final DatabaseRule dbRule = new ImpermanentDatabaseRule();
     private static final TimeUnit AWAIT_INDEX_UNIT = TimeUnit.SECONDS;
-    private static final int AWAIT_INDEX_DURATION = 60;
+	private static final int AWAIT_INDEX_DURATION = 60;
+	@Rule
+    public final DatabaseRule dbRule = new ImpermanentDatabaseRule();
 
-    @Test
+	@Test
     public void testRegisterUnregisterHandlers()
     {
         Object value1 = 10;
@@ -129,7 +129,7 @@ public class TestTransactionEvents
         db.unregisterTransactionEventHandler( handler1 );
     }
 
-    @Test
+	@Test
     public void makeSureHandlersCantBeRegisteredTwice()
     {
         DummyTransactionEventHandler<Object> handler = new DummyTransactionEventHandler<>( null );
@@ -148,7 +148,7 @@ public class TestTransactionEvents
         db.unregisterTransactionEventHandler( handler );
     }
 
-    @Test
+	@Test
     public void shouldGetCorrectTransactionDataUponCommit()
     {
         // Create new data, nothing modified, just added/created
@@ -278,7 +278,7 @@ public class TestTransactionEvents
         }
     }
 
-    @Test
+	@Test
     public void makeSureBeforeAfterAreCalledCorrectly()
     {
         List<TransactionEventHandler<Object>> handlers = new ArrayList<>();
@@ -287,10 +287,7 @@ public class TestTransactionEvents
         handlers.add( new FailingEventHandler<>( new DummyTransactionEventHandler<>( null ), true ) );
         handlers.add( new FailingEventHandler<>( new DummyTransactionEventHandler<>( null ), false ) );
         GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-        for ( TransactionEventHandler<Object> handler : handlers )
-        {
-            db.registerTransactionEventHandler( handler );
-        }
+        handlers.forEach(db::registerTransactionEventHandler);
 
         try
         {
@@ -308,10 +305,7 @@ public class TestTransactionEvents
             verifyHandlerCalls( handlers, false );
 
             db.unregisterTransactionEventHandler( handlers.remove( 2 ) );
-            for ( TransactionEventHandler<Object> handler : handlers )
-            {
-                ((DummyTransactionEventHandler<Object>) ((FailingEventHandler<Object>)handler).source).reset();
-            }
+            handlers.forEach(handler -> ((DummyTransactionEventHandler<Object>) ((FailingEventHandler<Object>) handler).source).reset());
             try ( Transaction transaction = db.beginTx() )
             {
                 db.createNode().delete();
@@ -321,14 +315,11 @@ public class TestTransactionEvents
         }
         finally
         {
-            for ( TransactionEventHandler<Object> handler : handlers )
-            {
-                db.unregisterTransactionEventHandler( handler );
-            }
+            handlers.forEach(db::unregisterTransactionEventHandler);
         }
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToAccessExceptionThrownInEventHook()
     {
         class MyFancyException extends Exception
@@ -371,7 +362,7 @@ public class TestTransactionEvents
         }
     }
 
-    @Test
+	@Test
     public void deleteNodeRelTriggerPropertyRemoveEvents()
     {
         GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
@@ -410,7 +401,639 @@ public class TestTransactionEvents
         assertEquals( 3, intArray[2] );
     }
 
-    private static class MyTxEventHandler implements TransactionEventHandler<Object>
+	private void verifyHandlerCalls(
+            List<TransactionEventHandler<Object>> handlers, boolean txSuccess )
+    {
+        handlers.stream().map(handler -> (DummyTransactionEventHandler<Object>) ((FailingEventHandler<Object>) handler).source).forEach(realHandler -> {
+			if ( txSuccess )
+            {
+                assertEquals( Integer.valueOf( 0 ), realHandler.beforeCommit );
+                assertEquals( Integer.valueOf( 1 ), realHandler.afterCommit );
+            }
+            else
+            {
+                if ( realHandler.counter > 0 )
+                {
+                    assertEquals( Integer.valueOf( 0 ),
+                            realHandler.beforeCommit );
+                    assertEquals( Integer.valueOf( 1 ),
+                            realHandler.afterRollback );
+                }
+            }
+		});
+    }
+
+	@Test
+    public void makeSureHandlerIsntCalledWhenTxRolledBack()
+    {
+        DummyTransactionEventHandler<Integer> handler =
+            new DummyTransactionEventHandler<>( 10 );
+        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
+        db.registerTransactionEventHandler( handler );
+        try
+        {
+            try ( Transaction ignore = db.beginTx() )
+            {
+                db.createNode().delete();
+            }
+            assertNull( handler.beforeCommit );
+            assertNull( handler.afterCommit );
+            assertNull( handler.afterRollback );
+        }
+        finally
+        {
+            db.unregisterTransactionEventHandler( handler );
+        }
+    }
+
+	@Test
+    public void modifiedPropertyCanByFurtherModifiedInBeforeCommit()
+    {
+        // Given
+        // -- create node and set property on it in one transaction
+        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
+        final String key = "key";
+        final Object value1 = "the old value";
+        final Object value2 = "the new value";
+        final Node node;
+        try ( Transaction tx = db.beginTx() )
+        {
+            node = db.createNode();
+            node.setProperty( key, "initial value" );
+            tx.success();
+        }
+        // -- register a tx handler which will override a property
+        TransactionEventHandler<Void> handler = new TransactionEventHandler.Adapter<Void>()
+        {
+            @Override
+            public Void beforeCommit( TransactionData data )
+            {
+                Node modifiedNode = data.assignedNodeProperties().iterator().next().entity();
+                assertEquals( node, modifiedNode );
+                modifiedNode.setProperty( key, value2 );
+                return null;
+            }
+        };
+        db.registerTransactionEventHandler( handler );
+
+        try ( Transaction tx = db.beginTx() )
+        {
+            // When
+            node.setProperty( key, value1 );
+            tx.success();
+        }
+        // Then
+        assertThat(node, inTx(db, hasProperty(key).withValue(value2)));
+        db.unregisterTransactionEventHandler( handler );
+    }
+
+	@Test
+    public void nodeCanBecomeSchemaIndexableInBeforeCommitByAddingProperty()
+    {
+        // Given we have a schema index...
+        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
+        Label label = label( "Label" );
+        try ( Transaction tx = db.beginTx() )
+        {
+            db.schema().indexFor( label ).on( "indexed" ).create();
+            tx.success();
+        }
+
+        // ... and a transaction event handler that likes to add the indexed property on nodes
+        db.registerTransactionEventHandler( new TransactionEventHandler.Adapter<Object>()
+        {
+            @Override
+            public Object beforeCommit( TransactionData data )
+            {
+                Iterator<Node> nodes = data.createdNodes().iterator();
+                if ( nodes.hasNext() )
+                {
+                    Node node = nodes.next();
+                    node.setProperty( "indexed", "value" );
+                }
+                return null;
+            }
+        } );
+
+        // When we create a node with the right label, but not the right property...
+        try ( Transaction tx = db.beginTx() )
+        {
+            db.schema().awaitIndexesOnline( AWAIT_INDEX_DURATION, AWAIT_INDEX_UNIT );
+            Node node = db.createNode( label );
+            node.setProperty( "random", 42 );
+            tx.success();
+        }
+
+        // Then we should be able to look it up through the index.
+        try ( Transaction ignore = db.beginTx() )
+        {
+            Node node = db.findNode( label, "indexed", "value" );
+            assertThat( node.getProperty( "random" ), is( 42 ) );
+        }
+    }
+
+	@Test
+    public void nodeCanBecomeSchemaIndexableInBeforeCommitByAddingLabel()
+    {
+        // Given we have a schema index...
+        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
+        final Label label = label( "Label" );
+        try ( Transaction tx = db.beginTx() )
+        {
+            db.schema().indexFor( label ).on( "indexed" ).create();
+            tx.success();
+        }
+
+        // ... and a transaction event handler that likes to add the indexed property on nodes
+        db.registerTransactionEventHandler( new TransactionEventHandler.Adapter<Object>()
+        {
+            @Override
+            public Object beforeCommit( TransactionData data )
+            {
+                Iterator<Node> nodes = data.createdNodes().iterator();
+                if ( nodes.hasNext() )
+                {
+                    Node node = nodes.next();
+                    node.addLabel( label );
+                }
+                return null;
+            }
+        } );
+
+        // When we create a node with the right property, but not the right label...
+        try ( Transaction tx = db.beginTx() )
+        {
+            db.schema().awaitIndexesOnline( AWAIT_INDEX_DURATION, AWAIT_INDEX_UNIT );
+            Node node = db.createNode();
+            node.setProperty( "indexed", "value" );
+            node.setProperty( "random", 42 );
+            tx.success();
+        }
+
+        // Then we should be able to look it up through the index.
+        try ( Transaction ignore = db.beginTx() )
+        {
+            Node node = db.findNode( label, "indexed", "value" );
+            assertThat( node.getProperty( "random" ), is( 42 ) );
+        }
+    }
+
+	@Test
+    public void shouldAccessAssignedLabels()
+    {
+        // given
+        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
+
+        ChangedLabels labels = (ChangedLabels) db.registerTransactionEventHandler( new ChangedLabels() );
+        try
+        {
+            // when
+            try ( Transaction tx = db.beginTx() )
+            {
+                Node node1 = db.createNode();
+                Node node2 = db.createNode();
+                Node node3 = db.createNode();
+
+                labels.add( node1, "Foo" );
+                labels.add( node2, "Bar" );
+                labels.add( node3, "Baz" );
+                labels.add( node3, "Bar" );
+
+                labels.activate();
+                tx.success();
+            }
+            // then
+            assertTrue( labels.isEmpty() );
+        }
+        finally
+        {
+            db.unregisterTransactionEventHandler( labels );
+        }
+    }
+
+	@Test
+    public void shouldAccessRemovedLabels()
+    {
+        // given
+        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
+
+        ChangedLabels labels = (ChangedLabels) db.registerTransactionEventHandler( new ChangedLabels() );
+        try
+        {
+            Node node1;
+            Node node2;
+            Node node3;
+            try ( Transaction tx = db.beginTx() )
+            {
+                node1 = db.createNode();
+                node2 = db.createNode();
+                node3 = db.createNode();
+
+                labels.add( node1, "Foo" );
+                labels.add( node2, "Bar" );
+                labels.add( node3, "Baz" );
+                labels.add( node3, "Bar" );
+
+                tx.success();
+            }
+            labels.clear();
+
+            // when
+            try ( Transaction tx = db.beginTx() )
+            {
+                labels.remove( node1, "Foo" );
+                labels.remove( node2, "Bar" );
+                labels.remove( node3, "Baz" );
+                labels.remove( node3, "Bar" );
+
+                labels.activate();
+                tx.success();
+            }
+            // then
+            assertTrue( labels.isEmpty() );
+        }
+        finally
+        {
+            db.unregisterTransactionEventHandler( labels );
+        }
+    }
+
+	@Test
+    public void shouldAccessRelationshipDataInAfterCommit()
+    {
+        // GIVEN
+        final GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
+        final AtomicInteger accessCount = new AtomicInteger();
+        final Map<Long,RelationshipData> expectedRelationshipData = new HashMap<>();
+        TransactionEventHandler<Void> handler = new TransactionEventHandler.Adapter<Void>()
+        {
+            @Override
+            public void afterCommit( TransactionData data, Void state )
+            {
+                accessCount.set( 0 );
+                try ( Transaction tx = db.beginTx() )
+                {
+                    for ( Relationship relationship : data.createdRelationships() )
+                    {
+                        accessData( relationship );
+                    }
+                    for ( PropertyEntry<Relationship> change : data.assignedRelationshipProperties() )
+                    {
+                        accessData( change.entity() );
+                    }
+                    for ( PropertyEntry<Relationship> change : data.removedRelationshipProperties() )
+                    {
+                        accessData( change.entity() );
+                    }
+                    tx.success();
+                }
+            }
+
+            private void accessData( Relationship relationship )
+            {
+                accessCount.incrementAndGet();
+                RelationshipData expectancy = expectedRelationshipData.get( relationship.getId() );
+                assertNotNull( expectancy );
+                assertEquals( expectancy.startNode, relationship.getStartNode() );
+                assertEquals( expectancy.type, relationship.getType().name() );
+                assertEquals( expectancy.endNode, relationship.getEndNode() );
+            }
+        };
+        db.registerTransactionEventHandler( handler );
+
+        // WHEN
+        try
+        {
+            Relationship relationship;
+            try ( Transaction tx = db.beginTx() )
+            {
+                relationship = db.createNode().createRelationshipTo( db.createNode(), MyRelTypes.TEST );
+                expectedRelationshipData.put( relationship.getId(), new RelationshipData( relationship ) );
+                tx.success();
+            }
+            // THEN
+            assertEquals( 1, accessCount.get() );
+
+            // and WHEN
+            try ( Transaction tx = db.beginTx() )
+            {
+                relationship.setProperty( "name", "Smith" );
+                Relationship otherRelationship =
+                        db.createNode().createRelationshipTo( db.createNode(), MyRelTypes.TEST2 );
+                expectedRelationshipData.put( otherRelationship.getId(), new RelationshipData( otherRelationship ) );
+                tx.success();
+            }
+            // THEN
+            assertEquals( 2, accessCount.get() );
+
+            // and WHEN
+            try ( Transaction tx = db.beginTx() )
+            {
+                relationship.delete();
+                tx.success();
+            }
+            // THEN
+            assertEquals( 1, accessCount.get() );
+        }
+        finally
+        {
+            db.unregisterTransactionEventHandler( handler );
+        }
+    }
+
+	@Test
+    public void shouldProvideTheCorrectRelationshipData()
+    {
+        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
+
+        // create a rel type so the next type id is non zero
+        try ( Transaction tx = db.beginTx() )
+        {
+            db.createNode().createRelationshipTo( db.createNode(), withName( "TYPE" ) );
+        }
+
+        RelationshipType livesIn = withName( "LIVES_IN" );
+        long relId;
+
+        try ( Transaction tx = db.beginTx() )
+        {
+            Node person = db.createNode( label( "Person" ) );
+
+            Node city = db.createNode( label( "City" ) );
+
+            Relationship rel = person.createRelationshipTo( city, livesIn );
+            rel.setProperty( "since", 2009 );
+            relId = rel.getId();
+            tx.success();
+        }
+
+        final Set<String> changedRelationships = new HashSet<>();
+
+        db.registerTransactionEventHandler( new TransactionEventHandler.Adapter<Void>()
+        {
+            @Override
+            public Void beforeCommit( TransactionData data )
+            {
+                for ( PropertyEntry<Relationship> entry : data.assignedRelationshipProperties() )
+                {
+                    changedRelationships.add( entry.entity().getType().name() );
+                }
+
+                return null;
+            }
+        } );
+
+        try ( Transaction tx = db.beginTx() )
+        {
+            Relationship rel = db.getRelationshipById( relId );
+            rel.setProperty( "since", 2010 );
+            tx.success();
+        }
+
+        assertEquals( 1, changedRelationships.size() );
+        assertTrue( new StringBuilder().append(livesIn).append(" not in ").append(changedRelationships.toString()).toString(),
+                changedRelationships.contains( livesIn.name() ) );
+    }
+
+	@Test
+    public void shouldNotFireEventForReadOnlyTransaction()
+    {
+        // GIVEN
+        Node root = createTree( 3, 3 );
+        dbRule.getGraphDatabaseAPI().registerTransactionEventHandler(
+                new ExceptionThrowingEventHandler( new RuntimeException( "Just failing" ) ) );
+
+        // WHEN
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            count( dbRule.getGraphDatabaseAPI().traversalDescription().traverse( root ) );
+            tx.success();
+        }
+    }
+
+	@Test
+    public void shouldNotFireEventForNonDataTransactions()
+    {
+        // GIVEN
+        final AtomicInteger counter = new AtomicInteger();
+        dbRule.getGraphDatabaseAPI().registerTransactionEventHandler( new TransactionEventHandler.Adapter<Void>()
+        {
+            @Override
+            public Void beforeCommit( TransactionData data )
+            {
+                assertTrue( "Expected only transactions that had nodes or relationships created",
+                        data.createdNodes().iterator().hasNext() ||
+                        data.createdRelationships().iterator().hasNext() );
+                counter.incrementAndGet();
+                return null;
+            }
+        } );
+        Label label = label( "Label" );
+        String key = "key";
+        assertEquals( 0, counter.get() );
+
+        // WHEN creating a label token
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            dbRule.createNode( label );
+            tx.success();
+        }
+        assertEquals( 1, counter.get() );
+        // ... a property key token
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            dbRule.createNode().setProperty( key, "value" );
+            tx.success();
+        }
+        assertEquals( 2, counter.get() );
+        // ... and a relationship type
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            dbRule.createNode().createRelationshipTo( dbRule.createNode(), withName( "A_TYPE" ) );
+            tx.success();
+        }
+        assertEquals( 3, counter.get() );
+        // ... also when creating an index
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            dbRule.schema().indexFor( label ).on( key ).create();
+            tx.success();
+        }
+        // ... or a constraint
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            dbRule.schema().constraintFor( label ).assertPropertyIsUnique( "otherkey" ).create();
+            tx.success();
+        }
+        // ... or even an explicit index
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            dbRule.index().forNodes( "some index", stringMap( PROVIDER, IDENTIFIER ) );
+            tx.success();
+        }
+
+        // THEN only three transaction events (all including graph data) should've been fired
+        assertEquals( 3, counter.get() );
+    }
+
+	@Test
+    public void shouldBeAbleToTouchDataOutsideTxDataInAfterCommit()
+    {
+        // GIVEN
+        final Node node = createNode( "one", "Two", "three", "Four" );
+        dbRule.getGraphDatabaseAPI().registerTransactionEventHandler( new TransactionEventHandler.Adapter<Object>()
+        {
+            @Override
+            public void afterCommit( TransactionData data, Object nothing )
+            {
+                try ( Transaction tx = dbRule.beginTx() )
+                {
+                    for ( String key : node.getPropertyKeys() )
+                    {   // Just to see if one can reach them
+                        node.getProperty( key );
+                    }
+                    tx.success();
+                }
+            }
+        } );
+
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            // WHEN/THEN
+            dbRule.createNode();
+            node.setProperty( "five", "Six" );
+            tx.success();
+        }
+    }
+
+	@Test
+    public void shouldAllowToStringOnCreatedRelationshipInAfterCommit()
+    {
+        // GIVEN
+        Relationship relationship;
+        Node startNode;
+        Node endNode;
+        RelationshipType type = MyRelTypes.TEST;
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            startNode = dbRule.createNode();
+            endNode = dbRule.createNode();
+            relationship = startNode.createRelationshipTo( endNode, type );
+            tx.success();
+        }
+
+        // WHEN
+        AtomicReference<String> deletedToString = new AtomicReference<>();
+        dbRule.registerTransactionEventHandler( new TransactionEventHandler.Adapter<Object>()
+        {
+            @Override
+            public void afterCommit( TransactionData data, Object state )
+            {
+                for ( Relationship relationship : data.deletedRelationships() )
+                {
+                    deletedToString.set( relationship.toString() );
+                }
+            }
+        } );
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            relationship.delete();
+            tx.success();
+        }
+
+        // THEN
+        assertNotNull( deletedToString.get() );
+        assertThat( deletedToString.get(), containsString( type.name() ) );
+        assertThat( deletedToString.get(), containsString( format( "(%d)", startNode.getId() ) ) );
+        assertThat( deletedToString.get(), containsString( format( "(%d)", endNode.getId() ) ) );
+    }
+
+	@Test
+    public void shouldGetCallToAfterRollbackEvenIfBeforeCommitFailed()
+    {
+        // given
+        CapturingEventHandler<Integer> firstWorkingHandler = new CapturingEventHandler<>( () -> 5 );
+        String failureMessage = "Massive fail";
+        CapturingEventHandler<Integer> faultyHandler = new CapturingEventHandler<>( () ->
+        {
+            throw new RuntimeException( failureMessage );
+        } );
+        CapturingEventHandler<Integer> otherWorkingHandler = new CapturingEventHandler<>( () -> 10 );
+        dbRule.registerTransactionEventHandler( firstWorkingHandler );
+        dbRule.registerTransactionEventHandler( faultyHandler );
+        dbRule.registerTransactionEventHandler( otherWorkingHandler );
+
+        boolean failed = false;
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            // when
+            dbRule.createNode();
+            tx.success();
+        }
+        catch ( Exception e )
+        {
+            assertTrue( Exceptions.contains( e, failureMessage, RuntimeException.class ) );
+            failed = true;
+        }
+        assertTrue( failed );
+
+        // then
+        assertTrue( firstWorkingHandler.beforeCommitCalled );
+        assertTrue( firstWorkingHandler.afterRollbackCalled );
+        assertEquals( 5, firstWorkingHandler.afterRollbackState.intValue() );
+        assertTrue( faultyHandler.beforeCommitCalled );
+        assertTrue( faultyHandler.afterRollbackCalled );
+        assertNull( faultyHandler.afterRollbackState );
+        assertTrue( otherWorkingHandler.beforeCommitCalled );
+        assertTrue( otherWorkingHandler.afterRollbackCalled );
+        assertEquals( 10, otherWorkingHandler.afterRollbackState.intValue() );
+    }
+
+	private Node createNode( String... properties )
+    {
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            Node node = dbRule.createNode();
+            for ( int i = 0; i < properties.length; i++ )
+            {
+                node.setProperty( properties[i++], properties[i] );
+            }
+            tx.success();
+            return node;
+        }
+    }
+
+	private Node createTree( int depth, int width )
+    {
+        try ( Transaction tx = dbRule.beginTx() )
+        {
+            Node root = dbRule.createNode( TestLabels.LABEL_ONE );
+            createTree( root, depth, width, 0 );
+            tx.success();
+            return root;
+        }
+    }
+
+	private void createTree( Node parent, int maxDepth, int width, int currentDepth )
+    {
+        if ( currentDepth > maxDepth )
+        {
+            return;
+        }
+        for ( int i = 0; i < width; i++ )
+        {
+            Node child = dbRule.createNode( TestLabels.LABEL_TWO );
+            parent.createRelationshipTo( child, MyRelTypes.TEST );
+            createTree( child, maxDepth, width, currentDepth + 1 );
+        }
+    }
+
+	private enum RelTypes implements RelationshipType
+    {
+        TXEVENT
+    }
+
+	private static class MyTxEventHandler implements TransactionEventHandler<Object>
     {
         Map<String,Object> nodeProps = new HashMap<>();
         Map<String,Object> relProps = new HashMap<>();
@@ -440,36 +1063,6 @@ public class TestTransactionEvents
         {
             return null;
         }
-    }
-
-    private void verifyHandlerCalls(
-            List<TransactionEventHandler<Object>> handlers, boolean txSuccess )
-    {
-        for ( TransactionEventHandler<Object> handler : handlers )
-        {
-            DummyTransactionEventHandler<Object> realHandler =
-                    (DummyTransactionEventHandler<Object>) ((FailingEventHandler<Object>) handler).source;
-            if ( txSuccess )
-            {
-                assertEquals( Integer.valueOf( 0 ), realHandler.beforeCommit );
-                assertEquals( Integer.valueOf( 1 ), realHandler.afterCommit );
-            }
-            else
-            {
-                if ( realHandler.counter > 0 )
-                {
-                    assertEquals( Integer.valueOf( 0 ),
-                            realHandler.beforeCommit );
-                    assertEquals( Integer.valueOf( 1 ),
-                            realHandler.afterRollback );
-                }
-            }
-        }
-    }
-
-    private enum RelTypes implements RelationshipType
-    {
-        TXEVENT
     }
 
     private static class FailingEventHandler<T> implements TransactionEventHandler<T>
@@ -613,611 +1206,6 @@ public class TestTransactionEvents
             beforeCommit = null;
             afterCommit = null;
             afterRollback = null;
-        }
-    }
-
-    @Test
-    public void makeSureHandlerIsntCalledWhenTxRolledBack()
-    {
-        DummyTransactionEventHandler<Integer> handler =
-            new DummyTransactionEventHandler<>( 10 );
-        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-        db.registerTransactionEventHandler( handler );
-        try
-        {
-            try ( Transaction ignore = db.beginTx() )
-            {
-                db.createNode().delete();
-            }
-            assertNull( handler.beforeCommit );
-            assertNull( handler.afterCommit );
-            assertNull( handler.afterRollback );
-        }
-        finally
-        {
-            db.unregisterTransactionEventHandler( handler );
-        }
-    }
-
-    @Test
-    public void modifiedPropertyCanByFurtherModifiedInBeforeCommit()
-    {
-        // Given
-        // -- create node and set property on it in one transaction
-        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-        final String key = "key";
-        final Object value1 = "the old value";
-        final Object value2 = "the new value";
-        final Node node;
-        try ( Transaction tx = db.beginTx() )
-        {
-            node = db.createNode();
-            node.setProperty( key, "initial value" );
-            tx.success();
-        }
-        // -- register a tx handler which will override a property
-        TransactionEventHandler<Void> handler = new TransactionEventHandler.Adapter<Void>()
-        {
-            @Override
-            public Void beforeCommit( TransactionData data )
-            {
-                Node modifiedNode = data.assignedNodeProperties().iterator().next().entity();
-                assertEquals( node, modifiedNode );
-                modifiedNode.setProperty( key, value2 );
-                return null;
-            }
-        };
-        db.registerTransactionEventHandler( handler );
-
-        try ( Transaction tx = db.beginTx() )
-        {
-            // When
-            node.setProperty( key, value1 );
-            tx.success();
-        }
-        // Then
-        assertThat(node, inTx(db, hasProperty(key).withValue(value2)));
-        db.unregisterTransactionEventHandler( handler );
-    }
-
-    @Test
-    public void nodeCanBecomeSchemaIndexableInBeforeCommitByAddingProperty()
-    {
-        // Given we have a schema index...
-        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-        Label label = label( "Label" );
-        try ( Transaction tx = db.beginTx() )
-        {
-            db.schema().indexFor( label ).on( "indexed" ).create();
-            tx.success();
-        }
-
-        // ... and a transaction event handler that likes to add the indexed property on nodes
-        db.registerTransactionEventHandler( new TransactionEventHandler.Adapter<Object>()
-        {
-            @Override
-            public Object beforeCommit( TransactionData data )
-            {
-                Iterator<Node> nodes = data.createdNodes().iterator();
-                if ( nodes.hasNext() )
-                {
-                    Node node = nodes.next();
-                    node.setProperty( "indexed", "value" );
-                }
-                return null;
-            }
-        } );
-
-        // When we create a node with the right label, but not the right property...
-        try ( Transaction tx = db.beginTx() )
-        {
-            db.schema().awaitIndexesOnline( AWAIT_INDEX_DURATION, AWAIT_INDEX_UNIT );
-            Node node = db.createNode( label );
-            node.setProperty( "random", 42 );
-            tx.success();
-        }
-
-        // Then we should be able to look it up through the index.
-        try ( Transaction ignore = db.beginTx() )
-        {
-            Node node = db.findNode( label, "indexed", "value" );
-            assertThat( node.getProperty( "random" ), is( 42 ) );
-        }
-    }
-
-    @Test
-    public void nodeCanBecomeSchemaIndexableInBeforeCommitByAddingLabel()
-    {
-        // Given we have a schema index...
-        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-        final Label label = label( "Label" );
-        try ( Transaction tx = db.beginTx() )
-        {
-            db.schema().indexFor( label ).on( "indexed" ).create();
-            tx.success();
-        }
-
-        // ... and a transaction event handler that likes to add the indexed property on nodes
-        db.registerTransactionEventHandler( new TransactionEventHandler.Adapter<Object>()
-        {
-            @Override
-            public Object beforeCommit( TransactionData data )
-            {
-                Iterator<Node> nodes = data.createdNodes().iterator();
-                if ( nodes.hasNext() )
-                {
-                    Node node = nodes.next();
-                    node.addLabel( label );
-                }
-                return null;
-            }
-        } );
-
-        // When we create a node with the right property, but not the right label...
-        try ( Transaction tx = db.beginTx() )
-        {
-            db.schema().awaitIndexesOnline( AWAIT_INDEX_DURATION, AWAIT_INDEX_UNIT );
-            Node node = db.createNode();
-            node.setProperty( "indexed", "value" );
-            node.setProperty( "random", 42 );
-            tx.success();
-        }
-
-        // Then we should be able to look it up through the index.
-        try ( Transaction ignore = db.beginTx() )
-        {
-            Node node = db.findNode( label, "indexed", "value" );
-            assertThat( node.getProperty( "random" ), is( 42 ) );
-        }
-    }
-
-    @Test
-    public void shouldAccessAssignedLabels()
-    {
-        // given
-        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-
-        ChangedLabels labels = (ChangedLabels) db.registerTransactionEventHandler( new ChangedLabels() );
-        try
-        {
-            // when
-            try ( Transaction tx = db.beginTx() )
-            {
-                Node node1 = db.createNode();
-                Node node2 = db.createNode();
-                Node node3 = db.createNode();
-
-                labels.add( node1, "Foo" );
-                labels.add( node2, "Bar" );
-                labels.add( node3, "Baz" );
-                labels.add( node3, "Bar" );
-
-                labels.activate();
-                tx.success();
-            }
-            // then
-            assertTrue( labels.isEmpty() );
-        }
-        finally
-        {
-            db.unregisterTransactionEventHandler( labels );
-        }
-    }
-
-    @Test
-    public void shouldAccessRemovedLabels()
-    {
-        // given
-        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-
-        ChangedLabels labels = (ChangedLabels) db.registerTransactionEventHandler( new ChangedLabels() );
-        try
-        {
-            Node node1;
-            Node node2;
-            Node node3;
-            try ( Transaction tx = db.beginTx() )
-            {
-                node1 = db.createNode();
-                node2 = db.createNode();
-                node3 = db.createNode();
-
-                labels.add( node1, "Foo" );
-                labels.add( node2, "Bar" );
-                labels.add( node3, "Baz" );
-                labels.add( node3, "Bar" );
-
-                tx.success();
-            }
-            labels.clear();
-
-            // when
-            try ( Transaction tx = db.beginTx() )
-            {
-                labels.remove( node1, "Foo" );
-                labels.remove( node2, "Bar" );
-                labels.remove( node3, "Baz" );
-                labels.remove( node3, "Bar" );
-
-                labels.activate();
-                tx.success();
-            }
-            // then
-            assertTrue( labels.isEmpty() );
-        }
-        finally
-        {
-            db.unregisterTransactionEventHandler( labels );
-        }
-    }
-
-    @Test
-    public void shouldAccessRelationshipDataInAfterCommit()
-    {
-        // GIVEN
-        final GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-        final AtomicInteger accessCount = new AtomicInteger();
-        final Map<Long,RelationshipData> expectedRelationshipData = new HashMap<>();
-        TransactionEventHandler<Void> handler = new TransactionEventHandler.Adapter<Void>()
-        {
-            @Override
-            public void afterCommit( TransactionData data, Void state )
-            {
-                accessCount.set( 0 );
-                try ( Transaction tx = db.beginTx() )
-                {
-                    for ( Relationship relationship : data.createdRelationships() )
-                    {
-                        accessData( relationship );
-                    }
-                    for ( PropertyEntry<Relationship> change : data.assignedRelationshipProperties() )
-                    {
-                        accessData( change.entity() );
-                    }
-                    for ( PropertyEntry<Relationship> change : data.removedRelationshipProperties() )
-                    {
-                        accessData( change.entity() );
-                    }
-                    tx.success();
-                }
-            }
-
-            private void accessData( Relationship relationship )
-            {
-                accessCount.incrementAndGet();
-                RelationshipData expectancy = expectedRelationshipData.get( relationship.getId() );
-                assertNotNull( expectancy );
-                assertEquals( expectancy.startNode, relationship.getStartNode() );
-                assertEquals( expectancy.type, relationship.getType().name() );
-                assertEquals( expectancy.endNode, relationship.getEndNode() );
-            }
-        };
-        db.registerTransactionEventHandler( handler );
-
-        // WHEN
-        try
-        {
-            Relationship relationship;
-            try ( Transaction tx = db.beginTx() )
-            {
-                relationship = db.createNode().createRelationshipTo( db.createNode(), MyRelTypes.TEST );
-                expectedRelationshipData.put( relationship.getId(), new RelationshipData( relationship ) );
-                tx.success();
-            }
-            // THEN
-            assertEquals( 1, accessCount.get() );
-
-            // and WHEN
-            try ( Transaction tx = db.beginTx() )
-            {
-                relationship.setProperty( "name", "Smith" );
-                Relationship otherRelationship =
-                        db.createNode().createRelationshipTo( db.createNode(), MyRelTypes.TEST2 );
-                expectedRelationshipData.put( otherRelationship.getId(), new RelationshipData( otherRelationship ) );
-                tx.success();
-            }
-            // THEN
-            assertEquals( 2, accessCount.get() );
-
-            // and WHEN
-            try ( Transaction tx = db.beginTx() )
-            {
-                relationship.delete();
-                tx.success();
-            }
-            // THEN
-            assertEquals( 1, accessCount.get() );
-        }
-        finally
-        {
-            db.unregisterTransactionEventHandler( handler );
-        }
-    }
-
-    @Test
-    public void shouldProvideTheCorrectRelationshipData()
-    {
-        GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-
-        // create a rel type so the next type id is non zero
-        try ( Transaction tx = db.beginTx() )
-        {
-            db.createNode().createRelationshipTo( db.createNode(), withName( "TYPE" ) );
-        }
-
-        RelationshipType livesIn = withName( "LIVES_IN" );
-        long relId;
-
-        try ( Transaction tx = db.beginTx() )
-        {
-            Node person = db.createNode( label( "Person" ) );
-
-            Node city = db.createNode( label( "City" ) );
-
-            Relationship rel = person.createRelationshipTo( city, livesIn );
-            rel.setProperty( "since", 2009 );
-            relId = rel.getId();
-            tx.success();
-        }
-
-        final Set<String> changedRelationships = new HashSet<>();
-
-        db.registerTransactionEventHandler( new TransactionEventHandler.Adapter<Void>()
-        {
-            @Override
-            public Void beforeCommit( TransactionData data )
-            {
-                for ( PropertyEntry<Relationship> entry : data.assignedRelationshipProperties() )
-                {
-                    changedRelationships.add( entry.entity().getType().name() );
-                }
-
-                return null;
-            }
-        } );
-
-        try ( Transaction tx = db.beginTx() )
-        {
-            Relationship rel = db.getRelationshipById( relId );
-            rel.setProperty( "since", 2010 );
-            tx.success();
-        }
-
-        assertEquals( 1, changedRelationships.size() );
-        assertTrue( livesIn + " not in " + changedRelationships.toString(),
-                changedRelationships.contains( livesIn.name() ) );
-    }
-
-    @Test
-    public void shouldNotFireEventForReadOnlyTransaction()
-    {
-        // GIVEN
-        Node root = createTree( 3, 3 );
-        dbRule.getGraphDatabaseAPI().registerTransactionEventHandler(
-                new ExceptionThrowingEventHandler( new RuntimeException( "Just failing" ) ) );
-
-        // WHEN
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            count( dbRule.getGraphDatabaseAPI().traversalDescription().traverse( root ) );
-            tx.success();
-        }
-    }
-
-    @Test
-    public void shouldNotFireEventForNonDataTransactions()
-    {
-        // GIVEN
-        final AtomicInteger counter = new AtomicInteger();
-        dbRule.getGraphDatabaseAPI().registerTransactionEventHandler( new TransactionEventHandler.Adapter<Void>()
-        {
-            @Override
-            public Void beforeCommit( TransactionData data )
-            {
-                assertTrue( "Expected only transactions that had nodes or relationships created",
-                        data.createdNodes().iterator().hasNext() ||
-                        data.createdRelationships().iterator().hasNext() );
-                counter.incrementAndGet();
-                return null;
-            }
-        } );
-        Label label = label( "Label" );
-        String key = "key";
-        assertEquals( 0, counter.get() );
-
-        // WHEN creating a label token
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            dbRule.createNode( label );
-            tx.success();
-        }
-        assertEquals( 1, counter.get() );
-        // ... a property key token
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            dbRule.createNode().setProperty( key, "value" );
-            tx.success();
-        }
-        assertEquals( 2, counter.get() );
-        // ... and a relationship type
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            dbRule.createNode().createRelationshipTo( dbRule.createNode(), withName( "A_TYPE" ) );
-            tx.success();
-        }
-        assertEquals( 3, counter.get() );
-        // ... also when creating an index
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            dbRule.schema().indexFor( label ).on( key ).create();
-            tx.success();
-        }
-        // ... or a constraint
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            dbRule.schema().constraintFor( label ).assertPropertyIsUnique( "otherkey" ).create();
-            tx.success();
-        }
-        // ... or even an explicit index
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            dbRule.index().forNodes( "some index", stringMap( PROVIDER, IDENTIFIER ) );
-            tx.success();
-        }
-
-        // THEN only three transaction events (all including graph data) should've been fired
-        assertEquals( 3, counter.get() );
-    }
-
-    @Test
-    public void shouldBeAbleToTouchDataOutsideTxDataInAfterCommit()
-    {
-        // GIVEN
-        final Node node = createNode( "one", "Two", "three", "Four" );
-        dbRule.getGraphDatabaseAPI().registerTransactionEventHandler( new TransactionEventHandler.Adapter<Object>()
-        {
-            @Override
-            public void afterCommit( TransactionData data, Object nothing )
-            {
-                try ( Transaction tx = dbRule.beginTx() )
-                {
-                    for ( String key : node.getPropertyKeys() )
-                    {   // Just to see if one can reach them
-                        node.getProperty( key );
-                    }
-                    tx.success();
-                }
-            }
-        } );
-
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            // WHEN/THEN
-            dbRule.createNode();
-            node.setProperty( "five", "Six" );
-            tx.success();
-        }
-    }
-
-    @Test
-    public void shouldAllowToStringOnCreatedRelationshipInAfterCommit()
-    {
-        // GIVEN
-        Relationship relationship;
-        Node startNode;
-        Node endNode;
-        RelationshipType type = MyRelTypes.TEST;
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            startNode = dbRule.createNode();
-            endNode = dbRule.createNode();
-            relationship = startNode.createRelationshipTo( endNode, type );
-            tx.success();
-        }
-
-        // WHEN
-        AtomicReference<String> deletedToString = new AtomicReference<>();
-        dbRule.registerTransactionEventHandler( new TransactionEventHandler.Adapter<Object>()
-        {
-            @Override
-            public void afterCommit( TransactionData data, Object state )
-            {
-                for ( Relationship relationship : data.deletedRelationships() )
-                {
-                    deletedToString.set( relationship.toString() );
-                }
-            }
-        } );
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            relationship.delete();
-            tx.success();
-        }
-
-        // THEN
-        assertNotNull( deletedToString.get() );
-        assertThat( deletedToString.get(), containsString( type.name() ) );
-        assertThat( deletedToString.get(), containsString( format( "(%d)", startNode.getId() ) ) );
-        assertThat( deletedToString.get(), containsString( format( "(%d)", endNode.getId() ) ) );
-    }
-
-    @Test
-    public void shouldGetCallToAfterRollbackEvenIfBeforeCommitFailed()
-    {
-        // given
-        CapturingEventHandler<Integer> firstWorkingHandler = new CapturingEventHandler<>( () -> 5 );
-        String failureMessage = "Massive fail";
-        CapturingEventHandler<Integer> faultyHandler = new CapturingEventHandler<>( () ->
-        {
-            throw new RuntimeException( failureMessage );
-        } );
-        CapturingEventHandler<Integer> otherWorkingHandler = new CapturingEventHandler<>( () -> 10 );
-        dbRule.registerTransactionEventHandler( firstWorkingHandler );
-        dbRule.registerTransactionEventHandler( faultyHandler );
-        dbRule.registerTransactionEventHandler( otherWorkingHandler );
-
-        boolean failed = false;
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            // when
-            dbRule.createNode();
-            tx.success();
-        }
-        catch ( Exception e )
-        {
-            assertTrue( Exceptions.contains( e, failureMessage, RuntimeException.class ) );
-            failed = true;
-        }
-        assertTrue( failed );
-
-        // then
-        assertTrue( firstWorkingHandler.beforeCommitCalled );
-        assertTrue( firstWorkingHandler.afterRollbackCalled );
-        assertEquals( 5, firstWorkingHandler.afterRollbackState.intValue() );
-        assertTrue( faultyHandler.beforeCommitCalled );
-        assertTrue( faultyHandler.afterRollbackCalled );
-        assertNull( faultyHandler.afterRollbackState );
-        assertTrue( otherWorkingHandler.beforeCommitCalled );
-        assertTrue( otherWorkingHandler.afterRollbackCalled );
-        assertEquals( 10, otherWorkingHandler.afterRollbackState.intValue() );
-    }
-
-    private Node createNode( String... properties )
-    {
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            Node node = dbRule.createNode();
-            for ( int i = 0; i < properties.length; i++ )
-            {
-                node.setProperty( properties[i++], properties[i] );
-            }
-            tx.success();
-            return node;
-        }
-    }
-
-    private Node createTree( int depth, int width )
-    {
-        try ( Transaction tx = dbRule.beginTx() )
-        {
-            Node root = dbRule.createNode( TestLabels.LABEL_ONE );
-            createTree( root, depth, width, 0 );
-            tx.success();
-            return root;
-        }
-    }
-
-    private void createTree( Node parent, int maxDepth, int width, int currentDepth )
-    {
-        if ( currentDepth > maxDepth )
-        {
-            return;
-        }
-        for ( int i = 0; i < width; i++ )
-        {
-            Node child = dbRule.createNode( TestLabels.LABEL_TWO );
-            parent.createRelationshipTo( child, MyRelTypes.TEST );
-            createTree( child, maxDepth, width, currentDepth + 1 );
         }
     }
 

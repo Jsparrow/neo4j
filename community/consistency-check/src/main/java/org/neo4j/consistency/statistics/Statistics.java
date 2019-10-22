@@ -25,12 +25,6 @@ package org.neo4j.consistency.statistics;
  */
 public interface Statistics
 {
-    void print( String name );
-
-    void reset();
-
-    Counts getCounts();
-
     Statistics NONE = new Statistics()
     {
         @Override
@@ -49,4 +43,10 @@ public interface Statistics
             return Counts.NONE;
         }
     };
+
+	void print( String name );
+
+	void reset();
+
+	Counts getCounts();
 }

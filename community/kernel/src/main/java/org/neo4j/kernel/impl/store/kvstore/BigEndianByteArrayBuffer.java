@@ -27,30 +27,30 @@ import org.neo4j.io.pagecache.PageCursor;
 
 public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableBuffer
 {
-    static BigEndianByteArrayBuffer newBuffer( int size )
-    {
-        return new BigEndianByteArrayBuffer( size );
-    }
-
     final byte[] buffer;
 
-    BigEndianByteArrayBuffer( int size )
-    {
-        this( new byte[size] );
-    }
-
-    public BigEndianByteArrayBuffer( byte[] buffer )
+	public BigEndianByteArrayBuffer( byte[] buffer )
     {
         this.buffer = buffer;
     }
 
-    @Override
+	BigEndianByteArrayBuffer( int size )
+    {
+        this( new byte[size] );
+    }
+
+	static BigEndianByteArrayBuffer newBuffer( int size )
+    {
+        return new BigEndianByteArrayBuffer( size );
+    }
+
+	@Override
     public String toString()
     {
         return toString( buffer );
     }
 
-    static String toString( byte[] buffer )
+	static String toString( byte[] buffer )
     {
         StringBuilder result = new StringBuilder( buffer.length * 6 + 1 ).append( '[' );
         for ( byte b : buffer )
@@ -85,7 +85,7 @@ public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableB
         return result.toString();
     }
 
-    static int compare( byte[] key, byte[] searchSpace, int offset )
+	static int compare( byte[] key, byte[] searchSpace, int offset )
     {
         for ( int i = 0; i < key.length; i++ )
         {
@@ -98,17 +98,17 @@ public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableB
         return 0;
     }
 
-    public void clear()
+	public void clear()
     {
         fill( (byte) 0 );
     }
 
-    public void fill( byte zero )
+	public void fill( byte zero )
     {
         Arrays.fill( buffer, zero );
     }
 
-    @Override
+	@Override
     public boolean allZeroes()
     {
         for ( byte b : buffer )
@@ -121,7 +121,7 @@ public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableB
         return true;
     }
 
-    public boolean minusOneAtTheEnd()
+	public boolean minusOneAtTheEnd()
     {
         for ( int i = 0; i < buffer.length / 2; i++ )
         {
@@ -141,37 +141,37 @@ public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableB
         return true;
     }
 
-    public void dataFrom( ByteBuffer buffer )
+	public void dataFrom( ByteBuffer buffer )
     {
         buffer.get( this.buffer );
     }
 
-    public void dataTo( byte[] target, int targetPos )
+	public void dataTo( byte[] target, int targetPos )
     {
         assert target.length >= targetPos + buffer.length : "insufficient space";
         System.arraycopy( buffer, 0, target, targetPos, buffer.length );
     }
 
-    @Override
+	@Override
     public int size()
     {
         return buffer.length;
     }
 
-    @Override
+	@Override
     public byte getByte( int offset )
     {
         offset = checkBounds( offset, 1 );
         return buffer[offset];
     }
 
-    @Override
+	@Override
     public BigEndianByteArrayBuffer putByte( int offset, byte value )
     {
         return putValue( offset, value, 1 );
     }
 
-    @Override
+	@Override
     public short getShort( int offset )
     {
         offset = checkBounds( offset, 2 );
@@ -179,13 +179,13 @@ public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableB
                         (0xFF & buffer[offset + 1]));
     }
 
-    @Override
+	@Override
     public BigEndianByteArrayBuffer putShort( int offset, short value )
     {
         return putValue( offset, value, 2 );
     }
 
-    @Override
+	@Override
     public char getChar( int offset )
     {
         offset = checkBounds( offset, 2 );
@@ -193,13 +193,13 @@ public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableB
                        (0xFF & buffer[offset + 1]));
     }
 
-    @Override
+	@Override
     public BigEndianByteArrayBuffer putChar( int offset, char value )
     {
         return putValue( offset, value, 2 );
     }
 
-    @Override
+	@Override
     public int getInt( int offset )
     {
         offset = checkBounds( offset, 4 );
@@ -209,13 +209,13 @@ public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableB
                 0xFF & buffer[offset + 3];
     }
 
-    @Override
+	@Override
     public BigEndianByteArrayBuffer putInt( int offset, int value )
     {
         return putValue( offset, value, 4 );
     }
 
-    @Override
+	@Override
     public long getLong( int offset )
     {
         offset = checkBounds( offset, 8 );
@@ -229,39 +229,39 @@ public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableB
                 (0xFFL & buffer[offset + 7]);
     }
 
-    @Override
+	@Override
     public byte[] get( int offset, byte[] target )
     {
         System.arraycopy( buffer, offset, target, 0, target.length );
         return target;
     }
 
-    @Override
+	@Override
     public int compareTo( byte[] value )
     {
         return compare( buffer, value, 0 );
     }
 
-    @Override
+	@Override
     public BigEndianByteArrayBuffer putLong( int offset, long value )
     {
         return putValue( offset, value, 8 );
     }
 
-    @Override
+	@Override
     public BigEndianByteArrayBuffer put( int offset, byte[] value )
     {
         System.arraycopy( value, 0, buffer, offset, value.length );
         return this;
     }
 
-    @Override
+	@Override
     public void getFrom( PageCursor cursor )
     {
         cursor.getBytes( buffer );
     }
 
-    private BigEndianByteArrayBuffer putValue( int offset, long value, int size )
+	private BigEndianByteArrayBuffer putValue( int offset, long value, int size )
     {
         offset = checkBounds( offset, size );
         while ( size-- > 0 )
@@ -272,20 +272,17 @@ public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableB
         return this;
     }
 
-    void putIntegerAtEnd( long value ) throws IOException
+	void putIntegerAtEnd( long value ) throws IOException
     {
         if ( value < -1 )
         {
             throw new IllegalArgumentException( "Negative values different form -1 are not supported." );
         }
-        if ( this.size() < 8 )
-        {
-            if ( Long.numberOfLeadingZeros( value ) > (8 * this.size()) )
-            {
-                throw new IOException( String.format( "Cannot write integer value (%d), value capacity = %d",
-                                                      value, this.size() ) );
-            }
-        }
+        boolean condition = this.size() < 8 && Long.numberOfLeadingZeros( value ) > (8 * this.size());
+		if ( condition ) {
+		    throw new IOException( String.format( "Cannot write integer value (%d), value capacity = %d",
+		                                          value, this.size() ) );
+		}
         for ( int i = buffer.length; i-- > 0 && value != 0; )
         {
             buffer[i] = (byte) (0xFF & value);
@@ -293,7 +290,7 @@ public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableB
         }
     }
 
-    long getIntegerFromEnd()
+	long getIntegerFromEnd()
     {
         long value = 0;
         for ( int i = Math.max( 0, buffer.length - 8 ); i < buffer.length; i++ )
@@ -303,12 +300,12 @@ public final class BigEndianByteArrayBuffer implements ReadableBuffer, WritableB
         return value;
     }
 
-    public void read( WritableBuffer target )
+	public void read( WritableBuffer target )
     {
         target.put( 0, buffer );
     }
 
-    private int checkBounds( int offset, int size )
+	private int checkBounds( int offset, int size )
     {
         if ( offset < 0 || offset > size() - size )
         {

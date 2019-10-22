@@ -30,6 +30,7 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.neo4j.helpers.collection.Pair.of;
+import java.util.Collections;
 
 public class DbStructureCollectorTest
 {
@@ -64,11 +65,11 @@ public class DbStructureCollectorTest
         assertArrayEquals( new String[] { "Person" }, lookup.knownUniqueIndices().next().first() );
         assertArrayEquals( new String[]{"name"}, lookup.knownUniqueIndices().next().other() );
 
-        assertEquals( asList( "City" ),
+        assertEquals( Collections.singletonList( "City" ),
                 Iterators.asList( Iterators.map( Pair::first, lookup.knownNodeKeyConstraints() ) ) );
         assertArrayEquals( new String[]{"name"}, lookup.knownNodeKeyConstraints().next().other() );
 
-        assertEquals( asList( "City" ),
+        assertEquals( Collections.singletonList( "City" ),
                 Iterators.asList( Iterators.map( Pair::first, lookup.knownUniqueConstraints() ) ) );
         assertArrayEquals( new String[]{"name"}, lookup.knownUniqueConstraints().next().other() );
 
@@ -118,7 +119,7 @@ public class DbStructureCollectorTest
 
         assertArrayEquals( new String[] { "Person" }, lookup.knownUniqueIndices().next().first() );
         assertArrayEquals( new String[]{"name", "lastName"}, lookup.knownUniqueIndices().next().other() );
-        assertEquals( asList( "City" ),
+        assertEquals( Collections.singletonList( "City" ),
                 Iterators.asList( Iterators.map( Pair::first, lookup.knownUniqueConstraints() ) ) );
         assertArrayEquals( new String[]{"name", "area"}, lookup.knownUniqueConstraints().next().other() );
         assertEquals( new String[] { "City" }, lookup.knownIndices().next().first() );

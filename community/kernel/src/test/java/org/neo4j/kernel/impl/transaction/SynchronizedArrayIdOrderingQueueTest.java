@@ -94,7 +94,7 @@ public class SynchronizedArrayIdOrderingQueueTest
         queue.offer( 5 );
 
         // WHEN another thread comes in and awaits 5
-        OtherThreadExecutor<Void> t2 = cleanup.add( new OtherThreadExecutor<Void>( "T2", null ) );
+        OtherThreadExecutor<Void> t2 = cleanup.add( new OtherThreadExecutor<>( "T2", null ) );
         Future<Object> await5 = t2.executeDontWait( awaitHead( queue, 5 ) );
         t2.waitUntilWaiting();
         // ... and head (3) gets removed

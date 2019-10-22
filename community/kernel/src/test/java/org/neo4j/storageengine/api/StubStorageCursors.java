@@ -658,13 +658,12 @@ public class StubStorageCursors implements StorageReader
                 next = iterator.next();
             }
 
-            if ( next != NO_ID )
-            {
-                current = relationshipData.get( next );
-                next = NO_ID;
-                return true;
-            }
-            return false;
+            if (next == NO_ID) {
+				return false;
+			}
+			current = relationshipData.get( next );
+			next = NO_ID;
+			return true;
         }
 
         @Override
@@ -724,12 +723,11 @@ public class StubStorageCursors implements StorageReader
         @Override
         public boolean next()
         {
-            if ( iterator.hasNext() )
-            {
-                current = iterator.next();
-                return true;
-            }
-            return false;
+            if (!iterator.hasNext()) {
+				return false;
+			}
+			current = iterator.next();
+			return true;
         }
     }
 }

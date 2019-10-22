@@ -134,13 +134,7 @@ public class ClockCache<K, V>
     public Collection<V> values()
     {
         Set<V> toReturn = new HashSet<>();
-        for ( Page<V> page : cache.values() )
-        {
-            if ( page.value != null )
-            {
-                toReturn.add( page.value );
-            }
-        }
+        cache.values().stream().filter(page -> page.value != null).forEach(page -> toReturn.add(page.value));
         return toReturn;
     }
 

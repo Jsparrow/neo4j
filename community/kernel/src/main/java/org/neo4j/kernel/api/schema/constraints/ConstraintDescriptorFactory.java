@@ -30,55 +30,6 @@ import static java.lang.String.format;
 
 public class ConstraintDescriptorFactory
 {
-    private ConstraintDescriptorFactory()
-    {
-    }
-
-    public static NodeExistenceConstraintDescriptor existsForLabel( int labelId, int... propertyIds )
-    {
-        return new NodeExistenceConstraintDescriptor( SchemaDescriptorFactory.forLabel( labelId, propertyIds ) );
-    }
-
-    public static RelExistenceConstraintDescriptor existsForRelType( int relTypeId, int... propertyIds )
-    {
-        return new RelExistenceConstraintDescriptor( SchemaDescriptorFactory.forRelType( relTypeId, propertyIds ) );
-    }
-
-    public static UniquenessConstraintDescriptor uniqueForLabel( int labelId, int... propertyIds )
-    {
-        return new UniquenessConstraintDescriptor( SchemaDescriptorFactory.forLabel( labelId, propertyIds ) );
-    }
-
-    public static NodeKeyConstraintDescriptor nodeKeyForLabel( int labelId, int... propertyIds )
-    {
-        return new NodeKeyConstraintDescriptor( SchemaDescriptorFactory.forLabel( labelId, propertyIds ) );
-    }
-
-    public static ConstraintDescriptor existsForSchema( SchemaDescriptor schema )
-    {
-        return schema.computeWith( convertToExistenceConstraint );
-    }
-
-    public static NodeExistenceConstraintDescriptor existsForSchema( LabelSchemaDescriptor schema )
-    {
-        return new NodeExistenceConstraintDescriptor( schema );
-    }
-
-    public static RelExistenceConstraintDescriptor existsForSchema( RelationTypeSchemaDescriptor schema )
-    {
-        return new RelExistenceConstraintDescriptor( schema );
-    }
-
-    public static UniquenessConstraintDescriptor uniqueForSchema( SchemaDescriptor schema )
-    {
-        return schema.computeWith( convertToUniquenessConstraint );
-    }
-
-    public static NodeKeyConstraintDescriptor nodeKeyForSchema( SchemaDescriptor schema )
-    {
-        return schema.computeWith( convertToNodeKeyConstraint );
-    }
-
     private static SchemaComputer<ConstraintDescriptor> convertToExistenceConstraint =
             new SchemaComputer<ConstraintDescriptor>()
             {
@@ -104,7 +55,7 @@ public class ConstraintDescriptorFactory
                             ) );                }
             };
 
-    private static SchemaComputer<UniquenessConstraintDescriptor> convertToUniquenessConstraint =
+	private static SchemaComputer<UniquenessConstraintDescriptor> convertToUniquenessConstraint =
             new SchemaComputer<UniquenessConstraintDescriptor>()
             {
                 @Override
@@ -133,7 +84,7 @@ public class ConstraintDescriptorFactory
                             ) );                }
             };
 
-    private static SchemaComputer<NodeKeyConstraintDescriptor> convertToNodeKeyConstraint =
+	private static SchemaComputer<NodeKeyConstraintDescriptor> convertToNodeKeyConstraint =
             new SchemaComputer<NodeKeyConstraintDescriptor>()
             {
                 @Override
@@ -161,4 +112,53 @@ public class ConstraintDescriptorFactory
                                     schema.getClass().getSimpleName()
                             ) );                }
             };
+
+	private ConstraintDescriptorFactory()
+    {
+    }
+
+	public static NodeExistenceConstraintDescriptor existsForLabel( int labelId, int... propertyIds )
+    {
+        return new NodeExistenceConstraintDescriptor( SchemaDescriptorFactory.forLabel( labelId, propertyIds ) );
+    }
+
+	public static RelExistenceConstraintDescriptor existsForRelType( int relTypeId, int... propertyIds )
+    {
+        return new RelExistenceConstraintDescriptor( SchemaDescriptorFactory.forRelType( relTypeId, propertyIds ) );
+    }
+
+	public static UniquenessConstraintDescriptor uniqueForLabel( int labelId, int... propertyIds )
+    {
+        return new UniquenessConstraintDescriptor( SchemaDescriptorFactory.forLabel( labelId, propertyIds ) );
+    }
+
+	public static NodeKeyConstraintDescriptor nodeKeyForLabel( int labelId, int... propertyIds )
+    {
+        return new NodeKeyConstraintDescriptor( SchemaDescriptorFactory.forLabel( labelId, propertyIds ) );
+    }
+
+	public static ConstraintDescriptor existsForSchema( SchemaDescriptor schema )
+    {
+        return schema.computeWith( convertToExistenceConstraint );
+    }
+
+	public static NodeExistenceConstraintDescriptor existsForSchema( LabelSchemaDescriptor schema )
+    {
+        return new NodeExistenceConstraintDescriptor( schema );
+    }
+
+	public static RelExistenceConstraintDescriptor existsForSchema( RelationTypeSchemaDescriptor schema )
+    {
+        return new RelExistenceConstraintDescriptor( schema );
+    }
+
+	public static UniquenessConstraintDescriptor uniqueForSchema( SchemaDescriptor schema )
+    {
+        return schema.computeWith( convertToUniquenessConstraint );
+    }
+
+	public static NodeKeyConstraintDescriptor nodeKeyForSchema( SchemaDescriptor schema )
+    {
+        return schema.computeWith( convertToNodeKeyConstraint );
+    }
 }

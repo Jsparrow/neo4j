@@ -104,13 +104,12 @@ class TxStateIndexChanges
                                                 ValueTuple values )
     {
         UnmodifiableMap<ValueTuple,? extends LongDiffSets> updates = txState.getIndexUpdates( descriptor.schema() );
-        if ( updates != null )
-        {
-            LongDiffSets indexUpdatesForSeek = updates.get( values );
-            return indexUpdatesForSeek == null ? EMPTY_ADDED_AND_REMOVED :
-                   new AddedAndRemoved( LongLists.mutable.ofAll( indexUpdatesForSeek.getAdded() ), indexUpdatesForSeek.getRemoved() );
-        }
-        return EMPTY_ADDED_AND_REMOVED;
+        if (updates == null) {
+			return EMPTY_ADDED_AND_REMOVED;
+		}
+		LongDiffSets indexUpdatesForSeek = updates.get( values );
+		return indexUpdatesForSeek == null ? EMPTY_ADDED_AND_REMOVED :
+		       new AddedAndRemoved( LongLists.mutable.ofAll( indexUpdatesForSeek.getAdded() ), indexUpdatesForSeek.getRemoved() );
     }
 
     // RANGE SEEK

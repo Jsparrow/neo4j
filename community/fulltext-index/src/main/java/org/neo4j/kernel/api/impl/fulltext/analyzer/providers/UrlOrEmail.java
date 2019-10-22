@@ -42,8 +42,6 @@ public class UrlOrEmail extends AnalyzerProvider
     @Override
     public String description()
     {
-        return "Tokenizes into sequences of alpha-numeric, numeric, URL, email, southeast asian terms, " +
-                "and into terms of individual ideographic and hiragana characters. " +
-                "English stop words are filtered out.";
+        return new StringBuilder().append("Tokenizes into sequences of alpha-numeric, numeric, URL, email, southeast asian terms, ").append("and into terms of individual ideographic and hiragana characters. ").append("English stop words are filtered out.").toString();
     }
 }

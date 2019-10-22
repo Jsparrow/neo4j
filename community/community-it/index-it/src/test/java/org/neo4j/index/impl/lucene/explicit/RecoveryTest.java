@@ -220,16 +220,6 @@ public class RecoveryTest
         db.restartDatabase();
     }
 
-    static class ClassWithToStringAlwaysNull
-    {
-        @Override
-        public String toString()
-        {
-            return null;
-        }
-
-    }
-
     private <ENTITY extends PropertyContainer> void assertAddFailsWithIllegalArgument( Index<ENTITY> index,
             ENTITY entity, String key, Object value )
     {
@@ -244,7 +234,7 @@ public class RecoveryTest
         }
     }
 
-    private <ENTITY extends PropertyContainer> void assertRemoveFailsWithIllegalArgument( Index<ENTITY> index,
+	private <ENTITY extends PropertyContainer> void assertRemoveFailsWithIllegalArgument( Index<ENTITY> index,
             ENTITY entity, String key, Object value )
     {
         try
@@ -256,5 +246,15 @@ public class RecoveryTest
         {
             // Good
         }
+    }
+
+	static class ClassWithToStringAlwaysNull
+    {
+        @Override
+        public String toString()
+        {
+            return null;
+        }
+
     }
 }

@@ -44,33 +44,31 @@ abstract class Serializer
     static void injectExtensions( MappingWriter mapping, MappingRepresentation value, URI baseUri,
             ExtensionInjector injector )
     {
-        if ( value instanceof ExtensibleRepresentation && injector != null )
-        {
-            Map<String/*name*/, List<String/*method*/>> extData = injector.getExensionsFor( value.type.extend );
-            String entityIdentity = ( (ExtensibleRepresentation) value ).getIdentity();
-            if ( extData != null )
-            {
-                MappingWriter extensions = mapping.newMapping( RepresentationType.PLUGINS, "extensions" );
-                for ( Map.Entry<String, List<String>> ext : extData.entrySet() )
-                {
-                    MappingWriter extension = extensions.newMapping( RepresentationType.PLUGIN, ext.getKey() );
-                    for ( String method : ext.getValue() )
-                    {
-                        StringBuilder path = new StringBuilder( "/ext/" ).append( ext.getKey() );
-                        path.append( "/" ).append( value.type.valueName );
-                        if ( entityIdentity != null )
-                        {
-                            path.append( "/" ).append( entityIdentity );
-                        }
-                        path.append( "/" ).append( method );
-                        extension.writeValue( RepresentationType.URI, method, joinBaseWithRelativePath( baseUri,
-                                path.toString() ) );
-                    }
-                    extension.done();
-                }
-                extensions.done();
-            }
-        }
+        if (!(value instanceof ExtensibleRepresentation && injector != null)) {
+			return;
+		}
+		Map<String/*name*/, List<String/*method*/>> extData = injector.getExensionsFor( value.type.extend );
+		String entityIdentity = ( (ExtensibleRepresentation) value ).getIdentity();
+		if ( extData != null )
+		{
+		    MappingWriter extensions = mapping.newMapping( RepresentationType.PLUGINS, "extensions" );
+		    extData.entrySet().forEach(ext -> {
+		        MappingWriter extension = extensions.newMapping( RepresentationType.PLUGIN, ext.getKey() );
+		        ext.getValue().forEach(method -> {
+		            StringBuilder path = new StringBuilder( "/ext/" ).append( ext.getKey() );
+		            path.append( "/" ).append( value.type.valueName );
+		            if ( entityIdentity != null )
+		            {
+		                path.append( "/" ).append( entityIdentity );
+		            }
+		            path.append( "/" ).append( method );
+		            extension.writeValue( RepresentationType.URI, method, joinBaseWithRelativePath( baseUri,
+		                    path.toString() ) );
+		        });
+		        extension.done();
+		    });
+		    extensions.done();
+		}
     }
 
     final void serialize( ListWriter list, ListRepresentation value )

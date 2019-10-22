@@ -54,8 +54,7 @@ public class DeleteNodeWithRelsIT
 
         // Expect
         exception.expect( ConstraintViolationException.class );
-        exception.expectMessage( "Cannot delete node<" + node.getId() + ">, because it still has relationships. " +
-                "To delete this node, you must first delete its relationships." );
+        exception.expectMessage( new StringBuilder().append("Cannot delete node<").append(node.getId()).append(">, because it still has relationships. ").append("To delete this node, you must first delete its relationships.").toString() );
 
         // When I commit
         tx.close();

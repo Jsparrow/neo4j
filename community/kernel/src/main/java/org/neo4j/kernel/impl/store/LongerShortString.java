@@ -635,7 +635,7 @@ public enum LongerShortString
 
     final IllegalArgumentException cannotEncode( byte b )
     {
-        return new IllegalArgumentException( "Cannot encode as " + this.name() + ": " + b );
+        return new IllegalArgumentException( new StringBuilder().append("Cannot encode as ").append(this.name()).append(": ").append(b).toString() );
     }
 
     /** Lookup table for decoding punctuation */

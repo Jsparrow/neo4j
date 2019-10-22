@@ -33,65 +33,7 @@ public interface IndexCapability
     IndexOrder[] ORDER_BOTH = {IndexOrder.ASCENDING, IndexOrder.DESCENDING};
     IndexOrder[] ORDER_NONE = new IndexOrder[0];
     IndexLimitation[] LIMITIATION_NONE = new IndexLimitation[0];
-
-    /**
-     * What possible orderings is this index capable to provide for a query on given combination of {@link ValueCategory}.
-     * Ordering of ValueCategory correspond to ordering of related {@link IndexReference#properties()}.
-     *
-     * @param valueCategories Ordered array of {@link ValueCategory ValueCategories} for which index should be queried. Note that valueCategory
-     * must correspond to related {@link IndexReference#properties()}. A {@code null} value in the array
-     * ({@code new ValueCategory[]{null}}) is interpreted as a wildcard for any {@link ValueCategory}. Note that this is not the same as
-     * {@code order(null)} which is undefined.
-     * @return {@link IndexOrder} array containing all possible orderings for provided value categories or empty array if no explicit
-     * ordering is possible or if length of {@code valueCategories} and {@link IndexReference#properties()} differ.
-     */
-    IndexOrder[] orderCapability( ValueCategory... valueCategories );
-
-    /**
-     * Is the index capable of providing values for a query on given combination of {@link ValueCategory}.
-     * Ordering of ValueCategory correspond to ordering of {@code properties} in related {@link IndexReference}.
-     *
-     * @param valueCategories Ordered array of {@link ValueCategory ValueCategories} for which index should be queried. Note that valueCategory
-     * must correspond to related {@link IndexReference#properties()}. {@link ValueCategory#UNKNOWN} can be used as a wildcard for
-     * any {@link ValueCategory}. Behaviour is undefined for empty {@code null} array and {@code null} values in array.
-     * @return {@link IndexValueCapability#YES} if index is capable of providing values for query on provided array of value categories,
-     * {@link IndexValueCapability#NO} if not or {@link IndexValueCapability#PARTIAL} for some results. If length of
-     * {@code valueCategories} and {@link IndexReference#properties()} differ {@link IndexValueCapability#NO} is returned.
-     */
-    IndexValueCapability valueCapability( ValueCategory... valueCategories );
-
-    /**
-     * Fulltext indexes have many restrictions and special capabilities that means they are not substitudes for general indexes, and therefor
-     * should not be planned to be used for IndexSeeks, for instance.
-     * <p>
-     * Perhaps in a future version we will change this into an "index kind" enum or something, but this is all we need for now.
-     *
-     * @return {@code true} if this index is a fulltext schema index, {@code false} otherwise.
-     */
-    boolean isFulltextIndex();
-
-    /**
-     * It is possible for some indexes to be <em>eventually consistent</em>, meaning that they might not reflect newly committed changes.
-     *
-     * @return {@code true} if this index is eventually consistent, {@code false} otherwise.
-     */
-    boolean isEventuallyConsistent();
-
-    /**
-     * @return an array of limitations that this index has. It could be anything that planning could look at and
-     * either try to avoid or issue warning for.
-     */
-    default IndexLimitation[] limitations()
-    {
-        return LIMITIATION_NONE;
-    }
-
-    default boolean singleWildcard( ValueCategory[] valueCategories )
-    {
-        return valueCategories.length == 1 && valueCategories[0] == ValueCategory.UNKNOWN;
-    }
-
-    IndexCapability NO_CAPABILITY = new IndexCapability()
+	IndexCapability NO_CAPABILITY = new IndexCapability()
     {
         @Override
         public IndexOrder[] orderCapability( ValueCategory... valueCategories )
@@ -117,4 +59,61 @@ public interface IndexCapability
             return false;
         }
     };
+
+	/**
+     * What possible orderings is this index capable to provide for a query on given combination of {@link ValueCategory}.
+     * Ordering of ValueCategory correspond to ordering of related {@link IndexReference#properties()}.
+     *
+     * @param valueCategories Ordered array of {@link ValueCategory ValueCategories} for which index should be queried. Note that valueCategory
+     * must correspond to related {@link IndexReference#properties()}. A {@code null} value in the array
+     * ({@code new ValueCategory[]{null}}) is interpreted as a wildcard for any {@link ValueCategory}. Note that this is not the same as
+     * {@code order(null)} which is undefined.
+     * @return {@link IndexOrder} array containing all possible orderings for provided value categories or empty array if no explicit
+     * ordering is possible or if length of {@code valueCategories} and {@link IndexReference#properties()} differ.
+     */
+    IndexOrder[] orderCapability( ValueCategory... valueCategories );
+
+	/**
+     * Is the index capable of providing values for a query on given combination of {@link ValueCategory}.
+     * Ordering of ValueCategory correspond to ordering of {@code properties} in related {@link IndexReference}.
+     *
+     * @param valueCategories Ordered array of {@link ValueCategory ValueCategories} for which index should be queried. Note that valueCategory
+     * must correspond to related {@link IndexReference#properties()}. {@link ValueCategory#UNKNOWN} can be used as a wildcard for
+     * any {@link ValueCategory}. Behaviour is undefined for empty {@code null} array and {@code null} values in array.
+     * @return {@link IndexValueCapability#YES} if index is capable of providing values for query on provided array of value categories,
+     * {@link IndexValueCapability#NO} if not or {@link IndexValueCapability#PARTIAL} for some results. If length of
+     * {@code valueCategories} and {@link IndexReference#properties()} differ {@link IndexValueCapability#NO} is returned.
+     */
+    IndexValueCapability valueCapability( ValueCategory... valueCategories );
+
+	/**
+     * Fulltext indexes have many restrictions and special capabilities that means they are not substitudes for general indexes, and therefor
+     * should not be planned to be used for IndexSeeks, for instance.
+     * <p>
+     * Perhaps in a future version we will change this into an "index kind" enum or something, but this is all we need for now.
+     *
+     * @return {@code true} if this index is a fulltext schema index, {@code false} otherwise.
+     */
+    boolean isFulltextIndex();
+
+	/**
+     * It is possible for some indexes to be <em>eventually consistent</em>, meaning that they might not reflect newly committed changes.
+     *
+     * @return {@code true} if this index is eventually consistent, {@code false} otherwise.
+     */
+    boolean isEventuallyConsistent();
+
+	/**
+     * @return an array of limitations that this index has. It could be anything that planning could look at and
+     * either try to avoid or issue warning for.
+     */
+    default IndexLimitation[] limitations()
+    {
+        return LIMITIATION_NONE;
+    }
+
+	default boolean singleWildcard( ValueCategory[] valueCategories )
+    {
+        return valueCategories.length == 1 && valueCategories[0] == ValueCategory.UNKNOWN;
+    }
 }

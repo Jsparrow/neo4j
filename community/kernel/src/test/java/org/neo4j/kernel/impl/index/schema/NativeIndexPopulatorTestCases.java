@@ -42,29 +42,11 @@ import static org.neo4j.kernel.impl.index.schema.ByteBufferFactory.heapBufferFac
 
 class NativeIndexPopulatorTestCases
 {
-    static class TestCase<KEY extends NativeIndexKey<KEY>, VALUE extends NativeIndexValue>
-    {
-        final String name;
-        final PopulatorFactory<KEY,VALUE> populatorFactory;
-        final ValueType[] typesOfGroup;
-        final IndexLayoutFactory<KEY,VALUE> indexLayoutFactory;
+    private static final IndexSpecificSpaceFillingCurveSettingsCache spaceFillingCurveSettings =
+            new IndexSpecificSpaceFillingCurveSettingsCache( new ConfiguredSpaceFillingCurveSettingsCache( Config.defaults() ), new HashMap<>() );
+	private static final StandardConfiguration configuration = new StandardConfiguration();
 
-        TestCase( String name, PopulatorFactory<KEY,VALUE> populatorFactory, ValueType[] typesOfGroup, IndexLayoutFactory<KEY,VALUE> indexLayoutFactory )
-        {
-            this.name = name;
-            this.populatorFactory = populatorFactory;
-            this.typesOfGroup = typesOfGroup;
-            this.indexLayoutFactory = indexLayoutFactory;
-        }
-
-        @Override
-        public String toString()
-        {
-            return name;
-        }
-    }
-
-    static Collection<Object[]> allCases()
+	static Collection<Object[]> allCases()
     {
         return Arrays.asList( new Object[][]{
                 {new TestCase<>( "Number",
@@ -115,16 +97,12 @@ class NativeIndexPopulatorTestCases
         // { Spatial has it's own subclass because it need to override some of the test methods }
     }
 
-    private static final IndexSpecificSpaceFillingCurveSettingsCache spaceFillingCurveSettings =
-            new IndexSpecificSpaceFillingCurveSettingsCache( new ConfiguredSpaceFillingCurveSettingsCache( Config.defaults() ), new HashMap<>() );
-    private static final StandardConfiguration configuration = new StandardConfiguration();
-
-    private static PopulatorFactory<NumberIndexKey,NativeIndexValue> numberPopulatorFactory()
+	private static PopulatorFactory<NumberIndexKey,NativeIndexValue> numberPopulatorFactory()
     {
         return NumberIndexPopulator::new;
     }
 
-    private static <TK extends NativeIndexSingleValueKey<TK>> PopulatorFactory<TK,NativeIndexValue> temporalPopulatorFactory( ValueGroup temporalValueGroup )
+	private static <TK extends NativeIndexSingleValueKey<TK>> PopulatorFactory<TK,NativeIndexValue> temporalPopulatorFactory( ValueGroup temporalValueGroup )
     {
         return ( pageCache, fs, storeFile, layout, monitor, descriptor ) ->
         {
@@ -133,7 +111,7 @@ class NativeIndexPopulatorTestCases
         };
     }
 
-    private static PopulatorFactory<GenericKey,NativeIndexValue> genericPopulatorFactory()
+	private static PopulatorFactory<GenericKey,NativeIndexValue> genericPopulatorFactory()
     {
         return ( pageCache, fs, storeFile, layout, monitor, descriptor ) ->
         {
@@ -144,7 +122,7 @@ class NativeIndexPopulatorTestCases
         };
     }
 
-    private static PopulatorFactory<GenericKey,NativeIndexValue> genericBlockBasedPopulatorFactory()
+	private static PopulatorFactory<GenericKey,NativeIndexValue> genericBlockBasedPopulatorFactory()
     {
         return ( pageCache, fs, storeFile, layout, monitor, descriptor ) ->
         {
@@ -153,6 +131,28 @@ class NativeIndexPopulatorTestCases
             return new GenericBlockBasedIndexPopulator( pageCache, fs, storeFile, layout, monitor, descriptor, spaceFillingCurveSettings,
                     directoryStructure, configuration, dropAction, false, heapBufferFactory( 10 * 1024 ) );
         };
+    }
+
+	static class TestCase<KEY extends NativeIndexKey<KEY>, VALUE extends NativeIndexValue>
+    {
+        final String name;
+        final PopulatorFactory<KEY,VALUE> populatorFactory;
+        final ValueType[] typesOfGroup;
+        final IndexLayoutFactory<KEY,VALUE> indexLayoutFactory;
+
+        TestCase( String name, PopulatorFactory<KEY,VALUE> populatorFactory, ValueType[] typesOfGroup, IndexLayoutFactory<KEY,VALUE> indexLayoutFactory )
+        {
+            this.name = name;
+            this.populatorFactory = populatorFactory;
+            this.typesOfGroup = typesOfGroup;
+            this.indexLayoutFactory = indexLayoutFactory;
+        }
+
+        @Override
+        public String toString()
+        {
+            return name;
+        }
     }
 
     @FunctionalInterface

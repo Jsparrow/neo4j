@@ -59,21 +59,24 @@ import static org.neo4j.kernel.api.impl.schema.LuceneIndexProviderFactory.PROVID
 
 public class LuceneIndexRecoveryIT
 {
-    @Rule
+    private static final Label myLabel = label( "MyLabel" );
+
+	@Rule
     public EphemeralFileSystemRule fs = new EphemeralFileSystemRule();
 
-    private final String NUM_BANANAS_KEY = "number_of_bananas_owned";
-    private static final Label myLabel = label( "MyLabel" );
-    private GraphDatabaseAPI db;
-    private DirectoryFactory directoryFactory;
+	private final String numBananasKey = "number_of_bananas_owned";
 
-    @Before
+	private GraphDatabaseAPI db;
+
+	private DirectoryFactory directoryFactory;
+
+	@Before
     public void before()
     {
         directoryFactory = new DirectoryFactory.InMemoryDirectoryFactory();
     }
 
-    @After
+	@After
     public void after() throws Exception
     {
         if ( db != null )
@@ -83,7 +86,7 @@ public class LuceneIndexRecoveryIT
         directoryFactory.close();
     }
 
-    @Test
+	@Test
     public void addShouldBeIdempotentWhenDoingRecovery() throws Exception
     {
         // Given
@@ -113,7 +116,7 @@ public class LuceneIndexRecoveryIT
         assertEquals( 1, doIndexLookup( myLabel, 12 ).size() );
     }
 
-    @Test
+	@Test
     public void changeShouldBeIdempotentWhenDoingRecovery() throws Exception
     {
         // Given
@@ -138,7 +141,7 @@ public class LuceneIndexRecoveryIT
         assertEquals( 1, doIndexLookup( myLabel, 13 ).size() );
     }
 
-    @Test
+	@Test
     public void removeShouldBeIdempotentWhenDoingRecovery() throws Exception
     {
         // Given
@@ -162,7 +165,7 @@ public class LuceneIndexRecoveryIT
         assertEquals( 0, doIndexLookup( myLabel, 12 ).size() );
     }
 
-    @Test
+	@Test
     public void shouldNotAddTwiceDuringRecoveryIfCrashedDuringPopulation() throws Exception
     {
         // Given
@@ -186,12 +189,12 @@ public class LuceneIndexRecoveryIT
             waitForIndex( index );
 
             // Then
-            assertEquals( 12, db.getNodeById( nodeId ).getProperty( NUM_BANANAS_KEY ) );
+            assertEquals( 12, db.getNodeById( nodeId ).getProperty( numBananasKey ) );
             assertEquals( 1, doIndexLookup( myLabel, 12 ).size() );
         }
     }
 
-    @Test
+	@Test
     public void shouldNotUpdateTwiceDuringRecovery() throws Exception
     {
         // Given
@@ -214,7 +217,7 @@ public class LuceneIndexRecoveryIT
         assertEquals( 1, doIndexLookup( myLabel, 14 ).size() );
     }
 
-    private void startDb( KernelExtensionFactory<?> indexProviderFactory )
+	private void startDb( KernelExtensionFactory<?> indexProviderFactory )
     {
         if ( db != null )
         {
@@ -228,7 +231,7 @@ public class LuceneIndexRecoveryIT
                 .setConfig( default_schema_provider, PROVIDER_DESCRIPTOR.name() ).newGraphDatabase();
     }
 
-    private void killDb() throws Exception
+	private void killDb() throws Exception
     {
         if ( db != null )
         {
@@ -240,24 +243,24 @@ public class LuceneIndexRecoveryIT
         }
     }
 
-    private void rotateLogsAndCheckPoint() throws IOException
+	private void rotateLogsAndCheckPoint() throws IOException
     {
         db.getDependencyResolver().resolveDependency( LogRotation.class ).rotateLogFile();
         db.getDependencyResolver().resolveDependency( CheckPointer.class ).forceCheckPoint(
                 new SimpleTriggerInfo( "test" ) );
     }
 
-    private IndexDefinition createIndex( Label label )
+	private IndexDefinition createIndex( Label label )
     {
         try ( Transaction tx = db.beginTx() )
         {
-            IndexDefinition definition = db.schema().indexFor( label ).on( NUM_BANANAS_KEY ).create();
+            IndexDefinition definition = db.schema().indexFor( label ).on( numBananasKey ).create();
             tx.success();
             return definition;
         }
     }
 
-    private void waitForIndex( IndexDefinition definition )
+	private void waitForIndex( IndexDefinition definition )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -266,40 +269,40 @@ public class LuceneIndexRecoveryIT
         }
     }
 
-    private Set<Node> doIndexLookup( Label myLabel, Object value )
+	private Set<Node> doIndexLookup( Label myLabel, Object value )
     {
         try ( Transaction tx = db.beginTx() )
         {
-            Iterator<Node> iter = db.findNodes( myLabel, NUM_BANANAS_KEY, value );
+            Iterator<Node> iter = db.findNodes( myLabel, numBananasKey, value );
             Set<Node> nodes = asUniqueSet( iter );
             tx.success();
             return nodes;
         }
     }
 
-    private long createNode( Label label, int number )
+	private long createNode( Label label, int number )
     {
         try ( Transaction tx = db.beginTx() )
         {
             Node node = db.createNode( label );
-            node.setProperty( NUM_BANANAS_KEY, number );
+            node.setProperty( numBananasKey, number );
             tx.success();
             return node.getId();
         }
     }
 
-    private void updateNode( long nodeId, int value )
+	private void updateNode( long nodeId, int value )
     {
 
         try ( Transaction tx = db.beginTx() )
         {
             Node node = db.getNodeById( nodeId );
-            node.setProperty( NUM_BANANAS_KEY, value );
+            node.setProperty( numBananasKey, value );
             tx.success();
         }
     }
 
-    private void deleteNode( long node )
+	private void deleteNode( long node )
     {
 
         try ( Transaction tx = db.beginTx() )
@@ -309,7 +312,7 @@ public class LuceneIndexRecoveryIT
         }
     }
 
-    private KernelExtensionFactory<LuceneIndexProviderFactory.Dependencies> createAlwaysInitiallyPopulatingLuceneIndexFactory()
+	private KernelExtensionFactory<LuceneIndexProviderFactory.Dependencies> createAlwaysInitiallyPopulatingLuceneIndexFactory()
     {
         return new KernelExtensionFactory<LuceneIndexProviderFactory.Dependencies>(
                 ExtensionType.DATABASE, PROVIDER_DESCRIPTOR.getKey() )
@@ -330,7 +333,7 @@ public class LuceneIndexRecoveryIT
         };
     }
 
-    // Creates a lucene index factory with the shared in-memory directory
+	// Creates a lucene index factory with the shared in-memory directory
     private KernelExtensionFactory<LuceneIndexProviderFactory.Dependencies> createLuceneIndexFactory()
     {
         return new KernelExtensionFactory<LuceneIndexProviderFactory.Dependencies>(

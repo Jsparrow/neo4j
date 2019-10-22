@@ -37,19 +37,21 @@ import org.neo4j.storageengine.api.schema.StoreIndexDescriptor;
  */
 public interface IndexPopulator extends IndexConfigProvider
 {
-    /**
+    IndexPopulator EMPTY = new Adapter();
+
+	/**
      * Remove all data in the index and paves the way for populating an index.
      *
      * @throws UncheckedIOException on I/O error.
      */
     void create();
 
-    /**
+	/**
      * Closes and deletes this index.
      */
     void drop();
 
-    /**
+	/**
      * Called when initially populating an index over existing data. Guaranteed to be
      * called by the same thread every time. All data coming in here is guaranteed to not
      * have been added to this index previously, so no checks needs to be performed before applying it.
@@ -66,7 +68,7 @@ public interface IndexPopulator extends IndexConfigProvider
      */
     void add( Collection<? extends IndexEntryUpdate<?>> updates ) throws IndexEntryConflictException;
 
-    /**
+	/**
      * Verifies that each value in this index is unique.
      * This method is called after the index has been fully populated and is guaranteed to not have
      * concurrent changes while executing.
@@ -78,7 +80,7 @@ public interface IndexPopulator extends IndexConfigProvider
      */
     void verifyDeferredConstraints( NodePropertyAccessor nodePropertyAccessor ) throws IndexEntryConflictException;
 
-    /**
+	/**
      * Return an updater for applying a set of changes to this index, generally this will be a set of changes from a
      * transaction.
      *
@@ -105,7 +107,7 @@ public interface IndexPopulator extends IndexConfigProvider
      */
     IndexUpdater newPopulatingUpdater( NodePropertyAccessor accessor );
 
-    /**
+	/**
      * Close this populator and releases any resources related to it.
      * If {@code populationCompletedSuccessfully} is {@code true} then it must mark this index
      * as {@link InternalIndexState#ONLINE} so that future invocations of its parent
@@ -121,7 +123,7 @@ public interface IndexPopulator extends IndexConfigProvider
      */
     void close( boolean populationCompletedSuccessfully );
 
-    /**
+	/**
      * Called then a population failed. The failure string should be stored for future retrieval by
      * {@link IndexProvider#getPopulationFailure(StoreIndexDescriptor)}. Called before {@link #close(boolean)}
      * if there was a failure during population.
@@ -131,19 +133,19 @@ public interface IndexPopulator extends IndexConfigProvider
      */
     void markAsFailed( String failure );
 
-    /**
+	/**
      * Add the given {@link IndexEntryUpdate update} to the sampler for this index.
      *
      * @param update update to include in sample
      */
     void includeSample( IndexEntryUpdate<?> update );
 
-    /**
+	/**
      * @return {@link IndexSample} from samples collected by {@link #includeSample(IndexEntryUpdate)} calls.
      */
     IndexSample sampleResult();
 
-    /**
+	/**
      * Returns actual population progress, given the progress of the scan. This is for when a populator needs to do
      * significant work after scan has completed where the scan progress can be seen as only a part of the whole progress.
      * @param scanProgress progress of the scan.
@@ -154,13 +156,11 @@ public interface IndexPopulator extends IndexConfigProvider
         return scanProgress;
     }
 
-    IndexPopulator EMPTY = new Adapter();
-
-    default void scanCompleted( PhaseTracker phaseTracker ) throws IndexEntryConflictException
+	default void scanCompleted( PhaseTracker phaseTracker ) throws IndexEntryConflictException
     {   // no-op by default
     }
 
-    class Adapter implements IndexPopulator
+	class Adapter implements IndexPopulator
     {
         @Override
         public void create()

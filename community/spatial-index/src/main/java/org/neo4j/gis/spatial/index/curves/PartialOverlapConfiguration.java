@@ -56,6 +56,7 @@ public class PartialOverlapConfiguration extends StandardConfiguration
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "(" + extraLevels + "," + topThreshold + "," + bottomThreshold + ")";
+        return new StringBuilder().append(getClass().getSimpleName()).append("(").append(extraLevels).append(",").append(topThreshold).append(",")
+				.append(bottomThreshold).append(")").toString();
     }
 }

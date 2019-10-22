@@ -67,10 +67,7 @@ public abstract class PropertyContainerProxyTest
             containerId = createPropertyContainer();
             PropertyContainer container = lookupPropertyContainer( containerId );
 
-            for ( Map.Entry<String,Object> entry : properties.entrySet() )
-            {
-                container.setProperty( entry.getKey(), entry.getValue() );
-            }
+            properties.entrySet().forEach(entry -> container.setProperty(entry.getKey(), entry.getValue()));
 
             tx.success();
         }
@@ -85,9 +82,6 @@ public abstract class PropertyContainerProxyTest
 
         // Then
         assertEquals( properties.size(), listedProperties.size() );
-        for ( String key : properties.keySet() )
-        {
-            assertObjectOrArrayEquals( properties.get( key ), listedProperties.get( key ) );
-        }
+        properties.keySet().forEach(key -> assertObjectOrArrayEquals(properties.get(key), listedProperties.get(key)));
     }
 }

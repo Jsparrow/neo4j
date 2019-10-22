@@ -213,10 +213,10 @@ public class StoreAccess
 
     public synchronized void close()
     {
-        if ( closeable )
-        {
-            closeable = false;
-            neoStores.close();
-        }
+        if (!closeable) {
+			return;
+		}
+		closeable = false;
+		neoStores.close();
     }
 }

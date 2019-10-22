@@ -65,10 +65,7 @@ class ExecutionPlanConverter
     private static ListValue children( ExecutionPlanDescription plan )
     {
         List<AnyValue> children = new LinkedList<>();
-        for ( ExecutionPlanDescription child : plan.getChildren() )
-        {
-            children.add( convert( child ) );
-        }
+        plan.getChildren().forEach(child -> children.add(convert(child)));
         return VirtualValues.fromList( children );
     }
 }

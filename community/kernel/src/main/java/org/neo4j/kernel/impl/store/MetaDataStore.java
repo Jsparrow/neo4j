@@ -68,87 +68,43 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
      *  constraint tx | upgrade time | upgrade id
      */
     // Positions of meta-data records
-
-    public enum Position
-    {
-        TIME( 0, "Creation time" ),
-        RANDOM_NUMBER( 1, "Random number for store id" ),
-        LOG_VERSION( 2, "Current log version" ),
-        LAST_TRANSACTION_ID( 3, "Last committed transaction" ),
-        STORE_VERSION( 4, "Store format version" ),
-        FIRST_GRAPH_PROPERTY( 5, "First property record containing graph properties" ),
-        LAST_CONSTRAINT_TRANSACTION( 6, "Last committed transaction containing constraint changes" ),
-        UPGRADE_TRANSACTION_ID( 7, "Transaction id most recent upgrade was performed at" ),
-        UPGRADE_TIME( 8, "Time of last upgrade" ),
-        LAST_TRANSACTION_CHECKSUM( 9, "Checksum of last committed transaction" ),
-        UPGRADE_TRANSACTION_CHECKSUM( 10, "Checksum of transaction id the most recent upgrade was performed at" ),
-        LAST_CLOSED_TRANSACTION_LOG_VERSION( 11, "Log version where the last transaction commit entry has been written into" ),
-        LAST_CLOSED_TRANSACTION_LOG_BYTE_OFFSET( 12, "Byte offset in the log file where the last transaction commit entry " +
-                                                     "has been written into" ),
-        LAST_TRANSACTION_COMMIT_TIMESTAMP( 13, "Commit time timestamp for last committed transaction" ),
-        UPGRADE_TRANSACTION_COMMIT_TIMESTAMP( 14, "Commit timestamp of transaction the most recent upgrade was performed at" );
-
-        private final int id;
-        private final String description;
-
-        Position( int id, String description )
-        {
-            this.id = id;
-            this.description = description;
-        }
-
-        public int id()
-        {
-            return id;
-        }
-
-        public String description()
-        {
-            return description;
-        }
-    }
-
-    // Fields the neostore keeps cached and must be initialized on startup
+	// Fields the neostore keeps cached and must be initialized on startup
     private volatile long creationTimeField = FIELD_NOT_INITIALIZED;
-    private volatile long randomNumberField = FIELD_NOT_INITIALIZED;
-    private volatile long versionField = FIELD_NOT_INITIALIZED;
-    // This is an atomic long since we, when incrementing last tx id, won't set the record in the page,
+	private volatile long randomNumberField = FIELD_NOT_INITIALIZED;
+	private volatile long versionField = FIELD_NOT_INITIALIZED;
+	// This is an atomic long since we, when incrementing last tx id, won't set the record in the page,
     // we do that when flushing, which performs better and fine from a recovery POV.
     private final AtomicLong lastCommittingTxField = new AtomicLong( FIELD_NOT_INITIALIZED );
-    private volatile long storeVersionField = FIELD_NOT_INITIALIZED;
-    private volatile long graphNextPropField = FIELD_NOT_INITIALIZED;
-    private volatile long latestConstraintIntroducingTxField = FIELD_NOT_INITIALIZED;
-    private volatile long upgradeTxIdField = FIELD_NOT_INITIALIZED;
-    private volatile long upgradeTxChecksumField = FIELD_NOT_INITIALIZED;
-    private volatile long upgradeTimeField = FIELD_NOT_INITIALIZED;
-    private volatile long upgradeCommitTimestampField = FIELD_NOT_INITIALIZED;
-
-    private volatile TransactionId upgradeTransaction = new TransactionId( FIELD_NOT_INITIALIZED,
+	private volatile long storeVersionField = FIELD_NOT_INITIALIZED;
+	private volatile long graphNextPropField = FIELD_NOT_INITIALIZED;
+	private volatile long latestConstraintIntroducingTxField = FIELD_NOT_INITIALIZED;
+	private volatile long upgradeTxIdField = FIELD_NOT_INITIALIZED;
+	private volatile long upgradeTxChecksumField = FIELD_NOT_INITIALIZED;
+	private volatile long upgradeTimeField = FIELD_NOT_INITIALIZED;
+	private volatile long upgradeCommitTimestampField = FIELD_NOT_INITIALIZED;
+	private volatile TransactionId upgradeTransaction = new TransactionId( FIELD_NOT_INITIALIZED,
             FIELD_NOT_INITIALIZED, FIELD_NOT_INITIALIZED );
-
-    // This is not a field in the store, but something keeping track of which is the currently highest
+	// This is not a field in the store, but something keeping track of which is the currently highest
     // committed transaction id, together with its checksum.
     private final HighestTransactionId highestCommittedTransaction =
             new HighestTransactionId( FIELD_NOT_INITIALIZED, FIELD_NOT_INITIALIZED, FIELD_NOT_INITIALIZED );
-
-    // This is not a field in the store, but something keeping track of which of the committed
+	// This is not a field in the store, but something keeping track of which of the committed
     // transactions have been closed. Useful in rotation and shutdown.
     private final OutOfOrderSequence lastClosedTx = new ArrayQueueOutOfOrderSequence( -1, 200, new long[2] );
-
-    // We use these objects and their monitors as "entity" locks on the records, because page write locks are not
+	// We use these objects and their monitors as "entity" locks on the records, because page write locks are not
     // exclusive. Therefor, these locks are only used when *writing* records, not when reading them.
     private final Object upgradeTimeLock = new Object();
-    private final Object creationTimeLock  = new Object();
-    private final Object randomNumberLock = new Object();
-    private final Object upgradeTransactionLock = new Object();
-    private final Object logVersionLock = new Object();
-    private final Object storeVersionLock = new Object();
-    private final Object graphNextPropLock = new Object();
-    private final Object lastConstraintIntroducingTxLock = new Object();
-    private final Object transactionCommittedLock = new Object();
-    private final Object transactionClosedLock = new Object();
+	private final Object creationTimeLock  = new Object();
+	private final Object randomNumberLock = new Object();
+	private final Object upgradeTransactionLock = new Object();
+	private final Object logVersionLock = new Object();
+	private final Object storeVersionLock = new Object();
+	private final Object graphNextPropLock = new Object();
+	private final Object lastConstraintIntroducingTxLock = new Object();
+	private final Object transactionCommittedLock = new Object();
+	private final Object transactionClosedLock = new Object();
 
-    MetaDataStore( File file, File idFile, Config conf,
+	MetaDataStore( File file, File idFile, Config conf,
             IdGeneratorFactory idGeneratorFactory,
             PageCache pageCache, LogProvider logProvider, RecordFormat<MetaDataRecord> recordFormat,
             String storeVersion,
@@ -158,7 +114,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
                 TYPE_DESCRIPTOR, recordFormat, NoStoreHeaderFormat.NO_STORE_HEADER_FORMAT, storeVersion, openOptions );
     }
 
-    @Override
+	@Override
     protected void initialiseNewStoreFile( PagedFile file ) throws IOException
     {
         super.initialiseNewStoreFile( file );
@@ -184,16 +140,14 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         pagedFile = null;
     }
 
-    @Override
+	@Override
     protected void checkAndLoadStorage( boolean createIfNotExists )
     {
         super.checkAndLoadStorage( createIfNotExists );
         initHighId();
     }
 
-    // Only for initialization and recovery, so we don't need to lock the records
-
-    @Override
+	@Override
     public void setLastCommittedAndClosedTransactionId(
             long transactionId, long checksum, long commitTimestamp, long byteOffset, long logVersion )
     {
@@ -208,7 +162,8 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         lastClosedTx.set( transactionId, new long[]{logVersion, byteOffset} );
         highestCommittedTransaction.set( transactionId, checksum, commitTimestamp );
     }
-    /**
+
+	/**
      * Writes a record in a neostore file.
      * This method only works for neostore files of the current version.
      *
@@ -257,19 +212,19 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return previousValue;
     }
 
-    private void initHighId()
+	private void initHighId()
     {
         Position[] values = Position.values();
         long highestPossibleId = values[values.length - 1].id;
         setHighestPossibleIdInUse( highestPossibleId );
     }
 
-    private static int offset( Position position )
+	private static int offset( Position position )
     {
         return RECORD_SIZE * position.id;
     }
 
-    /**
+	/**
      * Reads a record from a neostore file.
      *
      * @param pageCache {@link PageCache} the {@code neostore} file lives in.
@@ -318,17 +273,17 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return value;
     }
 
-    static int getPageSize( PageCache pageCache )
+	static int getPageSize( PageCache pageCache )
     {
         return pageCache.pageSize() - pageCache.pageSize() % RECORD_SIZE;
     }
 
-    public StoreId getStoreId()
+	public StoreId getStoreId()
     {
         return new StoreId( getCreationTime(), getRandomNumber(), getStoreVersion(), getUpgradeTime(), upgradeTxIdField );
     }
 
-    public static StoreId getStoreId( PageCache pageCache, File neoStore ) throws IOException
+	public static StoreId getStoreId( PageCache pageCache, File neoStore ) throws IOException
     {
         return new StoreId(
                 getRecord( pageCache, neoStore, Position.TIME ),
@@ -339,14 +294,14 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         );
     }
 
-    public long getUpgradeTime()
+	public long getUpgradeTime()
     {
         assertNotClosed();
         checkInitialized( upgradeTimeField );
         return upgradeTimeField;
     }
 
-    public void setUpgradeTime( long time )
+	public void setUpgradeTime( long time )
     {
         synchronized ( upgradeTimeLock )
         {
@@ -355,7 +310,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    public void setUpgradeTransaction( long id, long checksum, long timestamp )
+	public void setUpgradeTransaction( long id, long checksum, long timestamp )
     {
         long pageId = pageIdForRecord( Position.UPGRADE_TRANSACTION_ID.id );
         assert pageId == pageIdForRecord( Position.UPGRADE_TRANSACTION_CHECKSUM.id );
@@ -382,14 +337,14 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    public long getCreationTime()
+	public long getCreationTime()
     {
         assertNotClosed();
         checkInitialized( creationTimeField );
         return creationTimeField;
     }
 
-    public void setCreationTime( long time )
+	public void setCreationTime( long time )
     {
         synchronized ( creationTimeLock )
         {
@@ -398,14 +353,14 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    public long getRandomNumber()
+	public long getRandomNumber()
     {
         assertNotClosed();
         checkInitialized( randomNumberField );
         return randomNumberField;
     }
 
-    public void setRandomNumber( long nr )
+	public void setRandomNumber( long nr )
     {
         synchronized ( randomNumberLock )
         {
@@ -414,7 +369,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    @Override
+	@Override
     public long getCurrentLogVersion()
     {
         assertNotClosed();
@@ -422,7 +377,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return versionField;
     }
 
-    @Override
+	@Override
     public void setCurrentLogVersion( long version )
     {
         synchronized ( logVersionLock )
@@ -432,7 +387,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    public void setLastTransactionCommitTimestamp( long timestamp )
+	public void setLastTransactionCommitTimestamp( long timestamp )
     {
         // Preventing race with transactionCommitted() and assure record is consistent with highestCommittedTransaction
         synchronized ( transactionCommittedLock )
@@ -443,7 +398,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    @Override
+	@Override
     public long incrementAndGetVersion()
     {
         // This method can expect synchronisation at a higher level,
@@ -469,7 +424,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return version;
     }
 
-    private void incrementVersion( PageCursor cursor )
+	private void incrementVersion( PageCursor cursor )
     {
         if ( !cursor.isWriteLocked() )
         {
@@ -483,14 +438,14 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         versionField = value;
     }
 
-    public long getStoreVersion()
+	public long getStoreVersion()
     {
         assertNotClosed();
         checkInitialized( storeVersionField );
         return storeVersionField;
     }
 
-    public void setStoreVersion( long version )
+	public void setStoreVersion( long version )
     {
         synchronized ( storeVersionLock )
         {
@@ -499,14 +454,14 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    public long getGraphNextProp()
+	public long getGraphNextProp()
     {
         assertNotClosed();
         checkInitialized( graphNextPropField );
         return graphNextPropField;
     }
 
-    public void setGraphNextProp( long propId )
+	public void setGraphNextProp( long propId )
     {
         synchronized ( graphNextPropLock )
         {
@@ -515,14 +470,14 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    public long getLatestConstraintIntroducingTx()
+	public long getLatestConstraintIntroducingTx()
     {
         assertNotClosed();
         checkInitialized( latestConstraintIntroducingTxField );
         return latestConstraintIntroducingTxField;
     }
 
-    public void setLatestConstraintIntroducingTx( long latestConstraintIntroducingTx )
+	public void setLatestConstraintIntroducingTx( long latestConstraintIntroducingTx )
     {
         synchronized ( lastConstraintIntroducingTxLock )
         {
@@ -531,7 +486,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    private void readAllFields( PageCursor cursor ) throws IOException
+	private void readAllFields( PageCursor cursor ) throws IOException
     {
         do
         {
@@ -564,18 +519,17 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         if ( cursor.checkAndClearBoundsFlag() )
         {
             throw new UnderlyingStorageException(
-                    "Out of page bounds when reading all meta-data fields. The page in question is page " +
-                    cursor.getCurrentPageId() + " of file " + storageFile.getAbsolutePath() + ", which is " +
-                    cursor.getCurrentPageSize() + " bytes in size" );
+                    new StringBuilder().append("Out of page bounds when reading all meta-data fields. The page in question is page ").append(cursor.getCurrentPageId()).append(" of file ").append(storageFile.getAbsolutePath()).append(", which is ")
+							.append(cursor.getCurrentPageSize()).append(" bytes in size").toString() );
         }
     }
 
-    long getRecordValue( PageCursor cursor, Position position )
+	long getRecordValue( PageCursor cursor, Position position )
     {
         return getRecordValue( cursor, position, FIELD_NOT_PRESENT );
     }
 
-    private long getRecordValue( PageCursor cursor, Position position, long defaultValue )
+	private long getRecordValue( PageCursor cursor, Position position, long defaultValue )
     {
         MetaDataRecord record = newRecord();
         try
@@ -594,7 +548,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    private void refreshFields()
+	private void refreshFields()
     {
         scanAllFields( PF_SHARED_READ_LOCK, element ->
         {
@@ -603,7 +557,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         } );
     }
 
-    private void scanAllFields( int pf_flags, Visitor<PageCursor,IOException> visitor )
+	private void scanAllFields( int pf_flags, Visitor<PageCursor,IOException> visitor )
     {
         try ( PageCursor cursor = pagedFile.io( 0, pf_flags ) )
         {
@@ -618,7 +572,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    private void setRecord( Position position, long value )
+	private void setRecord( Position position, long value )
     {
         MetaDataRecord record = new MetaDataRecord();
         record.initialize( true, value );
@@ -626,7 +580,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         updateRecord( record );
     }
 
-    private void setRecord( PageCursor cursor, Position position, long value )
+	private void setRecord( PageCursor cursor, Position position, long value )
     {
         if ( !cursor.isWriteLocked() )
         {
@@ -639,14 +593,14 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         checkForDecodingErrors( cursor, position.id, NORMAL );
     }
 
-    public NeoStoreRecord graphPropertyRecord()
+	public NeoStoreRecord graphPropertyRecord()
     {
         NeoStoreRecord result = new NeoStoreRecord();
         result.setNextProp( getGraphNextProp() );
         return result;
     }
 
-    /*
+	/*
      * The following two methods encode and decode a string that is presumably
      * the store version into a long via Latin1 encoding. This leaves room for
      * 7 characters and 1 byte for the length. Current string is
@@ -683,7 +637,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return bits.getLong();
     }
 
-    public static String versionLongToString( long storeVersion )
+	public static String versionLongToString( long storeVersion )
     {
         if ( storeVersion == -1 )
         {
@@ -704,7 +658,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return new String( result );
     }
 
-    @Override
+	@Override
     public long nextCommittingTransactionId()
     {
         assertNotClosed();
@@ -712,7 +666,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return lastCommittingTxField.incrementAndGet();
     }
 
-    @Override
+	@Override
     public long committingTransactionId()
     {
         assertNotClosed();
@@ -720,7 +674,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return lastCommittingTxField.get();
     }
 
-    @Override
+	@Override
     public void transactionCommitted( long transactionId, long checksum, long commitTimestamp )
     {
         assertNotClosed();
@@ -759,7 +713,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    @Override
+	@Override
     public long getLastCommittedTransactionId()
     {
         assertNotClosed();
@@ -767,7 +721,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return highestCommittedTransaction.get().transactionId();
     }
 
-    @Override
+	@Override
     public TransactionId getLastCommittedTransaction()
     {
         assertNotClosed();
@@ -775,7 +729,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return highestCommittedTransaction.get();
     }
 
-    @Override
+	@Override
     public TransactionId getUpgradeTransaction()
     {
         assertNotClosed();
@@ -783,7 +737,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return upgradeTransaction;
     }
 
-    @Override
+	@Override
     public long getLastClosedTransactionId()
     {
         assertNotClosed();
@@ -791,7 +745,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return lastClosedTx.getHighestGapFreeNumber();
     }
 
-    @Override
+	@Override
     public void awaitClosedTransactionId( long txId, long timeoutMillis ) throws TimeoutException, InterruptedException
     {
         assertNotClosed();
@@ -799,7 +753,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         lastClosedTx.await( txId, timeoutMillis );
     }
 
-    @Override
+	@Override
     public long[] getLastClosedTransaction()
     {
         assertNotClosed();
@@ -807,7 +761,7 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         return lastClosedTx.get();
     }
 
-    /**
+	/**
      * Ensures that all fields are read from the store, by checking the initial value of the field in question
      *
      * @param field the value
@@ -820,33 +774,33 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
         }
     }
 
-    @Override
+	@Override
     public void transactionClosed( long transactionId, long logVersion, long byteOffset )
     {
-        if ( lastClosedTx.offer( transactionId, new long[]{logVersion, byteOffset} ) )
-        {
-            long pageId = pageIdForRecord( Position.LAST_CLOSED_TRANSACTION_LOG_VERSION.id );
-            assert pageId == pageIdForRecord( Position.LAST_CLOSED_TRANSACTION_LOG_BYTE_OFFSET.id );
-            synchronized ( transactionClosedLock )
-            {
-                try ( PageCursor cursor = pagedFile.io( pageId, PF_SHARED_WRITE_LOCK ) )
-                {
-                    if ( cursor.next() )
-                    {
-                        long[] lastClosedTransactionData = lastClosedTx.get();
-                        setRecord( cursor, Position.LAST_CLOSED_TRANSACTION_LOG_VERSION, lastClosedTransactionData[1] );
-                        setRecord( cursor, Position.LAST_CLOSED_TRANSACTION_LOG_BYTE_OFFSET, lastClosedTransactionData[2] );
-                    }
-                }
-                catch ( IOException e )
-                {
-                    throw new UnderlyingStorageException( e );
-                }
-            }
-        }
+        if (!lastClosedTx.offer( transactionId, new long[]{logVersion, byteOffset} )) {
+			return;
+		}
+		long pageId = pageIdForRecord( Position.LAST_CLOSED_TRANSACTION_LOG_VERSION.id );
+		assert pageId == pageIdForRecord( Position.LAST_CLOSED_TRANSACTION_LOG_BYTE_OFFSET.id );
+		synchronized ( transactionClosedLock )
+		{
+		    try ( PageCursor cursor = pagedFile.io( pageId, PF_SHARED_WRITE_LOCK ) )
+		    {
+		        if ( cursor.next() )
+		        {
+		            long[] lastClosedTransactionData = lastClosedTx.get();
+		            setRecord( cursor, Position.LAST_CLOSED_TRANSACTION_LOG_VERSION, lastClosedTransactionData[1] );
+		            setRecord( cursor, Position.LAST_CLOSED_TRANSACTION_LOG_BYTE_OFFSET, lastClosedTransactionData[2] );
+		        }
+		    }
+		    catch ( IOException e )
+		    {
+		        throw new UnderlyingStorageException( e );
+		    }
+		}
     }
 
-    public void logRecords( final Logger msgLog )
+	public void logRecords( final Logger msgLog )
     {
         scanAllFields( PF_SHARED_READ_LOCK, cursor ->
         {
@@ -859,33 +813,75 @@ public class MetaDataStore extends CommonAbstractStore<MetaDataRecord,NoStoreHea
                 }
                 while ( cursor.shouldRetry() );
                 boolean bounds = cursor.checkAndClearBoundsFlag();
-                msgLog.log( position.name() + " (" + position.description() + "): " + value +
-                            (bounds ? " (out-of-bounds detected; value cannot be trusted)" : ""));
+                msgLog.log( new StringBuilder().append(position.name()).append(" (").append(position.description()).append("): ").append(value)
+						.append(bounds ? " (out-of-bounds detected; value cannot be trusted)" : "").toString());
             }
             return false;
         } );
     }
 
-    @Override
+	@Override
     public MetaDataRecord newRecord()
     {
         return new MetaDataRecord();
     }
 
-    @Override
+	@Override
     public <FAILURE extends Exception> void accept(
             org.neo4j.kernel.impl.store.RecordStore.Processor<FAILURE> processor, MetaDataRecord record )
     {
         throw new UnsupportedOperationException();
     }
 
-    @Override
+	@Override
     public void prepareForCommit( MetaDataRecord record )
     {   // No need to do anything with these records before commit
     }
 
-    @Override
+	@Override
     public void prepareForCommit( MetaDataRecord record, IdSequence idSequence )
     {   // No need to do anything with these records before commit
     }
+
+	public enum Position
+    {
+        TIME( 0, "Creation time" ),
+        RANDOM_NUMBER( 1, "Random number for store id" ),
+        LOG_VERSION( 2, "Current log version" ),
+        LAST_TRANSACTION_ID( 3, "Last committed transaction" ),
+        STORE_VERSION( 4, "Store format version" ),
+        FIRST_GRAPH_PROPERTY( 5, "First property record containing graph properties" ),
+        LAST_CONSTRAINT_TRANSACTION( 6, "Last committed transaction containing constraint changes" ),
+        UPGRADE_TRANSACTION_ID( 7, "Transaction id most recent upgrade was performed at" ),
+        UPGRADE_TIME( 8, "Time of last upgrade" ),
+        LAST_TRANSACTION_CHECKSUM( 9, "Checksum of last committed transaction" ),
+        UPGRADE_TRANSACTION_CHECKSUM( 10, "Checksum of transaction id the most recent upgrade was performed at" ),
+        LAST_CLOSED_TRANSACTION_LOG_VERSION( 11, "Log version where the last transaction commit entry has been written into" ),
+        LAST_CLOSED_TRANSACTION_LOG_BYTE_OFFSET( 12, "Byte offset in the log file where the last transaction commit entry " +
+                                                     "has been written into" ),
+        LAST_TRANSACTION_COMMIT_TIMESTAMP( 13, "Commit time timestamp for last committed transaction" ),
+        UPGRADE_TRANSACTION_COMMIT_TIMESTAMP( 14, "Commit timestamp of transaction the most recent upgrade was performed at" );
+
+        private final int id;
+        private final String description;
+
+        Position( int id, String description )
+        {
+            this.id = id;
+            this.description = description;
+        }
+
+        public int id()
+        {
+            return id;
+        }
+
+        public String description()
+        {
+            return description;
+        }
+    }
+
+    // Only for initialization and recovery, so we don't need to lock the records
+
 }

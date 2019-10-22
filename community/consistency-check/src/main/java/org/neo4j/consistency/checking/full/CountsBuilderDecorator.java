@@ -67,7 +67,7 @@ class CountsBuilderDecorator extends CheckDecorator.Adapter
     private final MultiPassAvoidanceCondition<RelationshipRecord> relationshipCountBuildCondition;
     private final NodeStore nodeStore;
     private final StoreAccess storeAccess;
-    private final CountsEntry.CheckAdapter CHECK_NODE_COUNT = new CountsEntry.CheckAdapter()
+    private final CountsEntry.CheckAdapter checkNodeCount = new CountsEntry.CheckAdapter()
     {
         @Override
         public void check( CountsEntry record,
@@ -81,7 +81,7 @@ class CountsBuilderDecorator extends CheckDecorator.Adapter
             }
         }
     };
-    private final CountsEntry.CheckAdapter CHECK_RELATIONSHIP_COUNT = new CountsEntry.CheckAdapter()
+    private final CountsEntry.CheckAdapter checkRelationshipCount = new CountsEntry.CheckAdapter()
     {
         @Override
         public void check( CountsEntry record,
@@ -95,7 +95,7 @@ class CountsBuilderDecorator extends CheckDecorator.Adapter
             }
         }
     };
-    private final CountsEntry.CheckAdapter CHECK_NODE_KEY_COUNT = new CountsEntry.CheckAdapter()
+    private final CountsEntry.CheckAdapter checkNodeKeyCount = new CountsEntry.CheckAdapter()
     {
         @Override
         public void check( CountsEntry record,
@@ -109,7 +109,7 @@ class CountsBuilderDecorator extends CheckDecorator.Adapter
             }
         }
     };
-    private final CountsEntry.CheckAdapter CHECK_RELATIONSHIP_KEY_COUNT = new CountsEntry.CheckAdapter()
+    private final CountsEntry.CheckAdapter checkRelationshipKeyCount = new CountsEntry.CheckAdapter()
     {
         @Override
         public void check( CountsEntry record,
@@ -169,7 +169,7 @@ class CountsBuilderDecorator extends CheckDecorator.Adapter
             public void visitNodeCount( int labelId, long count )
             {
                 nodeEntries.incrementAndGet();
-                reporter.forCounts( new CountsEntry( nodeKey( labelId ), count ), CHECK_NODE_COUNT );
+                reporter.forCounts( new CountsEntry( nodeKey( labelId ), count ), checkNodeCount );
                 listener.add( 1 );
             }
 
@@ -179,19 +179,27 @@ class CountsBuilderDecorator extends CheckDecorator.Adapter
                 relationshipEntries.incrementAndGet();
                 reporter.forCounts(
                         new CountsEntry( relationshipKey( startLabelId, relTypeId, endLabelId ), count ),
-                        CHECK_RELATIONSHIP_COUNT );
+                        checkRelationshipCount );
                 listener.add( 1 );
             }
         } );
         reporter.forCounts(
-                new CountsEntry( nodeKey( WILDCARD ), nodeEntries.get() ), CHECK_NODE_KEY_COUNT );
+                new CountsEntry( nodeKey( WILDCARD ), nodeEntries.get() ), checkNodeKeyCount );
         reporter.forCounts(
                 new CountsEntry( relationshipKey( WILDCARD, WILDCARD, WILDCARD ),
-                        relationshipEntries.get() ), CHECK_RELATIONSHIP_KEY_COUNT );
+                        relationshipEntries.get() ), checkRelationshipKeyCount );
         listener.done();
     }
 
-    private static class NodeCounts implements OwningRecordCheck<NodeRecord,NodeConsistencyReport>
+    private static Set<Long> labelsFor( RecordStore<NodeRecord> nodeStore,
+                                        CheckerEngine<? extends AbstractBaseRecord,? extends ConsistencyReport> engine,
+                                        RecordAccess recordAccess,
+                                        long nodeId )
+    {
+        return getListOfLabels( nodeStore.getRecord( nodeId, nodeStore.newRecord(), FORCE ), recordAccess, engine );
+    }
+
+	private static class NodeCounts implements OwningRecordCheck<NodeRecord,NodeConsistencyReport>
     {
         private final RecordStore<NodeRecord> nodeStore;
         private final MutableObjectLongMap<CountsKey> counts;
@@ -218,24 +226,17 @@ class CountsBuilderDecorator extends CheckDecorator.Adapter
                            CheckerEngine<NodeRecord,NodeConsistencyReport> engine,
                            RecordAccess records )
         {
-            if ( countUpdateCondition.test( record ) )
-            {
-                if ( record.inUse() )
-                {
-                    CacheAccess.Client client = records.cacheAccess().client();
-                    client.putToCacheSingle( record.getId(), SLOT_IN_USE, 1 );
-                    client.putToCacheSingle( record.getId(), SLOT_LABEL_FIELD, record.getLabelField() );
-                    final Set<Long> labels = labelsFor( nodeStore, engine, records, record.getId() );
-                    synchronized ( counts )
-                    {
-                        counts.addToValue( nodeKey( WILDCARD ), 1 );
-                        for ( long label : labels )
-                        {
-                            counts.addToValue( nodeKey( (int) label ), 1 );
-                        }
-                    }
-                }
-            }
+            if ( countUpdateCondition.test( record ) && record.inUse() ) {
+			    CacheAccess.Client client = records.cacheAccess().client();
+			    client.putToCacheSingle( record.getId(), SLOT_IN_USE, 1 );
+			    client.putToCacheSingle( record.getId(), SLOT_LABEL_FIELD, record.getLabelField() );
+			    final Set<Long> labels = labelsFor( nodeStore, engine, records, record.getId() );
+			    synchronized ( counts )
+			    {
+			        counts.addToValue( nodeKey( WILDCARD ), 1 );
+			        labels.stream().mapToLong(Long::valueOf).forEach(label -> counts.addToValue(nodeKey((int) label), 1));
+			    }
+			}
             inner.check( record, engine, records );
         }
     }
@@ -270,66 +271,56 @@ class CountsBuilderDecorator extends CheckDecorator.Adapter
                            CheckerEngine<RelationshipRecord,RelationshipConsistencyReport> engine,
                            RecordAccess records )
         {
-            if ( countUpdateCondition.test( record ) )
-            {
-                if ( record.inUse() )
-                {
-                    CacheAccess.Client cacheAccess = records.cacheAccess().client();
-                    Set<Long> firstNodeLabels;
-                    Set<Long> secondNodeLabels;
-                    long firstLabelsField = cacheAccess.getFromCache( record.getFirstNode(), SLOT_LABEL_FIELD );
-                    if ( NodeLabelsField.fieldPointsToDynamicRecordOfLabels( firstLabelsField ) )
-                    {
-                        firstNodeLabels = labelsFor( nodeStore, engine, records, record.getFirstNode() );
-                    }
-                    else
-                    {
-                        firstNodeLabels = NodeLabelReader.getListOfLabels( firstLabelsField );
-                    }
-                    long secondLabelsField = cacheAccess.getFromCache( record.getSecondNode(), SLOT_LABEL_FIELD );
-                    if ( NodeLabelsField.fieldPointsToDynamicRecordOfLabels( secondLabelsField ) )
-                    {
-                        secondNodeLabels = labelsFor( nodeStore, engine, records, record.getSecondNode() );
-                    }
-                    else
-                    {
-                        secondNodeLabels = NodeLabelReader.getListOfLabels( secondLabelsField );
-                    }
-                    final int type = record.getType();
-                    synchronized ( counts )
-                    {
-                        counts.addToValue( relationshipKey( WILDCARD, WILDCARD, WILDCARD ), 1 );
-                        counts.addToValue( relationshipKey( WILDCARD, type, WILDCARD ), 1 );
-                        if ( firstNodeLabels != null )
-                        {
-                            for ( long firstLabel : firstNodeLabels )
-                            {
-                                counts.addToValue( relationshipKey( (int) firstLabel, WILDCARD, WILDCARD ), 1 );
-                                counts.addToValue( relationshipKey( (int) firstLabel, type, WILDCARD ), 1 );
-                            }
-                        }
-                        if ( secondNodeLabels != null )
-                        {
-                            for ( long secondLabel : secondNodeLabels )
-                            {
-                                counts.addToValue( relationshipKey( WILDCARD, WILDCARD, (int) secondLabel ), 1 );
-                                counts.addToValue( relationshipKey( WILDCARD, type, (int) secondLabel ), 1 );
-                            }
-                        }
-                        if ( COMPUTE_DOUBLE_SIDED_RELATIONSHIP_COUNTS )
-                        {
-                            for ( long firstLabel : firstNodeLabels )
-                            {
-                                for ( long secondLabel : secondNodeLabels )
-                                {
-                                    counts.addToValue( relationshipKey( (int) firstLabel, WILDCARD, (int) secondLabel ), 1 );
-                                    counts.addToValue( relationshipKey( (int) firstLabel, type, (int) secondLabel ), 1 );
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            if ( countUpdateCondition.test( record ) && record.inUse() ) {
+			    CacheAccess.Client cacheAccess = records.cacheAccess().client();
+			    Set<Long> firstNodeLabels;
+			    Set<Long> secondNodeLabels;
+			    long firstLabelsField = cacheAccess.getFromCache( record.getFirstNode(), SLOT_LABEL_FIELD );
+			    if ( NodeLabelsField.fieldPointsToDynamicRecordOfLabels( firstLabelsField ) )
+			    {
+			        firstNodeLabels = labelsFor( nodeStore, engine, records, record.getFirstNode() );
+			    }
+			    else
+			    {
+			        firstNodeLabels = NodeLabelReader.getListOfLabels( firstLabelsField );
+			    }
+			    long secondLabelsField = cacheAccess.getFromCache( record.getSecondNode(), SLOT_LABEL_FIELD );
+			    if ( NodeLabelsField.fieldPointsToDynamicRecordOfLabels( secondLabelsField ) )
+			    {
+			        secondNodeLabels = labelsFor( nodeStore, engine, records, record.getSecondNode() );
+			    }
+			    else
+			    {
+			        secondNodeLabels = NodeLabelReader.getListOfLabels( secondLabelsField );
+			    }
+			    final int type = record.getType();
+			    synchronized ( counts )
+			    {
+			        counts.addToValue( relationshipKey( WILDCARD, WILDCARD, WILDCARD ), 1 );
+			        counts.addToValue( relationshipKey( WILDCARD, type, WILDCARD ), 1 );
+			        if ( firstNodeLabels != null )
+			        {
+			            firstNodeLabels.stream().mapToLong(Long::valueOf).forEach(firstLabel -> {
+			                counts.addToValue( relationshipKey( (int) firstLabel, WILDCARD, WILDCARD ), 1 );
+			                counts.addToValue( relationshipKey( (int) firstLabel, type, WILDCARD ), 1 );
+			            });
+			        }
+			        if ( secondNodeLabels != null )
+			        {
+			            secondNodeLabels.stream().mapToLong(Long::valueOf).forEach(secondLabel -> {
+			                counts.addToValue( relationshipKey( WILDCARD, WILDCARD, (int) secondLabel ), 1 );
+			                counts.addToValue( relationshipKey( WILDCARD, type, (int) secondLabel ), 1 );
+			            });
+			        }
+			        if ( COMPUTE_DOUBLE_SIDED_RELATIONSHIP_COUNTS )
+			        {
+			            firstNodeLabels.stream().mapToLong(Long::valueOf).forEach(firstLabel -> secondNodeLabels.stream().mapToLong(Long::valueOf).forEach(secondLabel -> {
+							counts.addToValue(relationshipKey((int) firstLabel, WILDCARD, (int) secondLabel), 1);
+							counts.addToValue(relationshipKey((int) firstLabel, type, (int) secondLabel), 1);
+						}));
+			        }
+			    }
+			}
             inner.check( record, engine, records );
         }
     }
@@ -356,13 +347,5 @@ class CountsBuilderDecorator extends CheckDecorator.Adapter
         {
             return stage == activeStage;
         }
-    }
-
-    private static Set<Long> labelsFor( RecordStore<NodeRecord> nodeStore,
-                                        CheckerEngine<? extends AbstractBaseRecord,? extends ConsistencyReport> engine,
-                                        RecordAccess recordAccess,
-                                        long nodeId )
-    {
-        return getListOfLabels( nodeStore.getRecord( nodeId, nodeStore.newRecord(), FORCE ), recordAccess, engine );
     }
 }

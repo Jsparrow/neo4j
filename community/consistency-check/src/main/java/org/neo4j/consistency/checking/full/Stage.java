@@ -24,17 +24,19 @@ package org.neo4j.consistency.checking.full;
  */
 public interface Stage
 {
-    boolean isParallel();
+    Stage SEQUENTIAL_FORWARD = new Adapter( false, true, "General purpose" );
+	Stage PARALLEL_FORWARD = new Adapter( true, true, "General purpose" );
+	boolean isParallel();
 
-    boolean isForward();
+	boolean isForward();
 
-    String getPurpose();
+	String getPurpose();
 
-    int ordinal();
+	int ordinal();
 
-    int[] getCacheSlotSizes();
+	int[] getCacheSlotSizes();
 
-    class Adapter implements Stage
+	class Adapter implements Stage
     {
         private final boolean parallel;
         private final boolean forward;
@@ -79,7 +81,4 @@ public interface Stage
             return cacheSlotSizes;
         }
     }
-
-    Stage SEQUENTIAL_FORWARD = new Adapter( false, true, "General purpose" );
-    Stage PARALLEL_FORWARD = new Adapter( true, true, "General purpose" );
 }

@@ -24,9 +24,6 @@ import java.io.IOException;
 
 interface DataProvider extends EntryVisitor<WritableBuffer>, Closeable
 {
-    @Override
-    boolean visit( WritableBuffer key, WritableBuffer value ) throws IOException;
-
     DataProvider EMPTY_DATA_PROVIDER = new DataProvider()
     {
         @Override
@@ -40,4 +37,7 @@ interface DataProvider extends EntryVisitor<WritableBuffer>, Closeable
         {
         }
     };
+
+	@Override
+    boolean visit( WritableBuffer key, WritableBuffer value ) throws IOException;
 }

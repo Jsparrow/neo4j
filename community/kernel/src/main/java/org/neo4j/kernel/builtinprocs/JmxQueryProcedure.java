@@ -105,10 +105,7 @@ public class JmxQueryProcedure extends CallableProcedure.BasicProcedure
         catch ( MalformedObjectNameException e )
         {
             throw new ProcedureException( Status.Procedure.ProcedureCallFailed,
-                  "'%s' is an invalid JMX name pattern. Valid queries should use" +
-                  "the syntax outlined in the javax.management.ObjectName API documentation." +
-                  "For instance, try 'org.neo4j:*' to find all JMX beans of the 'org.neo4j' " +
-                  "domain, or '*:*' to find every JMX bean.", query );
+                  new StringBuilder().append("'%s' is an invalid JMX name pattern. Valid queries should use").append("the syntax outlined in the javax.management.ObjectName API documentation.").append("For instance, try 'org.neo4j:*' to find all JMX beans of the 'org.neo4j' ").append("domain, or '*:*' to find every JMX bean.").toString(), query );
         }
     }
 
@@ -213,10 +210,7 @@ public class JmxQueryProcedure extends CallableProcedure.BasicProcedure
     private Map<String, Object> toNeo4jValue( CompositeData composite )
     {
         HashMap<String,Object> properties = new HashMap<>();
-        for ( String key : composite.getCompositeType().keySet() )
-        {
-            properties.put( key, toNeo4jValue(composite.get( key )) );
-        }
+        composite.getCompositeType().keySet().forEach(key -> properties.put(key, toNeo4jValue(composite.get(key))));
 
         return map(
             "description", composite.getCompositeType().getDescription(),

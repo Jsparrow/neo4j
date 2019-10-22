@@ -71,21 +71,20 @@ import static org.neo4j.kernel.impl.index.schema.ByteBufferFactory.heapBufferFac
 @ExtendWith( {DefaultFileSystemExtension.class, TestDirectoryExtension.class} )
 class LuceneSchemaIndexPopulatorTest
 {
-    @Inject
-    private DefaultFileSystemAbstraction fs;
-    @Inject
-    private TestDirectory testDir;
-
-    private IndexStoreView indexStoreView;
-    private LuceneIndexProvider provider;
-    private Directory directory;
-    private IndexPopulator indexPopulator;
-    private IndexReader reader;
-    private IndexSearcher searcher;
     private static final int propertyKeyId = 666;
-    private StoreIndexDescriptor index;
+	@Inject
+    private DefaultFileSystemAbstraction fs;
+	@Inject
+    private TestDirectory testDir;
+	private IndexStoreView indexStoreView;
+	private LuceneIndexProvider provider;
+	private Directory directory;
+	private IndexPopulator indexPopulator;
+	private IndexReader reader;
+	private IndexSearcher searcher;
+	private StoreIndexDescriptor index;
 
-    @BeforeEach
+	@BeforeEach
     void before() throws Exception
     {
         directory = new RAMDirectory();
@@ -100,7 +99,7 @@ class LuceneSchemaIndexPopulatorTest
         indexPopulator.create();
     }
 
-    @AfterEach
+	@AfterEach
     void after() throws Exception
     {
         if ( reader != null )
@@ -110,7 +109,7 @@ class LuceneSchemaIndexPopulatorTest
         directory.close();
     }
 
-    @Test
+	@Test
     void addingValuesShouldPersistThem() throws Exception
     {
         // WHEN
@@ -135,7 +134,7 @@ class LuceneSchemaIndexPopulatorTest
                 hit( 6D, 8 ) );
     }
 
-    @Test
+	@Test
     void multipleEqualValues() throws Exception
     {
         // WHEN
@@ -148,7 +147,7 @@ class LuceneSchemaIndexPopulatorTest
                 hit( "value", 1L, 2L, 3L ) );
     }
 
-    @Test
+	@Test
     void multipleEqualValuesWithUpdateThatRemovesOne() throws Exception
     {
         // WHEN
@@ -162,7 +161,7 @@ class LuceneSchemaIndexPopulatorTest
                 hit( "value", 1L, 3L ) );
     }
 
-    @Test
+	@Test
     void changeUpdatesInterleavedWithAdds() throws Exception
     {
         // WHEN
@@ -179,7 +178,7 @@ class LuceneSchemaIndexPopulatorTest
                 hit( "3", 3 ) );
     }
 
-    @Test
+	@Test
     void addUpdatesInterleavedWithAdds() throws Exception
     {
         // WHEN
@@ -196,7 +195,7 @@ class LuceneSchemaIndexPopulatorTest
                 no( "1" ) );
     }
 
-    @Test
+	@Test
     void removeUpdatesInterleavedWithAdds() throws Exception
     {
         // WHEN
@@ -212,7 +211,7 @@ class LuceneSchemaIndexPopulatorTest
                 hit( "3", 3 ) );
     }
 
-    @Test
+	@Test
     void multipleInterleaves() throws Exception
     {
         // WHEN
@@ -235,49 +234,37 @@ class LuceneSchemaIndexPopulatorTest
                 hit( "4a", 4 ) );
     }
 
-    private Hit hit( Object value, Long... nodeIds )
+	private Hit hit( Object value, Long... nodeIds )
     {
         return new Hit( value, nodeIds );
     }
 
-    private Hit hit( Object value, long nodeId )
+	private Hit hit( Object value, long nodeId )
     {
         return new Hit( value, nodeId );
     }
 
-    private Hit no( Object value )
+	private Hit no( Object value )
     {
         return new Hit( value );
     }
 
-    private static class Hit
-    {
-        private final Value value;
-        private final Long[] nodeIds;
-
-        Hit( Object value, Long... nodeIds )
-        {
-            this.value = Values.of( value );
-            this.nodeIds = nodeIds;
-        }
-    }
-
-    private IndexEntryUpdate<?> add( long nodeId, Object value )
+	private IndexEntryUpdate<?> add( long nodeId, Object value )
     {
         return IndexQueryHelper.add( nodeId, index.schema(), value );
     }
 
-    private IndexEntryUpdate<?> change( long nodeId, Object valueBefore, Object valueAfter )
+	private IndexEntryUpdate<?> change( long nodeId, Object valueBefore, Object valueAfter )
     {
         return IndexQueryHelper.change( nodeId, index.schema(), valueBefore, valueAfter );
     }
 
-    private IndexEntryUpdate<?> remove( long nodeId, Object removedValue )
+	private IndexEntryUpdate<?> remove( long nodeId, Object removedValue )
     {
         return IndexQueryHelper.remove( nodeId, index.schema(), removedValue );
     }
 
-    private void assertIndexedValues( Hit... expectedHits ) throws IOException
+	private void assertIndexedValues( Hit... expectedHits ) throws IOException
     {
         switchToVerification();
 
@@ -295,7 +282,7 @@ class LuceneSchemaIndexPopulatorTest
         }
     }
 
-    private void switchToVerification() throws IOException
+	private void switchToVerification() throws IOException
     {
         indexPopulator.close( true );
         assertEquals( InternalIndexState.ONLINE, provider.getInitialState( index ) );
@@ -303,13 +290,13 @@ class LuceneSchemaIndexPopulatorTest
         searcher = new IndexSearcher( reader );
     }
 
-    private void addUpdate( IndexPopulator populator, long nodeId, Object value )
+	private void addUpdate( IndexPopulator populator, long nodeId, Object value )
             throws IOException, IndexEntryConflictException
     {
         populator.add( singletonList( IndexQueryHelper.add( nodeId, index.schema(), value ) ) );
     }
 
-    private static void updatePopulator(
+	private static void updatePopulator(
             IndexPopulator populator,
             Iterable<IndexEntryUpdate<?>> updates,
             NodePropertyAccessor accessor )
@@ -321,6 +308,18 @@ class LuceneSchemaIndexPopulatorTest
             {
                 updater.process( update );
             }
+        }
+    }
+
+	private static class Hit
+    {
+        private final Value value;
+        private final Long[] nodeIds;
+
+        Hit( Object value, Long... nodeIds )
+        {
+            this.value = Values.of( value );
+            this.nodeIds = nodeIds;
         }
     }
 }

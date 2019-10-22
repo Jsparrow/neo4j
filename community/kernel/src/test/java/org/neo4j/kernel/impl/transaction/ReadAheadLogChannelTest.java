@@ -121,14 +121,13 @@ public class ReadAheadLogChannelTest
             @Override
             public LogVersionedStoreChannel next( LogVersionedStoreChannel channel ) throws IOException
             {
-                if ( !returned )
-                {
-                    returned = true;
-                    channel.close();
-                    return new PhysicalLogVersionedStoreChannel( fileSystemRule.get().open( file( 1 ), OpenMode.READ ),
-                            -1 /* ignored */, (byte) -1 /* ignored */ );
-                }
-                return channel;
+                if (returned) {
+					return channel;
+				}
+				returned = true;
+				channel.close();
+				return new PhysicalLogVersionedStoreChannel( fileSystemRule.get().open( file( 1 ), OpenMode.READ ),
+				        -1 /* ignored */, (byte) -1 /* ignored */ );
             }
         }, 10 ) )
         {
@@ -153,6 +152,6 @@ public class ReadAheadLogChannelTest
 
     private File file( int index )
     {
-        return new File( directory.directory(), "" + index );
+        return new File( directory.directory(), Integer.toString(index) );
     }
 }

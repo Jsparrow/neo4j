@@ -61,11 +61,14 @@ import static org.neo4j.csv.reader.Readables.iterator;
  */
 public class DataFactories
 {
-    private DataFactories()
+    private static Supplier<ZoneId> defaultTimeZone = () -> UTC;
+	private static Pattern typeSpecAndOptionalParameter = Pattern.compile( "(?<newTypeSpec>.+?)(?<optionalParameter>\\{.*\\})?$" );
+
+	private DataFactories()
     {
     }
 
-    /**
+	/**
      * Creates a {@link DataFactory} where data exists in multiple files. If the first line of the first file is a header,
      * {@link #defaultFormatNodeFileHeader()} can be used to extract that.
      *
@@ -99,7 +102,7 @@ public class DataFactories
         };
     }
 
-    /**
+	/**
      * @param decorator Decorator for this data.
      * @param readable we need to have this as a {@link Factory} since one data file may be opened and scanned
      * multiple times.
@@ -124,7 +127,7 @@ public class DataFactories
         };
     }
 
-    /**
+	/**
      * Header parser that will read header information, using the default node header format,
      * from the top of the data file.
      *
@@ -138,7 +141,7 @@ public class DataFactories
         return new DefaultNodeFileHeaderParser( defaultTimeZone );
     }
 
-    /**
+	/**
      * Like {@link #defaultFormatNodeFileHeader(Supplier<ZoneId>)} with UTC as the default time zone.
      */
     public static Header.Factory defaultFormatNodeFileHeader()
@@ -146,7 +149,7 @@ public class DataFactories
         return defaultFormatNodeFileHeader( defaultTimeZone );
     }
 
-    /**
+	/**
      * Header parser that will read header information, using the default relationship header format,
      * from the top of the data file.
      *
@@ -160,7 +163,7 @@ public class DataFactories
         return new DefaultRelationshipFileHeaderParser( defaultTimeZone );
     }
 
-    /**
+	/**
      * Like {@link #defaultFormatRelationshipFileHeader(Supplier<ZoneId>)} with UTC as the default time zone.
      */
     public static Header.Factory defaultFormatRelationshipFileHeader()
@@ -168,9 +171,48 @@ public class DataFactories
         return defaultFormatRelationshipFileHeader( defaultTimeZone );
     }
 
-    private static Supplier<ZoneId> defaultTimeZone = () -> UTC;
+	private static Extractor<?> parsePropertyType( String typeSpec, Extractors extractors )
+    {
+        try
+        {
+            return extractors.valueOf( typeSpec );
+        }
+        catch ( IllegalArgumentException e )
+        {
+            throw new HeaderException( "Unable to parse header", e );
+        }
+    }
 
-    private abstract static class AbstractDefaultFileHeaderParser implements Header.Factory
+	@SafeVarargs
+    public static Iterable<DataFactory> datas( DataFactory... factories )
+    {
+        return Iterables.iterable( factories );
+    }
+
+	public static Pair<String,String> splitTypeSpecAndOptionalParameter( String typeSpec )
+    {
+        String optionalParameter = null;
+        String newTypeSpec = typeSpec;
+
+        Matcher matcher = typeSpecAndOptionalParameter.matcher( typeSpec );
+
+        if ( matcher.find() )
+        {
+            try
+            {
+                newTypeSpec = matcher.group( "newTypeSpec" );
+                optionalParameter = matcher.group( "optionalParameter" );
+            }
+            catch ( IllegalArgumentException e )
+            {
+                String errorMessage = format( "Failed to parse header: '%s'", typeSpec );
+                throw new IllegalArgumentException( errorMessage, e );
+            }
+        }
+        return Pair.of( newTypeSpec, optionalParameter );
+    }
+
+	private abstract static class AbstractDefaultFileHeaderParser implements Header.Factory
     {
         private final boolean createGroups;
         private final Type[] mandatoryTypes;
@@ -314,8 +356,7 @@ public class DataFactories
                         if ( !type.endsWith( ")" ) )
                         {
                             throw new IllegalArgumentException(
-                                    "Group specification in '" + rawHeaderField + "' is invalid, format expected to be 'name:TYPE(group)' " +
-                                            "where TYPE and (group) are optional" );
+                                    new StringBuilder().append("Group specification in '").append(rawHeaderField).append("' is invalid, format expected to be 'name:TYPE(group)' ").append("where TYPE and (group) are optional").toString() );
                         }
                         groupName = type.substring( groupNameStartIndex + 1, type.length() - 1 );
                         type = type.substring( 0, groupNameStartIndex );
@@ -378,7 +419,7 @@ public class DataFactories
                 }
                 else if ( isRecognizedType( typeSpec ) )
                 {
-                    throw new HeaderException( "Unexpected node header type '" + typeSpec + "'" );
+                    throw new HeaderException( new StringBuilder().append("Unexpected node header type '").append(typeSpec).append("'").toString() );
                 }
                 else
                 {
@@ -444,7 +485,7 @@ public class DataFactories
                 }
                 else if ( isRecognizedType( typeSpec ) )
                 {
-                    throw new HeaderException( "Unexpected relationship header type '" + typeSpec + "'" );
+                    throw new HeaderException( new StringBuilder().append("Unexpected relationship header type '").append(typeSpec).append("'").toString() );
                 }
                 else
                 {
@@ -455,48 +496,5 @@ public class DataFactories
             return new Header.Entry( name, type, group, extractor, optionalParameter );
         }
 
-    }
-
-    private static Extractor<?> parsePropertyType( String typeSpec, Extractors extractors )
-    {
-        try
-        {
-            return extractors.valueOf( typeSpec );
-        }
-        catch ( IllegalArgumentException e )
-        {
-            throw new HeaderException( "Unable to parse header", e );
-        }
-    }
-
-    @SafeVarargs
-    public static Iterable<DataFactory> datas( DataFactory... factories )
-    {
-        return Iterables.iterable( factories );
-    }
-
-    private static Pattern typeSpecAndOptionalParameter = Pattern.compile( "(?<newTypeSpec>.+?)(?<optionalParameter>\\{.*\\})?$" );
-
-    public static Pair<String,String> splitTypeSpecAndOptionalParameter( String typeSpec )
-    {
-        String optionalParameter = null;
-        String newTypeSpec = typeSpec;
-
-        Matcher matcher = typeSpecAndOptionalParameter.matcher( typeSpec );
-
-        if ( matcher.find() )
-        {
-            try
-            {
-                newTypeSpec = matcher.group( "newTypeSpec" );
-                optionalParameter = matcher.group( "optionalParameter" );
-            }
-            catch ( IllegalArgumentException e )
-            {
-                String errorMessage = format( "Failed to parse header: '%s'", typeSpec );
-                throw new IllegalArgumentException( errorMessage, e );
-            }
-        }
-        return Pair.of( newTypeSpec, optionalParameter );
     }
 }

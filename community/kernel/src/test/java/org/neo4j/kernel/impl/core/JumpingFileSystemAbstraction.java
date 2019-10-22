@@ -65,13 +65,13 @@ public class JumpingFileSystemAbstraction extends DelegatingFileSystemAbstractio
     {
         StoreFileChannel channel = (StoreFileChannel) super.open( fileName, openMode );
         if (
-                fileName.getName().equals( "neostore.nodestore.db" ) ||
-                fileName.getName().equals( "neostore.nodestore.db.labels" ) ||
-                fileName.getName().equals( "neostore.relationshipstore.db" ) ||
-                fileName.getName().equals( "neostore.propertystore.db" ) ||
-                fileName.getName().equals( "neostore.propertystore.db.strings" ) ||
-                fileName.getName().equals( "neostore.propertystore.db.arrays" ) ||
-                fileName.getName().equals( "neostore.relationshipgroupstore.db" ) )
+                "neostore.nodestore.db".equals( fileName.getName() ) ||
+                "neostore.nodestore.db.labels".equals( fileName.getName() ) ||
+                "neostore.relationshipstore.db".equals( fileName.getName() ) ||
+                "neostore.propertystore.db".equals( fileName.getName() ) ||
+                "neostore.propertystore.db.strings".equals( fileName.getName() ) ||
+                "neostore.propertystore.db.arrays".equals( fileName.getName() ) ||
+                "neostore.relationshipgroupstore.db".equals( fileName.getName() ) )
         {
             return new JumpingFileChannel( channel, recordSizeFor( fileName ) );
         }
@@ -214,7 +214,7 @@ public class JumpingFileSystemAbstraction extends DelegatingFileSystemAbstractio
                         return sizePerJump / 2;
                     }
                 }
-                throw new IllegalArgumentException( "" + diff );
+                throw new IllegalArgumentException( Long.toString(diff) );
             }
             return diff;
         }

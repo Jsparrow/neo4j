@@ -70,52 +70,7 @@ public class Args
 {
     private static final char OPTION_METADATA_DELIMITER = ':';
 
-    @Deprecated
-    public static class ArgsParser
-    {
-        private final String[] flags;
-
-        private ArgsParser( String... flags )
-        {
-            this.flags = Objects.requireNonNull( flags );
-        }
-
-        public Args parse( String... arguments )
-        {
-            return new Args( flags, arguments );
-        }
-    }
-
-    @Deprecated
-    public static class Option<T>
-    {
-        private final T value;
-        private final String metadata;
-
-        private Option( T value, String metadata )
-        {
-            this.value = value;
-            this.metadata = metadata;
-        }
-
-        public T value()
-        {
-            return value;
-        }
-
-        public String metadata()
-        {
-            return metadata;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "Option[" + value + (metadata != null ? ", " + metadata : "") + "]";
-        }
-    }
-
-    private static final Function<String,Option<String>> DEFAULT_OPTION_PARSER = from ->
+	private static final Function<String,Option<String>> DEFAULT_OPTION_PARSER = from ->
     {
         int metadataStartIndex = from.indexOf( OPTION_METADATA_DELIMITER );
         return metadataStartIndex == -1
@@ -123,24 +78,29 @@ public class Args
                 : new Option<>( from.substring( 0, metadataStartIndex ), from.substring( metadataStartIndex + 1 ) );
     };
 
-    private final String[] args;
-    private final String[] flags;
-    private final Map<String, List<Option<String>>> map = new HashMap<>();
-    private final List<String> orphans = new ArrayList<>();
+	private final String[] args;
 
-    @Deprecated
-    public static ArgsParser withFlags( String... flags )
+	private final String[] flags;
+
+	private final Map<String, List<Option<String>>> map = new HashMap<>();
+
+	private final List<String> orphans = new ArrayList<>();
+
+	@Deprecated
+    public Args( Map<String, String> source )
     {
-        return new ArgsParser( flags );
+        this( DEFAULT_OPTION_PARSER, source );
     }
 
-    @Deprecated
-    public static Args parse( String...args )
+	@Deprecated
+    public Args( Function<String,Option<String>> optionParser, Map<String, String> source )
     {
-        return withFlags().parse( args );
+        this.flags = new String[] {};
+        this.args = null;
+        source.entrySet().forEach(entry -> put(optionParser, entry.getKey(), entry.getValue()));
     }
 
-    /**
+	/**
      * Suitable for main( String[] args )
      * @param args the arguments to parse.
      */
@@ -149,7 +109,7 @@ public class Args
         this( DEFAULT_OPTION_PARSER, flags, args );
     }
 
-    /**
+	/**
      * Suitable for main( String[] args )
      * @param flags list of possible flags (e.g -v or -skip-bad). A flag differs from an option in that it
      * has no value after it. This list of flags is used for distinguishing between the two.
@@ -162,55 +122,49 @@ public class Args
         parseArgs( optionParser, args );
     }
 
-    @Deprecated
-    public Args( Map<String, String> source )
+	@Deprecated
+    public static ArgsParser withFlags( String... flags )
     {
-        this( DEFAULT_OPTION_PARSER, source );
+        return new ArgsParser( flags );
     }
 
-    @Deprecated
-    public Args( Function<String,Option<String>> optionParser, Map<String, String> source )
+	@Deprecated
+    public static Args parse( String...args )
     {
-        this.flags = new String[] {};
-        this.args = null;
-        for ( Entry<String,String> entry : source.entrySet() )
-        {
-            put( optionParser, entry.getKey(), entry.getValue() );
-        }
+        return withFlags().parse( args );
     }
 
-    @Deprecated
+	@Deprecated
     public String[] source()
     {
         return this.args;
     }
 
-    @Deprecated
+	@Deprecated
     public Map<String, String> asMap()
     {
         Map<String,String> result = new HashMap<>();
-        for ( Map.Entry<String,List<Option<String>>> entry : map.entrySet() )
-        {
+        map.entrySet().forEach(entry -> {
             Option<String> value = Iterables.firstOrNull( entry.getValue() );
             result.put( entry.getKey(), value != null ? value.value() : null );
-        }
+        });
         return result;
     }
 
-    @Deprecated
+	@Deprecated
     public boolean has( String  key )
     {
         return this.map.containsKey( key );
     }
 
-    @Deprecated
+	@Deprecated
     public boolean hasNonNull( String key )
     {
         List<Option<String>> values = this.map.get( key );
         return values != null && !values.isEmpty();
     }
 
-    @Deprecated
+	@Deprecated
     private String getSingleOptionOrNull( String key )
     {
         List<Option<String>> values = this.map.get( key );
@@ -220,12 +174,12 @@ public class Args
         }
         else if ( values.size() > 1 )
         {
-            throw new IllegalArgumentException( "There are multiple values for '" + key + "'" );
+            throw new IllegalArgumentException( new StringBuilder().append("There are multiple values for '").append(key).append("'").toString() );
         }
         return values.get( 0 ).value();
     }
 
-    /**
+	/**
      * Get a config option by name.
      * @param key name of the option, without any `-` or `--` prefix, eg. "o".
      * @return the string value of the option, or null if the user has not specified it
@@ -236,14 +190,14 @@ public class Args
         return getSingleOptionOrNull( key );
     }
 
-    @Deprecated
+	@Deprecated
     public String get( String key, String defaultValue )
     {
         String value = getSingleOptionOrNull( key );
         return value != null ? value : defaultValue;
     }
 
-    @Deprecated
+	@Deprecated
     public String get( String key, String defaultValueIfNotFound, String defaultValueIfNoValue )
     {
         String value = getSingleOptionOrNull( key );
@@ -254,21 +208,21 @@ public class Args
         return this.map.containsKey( key ) ? defaultValueIfNoValue : defaultValueIfNotFound;
     }
 
-    @Deprecated
+	@Deprecated
     public Number getNumber( String key, Number defaultValue )
     {
         String value = getSingleOptionOrNull( key );
         return value != null ? Double.valueOf( value ) : defaultValue;
     }
 
-    @Deprecated
+	@Deprecated
     public long getDuration( String key, long defaultValueInMillis )
     {
         String value = getSingleOptionOrNull( key );
         return value != null ? TimeUtil.parseTimeMillis.apply(value) : defaultValueInMillis;
     }
 
-    /**
+	/**
      * Like calling {@link #getBoolean(String, Boolean)} with {@code false} for default value.
      * This is the most common case, i.e. returns {@code true} if boolean argument was specified as:
      * <ul>
@@ -286,7 +240,7 @@ public class Args
         return getBoolean( key, false );
     }
 
-    /**
+	/**
      * Like calling {@link #getBoolean(String, Boolean, Boolean)} with {@code true} for
      * {@code defaultValueIfNoValue}, i.e. specifying {@code --myarg} will interpret it as {@code true}.
      *
@@ -300,7 +254,7 @@ public class Args
         return getBoolean( key, defaultValueIfNotSpecified, Boolean.TRUE );
     }
 
-    /**
+	/**
      * Parses a {@code boolean} argument. There are a couple of cases:
      * <ul>
      * <li>The argument isn't specified. In this case the value of {@code defaultValueIfNotSpecified}
@@ -328,7 +282,7 @@ public class Args
         return this.map.containsKey( key ) ? defaultValueIfSpecifiedButNoValue : defaultValueIfNotSpecified;
     }
 
-    @Deprecated
+	@Deprecated
     public <T extends Enum<T>> T getEnum( Class<T> enumClass, String key, T defaultValue )
     {
         String raw = getSingleOptionOrNull( key );
@@ -344,10 +298,10 @@ public class Args
                 return candidate;
             }
         }
-        throw new IllegalArgumentException( "No enum instance '" + raw + "' in " + enumClass.getName() );
+        throw new IllegalArgumentException( new StringBuilder().append("No enum instance '").append(raw).append("' in ").append(enumClass.getName()).toString() );
     }
 
-    /**
+	/**
      * Orphans are arguments specified without options flags, eg:
      *
      * <pre>myprogram -o blah orphan1 orphan2</pre>
@@ -362,7 +316,7 @@ public class Args
         return new ArrayList<>( this.orphans );
     }
 
-    /**
+	/**
      * @see #orphans()
      * @return list of orphan arguments.
      */
@@ -372,31 +326,26 @@ public class Args
         return orphans.toArray( new String[0] );
     }
 
-    @Deprecated
+	@Deprecated
     public String[] asArgs()
     {
         List<String> list = new ArrayList<>( orphans.size() );
-        for ( String orphan : orphans )
-        {
+        orphans.forEach(orphan -> {
             String quote = orphan.contains( " " ) ? " " : "";
-            list.add( quote + orphan + quote );
-        }
-        for ( Map.Entry<String,List<Option<String>>> entry : map.entrySet() )
-        {
-            for ( Option<String> option : entry.getValue() )
-            {
-                String key = option.metadata != null
-                        ? entry.getKey() + OPTION_METADATA_DELIMITER + option.metadata()
-                        : entry.getKey();
-                String value = option.value();
-                String quote = key.contains( " " ) || (value != null && value.contains( " " )) ? " " : "";
-                list.add( quote + (key.length() > 1 ? "--" : "-") + key + (value != null ? "=" + value + quote : "") );
-            }
-        }
+            list.add( new StringBuilder().append(quote).append(orphan).append(quote).toString() );
+        });
+        map.entrySet().forEach(entry -> entry.getValue().forEach(option -> {
+			String key = option.metadata != null ? new StringBuilder().append(entry.getKey()).append(OPTION_METADATA_DELIMITER).append(option.metadata()).toString()
+					: entry.getKey();
+			String value = option.value();
+			String quote = key.contains(" ") || (value != null && value.contains(" ")) ? " " : "";
+			list.add(new StringBuilder().append(quote).append(key.length() > 1 ? "--" : "-").append(key)
+					.append(value != null ? "=" + value + quote : "").toString());
+		}));
         return list.toArray( new String[0] );
     }
 
-    @Override
+	@Override
     public String toString()
     {
         StringBuilder builder = new StringBuilder();
@@ -407,22 +356,22 @@ public class Args
         return builder.toString();
     }
 
-    private static boolean isOption( String arg )
+	private static boolean isOption( String arg )
     {
         return arg.startsWith( "-" ) && arg.length() > 1;
     }
 
-    private boolean isFlag( String arg )
+	private boolean isFlag( String arg )
     {
         return ArrayUtil.contains( flags, arg );
     }
 
-    private static boolean isBoolean( String value )
+	private static boolean isBoolean( String value )
     {
         return "true".equalsIgnoreCase( value ) || "false".equalsIgnoreCase( value );
     }
 
-    private static String stripOption( String arg )
+	private static String stripOption( String arg )
     {
         while ( !arg.isEmpty() && arg.charAt( 0 ) == '-' )
         {
@@ -431,7 +380,7 @@ public class Args
         return arg;
     }
 
-    private void parseArgs( Function<String,Option<String>> optionParser, String[] args )
+	private void parseArgs( Function<String,Option<String>> optionParser, String[] args )
     {
         for ( int i = 0; i < args.length; i++ )
         {
@@ -483,14 +432,14 @@ public class Args
         }
     }
 
-    private void put( Function<String,Option<String>> optionParser, String key, String value )
+	private void put( Function<String,Option<String>> optionParser, String key, String value )
     {
         Option<String> option = optionParser.apply( key );
         List<Option<String>> values = map.computeIfAbsent( option.value(), k -> new ArrayList<>() );
         values.add( new Option<>( value, option.metadata() ) );
     }
 
-    @Deprecated
+	@Deprecated
     public static String jarUsage( Class<?> main, String... params )
     {
         StringBuilder usage = new StringBuilder( "USAGE: java [-cp ...] " );
@@ -510,7 +459,7 @@ public class Args
         return usage.toString();
     }
 
-    /**
+	/**
      * Useful for printing usage where the description itself shouldn't have knowledge about the width
      * of the window where it's printed. Existing new-line characters in the text are honored.
      *
@@ -548,7 +497,7 @@ public class Args
         return lines.toArray( new String[0] );
     }
 
-    private static int findSpaceBefore( String description, int position )
+	private static int findSpaceBefore( String description, int position )
     {
         while ( !Character.isWhitespace( description.charAt( position ) ) )
         {
@@ -557,7 +506,7 @@ public class Args
         return position + 1;
     }
 
-    @Deprecated
+	@Deprecated
     @SafeVarargs
     public final <T> T interpretOption( String key, Function<String,T> defaultValue,
             Function<String,T> converter, Validator<T>... validators )
@@ -575,7 +524,7 @@ public class Args
         return validated( value, validators );
     }
 
-    /**
+	/**
      * An option can be specified multiple times; this method will allow interpreting all values for
      * the given key, returning a {@link Collection}. This is the only means of extracting multiple values
      * for any given option. All other methods revolve around zero or one value for an option.
@@ -594,14 +543,11 @@ public class Args
     {
         Collection<Option<T>> options = interpretOptionsWithMetadata( key, defaultValue, converter, validators );
         Collection<T> values = new ArrayList<>( options.size() );
-        for ( Option<T> option : options )
-        {
-            values.add( option.value() );
-        }
+        options.forEach(option -> values.add(option.value()));
         return values;
     }
 
-    /**
+	/**
      * An option can be specified multiple times; this method will allow interpreting all values for
      * the given key, returning a {@link Collection}. This is the only means of extracting multiple values
      * for any given option. All other methods revolve around zero or one value for an option.
@@ -631,16 +577,15 @@ public class Args
         }
         else
         {
-            for ( Option<String> option : map.get( key ) )
-            {
+            map.get( key ).forEach(option -> {
                 String stringValue = option.value();
                 values.add( new Option<>( validated( converter.apply( stringValue ), validators ), option.metadata() ) );
-            }
+            });
         }
         return values;
     }
 
-    @Deprecated
+	@Deprecated
     @SafeVarargs
     public final <T> T interpretOrphan( int index, Function<String,T> defaultValue,
             Function<String,T> converter, Validator<T>... validators )
@@ -660,7 +605,7 @@ public class Args
         return validated( value, validators );
     }
 
-    @SafeVarargs
+	@SafeVarargs
     private final <T> T validated( T value, Validator<T>... validators )
     {
         if ( value != null )
@@ -671,5 +616,50 @@ public class Args
             }
         }
         return value;
+    }
+
+    @Deprecated
+    public static class ArgsParser
+    {
+        private final String[] flags;
+
+        private ArgsParser( String... flags )
+        {
+            this.flags = Objects.requireNonNull( flags );
+        }
+
+        public Args parse( String... arguments )
+        {
+            return new Args( flags, arguments );
+        }
+    }
+
+    @Deprecated
+    public static class Option<T>
+    {
+        private final T value;
+        private final String metadata;
+
+        private Option( T value, String metadata )
+        {
+            this.value = value;
+            this.metadata = metadata;
+        }
+
+        public T value()
+        {
+            return value;
+        }
+
+        public String metadata()
+        {
+            return metadata;
+        }
+
+        @Override
+        public String toString()
+        {
+            return new StringBuilder().append("Option[").append(value).append(metadata != null ? ", " + metadata : "").append("]").toString();
+        }
     }
 }

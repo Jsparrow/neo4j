@@ -70,8 +70,8 @@ public class CommittedTransactionRepresentation
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() +
-                "[" + startEntry + ", " + transactionRepresentation + ", " + commitEntry + "]";
+        return new StringBuilder().append(getClass().getSimpleName()).append("[").append(startEntry).append(", ").append(transactionRepresentation).append(", ")
+				.append(commitEntry).append("]").toString();
     }
 
     @Override

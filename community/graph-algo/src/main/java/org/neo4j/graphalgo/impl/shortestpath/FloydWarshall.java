@@ -85,7 +85,6 @@ public class FloydWarshall<CostType>
         Comparator<CostType> costComparator, Set<Node> nodeSet,
         Set<Relationship> relationshipSet )
     {
-        super();
         this.startCost = startCost;
         this.infinitelyBad = infinitelyBad;
         this.relationDirection = relationDirection;
@@ -149,14 +148,14 @@ public class FloydWarshall<CostType>
                 // exception?
                 continue;
             }
-            if ( relationDirection.equals( Direction.BOTH )
-                || relationDirection.equals( Direction.OUTGOING ) )
+            if ( relationDirection == Direction.BOTH
+                || relationDirection == Direction.OUTGOING )
             {
                 costMatrix[i1][i2] = costEvaluator.getCost( relationship, Direction.OUTGOING );
                 predecessors[i1][i2] = i1;
             }
-            if ( relationDirection.equals( Direction.BOTH )
-                || relationDirection.equals( Direction.INCOMING ) )
+            if ( relationDirection == Direction.BOTH
+                || relationDirection == Direction.INCOMING )
             {
                 costMatrix[i2][i1] = costEvaluator.getCost( relationship,
                         Direction.INCOMING );

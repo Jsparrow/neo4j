@@ -42,8 +42,6 @@ public class Persian extends AnalyzerProvider
     @Override
     public String description()
     {
-        return "Persian analyzer. Tokenizes with zero-width non-joiner characters in addition to whitespace. " +
-                "Persian-specific variants, such as the farsi 'yeh' and 'keheh', are standardized. " +
-                "Simple stemming is accomplished via stop words.";
+        return new StringBuilder().append("Persian analyzer. Tokenizes with zero-width non-joiner characters in addition to whitespace. ").append("Persian-specific variants, such as the farsi 'yeh' and 'keheh', are standardized. ").append("Simple stemming is accomplished via stop words.").toString();
     }
 }

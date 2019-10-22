@@ -32,7 +32,74 @@ import org.neo4j.kernel.impl.util.Bits;
  */
 public class LongBitsManipulator
 {
-    private static class Slot
+    private final Slot[] slots;
+
+	public LongBitsManipulator( int... slotsAndTheirBitCounts )
+    {
+        slots = intoSlots( slotsAndTheirBitCounts );
+    }
+
+	private Slot[] intoSlots( int[] slotsAndTheirSizes )
+    {
+        Slot[] slots = new Slot[slotsAndTheirSizes.length];
+        int bitCursor = 0;
+        for ( int i = 0; i < slotsAndTheirSizes.length; i++ )
+        {
+            int bits = slotsAndTheirSizes[i];
+            long mask = (1L << bits) - 1;
+            mask <<= bitCursor;
+            slots[i] = new Slot( bits, mask, bitCursor );
+            bitCursor += bits;
+        }
+        return slots;
+    }
+
+	public long set( long field, int slotIndex, long value )
+    {
+        return slot( slotIndex ).set( field, value );
+    }
+
+	public long get( long field, int slotIndex )
+    {
+        return slot( slotIndex ).get( field );
+    }
+
+	public long clear( long field, int slotIndex, boolean trueForAllOnes )
+    {
+        return slot( slotIndex ).clear( field, trueForAllOnes );
+    }
+
+	public long template( boolean... trueForOnes )
+    {
+        if ( trueForOnes.length != slots.length )
+        {
+            throw new IllegalArgumentException( "Invalid boolean arguments, expected " + slots.length );
+        }
+
+        long field = 0;
+        for ( int i = 0; i < trueForOnes.length; i++ )
+        {
+            field = slots[i].clear( field, trueForOnes[i] );
+        }
+        return field;
+    }
+
+	private Slot slot( int slotIndex )
+    {
+        if ( slotIndex < 0 || slotIndex >= slots.length )
+        {
+            throw new IllegalArgumentException( new StringBuilder().append("Invalid slot ").append(slotIndex).append(", I've got ").append(this).toString() );
+        }
+        return slots[slotIndex];
+    }
+
+	@Override
+    public String toString()
+    {
+        return Arrays.toString( slots );
+    }
+
+	private static class Slot
     {
         private final long mask;
         private final long maxValue;
@@ -55,7 +122,7 @@ public class LongBitsManipulator
         {
             if ( value < -1 || value > maxValue )
             {
-                throw new IllegalStateException( "Invalid value " + value + ", max is " + maxValue );
+                throw new IllegalStateException( new StringBuilder().append("Invalid value ").append(value).append(", max is ").append(maxValue).toString() );
             }
 
             long otherBits = field & ~mask;
@@ -76,74 +143,7 @@ public class LongBitsManipulator
         @Override
         public String toString()
         {
-            return getClass().getSimpleName() + "[" + Bits.numbersToBitString( new long[] {maxValue << bitOffset} ) + "]";
+            return new StringBuilder().append(getClass().getSimpleName()).append("[").append(Bits.numbersToBitString( new long[] {maxValue << bitOffset} )).append("]").toString();
         }
-    }
-
-    private final Slot[] slots;
-
-    public LongBitsManipulator( int... slotsAndTheirBitCounts )
-    {
-        slots = intoSlots( slotsAndTheirBitCounts );
-    }
-
-    private Slot[] intoSlots( int[] slotsAndTheirSizes )
-    {
-        Slot[] slots = new Slot[slotsAndTheirSizes.length];
-        int bitCursor = 0;
-        for ( int i = 0; i < slotsAndTheirSizes.length; i++ )
-        {
-            int bits = slotsAndTheirSizes[i];
-            long mask = (1L << bits) - 1;
-            mask <<= bitCursor;
-            slots[i] = new Slot( bits, mask, bitCursor );
-            bitCursor += bits;
-        }
-        return slots;
-    }
-
-    public long set( long field, int slotIndex, long value )
-    {
-        return slot( slotIndex ).set( field, value );
-    }
-
-    public long get( long field, int slotIndex )
-    {
-        return slot( slotIndex ).get( field );
-    }
-
-    public long clear( long field, int slotIndex, boolean trueForAllOnes )
-    {
-        return slot( slotIndex ).clear( field, trueForAllOnes );
-    }
-
-    public long template( boolean... trueForOnes )
-    {
-        if ( trueForOnes.length != slots.length )
-        {
-            throw new IllegalArgumentException( "Invalid boolean arguments, expected " + slots.length );
-        }
-
-        long field = 0;
-        for ( int i = 0; i < trueForOnes.length; i++ )
-        {
-            field = slots[i].clear( field, trueForOnes[i] );
-        }
-        return field;
-    }
-
-    private Slot slot( int slotIndex )
-    {
-        if ( slotIndex < 0 || slotIndex >= slots.length )
-        {
-            throw new IllegalArgumentException( "Invalid slot " + slotIndex + ", I've got " + this );
-        }
-        return slots[slotIndex];
-    }
-
-    @Override
-    public String toString()
-    {
-        return Arrays.toString( slots );
     }
 }

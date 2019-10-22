@@ -35,8 +35,8 @@ import static org.junit.Assert.assertTrue;
 
 public abstract class LargeNodeCursorTestBase<G extends KernelAPIReadTestSupport> extends KernelAPIReadTestBase<G>
 {
-    private static List<Long> NODE_IDS = new ArrayList<>();
-    private static int N_NODES = 10000;
+    private static List<Long> nodeIds = new ArrayList<>();
+    private static int nNodes = 10000;
 
     private static Random random = new Random( 2 );
 
@@ -46,12 +46,12 @@ public abstract class LargeNodeCursorTestBase<G extends KernelAPIReadTestSupport
         List<Node> deleted = new ArrayList<>();
         try ( Transaction tx = graphDb.beginTx() )
         {
-            for ( int i = 0; i < N_NODES; i++ )
+            for ( int i = 0; i < nNodes; i++ )
             {
                 Node node = graphDb.createNode();
                 if ( random.nextBoolean() )
                 {
-                    NODE_IDS.add( node.getId() );
+                    nodeIds.add( node.getId() );
                 }
                 else
                 {
@@ -63,10 +63,7 @@ public abstract class LargeNodeCursorTestBase<G extends KernelAPIReadTestSupport
 
         try ( Transaction tx = graphDb.beginTx() )
         {
-            for ( Node node : deleted )
-            {
-                node.delete();
-            }
+            deleted.forEach(Node::delete);
             tx.success();
         }
     }
@@ -87,7 +84,7 @@ public abstract class LargeNodeCursorTestBase<G extends KernelAPIReadTestSupport
         }
 
         // then
-        assertEquals( NODE_IDS, ids );
+        assertEquals( nodeIds, ids );
     }
 
     @Test
@@ -96,8 +93,7 @@ public abstract class LargeNodeCursorTestBase<G extends KernelAPIReadTestSupport
         // given
         try ( NodeCursor nodes = cursors.allocateNodeCursor() )
         {
-            for ( long id : NODE_IDS )
-            {
+            nodeIds.stream().mapToLong(Long::valueOf).forEach(id -> {
                 // when
                 read.singleNode( id, nodes );
 
@@ -105,7 +101,7 @@ public abstract class LargeNodeCursorTestBase<G extends KernelAPIReadTestSupport
                 assertTrue( "should access defined node", nodes.next() );
                 assertEquals( "should access the correct node", id, nodes.nodeReference() );
                 assertFalse( "should only access a single node", nodes.next() );
-            }
+            });
         }
     }
 }

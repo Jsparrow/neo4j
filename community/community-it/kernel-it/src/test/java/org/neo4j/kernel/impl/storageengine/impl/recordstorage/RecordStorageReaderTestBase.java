@@ -86,10 +86,7 @@ public abstract class RecordStorageReaderTestBase
         try ( Transaction tx = db.beginTx() )
         {
             Node node = db.createNode( labels );
-            for ( Map.Entry<String,Object> property : properties.entrySet() )
-            {
-                node.setProperty( property.getKey(), property.getValue() );
-            }
+            properties.entrySet().forEach(property -> node.setProperty(property.getKey(), property.getValue()));
             tx.success();
             return node;
         }

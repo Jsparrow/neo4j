@@ -149,12 +149,12 @@ public class LuceneIndexProvider extends IndexProvider
     }
 
     @Override
-    public String getPopulationFailure( StoreIndexDescriptor descriptor ) throws IllegalStateException
+    public String getPopulationFailure( StoreIndexDescriptor descriptor )
     {
         String failure = getIndexStorage( descriptor.getId() ).getStoredIndexFailure();
         if ( failure == null )
         {
-            throw new IllegalStateException( "Index " + descriptor.getId() + " isn't failed" );
+            throw new IllegalStateException( new StringBuilder().append("Index ").append(descriptor.getId()).append(" isn't failed").toString() );
         }
         return failure;
     }

@@ -33,36 +33,12 @@ public class ConstraintRule implements SchemaRule, ConstraintDescriptor.Supplier
     private final long id;
     private final ConstraintDescriptor descriptor;
 
-    public static ConstraintRule constraintRule(
-            long id, ConstraintDescriptor descriptor )
-    {
-        return new ConstraintRule( id, descriptor, null );
-    }
-
-    public static ConstraintRule constraintRule(
-            long id, IndexBackedConstraintDescriptor descriptor, long ownedIndexRule )
-    {
-        return new ConstraintRule( id, descriptor, ownedIndexRule );
-    }
-
-    public static ConstraintRule constraintRule(
-            long id, ConstraintDescriptor descriptor, String name )
-    {
-        return new ConstraintRule( id, descriptor, null, name );
-    }
-
-    public static ConstraintRule constraintRule(
-            long id, IndexBackedConstraintDescriptor descriptor, long ownedIndexRule, String name )
-    {
-        return new ConstraintRule( id, descriptor, ownedIndexRule, name );
-    }
-
     ConstraintRule( long id, ConstraintDescriptor descriptor, Long ownedIndex )
     {
         this( id, descriptor, ownedIndex, null );
     }
 
-    ConstraintRule( long id, ConstraintDescriptor descriptor, Long ownedIndex, String name )
+	ConstraintRule( long id, ConstraintDescriptor descriptor, Long ownedIndex, String name )
     {
         this.id = id;
         this.descriptor = descriptor;
@@ -70,26 +46,50 @@ public class ConstraintRule implements SchemaRule, ConstraintDescriptor.Supplier
         this.name = SchemaRule.nameOrDefault( name, "constraint_" + id );
     }
 
-    @Override
-    public String toString()
+	public static ConstraintRule constraintRule(
+            long id, ConstraintDescriptor descriptor )
     {
-        return "ConstraintRule[id=" + id + ", descriptor=" + descriptor.userDescription( idTokenNameLookup ) + ", " +
-                "ownedIndex=" + ownedIndex + "]";
+        return new ConstraintRule( id, descriptor, null );
     }
 
-    @Override
+	public static ConstraintRule constraintRule(
+            long id, IndexBackedConstraintDescriptor descriptor, long ownedIndexRule )
+    {
+        return new ConstraintRule( id, descriptor, ownedIndexRule );
+    }
+
+	public static ConstraintRule constraintRule(
+            long id, ConstraintDescriptor descriptor, String name )
+    {
+        return new ConstraintRule( id, descriptor, null, name );
+    }
+
+	public static ConstraintRule constraintRule(
+            long id, IndexBackedConstraintDescriptor descriptor, long ownedIndexRule, String name )
+    {
+        return new ConstraintRule( id, descriptor, ownedIndexRule, name );
+    }
+
+	@Override
+    public String toString()
+    {
+        return new StringBuilder().append("ConstraintRule[id=").append(id).append(", descriptor=").append(descriptor.userDescription( idTokenNameLookup )).append(", ").append("ownedIndex=")
+				.append(ownedIndex).append("]").toString();
+    }
+
+	@Override
     public SchemaDescriptor schema()
     {
         return descriptor.schema();
     }
 
-    @Override
+	@Override
     public ConstraintDescriptor getConstraintDescriptor()
     {
         return descriptor;
     }
 
-    @SuppressWarnings( "NumberEquality" )
+	@SuppressWarnings( "NumberEquality" )
     public long getOwnedIndex()
     {
         if ( ownedIndex == null )
@@ -99,30 +99,29 @@ public class ConstraintRule implements SchemaRule, ConstraintDescriptor.Supplier
         return ownedIndex;
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
-        if ( o instanceof ConstraintRule )
-        {
-            ConstraintRule that = (ConstraintRule) o;
-            return this.descriptor.equals( that.descriptor );
-        }
-        return false;
+        if (!(o instanceof ConstraintRule)) {
+			return false;
+		}
+		ConstraintRule that = (ConstraintRule) o;
+		return this.descriptor.equals( that.descriptor );
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return descriptor.hashCode();
     }
 
-    @Override
+	@Override
     public long getId()
     {
         return id;
     }
 
-    @Override
+	@Override
     public String getName()
     {
         return name;

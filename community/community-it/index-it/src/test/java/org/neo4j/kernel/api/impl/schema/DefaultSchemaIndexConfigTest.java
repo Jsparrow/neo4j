@@ -52,8 +52,10 @@ public class DefaultSchemaIndexConfigTest
     private static final String KEY = "key";
     private static final TestLabels LABEL = TestLabels.LABEL_ONE;
     private static final GraphDatabaseBuilder dbBuilder = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder();
+	@Parameterized.Parameter
+    public GraphDatabaseSettings.SchemaIndex provider;
 
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static List<GraphDatabaseSettings.SchemaIndex> providers()
     {
         List<GraphDatabaseSettings.SchemaIndex> providers = new ArrayList<>( Arrays.asList( GraphDatabaseSettings.SchemaIndex.values() ) );
@@ -61,10 +63,7 @@ public class DefaultSchemaIndexConfigTest
         return providers;
     }
 
-    @Parameterized.Parameter
-    public GraphDatabaseSettings.SchemaIndex provider;
-
-    @Test
+	@Test
     public void shouldUseConfiguredIndexProvider() throws IndexNotFoundKernelException
     {
         // given
@@ -83,7 +82,7 @@ public class DefaultSchemaIndexConfigTest
         }
     }
 
-    private void assertIndexProvider( GraphDatabaseService db, String expectedProviderIdentifier ) throws IndexNotFoundKernelException
+	private void assertIndexProvider( GraphDatabaseService db, String expectedProviderIdentifier ) throws IndexNotFoundKernelException
     {
         GraphDatabaseAPI graphDatabaseAPI = (GraphDatabaseAPI) db;
         try ( Transaction tx = graphDatabaseAPI.beginTx() )
@@ -102,7 +101,7 @@ public class DefaultSchemaIndexConfigTest
         }
     }
 
-    private void createIndex( GraphDatabaseService db )
+	private void createIndex( GraphDatabaseService db )
     {
         try ( Transaction tx = db.beginTx() )
         {

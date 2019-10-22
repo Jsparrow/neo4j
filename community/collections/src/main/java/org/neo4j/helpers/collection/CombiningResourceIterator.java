@@ -40,22 +40,18 @@ public class CombiningResourceIterator<T> extends CombiningIterator<T> implement
     @Override
     protected Iterator<T> nextIteratorOrNull()
     {
-        if ( iterators.hasNext() )
-        {
-            currentIterator = iterators.next();
-            seenIterators.add( currentIterator );
-            return currentIterator;
-        }
-        return null;
+        if (!iterators.hasNext()) {
+			return null;
+		}
+		currentIterator = iterators.next();
+		seenIterators.add( currentIterator );
+		return currentIterator;
     }
 
     @Override
     public void close()
     {
-        for ( ResourceIterator<T> seenIterator : seenIterators )
-        {
-            seenIterator.close();
-        }
+        seenIterators.forEach(ResourceIterator::close);
 
         while ( iterators.hasNext() )
         {

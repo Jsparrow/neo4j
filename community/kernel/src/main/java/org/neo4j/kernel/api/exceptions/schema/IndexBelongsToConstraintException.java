@@ -28,16 +28,16 @@ import static java.lang.String.format;
 
 public class IndexBelongsToConstraintException extends SchemaKernelException
 {
-    private final SchemaDescriptor descriptor;
     private static final String message = "Index belongs to constraint: %s";
+	private final SchemaDescriptor descriptor;
 
-    public IndexBelongsToConstraintException( SchemaDescriptor descriptor )
+	public IndexBelongsToConstraintException( SchemaDescriptor descriptor )
     {
         super( Status.Schema.ForbiddenOnConstraintIndex, format( "Index belongs to constraint: %s", descriptor ) );
         this.descriptor = descriptor;
     }
 
-    @Override
+	@Override
     public String getUserMessage( TokenNameLookup tokenNameLookup )
     {
         return format( message, descriptor.userDescription( tokenNameLookup ) );

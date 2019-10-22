@@ -31,20 +31,31 @@ import org.neo4j.kernel.api.security.AnonymousContext;
 
 public class AuthorizedRequestWrapper extends HttpServletRequestWrapper
 {
-    public static LoginContext getLoginContextFromHttpServletRequest( HttpServletRequest request )
+    private final String authType;
+	private final DelegatingPrincipal principal;
+
+	public AuthorizedRequestWrapper( final String authType, final String username, final HttpServletRequest request,
+            LoginContext loginContext )
+    {
+        super( request );
+        this.authType = authType;
+        this.principal = new DelegatingPrincipal( username, loginContext );
+    }
+
+	public static LoginContext getLoginContextFromHttpServletRequest( HttpServletRequest request )
     {
         Principal principal = request.getUserPrincipal();
         return getLoginContextFromUserPrincipal( principal );
     }
 
-    public static LoginContext getLoginContextFromHttpContext( HttpContext httpContext )
+	public static LoginContext getLoginContextFromHttpContext( HttpContext httpContext )
     {
         HttpRequestContext requestContext = httpContext.getRequest();
         Principal principal = requestContext.getUserPrincipal();
         return getLoginContextFromUserPrincipal( principal );
     }
 
-    public static LoginContext getLoginContextFromUserPrincipal( Principal principal )
+	public static LoginContext getLoginContextFromUserPrincipal( Principal principal )
     {
         if ( principal instanceof DelegatingPrincipal )
         {
@@ -55,45 +66,32 @@ public class AuthorizedRequestWrapper extends HttpServletRequestWrapper
         return AnonymousContext.none();
     }
 
-    private final String authType;
-    private final DelegatingPrincipal principal;
-
-    public AuthorizedRequestWrapper( final String authType, final String username, final HttpServletRequest request,
-            LoginContext loginContext )
-    {
-        super( request );
-        this.authType = authType;
-        this.principal = new DelegatingPrincipal( username, loginContext );
-    }
-
-    @Override
+	@Override
     public String getAuthType()
     {
         return authType;
     }
 
-    @Override
+	@Override
     public Principal getUserPrincipal()
     {
         return principal;
     }
 
-    @Override
+	@Override
     public boolean isUserInRole( String role )
     {
         return true;
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return "AuthorizedRequestWrapper{" +
-               "authType='" + authType + '\'' +
-               ", principal=" + principal +
-               '}';
+        return new StringBuilder().append("AuthorizedRequestWrapper{").append("authType='").append(authType).append('\'').append(", principal=").append(principal).append('}')
+				.toString();
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -113,7 +111,7 @@ public class AuthorizedRequestWrapper extends HttpServletRequestWrapper
         return principal.equals( that.principal );
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         int result = authType.hashCode();

@@ -86,10 +86,7 @@ public class DefaultParameterValue
     @Override
     public String toString()
     {
-        return "DefaultParameterValue{" +
-               "value=" + value +
-               ", type=" + type +
-               '}';
+        return new StringBuilder().append("DefaultParameterValue{").append("value=").append(value).append(", type=").append(type).append('}').toString();
     }
 
     @Override

@@ -30,7 +30,7 @@ import org.neo4j.kernel.impl.index.IndexConfigStore;
 class IndexTypeCache
 {
     private final Map<IndexIdentifier, Pair<Integer, IndexType>> cache = Collections.synchronizedMap(
-            new HashMap<IndexIdentifier, Pair<Integer, IndexType>>() );
+            new HashMap<>() );
     private final IndexConfigStore indexStore;
 
     IndexTypeCache( IndexConfigStore indexStore )

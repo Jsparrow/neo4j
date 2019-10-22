@@ -52,15 +52,14 @@ import static org.mockito.Mockito.when;
 
 public class SetDefaultAdminCommandIT
 {
-    private FileSystemAbstraction fileSystem = new EphemeralFileSystemAbstraction();
-    private File confDir;
-    private File homeDir;
-    private OutsideWorld out;
-    private AdminTool tool;
-
     private static final String SET_ADMIN = "set-default-admin";
+	private FileSystemAbstraction fileSystem = new EphemeralFileSystemAbstraction();
+	private File confDir;
+	private File homeDir;
+	private OutsideWorld out;
+	private AdminTool tool;
 
-    @Before
+	@Before
     public void setup()
     {
         File graphDir = new File( GraphDatabaseSettings.DEFAULT_DATABASE_NAME );
@@ -71,7 +70,7 @@ public class SetDefaultAdminCommandIT
         tool = new AdminTool( CommandLocator.fromServiceLocator(), BlockerLocator.fromServiceLocator(), out, true );
     }
 
-    @Test
+	@Test
     public void shouldSetDefaultAdmin() throws Throwable
     {
         insertUser( "jane", false );
@@ -81,7 +80,7 @@ public class SetDefaultAdminCommandIT
         verify( out ).stdOutLine( "default admin user set to 'jane'" );
     }
 
-    @Test
+	@Test
     public void shouldSetDefaultAdminForInitialUser() throws Throwable
     {
         insertUser( "jane", true );
@@ -91,7 +90,7 @@ public class SetDefaultAdminCommandIT
         verify( out ).stdOutLine( "default admin user set to 'jane'" );
     }
 
-    @Test
+	@Test
     public void shouldOverwrite() throws Throwable
     {
         insertUser( "jane", false );
@@ -105,7 +104,7 @@ public class SetDefaultAdminCommandIT
         verify( out ).stdOutLine( "default admin user set to 'janette'" );
     }
 
-    @Test
+	@Test
     public void shouldErrorWithNoSuchUser()
     {
         tool.execute( homeDir.toPath(), confDir.toPath(), SET_ADMIN, "bob" );
@@ -114,7 +113,7 @@ public class SetDefaultAdminCommandIT
         verify( out, never() ).stdOutLine( anyString() );
     }
 
-    @Test
+	@Test
     public void shouldIgnoreInitialUserIfUsersExist() throws Throwable
     {
         insertUser( "jane", false );
@@ -128,7 +127,7 @@ public class SetDefaultAdminCommandIT
         verify( out ).exit( 1 );
     }
 
-    @Test
+	@Test
     public void shouldGetUsageOnWrongArguments1()
     {
         tool.execute( homeDir.toPath(), confDir.toPath(), SET_ADMIN );
@@ -152,7 +151,7 @@ public class SetDefaultAdminCommandIT
         verify( out, never() ).stdOutLine( anyString() );
     }
 
-    @Test
+	@Test
     public void shouldGetUsageOnWrongArguments2()
     {
         tool.execute( homeDir.toPath(), confDir.toPath(), SET_ADMIN, "foo", "bar" );
@@ -176,7 +175,7 @@ public class SetDefaultAdminCommandIT
         verify( out, never() ).stdOutLine( anyString() );
     }
 
-    private void insertUser( String username, boolean initial ) throws Throwable
+	private void insertUser( String username, boolean initial ) throws Throwable
     {
         File userFile = getAuthFile( initial ? CommunitySecurityModule.INITIAL_USER_STORE_FILENAME :
                 CommunitySecurityModule.USER_STORE_FILENAME );
@@ -189,7 +188,7 @@ public class SetDefaultAdminCommandIT
         userRepository.shutdown();
     }
 
-    private void assertAdminIniFile( String username ) throws Throwable
+	private void assertAdminIniFile( String username ) throws Throwable
     {
         File adminIniFile = getAuthFile( SetDefaultAdminCommand.ADMIN_INI );
         assertTrue( fileSystem.fileExists( adminIniFile ) );
@@ -201,17 +200,17 @@ public class SetDefaultAdminCommandIT
         userRepository.shutdown();
     }
 
-    private void assertNoAuthIniFile()
+	private void assertNoAuthIniFile()
     {
         assertFalse( fileSystem.fileExists( getAuthFile( SetDefaultAdminCommand.ADMIN_INI ) ) );
     }
 
-    private File getAuthFile( String name )
+	private File getAuthFile( String name )
     {
         return new File( new File( new File( homeDir, "data" ), "dbms" ), name );
     }
 
-    private void resetOutsideWorldMock()
+	private void resetOutsideWorldMock()
     {
         reset( out );
         when( out.fileSystem() ).thenReturn( fileSystem );

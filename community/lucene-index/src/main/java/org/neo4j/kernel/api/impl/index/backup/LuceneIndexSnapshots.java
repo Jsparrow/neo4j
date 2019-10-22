@@ -65,10 +65,8 @@ public class LuceneIndexSnapshots
         }
         else
         {
-            throw new UnsupportedIndexDeletionPolicy( "Can't perform index snapshot with specified index deletion " +
-                                                      "policy: " + deletionPolicy.getClass().getName() + ". " +
-                                                      "Only " + SnapshotDeletionPolicy.class.getName() + " is " +
-                                                      "supported" );
+            throw new UnsupportedIndexDeletionPolicy( new StringBuilder().append("Can't perform index snapshot with specified index deletion ").append("policy: ").append(deletionPolicy.getClass().getName()).append(". ").append("Only ").append(SnapshotDeletionPolicy.class.getName())
+					.append(" is ").append("supported").toString() );
         }
     }
 

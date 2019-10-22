@@ -25,6 +25,6 @@ public class ReservedIdException extends UnderlyingStorageException
 {
     public ReservedIdException( long id )
     {
-        super( "Id " + id + " is reserved and can't be used as a regular record id" );
+        super( new StringBuilder().append("Id ").append(id).append(" is reserved and can't be used as a regular record id").toString() );
     }
 }

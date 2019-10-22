@@ -35,6 +35,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.helpers.collection.MapUtil.map;
 import static org.neo4j.server.rest.domain.JsonHelper.createJsonFrom;
+import java.util.Collections;
 
 public class StatementDeserializerTest
 {
@@ -43,7 +44,7 @@ public class StatementDeserializerTest
     public void shouldDeserializeSingleStatement()
     {
         // Given
-        String json = createJsonFrom( map( "statements", asList( map( "statement", "Blah blah", "parameters", map( "one", 12 ) ) ) ) );
+        String json = createJsonFrom( map( "statements", Collections.singletonList( map( "statement", "Blah blah", "parameters", map( "one", 12 ) ) ) ) );
 
         // When
         StatementDeserializer de = new StatementDeserializer( new ByteArrayInputStream( UTF8.encode( json ) ) );
@@ -148,7 +149,7 @@ public class StatementDeserializerTest
         // Given
         String json = createJsonFrom( map( "statements", asList(
                 map( "statement", "Blah blah", "parameters", map( "one", 12 ) ),
-                map( "statement", "Blah bluh", "parameters", map( "asd", asList( "one, two" ) ) ) ) ) );
+                map( "statement", "Blah bluh", "parameters", map( "asd", Collections.singletonList( "one, two" ) ) ) ) ) );
 
         // When
         StatementDeserializer de = new StatementDeserializer( new ByteArrayInputStream( UTF8.encode( json ) ) );
@@ -164,7 +165,7 @@ public class StatementDeserializerTest
         Statement stmt2 = de.next();
 
         assertThat( stmt2.statement(), equalTo( "Blah bluh" ) );
-        assertThat( stmt2.parameters(), equalTo( map( "asd", asList( "one, two" ) ) ) );
+        assertThat( stmt2.parameters(), equalTo( map( "asd", Collections.singletonList( "one, two" ) ) ) );
 
         assertThat( de.hasNext(), equalTo( false ) );
     }
@@ -173,40 +174,26 @@ public class StatementDeserializerTest
     public void shouldNotThrowButReportErrorOnInvalidInput()
     {
         assertYieldsErrors( "{}",
-                new Neo4jError( Status.Request.InvalidFormat, new DeserializationException( "Unable to " +
-                        "deserialize request. " +
-                        "Expected [START_OBJECT, FIELD_NAME, START_ARRAY], " +
-                        "found [START_OBJECT, END_OBJECT, null]." ) ) );
+                new Neo4jError( Status.Request.InvalidFormat, new DeserializationException( new StringBuilder().append("Unable to ").append("deserialize request. ").append("Expected [START_OBJECT, FIELD_NAME, START_ARRAY], ").append("found [START_OBJECT, END_OBJECT, null].").toString() ) ) );
 
         assertYieldsErrors( "{ \"statements\":\"WAIT WAT A STRING NOO11!\" }",
-                new Neo4jError( Status.Request.InvalidFormat, new DeserializationException( "Unable to " +
-                        "deserialize request. Expected [START_OBJECT, FIELD_NAME, START_ARRAY], found [START_OBJECT, " +
-                        "FIELD_NAME, VALUE_STRING]." ) ) );
+                new Neo4jError( Status.Request.InvalidFormat, new DeserializationException( new StringBuilder().append("Unable to ").append("deserialize request. Expected [START_OBJECT, FIELD_NAME, START_ARRAY], found [START_OBJECT, ").append("FIELD_NAME, VALUE_STRING].").toString() ) ) );
 
         assertYieldsErrors( "[{]}",
                 new Neo4jError( Status.Request.InvalidFormat,
-                        new DeserializationException( "Unable to deserialize request: Unexpected close marker ']': " +
-                                "expected '}' " +
-                                "(for OBJECT starting at [Source: TestInputStream; line: 1, column: 1])\n " +
-                                "at [Source: TestInputStream; line: 1, column: 4]" ) ) );
+                        new DeserializationException( new StringBuilder().append("Unable to deserialize request: Unexpected close marker ']': ").append("expected '}' ").append("(for OBJECT starting at [Source: TestInputStream; line: 1, column: 1])\n ").append("at [Source: TestInputStream; line: 1, column: 4]").toString() ) ) );
 
         assertYieldsErrors( "{ \"statements\" : \"ITS A STRING\" }",
                 new Neo4jError( Status.Request.InvalidFormat,
-                        new DeserializationException( "Unable to deserialize request. " +
-                                "Expected [START_OBJECT, FIELD_NAME, START_ARRAY], " +
-                                "found [START_OBJECT, FIELD_NAME, VALUE_STRING]." ) ) );
+                        new DeserializationException( new StringBuilder().append("Unable to deserialize request. ").append("Expected [START_OBJECT, FIELD_NAME, START_ARRAY], ").append("found [START_OBJECT, FIELD_NAME, VALUE_STRING].").toString() ) ) );
 
         assertYieldsErrors( "{ \"statements\" : [ { \"statement\" : [\"dd\"] } ] }",
                 new Neo4jError( Status.Request.InvalidFormat,
-                        new DeserializationException( "Unable to deserialize request: Can not deserialize instance of" +
-                                " java.lang.String out of START_ARRAY token\n at [Source: TestInputStream; line: 1, " +
-                                "column: 22]" ) ) );
+                        new DeserializationException( new StringBuilder().append("Unable to deserialize request: Can not deserialize instance of").append(" java.lang.String out of START_ARRAY token\n at [Source: TestInputStream; line: 1, ").append("column: 22]").toString() ) ) );
 
         assertYieldsErrors( "{ \"statements\" : [ { \"statement\" : \"stmt\", \"parameters\" : [\"AN ARRAY!!\"] } ] }",
                 new Neo4jError( Status.Request.InvalidFormat,
-                        new DeserializationException( "Unable to deserialize request: Can not deserialize instance of" +
-                                " java.util.LinkedHashMap out of START_ARRAY token\n at [Source: TestInputStream; " +
-                                "line: 1, column: 42]" ) ) );
+                        new DeserializationException( new StringBuilder().append("Unable to deserialize request: Can not deserialize instance of").append(" java.util.LinkedHashMap out of START_ARRAY token\n at [Source: TestInputStream; ").append("line: 1, column: 42]").toString() ) ) );
     }
 
     private void assertYieldsErrors( String json, Neo4jError... expectedErrors )

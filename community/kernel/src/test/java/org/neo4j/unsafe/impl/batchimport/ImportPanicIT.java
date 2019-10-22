@@ -147,7 +147,7 @@ public class ImportPanicIT
                 }
                 else
                 {
-                    writer.println( i + ",name" + i );
+                    writer.println( new StringBuilder().append(i).append(",name").append(i).toString() );
                 }
             }
         }

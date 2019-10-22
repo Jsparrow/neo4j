@@ -108,7 +108,7 @@ public class WeightedPathImpl implements WeightedPath
     @Override
     public String toString()
     {
-        return path.toString() + " weight:" + this.weight;
+        return new StringBuilder().append(path.toString()).append(" weight:").append(this.weight).toString();
     }
 
     @Override

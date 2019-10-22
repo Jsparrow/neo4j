@@ -164,11 +164,9 @@ public class ImportToolTest
                 "--delimiter", "TAB",
                 "--array-delimiter", String.valueOf( config.arrayDelimiter() ),
                 "--nodes",
-                nodeHeader( config ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                nodeData( false, config, nodeIds, TRUE ).getAbsolutePath(),
+                new StringBuilder().append(nodeHeader( config ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(nodeData( false, config, nodeIds, TRUE ).getAbsolutePath()).toString(),
                 "--relationships",
-                relationshipHeader( config ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                relationshipData( false, config, nodeIds, TRUE, true ).getAbsolutePath() );
+                new StringBuilder().append(relationshipHeader( config ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(relationshipData( false, config, nodeIds, TRUE, true ).getAbsolutePath()).toString() );
 
         // THEN
         verifyData();
@@ -201,7 +199,7 @@ public class ImportToolTest
         importTool( "--into", dbRule.getDatabaseDirAbsolutePath(),
                 "--delimiter", "TAB",
                 "--array-delimiter", "|",
-                "--nodes", header.getAbsolutePath() + MULTI_FILE_DELIMITER + data.getAbsolutePath() );
+                "--nodes", new StringBuilder().append(header.getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(data.getAbsolutePath()).toString() );
 
         // THEN
         try ( Transaction tx = dbRule.beginTx() )
@@ -230,10 +228,9 @@ public class ImportToolTest
             writer.println( ":LABEL,name,s:short,b:byte,i:int,l:long,f:float,d:double" );
 
             // For each test value
-            for ( String value : values )
-            {
+			values.forEach(value -> {
                 // Save value as a String in name
-                writer.print( "PERSON,'" + value + "'" );
+                writer.print( new StringBuilder().append("PERSON,'").append(value).append("'").toString() );
                 // For each numerical type
                 for ( int j = 0; j < 6; j++ )
                 {
@@ -241,7 +238,7 @@ public class ImportToolTest
                 }
                 // End line
                 writer.println();
-            }
+            });
         }
 
         // WHEN
@@ -261,11 +258,11 @@ public class ImportToolTest
                 assertEquals( 7, node.getAllProperties().size() );
                 for ( String key : node.getPropertyKeys() )
                 {
-                    if ( key.equals( "name" ) )
+                    if ( "name".equals( key ) )
                     {
                         continue;
                     }
-                    else if ( key.equals( "f" ) || key.equals( "d" ) )
+                    else if ( "f".equals( key ) || "d".equals( key ) )
                     {
                         // Floating points have decimals
                         expected = String.valueOf( Double.parseDouble( expected ) );
@@ -295,10 +292,9 @@ public class ImportToolTest
             writer.println( ":LABEL,name,f:float,d:double" );
 
             // For each test value
-            for ( String value : values )
-            {
+			values.forEach(value -> {
                 // Save value as a String in name
-                writer.print( "PERSON,'" + value + "'" );
+                writer.print( new StringBuilder().append("PERSON,'").append(value).append("'").toString() );
                 // For each numerical type
                 for ( int j = 0; j < 2; j++ )
                 {
@@ -306,7 +302,7 @@ public class ImportToolTest
                 }
                 // End line
                 writer.println();
-            }
+            });
         }
 
         // WHEN
@@ -326,7 +322,7 @@ public class ImportToolTest
                 assertEquals( 3, node.getAllProperties().size() );
                 for ( String key : node.getPropertyKeys() )
                 {
-                    if ( key.equals( "name" ) )
+                    if ( "name".equals( key ) )
                     {
                         continue;
                     }
@@ -566,11 +562,9 @@ public class ImportToolTest
                     "--into", dbRule.getDatabaseDirAbsolutePath(),
                     "--delimiter", "TAB",
                     "--array-delimiter", String.valueOf( config.arrayDelimiter() ),
-                    "--nodes", nodeHeader( config ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                            nodeData( false, config, nodeIds, TRUE, Charset.defaultCharset(), extraColumns )
-                                    .getAbsolutePath(),
-                    "--relationships", relationshipHeader( config ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                            relationshipData( false, config, nodeIds, TRUE, true ).getAbsolutePath() );
+                    "--nodes", new StringBuilder().append(nodeHeader( config ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(nodeData( false, config, nodeIds, TRUE, Charset.defaultCharset(), extraColumns )
+					        .getAbsolutePath()).toString(),
+                    "--relationships", new StringBuilder().append(relationshipHeader( config ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(relationshipData( false, config, nodeIds, TRUE, true ).getAbsolutePath()).toString() );
 
             fail( "Should have thrown exception" );
         }
@@ -600,11 +594,9 @@ public class ImportToolTest
                 "--ignore-extra-columns",
                 "--delimiter", "TAB",
                 "--array-delimiter", String.valueOf( config.arrayDelimiter() ),
-                "--nodes", nodeHeader( config ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                        nodeData( false, config, nodeIds, TRUE, Charset.defaultCharset(), extraColumns )
-                                .getAbsolutePath(),
-                "--relationships", relationshipHeader( config ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                        relationshipData( false, config, nodeIds, TRUE, true ).getAbsolutePath() );
+                "--nodes", new StringBuilder().append(nodeHeader( config ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(nodeData( false, config, nodeIds, TRUE, Charset.defaultCharset(), extraColumns )
+				        .getAbsolutePath()).toString(),
+                "--relationships", new StringBuilder().append(relationshipHeader( config ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(relationshipData( false, config, nodeIds, TRUE, true ).getAbsolutePath()).toString() );
 
         // THEN
         String badContents = FileUtils.readTextFile( bad, Charset.defaultCharset() );
@@ -622,15 +614,12 @@ public class ImportToolTest
         importTool(
                 "--into", dbRule.getDatabaseDirAbsolutePath(),
                 "--nodes", // One group with one header file and one data file
-                nodeHeader( config ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                nodeData( false, config, nodeIds, lines( 0, NODE_COUNT / 2 ) ).getAbsolutePath(),
+                new StringBuilder().append(nodeHeader( config ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(nodeData( false, config, nodeIds, lines( 0, NODE_COUNT / 2 ) ).getAbsolutePath()).toString(),
                 "--nodes", // One group with two data files, where the header sits in the first file
-                nodeData( true, config, nodeIds,
-                        lines( NODE_COUNT / 2, NODE_COUNT * 3 / 4 ) ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                nodeData( false, config, nodeIds, lines( NODE_COUNT * 3 / 4, NODE_COUNT ) ).getAbsolutePath(),
+                new StringBuilder().append(nodeData( true, config, nodeIds,
+                        lines( NODE_COUNT / 2, NODE_COUNT * 3 / 4 ) ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(nodeData( false, config, nodeIds, lines( NODE_COUNT * 3 / 4, NODE_COUNT ) ).getAbsolutePath()).toString(),
                 "--relationships",
-                relationshipHeader( config ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                relationshipData( false, config, nodeIds, TRUE, true ).getAbsolutePath() );
+                new StringBuilder().append(relationshipHeader( config ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(relationshipData( false, config, nodeIds, TRUE, true ).getAbsolutePath()).toString() );
 
         // THEN
         verifyData();
@@ -678,7 +667,7 @@ public class ImportToolTest
                     }
                     else
                     {
-                        fail( node + " has neither set of labels, it has " + labelsOf( node ) );
+                        fail( new StringBuilder().append(node).append(" has neither set of labels, it has ").append(labelsOf( node )).toString() );
                     }
                 },
                 relationship ->
@@ -693,7 +682,7 @@ public class ImportToolTest
                     }
                     else
                     {
-                        fail( relationship + " didn't have either type, it has " + relationship.getType().name() );
+                        fail( new StringBuilder().append(relationship).append(" didn't have either type, it has ").append(relationship.getType().name()).toString() );
                     }
                 } );
         assertEquals( NODE_COUNT / 2, numberOfNodesWithFirstSetOfLabels.intValue() );
@@ -770,12 +759,9 @@ public class ImportToolTest
         // WHEN
         importTool(
                 "--into", dbRule.getDatabaseDirAbsolutePath(),
-                "--nodes", nodeHeader( config, groupOne ) + MULTI_FILE_DELIMITER +
-                           nodeData( false, config, groupOneNodeIds, TRUE ),
-                "--nodes", nodeHeader( config, groupTwo ) + MULTI_FILE_DELIMITER +
-                           nodeData( false, config, groupTwoNodeIds, TRUE ),
-                "--relationships", relationshipHeader( config, groupOne, groupTwo, true ) + MULTI_FILE_DELIMITER +
-                                   relationshipData( false, config, rels.iterator(), TRUE, true ) );
+                "--nodes", new StringBuilder().append(nodeHeader( config, groupOne )).append(MULTI_FILE_DELIMITER).append(nodeData( false, config, groupOneNodeIds, TRUE )).toString(),
+                "--nodes", new StringBuilder().append(nodeHeader( config, groupTwo )).append(MULTI_FILE_DELIMITER).append(nodeData( false, config, groupTwoNodeIds, TRUE )).toString(),
+                "--relationships", new StringBuilder().append(relationshipHeader( config, groupOne, groupTwo, true )).append(MULTI_FILE_DELIMITER).append(relationshipData( false, config, rels.iterator(), TRUE, true )).toString() );
 
         // THEN
         GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
@@ -804,10 +790,8 @@ public class ImportToolTest
         // WHEN
         importTool(
                 "--into", dbRule.getDatabaseDirAbsolutePath(),
-                "--nodes", nodeHeader( config, "MyGroup" ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                           nodeData( false, config, groupOneNodeIds, TRUE ).getAbsolutePath(),
-                "--nodes", nodeHeader( config ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                           nodeData( false, config, groupTwoNodeIds, TRUE ).getAbsolutePath() );
+                "--nodes", new StringBuilder().append(nodeHeader( config, "MyGroup" ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(nodeData( false, config, groupOneNodeIds, TRUE ).getAbsolutePath()).toString(),
+                "--nodes", new StringBuilder().append(nodeHeader( config ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(nodeData( false, config, groupTwoNodeIds, TRUE ).getAbsolutePath()).toString() );
 
         // THEN
         verifyData( 6, 0, Validators.emptyValidator(), Validators.emptyValidator() );
@@ -848,9 +832,8 @@ public class ImportToolTest
         {
             importTool(
                     "--into", dbRule.getDatabaseDirAbsolutePath(),
-                    "--nodes", nodeHeaderFile.getAbsolutePath() + MULTI_FILE_DELIMITER +
-                               nodeData1.getAbsolutePath() + MULTI_FILE_DELIMITER +
-                               nodeData2.getAbsolutePath() );
+                    "--nodes", new StringBuilder().append(nodeHeaderFile.getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(nodeData1.getAbsolutePath()).append(MULTI_FILE_DELIMITER)
+							.append(nodeData2.getAbsolutePath()).toString() );
             fail( "Should have failed with duplicate node IDs" );
         }
         catch ( Exception e )
@@ -874,9 +857,8 @@ public class ImportToolTest
         importTool(
                 "--into", dbRule.getDatabaseDirAbsolutePath(),
                 "--skip-duplicate-nodes",
-                "--nodes", nodeHeaderFile.getAbsolutePath() + MULTI_FILE_DELIMITER +
-                           nodeData1.getAbsolutePath() + MULTI_FILE_DELIMITER +
-                           nodeData2.getAbsolutePath() );
+                "--nodes", new StringBuilder().append(nodeHeaderFile.getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(nodeData1.getAbsolutePath()).append(MULTI_FILE_DELIMITER)
+						.append(nodeData2.getAbsolutePath()).toString() );
 
         // THEN there should not be duplicates of any node
         GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
@@ -887,7 +869,7 @@ public class ImportToolTest
             for ( Node node : db.getAllNodes() )
             {
                 String id = (String) node.getProperty( "id" );
-                assertTrue( id + ", " + foundNodesIds, foundNodesIds.add( id ) );
+                assertTrue( new StringBuilder().append(id).append(", ").append(foundNodesIds).toString(), foundNodesIds.add( id ) );
                 assertTrue( expectedNodeIds.contains( id ) );
             }
             assertEquals( expectedNodeIds, foundNodesIds );
@@ -903,8 +885,8 @@ public class ImportToolTest
                         Node node = nodesByLabel.next();
                         if ( !node.hasLabel( label ) )
                         {
-                            fail( "Expected " + node + " to have label " + label.name() + ", but instead had " +
-                                    asList( node.getLabels() ) );
+                            fail( new StringBuilder().append("Expected ").append(node).append(" to have label ").append(label.name()).append(", but instead had ")
+									.append(asList( node.getLabels() )).toString() );
                         }
                     }
                 }
@@ -942,8 +924,7 @@ public class ImportToolTest
                 "--nodes", nodeData.getAbsolutePath(),
                 "--bad", bad.getAbsolutePath(),
                 "--bad-tolerance", "2",
-                "--relationships", relationshipData1.getAbsolutePath() + MULTI_FILE_DELIMITER +
-                                   relationshipData2.getAbsolutePath() );
+                "--relationships", new StringBuilder().append(relationshipData1.getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(relationshipData2.getAbsolutePath()).toString() );
 
         // THEN
         String badContents = FileUtils.readTextFile( bad, Charset.defaultCharset() );
@@ -975,8 +956,7 @@ public class ImportToolTest
                 "--nodes", nodeData.getAbsolutePath(),
                 "--bad-tolerance", "2",
                 "--skip-bad-entries-logging", "true",
-                "--relationships", relationshipData1.getAbsolutePath() + MULTI_FILE_DELIMITER +
-                        relationshipData2.getAbsolutePath() );
+                "--relationships", new StringBuilder().append(relationshipData1.getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(relationshipData2.getAbsolutePath()).toString() );
 
         assertFalse( badFile().exists() );
         verifyRelationships( relationships );
@@ -1043,8 +1023,7 @@ public class ImportToolTest
                     "--bad", bad.getAbsolutePath(),
                     "--stacktrace", // trying to find flaky test origin
                     "--skip-bad-relationships", "false",
-                    "--relationships", relationshipData1.getAbsolutePath() + MULTI_FILE_DELIMITER +
-                                       relationshipData2.getAbsolutePath() );
+                    "--relationships", new StringBuilder().append(relationshipData1.getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(relationshipData2.getAbsolutePath()).toString() );
             fail();
         }
         catch ( Exception e )
@@ -1127,7 +1106,7 @@ public class ImportToolTest
         // GIVEN
         List<String> nodeIds = asList( "1", "", "", "", "3", "", "", "", "", "", "5" );
         Configuration config = Configuration.COMMAS;
-        List<RelationshipDataLine> relationshipData = asList( relationship( "1", "3", "KNOWS" ) );
+        List<RelationshipDataLine> relationshipData = Collections.singletonList( relationship( "1", "3", "KNOWS" ) );
 
         // WHEN
         importTool(
@@ -1184,7 +1163,7 @@ public class ImportToolTest
     {
         // GIVEN
         String name = "  This is a line with leading and trailing whitespaces   ";
-        File data = data( ":ID,name", "1,\"" + name + "\"");
+        File data = data( ":ID,name", new StringBuilder().append("1,\"").append(name).append("\"").toString());
 
         // WHEN
         importTool(
@@ -1193,12 +1172,10 @@ public class ImportToolTest
 
         // THEN
         GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-        try ( Transaction tx = db.beginTx() )
+        try ( Transaction tx = db.beginTx();
+				ResourceIterator<Node> allNodes = db.getAllNodes().iterator() )
         {
-            ResourceIterator<Node> allNodes = db.getAllNodes().iterator();
             Node node = Iterators.single( allNodes );
-            allNodes.close();
-
             assertEquals( name, node.getProperty( "name" ) );
 
             tx.success();
@@ -1212,7 +1189,7 @@ public class ImportToolTest
         String name = "  This is a line with leading and trailing whitespaces   ";
         File data = data(
                 ":ID,name",
-                "1,\"" + name + "\"",
+                new StringBuilder().append("1,\"").append(name).append("\"").toString(),
                 "2," + name );
 
         // WHEN
@@ -1249,28 +1226,16 @@ public class ImportToolTest
 
         shouldPrintReferenceLinkAsPartOfErrorMessage( nodeIds(),
                 Iterators.iterator( new RelationshipDataLine( "1", "", "type", "name" ) ),
-                "Relationship missing mandatory field 'END_ID', read more about relationship " +
-                "format in the manual:  https://neo4j.com/docs/operations-manual/" +
-                docsVersion +
-                "/tools/import/file-header-format/#import-tool-header-format-rels" );
+                new StringBuilder().append("Relationship missing mandatory field 'END_ID', read more about relationship ").append("format in the manual:  https://neo4j.com/docs/operations-manual/").append(docsVersion).append("/tools/import/file-header-format/#import-tool-header-format-rels").toString() );
         shouldPrintReferenceLinkAsPartOfErrorMessage( nodeIds(),
                 Iterators.iterator( new RelationshipDataLine( "", "1", "type", "name" ) ),
-                "Relationship missing mandatory field 'START_ID', read more about relationship " +
-                "format in the manual:  https://neo4j.com/docs/operations-manual/" +
-                docsVersion +
-                "/tools/import/file-header-format/#import-tool-header-format-rels" );
+                new StringBuilder().append("Relationship missing mandatory field 'START_ID', read more about relationship ").append("format in the manual:  https://neo4j.com/docs/operations-manual/").append(docsVersion).append("/tools/import/file-header-format/#import-tool-header-format-rels").toString() );
         shouldPrintReferenceLinkAsPartOfErrorMessage( nodeIds(),
                 Iterators.iterator( new RelationshipDataLine( "1", "2", "", "name" ) ),
-                "Relationship missing mandatory field 'TYPE', read more about relationship " +
-                "format in the manual:  https://neo4j.com/docs/operations-manual/" +
-                 docsVersion +
-                "/tools/import/file-header-format/#import-tool-header-format-rels" );
+                new StringBuilder().append("Relationship missing mandatory field 'TYPE', read more about relationship ").append("format in the manual:  https://neo4j.com/docs/operations-manual/").append(docsVersion).append("/tools/import/file-header-format/#import-tool-header-format-rels").toString() );
         shouldPrintReferenceLinkAsPartOfErrorMessage( Arrays.asList( "1", "1" ),
                 Iterators.iterator( new RelationshipDataLine( "1", "2", "type", "name" ) ),
-                "Duplicate input ids that would otherwise clash can be put into separate id space, read more " +
-                "about how to use id spaces in the manual: https://neo4j.com/docs/operations-manual/" +
-                docsVersion +
-                "/tools/import/file-header-format/#import-tool-id-spaces" );
+                new StringBuilder().append("Duplicate input ids that would otherwise clash can be put into separate id space, read more ").append("about how to use id spaces in the manual: https://neo4j.com/docs/operations-manual/").append(docsVersion).append("/tools/import/file-header-format/#import-tool-id-spaces").toString() );
     }
 
     @Test
@@ -1334,12 +1299,10 @@ public class ImportToolTest
 
         // THEN
         GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-        try ( Transaction tx = db.beginTx() )
+        try ( Transaction tx = db.beginTx();
+				ResourceIterator<Node> allNodes = db.getAllNodes().iterator() )
         {
-            ResourceIterator<Node> allNodes = db.getAllNodes().iterator();
             Node node = Iterators.single( allNodes );
-            allNodes.close();
-
             assertEquals( "This is a line with\nnewlines in", node.getProperty( "name" ) );
 
             tx.success();
@@ -1422,8 +1385,8 @@ public class ImportToolTest
     {
         // GIVEN
         char weirdDelimiter = 1; // not '1', just the character represented with code 1, which seems to be SOH
-        String name1 = weirdDelimiter + "Weird" + weirdDelimiter;
-        String name2 = "Start " + weirdDelimiter + "middle thing" + weirdDelimiter + " end!";
+        String name1 = new StringBuilder().append(weirdDelimiter).append("Weird").append(weirdDelimiter).toString();
+        String name2 = new StringBuilder().append("Start ").append(weirdDelimiter).append("middle thing").append(weirdDelimiter).append(" end!").toString();
         File data = data(
                 ":ID,name",
                 "1," + name1,
@@ -1443,7 +1406,7 @@ public class ImportToolTest
             for ( Node node : db.getAllNodes() )
             {
                 String name = (String) node.getProperty( "name" );
-                assertTrue( "Didn't expect node with name '" + name + "'", names.remove( name ) );
+                assertTrue( new StringBuilder().append("Didn't expect node with name '").append(name).append("'").toString(), names.remove( name ) );
             }
             assertTrue( names.isEmpty() );
             tx.success();
@@ -1521,8 +1484,8 @@ public class ImportToolTest
     {
         // GIVEN
         char weirdDelimiter = 1; // not '1', just the character represented with code 1, which seems to be SOH
-        String name1 = weirdDelimiter + "Weird" + weirdDelimiter;
-        String name2 = "Start " + weirdDelimiter + "middle thing" + weirdDelimiter + " end!";
+        String name1 = new StringBuilder().append(weirdDelimiter).append("Weird").append(weirdDelimiter).toString();
+        String name2 = new StringBuilder().append("Start ").append(weirdDelimiter).append("middle thing").append(weirdDelimiter).append(" end!").toString();
         File data = data(
                 ":ID,name",
                 "1," + name1,
@@ -1542,7 +1505,7 @@ public class ImportToolTest
             for ( Node node : db.getAllNodes() )
             {
                 String name = (String) node.getProperty( "name" );
-                assertTrue( "Didn't expect node with name '" + name + "'", names.remove( name ) );
+                assertTrue( new StringBuilder().append("Didn't expect node with name '").append(name).append("'").toString(), names.remove( name ) );
             }
             assertTrue( names.isEmpty() );
             tx.success();
@@ -1576,8 +1539,8 @@ public class ImportToolTest
         // GIVEN
         char weirdDelimiter = 126; // 126 ~ (tilde)
         String weirdStringDelimiter = "\\126";
-        String name1 = weirdDelimiter + "Weird" + weirdDelimiter;
-        String name2 = "Start " + weirdDelimiter + "middle thing" + weirdDelimiter + " end!";
+        String name1 = new StringBuilder().append(weirdDelimiter).append("Weird").append(weirdDelimiter).toString();
+        String name2 = new StringBuilder().append("Start ").append(weirdDelimiter).append("middle thing").append(weirdDelimiter).append(" end!").toString();
         File data = data(
                 ":ID,name",
                 "1," + name1,
@@ -1600,7 +1563,7 @@ public class ImportToolTest
             for ( Node node : db.getAllNodes() )
             {
                 String name = (String) node.getProperty( "name" );
-                assertTrue( "Didn't expect node with name '" + name + "'", names.remove( name ) );
+                assertTrue( new StringBuilder().append("Didn't expect node with name '").append(name).append("'").toString(), names.remove( name ) );
             }
             assertTrue( names.isEmpty() );
             tx.success();
@@ -1658,8 +1621,8 @@ public class ImportToolTest
         // GIVEN
         char weirdDelimiter = 126; // 126 ~ (tilde)
         String weirdStringDelimiter = "~";
-        String name1 = weirdDelimiter + "Weird" + weirdDelimiter;
-        String name2 = "Start " + weirdDelimiter + "middle thing" + weirdDelimiter + " end!";
+        String name1 = new StringBuilder().append(weirdDelimiter).append("Weird").append(weirdDelimiter).toString();
+        String name2 = new StringBuilder().append("Start ").append(weirdDelimiter).append("middle thing").append(weirdDelimiter).append(" end!").toString();
         File data = data(
                 ":ID,name",
                 "1," + name1,
@@ -1682,7 +1645,7 @@ public class ImportToolTest
             for ( Node node : db.getAllNodes() )
             {
                 String name = (String) node.getProperty( "name" );
-                assertTrue( "Didn't expect node with name '" + name + "'", names.remove( name ) );
+                assertTrue( new StringBuilder().append("Didn't expect node with name '").append(name).append("'").toString(), names.remove( name ) );
             }
             assertTrue( names.isEmpty() );
             tx.success();
@@ -1783,9 +1746,8 @@ public class ImportToolTest
         {
             importTool(
                     "--into", dbRule.getDatabaseDirAbsolutePath(),
-                    "--nodes", nodeHeader( config ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                            nodeData( false, config, nodeIds, TRUE, Charset.defaultCharset(), extraColumns )
-                                    .getAbsolutePath(),
+                    "--nodes", new StringBuilder().append(nodeHeader( config ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(nodeData( false, config, nodeIds, TRUE, Charset.defaultCharset(), extraColumns )
+					        .getAbsolutePath()).toString(),
                     "--stacktrace" );
 
             fail( "Should have thrown exception" );
@@ -1806,7 +1768,7 @@ public class ImportToolTest
         String labelName = "Alive";
         List<String> lines = new ArrayList<>();
         lines.add( ":ID,name,:LABEL" );
-        lines.add( nodeId + "," + "\"abc\"\"def\\\"\"ghi\"" + "," + labelName );
+        lines.add( new StringBuilder().append(nodeId).append(",").append("\"abc\"\"def\\\"\"ghi\"").append(",").append(labelName).toString() );
 
         // WHEN
         importTool(
@@ -1829,7 +1791,7 @@ public class ImportToolTest
         // GIVEN
         List<String> lines = new ArrayList<>();
         lines.add( ":ID,name,:LABEL" );
-        lines.add( "id," + repeat( 'l', 2_000 ) + ",Person" );
+        lines.add( new StringBuilder().append("id,").append(repeat( 'l', 2_000 )).append(",Person").toString() );
 
         // WHEN
         try
@@ -1936,8 +1898,7 @@ public class ImportToolTest
         {
             importTool(
                     "--into", databaseDir,
-                    "--nodes", nodeHeader( config ).getAbsolutePath() + MULTI_FILE_DELIMITER +
-                            nodeData( false, config, nodeIds, TRUE, Charset.defaultCharset(), extraColumns ).getAbsolutePath() );
+                    "--nodes", new StringBuilder().append(nodeHeader( config ).getAbsolutePath()).append(MULTI_FILE_DELIMITER).append(nodeData( false, config, nodeIds, TRUE, Charset.defaultCharset(), extraColumns ).getAbsolutePath()).toString() );
             fail( "Should have thrown exception" );
         }
         catch ( InputException e )
@@ -2037,8 +1998,7 @@ public class ImportToolTest
                 return;
             }
         }
-        fail( "Expected error lines " + join( errorLines.toArray( new String[errorLines.size()] ), format( "%n" ) ) +
-                " to have at least one line containing the string '" + string + "'" );
+        fail( new StringBuilder().append("Expected error lines ").append(join( errorLines.toArray( new String[errorLines.size()] ), format( "%n" ) )).append(" to have at least one line containing the string '").append(string).append("'").toString() );
     }
 
     private static int occurencesOf( String text, String lookFor )
@@ -2278,12 +2238,13 @@ public class ImportToolTest
     private void writeNodeHeader( PrintStream writer, Configuration config, String idGroup )
     {
         char delimiter = config.delimiter();
-        writer.println( idEntry( "id", Type.ID, idGroup ) + delimiter + "name" + delimiter + "labels:LABEL" );
+        writer.println( new StringBuilder().append(idEntry( "id", Type.ID, idGroup )).append(delimiter).append("name").append(delimiter).append("labels:LABEL").toString() );
     }
 
     private String idEntry( String name, Type type, String idGroup )
     {
-        return (name != null ? name : "") + ":" + type.name() + (idGroup != null ? "(" + idGroup + ")" : "");
+        return new StringBuilder().append(name != null ? name : "").append(":").append(type.name())
+				.append(idGroup != null ? "(" + idGroup + ")" : "").toString();
     }
 
     private void writeNodeData( PrintStream writer, Configuration config, List<String> nodeIds,
@@ -2409,7 +2370,7 @@ public class ImportToolTest
 
     private String fileName( String name )
     {
-        return dataIndex++ + "-" + name;
+        return new StringBuilder().append(dataIndex++).append("-").append(name).toString();
     }
 
     private File file( String localname )
@@ -2427,14 +2388,94 @@ public class ImportToolTest
     {
         char delimiter = config.delimiter();
         writer.println(
-                idEntry( null, Type.START_ID, startIdGroup ) + delimiter +
-                idEntry( null, Type.END_ID, endIdGroup ) +
-                (specifyType ? (delimiter + ":" + Type.TYPE) : "") +
-                delimiter + "created:long" +
-                delimiter + "name:String" );
+                new StringBuilder().append(idEntry( null, Type.START_ID, startIdGroup )).append(delimiter).append(idEntry( null, Type.END_ID, endIdGroup ))
+						.append(specifyType ? (delimiter + ":" + Type.TYPE) : "").append(delimiter).append("created:long").append(delimiter).append("name:String")
+						.toString() );
     }
 
-    private static class RelationshipDataLine
+    private static RelationshipDataLine relationship( String startNodeId, String endNodeId, String type )
+    {
+        return relationship( startNodeId, endNodeId, type, null );
+    }
+
+	private static RelationshipDataLine relationship( String startNodeId, String endNodeId, String type, String name )
+    {
+        return new RelationshipDataLine( startNodeId, endNodeId, type, name );
+    }
+
+	private void writeRelationshipData( PrintStream writer, Configuration config,
+            Iterator<RelationshipDataLine> data, IntPredicate linePredicate, boolean specifyType )
+    {
+        char delimiter = config.delimiter();
+        for ( int i = 0; i < RELATIONSHIP_COUNT; i++ )
+        {
+            if ( !data.hasNext() )
+            {
+                break;
+            }
+            RelationshipDataLine entry = data.next();
+            if ( linePredicate.test( i ) )
+            {
+                writer.println( new StringBuilder().append(nullSafeString( entry.startNodeId )).append(delimiter).append(nullSafeString( entry.endNodeId ))
+						.append(specifyType ? (delimiter + nullSafeString( entry.type )) : "").append(delimiter).append(currentTimeMillis()).append(delimiter)
+						.append(entry.name != null ? entry.name : "").toString()
+                );
+            }
+        }
+    }
+
+	private static String nullSafeString( String endNodeId )
+    {
+        return endNodeId != null ? endNodeId : "";
+    }
+
+	private Iterator<RelationshipDataLine> randomRelationships( final List<String> nodeIds )
+    {
+        return new PrefetchingIterator<RelationshipDataLine>()
+        {
+            @Override
+            protected RelationshipDataLine fetchNextOrNull()
+            {
+                return new RelationshipDataLine(
+                        nodeIds.get( random.nextInt( nodeIds.size() ) ),
+                        nodeIds.get( random.nextInt( nodeIds.size() ) ),
+                        randomType(),
+                        null );
+            }
+        };
+    }
+
+	static void assertExceptionContains( Exception e, String message, Class<? extends Exception> type )
+            throws Exception
+    {
+        if ( !contains( e, message, type ) )
+        {   // Rethrow the exception since we'd like to see what it was instead
+            throw withMessage( e,
+                    format( "Expected exception to contain cause '%s', %s. but was %s", message, type, e ) );
+        }
+    }
+
+	private String randomType()
+    {
+        return "TYPE_" + random.nextInt( 4 );
+    }
+
+	private IntPredicate lines( final int startingAt, final int endingAt /*excluded*/ )
+    {
+        return line -> line >= startingAt && line < endingAt;
+    }
+
+	private static String escapePath( String path )
+    {
+        return path.replaceAll( " ", "\\\\ " );
+    }
+
+	static void importTool( String... arguments ) throws IOException
+    {
+        ImportTool.main( arguments, true );
+    }
+
+	private static class RelationshipDataLine
     {
         private final String startNodeId;
         private final String endNodeId;
@@ -2452,92 +2493,8 @@ public class ImportToolTest
         @Override
         public String toString()
         {
-            return "RelationshipDataLine [startNodeId=" + startNodeId + ", endNodeId=" + endNodeId + ", type=" + type
-                   + ", name=" + name + "]";
+            return new StringBuilder().append("RelationshipDataLine [startNodeId=").append(startNodeId).append(", endNodeId=").append(endNodeId).append(", type=").append(type)
+					.append(", name=").append(name).append("]").toString();
         }
-    }
-
-    private static RelationshipDataLine relationship( String startNodeId, String endNodeId, String type )
-    {
-        return relationship( startNodeId, endNodeId, type, null );
-    }
-
-    private static RelationshipDataLine relationship( String startNodeId, String endNodeId, String type, String name )
-    {
-        return new RelationshipDataLine( startNodeId, endNodeId, type, name );
-    }
-
-    private void writeRelationshipData( PrintStream writer, Configuration config,
-            Iterator<RelationshipDataLine> data, IntPredicate linePredicate, boolean specifyType )
-    {
-        char delimiter = config.delimiter();
-        for ( int i = 0; i < RELATIONSHIP_COUNT; i++ )
-        {
-            if ( !data.hasNext() )
-            {
-                break;
-            }
-            RelationshipDataLine entry = data.next();
-            if ( linePredicate.test( i ) )
-            {
-                writer.println( nullSafeString( entry.startNodeId ) +
-                                delimiter + nullSafeString( entry.endNodeId ) +
-                                (specifyType ? (delimiter + nullSafeString( entry.type )) : "") +
-                                delimiter + currentTimeMillis() +
-                                delimiter + (entry.name != null ? entry.name : "")
-                );
-            }
-        }
-    }
-
-    private static String nullSafeString( String endNodeId )
-    {
-        return endNodeId != null ? endNodeId : "";
-    }
-
-    private Iterator<RelationshipDataLine> randomRelationships( final List<String> nodeIds )
-    {
-        return new PrefetchingIterator<RelationshipDataLine>()
-        {
-            @Override
-            protected RelationshipDataLine fetchNextOrNull()
-            {
-                return new RelationshipDataLine(
-                        nodeIds.get( random.nextInt( nodeIds.size() ) ),
-                        nodeIds.get( random.nextInt( nodeIds.size() ) ),
-                        randomType(),
-                        null );
-            }
-        };
-    }
-
-    static void assertExceptionContains( Exception e, String message, Class<? extends Exception> type )
-            throws Exception
-    {
-        if ( !contains( e, message, type ) )
-        {   // Rethrow the exception since we'd like to see what it was instead
-            throw withMessage( e,
-                    format( "Expected exception to contain cause '%s', %s. but was %s", message, type, e ) );
-        }
-    }
-
-    private String randomType()
-    {
-        return "TYPE_" + random.nextInt( 4 );
-    }
-
-    private IntPredicate lines( final int startingAt, final int endingAt /*excluded*/ )
-    {
-        return line -> line >= startingAt && line < endingAt;
-    }
-
-    private static String escapePath( String path )
-    {
-        return path.replaceAll( " ", "\\\\ " );
-    }
-
-    static void importTool( String... arguments ) throws IOException
-    {
-        ImportTool.main( arguments, true );
     }
 }

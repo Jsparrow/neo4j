@@ -104,14 +104,13 @@ class ClassByteCodeWriter implements ClassEmitter
             MethodVisitor methodVisitor = classVisitor.visitMethod( ACC_STATIC, "<clinit>", "()V", null, null );
             ByteCodeExpressionVisitor expressionVisitor = new ByteCodeExpressionVisitor( methodVisitor );
             methodVisitor.visitCode();
-            for ( Map.Entry<FieldReference,Expression> entry : staticFields.entrySet() )
-            {
+            staticFields.entrySet().forEach(entry -> {
                 FieldReference field = entry.getKey();
                 Expression value = entry.getValue();
                 value.accept( expressionVisitor );
                 methodVisitor.visitFieldInsn( PUTSTATIC, byteCodeName( field.owner() ),
                         field.name(), typeName( field.type() ) );
-            }
+            });
             methodVisitor.visitInsn( RETURN );
             methodVisitor.visitMaxs( 0, 0 );
             methodVisitor.visitEnd();

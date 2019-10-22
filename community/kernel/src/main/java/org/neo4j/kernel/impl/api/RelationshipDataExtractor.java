@@ -65,7 +65,7 @@ public class RelationshipDataExtractor implements RelationshipVisitor<RuntimeExc
         else
         {
             throw new IllegalArgumentException(
-                    "Node[" + node + "] is neither start nor end node of relationship[" + relId + "]" );
+                    new StringBuilder().append("Node[").append(node).append("] is neither start nor end node of relationship[").append(relId).append("]").toString() );
         }
     }
 

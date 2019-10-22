@@ -52,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.util.Collections;
 
 @ExtendWith( TestDirectoryExtension.class )
 class DefaultFileSystemWatcherTest
@@ -153,7 +154,7 @@ class DefaultFileSystemWatcherTest
         watcher.addFileWatchEventListener( listener );
 
         TestWatchEvent<String> event = new TestWatchEvent( ENTRY_MODIFY, null );
-        TestWatchKey watchKey = new TestWatchKey( asList( event ) );
+        TestWatchKey watchKey = new TestWatchKey( Collections.singletonList( event ) );
 
         prepareWatcher( watchKey );
 

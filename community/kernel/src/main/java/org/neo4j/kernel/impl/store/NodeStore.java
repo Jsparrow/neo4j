@@ -44,21 +44,6 @@ public class NodeStore extends CommonAbstractStore<NodeRecord,NoStoreHeader>
     public static final String TYPE_DESCRIPTOR = "NodeStore";
     private final DynamicArrayStore dynamicLabelStore;
 
-    public static Long readOwnerFromDynamicLabelsRecord( DynamicRecord record )
-    {
-        byte[] data = record.getData();
-        byte[] header = PropertyType.ARRAY.readDynamicRecordHeader( data );
-        byte[] array = Arrays.copyOfRange( data, header.length, data.length );
-
-        int requiredBits = header[2];
-        if ( requiredBits == 0 )
-        {
-            return null;
-        }
-        Bits bits = Bits.bitsFromBytes( array );
-        return bits.getLong( requiredBits );
-    }
-
     public NodeStore(
             File file,
             File idFile,
@@ -75,13 +60,28 @@ public class NodeStore extends CommonAbstractStore<NodeRecord,NoStoreHeader>
         this.dynamicLabelStore = dynamicLabelStore;
     }
 
-    @Override
+	public static Long readOwnerFromDynamicLabelsRecord( DynamicRecord record )
+    {
+        byte[] data = record.getData();
+        byte[] header = PropertyType.ARRAY.readDynamicRecordHeader( data );
+        byte[] array = Arrays.copyOfRange( data, header.length, data.length );
+
+        int requiredBits = header[2];
+        if ( requiredBits == 0 )
+        {
+            return null;
+        }
+        Bits bits = Bits.bitsFromBytes( array );
+        return bits.getLong( requiredBits );
+    }
+
+	@Override
     public <FAILURE extends Exception> void accept( Processor<FAILURE> processor, NodeRecord record ) throws FAILURE
     {
         processor.processNode( this, record );
     }
 
-    @Override
+	@Override
     public void ensureHeavy( NodeRecord node )
     {
         if ( NodeLabelsField.fieldPointsToDynamicRecordOfLabels( node.getLabelField() ) )
@@ -90,7 +90,7 @@ public class NodeStore extends CommonAbstractStore<NodeRecord,NoStoreHeader>
         }
     }
 
-    public void ensureHeavy( NodeRecord node, long firstDynamicLabelRecord )
+	public void ensureHeavy( NodeRecord node, long firstDynamicLabelRecord )
     {
         if ( !node.isLight() )
         {
@@ -101,19 +101,19 @@ public class NodeStore extends CommonAbstractStore<NodeRecord,NoStoreHeader>
         node.setLabelField( node.getLabelField(), dynamicLabelStore.getRecords( firstDynamicLabelRecord, RecordLoad.NORMAL ) );
     }
 
-    @Override
+	@Override
     public void updateRecord( NodeRecord record )
     {
         super.updateRecord( record );
         updateDynamicLabelRecords( record.getDynamicLabelRecords() );
     }
 
-    public DynamicArrayStore getDynamicLabelStore()
+	public DynamicArrayStore getDynamicLabelStore()
     {
         return dynamicLabelStore;
     }
 
-    public void updateDynamicLabelRecords( Iterable<DynamicRecord> dynamicLabelRecords )
+	public void updateDynamicLabelRecords( Iterable<DynamicRecord> dynamicLabelRecords )
     {
         for ( DynamicRecord record : dynamicLabelRecords )
         {

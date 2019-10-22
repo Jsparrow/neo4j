@@ -36,16 +36,16 @@ public class DummyIndexExtensionFactory extends KernelExtensionFactory<DummyInde
         super( ExtensionType.DATABASE, IDENTIFIER );
     }
 
-    public interface Dependencies
-    {
-        IndexProviders getIndexProviders();
-    }
-
     @Override
     public Lifecycle newInstance( KernelContext context, Dependencies dependencies )
     {
         IndexProviders indexProviders = dependencies.getIndexProviders();
         return new Extension( indexProviders );
+    }
+
+	public interface Dependencies
+    {
+        IndexProviders getIndexProviders();
     }
 
     private static class Extension extends LifecycleAdapter

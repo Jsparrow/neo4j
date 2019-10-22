@@ -43,7 +43,7 @@ public class StoreAssertions
         ConsistencyCheckService.Result result = new ConsistencyCheckService().runFullConsistencyCheck(
                 databaseLayout, configuration, ProgressMonitorFactory.NONE, NullLogProvider.getInstance(), false );
 
-        assertTrue( "Consistency check for " + databaseLayout + " found inconsistencies:\n\n" + logger.serialize(),
+        assertTrue( new StringBuilder().append("Consistency check for ").append(databaseLayout).append(" found inconsistencies:\n\n").append(logger.serialize()).toString(),
                 result.isSuccessful() );
     }
 }

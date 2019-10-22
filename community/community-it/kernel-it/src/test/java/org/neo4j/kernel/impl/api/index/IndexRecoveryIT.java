@@ -87,7 +87,17 @@ import static org.neo4j.test.mockito.matcher.Neo4jMatchers.inTx;
 
 public class IndexRecoveryIT
 {
-    @Test
+    private GraphDatabaseAPI db;
+	@Rule
+    public EphemeralFileSystemRule fs = new EphemeralFileSystemRule();
+	private final IndexProvider mockedIndexProvider = mock( IndexProvider.class );
+	private final KernelExtensionFactory<?> mockedIndexProviderFactory =
+            singleInstanceIndexProviderFactory( PROVIDER_DESCRIPTOR.getKey(),
+                    mockedIndexProvider );
+	private final String key = "number_of_bananas_owned";
+	private final Label myLabel = label( "MyLabel" );
+
+	@Test
     public void shouldBeAbleToRecoverInTheMiddleOfPopulatingAnIndex() throws Exception
     {
         // Given
@@ -121,7 +131,7 @@ public class IndexRecoveryIT
         latch.countDown();
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToRecoverInTheMiddleOfPopulatingAnIndexWhereLogHasRotated() throws Exception
     {
         // Given
@@ -158,7 +168,7 @@ public class IndexRecoveryIT
         latch.countDown();
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToRecoverAndUpdateOnlineIndex() throws Exception
     {
         // Given
@@ -201,7 +211,7 @@ public class IndexRecoveryIT
         assertEquals( expectedUpdates, writer.batchedUpdates );
     }
 
-    @Test
+	@Test
     public void shouldKeepFailedIndexesAsFailedAfterRestart() throws Exception
     {
         // Given
@@ -230,17 +240,7 @@ public class IndexRecoveryIT
                 .getPopulator( any( StoreIndexDescriptor.class ), any( IndexSamplingConfig.class ), any() );
     }
 
-    private GraphDatabaseAPI db;
-    @Rule
-    public EphemeralFileSystemRule fs = new EphemeralFileSystemRule();
-    private final IndexProvider mockedIndexProvider = mock( IndexProvider.class );
-    private final KernelExtensionFactory<?> mockedIndexProviderFactory =
-            singleInstanceIndexProviderFactory( PROVIDER_DESCRIPTOR.getKey(),
-                    mockedIndexProvider );
-    private final String key = "number_of_bananas_owned";
-    private final Label myLabel = label( "MyLabel" );
-
-    @Before
+	@Before
     public void setUp() throws MisconfiguredIndexException
     {
         when( mockedIndexProvider.getProviderDescriptor() ).thenReturn( PROVIDER_DESCRIPTOR );
@@ -249,7 +249,7 @@ public class IndexRecoveryIT
         when( mockedIndexProvider.bless( any( IndexDescriptor.class ) ) ).thenCallRealMethod();
     }
 
-    private void startDb()
+	private void startDb()
     {
         if ( db != null )
         {
@@ -263,7 +263,7 @@ public class IndexRecoveryIT
                 .setConfig( GraphDatabaseSettings.default_schema_provider, PROVIDER_DESCRIPTOR.name() ).newGraphDatabase();
     }
 
-    private void killDb() throws Exception
+	private void killDb() throws Exception
     {
         if ( db != null )
         {
@@ -275,7 +275,7 @@ public class IndexRecoveryIT
         }
     }
 
-    private Future<Void> killDbInSeparateThread()
+	private Future<Void> killDbInSeparateThread()
     {
         ExecutorService executor = newSingleThreadExecutor();
         Future<Void> result = executor.submit( () ->
@@ -287,7 +287,7 @@ public class IndexRecoveryIT
         return result;
     }
 
-    @After
+	@After
     public void after()
     {
         if ( db != null )
@@ -296,7 +296,7 @@ public class IndexRecoveryIT
         }
     }
 
-    private void rotateLogsAndCheckPoint() throws IOException
+	private void rotateLogsAndCheckPoint() throws IOException
     {
         db.getDependencyResolver().resolveDependency( LogRotation.class ).rotateLogFile();
         db.getDependencyResolver().resolveDependency( CheckPointer.class ).forceCheckPoint(
@@ -304,7 +304,7 @@ public class IndexRecoveryIT
         );
     }
 
-    private void createIndexAndAwaitPopulation( Label label )
+	private void createIndexAndAwaitPopulation( Label label )
     {
         IndexDefinition index = createIndex( label );
         try ( Transaction tx = db.beginTx() )
@@ -314,7 +314,7 @@ public class IndexRecoveryIT
         }
     }
 
-    private IndexDefinition createIndex( Label label )
+	private IndexDefinition createIndex( Label label )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -324,7 +324,7 @@ public class IndexRecoveryIT
         }
     }
 
-    private Set<IndexEntryUpdate<?>> createSomeBananas( Label label )
+	private Set<IndexEntryUpdate<?>> createSomeBananas( Label label )
     {
         Set<IndexEntryUpdate<?>> updates = new HashSet<>();
         try ( Transaction tx = db.beginTx() )
@@ -348,7 +348,27 @@ public class IndexRecoveryIT
         }
     }
 
-    public static class GatheringIndexWriter extends IndexAccessor.Adapter
+	private static IndexPopulator indexPopulatorWithControlledCompletionTiming( final CountDownLatch latch )
+    {
+        return new IndexPopulator.Adapter()
+        {
+            @Override
+            public void create()
+            {
+                try
+                {
+                    latch.await();
+                }
+                catch ( InterruptedException e )
+                {
+                    // fall through and return early
+                }
+                throw new RuntimeException( "this is expected" );
+            }
+        };
+    }
+
+	public static class GatheringIndexWriter extends IndexAccessor.Adapter
     {
         private final Set<IndexEntryUpdate<?>> regularUpdates = new HashSet<>();
         private final Set<IndexEntryUpdate<?>> batchedUpdates = new HashSet<>();
@@ -373,25 +393,5 @@ public class IndexRecoveryIT
                 }
             } );
         }
-    }
-
-    private static IndexPopulator indexPopulatorWithControlledCompletionTiming( final CountDownLatch latch )
-    {
-        return new IndexPopulator.Adapter()
-        {
-            @Override
-            public void create()
-            {
-                try
-                {
-                    latch.await();
-                }
-                catch ( InterruptedException e )
-                {
-                    // fall through and return early
-                }
-                throw new RuntimeException( "this is expected" );
-            }
-        };
     }
 }

@@ -30,7 +30,8 @@ public abstract class FormatException extends IllegalStateException
 
     protected FormatException( @Nonnull SourceTraceability source, @Nonnull String description )
     {
-        super( "At " + source.sourceDescription() + " @ position " + source.position() + " - " + description );
+        super( new StringBuilder().append("At ").append(source.sourceDescription()).append(" @ position ").append(source.position()).append(" - ").append(description)
+				.toString() );
         this.source = source;
     }
 

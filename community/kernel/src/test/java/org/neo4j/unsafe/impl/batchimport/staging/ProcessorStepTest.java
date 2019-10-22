@@ -121,7 +121,16 @@ public class ProcessorStepTest
         step.close();
     }
 
-    private static class BlockingProcessorStep extends ProcessorStep<Void>
+    private WorkerCommand<Void,Void> receive( final int processors, final ProcessorStep<Void> step )
+    {
+        return state ->
+        {
+            step.receive( processors, null );
+            return null;
+        };
+    }
+
+	private static class BlockingProcessorStep extends ProcessorStep<Void>
     {
         private final CountDownLatch latch;
 
@@ -153,14 +162,5 @@ public class ProcessorStepTest
         {   // No processing in this test
             nextExpected.incrementAndGet();
         }
-    }
-
-    private WorkerCommand<Void,Void> receive( final int processors, final ProcessorStep<Void> step )
-    {
-        return state ->
-        {
-            step.receive( processors, null );
-            return null;
-        };
     }
 }

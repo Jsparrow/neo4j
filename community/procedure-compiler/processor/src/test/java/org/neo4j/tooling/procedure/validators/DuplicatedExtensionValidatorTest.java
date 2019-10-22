@@ -74,10 +74,8 @@ public class DuplicatedExtensionValidatorTest
         String procedureName = "org.neo4j.tooling.procedure.validators.examples.procedure";
         assertThat( errors ).extracting( CompilationMessage::getCategory, CompilationMessage::getElement,
                 CompilationMessage::getContents ).containsExactlyInAnyOrder( tuple( Diagnostic.Kind.ERROR, procedureA,
-                "Procedure|function name <" + procedureName + "> is already defined 2 times. It should be defined " +
-                        "only once!" ), tuple( Diagnostic.Kind.ERROR, procedureB,
-                "Procedure|function name <" + procedureName +
-                        "> is already defined 2 times. It should be defined only once!" ) );
+                new StringBuilder().append("Procedure|function name <").append(procedureName).append("> is already defined 2 times. It should be defined ").append("only once!").toString() ), tuple( Diagnostic.Kind.ERROR, procedureB,
+                new StringBuilder().append("Procedure|function name <").append(procedureName).append("> is already defined 2 times. It should be defined only once!").toString() ) );
     }
 
     @Test

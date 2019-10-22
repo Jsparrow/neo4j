@@ -243,7 +243,7 @@ public class ChunkedOutputTest
 
         ByteBuf outboundMessage = peekSingleOutboundMessage();
 
-        assertByteBufEqual( outboundMessage, chunkContaining( (long) 1 ) + chunkContaining( (long) 2 ) + chunkContaining( (long) 3 ) + messageBoundary() );
+        assertByteBufEqual( outboundMessage, new StringBuilder().append(chunkContaining( (long) 1 )).append(chunkContaining( (long) 2 )).append(chunkContaining( (long) 3 )).append(messageBoundary()).toString() );
     }
 
     @Test
@@ -264,7 +264,7 @@ public class ChunkedOutputTest
         Number[] chunk2Body = new Number[2];
         Arrays.fill( chunk2Body, (byte) 42 );
 
-        assertByteBufEqual( outboundMessage, chunkContaining( chunk1Body ) + chunkContaining( chunk2Body ) + messageBoundary() );
+        assertByteBufEqual( outboundMessage, new StringBuilder().append(chunkContaining( chunk1Body )).append(chunkContaining( chunk2Body )).append(messageBoundary()).toString() );
     }
 
     @Test
@@ -283,7 +283,7 @@ public class ChunkedOutputTest
 
         ByteBuf outboundMessage = peekSingleOutboundMessage();
 
-        assertByteBufEqual( outboundMessage, chunkContaining( (long) 1 ) + chunkContaining( (long) 2 ) + chunkContaining( (long) 3 ) + messageBoundary() );
+        assertByteBufEqual( outboundMessage, new StringBuilder().append(chunkContaining( (long) 1 )).append(chunkContaining( (long) 2 )).append(chunkContaining( (long) 3 )).append(messageBoundary()).toString() );
     }
 
     @Test
@@ -376,8 +376,7 @@ public class ChunkedOutputTest
 
         ByteBuf outboundMessage = peekSingleOutboundMessage();
 
-        assertByteBufEqual( outboundMessage, chunkContaining( 1, 2 ) + messageBoundary() +
-                                             chunkContaining( 33, (long) 44 ) + messageBoundary() );
+        assertByteBufEqual( outboundMessage, new StringBuilder().append(chunkContaining( 1, 2 )).append(messageBoundary()).append(chunkContaining( 33, (long) 44 )).append(messageBoundary()).toString() );
     }
 
     @Test
@@ -419,10 +418,7 @@ public class ChunkedOutputTest
         // now the whole buffer should be flushed, it is larger than the maxBufferSize
         ByteBuf outboundMessage = peekSingleOutboundMessage();
 
-        assertByteBufEqual( outboundMessage, chunkContaining( 1, 2, 3 ) +
-                                             chunkContaining( (long) 4, (byte) 5, (byte) 6 ) +
-                                             chunkContaining( (long) 7, 8, (byte) 9 ) +
-                                             messageBoundary() );
+        assertByteBufEqual( outboundMessage, new StringBuilder().append(chunkContaining( 1, 2, 3 )).append(chunkContaining( (long) 4, (byte) 5, (byte) 6 )).append(chunkContaining( (long) 7, 8, (byte) 9 )).append(messageBoundary()).toString() );
     }
 
     @Test
@@ -446,9 +442,9 @@ public class ChunkedOutputTest
         List<ByteBuf> outboundMessages = peekAllOutboundMessages();
         assertEquals( 3, outboundMessages.size() );
 
-        assertByteBufEqual( outboundMessages.get( 0 ), chunkContaining( (long) 1 ) + chunkContaining( (long) 2 ) + messageBoundary() );
-        assertByteBufEqual( outboundMessages.get( 1 ), chunkContaining( (long) 3 ) + chunkContaining( (long) 4 ) + messageBoundary() );
-        assertByteBufEqual( outboundMessages.get( 2 ), chunkContaining( (long) 5 ) + chunkContaining( (long) 6 ) + messageBoundary() );
+        assertByteBufEqual( outboundMessages.get( 0 ), new StringBuilder().append(chunkContaining( (long) 1 )).append(chunkContaining( (long) 2 )).append(messageBoundary()).toString() );
+        assertByteBufEqual( outboundMessages.get( 1 ), new StringBuilder().append(chunkContaining( (long) 3 )).append(chunkContaining( (long) 4 )).append(messageBoundary()).toString() );
+        assertByteBufEqual( outboundMessages.get( 2 ), new StringBuilder().append(chunkContaining( (long) 5 )).append(chunkContaining( (long) 6 )).append(messageBoundary()).toString() );
     }
 
     @Test
@@ -635,9 +631,7 @@ public class ChunkedOutputTest
         out.writeDouble( 199.92 );
         out.messageSucceeded();
 
-        assertByteBufEqual( peekSingleOutboundMessage(), chunkContaining( (byte) 8, (short) 9, 10 ) +
-                                                         chunkContaining( 199.92 ) +
-                                                         messageBoundary() );
+        assertByteBufEqual( peekSingleOutboundMessage(), new StringBuilder().append(chunkContaining( (byte) 8, (short) 9, 10 )).append(chunkContaining( 199.92 )).append(messageBoundary()).toString() );
     }
 
     private ByteBuf peekSingleOutboundMessage()
@@ -687,7 +681,7 @@ public class ChunkedOutputTest
             }
             else
             {
-                throw new IllegalArgumentException( "Unsupported number " + value.getClass() + ' ' + value );
+                throw new IllegalArgumentException( new StringBuilder().append("Unsupported number ").append(value.getClass()).append(' ').append(value).toString() );
             }
         }
 
@@ -718,7 +712,7 @@ public class ChunkedOutputTest
             }
             else
             {
-                throw new IllegalArgumentException( "Unsupported number " + value.getClass() + ' ' + value );
+                throw new IllegalArgumentException( new StringBuilder().append("Unsupported number ").append(value.getClass()).append(' ').append(value).toString() );
             }
         }
         buffer.flip();

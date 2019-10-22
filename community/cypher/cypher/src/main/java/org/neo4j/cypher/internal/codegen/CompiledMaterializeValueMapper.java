@@ -61,12 +61,11 @@ public final class CompiledMaterializeValueMapper
         // Hopefully the dry run will also heat up the caches for the real run, thus reducing its overhead.
         DryRunMaterializeValueMapper dryRunMapper = new DryRunMaterializeValueMapper();
         value.map( dryRunMapper );
-        if ( dryRunMapper.needsConversion )
-        {
-            WritingMaterializeValueMapper realMapper = new WritingMaterializeValueMapper( proxySPI );
-            return value.map( realMapper );
-        }
-        return value;
+        if (!(dryRunMapper.needsConversion)) {
+			return value;
+		}
+		WritingMaterializeValueMapper realMapper = new WritingMaterializeValueMapper( proxySPI );
+		return value.map( realMapper );
     }
 
     private static final class WritingMaterializeValueMapper extends AbstractMaterializeValueMapper

@@ -362,22 +362,21 @@ public class AuthProceduresIT
     {
         List<Map<String, Object>> result = r.stream().collect( Collectors.toList() );
 
-        assertEquals( "Results for should have size " + expected.size() + " but was " + result.size(),
+        assertEquals( new StringBuilder().append("Results for should have size ").append(expected.size()).append(" but was ").append(result.size()).toString(),
                 expected.size(), result.size() );
 
-        for ( Map<String, Object> row : result )
-        {
+        result.forEach(row -> {
             String key = (String) row.get( keyKey );
-            assertTrue( "Unexpected key '" + key + "'", expected.containsKey( key ) );
+            assertTrue( new StringBuilder().append("Unexpected key '").append(key).append("'").toString(), expected.containsKey( key ) );
 
-            assertTrue( "Value key '" + valueKey + "' not found in results", row.containsKey( valueKey ) );
+            assertTrue( new StringBuilder().append("Value key '").append(valueKey).append("' not found in results").toString(), row.containsKey( valueKey ) );
             Object objectValue = row.get( valueKey );
             if ( objectValue instanceof List )
             {
                 List<String> value = (List<String>) objectValue;
                 List<String> expectedValues = (List<String>) expected.get( key );
-                assertEquals( "Results for '" + key + "' should have size " + expectedValues.size() + " but was " +
-                        value.size(), value.size(), expectedValues.size() );
+                assertEquals( new StringBuilder().append("Results for '").append(key).append("' should have size ").append(expectedValues.size()).append(" but was ").append(value.size())
+						.toString(), value.size(), expectedValues.size() );
                 assertThat( value, containsInAnyOrder( expectedValues.toArray() ) );
             }
             else
@@ -386,6 +385,6 @@ public class AuthProceduresIT
                 String expectedValue = expected.get( key ).toString();
                 assertEquals( String.format( "Wrong value for '%s', expected '%s', got '%s'", key, expectedValue, value ), value, expectedValue );
             }
-        }
+        });
     }
 }

@@ -166,60 +166,36 @@ public class FullCheckIntegrationTest
     private static final String PROP2 = "key2";
     private static final Object VALUE1 = "value1";
     private static final Object VALUE2 = "value2";
-
-    private int label1;
-    private int label2;
-    private int label3;
-    private int label4;
-    private int  draconian;
-    private int key1;
-    private int key2;
-    private int mandatory;
-    private int C;
-    private int T;
-    private int M;
-
-    private final List<Long> indexedNodes = new ArrayList<>();
-
-    private static final Map<Class<?>,Set<String>> allReports = new HashMap<>();
-
-    @BeforeClass
-    public static void collectAllDifferentInconsistencyTypes()
+	private static final Map<Class<?>,Set<String>> allReports = Collections.unmodifiableMap(new HashMap<>());
+	private static DynamicRecordAllocator schemaAllocator = new DynamicRecordAllocator()
     {
-        Class<?> reportClass = ConsistencyReport.class;
-        for ( Class<?> cls : reportClass.getDeclaredClasses() )
-        {
-            for ( Method method : cls.getDeclaredMethods() )
-            {
-                if ( method.getAnnotation( Documented.class ) != null )
-                {
-                    Set<String> types = allReports.computeIfAbsent( cls, k -> new HashSet<>() );
-                    types.add( method.getName() );
-                }
-            }
-        }
-    }
+        private int next = 10000; // we start high to not conflict with real ids
 
-    @AfterClass
-    public static void verifyThatWeHaveExercisedAllTypesOfInconsistenciesThatWeHave()
-    {
-        if ( !allReports.isEmpty() )
+        @Override
+        public int getRecordDataSize()
         {
-            StringBuilder builder = new StringBuilder( "There are types of inconsistencies not covered by "
-                    + "this integration test, please add tests that tests for:" );
-            for ( Map.Entry<Class<?>,Set<String>> reporter : allReports.entrySet() )
-            {
-                builder.append( format( "%n%s:", reporter.getKey().getSimpleName() ) );
-                for ( String type : reporter.getValue() )
-                {
-                    builder.append( format( "%n  %s", type ) );
-                }
-            }
-            System.err.println( builder.toString() );
+            return SchemaStore.BLOCK_SIZE;
         }
-    }
 
-    private final GraphStoreFixture fixture = new GraphStoreFixture( getRecordFormatName() )
+        @Override
+        public DynamicRecord nextRecord()
+        {
+            return new DynamicRecord( next++ );
+        }
+    };
+	private int label1;
+	private int label2;
+	private int label3;
+	private int label4;
+	private int  draconian;
+	private int key1;
+	private int key2;
+	private int mandatory;
+	private int C;
+	private int t;
+	private int m;
+	private final List<Long> indexedNodes = new ArrayList<>();
+	private final GraphStoreFixture fixture = new GraphStoreFixture( getRecordFormatName() )
     {
         @Override
         protected void generateInitialData( GraphDatabaseService db )
@@ -278,8 +254,8 @@ public class FullCheckIntegrationTest
                     key1 = tokenRead.propertyKey( PROP1 );
                     mandatory = tokenWrite.propertyKeyGetOrCreateForName( "mandatory" );
                     C = tokenRead.relationshipType( "C" );
-                    T = tokenRead.relationshipType( "T" );
-                    M = tokenWrite.relationshipTypeGetOrCreateForName( "M" );
+                    t = tokenRead.relationshipType( "T" );
+                    m = tokenWrite.relationshipTypeGetOrCreateForName( "M" );
                 }
             }
             catch ( KernelException e )
@@ -288,13 +264,44 @@ public class FullCheckIntegrationTest
             }
         }
     };
-
-    private final SuppressOutput suppressOutput = SuppressOutput.suppress( SuppressOutput.System.out );
-
-    @Rule
+	private final SuppressOutput suppressOutput = SuppressOutput.suppress( SuppressOutput.System.out );
+	@Rule
     public RuleChain ruleChain = RuleChain.outerRule( suppressOutput ).around( fixture );
 
-    @Test
+	@BeforeClass
+    public static void collectAllDifferentInconsistencyTypes()
+    {
+        Class<?> reportClass = ConsistencyReport.class;
+        for ( Class<?> cls : reportClass.getDeclaredClasses() )
+        {
+            for ( Method method : cls.getDeclaredMethods() )
+            {
+                if ( method.getAnnotation( Documented.class ) != null )
+                {
+                    Set<String> types = allReports.computeIfAbsent( cls, k -> new HashSet<>() );
+                    types.add( method.getName() );
+                }
+            }
+        }
+    }
+
+	@AfterClass
+    public static void verifyThatWeHaveExercisedAllTypesOfInconsistenciesThatWeHave()
+    {
+        if (allReports.isEmpty()) {
+			return;
+		}
+		StringBuilder builder = new StringBuilder( "There are types of inconsistencies not covered by "
+		        + "this integration test, please add tests that tests for:" );
+		for ( Map.Entry<Class<?>,Set<String>> reporter : allReports.entrySet() )
+		{
+		    builder.append( format( "%n%s:", reporter.getKey().getSimpleName() ) );
+		    reporter.getValue().forEach(type -> builder.append(format("%n  %s", type)));
+		}
+		System.err.println( builder.toString() );
+    }
+
+	@Test
     public void shouldCheckConsistencyOfAConsistentStore() throws Exception
     {
         // when
@@ -304,7 +311,7 @@ public class FullCheckIntegrationTest
         assertEquals( result.toString(), 0, result.getTotalInconsistencyCount() );
     }
 
-    @Test
+	@Test
     public void shouldReportNodeInconsistencies() throws Exception
     {
         // given
@@ -326,7 +333,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInlineNodeLabelInconsistencies() throws Exception
     {
         // given
@@ -350,7 +357,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportNodeDynamicLabelContainingUnknownLabelAsNodeInconsistency() throws Exception
     {
         // given
@@ -379,7 +386,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldNotReportAnythingForNodeWithConsistentChainOfDynamicRecordsWithLabels() throws Exception
     {
         // given
@@ -392,7 +399,7 @@ public class FullCheckIntegrationTest
         assertTrue( "should be consistent", stats.isConsistent() );
     }
 
-    @Test
+	@Test
     public void shouldReportLabelScanStoreInconsistencies() throws Exception
     {
         // given
@@ -414,7 +421,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    private void write( LabelScanStore labelScanStore, Iterable<NodeLabelUpdate> nodeLabelUpdates )
+	private void write( LabelScanStore labelScanStore, Iterable<NodeLabelUpdate> nodeLabelUpdates )
             throws IOException
     {
         try ( LabelScanWriter writer = labelScanStore.newWriter() )
@@ -426,15 +433,12 @@ public class FullCheckIntegrationTest
         }
     }
 
-    @Test
+	@Test
     public void shouldReportIndexInconsistencies() throws Exception
     {
         // given
-        for ( Long indexedNodeId : indexedNodes )
-        {
-            fixture.directStoreAccess().nativeStores().getNodeStore().updateRecord(
-                    notInUse( new NodeRecord( indexedNodeId, false, -1, -1 ) ) );
-        }
+		indexedNodes.forEach(indexedNodeId -> fixture.directStoreAccess().nativeStores().getNodeStore()
+				.updateRecord(notInUse(new NodeRecord(indexedNodeId, false, -1, -1))));
 
         // when
         ConsistencySummaryStatistics stats = check();
@@ -446,7 +450,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldNotReportIndexInconsistenciesIfIndexIsFailed() throws Exception
     {
         // this test fails all indexes, and then destroys a record and makes sure we only get a failure for
@@ -467,11 +471,7 @@ public class FullCheckIntegrationTest
             populator.close( false );
         }
 
-        for ( Long indexedNodeId : indexedNodes )
-        {
-            storeAccess.nativeStores().getNodeStore().updateRecord(
-                    notInUse( new NodeRecord( indexedNodeId, false, -1, -1 ) ) );
-        }
+        indexedNodes.forEach(indexedNodeId -> storeAccess.nativeStores().getNodeStore().updateRecord(notInUse(new NodeRecord(indexedNodeId, false, -1, -1))));
 
         // when
         ConsistencySummaryStatistics stats = check();
@@ -482,7 +482,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportMismatchedLabels() throws Exception
     {
         final List<Integer> labels = new ArrayList<>();
@@ -510,7 +510,7 @@ public class FullCheckIntegrationTest
         labels.remove( 1 );
         long[] after = asArray( labels );
 
-        write( fixture.directStoreAccess().labelScanStore(), asList( labelChanges( 42, before, after ) ) );
+        write( fixture.directStoreAccess().labelScanStore(), Collections.singletonList( labelChanges( 42, before, after ) ) );
 
         // when
         ConsistencySummaryStatistics stats = check();
@@ -520,7 +520,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    private long[] asArray( List<? extends Number> in )
+	private long[] asArray( List<? extends Number> in )
     {
         long[] longs = new long[in.size()];
         for ( int i = 0; i < in.size(); i++ )
@@ -530,7 +530,7 @@ public class FullCheckIntegrationTest
         return longs;
     }
 
-    @Test
+	@Test
     public void shouldReportMismatchedInlinedLabels() throws Exception
     {
         // given
@@ -547,7 +547,7 @@ public class FullCheckIntegrationTest
             }
         } );
 
-        write( fixture.directStoreAccess().labelScanStore(), asList( labelChanges( 42, new long[]{label1, label2}, new long[]{label1} ) ) );
+        write( fixture.directStoreAccess().labelScanStore(), Collections.singletonList( labelChanges( 42, new long[]{label1, label2}, new long[]{label1} ) ) );
 
         // when
         ConsistencySummaryStatistics stats = check();
@@ -557,7 +557,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportNodesThatAreNotIndexed() throws Exception
     {
         // given
@@ -576,7 +576,7 @@ public class FullCheckIntegrationTest
                 for ( long nodeId : indexedNodes )
                 {
                     EntityUpdates updates = storeView.nodeAsUpdates( nodeId );
-                    for ( IndexEntryUpdate<?> update : updates.forIndexKeys( asList( indexDescriptor ) ) )
+                    for ( IndexEntryUpdate<?> update : updates.forIndexKeys( Collections.singletonList( indexDescriptor ) ) )
                     {
                         updater.process( IndexEntryUpdate.remove( nodeId, indexDescriptor, update.values() ) );
                     }
@@ -594,7 +594,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportNodesWithDuplicatePropertyValueInUniqueIndex() throws Exception
     {
         // given
@@ -622,7 +622,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    private Value[] values( StoreIndexDescriptor indexRule )
+	private Value[] values( StoreIndexDescriptor indexRule )
     {
         switch ( indexRule.schema().getPropertyIds().length )
         {
@@ -632,7 +632,7 @@ public class FullCheckIntegrationTest
         }
     }
 
-    @Test
+	@Test
     public void shouldReportMissingMandatoryNodeProperty() throws Exception
     {
         // given
@@ -667,7 +667,7 @@ public class FullCheckIntegrationTest
                 .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportMissingMandatoryRelationshipProperty() throws Exception
     {
         // given
@@ -688,7 +688,7 @@ public class FullCheckIntegrationTest
                         NO_LABELS_FIELD.intValue() );
 
                 // structurally correct, but does not have the 'mandatory' property with the 'M' rel type
-                RelationshipRecord relationship = new RelationshipRecord( relId, true, nodeId1, nodeId2, M,
+                RelationshipRecord relationship = new RelationshipRecord( relId, true, nodeId1, nodeId2, m,
                         NO_PREV_RELATIONSHIP.intValue(), NO_NEXT_RELATIONSHIP.intValue(),
                         NO_PREV_RELATIONSHIP.intValue(), NO_NEXT_RELATIONSHIP.intValue(), true, true );
                 relationship.setNextProp( propId );
@@ -704,11 +704,11 @@ public class FullCheckIntegrationTest
                 tx.create( relationship );
                 tx.create( property );
                 tx.incrementRelationshipCount( ANY_LABEL, ANY_RELATIONSHIP_TYPE, ANY_LABEL, 1 );
-                tx.incrementRelationshipCount( ANY_LABEL, M, ANY_LABEL, 1 );
+                tx.incrementRelationshipCount( ANY_LABEL, m, ANY_LABEL, 1 );
             }
         } );
 
-        createRelationshipPropertyExistenceConstraint( M, mandatory );
+        createRelationshipPropertyExistenceConstraint( m, mandatory );
 
         // when
         ConsistencySummaryStatistics stats = check();
@@ -718,7 +718,7 @@ public class FullCheckIntegrationTest
                 .andThatsAllFolks();
     }
 
-    private long inlinedLabelsLongRepresentation( long... labelIds )
+	private long inlinedLabelsLongRepresentation( long... labelIds )
     {
         long header = (long) labelIds.length << 36;
         byte bitsPerLabel = (byte) (36 / labelIds.length);
@@ -730,7 +730,7 @@ public class FullCheckIntegrationTest
         return header | bits.getLongs()[0];
     }
 
-    @Test
+	@Test
     public void shouldReportCyclesInDynamicRecordsWithLabels() throws Exception
     {
         // given
@@ -766,7 +766,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    private Pair<List<DynamicRecord>,List<Integer>> chainOfDynamicRecordsWithLabelsForANode( int labelCount )
+	private Pair<List<DynamicRecord>,List<Integer>> chainOfDynamicRecordsWithLabelsForANode( int labelCount )
             throws TransactionFailureException
     {
         final long[] labels = new long[labelCount + 1]; // allocate enough labels to need three records
@@ -812,7 +812,7 @@ public class FullCheckIntegrationTest
         return Pair.of( chain, createdLabels );
     }
 
-    @Test
+	@Test
     public void shouldReportNodeDynamicLabelContainingDuplicateLabelAsNodeInconsistency() throws Exception
     {
         int nodeId = 1000;
@@ -854,7 +854,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportOrphanedNodeDynamicLabelAsNodeInconsistency() throws Exception
     {
         // given
@@ -885,7 +885,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipInconsistencies() throws Exception
     {
         // given
@@ -908,7 +908,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipOtherNodeInconsistencies() throws Exception
     {
         // given
@@ -937,7 +937,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportPropertyInconsistencies() throws Exception
     {
         // given
@@ -971,7 +971,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportStringPropertyInconsistencies() throws Exception
     {
         // given
@@ -1007,7 +1007,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportBrokenSchemaRecordChain() throws Exception
     {
         // given
@@ -1024,7 +1024,7 @@ public class FullCheckIntegrationTest
                 StoreIndexDescriptor rule = indexRule( schema.getId(), label1, key1, DESCRIPTOR );
                 schema.setData( SchemaRuleSerialization.serialize( rule ) );
 
-                tx.createSchema( asList( schemaBefore ), asList( schema ), rule );
+                tx.createSchema( Collections.singletonList( schemaBefore ), Collections.singletonList( schema ), rule );
             }
         } );
 
@@ -1036,7 +1036,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportDuplicateConstraintReferences() throws Exception
     {
         // given
@@ -1062,14 +1062,14 @@ public class FullCheckIntegrationTest
                 Collection<DynamicRecord> records1 = serializeRule( rule1, record1 );
                 Collection<DynamicRecord> records2 = serializeRule( rule2, record2 );
 
-                assertEquals( asList( record1 ), records1 );
-                assertEquals( asList( record2 ), records2 );
+                assertEquals( Collections.singletonList( record1 ), records1 );
+                assertEquals( Collections.singletonList( record2 ), records2 );
 
                 tx.nodeLabel( labelId, "label" );
                 tx.propertyKey( propertyKeyId, "property" );
 
-                tx.createSchema( asList(record1Before), records1, rule1 );
-                tx.createSchema( asList(record2Before), records2, rule2 );
+                tx.createSchema( Collections.singletonList(record1Before), records1, rule1 );
+                tx.createSchema( Collections.singletonList(record2Before), records2, rule2 );
             }
         } );
 
@@ -1081,7 +1081,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidConstraintBackReferences() throws Exception
     {
         // given
@@ -1107,14 +1107,14 @@ public class FullCheckIntegrationTest
                 Collection<DynamicRecord> records1 = serializeRule( rule1, record1 );
                 Collection<DynamicRecord> records2 = serializeRule( rule2, record2 );
 
-                assertEquals( asList( record1 ), records1 );
-                assertEquals( asList( record2 ), records2 );
+                assertEquals( Collections.singletonList( record1 ), records1 );
+                assertEquals( Collections.singletonList( record2 ), records2 );
 
                 tx.nodeLabel( labelId, "label" );
                 tx.propertyKey( propertyKeyId, "property" );
 
-                tx.createSchema( asList(record1Before), records1, rule1 );
-                tx.createSchema( asList(record2Before), records2, rule2 );
+                tx.createSchema( Collections.singletonList(record1Before), records1, rule1 );
+                tx.createSchema( Collections.singletonList(record2Before), records2, rule2 );
             }
         } );
 
@@ -1126,7 +1126,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportArrayPropertyInconsistencies() throws Exception
     {
         // given
@@ -1162,7 +1162,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipLabelNameInconsistencies() throws Exception
     {
         // given
@@ -1191,7 +1191,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportPropertyKeyNameInconsistencies() throws Exception
     {
         // given
@@ -1220,7 +1220,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipTypeInconsistencies() throws Exception
     {
         // given
@@ -1241,7 +1241,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportLabelInconsistencies() throws Exception
     {
         // given
@@ -1260,7 +1260,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportPropertyKeyInconsistencies() throws Exception
     {
         // given
@@ -1289,7 +1289,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipGroupTypeInconsistencies() throws Exception
     {
         // given
@@ -1315,7 +1315,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipGroupChainInconsistencies() throws Exception
     {
         // given
@@ -1341,7 +1341,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipGroupUnsortedChainInconsistencies() throws Exception
     {
         // given
@@ -1355,7 +1355,7 @@ public class FullCheckIntegrationTest
                 long firstGroupId = next.relationshipGroup();
                 long otherGroupId = next.relationshipGroup();
                 tx.create( inUse( new NodeRecord( node, true, firstGroupId, NO_NEXT_PROPERTY.intValue() ) ) );
-                tx.create( withOwner( withNext( inUse( new RelationshipGroupRecord( firstGroupId, T ) ),
+                tx.create( withOwner( withNext( inUse( new RelationshipGroupRecord( firstGroupId, t ) ),
                         otherGroupId ), node ) );
                 tx.create( withOwner( inUse( new RelationshipGroupRecord( otherGroupId, C ) ), node ) );
             }
@@ -1369,7 +1369,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipGroupRelationshipNotInUseInconsistencies() throws Exception
     {
         // given
@@ -1396,7 +1396,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipGroupRelationshipNotFirstInconsistencies() throws Exception
     {
         // given
@@ -1435,7 +1435,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportFirstRelationshipGroupOwnerInconsistency() throws Exception
     {
         // given
@@ -1466,7 +1466,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportChainedRelationshipGroupOwnerInconsistency() throws Exception
     {
         // given
@@ -1491,7 +1491,7 @@ public class FullCheckIntegrationTest
                         NO_NEXT_PROPERTY.intValue() ) ) );
                 tx.create( withNext( withOwner( inUse( new RelationshipGroupRecord( groupA, C ) ),
                         node ), groupB ) );
-                tx.create( withOwner( inUse( new RelationshipGroupRecord( groupB, T ) ), otherNode ) );
+                tx.create( withOwner( inUse( new RelationshipGroupRecord( groupB, t ) ), otherNode ) );
             }
         } );
 
@@ -1503,7 +1503,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipGroupOwnerNotInUse() throws Exception
     {
         // given
@@ -1528,7 +1528,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipGroupOwnerInvalidValue() throws Exception
     {
         // given
@@ -1552,14 +1552,14 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    private RelationshipRecord withNext( RelationshipRecord relationship, long next )
+	private RelationshipRecord withNext( RelationshipRecord relationship, long next )
     {
         relationship.setFirstNextRel( next );
         relationship.setSecondNextRel( next );
         return relationship;
     }
 
-    private RelationshipRecord withPrev( RelationshipRecord relationship, long prev )
+	private RelationshipRecord withPrev( RelationshipRecord relationship, long prev )
     {
         relationship.setFirstInFirstChain( false );
         relationship.setFirstInSecondChain( false );
@@ -1568,7 +1568,7 @@ public class FullCheckIntegrationTest
         return relationship;
     }
 
-    @Test
+	@Test
     public void shouldReportRelationshipGroupRelationshipOfOtherTypeInconsistencies() throws Exception
     {
         // given
@@ -1590,11 +1590,11 @@ public class FullCheckIntegrationTest
                 long rel = next.relationship();
                 tx.create( new NodeRecord( node, true, group, NO_NEXT_PROPERTY.intValue() ) );
                 tx.create( new NodeRecord( otherNode, false, rel, NO_NEXT_PROPERTY.intValue() ) );
-                tx.create( new RelationshipRecord( rel, otherNode, otherNode, T ) );
+                tx.create( new RelationshipRecord( rel, otherNode, otherNode, t ) );
                 tx.create( withOwner( withRelationships( new RelationshipGroupRecord( group, C ),
                         rel, rel, rel ), node ) );
                 tx.incrementRelationshipCount( ANY_LABEL, ANY_RELATIONSHIP_TYPE, ANY_LABEL, 1 );
-                tx.incrementRelationshipCount( ANY_LABEL, T, ANY_LABEL, 1 );
+                tx.incrementRelationshipCount( ANY_LABEL, t, ANY_LABEL, 1 );
             }
         } );
 
@@ -1606,7 +1606,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldNotReportRelationshipGroupInconsistenciesForConsistentRecords() throws Exception
     {
         // given
@@ -1639,7 +1639,7 @@ public class FullCheckIntegrationTest
 
                 tx.create( withOwner( withRelationship( withNext( new RelationshipGroupRecord( groupA, C ), groupB ),
                         Direction.OUTGOING, rel ), nodeA ) );
-                tx.create( withOwner( new RelationshipGroupRecord( groupB, T ), nodeA ) );
+                tx.create( withOwner( new RelationshipGroupRecord( groupB, t ), nodeA ) );
             }
         } );
 
@@ -1650,7 +1650,7 @@ public class FullCheckIntegrationTest
         assertTrue( "should be consistent", stats.isConsistent() );
     }
 
-    @Test
+	@Test
     public void shouldReportWrongNodeCountsEntries() throws Exception
     {
         // given
@@ -1672,7 +1672,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportWrongRelationshipCountsEntries() throws Exception
     {
         // given
@@ -1694,7 +1694,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportIfSomeKeysAreMissing() throws Exception
     {
         // given
@@ -1716,7 +1716,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportIfThereAreExtraKeys() throws Exception
     {
         // given
@@ -1738,7 +1738,7 @@ public class FullCheckIntegrationTest
                    .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportDuplicatedIndexRules() throws Exception
     {
         // Given
@@ -1754,7 +1754,7 @@ public class FullCheckIntegrationTest
         on( stats ).verify( RecordType.SCHEMA, 1 ).andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportDuplicatedCompositeIndexRules() throws Exception
     {
         // Given
@@ -1772,7 +1772,7 @@ public class FullCheckIntegrationTest
         on( stats ).verify( RecordType.SCHEMA, 1 ).andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportDuplicatedUniquenessConstraintRules() throws Exception
     {
         // Given
@@ -1789,7 +1789,7 @@ public class FullCheckIntegrationTest
                 .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportDuplicatedCompositeUniquenessConstraintRules() throws Exception
     {
         // Given
@@ -1807,7 +1807,7 @@ public class FullCheckIntegrationTest
                 .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportDuplicatedNodeKeyConstraintRules() throws Exception
     {
         // Given
@@ -1825,7 +1825,7 @@ public class FullCheckIntegrationTest
                 .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportDuplicatedNodePropertyExistenceConstraintRules() throws Exception
     {
         // Given
@@ -1841,7 +1841,7 @@ public class FullCheckIntegrationTest
         on( stats ).verify( RecordType.SCHEMA, 1 ).andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportDuplicatedRelationshipPropertyExistenceConstraintRules() throws Exception
     {
         // Given
@@ -1857,7 +1857,7 @@ public class FullCheckIntegrationTest
         on( stats ).verify( RecordType.SCHEMA, 1 ).andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidLabelIdInIndexRule() throws Exception
     {
         // Given
@@ -1872,7 +1872,7 @@ public class FullCheckIntegrationTest
         on( stats ).verify( RecordType.SCHEMA, 1 ).andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidLabelIdInUniquenessConstraintRule() throws Exception
     {
         // Given
@@ -1888,7 +1888,7 @@ public class FullCheckIntegrationTest
                 .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidLabelIdInNodeKeyConstraintRule() throws Exception
     {
         // Given
@@ -1904,7 +1904,7 @@ public class FullCheckIntegrationTest
                 .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidLabelIdInNodePropertyExistenceConstraintRule() throws Exception
     {
         // Given
@@ -1919,7 +1919,7 @@ public class FullCheckIntegrationTest
         on( stats ).verify( RecordType.SCHEMA, 1 ).andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidPropertyKeyIdInIndexRule() throws Exception
     {
         // Given
@@ -1934,7 +1934,7 @@ public class FullCheckIntegrationTest
         on( stats ).verify( RecordType.SCHEMA, 1 ).andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidSecondPropertyKeyIdInIndexRule() throws Exception
     {
         // Given
@@ -1950,7 +1950,7 @@ public class FullCheckIntegrationTest
         on( stats ).verify( RecordType.SCHEMA, 1 ).andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidPropertyKeyIdInUniquenessConstraintRule() throws Exception
     {
         // Given
@@ -1966,7 +1966,7 @@ public class FullCheckIntegrationTest
                 .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidSecondPropertyKeyIdInUniquenessConstraintRule() throws Exception
     {
         // Given
@@ -1983,7 +1983,7 @@ public class FullCheckIntegrationTest
                 .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidSecondPropertyKeyIdInNodeKeyConstraintRule() throws Exception
     {
         // Given
@@ -2000,7 +2000,7 @@ public class FullCheckIntegrationTest
                 .andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidPropertyKeyIdInNodePropertyExistenceConstraintRule() throws Exception
     {
         // Given
@@ -2015,7 +2015,7 @@ public class FullCheckIntegrationTest
         on( stats ).verify( RecordType.SCHEMA, 1 ).andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportInvalidRelTypeIdInRelationshipPropertyExistenceConstraintRule() throws Exception
     {
         // Given
@@ -2030,7 +2030,7 @@ public class FullCheckIntegrationTest
         on( stats ).verify( RecordType.SCHEMA, 1 ).andThatsAllFolks();
     }
 
-    @Test
+	@Test
     public void shouldReportNothingForUniquenessAndPropertyExistenceConstraintOnSameLabelAndProperty() throws Exception
     {
         // Given
@@ -2047,7 +2047,7 @@ public class FullCheckIntegrationTest
         assertTrue( stats.isConsistent() );
     }
 
-    @Test
+	@Test
     public void shouldReportNothingForNodeKeyAndPropertyExistenceConstraintOnSameLabelAndProperty() throws Exception
     {
         // Given
@@ -2064,7 +2064,7 @@ public class FullCheckIntegrationTest
         assertTrue( stats.isConsistent() );
     }
 
-    @Test
+	@Test
     public void shouldManageUnusedRecordsWithWeirdDataIn() throws Exception
     {
         // Given
@@ -2099,14 +2099,14 @@ public class FullCheckIntegrationTest
         assertTrue( stats.isConsistent() );
     }
 
-    @Test
+	@Test
     public void shouldReportCircularNodePropertyRecordChain() throws Exception
     {
         shouldReportCircularPropertyRecordChain( RecordType.NODE, ( tx, next, propertyRecordId ) -> tx.create(
                 new NodeRecord( next.node() ).initialize( true, propertyRecordId, false, -1, Record.NO_LABELS_FIELD.longValue() ) ) );
     }
 
-    @Test
+	@Test
     public void shouldReportCircularRelationshipPropertyRecordChain() throws Exception
     {
         int relType = createRelType();
@@ -2124,19 +2124,19 @@ public class FullCheckIntegrationTest
         } );
     }
 
-    @Test
+	@Test
     public void shouldReportMissingCountsStore() throws Exception
     {
         shouldReportBadCountsStore( this::corruptFileIfExists );
     }
 
-    @Test
+	@Test
     public void shouldReportBrokenCountsStore() throws Exception
     {
         shouldReportBadCountsStore( File::delete );
     }
 
-    private void shouldReportBadCountsStore( ThrowingFunction<File,Boolean,IOException> fileAction ) throws Exception
+	private void shouldReportBadCountsStore( ThrowingFunction<File,Boolean,IOException> fileAction ) throws Exception
     {
         // given
         boolean aCorrupted = fileAction.apply( fixture.databaseLayout().countStoreA() );
@@ -2150,27 +2150,26 @@ public class FullCheckIntegrationTest
         on( stats ).verify( RecordType.COUNTS, 1 );
     }
 
-    private boolean corruptFileIfExists( File file ) throws IOException
+	private boolean corruptFileIfExists( File file ) throws IOException
     {
-        if ( file.exists() )
-        {
-            try ( RandomAccessFile accessFile = new RandomAccessFile( file, "rw" ) )
-            {
-                FileChannel channel = accessFile.getChannel();
-                ByteBuffer buffer = ByteBuffer.allocate( 30 );
-                while ( buffer.hasRemaining() )
-                {
-                    buffer.put( (byte) 9 );
-                }
-                buffer.flip();
-                channel.write( buffer );
-            }
-            return true;
-        }
-        return false;
+        if (!file.exists()) {
+			return false;
+		}
+		try ( RandomAccessFile accessFile = new RandomAccessFile( file, "rw" ) )
+		{
+		    FileChannel channel = accessFile.getChannel();
+		    ByteBuffer buffer = ByteBuffer.allocate( 30 );
+		    while ( buffer.hasRemaining() )
+		    {
+		        buffer.put( (byte) 9 );
+		    }
+		    buffer.flip();
+		    channel.write( buffer );
+		}
+		return true;
     }
 
-    private void shouldReportCircularPropertyRecordChain( RecordType expectedInconsistentRecordType, EntityCreator entityCreator ) throws Exception
+	private void shouldReportCircularPropertyRecordChain( RecordType expectedInconsistentRecordType, EntityCreator entityCreator ) throws Exception
     {
         // Given
         fixture.apply( new GraphStoreFixture.Transaction()
@@ -2209,17 +2208,12 @@ public class FullCheckIntegrationTest
         on( stats ).verify( expectedInconsistentRecordType, 1 );
     }
 
-    private interface EntityCreator
-    {
-        void create( TransactionDataBuilder tx, IdGenerator next, long propertyRecordId );
-    }
-
-    private ConsistencySummaryStatistics check() throws ConsistencyCheckIncompleteException
+	private ConsistencySummaryStatistics check() throws ConsistencyCheckIncompleteException
     {
         return check( fixture.readOnlyDirectStoreAccess() );
     }
 
-    private ConsistencySummaryStatistics check( DirectStoreAccess stores ) throws ConsistencyCheckIncompleteException
+	private ConsistencySummaryStatistics check( DirectStoreAccess stores ) throws ConsistencyCheckIncompleteException
     {
         Config config = config();
         FullCheck checker = new FullCheck( config, ProgressMonitorFactory.NONE, fixture.getAccessStatistics(),
@@ -2233,7 +2227,7 @@ public class FullCheckIntegrationTest
                 } );
     }
 
-    private Config config()
+	private Config config()
     {
         Map<String,String> params = stringMap(
                 // Enable property owners check by default in tests:
@@ -2242,7 +2236,7 @@ public class FullCheckIntegrationTest
         return Config.defaults( params );
     }
 
-    protected static RelationshipGroupRecord withRelationships( RelationshipGroupRecord group, long out,
+	protected static RelationshipGroupRecord withRelationships( RelationshipGroupRecord group, long out,
             long in, long loop )
     {
         group.setFirstOut( out );
@@ -2251,7 +2245,7 @@ public class FullCheckIntegrationTest
         return group;
     }
 
-    protected static RelationshipGroupRecord withRelationship( RelationshipGroupRecord group, Direction direction,
+	protected static RelationshipGroupRecord withRelationship( RelationshipGroupRecord group, Direction direction,
             long rel )
     {
         switch ( direction )
@@ -2271,7 +2265,7 @@ public class FullCheckIntegrationTest
         return group;
     }
 
-    protected static RelationshipRecord firstInChains( RelationshipRecord relationship, int count )
+	protected static RelationshipRecord firstInChains( RelationshipRecord relationship, int count )
     {
         relationship.setFirstInFirstChain( true );
         relationship.setFirstPrevRel( count );
@@ -2280,24 +2274,24 @@ public class FullCheckIntegrationTest
         return relationship;
     }
 
-    protected static RelationshipGroupRecord withNext( RelationshipGroupRecord group, long next )
+	protected static RelationshipGroupRecord withNext( RelationshipGroupRecord group, long next )
     {
         group.setNext( next );
         return group;
     }
 
-    protected static RelationshipGroupRecord withOwner( RelationshipGroupRecord record, long owner )
+	protected static RelationshipGroupRecord withOwner( RelationshipGroupRecord record, long owner )
     {
         record.setOwningNode( owner );
         return record;
     }
 
-    protected String getRecordFormatName()
+	protected String getRecordFormatName()
     {
         return StringUtils.EMPTY;
     }
 
-    private int createLabel() throws Exception
+	private int createLabel() throws Exception
     {
         final MutableInt id = new MutableInt( -1 );
 
@@ -2316,12 +2310,12 @@ public class FullCheckIntegrationTest
         return id.intValue();
     }
 
-    private int createPropertyKey() throws Exception
+	private int createPropertyKey() throws Exception
     {
         return createPropertyKey( "property" );
     }
 
-    private int createPropertyKey( String propertyKey ) throws Exception
+	private int createPropertyKey( String propertyKey ) throws Exception
     {
         final MutableInt id = new MutableInt( -1 );
 
@@ -2340,7 +2334,7 @@ public class FullCheckIntegrationTest
         return id.intValue();
     }
 
-    private int createRelType() throws Exception
+	private int createRelType() throws Exception
     {
         final MutableInt id = new MutableInt( -1 );
 
@@ -2359,7 +2353,7 @@ public class FullCheckIntegrationTest
         return id.intValue();
     }
 
-    private void createIndexRule( final int labelId, final int... propertyKeyIds ) throws Exception
+	private void createIndexRule( final int labelId, final int... propertyKeyIds ) throws Exception
     {
         fixture.apply( new GraphStoreFixture.Transaction()
         {
@@ -2380,7 +2374,7 @@ public class FullCheckIntegrationTest
         } );
     }
 
-    private void createUniquenessConstraintRule( final int labelId, final int... propertyKeyIds )
+	private void createUniquenessConstraintRule( final int labelId, final int... propertyKeyIds )
     {
         SchemaStore schemaStore = (SchemaStore) fixture.directStoreAccess().nativeStores().getSchemaStore();
 
@@ -2396,7 +2390,7 @@ public class FullCheckIntegrationTest
         writeToSchemaStore( schemaStore, uniqueRule );
     }
 
-    private void createNodeKeyConstraintRule( final int labelId, final int... propertyKeyIds )
+	private void createNodeKeyConstraintRule( final int labelId, final int... propertyKeyIds )
     {
         SchemaStore schemaStore = (SchemaStore) fixture.directStoreAccess().nativeStores().getSchemaStore();
 
@@ -2412,34 +2406,46 @@ public class FullCheckIntegrationTest
         writeToSchemaStore( schemaStore, nodeKeyRule );
     }
 
-    private void createNodePropertyExistenceConstraint( int labelId, int propertyKeyId )
+	private void createNodePropertyExistenceConstraint( int labelId, int propertyKeyId )
     {
         SchemaStore schemaStore = (SchemaStore) fixture.directStoreAccess().nativeStores().getSchemaStore();
         ConstraintRule rule = nodePropertyExistenceConstraintRule( schemaStore.nextId(), labelId, propertyKeyId );
         writeToSchemaStore( schemaStore, rule );
     }
 
-    private void createRelationshipPropertyExistenceConstraint( int relTypeId, int propertyKeyId )
+	private void createRelationshipPropertyExistenceConstraint( int relTypeId, int propertyKeyId )
     {
         SchemaStore schemaStore = (SchemaStore) fixture.directStoreAccess().nativeStores().getSchemaStore();
         ConstraintRule rule = relPropertyExistenceConstraintRule( schemaStore.nextId(), relTypeId, propertyKeyId );
         writeToSchemaStore( schemaStore, rule );
     }
 
-    private void writeToSchemaStore( SchemaStore schemaStore, SchemaRule rule )
+	private void writeToSchemaStore( SchemaStore schemaStore, SchemaRule rule )
     {
         Collection<DynamicRecord> records = schemaStore.allocateFrom( rule );
-        for ( DynamicRecord record : records )
-        {
-            schemaStore.updateRecord( record );
-        }
+        records.forEach(schemaStore::updateRecord);
     }
 
-    private static KernelTransaction transactionOn( GraphDatabaseService db )
+	private static KernelTransaction transactionOn( GraphDatabaseService db )
     {
         DependencyResolver resolver = ((GraphDatabaseAPI) db).getDependencyResolver();
         ThreadToStatementContextBridge bridge = resolver.resolveDependency( ThreadToStatementContextBridge.class );
         return bridge.getKernelTransactionBoundToThisThread( true );
+    }
+
+	private static Collection<DynamicRecord> serializeRule( SchemaRule rule, DynamicRecord... records )
+    {
+        byte[] data = SchemaRuleSerialization.serialize( rule );
+        DynamicRecordAllocator dynamicRecordAllocator =
+                new ReusableRecordsCompositeAllocator( asList( records ), schemaAllocator );
+        Collection<DynamicRecord> result = new ArrayList<>();
+        AbstractDynamicStore.allocateRecordsFromBytes( result, data, dynamicRecordAllocator );
+        return result;
+    }
+
+    private interface EntityCreator
+    {
+        void create( TransactionDataBuilder tx, IdGenerator next, long propertyRecordId );
     }
 
     private static class Reference<T>
@@ -2469,17 +2475,17 @@ public class FullCheckIntegrationTest
         private final Set<RecordType> types = new HashSet<>();
         private long total;
 
-        public static ConsistencySummaryVerifier on( ConsistencySummaryStatistics stats )
-        {
-            return new ConsistencySummaryVerifier( stats );
-        }
-
         private ConsistencySummaryVerifier( ConsistencySummaryStatistics stats )
         {
             this.stats = stats;
         }
 
-        public ConsistencySummaryVerifier verify( RecordType type, int inconsistencies )
+		public static ConsistencySummaryVerifier on( ConsistencySummaryStatistics stats )
+        {
+            return new ConsistencySummaryVerifier( stats );
+        }
+
+		public ConsistencySummaryVerifier verify( RecordType type, int inconsistencies )
         {
             if ( !types.add( type ) )
             {
@@ -2491,36 +2497,9 @@ public class FullCheckIntegrationTest
             return this;
         }
 
-        public void andThatsAllFolks()
+		public void andThatsAllFolks()
         {
             assertEquals( "Total number of inconsistencies: " + stats, total, stats.getTotalInconsistencyCount() );
         }
     }
-
-    private static Collection<DynamicRecord> serializeRule( SchemaRule rule, DynamicRecord... records )
-    {
-        byte[] data = SchemaRuleSerialization.serialize( rule );
-        DynamicRecordAllocator dynamicRecordAllocator =
-                new ReusableRecordsCompositeAllocator( asList( records ), schemaAllocator );
-        Collection<DynamicRecord> result = new ArrayList<>();
-        AbstractDynamicStore.allocateRecordsFromBytes( result, data, dynamicRecordAllocator );
-        return result;
-    }
-
-    private static DynamicRecordAllocator schemaAllocator = new DynamicRecordAllocator()
-    {
-        private int next = 10000; // we start high to not conflict with real ids
-
-        @Override
-        public int getRecordDataSize()
-        {
-            return SchemaStore.BLOCK_SIZE;
-        }
-
-        @Override
-        public DynamicRecord nextRecord()
-        {
-            return new DynamicRecord( next++ );
-        }
-    };
 }

@@ -173,12 +173,11 @@ public class PropertyCreator
     {
         host.removePropertyBlock( block.getKeyIndexId() );
         host.setChanged( primitive );
-        for ( DynamicRecord record : block.getValueRecords() )
-        {
+        block.getValueRecords().forEach(record -> {
             assert record.inUse();
             record.setInUse( false, block.getType().intValue() );
             host.addDeletedRecord( record );
-        }
+        });
     }
 
     private boolean propertyFitsInside( int newBlockSizeInBytes, PropertyRecord propRecord )

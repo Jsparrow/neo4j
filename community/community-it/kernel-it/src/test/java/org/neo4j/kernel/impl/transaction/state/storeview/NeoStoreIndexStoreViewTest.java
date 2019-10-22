@@ -385,7 +385,7 @@ public class NeoStoreIndexStoreViewTest
         private EntityUpdates propertyUpdates;
 
         @Override
-        public boolean visit( EntityUpdates element ) throws RuntimeException
+        public boolean visit( EntityUpdates element )
         {
             propertyUpdates = element;
             return true;

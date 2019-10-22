@@ -65,13 +65,12 @@ class PropertyReader implements NodePropertyAccessor
     List<PropertyBlock> propertyBlocks( Collection<PropertyRecord> records )
     {
         List<PropertyBlock> propertyBlocks = new ArrayList<>();
-        for ( PropertyRecord record : records )
-        {
+        records.forEach(record -> {
             for ( PropertyBlock block : record )
             {
                 propertyBlocks.add( block );
             }
-        }
+        });
         return propertyBlocks;
     }
 
@@ -142,7 +141,7 @@ class PropertyReader implements NodePropertyAccessor
         }
 
         @Override
-        public boolean visit( PropertyRecord element ) throws RuntimeException
+        public boolean visit( PropertyRecord element )
         {
             for ( PropertyBlock block : element )
             {

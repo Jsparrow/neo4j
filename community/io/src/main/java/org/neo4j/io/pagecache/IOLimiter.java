@@ -41,8 +41,13 @@ public interface IOLimiter
      * {@link #maybeLimitIO(long, int, Flushable)} on the first call in a flush.
      */
     long INITIAL_STAMP = 0;
+	/**
+     * An IOPSLimiter implementation that does not restrict the rate of IO. Use this implementation if you want the
+     * flush to go as fast as possible.
+     */
+    IOLimiter UNLIMITED = ( previousStamp, recentlyCompletedIOs, flushable ) -> previousStamp;
 
-    /**
+	/**
      * Invoked at regular intervals during flushing of the {@link PageCache} or {@link PagedFile}s.
      * <p/>
      * For the first call in a flush, the {@code previousStamp} should have the {@link #INITIAL_STAMP} value.
@@ -67,7 +72,7 @@ public interface IOLimiter
      */
     long maybeLimitIO( long previousStamp, int recentlyCompletedIOs, Flushable flushable );
 
-    /**
+	/**
      * Temporarily disable the IOLimiter, to allow IO to proceed at full speed.
      * This call <strong>MUST</strong> be paired with a subsequent {@link #enableLimit()} call.
      * This method is thread-safe and reentrant. Multiple concurrent calls will "stack", and IO limitations will be
@@ -93,7 +98,7 @@ public interface IOLimiter
         // By default this method does nothing, assuming the implementation always has no or fixed limits.
     }
 
-    /**
+	/**
      * Re-enable the IOLimiter, after having disabled it with {@link #disableLimit()}.
      *
      * @see #disableLimit() for how to use this method.
@@ -103,13 +108,7 @@ public interface IOLimiter
         // Same as for disableLimit().
     }
 
-    /**
-     * An IOPSLimiter implementation that does not restrict the rate of IO. Use this implementation if you want the
-     * flush to go as fast as possible.
-     */
-    IOLimiter UNLIMITED = ( previousStamp, recentlyCompletedIOs, flushable ) -> previousStamp;
-
-    /**
+	/**
      * @return {@code true} if IO is currently limited
      */
     default boolean isLimited()

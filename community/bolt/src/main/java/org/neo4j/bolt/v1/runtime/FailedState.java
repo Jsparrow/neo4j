@@ -88,12 +88,11 @@ public class FailedState implements BoltStateMachineState
     private BoltStateMachineState processResetMessage( StateMachineContext context ) throws BoltConnectionFatality
     {
         boolean success = context.resetMachine();
-        if ( success )
-        {
-            context.connectionState().resetPendingFailedAndIgnored();
-            return readyState;
-        }
-        return this;
+        if (!success) {
+			return this;
+		}
+		context.connectionState().resetPendingFailedAndIgnored();
+		return readyState;
     }
 
     private void assertInitialized()

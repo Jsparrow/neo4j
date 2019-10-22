@@ -152,13 +152,11 @@ public class ProtocolHandshaker extends ChannelInboundHandlerAdapter
 
     private boolean verifyBoltPreamble()
     {
-        if ( handshakeBuffer.getInt( 0 ) != BOLT_MAGIC_PREAMBLE )
-        {
-            log.debug( "Invalid Bolt handshake signature. Expected 0x%08X, but got: 0x%08X", BOLT_MAGIC_PREAMBLE, handshakeBuffer.getInt( 0 ) );
-            return false;
-        }
-
-        return true;
+        if (handshakeBuffer.getInt( 0 ) == BOLT_MAGIC_PREAMBLE) {
+			return true;
+		}
+		log.debug( "Invalid Bolt handshake signature. Expected 0x%08X, but got: 0x%08X", BOLT_MAGIC_PREAMBLE, handshakeBuffer.getInt( 0 ) );
+		return false;
     }
 
     private boolean performHandshake()

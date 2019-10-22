@@ -111,8 +111,7 @@ final class GraphCountsSection
             relationshipTypeCount.put( "count", count );
             relationshipCounts.add( relationshipTypeCount );
 
-            for ( NamedToken label : labels )
-            {
+            labels.forEach(label -> {
                 long startCount = read.countsForRelationshipWithoutTxState( label.id(), t.id(), -1 );
                 if ( startCount > 0 )
                 {
@@ -131,7 +130,7 @@ final class GraphCountsSection
                     x.put( "count", endCount );
                     relationshipCounts.add( x );
                 }
-            }
+            });
         } );
 
         return relationshipCounts;

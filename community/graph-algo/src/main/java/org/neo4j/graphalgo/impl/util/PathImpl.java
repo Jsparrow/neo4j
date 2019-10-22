@@ -35,7 +35,230 @@ import static org.neo4j.helpers.collection.Iterators.iteratorsEqual;
 
 public final class PathImpl implements Path
 {
-    public static final class Builder
+    private final Node start;
+	private final Relationship[] path;
+	private final Node end;
+
+	private PathImpl( Builder left, Builder right )
+    {
+        Node endNode = null;
+        path = new Relationship[left.size + ( right == null ? 0 : right.size )];
+        if ( right != null )
+        {
+            for ( int i = left.size, total = i + right.size; i < total; i++ )
+            {
+                path[i] = right.relationship;
+                right = right.previous;
+            }
+            assert right.relationship == null : "right Path.Builder size error";
+            endNode = right.start;
+        }
+
+        for ( int i = left.size - 1; i >= 0; i-- )
+        {
+            path[i] = left.relationship;
+            left = left.previous;
+        }
+        assert left.relationship == null : "left Path.Builder size error";
+        start = left.start;
+        end = endNode;
+    }
+
+	private static String relToString( Relationship rel )
+    {
+        return new StringBuilder().append(rel.getStartNode()).append("--").append(rel.getType()).append("-->").append(rel.getEndNode()).toString();
+    }
+
+	public static Path singular( Node start )
+    {
+        return new Builder( start ).build();
+    }
+
+	@Override
+    public Node startNode()
+    {
+        return start;
+    }
+
+	@Override
+    public Node endNode()
+    {
+        if ( end != null )
+        {
+            return end;
+        }
+
+        // TODO We could really figure this out in the constructor
+        Node stepNode = null;
+        for ( Node node : nodes() )
+        {
+            stepNode = node;
+        }
+        return stepNode;
+    }
+
+	@Override
+    public Relationship lastRelationship()
+    {
+        return path != null && path.length > 0 ? path[path.length - 1] : null;
+    }
+
+	@Override
+    public Iterable<Node> nodes()
+    {
+        return nodeIterator( start, relationships() );
+    }
+
+	@Override
+    public Iterable<Node> reverseNodes()
+    {
+        return nodeIterator( endNode(), reverseRelationships() );
+    }
+
+	private Iterable<Node> nodeIterator( final Node start, final Iterable<Relationship> relationships )
+    {
+        return () -> new Iterator<Node>()
+        {
+            Node current = start;
+            int index;
+            Iterator<Relationship> relationshipIterator = relationships.iterator();
+
+            @Override
+            public boolean hasNext()
+            {
+                return index <= path.length;
+            }
+
+            @Override
+            public Node next()
+            {
+                if ( current == null )
+                {
+                    throw new NoSuchElementException();
+                }
+                Node next = null;
+                if ( index < path.length )
+                {
+                    if ( !relationshipIterator.hasNext() )
+                    {
+                        throw new IllegalStateException( String.format( "Number of relationships: %d does not" +
+                                              " match with path length: %d.", index, path.length ) );
+                    }
+                    next = relationshipIterator.next().getOtherNode( current );
+                }
+                index += 1;
+                try
+                {
+                    return current;
+                }
+                finally
+                {
+                    current = next;
+                }
+            }
+
+            @Override
+            public void remove()
+            {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+	@Override
+    public Iterable<Relationship> relationships()
+    {
+        return () -> new ArrayIterator<>( path );
+    }
+
+	@Override
+    public Iterable<Relationship> reverseRelationships()
+    {
+        return () -> new ReverseArrayIterator<>( path );
+    }
+
+	@Override
+    public Iterator<PropertyContainer> iterator()
+    {
+        return new Iterator<PropertyContainer>()
+        {
+            Iterator<? extends PropertyContainer> current = nodes().iterator();
+            Iterator<? extends PropertyContainer> next = relationships().iterator();
+
+            @Override
+            public boolean hasNext()
+            {
+                return current.hasNext();
+            }
+
+            @Override
+            public PropertyContainer next()
+            {
+                try
+                {
+                    return current.next();
+                }
+                finally
+                {
+                    Iterator<? extends PropertyContainer> temp = current;
+                    current = next;
+                    next = temp;
+                }
+            }
+
+            @Override
+            public void remove()
+            {
+                next.remove();
+            }
+        };
+    }
+
+	@Override
+    public int length()
+    {
+        return path.length;
+    }
+
+	@Override
+    public int hashCode()
+    {
+        if ( path.length == 0 )
+        {
+            return start.hashCode();
+        }
+        else
+        {
+            return Arrays.hashCode( path );
+        }
+    }
+
+	@Override
+    public boolean equals( Object obj )
+    {
+        if ( this == obj )
+        {
+            return true;
+        }
+        else if ( obj instanceof Path )
+        {
+            Path other = (Path) obj;
+            return start.equals( other.startNode() ) &&
+                    iteratorsEqual( this.relationships().iterator(), other.relationships().iterator() );
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+	@Override
+    public String toString()
+    {
+        return Paths.defaultPathToString( this );
+    }
+
+	public static final class Builder
     {
         private final Builder previous;
         private final Node start;
@@ -95,232 +318,8 @@ public final class PathImpl implements Path
             }
             else
             {
-                return relToString( relationship ) + ":" + previous.toString();
+                return new StringBuilder().append(relToString( relationship )).append(":").append(previous.toString()).toString();
             }
         }
-    }
-
-    private static String relToString( Relationship rel )
-    {
-        return rel.getStartNode() + "--" + rel.getType() + "-->"
-               + rel.getEndNode();
-    }
-
-    private final Node start;
-    private final Relationship[] path;
-    private final Node end;
-
-    private PathImpl( Builder left, Builder right )
-    {
-        Node endNode = null;
-        path = new Relationship[left.size + ( right == null ? 0 : right.size )];
-        if ( right != null )
-        {
-            for ( int i = left.size, total = i + right.size; i < total; i++ )
-            {
-                path[i] = right.relationship;
-                right = right.previous;
-            }
-            assert right.relationship == null : "right Path.Builder size error";
-            endNode = right.start;
-        }
-
-        for ( int i = left.size - 1; i >= 0; i-- )
-        {
-            path[i] = left.relationship;
-            left = left.previous;
-        }
-        assert left.relationship == null : "left Path.Builder size error";
-        start = left.start;
-        end = endNode;
-    }
-
-    public static Path singular( Node start )
-    {
-        return new Builder( start ).build();
-    }
-
-    @Override
-    public Node startNode()
-    {
-        return start;
-    }
-
-    @Override
-    public Node endNode()
-    {
-        if ( end != null )
-        {
-            return end;
-        }
-
-        // TODO We could really figure this out in the constructor
-        Node stepNode = null;
-        for ( Node node : nodes() )
-        {
-            stepNode = node;
-        }
-        return stepNode;
-    }
-
-    @Override
-    public Relationship lastRelationship()
-    {
-        return path != null && path.length > 0 ? path[path.length - 1] : null;
-    }
-
-    @Override
-    public Iterable<Node> nodes()
-    {
-        return nodeIterator( start, relationships() );
-    }
-
-    @Override
-    public Iterable<Node> reverseNodes()
-    {
-        return nodeIterator( endNode(), reverseRelationships() );
-    }
-
-    private Iterable<Node> nodeIterator( final Node start, final Iterable<Relationship> relationships )
-    {
-        return () -> new Iterator<Node>()
-        {
-            Node current = start;
-            int index;
-            Iterator<Relationship> relationshipIterator = relationships.iterator();
-
-            @Override
-            public boolean hasNext()
-            {
-                return index <= path.length;
-            }
-
-            @Override
-            public Node next()
-            {
-                if ( current == null )
-                {
-                    throw new NoSuchElementException();
-                }
-                Node next = null;
-                if ( index < path.length )
-                {
-                    if ( !relationshipIterator.hasNext() )
-                    {
-                        throw new IllegalStateException( String.format( "Number of relationships: %d does not" +
-                                              " match with path length: %d.", index, path.length ) );
-                    }
-                    next = relationshipIterator.next().getOtherNode( current );
-                }
-                index += 1;
-                try
-                {
-                    return current;
-                }
-                finally
-                {
-                    current = next;
-                }
-            }
-
-            @Override
-            public void remove()
-            {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
-
-    @Override
-    public Iterable<Relationship> relationships()
-    {
-        return () -> new ArrayIterator<>( path );
-    }
-
-    @Override
-    public Iterable<Relationship> reverseRelationships()
-    {
-        return () -> new ReverseArrayIterator<>( path );
-    }
-
-    @Override
-    public Iterator<PropertyContainer> iterator()
-    {
-        return new Iterator<PropertyContainer>()
-        {
-            Iterator<? extends PropertyContainer> current = nodes().iterator();
-            Iterator<? extends PropertyContainer> next = relationships().iterator();
-
-            @Override
-            public boolean hasNext()
-            {
-                return current.hasNext();
-            }
-
-            @Override
-            public PropertyContainer next()
-            {
-                try
-                {
-                    return current.next();
-                }
-                finally
-                {
-                    Iterator<? extends PropertyContainer> temp = current;
-                    current = next;
-                    next = temp;
-                }
-            }
-
-            @Override
-            public void remove()
-            {
-                next.remove();
-            }
-        };
-    }
-
-    @Override
-    public int length()
-    {
-        return path.length;
-    }
-
-    @Override
-    public int hashCode()
-    {
-        if ( path.length == 0 )
-        {
-            return start.hashCode();
-        }
-        else
-        {
-            return Arrays.hashCode( path );
-        }
-    }
-
-    @Override
-    public boolean equals( Object obj )
-    {
-        if ( this == obj )
-        {
-            return true;
-        }
-        else if ( obj instanceof Path )
-        {
-            Path other = (Path) obj;
-            return start.equals( other.startNode() ) &&
-                    iteratorsEqual( this.relationships().iterator(), other.relationships().iterator() );
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    @Override
-    public String toString()
-    {
-        return Paths.defaultPathToString( this );
     }
 }

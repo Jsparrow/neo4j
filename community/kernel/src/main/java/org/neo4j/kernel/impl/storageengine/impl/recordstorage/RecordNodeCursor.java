@@ -187,11 +187,11 @@ public class RecordNodeCursor extends NodeRecord implements StorageNodeCursor
     @Override
     public void reset()
     {
-        if ( open )
-        {
-            open = false;
-            resetState();
-        }
+        if (!open) {
+			return;
+		}
+		open = false;
+		resetState();
     }
 
     private void resetState()
@@ -215,21 +215,19 @@ public class RecordNodeCursor extends NodeRecord implements StorageNodeCursor
         }
         else
         {
-            return "RecordNodeCursor[id=" + getId() +
-                    ", open state with: highMark=" + highMark +
-                    ", next=" + next +
-                    ", underlying record=" + super.toString() + "]";
+            return new StringBuilder().append("RecordNodeCursor[id=").append(getId()).append(", open state with: highMark=").append(highMark).append(", next=").append(next)
+					.append(", underlying record=").append(super.toString()).append("]").toString();
         }
     }
 
     @Override
     public void close()
     {
-        if ( pageCursor != null )
-        {
-            pageCursor.close();
-            pageCursor = null;
-        }
+        if (pageCursor == null) {
+			return;
+		}
+		pageCursor.close();
+		pageCursor = null;
     }
 
     private PageCursor nodePage( long reference )

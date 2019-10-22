@@ -38,10 +38,7 @@ public class StatusTest
         Set<Object> codes = new HashSet<>();
 
         // when
-        for ( Status status : Status.Code.all() )
-        {
-            codes.add( status.code().serialize() );
-        }
+		Status.Code.all().forEach(status -> codes.add(status.code().serialize()));
 
         // then
         assertNotEquals( 0, codes.size() );

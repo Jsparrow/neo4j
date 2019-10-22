@@ -63,22 +63,18 @@ public class MessageAccumulator extends ByteToMessageDecoder
     @Override
     protected void decode( ChannelHandlerContext channelHandlerContext, ByteBuf in, List<Object> out )
     {
-        if ( readMessageBoundary )
-        {
-            // now we have a complete message in the input buffer
-
-            // increment ref count of the buffer and create it's duplicate that shares the content
-            // duplicate will be the output of this decoded and input for the next one
-            ByteBuf messageBuf = in.retainedDuplicate();
-
-            // signal that whole message was read by making input buffer seem like it was fully read/consumed
-            in.readerIndex( in.readableBytes() );
-
-            // pass the full message to the next handler in the pipeline
-            out.add( messageBuf );
-
-            readMessageBoundary = false;
-        }
+        // now we have a complete message in the input buffer
+		if (!readMessageBoundary) {
+			return;
+		}
+		// increment ref count of the buffer and create it's duplicate that shares the content
+		// duplicate will be the output of this decoded and input for the next one
+		ByteBuf messageBuf = in.retainedDuplicate();
+		// signal that whole message was read by making input buffer seem like it was fully read/consumed
+		in.readerIndex( in.readableBytes() );
+		// pass the full message to the next handler in the pipeline
+		out.add( messageBuf );
+		readMessageBoundary = false;
     }
 
     private void assertNonEmptyMessage()

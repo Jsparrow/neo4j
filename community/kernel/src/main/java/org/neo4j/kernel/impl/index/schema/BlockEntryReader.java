@@ -49,7 +49,8 @@ public class BlockEntryReader<KEY,VALUE> implements BlockEntryCursor<KEY,VALUE>
         this.value = layout.newValue();
     }
 
-    public boolean next() throws IOException
+    @Override
+	public boolean next() throws IOException
     {
         if ( readEntries >= entryCount )
         {
@@ -70,12 +71,14 @@ public class BlockEntryReader<KEY,VALUE> implements BlockEntryCursor<KEY,VALUE>
         return entryCount;
     }
 
-    public KEY key()
+    @Override
+	public KEY key()
     {
         return key;
     }
 
-    public VALUE value()
+    @Override
+	public VALUE value()
     {
         return value;
     }

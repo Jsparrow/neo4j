@@ -165,14 +165,18 @@ class LuceneTransactionState implements Closeable
     @Override
     public void close()
     {
-        for ( TxDataBoth data : this.txData.values() )
-        {
-            data.close();
-        }
+        this.txData.values().forEach(TxDataBoth::close);
         this.txData.clear();
     }
 
-    // Bad name
+    IndexSearcher getAdditionsAsSearcher( LuceneExplicitIndex index,
+            QueryContext context )
+    {
+        TxDataHolder data = addedTxDataOrNull( index );
+        return data != null ? data.asSearcher( context ) : null;
+    }
+
+	// Bad name
     private static class TxDataBoth
     {
         private TxDataHolder add;
@@ -238,15 +242,7 @@ class LuceneTransactionState implements Closeable
 
         private IllegalStateException illegalStateException()
         {
-            throw new IllegalStateException( "This index (" + index.getIdentifier() +
-                    ") has been marked as deleted in this transaction" );
+            throw new IllegalStateException( new StringBuilder().append("This index (").append(index.getIdentifier()).append(") has been marked as deleted in this transaction").toString() );
         }
-    }
-
-    IndexSearcher getAdditionsAsSearcher( LuceneExplicitIndex index,
-            QueryContext context )
-    {
-        TxDataHolder data = addedTxDataOrNull( index );
-        return data != null ? data.asSearcher( context ) : null;
     }
 }

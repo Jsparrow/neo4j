@@ -220,7 +220,16 @@ public abstract class DynamicRecordCheckTest
 
     abstract DynamicRecord record( long id );
 
-    @RunWith( JUnit4.class )
+    public static RecordStore<DynamicRecord> configureDynamicStore( int blockSize )
+    {
+        @SuppressWarnings( "unchecked" )
+        RecordStore<DynamicRecord> mock = mock( RecordStore.class );
+        when( mock.getRecordSize() ).thenReturn( blockSize + DynamicRecordFormat.RECORD_HEADER_SIZE );
+        when( mock.getRecordDataSize() ).thenReturn( blockSize );
+        return mock;
+    }
+
+	@RunWith( JUnit4.class )
     public static class StringDynamicRecordCheckTest extends DynamicRecordCheckTest
     {
         public StringDynamicRecordCheckTest()
@@ -287,14 +296,5 @@ public abstract class DynamicRecordCheckTest
             record.setLength( size );
             return record;
         }
-    }
-
-    public static RecordStore<DynamicRecord> configureDynamicStore( int blockSize )
-    {
-        @SuppressWarnings( "unchecked" )
-        RecordStore<DynamicRecord> mock = mock( RecordStore.class );
-        when( mock.getRecordSize() ).thenReturn( blockSize + DynamicRecordFormat.RECORD_HEADER_SIZE );
-        when( mock.getRecordDataSize() ).thenReturn( blockSize );
-        return mock;
     }
 }

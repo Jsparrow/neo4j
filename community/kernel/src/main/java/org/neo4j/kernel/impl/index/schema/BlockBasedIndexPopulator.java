@@ -200,14 +200,14 @@ public abstract class BlockBasedIndexPopulator<KEY extends NativeIndexKey<KEY>,V
     @Override
     public void add( Collection<? extends IndexEntryUpdate<?>> updates )
     {
-        if ( !updates.isEmpty() )
-        {
-            BlockStorage<KEY,VALUE> blockStorage = scanUpdates.get().blockStorage;
-            for ( IndexEntryUpdate<?> update : updates )
-            {
-                storeUpdate( update, blockStorage );
-            }
-        }
+        if (updates.isEmpty()) {
+			return;
+		}
+		BlockStorage<KEY,VALUE> blockStorage = scanUpdates.get().blockStorage;
+		for ( IndexEntryUpdate<?> update : updates )
+		{
+		    storeUpdate( update, blockStorage );
+		}
     }
 
     private void storeUpdate( long entityId, Value[] values, BlockStorage<KEY,VALUE> blockStorage )
@@ -390,18 +390,15 @@ public abstract class BlockBasedIndexPopulator<KEY extends NativeIndexKey<KEY>,V
 
     private void verifyUniqueSeek( RawCursor<Hit<KEY,VALUE>,IOException> seek ) throws IOException, IndexEntryConflictException
     {
-        if ( seek != null )
-        {
-            if ( seek.next() )
-            {
-                long firstEntityId = seek.get().key().getEntityId();
-                if ( seek.next() )
-                {
-                    long secondEntityId = seek.get().key().getEntityId();
-                    throw new IndexEntryConflictException( firstEntityId, secondEntityId, seek.get().key().asValues() );
-                }
-            }
-        }
+        boolean condition = seek != null && seek.next();
+		if ( condition ) {
+		    long firstEntityId = seek.get().key().getEntityId();
+		    if ( seek.next() )
+		    {
+		        long secondEntityId = seek.get().key().getEntityId();
+		        throw new IndexEntryConflictException( firstEntityId, secondEntityId, seek.get().key().asValues() );
+		    }
+		}
     }
 
     private void writeScanUpdatesToTree( RecordingConflictDetector<KEY,VALUE> recordingConflictDetector, Allocator allocator, int bufferSize )
@@ -602,17 +599,16 @@ public abstract class BlockBasedIndexPopulator<KEY extends NativeIndexKey<KEY>,V
     private void handleMergeConflict( Writer<KEY,VALUE> writer, RecordingConflictDetector<KEY,VALUE> recordingConflictDetector, KEY key, VALUE value )
             throws IndexEntryConflictException
     {
-        if ( recordingConflictDetector.wasConflicting() )
-        {
-            // Report conflict
-            KEY copy = layout.newKey();
-            layout.copyKey( key, copy );
-            recordingConflictDetector.reportConflict( copy );
-
-            // Insert and overwrite with relaxed uniqueness constraint
-            recordingConflictDetector.relaxUniqueness( key );
-            writer.put( key, value );
-        }
+        if (!recordingConflictDetector.wasConflicting()) {
+			return;
+		}
+		// Report conflict
+		KEY copy = layout.newKey();
+		layout.copyKey( key, copy );
+		recordingConflictDetector.reportConflict( copy );
+		// Insert and overwrite with relaxed uniqueness constraint
+		recordingConflictDetector.relaxUniqueness( key );
+		writer.put( key, value );
     }
 
     /**
@@ -630,7 +626,7 @@ public abstract class BlockBasedIndexPopulator<KEY extends NativeIndexKey<KEY>,V
         ThreadLocalBlockStorage( int id ) throws IOException
         {
             super( blockStorageMonitor );
-            File blockFile = new File( storeFile.getParentFile(), storeFile.getName() + ".scan-" + id );
+            File blockFile = new File( storeFile.getParentFile(), new StringBuilder().append(storeFile.getName()).append(".scan-").append(id).toString() );
             this.blockStorage = new BlockStorage<>( layout, bufferFactory, fileSystem, blockFile, this );
         }
 

@@ -2258,11 +2258,11 @@ abstract class SeekCursorTestBase<KEY, VALUE>
         {
             newRootFromSplit( structurePropagation );
         }
-        if ( structurePropagation.hasMidChildUpdate )
-        {
-            structurePropagation.hasMidChildUpdate = false;
-            updateRoot();
-        }
+        if (!(structurePropagation.hasMidChildUpdate)) {
+			return;
+		}
+		structurePropagation.hasMidChildUpdate = false;
+		updateRoot();
     }
 
     private SeekCursor<KEY,VALUE> seekCursor( long fromInclusive, long toExclusive ) throws IOException
@@ -2384,7 +2384,30 @@ abstract class SeekCursorTestBase<KEY, VALUE>
         TreeNode.setKeyCount( cursor, keyCount - 1 );
     }
 
-    private static class BreadcrumbPageCursor extends DelegatingPageCursor
+    private long childAt( PageCursor cursor, int pos, long stableGeneration, long unstableGeneration )
+    {
+        return pointer( node.childAt( cursor, pos, stableGeneration, unstableGeneration ) );
+    }
+
+	private long keyAt( PageCursor cursor, int pos, TreeNode.Type type )
+    {
+        KEY readKey = layout.newKey();
+        node.keyAt( cursor, readKey, pos, type );
+        return getSeed( readKey );
+    }
+
+	// KEEP even if unused
+    @SuppressWarnings( "unused" )
+    private void printTree() throws IOException
+    {
+        long currentPageId = cursor.getCurrentPageId();
+        cursor.next( rootId );
+        PrintingGBPTreeVisitor<KEY,VALUE> printingVisitor = new PrintingGBPTreeVisitor<>( System.out, false, false, false, false, false );
+        new GBPTreeStructure<>( node, layout, stableGeneration, unstableGeneration ).visitTree( cursor, cursor, printingVisitor );
+        cursor.next( currentPageId );
+    }
+
+	private static class BreadcrumbPageCursor extends DelegatingPageCursor
     {
         private final List<Long> breadcrumbs = new ArrayList<>();
 
@@ -2413,28 +2436,5 @@ abstract class SeekCursorTestBase<KEY, VALUE>
         {
             return breadcrumbs;
         }
-    }
-
-    private long childAt( PageCursor cursor, int pos, long stableGeneration, long unstableGeneration )
-    {
-        return pointer( node.childAt( cursor, pos, stableGeneration, unstableGeneration ) );
-    }
-
-    private long keyAt( PageCursor cursor, int pos, TreeNode.Type type )
-    {
-        KEY readKey = layout.newKey();
-        node.keyAt( cursor, readKey, pos, type );
-        return getSeed( readKey );
-    }
-
-    // KEEP even if unused
-    @SuppressWarnings( "unused" )
-    private void printTree() throws IOException
-    {
-        long currentPageId = cursor.getCurrentPageId();
-        cursor.next( rootId );
-        PrintingGBPTreeVisitor<KEY,VALUE> printingVisitor = new PrintingGBPTreeVisitor<>( System.out, false, false, false, false, false );
-        new GBPTreeStructure<>( node, layout, stableGeneration, unstableGeneration ).visitTree( cursor, cursor, printingVisitor );
-        cursor.next( currentPageId );
     }
 }

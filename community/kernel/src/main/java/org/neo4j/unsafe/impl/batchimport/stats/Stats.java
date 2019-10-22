@@ -24,7 +24,28 @@ package org.neo4j.unsafe.impl.batchimport.stats;
  */
 public class Stats
 {
-    public abstract static class LongBasedStat implements Stat
+    private Stats()
+    {
+    }
+
+	public static Stat longStat( final long stat )
+    {
+        return longStat( stat, DetailLevel.BASIC );
+    }
+
+	public static Stat longStat( final long stat, DetailLevel detailLevel )
+    {
+        return new LongBasedStat( detailLevel )
+        {
+            @Override
+            public long asLong()
+            {
+                return stat;
+            }
+        };
+    }
+
+	public abstract static class LongBasedStat implements Stat
     {
         private final DetailLevel detailLevel;
 
@@ -44,26 +65,5 @@ public class Stats
         {
             return String.valueOf( asLong() );
         }
-    }
-
-    private Stats()
-    {
-    }
-
-    public static Stat longStat( final long stat )
-    {
-        return longStat( stat, DetailLevel.BASIC );
-    }
-
-    public static Stat longStat( final long stat, DetailLevel detailLevel )
-    {
-        return new LongBasedStat( detailLevel )
-        {
-            @Override
-            public long asLong()
-            {
-                return stat;
-            }
-        };
     }
 }

@@ -46,19 +46,19 @@ abstract class NativeIndexProgressor<KEY extends NativeIndexKey<KEY>, VALUE exte
     @Override
     public void close()
     {
-        if ( !closed )
-        {
-            closed = true;
-            try
-            {
-                seeker.close();
-                toRemoveFromOnClose.remove( seeker );
-            }
-            catch ( IOException e )
-            {
-                throw new UncheckedIOException( e );
-            }
-        }
+        if (closed) {
+			return;
+		}
+		closed = true;
+		try
+		{
+		    seeker.close();
+		    toRemoveFromOnClose.remove( seeker );
+		}
+		catch ( IOException e )
+		{
+		    throw new UncheckedIOException( e );
+		}
     }
 
     Value[] extractValues( KEY key )

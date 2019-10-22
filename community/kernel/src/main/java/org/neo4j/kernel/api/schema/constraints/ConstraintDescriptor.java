@@ -76,12 +76,11 @@ public abstract class ConstraintDescriptor implements org.neo4j.internal.kernel.
     @Override
     public final boolean equals( Object o )
     {
-        if ( o instanceof ConstraintDescriptor )
-        {
-            ConstraintDescriptor that = (ConstraintDescriptor)o;
-            return this.type() == that.type() && this.schema().equals( that.schema() );
-        }
-        return false;
+        if (!(o instanceof ConstraintDescriptor)) {
+			return false;
+		}
+		ConstraintDescriptor that = (ConstraintDescriptor)o;
+		return this.type() == that.type() && this.schema().equals( that.schema() );
     }
 
     @Override
@@ -94,7 +93,7 @@ public abstract class ConstraintDescriptor implements org.neo4j.internal.kernel.
     {
         if ( name.contains( ":" ) )
         {
-            return "`" + name + "`";
+            return new StringBuilder().append("`").append(name).append("`").toString();
         }
         else
         {

@@ -67,7 +67,7 @@ interface ExecutorServiceFactory
 
             private IllegalArgumentException newUnschedulableException( Group group )
             {
-                return new IllegalArgumentException( "Tasks cannot be scheduled directly to the " + group.groupName() + " group." );
+                return new IllegalArgumentException( new StringBuilder().append("Tasks cannot be scheduled directly to the ").append(group.groupName()).append(" group.").toString() );
             }
         };
     }

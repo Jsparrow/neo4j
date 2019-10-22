@@ -217,13 +217,8 @@ public class CsvInputParser implements Closeable
             {   // OK
             }
 
-            String message = format( "ERROR in input" +
-                    "%n  data source: %s" +
-                    "%n  in field: %s" +
-                    "%n  for header: %s" +
-                    "%n  raw field value: %s" +
-                    "%n  original error: %s",
-                    seeker, entry + ":" + (i + 1), header,
+            String message = format( new StringBuilder().append("ERROR in input").append("%n  data source: %s").append("%n  in field: %s").append("%n  for header: %s").append("%n  raw field value: %s").append("%n  original error: %s").toString(),
+                    seeker, new StringBuilder().append(entry).append(":").append(i + 1).toString(), header,
                     stringValue != null ? stringValue : "??",
                     e.getMessage() );
 

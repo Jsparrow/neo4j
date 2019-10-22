@@ -88,33 +88,11 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
 
     private static final String KEY1 = "key1";
     private static final String KEY2 = "key2";
-
-    private enum Provider
-    {
-        // in order of appearance
-        LUCENE_10( "Label1", GraphDatabaseSettings.SchemaIndex.LUCENE10, LuceneIndexProviderFactory.PROVIDER_DESCRIPTOR ),
-        FUSION_10( "Label2", GraphDatabaseSettings.SchemaIndex.NATIVE10, NativeLuceneFusionIndexProviderFactory10.DESCRIPTOR ),
-        FUSION_20( "Label3", GraphDatabaseSettings.SchemaIndex.NATIVE20, NativeLuceneFusionIndexProviderFactory20.DESCRIPTOR ),
-        BTREE_10( "Label4", GraphDatabaseSettings.SchemaIndex.NATIVE_BTREE10, GenericNativeIndexProvider.DESCRIPTOR );
-
-        private final Label label;
-        private final GraphDatabaseSettings.SchemaIndex setting;
-        private final IndexProviderDescriptor descriptor;
-
-        Provider( String labelName, GraphDatabaseSettings.SchemaIndex setting, IndexProviderDescriptor descriptor )
-        {
-            this.label = Label.label( labelName );
-            this.setting = setting;
-            this.descriptor = descriptor;
-        }
-    }
-
-    private static final Provider DEFAULT_PROVIDER = Provider.BTREE_10;
-
-    @Inject
+	private static final Provider DEFAULT_PROVIDER = Provider.BTREE_10;
+	@Inject
     private TestDirectory directory;
 
-    @Disabled( "Here as reference for how 3.2 db was created" )
+	@Disabled( "Here as reference for how 3.2 db was created" )
     @Test
     void create3_2Database() throws Exception
     {
@@ -128,7 +106,7 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         System.out.println( "Db created in " + zipFile.getAbsolutePath() );
     }
 
-    @Disabled( "Here as reference for how 3.3 db was created" )
+	@Disabled( "Here as reference for how 3.3 db was created" )
     @Test
     void create3_3Database() throws Exception
     {
@@ -151,7 +129,7 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         System.out.println( "Db created in " + zipFile.getAbsolutePath() );
     }
 
-    @Disabled( "Here as reference for how 3.4 db was created" )
+	@Disabled( "Here as reference for how 3.4 db was created" )
     @Test
     void create3_4Database() throws Exception
     {
@@ -168,25 +146,25 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         System.out.println( "Db created in " + zipFile.getAbsolutePath() );
     }
 
-    @Test
+	@Test
     void shouldOpen3_2DbAndCreateAndWorkWithSomeFusionIndexes() throws Exception
     {
         shouldOpenOldDbAndCreateAndWorkWithSomeFusionIndexes( ZIP_FILE_3_2, Provider.LUCENE_10 );
     }
 
-    @Test
+	@Test
     void shouldOpen3_3DbAndCreateAndWorkWithSomeFusionIndexes() throws Exception
     {
         shouldOpenOldDbAndCreateAndWorkWithSomeFusionIndexes( ZIP_FILE_3_3, Provider.FUSION_10 );
     }
 
-    @Test
+	@Test
     void shouldOpen3_4DbAndCreateAndWorkWithSomeFusionIndexes() throws Exception
     {
         shouldOpenOldDbAndCreateAndWorkWithSomeFusionIndexes( ZIP_FILE_3_4, Provider.FUSION_20 );
     }
 
-    private void shouldOpenOldDbAndCreateAndWorkWithSomeFusionIndexes( String zippedDbName, Provider highestProviderInOldVersion ) throws Exception
+	private void shouldOpenOldDbAndCreateAndWorkWithSomeFusionIndexes( String zippedDbName, Provider highestProviderInOldVersion ) throws Exception
     {
         // given
         unzip( getClass(), zippedDbName, directory.databaseDir() );
@@ -247,12 +225,12 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         }
     }
 
-    private Provider[] providersUpToAndIncluding( Provider provider )
+	private Provider[] providersUpToAndIncluding( Provider provider )
     {
         return Stream.of( Provider.values() ).filter( p -> p.ordinal() <= provider.ordinal() ).toArray( Provider[]::new );
     }
 
-    private GraphDatabaseAPI setupDb( File storeDir, IndexRecoveryTracker indexRecoveryTracker )
+	private GraphDatabaseAPI setupDb( File storeDir, IndexRecoveryTracker indexRecoveryTracker )
     {
         Monitors monitors = new Monitors();
         monitors.addMonitorListener( indexRecoveryTracker );
@@ -263,16 +241,13 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
                 .newGraphDatabase();
     }
 
-    private void verifyInitialState( IndexRecoveryTracker indexRecoveryTracker, int expectedNumberOfIndexes, InternalIndexState expectedInitialState )
+	private void verifyInitialState( IndexRecoveryTracker indexRecoveryTracker, int expectedNumberOfIndexes, InternalIndexState expectedInitialState )
     {
-        assertEquals( expectedNumberOfIndexes, indexRecoveryTracker.initialStateMap.size(), "exactly " + expectedNumberOfIndexes + " indexes " );
-        for ( InternalIndexState actualInitialState : indexRecoveryTracker.initialStateMap.values() )
-        {
-            assertEquals( expectedInitialState, actualInitialState, "initial state is online, don't do recovery" );
-        }
+        assertEquals( expectedNumberOfIndexes, indexRecoveryTracker.initialStateMap.size(), new StringBuilder().append("exactly ").append(expectedNumberOfIndexes).append(" indexes ").toString() );
+        indexRecoveryTracker.initialStateMap.values().forEach(actualInitialState -> assertEquals(expectedInitialState, actualInitialState, "initial state is online, don't do recovery"));
     }
 
-    private static void verifyExpectedProvider( GraphDatabaseAPI db, Label label, IndexProviderDescriptor expectedDescriptor )
+	private static void verifyExpectedProvider( GraphDatabaseAPI db, Label label, IndexProviderDescriptor expectedDescriptor )
             throws TransactionFailureException
     {
         try ( Transaction tx = db.beginTx();
@@ -294,18 +269,18 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         }
     }
 
-    private static void assertIndexHasExpectedProvider( IndexProviderDescriptor expectedDescriptor, IndexReference index )
+	private static void assertIndexHasExpectedProvider( IndexProviderDescriptor expectedDescriptor, IndexReference index )
     {
         assertEquals( expectedDescriptor.getKey(), index.providerKey(), "same key" );
         assertEquals( expectedDescriptor.getVersion(), index.providerVersion(), "same version" );
     }
 
-    private static void createIndexDataAndShutdown( GraphDatabaseBuilder builder, String indexProvider, Label label )
+	private static void createIndexDataAndShutdown( GraphDatabaseBuilder builder, String indexProvider, Label label )
     {
         createIndexDataAndShutdown( builder, indexProvider, label, db -> {} );
     }
 
-    private static void createIndexDataAndShutdown( GraphDatabaseBuilder builder, String indexProvider, Label label,
+	private static void createIndexDataAndShutdown( GraphDatabaseBuilder builder, String indexProvider, Label label,
             Consumer<GraphDatabaseService> otherActions )
     {
         builder.setConfig( GraphDatabaseSettings.default_schema_provider, indexProvider );
@@ -321,12 +296,12 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         }
     }
 
-    private static void createIndexData( GraphDatabaseService db, Label label )
+	private static void createIndexData( GraphDatabaseService db, Label label )
     {
         createIndexesAndData( db, label );
     }
 
-    private static File tempStoreDirectory() throws IOException
+	private static File tempStoreDirectory() throws IOException
     {
         File file = File.createTempFile( "create-db", "neo4j" );
         File storeDir = new File( file.getAbsoluteFile().getParentFile(), file.getName() );
@@ -334,7 +309,7 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         return storeDir;
     }
 
-    private static void createIndexesAndData( GraphDatabaseService db, Label label )
+	private static void createIndexesAndData( GraphDatabaseService db, Label label )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -351,7 +326,7 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         createData( db, label );
     }
 
-    private static void createData( GraphDatabaseService db, Label label )
+	private static void createData( GraphDatabaseService db, Label label )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -369,7 +344,7 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         }
     }
 
-    private static void createSpatialAndTemporalData( GraphDatabaseAPI db, Label label )
+	private static void createSpatialAndTemporalData( GraphDatabaseAPI db, Label label )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -389,13 +364,13 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         }
     }
 
-    private static void additionalUpdates( GraphDatabaseAPI db, Label label )
+	private static void additionalUpdates( GraphDatabaseAPI db, Label label )
     {
         createData( db, label );
         createSpatialAndTemporalData( db, label );
     }
 
-    private static void verifyIndexes( GraphDatabaseAPI db, Label label ) throws Exception
+	private static void verifyIndexes( GraphDatabaseAPI db, Label label ) throws Exception
     {
         assertTrue( hasIndex( db, label, KEY1 ) );
         assertEquals( 100, countIndexedNodes( db, label, KEY1 ) );
@@ -404,7 +379,7 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         assertEquals( 34, countIndexedNodes( db, label, KEY1, KEY2 ) );
     }
 
-    private static void verifyAfterAdditionalUpdate( GraphDatabaseAPI db, Label label ) throws Exception
+	private static void verifyAfterAdditionalUpdate( GraphDatabaseAPI db, Label label ) throws Exception
     {
         assertTrue( hasIndex( db, label, KEY1 ) );
         assertEquals( 300, countIndexedNodes( db, label, KEY1 ) );
@@ -413,7 +388,7 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         assertEquals( 102, countIndexedNodes( db, label, KEY1, KEY2 ) );
     }
 
-    private static int countIndexedNodes( GraphDatabaseAPI db, Label label, String... keys ) throws Exception
+	private static int countIndexedNodes( GraphDatabaseAPI db, Label label, String... keys ) throws Exception
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -447,7 +422,7 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
         }
     }
 
-    private static boolean hasIndex( GraphDatabaseService db, Label label, String... keys )
+	private static boolean hasIndex( GraphDatabaseService db, Label label, String... keys )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -462,6 +437,26 @@ class StartOldDbOnCurrentVersionAndCreateFusionIndexIT
             tx.success();
         }
         return false;
+    }
+
+	private enum Provider
+    {
+        // in order of appearance
+        LUCENE_10( "Label1", GraphDatabaseSettings.SchemaIndex.LUCENE10, LuceneIndexProviderFactory.PROVIDER_DESCRIPTOR ),
+        FUSION_10( "Label2", GraphDatabaseSettings.SchemaIndex.NATIVE10, NativeLuceneFusionIndexProviderFactory10.DESCRIPTOR ),
+        FUSION_20( "Label3", GraphDatabaseSettings.SchemaIndex.NATIVE20, NativeLuceneFusionIndexProviderFactory20.DESCRIPTOR ),
+        BTREE_10( "Label4", GraphDatabaseSettings.SchemaIndex.NATIVE_BTREE10, GenericNativeIndexProvider.DESCRIPTOR );
+
+        private final Label label;
+        private final GraphDatabaseSettings.SchemaIndex setting;
+        private final IndexProviderDescriptor descriptor;
+
+        Provider( String labelName, GraphDatabaseSettings.SchemaIndex setting, IndexProviderDescriptor descriptor )
+        {
+            this.label = Label.label( labelName );
+            this.setting = setting;
+            this.descriptor = descriptor;
+        }
     }
 
     private class IndexRecoveryTracker extends IndexingService.MonitorAdapter

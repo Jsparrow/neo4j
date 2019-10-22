@@ -41,7 +41,9 @@ import org.neo4j.helpers.collection.Iterables;
  */
 public interface AdminCommand
 {
-    abstract class Provider extends Service
+    void execute( String[] args ) throws IncorrectUsage, CommandFailed;
+
+	abstract class Provider extends Service
     {
         /**
          * Create a new instance of a service implementation identified with the
@@ -129,6 +131,4 @@ public interface AdminCommand
         @Nonnull
         String explanation();
     }
-
-    void execute( String[] args ) throws IncorrectUsage, CommandFailed;
 }

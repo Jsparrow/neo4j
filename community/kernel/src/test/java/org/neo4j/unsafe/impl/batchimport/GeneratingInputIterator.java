@@ -37,16 +37,19 @@ import static java.lang.Math.toIntExact;
  */
 public class GeneratingInputIterator<CHUNKSTATE> implements InputIterator
 {
-    private final LongFunction<CHUNKSTATE> states;
-    private final long totalCount;
-    private final int batchSize;
-    private final Generator<CHUNKSTATE> generator;
-    private final long startId;
+    public static final InputIterator EMPTY = new GeneratingInputIterator<Void>( 0, 1, batch -> null, null, 0 )
+    {   // here's nothing
+    };
+	public static final InputIterable EMPTY_ITERABLE = () -> EMPTY;
+	private final LongFunction<CHUNKSTATE> states;
+	private final long totalCount;
+	private final int batchSize;
+	private final Generator<CHUNKSTATE> generator;
+	private final long startId;
+	private long nextBatch;
+	private long numberOfBatches;
 
-    private long nextBatch;
-    private long numberOfBatches;
-
-    public GeneratingInputIterator( long totalCount, int batchSize, LongFunction<CHUNKSTATE> states,
+	public GeneratingInputIterator( long totalCount, int batchSize, LongFunction<CHUNKSTATE> states,
             Generator<CHUNKSTATE> generator, long startId )
     {
         this.totalCount = totalCount;
@@ -57,18 +60,18 @@ public class GeneratingInputIterator<CHUNKSTATE> implements InputIterator
         this.numberOfBatches = batchSize == 0 ? 0 : (totalCount - 1) / batchSize + 1;
     }
 
-    @Override
+	@Override
     public void close()
     {
     }
 
-    @Override
+	@Override
     public InputChunk newChunk()
     {
         return new Chunk();
     }
 
-    @Override
+	@Override
     public synchronized boolean next( InputChunk chunk )
     {
         if ( numberOfBatches > 1 )
@@ -90,7 +93,7 @@ public class GeneratingInputIterator<CHUNKSTATE> implements InputIterator
         return false;
     }
 
-    private class Chunk implements InputChunk
+	private class Chunk implements InputChunk
     {
         private CHUNKSTATE state;
         private int count;
@@ -117,22 +120,15 @@ public class GeneratingInputIterator<CHUNKSTATE> implements InputIterator
         @Override
         public boolean next( InputEntityVisitor visitor ) throws IOException
         {
-            if ( itemInBatch < count )
-            {
-                generator.accept( state, visitor, baseId + itemInBatch );
-                visitor.endOfEntity();
-                itemInBatch++;
-                return true;
-            }
-            return false;
+            if (itemInBatch >= count) {
+				return false;
+			}
+			generator.accept( state, visitor, baseId + itemInBatch );
+			visitor.endOfEntity();
+			itemInBatch++;
+			return true;
         }
     }
-
-    public static final InputIterator EMPTY = new GeneratingInputIterator<Void>( 0, 1, batch -> null, null, 0 )
-    {   // here's nothing
-    };
-
-    public static final InputIterable EMPTY_ITERABLE = () -> EMPTY;
 
     public interface Generator<CHUNKSTATE>
     {

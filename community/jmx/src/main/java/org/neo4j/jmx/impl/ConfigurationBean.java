@@ -56,11 +56,7 @@ public final class ConfigurationBean extends Neo4jMBean
     private MBeanAttributeInfo[] keys()
     {
         List<MBeanAttributeInfo> keys = new ArrayList<>();
-        for ( String key : config.keySet() )
-        {
-            keys.add( new MBeanAttributeInfo( key, String.class.getName(),
-                    describeConfigParameter( key ), true, false, false ) );
-        }
+        config.keySet().forEach(key -> keys.add(new MBeanAttributeInfo(key, String.class.getName(), describeConfigParameter(key), true, false, false)));
         return keys.toArray( new MBeanAttributeInfo[keys.size()] );
     }
 

@@ -106,7 +106,7 @@ public class CypherAdapterStream implements BoltResult
     @Override
     public String toString()
     {
-        return "CypherAdapterStream{" + "delegate=" + delegate + ", fieldNames=" + Arrays.toString( fieldNames ) + '}';
+        return new StringBuilder().append("CypherAdapterStream{").append("delegate=").append(delegate).append(", fieldNames=").append(Arrays.toString( fieldNames )).append('}').toString();
     }
 
     private MapValue queryStats( QueryStatistics queryStatistics )

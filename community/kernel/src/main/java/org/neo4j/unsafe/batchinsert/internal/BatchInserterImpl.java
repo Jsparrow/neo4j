@@ -286,7 +286,7 @@ public class BatchInserterImpl implements BatchInserter, IndexConfigStoreProvide
         {
             dumpConfiguration( params, System.out );
         }
-        msgLog.info( Thread.currentThread() + " Starting BatchInserter(" + this + ")" );
+        msgLog.info( new StringBuilder().append(Thread.currentThread()).append(" Starting BatchInserter(").append(this).append(")").toString() );
         life.start();
         neoStores = sf.openAllNeoStores( true );
         neoStores.verifyStoreOk();
@@ -501,13 +501,10 @@ public class BatchInserterImpl implements BatchInserter, IndexConfigStoreProvide
         catch ( MisconfiguredIndexException e )
         {
             throw new ConstraintViolationException(
-                    "Unable to create index. The index configuration was refused by the '" + providerDescriptor + "' index provider.", e );
+                    new StringBuilder().append("Unable to create index. The index configuration was refused by the '").append(providerDescriptor).append("' index provider.").toString(), e );
         }
 
-        for ( DynamicRecord record : schemaStore.allocateFrom( schemaRule ) )
-        {
-            schemaStore.updateRecord( record );
-        }
+        schemaStore.allocateFrom( schemaRule ).forEach(schemaStore::updateRecord);
         schemaCache.addSchemaRule( schemaRule );
         labelsTouched = true;
         flushStrategy.forceFlush();
@@ -556,7 +553,7 @@ public class BatchInserterImpl implements BatchInserter, IndexConfigStoreProvide
         }
         catch ( IndexNotFoundKernelException e )
         {
-            throw new IllegalStateException( "Expected index by descriptor " + descriptpr + " to exist, but didn't", e );
+            throw new IllegalStateException( new StringBuilder().append("Expected index by descriptor ").append(descriptpr).append(" to exist, but didn't").toString(), e );
         }
     }
 
@@ -614,20 +611,14 @@ public class BatchInserterImpl implements BatchInserter, IndexConfigStoreProvide
         catch ( MisconfiguredIndexException e )
         {
             throw new ConstraintViolationException(
-                    "Unable to create index. The index configuration was refused by the '" + providerDescriptor + "' index provider.", e );
+                    new StringBuilder().append("Unable to create index. The index configuration was refused by the '").append(providerDescriptor).append("' index provider.").toString(), e );
         }
 
         ConstraintRule constraintRule = ConstraintRule.constraintRule( constraintRuleId, constraintDescriptor, indexId );
 
-        for ( DynamicRecord record : schemaStore.allocateFrom( constraintRule ) )
-        {
-            schemaStore.updateRecord( record );
-        }
+        schemaStore.allocateFrom( constraintRule ).forEach(schemaStore::updateRecord);
         schemaCache.addSchemaRule( constraintRule );
-        for ( DynamicRecord record : schemaStore.allocateFrom( storeIndexDescriptor ) )
-        {
-            schemaStore.updateRecord( record );
-        }
+        schemaStore.allocateFrom( storeIndexDescriptor ).forEach(schemaStore::updateRecord);
         schemaCache.addSchemaRule( storeIndexDescriptor );
         labelsTouched = true;
         flushStrategy.forceFlush();
@@ -648,10 +639,7 @@ public class BatchInserterImpl implements BatchInserter, IndexConfigStoreProvide
         SchemaRule rule = ConstraintRule.constraintRule( schemaStore.nextId(),
                 ConstraintDescriptorFactory.existsForLabel( labelId, propertyKeyIds ) );
 
-        for ( DynamicRecord record : schemaStore.allocateFrom( rule ) )
-        {
-            schemaStore.updateRecord( record );
-        }
+        schemaStore.allocateFrom( rule ).forEach(schemaStore::updateRecord);
         schemaCache.addSchemaRule( rule );
         labelsTouched = true;
         flushStrategy.forceFlush();
@@ -662,10 +650,7 @@ public class BatchInserterImpl implements BatchInserter, IndexConfigStoreProvide
         SchemaRule rule = ConstraintRule.constraintRule( schemaStore.nextId(),
                 ConstraintDescriptorFactory.existsForRelType( relTypeId, propertyKeyIds ) );
 
-        for ( DynamicRecord record : schemaStore.allocateFrom( rule ) )
-        {
-            schemaStore.updateRecord( record );
-        }
+        schemaStore.allocateFrom( rule ).forEach(schemaStore::updateRecord);
         schemaCache.addSchemaRule( rule );
         flushStrategy.forceFlush();
     }
@@ -784,7 +769,7 @@ public class BatchInserterImpl implements BatchInserter, IndexConfigStoreProvide
         IdValidator.assertValidId( IdType.NODE, id, maxNodeId );
         if ( nodeStore.isInUse( id ) )
         {
-            throw new IllegalArgumentException( "id=" + id + " already in use" );
+            throw new IllegalArgumentException( new StringBuilder().append("id=").append(id).append(" already in use").toString() );
         }
         long highId = nodeStore.getHighId();
         if ( highId <= id )
@@ -988,7 +973,7 @@ public class BatchInserterImpl implements BatchInserter, IndexConfigStoreProvide
                 throw new UnderlyingStorageException( "Could not release store lock", e );
             }
 
-            msgLog.info( Thread.currentThread() + " Clean shutdown on BatchInserter(" + this + ")" );
+            msgLog.info( new StringBuilder().append(Thread.currentThread()).append(" Clean shutdown on BatchInserter(").append(this).append(")").toString() );
             life.shutdown();
         }
     }
@@ -1010,7 +995,7 @@ public class BatchInserterImpl implements BatchInserter, IndexConfigStoreProvide
     @Override
     public String toString()
     {
-        return "EmbeddedBatchInserter[" + databaseLayout + "]";
+        return new StringBuilder().append("EmbeddedBatchInserter[").append(databaseLayout).append("]").toString();
     }
 
     private Map<String, Object> getPropertyChain( long nextProp )
@@ -1108,13 +1093,7 @@ public class BatchInserterImpl implements BatchInserter, IndexConfigStoreProvide
 
     private static void dumpConfiguration( Map<String,String> config, PrintStream out )
     {
-        for ( Entry<String,String> entry : config.entrySet() )
-        {
-            if ( entry.getValue() != null )
-            {
-                out.println( entry.getKey() + "=" + entry.getValue() );
-            }
-        }
+        config.entrySet().stream().filter(entry -> entry.getValue() != null).forEach(entry -> out.println(new StringBuilder().append(entry.getKey()).append("=").append(entry.getValue()).toString()));
     }
 
     @VisibleForTesting

@@ -49,17 +49,13 @@ public class HtmlHelper
     {
         StringBuilder builder = new StringBuilder();
         builder.append( "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n" );
-        builder.append( "<html><head><title>" + title + "</title>" );
+        builder.append( new StringBuilder().append("<html><head><title>").append(title).append("</title>").toString() );
         if ( additionalCodeInHead != null )
         {
             builder.append( additionalCodeInHead );
         }
-        builder.append( "<meta content=\"text/html; charset=utf-8\" http-equiv=\"Content-Type\">\n" + "<link href='"
-                        + STYLE_LOCATION + "rest.css' rel='stylesheet' type='text/css'>\n"
-                        + "</head>\n<body onload='javascript:neo4jHtmlBrowse.start();' id='" + title.toLowerCase()
-                        + "'>\n" + "<div id='content'>" + "<div id='header'>"
-                        + "<h1><a title='Neo4j REST interface' href='/'><span>Neo4j REST interface</span></a></h1>"
-                        + "</div>" + "\n<div id='page-body'>\n" );
+        builder.append( new StringBuilder().append("<meta content=\"text/html; charset=utf-8\" http-equiv=\"Content-Type\">\n").append("<link href='").append(STYLE_LOCATION).append("rest.css' rel='stylesheet' type='text/css'>\n").append("</head>\n<body onload='javascript:neo4jHtmlBrowse.start();' id='").append(title.toLowerCase()).append("'>\n")
+				.append("<div id='content'>").append("<div id='header'>").append("<h1><a title='Neo4j REST interface' href='/'><span>Neo4j REST interface</span></a></h1>").append("</div>").append("\n<div id='page-body'>\n").toString() );
         return builder;
     }
 
@@ -71,7 +67,7 @@ public class HtmlHelper
 
     public static void appendMessage( final StringBuilder builder, final String message )
     {
-        builder.append( "<p class=\"message\">" + message + "</p>" );
+        builder.append( new StringBuilder().append("<p class=\"message\">").append(message).append("</p>").toString() );
     }
 
     public static void append( final StringBuilder builder, final Object object, final ObjectType objectType )
@@ -79,12 +75,11 @@ public class HtmlHelper
         if ( object instanceof Collection )
         {
             builder.append( "<ul>\n" );
-            for ( Object item : (Collection<?>) object )
-            {
+            ((Collection<?>) object).forEach(item -> {
                 builder.append( "<li>" );
                 append( builder, item, objectType );
                 builder.append( "</li>\n" );
-            }
+            });
             builder.append( "</ul>\n" );
         }
         else if ( object instanceof Map )
@@ -94,21 +89,21 @@ public class HtmlHelper
             String caption = objectType.getCaption();
             if ( !map.isEmpty() )
             {
-                boolean isNodeOrRelationship = ObjectType.NODE.equals( objectType )
-                                               || ObjectType.RELATIONSHIP.equals( objectType );
+                boolean isNodeOrRelationship = ObjectType.NODE == objectType
+                                               || ObjectType.RELATIONSHIP == objectType;
                 if ( isNodeOrRelationship )
                 {
-                    builder.append( "<h2>" + caption + "</h2>\n" );
+                    builder.append( new StringBuilder().append("<h2>").append(caption).append("</h2>\n").toString() );
                     append( builder, map.get( "data" ), ObjectType.PROPERTIES );
                     htmlClass = "meta";
                     caption += " info";
                 }
-                if ( ObjectType.NODE.equals( objectType ) && map.size() == 1 )
+                if ( ObjectType.NODE == objectType && map.size() == 1 )
                 {
                     // there's only properties, so we're finished here
                     return;
                 }
-                builder.append( "<table class=\"" + htmlClass + "\"><caption>" );
+                builder.append( new StringBuilder().append("<table class=\"").append(htmlClass).append("\"><caption>").toString() );
                 builder.append( caption );
                 builder.append( "</caption>\n" );
                 boolean odd = true;
@@ -118,9 +113,9 @@ public class HtmlHelper
                     {
                         continue;
                     }
-                    builder.append( "<tr" + ( odd ? " class='odd'" : "" ) + ">" );
+                    builder.append( new StringBuilder().append("<tr").append(odd ? " class='odd'" : "").append(">").toString() );
                     odd = !odd;
-                    builder.append( "<th>" + entry.getKey() + "</th><td>" );
+                    builder.append( new StringBuilder().append("<th>").append(entry.getKey()).append("</th><td>").toString() );
                     // TODO We always assume that an inner map is for
                     // properties, correct?
                     append( builder, entry.getValue(), ObjectType.PROPERTIES );
@@ -130,7 +125,7 @@ public class HtmlHelper
             }
             else
             {
-                builder.append( "<table class=\"" + htmlClass + "\"><caption>" );
+                builder.append( new StringBuilder().append("<table class=\"").append(htmlClass).append("\"><caption>").toString() );
                 builder.append( caption );
                 builder.append( "</caption>" );
                 builder.append( "<tr><td></td></tr>" );
@@ -148,7 +143,7 @@ public class HtmlHelper
         // TODO Hardcode "http://" string?
         if ( string.startsWith( "http://" ) || string.startsWith( "https://" ) )
         {
-            String anchoredString = "<a href=\"" + string + "\"";
+            String anchoredString = new StringBuilder().append("<a href=\"").append(string).append("\"").toString();
 
             // TODO Hardcoded /node/, /relationship/ string?
             String anchorClass = null;
@@ -162,9 +157,9 @@ public class HtmlHelper
             }
             if ( anchorClass != null )
             {
-                anchoredString += " class=\"" + anchorClass + "\"";
+                anchoredString += new StringBuilder().append(" class=\"").append(anchorClass).append("\"").toString();
             }
-            anchoredString += ">" + escapeHtml( string ) + "</a>";
+            anchoredString += new StringBuilder().append(">").append(escapeHtml( string )).append("</a>").toString();
             string = anchoredString;
         }
         else

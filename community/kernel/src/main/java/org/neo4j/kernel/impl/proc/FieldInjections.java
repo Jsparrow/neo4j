@@ -44,6 +44,87 @@ class FieldInjections
     }
 
     /**
+     * For each annotated field in the provided class, creates a `FieldSetter`.
+     * @param cls The class where injection should happen.
+     * @return A list of `FieldSetters`
+     * @throws ProcedureException if the type of the injected field does not match what has been registered.
+     */
+    List<FieldSetter> setters( Class<?> cls ) throws ProcedureException
+    {
+        List<FieldSetter> setters = new LinkedList<>();
+        Class<?> currentClass = cls;
+
+        do
+        {
+            for ( Field field : currentClass.getDeclaredFields() )
+            {
+                //ignore synthetic fields
+                if ( field.isSynthetic() )
+                {
+                    continue;
+                }
+                if ( Modifier.isStatic( field.getModifiers() ) )
+                {
+                    if ( field.isAnnotationPresent( Context.class ) )
+                    {
+                        throw new ProcedureException( Status.Procedure.ProcedureRegistrationFailed,
+                                 new StringBuilder().append("The field `%s` in the class named `%s` is annotated as a @Context field,%n").append("but it is static. @Context fields must be public, non-final and non-static,%n").append("because they are reset each time a procedure is invoked.").toString(),
+                                field.getName(), cls.getSimpleName() );
+                    }
+                    continue;
+                }
+
+                assertValidForInjection( cls, field );
+                setters.add( createInjector( cls, field ) );
+            }
+        }
+        while ( (currentClass = currentClass.getSuperclass()) != null );
+
+        return setters;
+    }
+
+	private FieldSetter createInjector( Class<?> cls, Field field ) throws ProcedureException
+    {
+        try
+        {
+            ComponentRegistry.Provider<?> provider = components.providerFor( field.getType() );
+            if ( provider == null )
+            {
+                throw new ComponentInjectionException( Status.Procedure.ProcedureRegistrationFailed,
+                        "Unable to set up injection for procedure `%s`, the field `%s` " +
+                        "has type `%s` which is not a known injectable component.",
+                            cls.getSimpleName(), field.getName(), field.getType() );
+            }
+
+            MethodHandle setter = MethodHandles.lookup().unreflectSetter( field );
+            return new FieldSetter( field, setter, provider );
+        }
+        catch ( IllegalAccessException e )
+        {
+            throw new ProcedureException( Status.Procedure.ProcedureRegistrationFailed,
+                    "Unable to set up injection for `%s`, failed to access field `%s`: %s",
+                    e, cls.getSimpleName(), field.getName(), e.getMessage() );
+        }
+    }
+
+	private void assertValidForInjection( Class<?> cls, Field field ) throws ProcedureException
+    {
+        if ( !field.isAnnotationPresent( Context.class ) )
+        {
+            throw new ProcedureException(  Status.Procedure.ProcedureRegistrationFailed,
+                    new StringBuilder().append("Field `%s` on `%s` is not annotated as a @").append(Context.class.getSimpleName()).append(" and is not static. If you want to store state along with your procedure,").append(" please use a static field.").toString(),
+                    field.getName(), cls.getSimpleName() );
+        }
+
+        if ( !Modifier.isPublic( field.getModifiers() ) || Modifier.isFinal( field.getModifiers() ) )
+        {
+            throw new ProcedureException( Status.Procedure.ProcedureRegistrationFailed,
+                    "Field `%s` on `%s` must be non-final and public.", field.getName(), cls.getSimpleName() );
+
+        }
+    }
+
+	/**
      * On calling apply, injects the `value` for the field `field` on the provided `object`.
      */
     static class FieldSetter
@@ -71,91 +152,6 @@ class FieldInjections
                         "Unable to inject component to field `%s`, please ensure it is public and non-final: %s",
                         field.getName(), e.getMessage() );
             }
-        }
-    }
-
-    /**
-     * For each annotated field in the provided class, creates a `FieldSetter`.
-     * @param cls The class where injection should happen.
-     * @return A list of `FieldSetters`
-     * @throws ProcedureException if the type of the injected field does not match what has been registered.
-     */
-    List<FieldSetter> setters( Class<?> cls ) throws ProcedureException
-    {
-        List<FieldSetter> setters = new LinkedList<>();
-        Class<?> currentClass = cls;
-
-        do
-        {
-            for ( Field field : currentClass.getDeclaredFields() )
-            {
-                //ignore synthetic fields
-                if ( field.isSynthetic() )
-                {
-                    continue;
-                }
-                if ( Modifier.isStatic( field.getModifiers() ) )
-                {
-                    if ( field.isAnnotationPresent( Context.class ) )
-                    {
-                        throw new ProcedureException( Status.Procedure.ProcedureRegistrationFailed,
-                                 "The field `%s` in the class named `%s` is annotated as a @Context field,%n" +
-                                "but it is static. @Context fields must be public, non-final and non-static,%n" +
-                                "because they are reset each time a procedure is invoked.",
-                                field.getName(), cls.getSimpleName() );
-                    }
-                    continue;
-                }
-
-                assertValidForInjection( cls, field );
-                setters.add( createInjector( cls, field ) );
-            }
-        }
-        while ( (currentClass = currentClass.getSuperclass()) != null );
-
-        return setters;
-    }
-
-    private FieldSetter createInjector( Class<?> cls, Field field ) throws ProcedureException
-    {
-        try
-        {
-            ComponentRegistry.Provider<?> provider = components.providerFor( field.getType() );
-            if ( provider == null )
-            {
-                throw new ComponentInjectionException( Status.Procedure.ProcedureRegistrationFailed,
-                        "Unable to set up injection for procedure `%s`, the field `%s` " +
-                        "has type `%s` which is not a known injectable component.",
-                            cls.getSimpleName(), field.getName(), field.getType() );
-            }
-
-            MethodHandle setter = MethodHandles.lookup().unreflectSetter( field );
-            return new FieldSetter( field, setter, provider );
-        }
-        catch ( IllegalAccessException e )
-        {
-            throw new ProcedureException( Status.Procedure.ProcedureRegistrationFailed,
-                    "Unable to set up injection for `%s`, failed to access field `%s`: %s",
-                    e, cls.getSimpleName(), field.getName(), e.getMessage() );
-        }
-    }
-
-    private void assertValidForInjection( Class<?> cls, Field field ) throws ProcedureException
-    {
-        if ( !field.isAnnotationPresent( Context.class ) )
-        {
-            throw new ProcedureException(  Status.Procedure.ProcedureRegistrationFailed,
-                    "Field `%s` on `%s` is not annotated as a @" + Context.class.getSimpleName() +
-                            " and is not static. If you want to store state along with your procedure," +
-                            " please use a static field.",
-                    field.getName(), cls.getSimpleName() );
-        }
-
-        if ( !Modifier.isPublic( field.getModifiers() ) || Modifier.isFinal( field.getModifiers() ) )
-        {
-            throw new ProcedureException( Status.Procedure.ProcedureRegistrationFailed,
-                    "Field `%s` on `%s` must be non-final and public.", field.getName(), cls.getSimpleName() );
-
         }
     }
 }

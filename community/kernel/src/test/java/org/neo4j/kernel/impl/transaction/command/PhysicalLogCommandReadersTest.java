@@ -84,7 +84,7 @@ public class PhysicalLogCommandReadersTest
         }
         catch ( IOException e )
         {
-            assertEquals( "Unknown command type[" + NeoCommandType.REL_GROUP_COMMAND + "]", e.getMessage() );
+            assertEquals( new StringBuilder().append("Unknown command type[").append(NeoCommandType.REL_GROUP_COMMAND).append("]").toString(), e.getMessage() );
         }
     }
 

@@ -75,17 +75,13 @@ public class LuceneBatchInserterIndexProviderNewImpl implements BatchInserterInd
             String indexName, Map<String, String> config )
     {
         // TODO Doesn't look right
-        if ( config != null )
-        {
-            config = MapUtil.stringMap( new HashMap<>( config ),
-                    IndexManager.PROVIDER, LuceneIndexImplementation.SERVICE_NAME );
-            indexStore.setIfNecessary( cls, indexName, config );
-            return config;
-        }
-        else
-        {
-            return indexStore.get( cls, indexName );
-        }
+		if (config == null) {
+			return indexStore.get( cls, indexName );
+		}
+		config = MapUtil.stringMap( new HashMap<>( config ),
+		        IndexManager.PROVIDER, LuceneIndexImplementation.SERVICE_NAME );
+		indexStore.setIfNecessary( cls, indexName, config );
+		return config;
     }
 
     @Override
@@ -112,9 +108,6 @@ public class LuceneBatchInserterIndexProviderNewImpl implements BatchInserterInd
     @Override
     public void shutdown()
     {
-        for ( LuceneBatchInserterIndex index : indexes.values() )
-        {
-            index.shutdown();
-        }
+        indexes.values().forEach(LuceneBatchInserterIndex::shutdown);
     }
 }

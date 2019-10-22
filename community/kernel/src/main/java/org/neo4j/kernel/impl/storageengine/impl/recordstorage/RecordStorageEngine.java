@@ -250,32 +250,30 @@ public class RecordStorageEngine implements StorageEngine, Lifecycle
             long lastTransactionIdWhenStarted, TxStateVisitor.Decorator additionalTxStateVisitor )
             throws TransactionFailureException, CreateConstraintFailureException, ConstraintValidationException
     {
-        if ( txState != null )
-        {
-            // We can make this cast here because we expected that the storageReader passed in here comes from
-            // this storage engine itself, anything else is considered a bug. And we do know the inner workings
-            // of the storage statements that we create.
-            RecordStorageCommandCreationContext creationContext =
-                    ((RecordStorageReader) storageReader).getCommandCreationContext();
-            TransactionRecordState recordState =
-                    creationContext.createTransactionRecordState( integrityValidator, lastTransactionIdWhenStarted, locks );
-
-            // Visit transaction state and populate these record state objects
-            TxStateVisitor txStateVisitor = new TransactionToRecordStateVisitor( recordState, schemaState,
-                    schemaStorage, constraintSemantics );
-            CountsRecordState countsRecordState = new CountsRecordState();
-            txStateVisitor = additionalTxStateVisitor.apply( txStateVisitor );
-            txStateVisitor = new TransactionCountingStateVisitor(
-                    txStateVisitor, storageReader, txState, countsRecordState );
-            try ( TxStateVisitor visitor = txStateVisitor )
-            {
-                txState.accept( visitor );
-            }
-
-            // Convert record state into commands
-            recordState.extractCommands( commands );
-            countsRecordState.extractCommands( commands );
-        }
+        if (txState == null) {
+			return;
+		}
+		// We can make this cast here because we expected that the storageReader passed in here comes from
+		// this storage engine itself, anything else is considered a bug. And we do know the inner workings
+		// of the storage statements that we create.
+		RecordStorageCommandCreationContext creationContext =
+		        ((RecordStorageReader) storageReader).getCommandCreationContext();
+		TransactionRecordState recordState =
+		        creationContext.createTransactionRecordState( integrityValidator, lastTransactionIdWhenStarted, locks );
+		// Visit transaction state and populate these record state objects
+		TxStateVisitor txStateVisitor = new TransactionToRecordStateVisitor( recordState, schemaState,
+		        schemaStorage, constraintSemantics );
+		CountsRecordState countsRecordState = new CountsRecordState();
+		txStateVisitor = additionalTxStateVisitor.apply( txStateVisitor );
+		txStateVisitor = new TransactionCountingStateVisitor(
+		        txStateVisitor, storageReader, txState, countsRecordState );
+		try ( TxStateVisitor visitor = txStateVisitor )
+		{
+		    txState.accept( visitor );
+		}
+		// Convert record state into commands
+		recordState.extractCommands( commands );
+		countsRecordState.extractCommands( commands );
     }
 
     @Override
@@ -452,7 +450,7 @@ public class RecordStorageEngine implements StorageEngine, Lifecycle
         List<StoreFileMetadata> files = new ArrayList<>();
         for ( StoreType type : StoreType.values() )
         {
-            if ( type.equals( StoreType.COUNTS ) )
+            if ( type == StoreType.COUNTS )
             {
                 addCountStoreFiles( files );
             }

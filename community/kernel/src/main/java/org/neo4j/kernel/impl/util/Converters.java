@@ -40,49 +40,49 @@ import static org.neo4j.function.Predicates.not;
 
 public class Converters
 {
-    private Converters()
+    public static final Comparator<File> BY_FILE_NAME = Comparator.comparing( File::getName );
+
+	public static final Comparator<File> BY_FILE_NAME_WITH_CLEVER_NUMBERS =
+            ( o1, o2 ) -> NumberAwareStringComparator.INSTANCE.compare( o1.getAbsolutePath(), o2.getAbsolutePath() );
+
+	private Converters()
     {
     }
 
-    public static <T> Function<String,T> mandatory()
+	public static <T> Function<String,T> mandatory()
     {
         return key ->
         {
-            throw new IllegalArgumentException( "Missing argument '" + key + "'" );
+            throw new IllegalArgumentException( new StringBuilder().append("Missing argument '").append(key).append("'").toString() );
         };
     }
 
-    public static <T> Function<String,T> optional()
+	public static <T> Function<String,T> optional()
     {
         return from -> null;
     }
 
-    public static <T> Function<String,T> withDefault( final T defaultValue )
+	public static <T> Function<String,T> withDefault( final T defaultValue )
     {
         return from -> defaultValue;
     }
 
-    public static Function<String,File> toFile()
+	public static Function<String,File> toFile()
     {
         return File::new;
     }
 
-    public static Function<String, Path> toPath()
+	public static Function<String, Path> toPath()
     {
         return Paths::get;
     }
 
-    public static Function<String, String> identity()
+	public static Function<String, String> identity()
     {
         return s -> s;
     }
 
-    public static final Comparator<File> BY_FILE_NAME = Comparator.comparing( File::getName );
-
-    public static final Comparator<File> BY_FILE_NAME_WITH_CLEVER_NUMBERS =
-            ( o1, o2 ) -> NumberAwareStringComparator.INSTANCE.compare( o1.getAbsolutePath(), o2.getAbsolutePath() );
-
-    public static Function<String,File[]> regexFiles( final boolean cleverNumberRegexSort )
+	public static Function<String,File[]> regexFiles( final boolean cleverNumberRegexSort )
     {
         return name ->
         {
@@ -93,7 +93,7 @@ public class Converters
         };
     }
 
-    public static Function<String,File[]> toFiles( final String delimiter,
+	public static Function<String,File[]> toFiles( final String delimiter,
             final Function<String,File[]> eachFileConverter )
     {
         return from ->
@@ -113,12 +113,12 @@ public class Converters
         };
     }
 
-    public static Function<String,Integer> toInt()
+	public static Function<String,Integer> toInt()
     {
         return Integer::new;
     }
 
-    /**
+	/**
      * Takes a raw address that can have a single port or 2 ports (lower and upper bounds of port range) and
      * processes it to a clean separation of host and ports. When only one port is specified, it is in the lower bound.
      * The presence of an upper bound implies a range.
@@ -136,7 +136,7 @@ public class Converters
                 optionalFromZeroable( hostnamePort.getPorts()[1] ) );
     }
 
-    private static Optional<Integer> optionalFromZeroable( int port )
+	private static Optional<Integer> optionalFromZeroable( int port )
     {
         return port == 0 ? Optional.empty() : Optional.of( port );
     }

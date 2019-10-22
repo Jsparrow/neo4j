@@ -52,8 +52,8 @@ public abstract class AbstractSwallowingIndexProxy implements IndexProxy
     @Override
     public void start()
     {
-        String message = "Unable to start index, it is in a " + getState().name() + " state.";
-        throw new UnsupportedOperationException( message + ", caused by: " + getPopulationFailure() );
+        String message = new StringBuilder().append("Unable to start index, it is in a ").append(getState().name()).append(" state.").toString();
+        throw new UnsupportedOperationException( new StringBuilder().append(message).append(", caused by: ").append(getPopulationFailure()).toString() );
     }
 
     @Override

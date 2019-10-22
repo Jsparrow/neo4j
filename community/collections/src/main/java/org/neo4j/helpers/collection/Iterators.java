@@ -256,8 +256,8 @@ public final class Iterators
             T result = iterator.hasNext() ? iterator.next() : itemIfNone;
             if ( iterator.hasNext() )
             {
-                throw new NoSuchElementException( "More than one element in " + iterator + ". First element is '"
-                        + result + "' and the second element is '" + iterator.next() + "'" );
+                throw new NoSuchElementException( new StringBuilder().append("More than one element in ").append(iterator).append(". First element is '").append(result).append("' and the second element is '").append(iterator.next())
+						.append("'").toString() );
             }
             return result;
         }
@@ -312,8 +312,7 @@ public final class Iterators
     {
         if ( !collection.add( item ) )
         {
-            throw new IllegalStateException( "Encountered an already added item:" + item +
-                    " when adding items uniquely to a collection:" + collection );
+            throw new IllegalStateException( new StringBuilder().append("Encountered an already added item:").append(item).append(" when adding items uniquely to a collection:").append(collection).toString() );
         }
     }
 

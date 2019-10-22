@@ -48,69 +48,235 @@ import static org.neo4j.test.GraphDescription.PropType.STRING;
 
 public class GraphDescription implements GraphDefinition
 {
-    @Inherited
-    @Target( { ElementType.METHOD, ElementType.TYPE } )
-    @Retention( RetentionPolicy.RUNTIME )
-    public @interface Graph
+    private static final PROP[] NO_PROPS = {};
+	private static final NODE[] NO_NODES = {};
+	private static final REL[] NO_RELS = {};
+	private static final GraphDescription EMPTY = new GraphDescription( NO_NODES, NO_RELS, false, false )
     {
-        String[] value() default {};
+        @Override
+        public Map<String, Node> create( GraphDatabaseService graphdb )
+        {
+            // don't bother with creating a transaction
+            return new HashMap<>();
+        }
+    };
+	private final NODE[] nodes;
+	private final REL[] rels;
+	private final boolean autoIndexRelationships;
+	private final boolean autoIndexNodes;
 
-        NODE[] nodes() default {};
-
-        REL[] relationships() default {};
-
-        boolean autoIndexNodes() default false;
-
-        boolean autoIndexRelationships() default false;
+	private GraphDescription( NODE[] nodes, REL[] rels, boolean autoIndexNodes, boolean autoIndexRelationships )
+    {
+        this.nodes = nodes;
+        this.rels = rels;
+        this.autoIndexNodes = autoIndexNodes;
+        this.autoIndexRelationships = autoIndexRelationships;
     }
 
-    @Target( {} )
-    public @interface NODE
+	public static TestData.Producer<Map<String, Node>> createGraphFor( final GraphHolder holder, final boolean destroy )
     {
-        String name();
+        return new TestData.Producer<Map<String, Node>>()
+        {
+            @Override
+            public Map<String, Node> create( GraphDefinition graph, String title, String documentation )
+            {
+                return graph.create( holder.graphdb() );
+            }
 
-        PROP[] properties() default {};
-
-        LABEL[] labels() default {};
-
-        boolean setNameProperty() default false;
+            @Override
+            public void destroy( Map<String, Node> product, boolean successful )
+            {
+                if ( destroy )
+                {
+                    GraphDescription.destroy( product );
+                }
+            }
+        };
     }
 
-    @Target( {} )
-    public @interface REL
+	@Override
+    public Map<String, Node> create( GraphDatabaseService graphdb )
     {
-        String name() default "";
-
-        String type();
-
-        String start();
-
-        String end();
-
-        PROP[] properties() default {};
-
-        boolean setNameProperty() default false;
+        Map<String, Node> result = new HashMap<>();
+        try ( Transaction tx = graphdb.beginTx() )
+        {
+            graphdb.index().getRelationshipAutoIndexer().setEnabled( autoIndexRelationships );
+            for ( NODE def : nodes )
+            {
+                Node node = init( graphdb.createNode(), def.setNameProperty() ? def.name() : null, def.properties(),
+                        graphdb.index().getNodeAutoIndexer(), autoIndexNodes );
+                for ( LABEL label : def.labels() )
+                {
+                    node.addLabel( label( label.value() ) );
+                }
+                result.put( def.name(), node );
+            }
+            for ( REL def : rels )
+            {
+                init( result.get( def.start() ).createRelationshipTo( result.get( def.end() ),
+                                RelationshipType.withName( def.type() ) ), def.setNameProperty() ? def.name() : null,
+                        def.properties(), graphdb.index().getRelationshipAutoIndexer(), autoIndexRelationships );
+            }
+            tx.success();
+        }
+        return result;
     }
 
-    @Target( {} )
-    public @interface PROP
+	private static <T extends PropertyContainer> T init( T entity, String name, PROP[] properties, AutoIndexer<T> autoindex, boolean auto )
     {
-        String key();
+        autoindex.setEnabled( auto );
+        for ( PROP prop : properties )
+        {
+            if ( auto )
+            {
+                autoindex.startAutoIndexingProperty( prop.key() );
+            }
+            PropType tpe = prop.type();
+            switch ( tpe )
+            {
+            case ARRAY:
+                entity.setProperty( prop.key(), tpe.convert( prop.componentType(), prop.value() ) );
+                break;
+            default:
+                entity.setProperty( prop.key(), prop.type().convert( prop.value() ) );
+            }
+        }
+        if ( name != null )
+        {
+            if ( auto )
+            {
+                autoindex.startAutoIndexingProperty( "name" );
+            }
+            entity.setProperty( "name", name );
+        }
 
-        String value();
-
-        PropType type() default STRING;
-
-        PropType componentType() default ERROR;
+        return entity;
     }
 
-    @Target( {} )
-    public @interface LABEL
+	public static GraphDescription create( String... definition )
     {
-        String value();
+        Map<String, NODE> nodes = new HashMap<>();
+        List<REL> relationships = new ArrayList<>();
+        parse( definition, nodes, relationships );
+        return new GraphDescription( nodes.values().toArray( NO_NODES ), relationships.toArray( NO_RELS ), false, false );
     }
 
-    @SuppressWarnings( "boxing" )
+	public static void destroy( Map<String, Node> nodes )
+    {
+        if ( nodes.isEmpty() )
+        {
+            return;
+        }
+        GraphDatabaseService db = nodes.values().iterator().next().getGraphDatabase();
+        try ( Transaction tx = db.beginTx() )
+        {
+            for ( Node node : db.getAllNodes() )
+            {
+                for ( Relationship rel : node.getRelationships() )
+                {
+                    rel.delete();
+                }
+                node.delete();
+            }
+            tx.success();
+        }
+    }
+
+	public static GraphDescription create( Graph graph )
+    {
+        if ( graph == null )
+        {
+            return EMPTY;
+        }
+        Map<String, NODE> nodes = new HashMap<>();
+        for ( NODE node : graph.nodes() )
+        {
+            if ( nodes.put( defined( node.name() ), node ) != null )
+            {
+                throw new IllegalArgumentException( new StringBuilder().append("Node \"").append(node.name()).append("\" defined more than once").toString() );
+            }
+        }
+        Map<String, REL> rels = new HashMap<>();
+        List<REL> relationships = new ArrayList<>();
+        for ( REL rel : graph.relationships() )
+        {
+            createIfAbsent( nodes, rel.start() );
+            createIfAbsent( nodes, rel.end() );
+            String name = rel.name();
+            boolean condition = !"".equals( name ) && rels.put( name, rel ) != null;
+			if ( condition ) {
+			    throw new IllegalArgumentException( new StringBuilder().append("Relationship \"").append(name).append("\" defined more than once").toString() );
+			}
+            relationships.add( rel );
+        }
+        parse( graph.value(), nodes, relationships );
+        return new GraphDescription( nodes.values().toArray( NO_NODES ), relationships.toArray( NO_RELS ),
+                graph.autoIndexNodes(), graph.autoIndexRelationships() );
+    }
+
+	private static void createIfAbsent( Map<String, NODE> nodes, String name, String ... labels )
+    {
+        if ( !nodes.containsKey( name ) )
+        {
+            nodes.put( name, new DefaultNode( name, labels ) );
+        }
+        else
+        {
+            NODE preexistingNode = nodes.get( name );
+            // Join with any new labels
+            HashSet<String> joinedLabels = new HashSet<>( asList( labels ) );
+            for ( LABEL label : preexistingNode.labels() )
+            {
+                joinedLabels.add( label.value() );
+            }
+
+            String[] labelNameArray = joinedLabels.toArray(new String[joinedLabels.size()]);
+            nodes.put( name, new NodeWithAddedLabels( preexistingNode, labelNameArray ) );
+        }
+    }
+
+	private static String parseAndCreateNodeIfAbsent( Map<String, NODE> nodes, String descriptionToParse )
+    {
+        String[] parts = descriptionToParse.split( ":" );
+        if ( parts.length == 0 )
+        {
+            throw new IllegalArgumentException( "Empty node names are not allowed." );
+        }
+
+        createIfAbsent( nodes, parts[0], copyOfRange( parts, 1, parts.length ) );
+        return parts[0];
+
+    }
+
+	private static void parse( String[] description, Map<String, NODE> nodes, List<REL> relationships )
+    {
+        for ( String part : description )
+        {
+            for ( String line : part.split( "\n" ) )
+            {
+                String[] components = line.split( " " );
+                if ( components.length != 3 )
+                {
+                    throw new IllegalArgumentException( new StringBuilder().append("syntax error: \"").append(line).append("\"").toString() );
+                }
+
+                String startName = parseAndCreateNodeIfAbsent( nodes, defined( components[0] ) );
+                String endName = parseAndCreateNodeIfAbsent( nodes, defined( components[2] ) );
+                relationships.add( new DefaultRel( startName, components[1], endName ) );
+            }
+        }
+    }
+
+	static String defined( String name )
+    {
+        if ( name == null || "".equals( name ) )
+        {
+            throw new IllegalArgumentException( "Node name not provided" );
+        }
+        return name;
+    }
+
+	@SuppressWarnings( "boxing" )
     public enum PropType
     {
 
@@ -205,238 +371,69 @@ public class GraphDescription implements GraphDefinition
         }
     }
 
-    public static TestData.Producer<Map<String, Node>> createGraphFor( final GraphHolder holder, final boolean destroy )
+	@Inherited
+    @Target( { ElementType.METHOD, ElementType.TYPE } )
+    @Retention( RetentionPolicy.RUNTIME )
+    public @interface Graph
     {
-        return new TestData.Producer<Map<String, Node>>()
-        {
-            @Override
-            public Map<String, Node> create( GraphDefinition graph, String title, String documentation )
-            {
-                return graph.create( holder.graphdb() );
-            }
+        String[] value() default {};
 
-            @Override
-            public void destroy( Map<String, Node> product, boolean successful )
-            {
-                if ( destroy )
-                {
-                    GraphDescription.destroy( product );
-                }
-            }
-        };
+        NODE[] nodes() default {};
+
+        REL[] relationships() default {};
+
+        boolean autoIndexNodes() default false;
+
+        boolean autoIndexRelationships() default false;
     }
 
-    @Override
-    public Map<String, Node> create( GraphDatabaseService graphdb )
+	@Target( {} )
+    public @interface NODE
     {
-        Map<String, Node> result = new HashMap<>();
-        try ( Transaction tx = graphdb.beginTx() )
-        {
-            graphdb.index().getRelationshipAutoIndexer().setEnabled( autoIndexRelationships );
-            for ( NODE def : nodes )
-            {
-                Node node = init( graphdb.createNode(), def.setNameProperty() ? def.name() : null, def.properties(),
-                        graphdb.index().getNodeAutoIndexer(), autoIndexNodes );
-                for ( LABEL label : def.labels() )
-                {
-                    node.addLabel( label( label.value() ) );
-                }
-                result.put( def.name(), node );
-            }
-            for ( REL def : rels )
-            {
-                init( result.get( def.start() ).createRelationshipTo( result.get( def.end() ),
-                                RelationshipType.withName( def.type() ) ), def.setNameProperty() ? def.name() : null,
-                        def.properties(), graphdb.index().getRelationshipAutoIndexer(), autoIndexRelationships );
-            }
-            tx.success();
-        }
-        return result;
+        String name();
+
+        PROP[] properties() default {};
+
+        LABEL[] labels() default {};
+
+        boolean setNameProperty() default false;
     }
 
-    private static <T extends PropertyContainer> T init( T entity, String name, PROP[] properties, AutoIndexer<T> autoindex, boolean auto )
+	@Target( {} )
+    public @interface REL
     {
-        autoindex.setEnabled( auto );
-        for ( PROP prop : properties )
-        {
-            if ( auto )
-            {
-                autoindex.startAutoIndexingProperty( prop.key() );
-            }
-            PropType tpe = prop.type();
-            switch ( tpe )
-            {
-            case ARRAY:
-                entity.setProperty( prop.key(), tpe.convert( prop.componentType(), prop.value() ) );
-                break;
-            default:
-                entity.setProperty( prop.key(), prop.type().convert( prop.value() ) );
-            }
-        }
-        if ( name != null )
-        {
-            if ( auto )
-            {
-                autoindex.startAutoIndexingProperty( "name" );
-            }
-            entity.setProperty( "name", name );
-        }
+        String name() default "";
 
-        return entity;
+        String type();
+
+        String start();
+
+        String end();
+
+        PROP[] properties() default {};
+
+        boolean setNameProperty() default false;
     }
 
-    private static final PROP[] NO_PROPS = {};
-    private static final NODE[] NO_NODES = {};
-    private static final REL[] NO_RELS = {};
-    private static final GraphDescription EMPTY = new GraphDescription( NO_NODES, NO_RELS, false, false )
+	@Target( {} )
+    public @interface PROP
     {
-        @Override
-        public Map<String, Node> create( GraphDatabaseService graphdb )
-        {
-            // don't bother with creating a transaction
-            return new HashMap<>();
-        }
-    };
-    private final NODE[] nodes;
-    private final REL[] rels;
-    private final boolean autoIndexRelationships;
-    private final boolean autoIndexNodes;
+        String key();
 
-    public static GraphDescription create( String... definition )
-    {
-        Map<String, NODE> nodes = new HashMap<>();
-        List<REL> relationships = new ArrayList<>();
-        parse( definition, nodes, relationships );
-        return new GraphDescription( nodes.values().toArray( NO_NODES ), relationships.toArray( NO_RELS ), false, false );
+        String value();
+
+        PropType type() default STRING;
+
+        PropType componentType() default ERROR;
     }
 
-    public static void destroy( Map<String, Node> nodes )
+	@Target( {} )
+    public @interface LABEL
     {
-        if ( nodes.isEmpty() )
-        {
-            return;
-        }
-        GraphDatabaseService db = nodes.values().iterator().next().getGraphDatabase();
-        try ( Transaction tx = db.beginTx() )
-        {
-            for ( Node node : db.getAllNodes() )
-            {
-                for ( Relationship rel : node.getRelationships() )
-                {
-                    rel.delete();
-                }
-                node.delete();
-            }
-            tx.success();
-        }
+        String value();
     }
 
-    public static GraphDescription create( Graph graph )
-    {
-        if ( graph == null )
-        {
-            return EMPTY;
-        }
-        Map<String, NODE> nodes = new HashMap<>();
-        for ( NODE node : graph.nodes() )
-        {
-            if ( nodes.put( defined( node.name() ), node ) != null )
-            {
-                throw new IllegalArgumentException( "Node \"" + node.name() + "\" defined more than once" );
-            }
-        }
-        Map<String, REL> rels = new HashMap<>();
-        List<REL> relationships = new ArrayList<>();
-        for ( REL rel : graph.relationships() )
-        {
-            createIfAbsent( nodes, rel.start() );
-            createIfAbsent( nodes, rel.end() );
-            String name = rel.name();
-            if ( !name.equals( "" ) )
-            {
-                if ( rels.put( name, rel ) != null )
-                {
-                    throw new IllegalArgumentException( "Relationship \"" + name + "\" defined more than once" );
-                }
-            }
-            relationships.add( rel );
-        }
-        parse( graph.value(), nodes, relationships );
-        return new GraphDescription( nodes.values().toArray( NO_NODES ), relationships.toArray( NO_RELS ),
-                graph.autoIndexNodes(), graph.autoIndexRelationships() );
-    }
-
-    private static void createIfAbsent( Map<String, NODE> nodes, String name, String ... labels )
-    {
-        if ( !nodes.containsKey( name ) )
-        {
-            nodes.put( name, new DefaultNode( name, labels ) );
-        }
-        else
-        {
-            NODE preexistingNode = nodes.get( name );
-            // Join with any new labels
-            HashSet<String> joinedLabels = new HashSet<>( asList( labels ) );
-            for ( LABEL label : preexistingNode.labels() )
-            {
-                joinedLabels.add( label.value() );
-            }
-
-            String[] labelNameArray = joinedLabels.toArray(new String[joinedLabels.size()]);
-            nodes.put( name, new NodeWithAddedLabels( preexistingNode, labelNameArray ) );
-        }
-    }
-
-    private static String parseAndCreateNodeIfAbsent( Map<String, NODE> nodes, String descriptionToParse )
-    {
-        String[] parts = descriptionToParse.split( ":" );
-        if ( parts.length == 0 )
-        {
-            throw new IllegalArgumentException( "Empty node names are not allowed." );
-        }
-
-        createIfAbsent( nodes, parts[0], copyOfRange( parts, 1, parts.length ) );
-        return parts[0];
-
-    }
-
-    private static void parse( String[] description, Map<String, NODE> nodes, List<REL> relationships )
-    {
-        for ( String part : description )
-        {
-            for ( String line : part.split( "\n" ) )
-            {
-                String[] components = line.split( " " );
-                if ( components.length != 3 )
-                {
-                    throw new IllegalArgumentException( "syntax error: \"" + line + "\"" );
-                }
-
-                String startName = parseAndCreateNodeIfAbsent( nodes, defined( components[0] ) );
-                String endName = parseAndCreateNodeIfAbsent( nodes, defined( components[2] ) );
-                relationships.add( new DefaultRel( startName, components[1], endName ) );
-            }
-        }
-    }
-
-    private GraphDescription( NODE[] nodes, REL[] rels, boolean autoIndexNodes, boolean autoIndexRelationships )
-    {
-        this.nodes = nodes;
-        this.rels = rels;
-        this.autoIndexNodes = autoIndexNodes;
-        this.autoIndexRelationships = autoIndexRelationships;
-    }
-
-    static String defined( String name )
-    {
-        if ( name == null || name.equals( "" ) )
-        {
-            throw new IllegalArgumentException( "Node name not provided" );
-        }
-        return name;
-    }
-
-    private static class Default
+	private static class Default
     {
         private final String name;
 

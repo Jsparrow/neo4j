@@ -85,30 +85,28 @@ public class BoltConnectionReadLimiter implements BoltConnectionQueueMonitor
     {
         Channel channel = connection.channel();
 
-        if ( queueSize > highWatermark && channel.config().isAutoRead() )
-        {
-            if ( log != null )
-            {
-                log.warn( "Channel [%s]: client produced %d messages on the worker queue, auto-read is being disabled.", channel.remoteAddress(), queueSize );
-            }
-
-            channel.config().setAutoRead( false );
-        }
+        if (!(queueSize > highWatermark && channel.config().isAutoRead())) {
+			return;
+		}
+		if ( log != null )
+		{
+		    log.warn( "Channel [%s]: client produced %d messages on the worker queue, auto-read is being disabled.", channel.remoteAddress(), queueSize );
+		}
+		channel.config().setAutoRead( false );
     }
 
     private void checkLimitsOnDequeue( BoltConnection connection )
     {
         Channel channel = connection.channel();
 
-        if ( queueSize <= lowWatermark && !channel.config().isAutoRead() )
-        {
-            if ( log != null )
-            {
-                log.warn( "Channel [%s]: consumed messages on the worker queue below %d, auto-read is being enabled.", channel.remoteAddress(), lowWatermark );
-            }
-
-            channel.config().setAutoRead( true );
-        }
+        if (!(queueSize <= lowWatermark && !channel.config().isAutoRead())) {
+			return;
+		}
+		if ( log != null )
+		{
+		    log.warn( "Channel [%s]: consumed messages on the worker queue below %d, auto-read is being enabled.", channel.remoteAddress(), lowWatermark );
+		}
+		channel.config().setAutoRead( true );
     }
 
 }

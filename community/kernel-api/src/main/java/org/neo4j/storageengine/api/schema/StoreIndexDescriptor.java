@@ -151,8 +151,8 @@ public class StoreIndexDescriptor extends IndexDescriptor implements SchemaRule
             ownerString = ", owner=" + owningConstraintId;
         }
 
-        return "IndexRule[id=" + id + ", descriptor=" + this.userDescription( tokenNameLookup ) +
-                ", provider=" + this.providerDescriptor() + ownerString + "]";
+        return new StringBuilder().append("IndexRule[id=").append(id).append(", descriptor=").append(this.userDescription( tokenNameLookup )).append(", provider=").append(this.providerDescriptor())
+				.append(ownerString).append("]").toString();
     }
 
     @Override

@@ -21,18 +21,18 @@ package org.neo4j.kernel.impl.api;
 
 public interface CountsVisitor
 {
-    interface Visitable
+    void visitNodeCount( int labelId, long count );
+
+	void visitRelationshipCount( int startLabelId, int typeId, int endLabelId, long count );
+
+	void visitIndexStatistics( long indexId, long updates, long size );
+
+	void visitIndexSample( long indexId, long unique, long size );
+
+	interface Visitable
     {
         void accept( CountsVisitor visitor );
     }
-
-    void visitNodeCount( int labelId, long count );
-
-    void visitRelationshipCount( int startLabelId, int typeId, int endLabelId, long count );
-
-    void visitIndexStatistics( long indexId, long updates, long size );
-
-    void visitIndexSample( long indexId, long unique, long size );
 
     class Adapter implements CountsVisitor
     {

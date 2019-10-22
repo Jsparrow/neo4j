@@ -39,27 +39,12 @@ public class LuceneKernelExtensionFactory extends KernelExtensionFactory<LuceneK
      * @deprecated removed in 4.0
      */
     @Deprecated
-    public interface Dependencies
-    {
-        Config getConfig();
-
-        IndexProviders getIndexProviders();
-
-        IndexConfigStore getIndexStore();
-
-        FileSystemAbstraction fileSystem();
-    }
-
-    /**
-     * @deprecated removed in 4.0
-     */
-    @Deprecated
     public LuceneKernelExtensionFactory()
     {
         super( ExtensionType.DATABASE, LuceneIndexImplementation.SERVICE_NAME );
     }
 
-    @Override
+	@Override
     public Lifecycle newInstance( KernelContext context, Dependencies dependencies )
     {
         return new LuceneKernelExtension(
@@ -69,5 +54,20 @@ public class LuceneKernelExtensionFactory extends KernelExtensionFactory<LuceneK
                 dependencies.fileSystem(),
                 dependencies.getIndexProviders(),
                 context.databaseInfo().operationalMode );
+    }
+
+	/**
+     * @deprecated removed in 4.0
+     */
+    @Deprecated
+    public interface Dependencies
+    {
+        Config getConfig();
+
+        IndexProviders getIndexProviders();
+
+        IndexConfigStore getIndexStore();
+
+        FileSystemAbstraction fileSystem();
     }
 }

@@ -64,19 +64,15 @@ class AsOneStartBranch implements TraversalBranch
 
     private Iterator<TraversalBranch> toBranches( Iterable<Node> nodes )
     {
-        if ( uniqueness.eagerStartBranches() )
-        {
-            List<TraversalBranch> result = new ArrayList<>();
-            for ( Node node : nodes )
-            {
-                result.add( new StartNodeTraversalBranch( context, this, node, initialState ) );
-            }
-            return result.iterator();
-        }
-        else
-        {
-            return new TraversalBranchIterator( nodes.iterator() );
-        }
+        if (!uniqueness.eagerStartBranches()) {
+			return new TraversalBranchIterator( nodes.iterator() );
+		}
+		List<TraversalBranch> result = new ArrayList<>();
+		for ( Node node : nodes )
+		{
+		    result.add( new StartNodeTraversalBranch( context, this, node, initialState ) );
+		}
+		return result.iterator();
     }
 
     @Override
@@ -106,12 +102,11 @@ class AsOneStartBranch implements TraversalBranch
     @Override
     public TraversalBranch next( PathExpander expander, TraversalContext metadata )
     {
-        if ( branches.hasNext() )
-        {
-            expanded++;
-            return branches.next().next( expander, metadata );
-        }
-        return null;
+        if (!branches.hasNext()) {
+			return null;
+		}
+		expanded++;
+		return branches.next().next( expander, metadata );
     }
 
     @Override

@@ -26,111 +26,67 @@ import java.util.PriorityQueue;
 
 public class PriorityMap<E, K, P>
 {
-    public interface Converter<T, S>
-    {
-        T convert( S source );
-    }
-
-    public static final class Entry<E, P>
-    {
-        private final E entity;
-        private final P priority;
-
-        private Entry( E entity, P priority )
-        {
-            this.entity = entity;
-            this.priority = priority;
-        }
-
-        Entry( Node<E, P> node )
-        {
-            this( node.head.entity, node.head.priority );
-        }
-
-        public E getEntity()
-        {
-            return entity;
-        }
-
-        public P getPriority()
-        {
-            return priority;
-        }
-    }
-
     @SuppressWarnings( "rawtypes" )
     private static final Converter SELF_KEY = source -> source;
-    @SuppressWarnings( "unchecked" )
-    public static <K, P> PriorityMap<K, K, P> withSelfKey(
-            Comparator<P> priority )
+	private final Converter<K, E> keyFunction;
+	private final Comparator<P> order;
+	private final boolean onlyKeepBestPriorities;
+	// Naive implementation
+
+    private final Map<K, Node<E, P>> map = new HashMap<>();
+	private final PriorityQueue<Node<E, P>> queue = new PriorityQueue<>( 11, new Comparator<Node<E,P>>()
     {
-        return new PriorityMap<K, K, P>( SELF_KEY, priority, true );
-    }
-
-    private static class NaturalPriority<P extends Comparable<P>> implements
-            Comparator<P>
-    {
-        private final boolean reversed;
-
-        NaturalPriority( boolean reversed )
-        {
-            this.reversed = reversed;
-        }
-
         @Override
-        public int compare( P o1, P o2 )
+        public int compare( Node<E,P> o1, Node<E,P> o2 )
         {
-            return reversed ? o2.compareTo( o1 ) : o1.compareTo( o2 );
+            return order.compare( o1.head.priority, o2.head.priority );
         }
-    }
-    public static <E, K, P extends Comparable<P>> PriorityMap<E, K, P> withNaturalOrder(
-            Converter<K, E> key )
-    {
-        return PriorityMap.withNaturalOrder( key, false );
-    }
-    public static <E, K, P extends Comparable<P>> PriorityMap<E, K, P> withNaturalOrder(
-            Converter<K, E> key, boolean reversed )
-    {
-        return withNaturalOrder( key, reversed, true );
-    }
-    public static <E, K, P extends Comparable<P>> PriorityMap<E, K, P> withNaturalOrder(
-            Converter<K, E> key, boolean reversed, boolean onlyKeepBestPriorities )
-    {
-        Comparator<P> priority = new NaturalPriority<>( reversed );
-        return new PriorityMap<>( key, priority, onlyKeepBestPriorities );
-    }
-
-    public static <K, P extends Comparable<P>> PriorityMap<K, K, P> withSelfKeyNaturalOrder()
-    {
-        return PriorityMap.withSelfKeyNaturalOrder( false );
-    }
-
-    public static <K, P extends Comparable<P>> PriorityMap<K, K, P> withSelfKeyNaturalOrder(
-            boolean reversed )
-    {
-        return PriorityMap.withSelfKeyNaturalOrder( reversed, true );
-    }
-
-    @SuppressWarnings( "unchecked" )
-    public static <K, P extends Comparable<P>> PriorityMap<K, K, P> withSelfKeyNaturalOrder(
-            boolean reversed, boolean onlyKeepBestPriorities )
-    {
-        Comparator<P> priority = new NaturalPriority<>( reversed );
-        return new PriorityMap<K, K, P>( SELF_KEY, priority, onlyKeepBestPriorities );
-    }
-
-    private final Converter<K, E> keyFunction;
-    private final Comparator<P> order;
-    private final boolean onlyKeepBestPriorities;
-
-    public PriorityMap( Converter<K, E> key, Comparator<P> priority, boolean onlyKeepBestPriorities )
+    } );
+	public PriorityMap( Converter<K, E> key, Comparator<P> priority, boolean onlyKeepBestPriorities )
     {
         this.keyFunction = key;
         this.order = priority;
         this.onlyKeepBestPriorities = onlyKeepBestPriorities;
     }
-
-    /**
+	@SuppressWarnings( "unchecked" )
+    public static <K, P> PriorityMap<K, K, P> withSelfKey(
+            Comparator<P> priority )
+    {
+        return new PriorityMap<>( SELF_KEY, priority, true );
+    }
+	public static <E, K, P extends Comparable<P>> PriorityMap<E, K, P> withNaturalOrder(
+            Converter<K, E> key )
+    {
+        return PriorityMap.withNaturalOrder( key, false );
+    }
+	public static <E, K, P extends Comparable<P>> PriorityMap<E, K, P> withNaturalOrder(
+            Converter<K, E> key, boolean reversed )
+    {
+        return withNaturalOrder( key, reversed, true );
+    }
+	public static <E, K, P extends Comparable<P>> PriorityMap<E, K, P> withNaturalOrder(
+            Converter<K, E> key, boolean reversed, boolean onlyKeepBestPriorities )
+    {
+        Comparator<P> priority = new NaturalPriority<>( reversed );
+        return new PriorityMap<>( key, priority, onlyKeepBestPriorities );
+    }
+	public static <K, P extends Comparable<P>> PriorityMap<K, K, P> withSelfKeyNaturalOrder()
+    {
+        return PriorityMap.withSelfKeyNaturalOrder( false );
+    }
+	public static <K, P extends Comparable<P>> PriorityMap<K, K, P> withSelfKeyNaturalOrder(
+            boolean reversed )
+    {
+        return PriorityMap.withSelfKeyNaturalOrder( reversed, true );
+    }
+	@SuppressWarnings( "unchecked" )
+    public static <K, P extends Comparable<P>> PriorityMap<K, K, P> withSelfKeyNaturalOrder(
+            boolean reversed, boolean onlyKeepBestPriorities )
+    {
+        Comparator<P> priority = new NaturalPriority<>( reversed );
+        return new PriorityMap<>( SELF_KEY, priority, onlyKeepBestPriorities );
+    }
+	/**
      * Add an entity to the priority map. If the key for the {@code entity}
      * was already found in the priority map and the priority is the same
      * the entity will be added. If the priority is lower the existing entities
@@ -205,21 +161,18 @@ public class PriorityMap<E, K, P>
         }
         return result;
     }
-
-    private void putNew( E entity, P priority, K key )
+	private void putNew( E entity, P priority, K key )
     {
         Node<E, P> node = new Node<>( new Link<>( entity, priority, null ) );
         map.put( key, node );
         queue.add( node );
     }
-
-    private void reinsert( Node<E,P> node )
+	private void reinsert( Node<E,P> node )
     {
         queue.remove( node );
         queue.add( node );
     }
-
-    /**
+	/**
      * Get the priority for the entity with the specified key.
      *
      * @param key the key.
@@ -230,8 +183,7 @@ public class PriorityMap<E, K, P>
         Node<E, P> node = map.get( key );
         return node != null ? node.head.priority : null;
     }
-
-    /**
+	/**
      * Remove and return the entry with the highest priority.
      *
      * @return the entry with the highest priority.
@@ -271,8 +223,7 @@ public class PriorityMap<E, K, P>
         }
         return result;
     }
-
-    public Entry<E, P> peek()
+	public Entry<E, P> peek()
     {
         Node<E, P> node = queue.peek();
         if ( node == null )
@@ -282,18 +233,54 @@ public class PriorityMap<E, K, P>
         return new Entry<>( node );
     }
 
-    // Naive implementation
-
-    private final Map<K, Node<E, P>> map = new HashMap<>();
-    private final PriorityQueue<Node<E, P>> queue = new PriorityQueue<>( 11, new Comparator<Node<E,P>>()
+	public interface Converter<T, S>
     {
-        @Override
-        public int compare( Node<E,P> o1, Node<E,P> o2 )
-        {
-            return order.compare( o1.head.priority, o2.head.priority );
-        }
-    } );
+        T convert( S source );
+    }
 
+    public static final class Entry<E, P>
+    {
+        private final E entity;
+        private final P priority;
+
+        Entry( Node<E, P> node )
+        {
+            this( node.head.entity, node.head.priority );
+        }
+
+		private Entry( E entity, P priority )
+        {
+            this.entity = entity;
+            this.priority = priority;
+        }
+
+		public E getEntity()
+        {
+            return entity;
+        }
+
+		public P getPriority()
+        {
+            return priority;
+        }
+    }
+
+    private static class NaturalPriority<P extends Comparable<P>> implements
+            Comparator<P>
+    {
+        private final boolean reversed;
+
+        NaturalPriority( boolean reversed )
+        {
+            this.reversed = reversed;
+        }
+
+        @Override
+        public int compare( P o1, P o2 )
+        {
+            return reversed ? o2.compareTo( o1 ) : o1.compareTo( o2 );
+        }
+    }
     private static class Node<E,P>
     {
         private Link<E,P> head;

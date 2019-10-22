@@ -43,16 +43,16 @@ import static java.lang.String.format;
 @Ignore( "Too costly to run by default but useful for testing resource clean up and indexing" )
 public class ManyMergesStressTest
 {
-    private Random random = new Random();
-
-    private String[] SYLLABLES = new String[] { "Om", "Pa", "So", "Hu", "Ma", "Ni", "Ru", "Gu", "Ha", "Ta" };
-
     private static final int TRIES = 8000;
 
-    @Rule
+	private Random random = new Random();
+
+	private String[] syllables = new String[] { "Om", "Pa", "So", "Hu", "Ma", "Ni", "Ru", "Gu", "Ha", "Ta" };
+
+	@Rule
     public EmbeddedDatabaseRule dbRule = new EmbeddedDatabaseRule();
 
-    @Test
+	@Test
     public void shouldWorkFine()
     {
         GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
@@ -93,23 +93,22 @@ public class ManyMergesStressTest
             String query =
                 format( "MERGE (%s:Person {id: %s}) ON CREATE SET %s.name = \"%s\";", ident, id, ident, name );
 
-            try ( InternalTransaction tx = graph.beginTransaction( KernelTransaction.Type.implicit, LoginContext.AUTH_DISABLED ) )
+            try ( InternalTransaction tx = graph.beginTransaction( KernelTransaction.Type.implicit, LoginContext.AUTH_DISABLED );
+					Result result = db.execute(query) )
             {
-                Result result = db.execute( query );
-                result.close();
                 tx.success();
             }
         }
     }
 
-    public Pair<String, String> getRandomName()
+	public Pair<String, String> getRandomName()
     {
         StringBuilder identBuilder = new StringBuilder();
         StringBuilder nameBuilder = new StringBuilder();
 
         for ( int j = 0; j < 10; j++ )
         {
-            String part = SYLLABLES[random.nextInt( SYLLABLES.length )];
+            String part = syllables[random.nextInt( syllables.length )];
             if ( j != 0 )
             {
                 identBuilder.append( '_' );

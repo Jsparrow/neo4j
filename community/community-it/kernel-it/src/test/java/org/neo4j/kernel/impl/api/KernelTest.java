@@ -86,9 +86,7 @@ public class KernelTest
                             return () ->
                             {
                                 throw new InvalidTransactionTypeKernelException(
-                                        "Creation or deletion of constraints is not possible while running in a HA cluster. " +
-                                                "In order to do that, please restart in non-HA mode and propagate the database copy" +
-                                                "to all slaves" );
+                                        new StringBuilder().append("Creation or deletion of constraints is not possible while running in a HA cluster. ").append("In order to do that, please restart in non-HA mode and propagate the database copy").append("to all slaves").toString() );
                             };
                         }
                     };

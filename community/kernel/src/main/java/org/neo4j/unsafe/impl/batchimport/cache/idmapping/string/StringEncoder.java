@@ -33,34 +33,32 @@ public class StringEncoder implements Encoder
 {
     private static final long UPPER_INT_MASK = 0x00000000_FFFFFFFFL;
     private static final int FOURTH_BYTE = 0x000000FF;
-
-    // fixed values
+	private static final int encodingThreshold = 7;
+	// fixed values
     private final int numCodes;
-    private static final int encodingThreshold = 7;
-
-    // data changing over time, potentially with each encoding
+	// data changing over time, potentially with each encoding
     private final byte[] reMap = new byte[256];
-    private int numChars;
+	private int numChars;
 
-    public StringEncoder()
+	public StringEncoder()
     {
         this( 2 );
     }
 
-    public StringEncoder( int codingStrength )
+	public StringEncoder( int codingStrength )
     {
         numCodes = codingStrength > 2 ? codingStrength : 2;
         Arrays.fill( reMap, (byte)-1 );
     }
 
-    @Override
+	@Override
     public long encode( Object s )
     {
         int[] val = encodeInt( (String) s );
         return (long) val[0] << 32 | val[1] & UPPER_INT_MASK;
     }
 
-    private int[] encodeInt( String s )
+	private int[] encodeInt( String s )
     {
         // construct bytes from string
         int inputLength = s.length();
@@ -93,7 +91,7 @@ public class StringEncoder implements Encoder
         return codes;
     }
 
-    private int lengthEncoder( int length )
+	private int lengthEncoder( int length )
     {
         if ( length < 32 )
         {
@@ -121,7 +119,7 @@ public class StringEncoder implements Encoder
         }
     }
 
-    private void reMap( byte[] bytes, int inputLength )
+	private void reMap( byte[] bytes, int inputLength )
     {
         for ( int i = 0; i < inputLength; i++ )
         {
@@ -139,7 +137,7 @@ public class StringEncoder implements Encoder
         }
     }
 
-    private int[] simplestCode( byte[] bytes, int inputLength )
+	private int[] simplestCode( byte[] bytes, int inputLength )
     {
         int[] codes = new int[]{0, 0};
         codes[0] = max( inputLength, 1 ) << 25;
@@ -155,7 +153,7 @@ public class StringEncoder implements Encoder
         return codes;
     }
 
-    private int getCode( byte[] bytes, int inputLength, int order )
+	private int getCode( byte[] bytes, int inputLength, int order )
     {
         long code = 0;
         int size = inputLength;
@@ -173,9 +171,9 @@ public class StringEncoder implements Encoder
         return (int) code;
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[" + numCodes + "]";
+        return new StringBuilder().append(getClass().getSimpleName()).append("[").append(numCodes).append("]").toString();
     }
 }

@@ -172,7 +172,7 @@ public class SchemaImpl implements Schema
                 }
                 return new IndexDefinitionImpl( actions, index, relTypes, propertyNames, constraintIndex );
             default:
-                throw new IllegalArgumentException( "Cannot create IndexDefinition for " + schema.entityType() + " entity-typed schema." );
+                throw new IllegalArgumentException( new StringBuilder().append("Cannot create IndexDefinition for ").append(schema.entityType()).append(" entity-typed schema.").toString() );
             }
         }
         catch ( KernelException e )
@@ -232,9 +232,7 @@ public class SchemaImpl implements Schema
         {
             if ( millisLeft < 0 )
             {
-                throw new IllegalStateException( "Expected all indexes to come online within a reasonable time."
-                                                 + "Indexes brought online: " + onlineIndexes
-                                                 + ". Indexes not guaranteed to be online: " + asCollection( iter ) );
+                throw new IllegalStateException( new StringBuilder().append("Expected all indexes to come online within a reasonable time.").append("Indexes brought online: ").append(onlineIndexes).append(". Indexes not guaranteed to be online: ").append(asCollection( iter )).toString() );
             }
 
             IndexDefinition index = iter.next();
@@ -260,15 +258,14 @@ public class SchemaImpl implements Schema
             {
                 if ( index != null )
                 {
-                    throw new IllegalStateException( "Multiple indexes found by the name '" + indexName + "'. " +
-                            "Try iterating Schema#getIndexes() and filter by name instead." );
+                    throw new IllegalStateException( new StringBuilder().append("Multiple indexes found by the name '").append(indexName).append("'. ").append("Try iterating Schema#getIndexes() and filter by name instead.").toString() );
                 }
                 index = candidate;
             }
         }
         if ( index == null )
         {
-            throw new IllegalArgumentException( "No index found with the name '" + indexName + "'." );
+            throw new IllegalArgumentException( new StringBuilder().append("No index found with the name '").append(indexName).append("'.").toString() );
         }
         return index;
     }
@@ -303,7 +300,7 @@ public class SchemaImpl implements Schema
 
     private NotFoundException newIndexNotFoundException( IndexDefinition index, KernelException e )
     {
-        return new NotFoundException( "No index was found corresponding to " + index + ".", e );
+        return new NotFoundException( new StringBuilder().append("No index was found corresponding to ").append(index).append(".").toString(), e );
     }
 
     @Override
@@ -432,7 +429,7 @@ public class SchemaImpl implements Schema
         }
         else
         {
-            throw new IllegalArgumentException( "The given index is neither a node index, nor a relationship index: " + index + "." );
+            throw new IllegalArgumentException( new StringBuilder().append("The given index is neither a node index, nor a relationship index: ").append(index).append(".").toString() );
         }
 
         reference = schemaRead.index( schema );
@@ -458,7 +455,7 @@ public class SchemaImpl implements Schema
             int tokenId = getTokenId.applyAsInt( tokenName );
             if ( tokenId == TokenRead.NO_TOKEN )
             {
-                throw new NotFoundException( tokenTypeName + " " + tokenName + " not found." );
+                throw new NotFoundException( new StringBuilder().append(tokenTypeName).append(" ").append(tokenName).append(" not found.").toString() );
             }
             tokenIds[i] = tokenId;
         }
@@ -606,9 +603,7 @@ public class SchemaImpl implements Schema
         {
             if ( indexDefinition.isMultiTokenIndex() )
             {
-                throw new ConstraintViolationException( "A property uniqueness constraint does not support multi-token index definitions. " +
-                        "That is, only a single label is supported, but the following labels were provided: " +
-                        labelNameList( indexDefinition.getLabels(), "", "." ) );
+                throw new ConstraintViolationException( new StringBuilder().append("A property uniqueness constraint does not support multi-token index definitions. ").append("That is, only a single label is supported, but the following labels were provided: ").append(labelNameList( indexDefinition.getLabels(), "", "." )).toString() );
             }
             KernelTransaction transaction = safeAcquireTransaction( transactionSupplier );
             try ( Statement ignore = transaction.acquireStatement() )
@@ -648,9 +643,7 @@ public class SchemaImpl implements Schema
         {
             if ( indexDefinition.isMultiTokenIndex() )
             {
-                throw new ConstraintViolationException( "A node key constraint does not support multi-token index definitions. " +
-                        "That is, only a single label is supported, but the following labels were provided: " +
-                        labelNameList( indexDefinition.getLabels(), "", "." ) );
+                throw new ConstraintViolationException( new StringBuilder().append("A node key constraint does not support multi-token index definitions. ").append("That is, only a single label is supported, but the following labels were provided: ").append(labelNameList( indexDefinition.getLabels(), "", "." )).toString() );
             }
             KernelTransaction transaction = safeAcquireTransaction( transactionSupplier );
             try ( Statement ignore = transaction.acquireStatement() )
@@ -872,11 +865,11 @@ public class SchemaImpl implements Schema
         public void assertInOpenTransaction()
         {
             KernelTransaction transaction = transactionSupplier.get();
-            if ( transaction.isTerminated() )
-            {
-                Status terminationReason = transaction.getReasonIfTerminated().orElse( Status.Transaction.Terminated );
-                throw new TransactionTerminatedException( terminationReason );
-            }
+            if (!transaction.isTerminated()) {
+				return;
+			}
+			Status terminationReason = transaction.getReasonIfTerminated().orElse( Status.Transaction.Terminated );
+			throw new TransactionTerminatedException( terminationReason );
         }
     }
 }

@@ -21,10 +21,9 @@ package org.neo4j.codegen;
 
 public interface CodeGeneratorOption
 {
-    void applyTo( Object target );
-
     CodeGeneratorOption BLANK_OPTION = target ->
     {
     };
-    CodeGeneratorOption PRINT_DISASSEMBLY = ByteCodeVisitor.printer( System.out );
+	CodeGeneratorOption PRINT_DISASSEMBLY = ByteCodeVisitor.printer( System.out );
+	void applyTo( Object target );
 }

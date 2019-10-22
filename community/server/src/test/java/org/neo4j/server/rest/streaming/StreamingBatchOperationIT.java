@@ -67,7 +67,7 @@ public class StreamingBatchOperationIT extends AbstractRestFunctionalTestBase
             .array()
                 .object()
                     .key("method")  .value("PUT")
-                    .key("to")      .value("/node/" + idJoe + "/properties")
+                    .key("to")      .value(new StringBuilder().append("/node/").append(idJoe).append("/properties").toString())
                     .key("body")
                         .object()
                             .key("age").value(1)
@@ -120,7 +120,7 @@ public class StreamingBatchOperationIT extends AbstractRestFunctionalTestBase
         assertEquals(3, secondPostResult.get("id"));
 
         // Should contain "from"
-        assertEquals("/node/" + idJoe + "/properties", putResult.get("from"));
+        assertEquals(new StringBuilder().append("/node/").append(idJoe).append("/properties").toString(), putResult.get("from"));
         assertEquals("/node/" + idJoe, getResult.get("from"));
         assertEquals("/node", firstPostResult.get("from"));
         assertEquals("/node", secondPostResult.get("from"));
@@ -284,8 +284,7 @@ public class StreamingBatchOperationIT extends AbstractRestFunctionalTestBase
     }
 
     @Test
-    public void shouldRollbackAllWhenGivenIncorrectRequest() throws JsonParseException, ClientHandlerException,
-            UniformInterfaceException, JSONException
+    public void shouldRollbackAllWhenGivenIncorrectRequest() throws JsonParseException
     {
 
         String jsonString = new PrettyJSON()
@@ -368,8 +367,7 @@ public class StreamingBatchOperationIT extends AbstractRestFunctionalTestBase
 
     @Test
     @Graph( "Peter likes Jazz" )
-    public void shouldHandleEscapedStrings() throws ClientHandlerException,
-            UniformInterfaceException, JSONException, JsonParseException
+    public void shouldHandleEscapedStrings() throws JsonParseException
     {
         String string = "Jazz";
         Node gnode = getNode( string );
@@ -381,7 +379,7 @@ public class StreamingBatchOperationIT extends AbstractRestFunctionalTestBase
         .array()
             .object()
                 .key("method") .value("PUT")
-                .key("to")     .value("/node/" + gnode.getId() + "/properties")
+                .key("to")     .value(new StringBuilder().append("/node/").append(gnode.getId()).append("/properties").toString())
                 .key("body")
                     .object()
                         .key("name").value(name)
@@ -401,7 +399,7 @@ public class StreamingBatchOperationIT extends AbstractRestFunctionalTestBase
         .array()
             .object()
                 .key("method") .value("GET")
-                .key("to")     .value("/node/" + gnode.getId() + "/properties/name")
+                .key("to")     .value(new StringBuilder().append("/node/").append(gnode.getId()).append("/properties/name").toString())
             .endObject()
         .endArray()
         .toString();
@@ -416,8 +414,7 @@ public class StreamingBatchOperationIT extends AbstractRestFunctionalTestBase
     }
 
     @Test
-    public void shouldRollbackAllWhenInsertingIllegalData() throws JsonParseException, ClientHandlerException,
-            UniformInterfaceException, JSONException
+    public void shouldRollbackAllWhenInsertingIllegalData() throws JsonParseException
     {
 
         String jsonString = new PrettyJSON()
@@ -458,8 +455,7 @@ public class StreamingBatchOperationIT extends AbstractRestFunctionalTestBase
     }
 
     @Test
-    public void shouldRollbackAllOnSingle404() throws JsonParseException, ClientHandlerException,
-            UniformInterfaceException, JSONException
+    public void shouldRollbackAllOnSingle404() throws JsonParseException
     {
 
         String jsonString = new PrettyJSON()

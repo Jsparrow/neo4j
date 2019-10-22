@@ -49,7 +49,122 @@ public class TimedRepository<KEY, VALUE> implements Runnable
     private final long timeout;
     private final Clock clock;
 
-    private class Entry
+    public TimedRepository( Factory<VALUE> provider, Consumer<VALUE> reaper, long timeout, Clock clock )
+    {
+        this.factory = provider;
+        this.reaper = reaper;
+        this.timeout = timeout;
+        this.clock = clock;
+    }
+
+	public void begin( KEY key ) throws ConcurrentAccessException
+    {
+        VALUE instance = factory.newInstance();
+        Entry existing;
+        if ((existing = repo.putIfAbsent( key, new Entry( instance ) )) == null) {
+			return;
+		}
+		reaper.accept( instance ); // Need to clear up our optimistically allocated value
+		throw new ConcurrentAccessException( String.format(
+		        "Cannot begin '%s', because %s with that key already exists.", key, existing ) );
+    }
+
+	/**
+     * End the life of a stored entry. If the entry is currently in use, it will be thrown out as soon as the other client
+     * is done with it.
+     */
+    public VALUE end( KEY key )
+    {
+        while ( true )
+        {
+            Entry entry = repo.get( key );
+            if ( entry == null )
+            {
+                return null;
+            }
+
+            // Ending the life of an entry is somewhat complicated, because we promise the callee here that if someone
+            // else is concurrently using the entry, we will ensure that either we or the other user will end the entry
+            // life when the other user is done with it.
+
+            // First, assume the entry is in use and try and mark it to be ended by the other user
+            if ( entry.markForEndingIfInUse() )
+            {
+                // The entry was indeed in use, and we successfully marked it to be ended. That's all we need to do here,
+                // the other user will see the ending flag when releasing the entry.
+                return entry.value;
+            }
+
+            // Marking it for ending failed, likely because the entry is currently idle - lets try and just acquire it
+            // and throw it out ourselves
+            if ( entry.acquire() )
+            {
+                // Got it, just throw it away
+                end0( key, entry.value );
+                return entry.value;
+            }
+
+            // We didn't manage to mark this for ending, and we didn't manage to acquire it to end it ourselves, which
+            // means either we're racing with another thread using it (and we just need to retry), or it's already
+            // marked for ending. In the latter case, we can bail here.
+            if ( entry.isMarkedForEnding() )
+            {
+                // Someone did indeed manage to mark it for ending, which means it will be thrown out (or has already).
+                return entry.value;
+            }
+        }
+    }
+
+	public VALUE acquire( KEY key ) throws NoSuchEntryException, ConcurrentAccessException
+    {
+        Entry entry = repo.get( key );
+        if ( entry == null )
+        {
+            throw new NoSuchEntryException( String.format("Cannot access '%s', no such entry exists.", key) );
+        }
+        if ( entry.acquire() )
+        {
+            return entry.value;
+        }
+        throw new ConcurrentAccessException( String.format("Cannot access '%s', because another client is currently using it.", key) );
+    }
+
+	public void release( KEY key )
+    {
+        Entry entry = repo.get( key );
+        if ( entry != null && !entry.release() )
+        {
+            // This happens when another client has asked that this entry be ended while we were using it, leaving us
+            // a note to not release the object back to the public, and to end its life when we are done with it.
+            end0( key, entry.value );
+        }
+    }
+
+	public Set<KEY> keys()
+    {
+        return repo.keySet();
+    }
+
+	@Override
+    public void run()
+    {
+        long maxAllowedAge = clock.millis() - timeout;
+        keys().forEach(key -> {
+            Entry entry = repo.get( key );
+            boolean condition = (entry != null) && (entry.latestActivityTimestamp < maxAllowedAge) && (entry.latestActivityTimestamp < maxAllowedAge) && entry.acquire();
+			if ( condition ) {
+			    end0( key, entry.value );
+			}
+        });
+    }
+
+	private void end0( KEY key, VALUE value )
+    {
+        repo.remove( key );
+        reaper.accept( value );
+    }
+
+	private class Entry
     {
         static final int IDLE = 0;
         static final int IN_USE = 1;
@@ -97,124 +212,5 @@ public class TimedRepository<KEY, VALUE> implements Runnable
             return format( "%s[%s last accessed at %d (%s ago)", getClass().getSimpleName(),
                     value, latestActivityTimestamp, duration( currentTimeMillis() - latestActivityTimestamp ) );
         }
-    }
-
-    public TimedRepository( Factory<VALUE> provider, Consumer<VALUE> reaper, long timeout, Clock clock )
-    {
-        this.factory = provider;
-        this.reaper = reaper;
-        this.timeout = timeout;
-        this.clock = clock;
-    }
-
-    public void begin( KEY key ) throws ConcurrentAccessException
-    {
-        VALUE instance = factory.newInstance();
-        Entry existing;
-        if ( (existing = repo.putIfAbsent( key, new Entry( instance ) )) != null )
-        {
-            reaper.accept( instance ); // Need to clear up our optimistically allocated value
-            throw new ConcurrentAccessException( String.format(
-                    "Cannot begin '%s', because %s with that key already exists.", key, existing ) );
-        }
-    }
-
-    /**
-     * End the life of a stored entry. If the entry is currently in use, it will be thrown out as soon as the other client
-     * is done with it.
-     */
-    public VALUE end( KEY key )
-    {
-        while ( true )
-        {
-            Entry entry = repo.get( key );
-            if ( entry == null )
-            {
-                return null;
-            }
-
-            // Ending the life of an entry is somewhat complicated, because we promise the callee here that if someone
-            // else is concurrently using the entry, we will ensure that either we or the other user will end the entry
-            // life when the other user is done with it.
-
-            // First, assume the entry is in use and try and mark it to be ended by the other user
-            if ( entry.markForEndingIfInUse() )
-            {
-                // The entry was indeed in use, and we successfully marked it to be ended. That's all we need to do here,
-                // the other user will see the ending flag when releasing the entry.
-                return entry.value;
-            }
-
-            // Marking it for ending failed, likely because the entry is currently idle - lets try and just acquire it
-            // and throw it out ourselves
-            if ( entry.acquire() )
-            {
-                // Got it, just throw it away
-                end0( key, entry.value );
-                return entry.value;
-            }
-
-            // We didn't manage to mark this for ending, and we didn't manage to acquire it to end it ourselves, which
-            // means either we're racing with another thread using it (and we just need to retry), or it's already
-            // marked for ending. In the latter case, we can bail here.
-            if ( entry.isMarkedForEnding() )
-            {
-                // Someone did indeed manage to mark it for ending, which means it will be thrown out (or has already).
-                return entry.value;
-            }
-        }
-    }
-
-    public VALUE acquire( KEY key ) throws NoSuchEntryException, ConcurrentAccessException
-    {
-        Entry entry = repo.get( key );
-        if ( entry == null )
-        {
-            throw new NoSuchEntryException( String.format("Cannot access '%s', no such entry exists.", key) );
-        }
-        if ( entry.acquire() )
-        {
-            return entry.value;
-        }
-        throw new ConcurrentAccessException( String.format("Cannot access '%s', because another client is currently using it.", key) );
-    }
-
-    public void release( KEY key )
-    {
-        Entry entry = repo.get( key );
-        if ( entry != null && !entry.release() )
-        {
-            // This happens when another client has asked that this entry be ended while we were using it, leaving us
-            // a note to not release the object back to the public, and to end its life when we are done with it.
-            end0( key, entry.value );
-        }
-    }
-
-    public Set<KEY> keys()
-    {
-        return repo.keySet();
-    }
-
-    @Override
-    public void run()
-    {
-        long maxAllowedAge = clock.millis() - timeout;
-        for ( KEY key : keys() )
-        {
-            Entry entry = repo.get( key );
-            if ( (entry != null) && (entry.latestActivityTimestamp < maxAllowedAge) )
-            {
-                if ( (entry.latestActivityTimestamp < maxAllowedAge) && entry.acquire() )
-                {
-                    end0( key, entry.value );
-                }
-            }
-        }
-    }
-
-    private void end0( KEY key, VALUE value )
-    {
-        repo.remove( key );
-        reaper.accept( value );
     }
 }

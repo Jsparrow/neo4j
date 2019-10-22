@@ -39,15 +39,13 @@ public abstract class IndexRepresentation extends MappingRepresentation implemen
     protected void serialize( final MappingSerializer serializer )
     {
         serializer.putRelativeUriTemplate( "template", path() + "{key}/{value}" );
-        for ( Map.Entry<String, String> pair : type.entrySet() )
-        {
-            serializer.putString( pair.getKey(), pair.getValue() );
-        }
+        type.entrySet().forEach(pair -> serializer.putString(pair.getKey(), pair.getValue()));
     }
 
     public String relativeUriFor( String key, String value, long entityId )
     {
-        return path() + URIHelper.encode( key ) + "/" + URIHelper.encode( value ) + "/" + Long.toString( entityId );
+        return new StringBuilder().append(path()).append(URIHelper.encode( key )).append("/").append(URIHelper.encode( value )).append("/")
+				.append(Long.toString( entityId )).toString();
     }
 
     @Override
@@ -58,7 +56,7 @@ public abstract class IndexRepresentation extends MappingRepresentation implemen
 
     protected String path()
     {
-        return "index/" + propertyContainerType() + "/" + URIHelper.encode(name) + "/";
+        return new StringBuilder().append("index/").append(propertyContainerType()).append("/").append(URIHelper.encode(name)).append("/").toString();
     }
 
     protected abstract String propertyContainerType();

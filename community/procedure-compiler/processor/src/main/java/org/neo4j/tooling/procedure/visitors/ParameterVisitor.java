@@ -53,15 +53,14 @@ class ParameterVisitor extends SimpleElementVisitor8<Stream<CompilationMessage>,
                     Name.class.getName(), nameOf( parameter ) ) );
         }
 
-        if ( !parameterTypeVisitor.visit( parameter.asType() ) )
-        {
-            Element method = parameter.getEnclosingElement();
-            return Stream.of( new ParameterTypeError( parameter,
-                    "Unsupported parameter type <%s> of " + "procedure|function" + " %s#%s",
-                    parameter.asType().toString(), method.getEnclosingElement().getSimpleName(),
-                    method.getSimpleName() ) );
-        }
-        return Stream.empty();
+        if (parameterTypeVisitor.visit( parameter.asType() )) {
+			return Stream.empty();
+		}
+		Element method = parameter.getEnclosingElement();
+		return Stream.of( new ParameterTypeError( parameter,
+		        new StringBuilder().append("Unsupported parameter type <%s> of ").append("procedure|function").append(" %s#%s").toString(),
+		        parameter.asType().toString(), method.getEnclosingElement().getSimpleName(),
+		        method.getSimpleName() ) );
     }
 
     private AnnotationMirror annotationMirror( List<? extends AnnotationMirror> mirrors )

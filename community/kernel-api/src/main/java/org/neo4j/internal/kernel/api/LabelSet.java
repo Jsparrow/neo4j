@@ -29,14 +29,6 @@ import java.util.NoSuchElementException;
  */
 public interface LabelSet
 {
-    int numberOfLabels();
-
-    int label( int offset );
-
-    boolean contains( int labelToken );
-
-    long[] all();
-
     LabelSet NONE = new LabelSet()
     {
         private final long[] EMPTY = new long[0];
@@ -65,4 +57,12 @@ public interface LabelSet
             return EMPTY;
         }
     };
+
+	int numberOfLabels();
+
+	int label( int offset );
+
+	boolean contains( int labelToken );
+
+	long[] all();
 }

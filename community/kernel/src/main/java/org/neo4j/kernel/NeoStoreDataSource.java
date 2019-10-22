@@ -603,7 +603,7 @@ public class NeoStoreDataSource extends LifecycleAdapter
          * This is used by explicit indexes and constraint indexes whenever a transaction is to be spawned
          * from within an existing transaction. It smells, and we should look over alternatives when time permits.
          */
-        Supplier<Kernel> kernelProvider = () -> kernelModule.kernelAPI();
+        Supplier<Kernel> kernelProvider = kernelModule::kernelAPI;
 
         ConstraintIndexCreator constraintIndexCreator = new ConstraintIndexCreator( kernelProvider, indexingService, nodePropertyAccessor, logProvider );
 

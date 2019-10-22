@@ -173,7 +173,30 @@ public class ProcedureSignature
         }
     }
 
-    public static class Builder
+    public static Builder procedureSignature( String... namespaceAndName )
+    {
+        String[] namespace = namespaceAndName.length > 1 ?
+                             Arrays.copyOf( namespaceAndName, namespaceAndName.length - 1 ) : new String[0];
+        String name = namespaceAndName[namespaceAndName.length - 1];
+        return procedureSignature( namespace, name );
+    }
+
+	public static Builder procedureSignature( QualifiedName name )
+    {
+        return new Builder( name.namespace(), name.name() );
+    }
+
+	public static Builder procedureSignature( String[] namespace, String name )
+    {
+        return new Builder( namespace, name );
+    }
+
+	public static QualifiedName procedureName( String... namespaceAndName )
+    {
+        return procedureSignature( namespaceAndName ).build().name();
+    }
+
+	public static class Builder
     {
         private final QualifiedName name;
         private final List<FieldSignature> inputSignature = new LinkedList<>();
@@ -258,28 +281,5 @@ public class ProcedureSignature
             return new ProcedureSignature( name, inputSignature, outputSignature, mode, admin, deprecated, allowed,
                     description, warning, eager, false );
         }
-    }
-
-    public static Builder procedureSignature( String... namespaceAndName )
-    {
-        String[] namespace = namespaceAndName.length > 1 ?
-                             Arrays.copyOf( namespaceAndName, namespaceAndName.length - 1 ) : new String[0];
-        String name = namespaceAndName[namespaceAndName.length - 1];
-        return procedureSignature( namespace, name );
-    }
-
-    public static Builder procedureSignature( QualifiedName name )
-    {
-        return new Builder( name.namespace(), name.name() );
-    }
-
-    public static Builder procedureSignature( String[] namespace, String name )
-    {
-        return new Builder( namespace, name );
-    }
-
-    public static QualifiedName procedureName( String... namespaceAndName )
-    {
-        return procedureSignature( namespaceAndName ).build().name();
     }
 }

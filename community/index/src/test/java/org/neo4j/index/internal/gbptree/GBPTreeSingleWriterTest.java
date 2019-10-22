@@ -97,10 +97,7 @@ class GBPTreeSingleWriterTest
             // The leftmost node on all levels should have only a single key.
             KeyCountingVisitor keyCountingVisitor = new KeyCountingVisitor();
             gbpTree.visit( keyCountingVisitor );
-            for ( Integer leftmostKeyCount : keyCountingVisitor.keyCountOnLeftmostPerLevel )
-            {
-                assertEquals( 1, leftmostKeyCount.intValue() );
-            }
+            keyCountingVisitor.keyCountOnLeftmostPerLevel.forEach(leftmostKeyCount -> assertEquals(1, leftmostKeyCount.intValue()));
         }
     }
 
@@ -125,10 +122,7 @@ class GBPTreeSingleWriterTest
             // The rightmost node on all levels should have either one or zero key (zero for internal nodes).
             KeyCountingVisitor keyCountingVisitor = new KeyCountingVisitor();
             gbpTree.visit( keyCountingVisitor );
-            for ( Integer rightmostKeyCount : keyCountingVisitor.keyCountOnRightmostPerLevel )
-            {
-                assertTrue( rightmostKeyCount == 0 || rightmostKeyCount == 1 );
-            }
+            keyCountingVisitor.keyCountOnRightmostPerLevel.forEach(rightmostKeyCount -> assertTrue(rightmostKeyCount == 0 || rightmostKeyCount == 1));
         }
     }
 

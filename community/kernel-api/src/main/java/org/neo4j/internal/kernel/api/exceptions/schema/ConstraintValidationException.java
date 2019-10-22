@@ -31,7 +31,31 @@ import org.neo4j.kernel.api.exceptions.Status;
  */
 public abstract class ConstraintValidationException extends KernelException
 {
-    /**
+    protected final ConstraintDescriptor constraint;
+
+	protected ConstraintValidationException( ConstraintDescriptor constraint, Phase phase, String subject )
+    {
+        super( phase.getStatus(), "%s does not satisfy %s.",
+                subject, constraint.prettyPrint( SchemaUtil.idTokenNameLookup ) );
+        this.constraint = constraint;
+    }
+
+	protected ConstraintValidationException( ConstraintDescriptor constraint, Phase phase, String subject, Throwable failure )
+    {
+        super( phase.getStatus(), failure, "%s does not satisfy %s: %s",
+                subject, constraint.prettyPrint( SchemaUtil.idTokenNameLookup ), failure.getMessage() );
+        this.constraint = constraint;
+    }
+
+	@Override
+    public abstract String getUserMessage( TokenNameLookup tokenNameLookup );
+
+	public ConstraintDescriptor constraint()
+    {
+        return constraint;
+    }
+
+	/**
      * Constraint validation failures can happen during one of two phases of the constraint lifecycle.
      *
      * VERIFICATION is the process to control that a constraint holds with respect to all the data in the graph. This
@@ -58,29 +82,5 @@ public abstract class ConstraintValidationException extends KernelException
         {
             return status;
         }
-    }
-
-    protected final ConstraintDescriptor constraint;
-
-    protected ConstraintValidationException( ConstraintDescriptor constraint, Phase phase, String subject )
-    {
-        super( phase.getStatus(), "%s does not satisfy %s.",
-                subject, constraint.prettyPrint( SchemaUtil.idTokenNameLookup ) );
-        this.constraint = constraint;
-    }
-
-    protected ConstraintValidationException( ConstraintDescriptor constraint, Phase phase, String subject, Throwable failure )
-    {
-        super( phase.getStatus(), failure, "%s does not satisfy %s: %s",
-                subject, constraint.prettyPrint( SchemaUtil.idTokenNameLookup ), failure.getMessage() );
-        this.constraint = constraint;
-    }
-
-    @Override
-    public abstract String getUserMessage( TokenNameLookup tokenNameLookup );
-
-    public ConstraintDescriptor constraint()
-    {
-        return constraint;
     }
 }

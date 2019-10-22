@@ -104,7 +104,10 @@ public abstract class NodeTransactionStateTestBase<G extends KernelAPIWriteTestS
     public void shouldSeeLabelChangesInTransaction() throws Exception
     {
         long nodeId;
-        int toRetain, toDelete, toAdd, toRegret;
+        int toRetain;
+		int toDelete;
+		int toAdd;
+		int toRegret;
         final String toRetainName = "ToRetain";
         final String toDeleteName = "ToDelete";
         final String toAddName = "ToAdd";
@@ -915,7 +918,9 @@ public abstract class NodeTransactionStateTestBase<G extends KernelAPIWriteTestS
     {
         // Given
         long node;
-        int prop1, prop2, prop3;
+        int prop1;
+		int prop2;
+		int prop3;
         try ( Transaction tx = beginTransaction() )
         {
             node = tx.dataWrite().nodeCreate();

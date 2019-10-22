@@ -275,10 +275,7 @@ public class TestArrayStore
     {
         Collection<DynamicRecord> records = new ArrayList<>();
         arrayStore.allocateRecords( records, array );
-        for ( DynamicRecord record : records )
-        {
-            arrayStore.updateRecord( record );
-        }
+        records.forEach(arrayStore::updateRecord);
         return records;
     }
 

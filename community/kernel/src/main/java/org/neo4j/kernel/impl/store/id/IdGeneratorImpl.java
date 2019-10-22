@@ -214,7 +214,7 @@ public class IdGeneratorImpl implements IdGenerator
 
         if ( id < 0 || id >= highId )
         {
-            throw new IllegalArgumentException( "Illegal id[" + id + "], highId is " + highId );
+            throw new IllegalArgumentException( new StringBuilder().append("Illegal id[").append(id).append("], highId is ").append(highId).toString() );
         }
         idContainer.freeId( id );
     }
@@ -305,6 +305,7 @@ public class IdGeneratorImpl implements IdGenerator
     @Override
     public String toString()
     {
-        return "IdGeneratorImpl " + hashCode() + " [max=" + max + ", idContainer=" + idContainer + "]";
+        return new StringBuilder().append("IdGeneratorImpl ").append(hashCode()).append(" [max=").append(max).append(", idContainer=").append(idContainer)
+				.append("]").toString();
     }
 }

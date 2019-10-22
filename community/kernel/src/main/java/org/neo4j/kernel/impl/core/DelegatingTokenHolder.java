@@ -101,16 +101,15 @@ public class DelegatingTokenHolder extends AbstractTokenHolderBase
         // created concurrently with us.
         MutableIntSet unresolvedIndexes = new IntHashSet();
         resolveIds( names, ids, i -> !unresolvedIndexes.add( i ) );
-        if ( !unresolvedIndexes.isEmpty() )
-        {
-            // We still have unresolved ids to create.
-            ObjectIntHashMap<String> createdTokens = createUnresolvedTokens( unresolvedIndexes, names, ids );
-            List<NamedToken> createdTokensList = new ArrayList<>( createdTokens.size() );
-            createdTokens.forEachKeyValue( ( name, index ) ->
-                    createdTokensList.add( new NamedToken( name, ids[index] ) ) );
-
-            tokenRegistry.putAll( createdTokensList );
-        }
+        if (unresolvedIndexes.isEmpty()) {
+			return;
+		}
+		// We still have unresolved ids to create.
+		ObjectIntHashMap<String> createdTokens = createUnresolvedTokens( unresolvedIndexes, names, ids );
+		List<NamedToken> createdTokensList = new ArrayList<>( createdTokens.size() );
+		createdTokens.forEachKeyValue( ( name, index ) ->
+		        createdTokensList.add( new NamedToken( name, ids[index] ) ) );
+		tokenRegistry.putAll( createdTokensList );
     }
 
     private ObjectIntHashMap<String> createUnresolvedTokens( IntSet unresolvedIndexes, String[] names, int[] ids )

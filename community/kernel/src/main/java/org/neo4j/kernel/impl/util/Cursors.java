@@ -27,7 +27,7 @@ import org.neo4j.cursor.RawCursor;
 
 public class Cursors
 {
-    private static Cursor<Object> EMPTY = new Cursor<Object>()
+    private static Cursor<Object> empty = new Cursor<Object>()
     {
         @Override
         public boolean next()
@@ -55,7 +55,7 @@ public class Cursors
     @SuppressWarnings( "unchecked" )
     public static <T> Cursor<T> empty()
     {
-        return (Cursor<T>) EMPTY;
+        return (Cursor<T>) empty;
     }
 
     public static <E extends Exception> int count( RawCursor<?,E> cursor ) throws E

@@ -31,12 +31,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class MonitorsTest
 {
-    interface MyMonitor
-    {
-        void aVoid();
-        void takesArgs( String arg1, long arg2, Object ... moreArgs );
-    }
-
     @Test
     public void shouldProvideNoOpDelegate()
     {
@@ -51,7 +45,7 @@ public class MonitorsTest
         monitor.takesArgs( "ha", 12, new Object() );
     }
 
-    @Test
+	@Test
     public void shouldRegister()
     {
         // Given
@@ -71,7 +65,7 @@ public class MonitorsTest
         verify(listener).takesArgs( "ha", 12, obj );
     }
 
-    @Test
+	@Test
     public void shouldUnregister()
     {
         // Given
@@ -92,7 +86,7 @@ public class MonitorsTest
         verifyNoMoreInteractions( listener );
     }
 
-    @Test
+	@Test
     public void shouldRespectTags()
     {
         // Given
@@ -113,7 +107,7 @@ public class MonitorsTest
         verifyNoMoreInteractions( listener );
     }
 
-    @Test
+	@Test
     public void shouldTellIfMonitorHasListeners()
     {
         // Given
@@ -139,7 +133,7 @@ public class MonitorsTest
         assertFalse( monitors.hasListeners( MyMonitor.class ) );
     }
 
-    @Test
+	@Test
     public void multipleListenersRegistration()
     {
         Monitors monitors = new Monitors();
@@ -159,7 +153,7 @@ public class MonitorsTest
         assertFalse( monitors.hasListeners( MyMonitor.class ) );
     }
 
-    @Test
+	@Test
     public void eventShouldBubbleUp()
     {
         Monitors parent = new Monitors();
@@ -181,5 +175,11 @@ public class MonitorsTest
         childMonitor.aVoid();
         verify( parentListener, times( 2 ) ).aVoid();
         verify( childListener, times( 1 ) ).aVoid();
+    }
+
+	interface MyMonitor
+    {
+        void aVoid();
+        void takesArgs( String arg1, long arg2, Object ... moreArgs );
     }
 }

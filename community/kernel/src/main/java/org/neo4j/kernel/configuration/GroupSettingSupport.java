@@ -31,17 +31,12 @@ public class GroupSettingSupport
     private final String groupName;
     public final String groupKey;
 
-    private static String groupPrefix( Class<?> groupClass )
-    {
-        return groupClass.getAnnotation( Group.class ).value();
-    }
-
     public GroupSettingSupport( Class<?> groupClass, String groupKey )
     {
         this( groupPrefix( groupClass ), groupKey );
     }
 
-    /**
+	/**
      * @param groupPrefix the base that is common for each group of this kind, eg. 'dbms.mygroup'
      * @param groupKey the unique key for this particular group instance, eg. '0' or 'group1',
      *                 this gets combined with the groupPrefix to eg. `dbms.mygroup.0`
@@ -49,17 +44,22 @@ public class GroupSettingSupport
     private GroupSettingSupport( String groupPrefix, String groupKey )
     {
         this.groupKey = groupKey;
-        this.groupName = groupPrefix + "." + groupKey;
+        this.groupName = new StringBuilder().append(groupPrefix).append(".").append(groupKey).toString();
     }
 
-    /**
+	private static String groupPrefix( Class<?> groupClass )
+    {
+        return groupClass.getAnnotation( Group.class ).value();
+    }
+
+	/**
      * Define a sub-setting of this group. The setting passed in should not worry about
      * the group prefix or key. If you want config like `dbms.mygroup.0.foo=bar`, you should
      * pass in a setting with the key `foo` here.
      */
     public <T> Setting<T> scope( Setting<T> setting )
     {
-        setting.withScope( key -> groupName + "." + key );
+        setting.withScope( key -> new StringBuilder().append(groupName).append(".").append(key).toString() );
         return setting;
     }
 }

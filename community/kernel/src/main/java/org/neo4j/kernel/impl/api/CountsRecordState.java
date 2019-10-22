@@ -117,11 +117,10 @@ public class CountsRecordState implements CountsAccessor, RecordState, CountsAcc
     @Override
     public void accept( CountsVisitor visitor )
     {
-        for ( Map.Entry<CountsKey, DoubleLongRegister> entry : counts.entrySet() )
-        {
+        counts.entrySet().forEach(entry -> {
             DoubleLongRegister register = entry.getValue();
             entry.getKey().accept( visitor, register.readFirst(), register.readSecond() );
-        }
+        });
     }
 
     @Override
@@ -143,7 +142,38 @@ public class CountsRecordState implements CountsAccessor, RecordState, CountsAcc
         return !counts.isEmpty();
     }
 
-    public static final class Difference
+    public void addNode( long[] labels )
+    {
+        incrementNodeCount( ANY_LABEL, 1 );
+        for ( long label : labels )
+        {
+            incrementNodeCount( (int) label, 1 );
+        }
+    }
+
+	public void addRelationship( long[] startLabels, int type, long[] endLabels )
+    {
+        incrementRelationshipCount( ANY_LABEL, ANY_RELATIONSHIP_TYPE, ANY_LABEL, 1 );
+        incrementRelationshipCount( ANY_LABEL, type, ANY_LABEL, 1 );
+        for ( long startLabelId : startLabels )
+        {
+            incrementRelationshipCount( (int) startLabelId, ANY_RELATIONSHIP_TYPE, ANY_LABEL, 1 );
+            incrementRelationshipCount( (int) startLabelId, type, ANY_LABEL, 1 );
+        }
+        for ( long endLabelId : endLabels )
+        {
+            incrementRelationshipCount( ANY_LABEL, ANY_RELATIONSHIP_TYPE, (int) endLabelId, 1 );
+            incrementRelationshipCount( ANY_LABEL, type, (int) endLabelId, 1 );
+        }
+    }
+
+	private DoubleLongRegister counts( CountsKey key )
+    {
+        return counts.computeIfAbsent( key,
+                k -> Registers.newDoubleLongRegister( DEFAULT_FIRST_VALUE, DEFAULT_SECOND_VALUE ) );
+    }
+
+	public static final class Difference
     {
         private final CountsKey key;
         private final long expectedFirst;
@@ -179,14 +209,13 @@ public class CountsRecordState implements CountsAccessor, RecordState, CountsAcc
             {
                 return true;
             }
-            if ( obj instanceof Difference )
-            {
-                Difference that = (Difference) obj;
-                return actualFirst == that.actualFirst && expectedFirst == that.expectedFirst
-                       && actualSecond == that.actualSecond && expectedSecond == that.expectedSecond
-                       && key.equals( that.key );
-            }
-            return false;
+            if (!(obj instanceof Difference)) {
+				return false;
+			}
+			Difference that = (Difference) obj;
+			return actualFirst == that.actualFirst && expectedFirst == that.expectedFirst
+			       && actualSecond == that.actualSecond && expectedSecond == that.expectedSecond
+			       && key.equals( that.key );
         }
 
         @Override
@@ -199,37 +228,6 @@ public class CountsRecordState implements CountsAccessor, RecordState, CountsAcc
             result = 31 * result + (int) (actualSecond ^ (actualSecond >>> 32));
             return result;
         }
-    }
-
-    public void addNode( long[] labels )
-    {
-        incrementNodeCount( ANY_LABEL, 1 );
-        for ( long label : labels )
-        {
-            incrementNodeCount( (int) label, 1 );
-        }
-    }
-
-    public void addRelationship( long[] startLabels, int type, long[] endLabels )
-    {
-        incrementRelationshipCount( ANY_LABEL, ANY_RELATIONSHIP_TYPE, ANY_LABEL, 1 );
-        incrementRelationshipCount( ANY_LABEL, type, ANY_LABEL, 1 );
-        for ( long startLabelId : startLabels )
-        {
-            incrementRelationshipCount( (int) startLabelId, ANY_RELATIONSHIP_TYPE, ANY_LABEL, 1 );
-            incrementRelationshipCount( (int) startLabelId, type, ANY_LABEL, 1 );
-        }
-        for ( long endLabelId : endLabels )
-        {
-            incrementRelationshipCount( ANY_LABEL, ANY_RELATIONSHIP_TYPE, (int) endLabelId, 1 );
-            incrementRelationshipCount( ANY_LABEL, type, (int) endLabelId, 1 );
-        }
-    }
-
-    private DoubleLongRegister counts( CountsKey key )
-    {
-        return counts.computeIfAbsent( key,
-                k -> Registers.newDoubleLongRegister( DEFAULT_FIRST_VALUE, DEFAULT_SECOND_VALUE ) );
     }
 
     private static class CommandCollector extends CountsVisitor.Adapter
@@ -316,11 +314,10 @@ public class CountsRecordState implements CountsAccessor, RecordState, CountsAcc
 
         public List<Difference> differences()
         {
-            for ( Map.Entry<CountsKey, DoubleLongRegister> entry : counts.entrySet() )
-            {
+            counts.entrySet().forEach(entry -> {
                 DoubleLongRegister value = entry.getValue();
                 differences.add( new Difference( entry.getKey(), value.readFirst(), value.readSecond(), 0, 0 ) );
-            }
+            });
             counts.clear();
             return differences;
         }

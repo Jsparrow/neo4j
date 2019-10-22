@@ -492,11 +492,11 @@ public class RandomPageCacheTestHarness implements Closeable
 
     private void runVerificationPhase( MuninnPageCache cache ) throws Exception
     {
-        if ( verification != null )
-        {
-            cache.flushAndForce(); // Clears any stray evictor exceptions
-            verification.run( cache, this.fs, plan.getFilesTouched() );
-        }
+        if (verification == null) {
+			return;
+		}
+		cache.flushAndForce(); // Clears any stray evictor exceptions
+		verification.run( cache, this.fs, plan.getFilesTouched() );
     }
 
     private File[] buildFileNames() throws IOException
@@ -575,6 +575,6 @@ public class RandomPageCacheTestHarness implements Closeable
             }
         }
         throw new AssertionError(
-                "Tried to pick randomPick = " + randomPick + " from weights = " + Arrays.toString( commandWeights ) );
+                new StringBuilder().append("Tried to pick randomPick = ").append(randomPick).append(" from weights = ").append(Arrays.toString( commandWeights )).toString() );
     }
 }

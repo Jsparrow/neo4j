@@ -40,7 +40,15 @@ import static org.neo4j.graphdb.QueryExecutionType.query;
 @RunWith( Parameterized.class )
 public class QueryExecutionTypeTest
 {
-    @Parameterized.Parameters( name = "{0}" )
+    private final Assumptions expected;
+
+	public QueryExecutionTypeTest( Assumptions expected )
+    {
+
+        this.expected = expected;
+    }
+
+	@Parameterized.Parameters( name = "{0}" )
     public static List<Object[]> cases()
     {
         return Arrays.asList(
@@ -97,9 +105,7 @@ public class QueryExecutionTypeTest
         );
     }
 
-    private final Assumptions expected;
-
-    @Test
+	@Test
     public void verify()
     {
         QueryExecutionType executionType = expected.type();
@@ -111,7 +117,7 @@ public class QueryExecutionTypeTest
         assertEquals( expected.canUpdateSchema, executionType.canUpdateSchema() );
     }
 
-    @Test
+	@Test
     public void noneOtherLikeIt()
     {
         for ( QueryExecutionType.QueryType queryType : QueryExecutionType.QueryType.values() )
@@ -135,28 +141,22 @@ public class QueryExecutionTypeTest
         }
     }
 
-    public QueryExecutionTypeTest( Assumptions expected )
-    {
-
-        this.expected = expected;
-    }
-
-    private static Object[] verify( Assumptions assumptions )
+	private static Object[] verify( Assumptions assumptions )
     {
         return new Object[]{assumptions};
     }
 
-    private static Assumptions that( QueryExecutionType type )
+	private static Assumptions that( QueryExecutionType type )
     {
         return new Assumptions( type, false );
     }
 
-    private static Assumptions thatQueryOf( QueryExecutionType type )
+	private static Assumptions thatQueryOf( QueryExecutionType type )
     {
         return new Assumptions( type, true );
     }
 
-    static class Assumptions
+	static class Assumptions
     {
         final QueryExecutionType type;
         final boolean convertToQuery;

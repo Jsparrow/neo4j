@@ -37,11 +37,32 @@ import java.util.Set;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import java.util.Collections;
 
 class PluginPointFactoryImpl implements PluginPointFactory
 {
 
-    @Override
+    private static final Map<Class<?>, TypeCaster> TYPES = Collections.unmodifiableMap(new HashMap<>());
+	static
+    {
+        put( TYPES, new StringTypeCaster(), String.class );
+        put( TYPES, new ByteTypeCaster(), byte.class, Byte.class );
+        put( TYPES, new ShortTypeCaster(), short.class, Short.class );
+        put( TYPES, new IntegerTypeCaster(), int.class, Integer.class );
+        put( TYPES, new LongTypeCaster(), long.class, Long.class );
+        put( TYPES, new CharacterTypeCaster(), char.class, Character.class );
+        put( TYPES, new BooleanTypeCaster(), boolean.class, Boolean.class );
+        put( TYPES, new FloatTypeCaster(), float.class, Float.class );
+        put( TYPES, new DoubleTypeCaster(), double.class, Double.class );
+        put( TYPES, new MapTypeCaster(), Map.class );
+        put( TYPES, new NodeTypeCaster(), Node.class );
+        put( TYPES, new RelationshipTypeCaster(), Relationship.class );
+        put( TYPES, new RelationshipTypeTypeCaster(), RelationshipType.class );
+        put( TYPES, new UriTypeCaster(), URI.class );
+        put( TYPES, new URLTypeCaster(), URL.class );
+    }
+
+	@Override
     public PluginPoint createFrom( ServerPlugin plugin, Method method, Class<?> discovery )
     {
         ResultConverter result = ResultConverter.get( method.getGenericReturnType() );
@@ -79,8 +100,8 @@ class PluginPointFactoryImpl implements PluginPointFactory
             {
                 if ( types[i] != discovery )
                 {
-                    throw new IllegalStateException( "Source parameter type (" + types[i]
-                                                     + ") must equal the discovery type (" + discovery.getName() + ")." );
+                    throw new IllegalStateException( new StringBuilder().append("Source parameter type (").append(types[i]).append(") must equal the discovery type (").append(discovery.getName()).append(").")
+							.toString() );
                 }
                 if ( sourceExtractor != null )
                 {
@@ -102,7 +123,7 @@ class PluginPointFactoryImpl implements PluginPointFactory
                 method.getAnnotation( Description.class ) );
     }
 
-    private static ParameterExtractor parameterExtractor( Type type, Parameter parameter, Description description )
+	private static ParameterExtractor parameterExtractor( Type type, Parameter parameter, Description description )
     {
         if ( type instanceof ParameterizedType )
         {
@@ -195,7 +216,7 @@ class PluginPointFactoryImpl implements PluginPointFactory
         throw new IllegalStateException( "Unsupported parameter type: " + type );
     }
 
-    private static void put( Map<Class<?>, TypeCaster> types, TypeCaster caster, Class<?>... keys )
+	private static void put( Map<Class<?>, TypeCaster> types, TypeCaster caster, Class<?>... keys )
     {
         for ( Class<?> key : keys )
         {
@@ -203,27 +224,7 @@ class PluginPointFactoryImpl implements PluginPointFactory
         }
     }
 
-    private static final Map<Class<?>, TypeCaster> TYPES = new HashMap<>();
-    static
-    {
-        put( TYPES, new StringTypeCaster(), String.class );
-        put( TYPES, new ByteTypeCaster(), byte.class, Byte.class );
-        put( TYPES, new ShortTypeCaster(), short.class, Short.class );
-        put( TYPES, new IntegerTypeCaster(), int.class, Integer.class );
-        put( TYPES, new LongTypeCaster(), long.class, Long.class );
-        put( TYPES, new CharacterTypeCaster(), char.class, Character.class );
-        put( TYPES, new BooleanTypeCaster(), boolean.class, Boolean.class );
-        put( TYPES, new FloatTypeCaster(), float.class, Float.class );
-        put( TYPES, new DoubleTypeCaster(), double.class, Double.class );
-        put( TYPES, new MapTypeCaster(), Map.class );
-        put( TYPES, new NodeTypeCaster(), Node.class );
-        put( TYPES, new RelationshipTypeCaster(), Relationship.class );
-        put( TYPES, new RelationshipTypeTypeCaster(), RelationshipType.class );
-        put( TYPES, new UriTypeCaster(), URI.class );
-        put( TYPES, new URLTypeCaster(), URL.class );
-    }
-
-    private static String nameOf( Method method )
+	private static String nameOf( Method method )
     {
         Name name = method.getAnnotation( Name.class );
         if ( name != null )

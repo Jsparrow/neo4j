@@ -137,25 +137,21 @@ class TextType extends Type
             byte[] this_byteArray, long this_long0, long this_long2, long this_long3,
             byte[] that_byteArray, long that_long0, long that_long2, long that_long3 )
     {
-        if ( this_byteArray != that_byteArray )
-        {
-            if ( isHighestText( this_long3 ) || isHighestText( that_long3 ) )
-            {
-                return Boolean.compare( isHighestText( this_long3 ), isHighestText( that_long3 ) );
-            }
-            if ( this_byteArray == null )
-            {
-                return -1;
-            }
-            if ( that_byteArray == null )
-            {
-                return 1;
-            }
-        }
-        else
-        {
-            return 0;
-        }
+        if (this_byteArray == that_byteArray) {
+			return 0;
+		}
+		if ( isHighestText( this_long3 ) || isHighestText( that_long3 ) )
+		{
+		    return Boolean.compare( isHighestText( this_long3 ), isHighestText( that_long3 ) );
+		}
+		if ( this_byteArray == null )
+		{
+		    return -1;
+		}
+		if ( that_byteArray == null )
+		{
+		    return 1;
+		}
 
         return lexicographicalUnsignedByteArrayCompare( this_byteArray, (int) this_long0, that_byteArray, (int) that_long0,
                 booleanOf( this_long2 ) | booleanOf( that_long2 ) );

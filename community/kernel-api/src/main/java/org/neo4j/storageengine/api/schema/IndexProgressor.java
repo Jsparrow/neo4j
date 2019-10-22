@@ -50,7 +50,21 @@ import org.neo4j.values.storable.Value;
  */
 public interface IndexProgressor extends AutoCloseable
 {
-    /**
+    IndexProgressor EMPTY = new IndexProgressor()
+    {
+        @Override
+        public boolean next()
+        {
+            return false;
+        }
+
+        @Override
+        public void close()
+        {   // no-op
+        }
+    };
+
+	/**
      * Progress through the index until the next accepted entry. Entries are feed to a Client, which
      * is setup in an implementation specific way.
      *
@@ -58,13 +72,13 @@ public interface IndexProgressor extends AutoCloseable
      */
     boolean next();
 
-    /**
+	/**
      * Close the progressor and all attached resources. Idempotent.
      */
     @Override
     void close();
 
-    /**
+	/**
      * Client which accepts nodes and some of their property values.
      */
     interface NodeValueClient
@@ -140,18 +154,4 @@ public interface IndexProgressor extends AutoCloseable
          */
         boolean acceptEntity( long reference, float score );
     }
-
-    IndexProgressor EMPTY = new IndexProgressor()
-    {
-        @Override
-        public boolean next()
-        {
-            return false;
-        }
-
-        @Override
-        public void close()
-        {   // no-op
-        }
-    };
 }

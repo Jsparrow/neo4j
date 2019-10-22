@@ -34,14 +34,15 @@ public class IndexSamplingJobQueueTest
 {
     public static final Predicate<Object> TRUE = Predicates.alwaysTrue();
     public static final Predicate<Object> FALSE = Predicates.alwaysFalse();
+	private final Object something = new Object();
 
-    @Test
+	@Test
     public void returnsNullWhenEmpty()
     {
         assertNull( new IndexSamplingJobQueue<>( Predicates.alwaysTrue() ).poll() );
     }
 
-    @Test
+	@Test
     public void shouldEnqueueJobWhenEmpty()
     {
         // given
@@ -55,7 +56,7 @@ public class IndexSamplingJobQueueTest
         assertEquals( something, result );
     }
 
-    @Test
+	@Test
     public void shouldEnqueueJobOnlyOnce()
     {
         // given
@@ -70,7 +71,7 @@ public class IndexSamplingJobQueueTest
         assertNull( jobQueue.poll() );
     }
 
-    @Test
+	@Test
     public void shouldNotEnqueueJobOnlyIfForbiddenByThePredicate()
     {
         // given
@@ -83,7 +84,7 @@ public class IndexSamplingJobQueueTest
         assertNull( jobQueue.poll() );
     }
 
-    @Test
+	@Test
     public void shouldForceEnqueueOfAnJobEvenIfThePredicateForbidsIt()
     {
         // given
@@ -96,7 +97,7 @@ public class IndexSamplingJobQueueTest
         assertEquals( something, jobQueue.poll() );
     }
 
-    @Test
+	@Test
     public void shouldDequeueAll()
     {
         // given
@@ -115,6 +116,4 @@ public class IndexSamplingJobQueueTest
         );
         assertNull( jobQueue.poll() );
     }
-
-    private final Object something = new Object();
 }

@@ -197,7 +197,35 @@ public abstract class RelationshipDenseSelectionTestBase<Traverser extends Relat
 
     abstract void assertEmpty( Traverser cursor );
 
-    public static class IteratorTest extends RelationshipDenseSelectionTestBase<RelationshipDenseSelectionIterator<R>>
+    private void assertEmptyAndClosed( Traverser traverser )
+    {
+        assertEmpty( traverser );
+        assertTrue( "close group cursor", innerGroupCursor.isClosed() );
+        assertTrue( "close traversal cursor", innerRelationshipCursor.isClosed() );
+    }
+
+	private StubGroupCursor.GroupData group(
+            List<TestRelationshipChain> store,
+            int type,
+            TestRelationshipChain out,
+            TestRelationshipChain in,
+            TestRelationshipChain loop )
+    {
+        return new StubGroupCursor.GroupData(
+                addToStore( store, out ),
+                addToStore( store, in ),
+                addToStore( store, loop ),
+                type );
+    }
+
+	private int addToStore( List<TestRelationshipChain> store, TestRelationshipChain chain )
+    {
+        int ref = store.size();
+        store.add( chain );
+        return ref;
+    }
+
+	public static class IteratorTest extends RelationshipDenseSelectionTestBase<RelationshipDenseSelectionIterator<R>>
     {
         @Override
         protected RelationshipDenseSelectionIterator<R> make()
@@ -261,33 +289,5 @@ public abstract class RelationshipDenseSelectionTestBase<Traverser extends Relat
         {
             assertEmpty( (RelationshipSelectionCursor) iterator );
         }
-    }
-
-    private void assertEmptyAndClosed( Traverser traverser )
-    {
-        assertEmpty( traverser );
-        assertTrue( "close group cursor", innerGroupCursor.isClosed() );
-        assertTrue( "close traversal cursor", innerRelationshipCursor.isClosed() );
-    }
-
-    private StubGroupCursor.GroupData group(
-            List<TestRelationshipChain> store,
-            int type,
-            TestRelationshipChain out,
-            TestRelationshipChain in,
-            TestRelationshipChain loop )
-    {
-        return new StubGroupCursor.GroupData(
-                addToStore( store, out ),
-                addToStore( store, in ),
-                addToStore( store, loop ),
-                type );
-    }
-
-    private int addToStore( List<TestRelationshipChain> store, TestRelationshipChain chain )
-    {
-        int ref = store.size();
-        store.add( chain );
-        return ref;
     }
 }

@@ -103,7 +103,7 @@ public class SetNodePropertiesIT extends
 
     private URI getPropertyUri( Node node, String key ) throws Exception
     {
-        return new URI( getPropertiesUri( node ) + "/" + key );
+        return new URI( new StringBuilder().append(getPropertiesUri( node )).append("/").append(key).toString() );
     }
 
     @Documented( "Set property on node.\n" +

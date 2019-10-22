@@ -52,32 +52,15 @@ import static java.lang.Integer.parseInt;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import java.util.Collections;
 
 @RunWith( Parameterized.class )
 public class TestRelationshipCount
 {
-    @Parameterized.Parameters( name = "denseNodeThreshold={0}" )
-    public static Collection<Object[]> data()
-    {
-        Collection<Object[]> data = new ArrayList<>();
-        int max = parseInt( GraphDatabaseSettings.dense_node_threshold.getDefaultValue() );
-        for ( int i = 1; i < max; i++ )
-        {
-            data.add( new Object[] {i} );
-        }
-        return data;
-    }
-
     private static GraphDatabaseAPI db;
-    private Transaction tx;
+	private Transaction tx;
 
-    @AfterClass
-    public static void shutdownDb()
-    {
-        db.shutdown();
-    }
-
-    public TestRelationshipCount( final int denseNodeThreshold )
+	public TestRelationshipCount( final int denseNodeThreshold )
     {
         // This code below basically turns "db" into a ClassRule, but per dense node threshold
         if ( db == null || db.getDependencyResolver().resolveDependency( Config.class )
@@ -93,7 +76,25 @@ public class TestRelationshipCount
         }
     }
 
-    @Test
+	@Parameterized.Parameters( name = "denseNodeThreshold={0}" )
+    public static Collection<Object[]> data()
+    {
+        Collection<Object[]> data = new ArrayList<>();
+        int max = parseInt( GraphDatabaseSettings.dense_node_threshold.getDefaultValue() );
+        for ( int i = 1; i < max; i++ )
+        {
+            data.add( new Object[] {i} );
+        }
+        return data;
+    }
+
+	@AfterClass
+    public static void shutdownDb()
+    {
+        db.shutdown();
+    }
+
+	@Test
     public void convertNodeToDense()
     {
         Node node = getGraphDb().createNode();
@@ -124,7 +125,7 @@ public class TestRelationshipCount
                 Iterables.asSet( node.getRelationships( MyRelTypes.TEST_TRAVERSAL, MyRelTypes.TEST2 ) ) );
     }
 
-    private <T> Set<T> join( Set<T> set, Set<T> set2 )
+	private <T> Set<T> join( Set<T> set, Set<T> set2 )
     {
         Set<T> result = new HashSet<>();
         result.addAll( set );
@@ -132,13 +133,13 @@ public class TestRelationshipCount
         return result;
     }
 
-    @Test
+	@Test
     public void testGetRelationshipTypesOnDiscreteNode()
     {
         testGetRelationshipTypes( getGraphDb().createNode(), new HashSet<>() );
     }
 
-    @Test
+	@Test
     public void testGetRelationshipTypesOnDenseNode()
     {
         Node node = getGraphDb().createNode();
@@ -147,10 +148,10 @@ public class TestRelationshipCount
         {
             node.createRelationshipTo( otherNode, RelType.INITIAL );
         }
-        testGetRelationshipTypes( node, new HashSet<>( asList( RelType.INITIAL.name() ) ) );
+        testGetRelationshipTypes( node, new HashSet<>( Collections.singletonList( RelType.INITIAL.name() ) ) );
     }
 
-    private void testGetRelationshipTypes( Node node, Set<String> expectedTypes )
+	private void testGetRelationshipTypes( Node node, Set<String> expectedTypes )
     {
         assertExpectedRelationshipTypes( expectedTypes, node, false );
         node.createRelationshipTo( getGraphDb().createNode(), RelType.TYPE1 );
@@ -182,7 +183,7 @@ public class TestRelationshipCount
         assertExpectedRelationshipTypes( expectedTypes, node, true );
     }
 
-    private void assertExpectedRelationshipTypes( Set<String> expectedTypes, Node node, boolean commit )
+	private void assertExpectedRelationshipTypes( Set<String> expectedTypes, Node node, boolean commit )
     {
         Set<String> actual = Iterables.asSet( asStrings( node.getRelationshipTypes() ) );
         assertEquals( expectedTypes, actual );
@@ -193,7 +194,7 @@ public class TestRelationshipCount
         assertEquals( expectedTypes, Iterables.asSet( asStrings( node.getRelationshipTypes() ) ) );
     }
 
-    private Iterable<String> asStrings( Iterable<RelationshipType> relationshipTypes )
+	private Iterable<String> asStrings( Iterable<RelationshipType> relationshipTypes )
     {
         return new IterableWrapper<String, RelationshipType>( relationshipTypes )
         {
@@ -205,7 +206,7 @@ public class TestRelationshipCount
         };
     }
 
-    @Test
+	@Test
     public void withoutLoops()
     {
         Node node1 = getGraphDb().createNode();
@@ -270,7 +271,7 @@ public class TestRelationshipCount
         newTransaction();
     }
 
-    @Test
+	@Test
     public void withLoops()
     {
         // Just to make sure it doesn't work by accident what with ids aligning with count
@@ -299,7 +300,7 @@ public class TestRelationshipCount
         assertEquals( 1, node.getDegree() );
     }
 
-    @Test
+	@Test
     public void ensureRightDegree()
     {
         for ( int initialSize : new int[] { 0, 95, 200 } )
@@ -341,7 +342,7 @@ public class TestRelationshipCount
         }
     }
 
-    private void ensureRightDegree( int initialSize, Collection<RelationshipCreationSpec> cspecs,
+	private void ensureRightDegree( int initialSize, Collection<RelationshipCreationSpec> cspecs,
             Collection<RelationshipDeletionSpec> dspecs )
     {
         Map<RelType, int[]> expectedCounts = new EnumMap<>( RelType.class );
@@ -456,23 +457,22 @@ public class TestRelationshipCount
         me.delete();
     }
 
-    private void assertCounts( Node me, Map<RelType, int[]> expectedCounts )
+	private void assertCounts( Node me, Map<RelType, int[]> expectedCounts )
     {
         assertEquals( totalCount( expectedCounts, Direction.BOTH ), me.getDegree() );
         assertEquals( totalCount( expectedCounts, Direction.BOTH ), me.getDegree( Direction.BOTH ) );
         assertEquals( totalCount( expectedCounts, Direction.OUTGOING ), me.getDegree( Direction.OUTGOING ) );
         assertEquals( totalCount( expectedCounts, Direction.INCOMING ), me.getDegree( Direction.INCOMING ) );
-        for ( Map.Entry<RelType, int[]> entry : expectedCounts.entrySet() )
-        {
+        expectedCounts.entrySet().forEach(entry -> {
             RelType type = entry.getKey();
             assertEquals( totalCount( entry.getValue(), Direction.BOTH ), me.getDegree( type ) );
             assertEquals( totalCount( entry.getValue(), Direction.OUTGOING ), me.getDegree( type, Direction.OUTGOING ) );
             assertEquals( totalCount( entry.getValue(), Direction.INCOMING ), me.getDegree( type, Direction.INCOMING ) );
             assertEquals( totalCount( entry.getValue(), Direction.BOTH ), me.getDegree( type, Direction.BOTH ) );
-        }
+        });
     }
 
-    private int totalCount( Map<RelType, int[]> expectedCounts, Direction direction )
+	private int totalCount( Map<RelType, int[]> expectedCounts, Direction direction )
     {
         int result = 0;
         for ( Map.Entry<RelType, int[]> entry : expectedCounts.entrySet() )
@@ -482,7 +482,7 @@ public class TestRelationshipCount
         return result;
     }
 
-    private int totalCount( int[] expectedCounts, Direction direction )
+	private int totalCount( int[] expectedCounts, Direction direction )
     {
         int result = 0;
         if ( direction == Direction.OUTGOING || direction == Direction.BOTH )
@@ -497,7 +497,7 @@ public class TestRelationshipCount
         return result;
     }
 
-    private void deleteOneRelationship( Node node, RelType type, Direction direction, int which )
+	private void deleteOneRelationship( Node node, RelType type, Direction direction, int which )
     {
         Relationship last = null;
         int counter = 0;
@@ -524,16 +524,63 @@ public class TestRelationshipCount
             return;
         }
 
-        fail( "Couldn't find " + (direction == Direction.BOTH ? "loop" : "non-loop") + " relationship " +
-                type.name() + " " + direction + " to delete" );
+        fail( new StringBuilder().append("Couldn't find ").append(direction == Direction.BOTH ? "loop" : "non-loop").append(" relationship ").append(type.name()).append(" ")
+				.append(direction).append(" to delete").toString() );
     }
 
-    private boolean isLoop( Relationship r )
+	private boolean isLoop( Relationship r )
     {
         return r.getStartNode().equals( r.getEndNode() );
     }
 
-    private static class RelationshipCreationSpec
+	static RelationshipCreationSpec create( RelType type, Direction dir, int count )
+    {
+        return new RelationshipCreationSpec( type, dir, count );
+    }
+
+	static RelationshipDeletionSpec delete( RelType type, Direction dir, int which )
+    {
+        return new RelationshipDeletionSpec( type, dir, which );
+    }
+
+	@Before
+    public void newTransaction()
+    {
+        if ( tx != null )
+        {
+            closeTransaction();
+        }
+        tx = getGraphDb().beginTx();
+    }
+
+	@After
+    public void closeTransaction()
+    {
+        assert tx != null;
+        tx.success();
+        tx.close();
+    }
+
+	private GraphDatabaseService getGraphDb()
+    {
+        return db;
+    }
+
+	private enum RelType implements RelationshipType
+    {
+        INITIAL( false ),
+        TYPE1( true ),
+        TYPE2( true );
+
+        boolean measure;
+
+        RelType( boolean measure )
+        {
+            this.measure = measure;
+        }
+    }
+
+	private static class RelationshipCreationSpec
     {
         private final RelType type;
         private final Direction dir;
@@ -559,52 +606,5 @@ public class TestRelationshipCount
             this.dir = dir;
             this.which = which;
         }
-    }
-
-    static RelationshipCreationSpec create( RelType type, Direction dir, int count )
-    {
-        return new RelationshipCreationSpec( type, dir, count );
-    }
-
-    static RelationshipDeletionSpec delete( RelType type, Direction dir, int which )
-    {
-        return new RelationshipDeletionSpec( type, dir, which );
-    }
-
-    private enum RelType implements RelationshipType
-    {
-        INITIAL( false ),
-        TYPE1( true ),
-        TYPE2( true );
-
-        boolean measure;
-
-        RelType( boolean measure )
-        {
-            this.measure = measure;
-        }
-    }
-
-    @Before
-    public void newTransaction()
-    {
-        if ( tx != null )
-        {
-            closeTransaction();
-        }
-        tx = getGraphDb().beginTx();
-    }
-
-    @After
-    public void closeTransaction()
-    {
-        assert tx != null;
-        tx.success();
-        tx.close();
-    }
-
-    private GraphDatabaseService getGraphDb()
-    {
-        return db;
     }
 }

@@ -30,16 +30,19 @@ import static org.neo4j.graphdb.security.AuthorizationViolationException.PERMISS
  */
 public class SecurityContext implements LoginContext
 {
-    protected final AuthSubject subject;
-    protected final AccessMode mode;
+    /** Allows all operations. */
+    @SuppressWarnings( "StaticInitializerReferencesSubClass" )
+    public static final SecurityContext AUTH_DISABLED = new AuthDisabled( AccessMode.Static.FULL );
+	protected final AuthSubject subject;
+	protected final AccessMode mode;
 
-    public SecurityContext( AuthSubject subject, AccessMode mode )
+	public SecurityContext( AuthSubject subject, AccessMode mode )
     {
         this.subject = subject;
         this.mode = mode;
     }
 
-    /**
+	/**
      * Get the authorization data of the user. This is immutable.
      */
     public AccessMode mode()
@@ -47,7 +50,7 @@ public class SecurityContext implements LoginContext
         return mode;
     }
 
-    /**
+	/**
      * Check whether the user is an admin.
      */
     public boolean isAdmin()
@@ -55,19 +58,19 @@ public class SecurityContext implements LoginContext
         return true;
     }
 
-    @Override
+	@Override
     public AuthSubject subject()
     {
         return subject;
     }
 
-    @Override
+	@Override
     public SecurityContext authorize( ToIntFunction<String> propertyIdLookup, String dbName )
     {
         return this;
     }
 
-    /**
+	/**
      * Create a copy of this SecurityContext with the provided mode.
      */
     public SecurityContext withMode( AccessMode mode )
@@ -75,29 +78,25 @@ public class SecurityContext implements LoginContext
         return new SecurityContext( subject, mode );
     }
 
-    public void assertCredentialsNotExpired()
+	public void assertCredentialsNotExpired()
     {
-        if ( subject().getAuthenticationResult().equals( AuthenticationResult.PASSWORD_CHANGE_REQUIRED ) )
+        if ( subject().getAuthenticationResult() == AuthenticationResult.PASSWORD_CHANGE_REQUIRED )
         {
             throw mode().onViolation( PERMISSION_DENIED );
         }
     }
 
-    public String description()
+	public String description()
     {
         return String.format( "user '%s' with %s", subject().username(), mode().name() );
     }
 
-    protected String defaultString( String name )
+	protected String defaultString( String name )
     {
         return String.format( "%s{ username=%s, accessMode=%s }", name, subject().username(), mode() );
     }
 
-    /** Allows all operations. */
-    @SuppressWarnings( "StaticInitializerReferencesSubClass" )
-    public static final SecurityContext AUTH_DISABLED = new AuthDisabled( AccessMode.Static.FULL );
-
-    private static class AuthDisabled extends SecurityContext
+	private static class AuthDisabled extends SecurityContext
     {
         private AuthDisabled( AccessMode mode )
         {

@@ -57,7 +57,8 @@ public class RecordMatchers
 
         return new DiffMatcher<RecordChangeSet>()
         {
-            String diff( RecordChangeSet actual )
+            @Override
+			String diff( RecordChangeSet actual )
             {
                 String diff;
 
@@ -104,7 +105,8 @@ public class RecordMatchers
                 Collectors.toMap( AbstractBaseRecord::getId, Functions.identity() ) );
         return new DiffMatcher<Iterable<? extends AbstractBaseRecord>>()
         {
-            String diff( Iterable<? extends AbstractBaseRecord> actual )
+            @Override
+			String diff( Iterable<? extends AbstractBaseRecord> actual )
             {
                 Set<Long> seen = new HashSet<>( expectedById.keySet() );
                 for ( AbstractBaseRecord record : actual )
@@ -208,8 +210,7 @@ public class RecordMatchers
                     }
                     arrow.append( "-" );
                 }
-                return String.format( "Record fields don't match.\n" + "Expected: %s\n" +
-                                "Actual:   %s\n" + "          %s", expected, actual,
+                return String.format( new StringBuilder().append("Record fields don't match.\n").append("Expected: %s\n").append("Actual:   %s\n").append("          %s").toString(), expected, actual,
                         arrow.append( "^" ).toString() );
             }
 
@@ -217,7 +218,7 @@ public class RecordMatchers
             public void describeTo( Description description )
             {
                 description.appendValueList(
-                        String.format( "%s matching:\n  ", recordPlural ), "\n  ", "",
+                        String.format( "%s matching:%n  ", recordPlural ), "\n  ", "",
                         expectedById.values() );
             }
         };

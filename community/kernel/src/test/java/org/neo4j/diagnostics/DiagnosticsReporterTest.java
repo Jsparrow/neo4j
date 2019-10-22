@@ -93,16 +93,8 @@ class DiagnosticsReporterTest
             reporter.dump( classifiers, destination, progress, true );
 
             assertThat( baos.toString(), is(String.format(
-                    "1/2 fail.txt%n" +
-                    "....................  20%%%n" +
-                    "..........%n" +
-                    "Error: Step failed%n" +
-                    "2/2 logs/a.txt%n" +
-                    "....................  20%%%n" +
-                    "....................  40%%%n" +
-                    "....................  60%%%n" +
-                    "....................  80%%%n" +
-                    ".................... 100%%%n%n" ) ) );
+                    new StringBuilder().append("1/2 fail.txt%n").append("....................  20%%%n").append("..........%n").append("Error: Step failed%n").append("2/2 logs/a.txt%n").append("....................  20%%%n").append("....................  40%%%n")
+							.append("....................  60%%%n").append("....................  80%%%n").append(".................... 100%%%n%n").toString() ) ) );
         }
 
         // Verify content

@@ -53,38 +53,6 @@ import static org.junit.Assume.assumeTrue;
 @RunWith( Theories.class )
 public class PrimitiveCollectionEqualityTest
 {
-    private interface Value<T extends PrimitiveCollection>
-    {
-        void add( T coll );
-
-        /**
-         * @return 'true' if what was removed was exactly the value that was put in.
-         */
-        boolean remove( T coll );
-    }
-
-    private abstract static class ValueProducer<T extends PrimitiveCollection>
-    {
-        private final Class<T> applicableType;
-
-        ValueProducer( Class<T> applicableType )
-        {
-            this.applicableType = applicableType;
-        }
-
-        public boolean isApplicable( Factory<? extends PrimitiveCollection> factory )
-        {
-            try ( PrimitiveCollection coll = factory.newInstance() )
-            {
-                return applicableType.isInstance( coll );
-            }
-        }
-
-        public abstract Value<T> randomValue();
-    }
-
-    // ==== Test Value Producers ====
-
     @DataPoint
     public static ValueProducer<PrimitiveIntSet> intV = new ValueProducer<PrimitiveIntSet>( PrimitiveIntSet.class )
     {
@@ -109,7 +77,7 @@ public class PrimitiveCollectionEqualityTest
         }
     };
 
-    @DataPoint
+	@DataPoint
     public static ValueProducer<PrimitiveLongSet> longV =
             new ValueProducer<PrimitiveLongSet>( PrimitiveLongSet.class )
             {
@@ -134,7 +102,7 @@ public class PrimitiveCollectionEqualityTest
                 }
             };
 
-    @DataPoint
+	@DataPoint
     public static ValueProducer<PrimitiveIntLongMap> intLongV = new ValueProducer<PrimitiveIntLongMap>(
             PrimitiveIntLongMap.class )
     {
@@ -160,7 +128,7 @@ public class PrimitiveCollectionEqualityTest
         }
     };
 
-    @DataPoint
+	@DataPoint
     public static ValueProducer<PrimitiveLongIntMap> longIntV = new ValueProducer<PrimitiveLongIntMap>(
             PrimitiveLongIntMap.class )
     {
@@ -186,7 +154,7 @@ public class PrimitiveCollectionEqualityTest
         }
     };
 
-    @DataPoint
+	@DataPoint
     public static ValueProducer<PrimitiveLongLongMap> longLongV = new ValueProducer<PrimitiveLongLongMap>(
             PrimitiveLongLongMap.class )
     {
@@ -212,7 +180,7 @@ public class PrimitiveCollectionEqualityTest
         }
     };
 
-    @DataPoint
+	@DataPoint
     public static ValueProducer<PrimitiveIntObjectMap> intObjV =
             new ValueProducer<PrimitiveIntObjectMap>( PrimitiveIntObjectMap.class )
             {
@@ -238,7 +206,7 @@ public class PrimitiveCollectionEqualityTest
                 }
             };
 
-    @DataPoint
+	@DataPoint
     public static ValueProducer<PrimitiveLongObjectMap> longObjV =
             new ValueProducer<PrimitiveLongObjectMap>( PrimitiveLongObjectMap.class )
             {
@@ -264,81 +232,80 @@ public class PrimitiveCollectionEqualityTest
                 }
             };
 
-    // ==== Primitive Collection Implementations ====
-
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveIntSet> intSet = Primitive::intSet;
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveIntSet> intSetWithCapacity = () -> Primitive.intSet( randomCapacity() );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveIntSet> offheapIntSet =
             () -> Primitive.offHeapIntSet( GlobalMemoryTracker.INSTANCE );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveIntSet> offheapIntSetWithCapacity =
             () -> Primitive.offHeapIntSet( randomCapacity(), GlobalMemoryTracker.INSTANCE );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongSet> longSet = Primitive::longSet;
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongSet> longSetWithCapacity = () -> Primitive.longSet( randomCapacity() );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongSet> offheapLongSet =
             () -> Primitive.offHeapLongSet( GlobalMemoryTracker.INSTANCE );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongSet> offheapLongSetWithCapacity =
             () -> Primitive.offHeapLongSet( randomCapacity(), GlobalMemoryTracker.INSTANCE );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveIntLongMap> intLongMap = Primitive::intLongMap;
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveIntLongMap> intLongMapWithCapacity = () -> Primitive.intLongMap( randomCapacity() );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongIntMap> longIntMap = Primitive::longIntMap;
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongIntMap> longIntMapWithCapacity = () -> Primitive.longIntMap( randomCapacity() );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongLongMap> longLongMap = Primitive::longLongMap;
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongLongMap> longLongMapWithCapacity =
             () -> Primitive.longLongMap( randomCapacity() );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongLongMap> offheapLongLongMap =
             () -> Primitive.offHeapLongLongMap( GlobalMemoryTracker.INSTANCE );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongLongMap> offheapLongLongMapWithCapacity =
             () -> Primitive.offHeapLongLongMap( randomCapacity(), GlobalMemoryTracker.INSTANCE );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveIntObjectMap> intObjMap = Primitive::intObjectMap;
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveIntObjectMap> intObjMapWithCapacity =
             () -> Primitive.intObjectMap( randomCapacity() );
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongObjectMap> longObjectMap = Primitive::longObjectMap;
 
-    @DataPoint
+	@DataPoint
     public static Factory<PrimitiveLongObjectMap> longObjectMapWithCapacity =
             () -> Primitive.longObjectMap( randomCapacity() );
 
-    private static final PrimitiveIntSet observedRandomInts = Primitive.intSet();
-    private static final PrimitiveLongSet observedRandomLongs = Primitive.longSet();
+	private static final PrimitiveIntSet observedRandomInts = Primitive.intSet();
 
-    /**
+	private static final PrimitiveLongSet observedRandomLongs = Primitive.longSet();
+
+	/**
      * Produce a random int that hasn't been seen before by any test.
      */
     private static int randomInt()
@@ -352,7 +319,7 @@ public class PrimitiveCollectionEqualityTest
         return n;
     }
 
-    /**
+	/**
      * Produce a random long that hasn't been seen before by any test.
      */
     private static long randomLong()
@@ -366,19 +333,19 @@ public class PrimitiveCollectionEqualityTest
         return n;
     }
 
-    private static int randomCapacity()
+	private static int randomCapacity()
     {
         return ThreadLocalRandom.current().nextInt( 30, 1200 );
     }
 
-    private static void assertEquals( PrimitiveCollection a, PrimitiveCollection b )
+	private static void assertEquals( PrimitiveCollection a, PrimitiveCollection b )
     {
         assertThat( a, is( equalTo( b ) ) );
         assertThat( b, is( equalTo( a ) ) );
         assertThat( a.hashCode(), is( equalTo( b.hashCode() ) ) );
     }
 
-    @Theory
+	@Theory
     public void collectionsAreNotEqualToObjectsOfOtherTypes( Factory<PrimitiveCollection> factory )
     {
         try ( PrimitiveCollection coll = factory.newInstance() )
@@ -387,7 +354,7 @@ public class PrimitiveCollectionEqualityTest
         }
     }
 
-    @Theory
+	@Theory
     public void emptyCollectionsAreEqual(
             ValueProducer values, Factory<PrimitiveCollection> factoryA, Factory<PrimitiveCollection> factoryB )
     {
@@ -400,7 +367,7 @@ public class PrimitiveCollectionEqualityTest
         }
     }
 
-    @Theory
+	@Theory
     public void addingTheSameValuesMustProduceEqualCollections(
             ValueProducer values, Factory<PrimitiveCollection> factoryA, Factory<PrimitiveCollection> factoryB )
     {
@@ -416,7 +383,7 @@ public class PrimitiveCollectionEqualityTest
         }
     }
 
-    @Theory
+	@Theory
     public void addingDifferentValuesMustProduceUnequalCollections(
             ValueProducer values, Factory<PrimitiveCollection> factoryA, Factory<PrimitiveCollection> factoryB )
     {
@@ -431,7 +398,7 @@ public class PrimitiveCollectionEqualityTest
         }
     }
 
-    @Theory
+	@Theory
     public void differentButEquivalentMutationsShouldProduceEqualCollections(
             ValueProducer values, Factory<PrimitiveCollection> factoryA, Factory<PrimitiveCollection> factoryB )
     {
@@ -457,7 +424,7 @@ public class PrimitiveCollectionEqualityTest
         }
     }
 
-    @Theory
+	@Theory
     public void capacityDifferencesMustNotInfluenceEquality(
             ValueProducer values, Factory<PrimitiveCollection> factoryA, Factory<PrimitiveCollection> factoryB )
     {
@@ -495,7 +462,7 @@ public class PrimitiveCollectionEqualityTest
         }
     }
 
-    @Theory
+	@Theory
     public void hashCodeMustFollowValues(
             ValueProducer values, Factory<PrimitiveCollection> factory )
     {
@@ -529,4 +496,40 @@ public class PrimitiveCollectionEqualityTest
             assertThat( "0 elm hashcode distinct", i, not( isOneOf( j, k, l, m, n ) ) );
         }
     }
+
+	private interface Value<T extends PrimitiveCollection>
+    {
+        void add( T coll );
+
+        /**
+         * @return 'true' if what was removed was exactly the value that was put in.
+         */
+        boolean remove( T coll );
+    }
+
+    private abstract static class ValueProducer<T extends PrimitiveCollection>
+    {
+        private final Class<T> applicableType;
+
+        ValueProducer( Class<T> applicableType )
+        {
+            this.applicableType = applicableType;
+        }
+
+        public boolean isApplicable( Factory<? extends PrimitiveCollection> factory )
+        {
+            try ( PrimitiveCollection coll = factory.newInstance() )
+            {
+                return applicableType.isInstance( coll );
+            }
+        }
+
+        public abstract Value<T> randomValue();
+    }
+
+    // ==== Test Value Producers ====
+
+
+    // ==== Primitive Collection Implementations ====
+
 }

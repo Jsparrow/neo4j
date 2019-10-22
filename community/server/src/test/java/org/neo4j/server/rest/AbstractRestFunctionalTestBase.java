@@ -80,7 +80,7 @@ public class AbstractRestFunctionalTestBase extends SharedServerTestBase impleme
         data.get();
 
         String script = createScript( scriptTemplate );
-        String queryString = "{\"query\": \"" + script + "\",\"params\":{" + parameterString + "}}";
+        String queryString = new StringBuilder().append("{\"query\": \"").append(script).append("\",\"params\":{").append(parameterString).append("}}").toString();
 
         gen().expectedStatus( status.getStatusCode() )
                 .payload( queryString );
@@ -99,7 +99,8 @@ public class AbstractRestFunctionalTestBase extends SharedServerTestBase impleme
         {
             String delimiter = paramString.isEmpty() || paramString.endsWith( "{" ) ? "" : ",";
 
-            paramString += delimiter + "\"" + param.first() + "\":\"" + param.other() + "\"";
+            paramString += new StringBuilder().append(delimiter).append("\"").append(param.first()).append("\":\"").append(param.other()).append("\"")
+					.toString();
         }
 
         return paramString;
@@ -109,7 +110,7 @@ public class AbstractRestFunctionalTestBase extends SharedServerTestBase impleme
     {
         for ( String key : data.get().keySet() )
         {
-            template = template.replace( "%" + key + "%", idFor( key ).toString() );
+            template = template.replace( new StringBuilder().append("%").append(key).append("%").toString(), idFor( key ).toString() );
         }
         return template;
     }
@@ -127,12 +128,12 @@ public class AbstractRestFunctionalTestBase extends SharedServerTestBase impleme
 
     protected static String getDataUri()
     {
-        return "http://localhost:" + getLocalHttpPort() + "/db/data/";
+        return new StringBuilder().append("http://localhost:").append(getLocalHttpPort()).append("/db/data/").toString();
     }
 
     protected String getDatabaseUri()
     {
-        return "http://localhost:" + getLocalHttpPort() + "/db/";
+        return new StringBuilder().append("http://localhost:").append(getLocalHttpPort()).append("/db/").toString();
     }
 
     protected String getNodeUri( Node node )
@@ -142,22 +143,22 @@ public class AbstractRestFunctionalTestBase extends SharedServerTestBase impleme
 
     protected String getNodeUri( long node )
     {
-        return getDataUri() + PATH_NODES + "/" + node;
+        return new StringBuilder().append(getDataUri()).append(PATH_NODES).append("/").append(node).toString();
     }
 
     protected String getRelationshipUri( Relationship relationship )
     {
-        return getDataUri() + PATH_RELATIONSHIPS + "/" + relationship.getId();
+        return new StringBuilder().append(getDataUri()).append(PATH_RELATIONSHIPS).append("/").append(relationship.getId()).toString();
     }
 
     protected String postNodeIndexUri( String indexName )
     {
-        return getDataUri() + PATH_NODE_INDEX + "/" + indexName;
+        return new StringBuilder().append(getDataUri()).append(PATH_NODE_INDEX).append("/").append(indexName).toString();
     }
 
     protected String postRelationshipIndexUri( String indexName )
     {
-        return getDataUri() + PATH_RELATIONSHIP_INDEX + "/" + indexName;
+        return new StringBuilder().append(getDataUri()).append(PATH_RELATIONSHIP_INDEX).append("/").append(indexName).toString();
     }
 
     protected String txUri()
@@ -172,7 +173,7 @@ public class AbstractRestFunctionalTestBase extends SharedServerTestBase impleme
 
     protected String txUri( long txId )
     {
-        return getDataUri() + "transaction/" + txId;
+        return new StringBuilder().append(getDataUri()).append("transaction/").append(txId).toString();
     }
 
     public static long extractTxId( HTTP.Response response )
@@ -255,12 +256,13 @@ public class AbstractRestFunctionalTestBase extends SharedServerTestBase impleme
 
     public String getSchemaIndexLabelUri( String label )
     {
-        return getDataUri() + PATH_SCHEMA_INDEX + "/" + label;
+        return new StringBuilder().append(getDataUri()).append(PATH_SCHEMA_INDEX).append("/").append(label).toString();
     }
 
     public String getSchemaIndexLabelPropertyUri( String label, String property )
     {
-        return getDataUri() + PATH_SCHEMA_INDEX + "/" + label + "/" + property;
+        return new StringBuilder().append(getDataUri()).append(PATH_SCHEMA_INDEX).append("/").append(label).append("/").append(property)
+				.toString();
     }
 
     public String getSchemaConstraintUri()
@@ -270,17 +272,18 @@ public class AbstractRestFunctionalTestBase extends SharedServerTestBase impleme
 
     public String getSchemaConstraintLabelUri( String label )
     {
-        return getDataUri() + PATH_SCHEMA_CONSTRAINT + "/" + label;
+        return new StringBuilder().append(getDataUri()).append(PATH_SCHEMA_CONSTRAINT).append("/").append(label).toString();
     }
 
     public String getSchemaConstraintLabelUniquenessUri( String label )
     {
-        return getDataUri() + PATH_SCHEMA_CONSTRAINT + "/" + label + "/uniqueness/";
+        return new StringBuilder().append(getDataUri()).append(PATH_SCHEMA_CONSTRAINT).append("/").append(label).append("/uniqueness/").toString();
     }
 
     public String getSchemaConstraintLabelUniquenessPropertyUri( String label, String property )
     {
-        return getDataUri() + PATH_SCHEMA_CONSTRAINT + "/" + label + "/uniqueness/" + property;
+        return new StringBuilder().append(getDataUri()).append(PATH_SCHEMA_CONSTRAINT).append("/").append(label).append("/uniqueness/").append(property)
+				.toString();
     }
 
     public static int getLocalHttpPort()
@@ -295,8 +298,8 @@ public class AbstractRestFunctionalTestBase extends SharedServerTestBase impleme
         String resultDataContents = "";
         if ( contentTypes.length > 0 )
         {
-            resultDataContents = ", 'resultDataContents': [" + Arrays.stream( contentTypes )
-                    .map( unquoted -> format( "'%s'", unquoted ) ).collect( joining( "," ) ) + "]";
+            resultDataContents = new StringBuilder().append(", 'resultDataContents': [").append(Arrays.stream( contentTypes )
+                    .map( unquoted -> format( "'%s'", unquoted ) ).collect( joining( "," ) )).append("]").toString();
         }
         return POST( txCommitUri(), quotedJson( format( "{'statements': [{'statement': '%s'%s}]}", query, resultDataContents) ) );
     }

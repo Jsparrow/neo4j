@@ -50,7 +50,7 @@ public class JmxAttributeRepresentationDispatcher extends RepresentationDispatch
     {
         if ( property instanceof CompositeData[] )
         {
-            return dispatchCompositeDataArray( (CompositeData[]) property, param );
+            return dispatchCompositeDataArray( (CompositeData[]) property );
         }
         else
         {
@@ -63,7 +63,7 @@ public class JmxAttributeRepresentationDispatcher extends RepresentationDispatch
         return new JmxCompositeDataRepresentation( property );
     }
 
-    private Representation dispatchCompositeDataArray( CompositeData[] property, String param )
+    private Representation dispatchCompositeDataArray( CompositeData[] property )
     {
         ArrayList<Representation> values = new ArrayList<>();
         for ( CompositeData value : property )

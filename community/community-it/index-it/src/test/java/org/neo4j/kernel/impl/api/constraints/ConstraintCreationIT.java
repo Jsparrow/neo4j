@@ -42,13 +42,14 @@ import static org.neo4j.graphdb.factory.GraphDatabaseSettings.default_schema_pro
 
 public class ConstraintCreationIT
 {
-    @Rule
+    private static final Label LABEL = Label.label( "label1" );
+
+	private static final long indexId = 1;
+
+	@Rule
     public EmbeddedDatabaseRule db = new EmbeddedDatabaseRule().startLazily();
 
-    private static final Label LABEL = Label.label( "label1" );
-    private static final long indexId = 1;
-
-    @Test
+	@Test
     public void shouldNotLeaveLuceneIndexFilesHangingAroundIfConstraintCreationFails()
     {
         // given
@@ -63,7 +64,7 @@ public class ConstraintCreationIT
         assertFalse( new IndexFolderLayout( indexDir ).getIndexFolder().exists() );
     }
 
-    @Test
+	@Test
     public void shouldNotLeaveNativeIndexFilesHangingAroundIfConstraintCreationFails()
     {
         // given
@@ -77,7 +78,7 @@ public class ConstraintCreationIT
         assertFalse( indexDir.exists() );
     }
 
-    private void attemptAndFailConstraintCreation()
+	private void attemptAndFailConstraintCreation()
     {
         try ( Transaction tx = db.beginTx() )
         {

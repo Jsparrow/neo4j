@@ -33,11 +33,6 @@ public class ConfigFileBuilder
     private final File directory;
     private final Map<String,String> config;
 
-    public static ConfigFileBuilder builder( File directory )
-    {
-        return new ConfigFileBuilder( directory );
-    }
-
     private ConfigFileBuilder( File directory )
     {
         this.directory = directory;
@@ -50,26 +45,31 @@ public class ConfigFileBuilder
                 ServerSettings.rest_api_path.name(), "http://localhost:7474/db/data/" );
     }
 
-    public File build()
+	public static ConfigFileBuilder builder( File directory )
+    {
+        return new ConfigFileBuilder( directory );
+    }
+
+	public File build()
     {
         File file = new File( directory, "config" );
         ServerTestUtils.writeConfigToFile( config, file );
         return file;
     }
 
-    public ConfigFileBuilder withNameValue( String name, String value )
+	public ConfigFileBuilder withNameValue( String name, String value )
     {
         config.put( name, value );
         return this;
     }
 
-    public ConfigFileBuilder withSetting( Setting setting, String value )
+	public ConfigFileBuilder withSetting( Setting setting, String value )
     {
         config.put( setting.name(), value );
         return this;
     }
 
-    public ConfigFileBuilder withoutSetting( Setting setting )
+	public ConfigFileBuilder withoutSetting( Setting setting )
     {
         config.remove( setting.name() );
         return this;

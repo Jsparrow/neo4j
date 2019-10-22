@@ -205,6 +205,6 @@ class KernelTransactionImplementationHandle implements KernelTransactionHandle
     @Override
     public String toString()
     {
-        return "KernelTransactionImplementationHandle{txReuseCount=" + txReuseCount + ", tx=" + tx + "}";
+        return new StringBuilder().append("KernelTransactionImplementationHandle{txReuseCount=").append(txReuseCount).append(", tx=").append(tx).append("}").toString();
     }
 }

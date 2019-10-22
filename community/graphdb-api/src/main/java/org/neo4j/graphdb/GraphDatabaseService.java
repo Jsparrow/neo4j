@@ -401,7 +401,7 @@ public interface GraphDatabaseService
      * @return A {@link org.neo4j.graphdb.Result} that contains the result set.
      * @throws QueryExecutionException If the Query contains errors
      */
-    Result execute( String query ) throws QueryExecutionException;
+    Result execute( String query );
 
     /**
      * Executes a query and returns an iterable that contains the result set.
@@ -415,7 +415,7 @@ public interface GraphDatabaseService
      * @return A {@link org.neo4j.graphdb.Result} that contains the result set.
      * @throws QueryExecutionException If the Query contains errors
      */
-    Result execute( String query, long timeout, TimeUnit unit ) throws QueryExecutionException;
+    Result execute( String query, long timeout, TimeUnit unit );
 
     /**
      * Executes a query and returns an iterable that contains the result set.
@@ -425,7 +425,7 @@ public interface GraphDatabaseService
      * @return A {@link org.neo4j.graphdb.Result} that contains the result set
      * @throws QueryExecutionException If the Query contains errors
      */
-    Result execute( String query, Map<String,Object> parameters ) throws QueryExecutionException;
+    Result execute( String query, Map<String,Object> parameters );
 
     /**
      * Executes a query and returns an iterable that contains the result set.
@@ -438,7 +438,7 @@ public interface GraphDatabaseService
      * @return A {@link org.neo4j.graphdb.Result} that contains the result set
      * @throws QueryExecutionException If the Query contains errors
      */
-    Result execute( String query, Map<String,Object> parameters, long timeout, TimeUnit unit ) throws QueryExecutionException;
+    Result execute( String query, Map<String,Object> parameters, long timeout, TimeUnit unit );
 
     /**
      * Registers {@code handler} as a handler for transaction events which

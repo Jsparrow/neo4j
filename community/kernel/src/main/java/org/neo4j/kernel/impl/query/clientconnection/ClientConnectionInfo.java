@@ -26,64 +26,6 @@ package org.neo4j.kernel.impl.query.clientconnection;
  */
 public abstract class ClientConnectionInfo
 {
-    /**
-     * Used by {@link #asConnectionDetails()} only. When the {@code connectionDetails} string is no longer needed,
-     * this can go away, since the username is provided though other means to the places that need it.
-     */
-    @Deprecated
-    public ClientConnectionInfo withUsername( String username )
-    {
-        return new ConnectionInfoWithUsername( this, username );
-    }
-
-    /**
-     * This method provides the custom format for each type of connection.
-     * <p>
-     * Preferably we would not need to have a custom format for each type of connection, but this is provided for
-     * backwards compatibility reasons.
-     *
-     * @return a custom log-line format describing this type of connection.
-     */
-    @Deprecated
-    public abstract String asConnectionDetails();
-
-    /**
-     * Which protocol was used for this connection.
-     * <p>
-     * This is not necessarily an internet protocol (like http et.c.) although it could be. It might also be "embedded"
-     * for example, if this connection represents an embedded session.
-     *
-     * @return the protocol used for connecting to the server.
-     */
-    public abstract String protocol();
-
-    /**
-     * Identifier of the network connection.
-     *
-     * @return the identifier or {@code null} for embedded connections.
-     */
-    public abstract String connectionId();
-
-    /**
-     * This method is overridden in the subclasses where this information is available.
-     *
-     * @return the address of the client. or {@code null} if the address is not available.
-     */
-    public String clientAddress()
-    {
-        return null;
-    }
-
-    /**
-     * This method is overridden in the subclasses where this information is available.
-     *
-     * @return the URI of this server that the client connected to, or {@code null} if the URI is not available.
-     */
-    public String requestURI()
-    {
-        return null;
-    }
-
     public static final ClientConnectionInfo EMBEDDED_CONNECTION = new ClientConnectionInfo()
     {
         @Override
@@ -105,7 +47,65 @@ public abstract class ClientConnectionInfo
         }
     };
 
-    /**
+	/**
+     * Used by {@link #asConnectionDetails()} only. When the {@code connectionDetails} string is no longer needed,
+     * this can go away, since the username is provided though other means to the places that need it.
+     */
+    @Deprecated
+    public ClientConnectionInfo withUsername( String username )
+    {
+        return new ConnectionInfoWithUsername( this, username );
+    }
+
+	/**
+     * This method provides the custom format for each type of connection.
+     * <p>
+     * Preferably we would not need to have a custom format for each type of connection, but this is provided for
+     * backwards compatibility reasons.
+     *
+     * @return a custom log-line format describing this type of connection.
+     */
+    @Deprecated
+    public abstract String asConnectionDetails();
+
+	/**
+     * Which protocol was used for this connection.
+     * <p>
+     * This is not necessarily an internet protocol (like http et.c.) although it could be. It might also be "embedded"
+     * for example, if this connection represents an embedded session.
+     *
+     * @return the protocol used for connecting to the server.
+     */
+    public abstract String protocol();
+
+	/**
+     * Identifier of the network connection.
+     *
+     * @return the identifier or {@code null} for embedded connections.
+     */
+    public abstract String connectionId();
+
+	/**
+     * This method is overridden in the subclasses where this information is available.
+     *
+     * @return the address of the client. or {@code null} if the address is not available.
+     */
+    public String clientAddress()
+    {
+        return null;
+    }
+
+	/**
+     * This method is overridden in the subclasses where this information is available.
+     *
+     * @return the URI of this server that the client connected to, or {@code null} if the URI is not available.
+     */
+    public String requestURI()
+    {
+        return null;
+    }
+
+	/**
      * Should be removed along with {@link #withUsername(String)} and {@link #asConnectionDetails()}.
      */
     @Deprecated
@@ -123,7 +123,7 @@ public abstract class ClientConnectionInfo
         @Override
         public String asConnectionDetails()
         {
-            return source.asConnectionDetails() + '\t' + username;
+            return new StringBuilder().append(source.asConnectionDetails()).append('\t').append(username).toString();
         }
 
         @Override

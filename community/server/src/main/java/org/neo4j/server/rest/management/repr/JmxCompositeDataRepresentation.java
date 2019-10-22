@@ -30,43 +30,39 @@ import org.neo4j.server.rest.repr.ValueRepresentation;
 
 public class JmxCompositeDataRepresentation extends ObjectRepresentation
 {
-    protected CompositeData data;
     private static final RepresentationDispatcher REPRESENTATION_DISPATCHER = new JmxAttributeRepresentationDispatcher();
+	protected CompositeData data;
 
-    public JmxCompositeDataRepresentation( CompositeData data )
+	public JmxCompositeDataRepresentation( CompositeData data )
     {
         super( "jmxCompositeData" );
         this.data = data;
     }
 
-    @Mapping( "type" )
+	@Mapping( "type" )
     public ValueRepresentation getType()
     {
         return ValueRepresentation.string( data.getCompositeType()
                 .getTypeName() );
     }
 
-    @Mapping( "description" )
+	@Mapping( "description" )
     public ValueRepresentation getDescription()
     {
         return ValueRepresentation.string( data.getCompositeType()
                 .getDescription() );
     }
 
-    @Mapping( "value" )
+	@Mapping( "value" )
     public ListRepresentation getValue()
     {
 
         ArrayList<Representation> values = new ArrayList<>();
-        for ( Object key : data.getCompositeType().keySet() )
-        {
-            String name = key.toString();
-            String description = data.getCompositeType().getDescription( name );
-
-            Representation value = REPRESENTATION_DISPATCHER.dispatch( data.get( name ), "" );
-
-            values.add( new NameDescriptionValueRepresentation( name, description, value ) );
-        }
+        data.getCompositeType().keySet().stream().map(String::toString).forEach(name -> {
+			String description = data.getCompositeType().getDescription( name );
+			Representation value = REPRESENTATION_DISPATCHER.dispatch( data.get( name ), "" );
+			values.add( new NameDescriptionValueRepresentation( name, description, value ) );
+		});
 
         return new ListRepresentation( "value", values );
     }

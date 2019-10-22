@@ -32,21 +32,17 @@ public final class ServerExtensionRepresentation extends MappingRepresentation
     {
         super( RepresentationType.SERVER_PLUGIN_DESCRIPTION );
         this.extended = new HashMap<>();
-        for ( ExtensionPointRepresentation extension : methods )
-        {
+        methods.forEach(extension -> {
             EntityExtensionRepresentation entity =
                     extended.computeIfAbsent( extension.getExtendedEntity(), k -> new EntityExtensionRepresentation() );
             entity.add( extension );
-        }
+        });
     }
 
     @Override
     protected void serialize( MappingSerializer serializer )
     {
-        for ( Map.Entry<String, EntityExtensionRepresentation> entity : extended.entrySet() )
-        {
-            serializer.putMapping( entity.getKey(), entity.getValue() );
-        }
+        extended.entrySet().forEach(entity -> serializer.putMapping(entity.getKey(), entity.getValue()));
     }
 
     private static class EntityExtensionRepresentation extends MappingRepresentation
@@ -67,10 +63,7 @@ public final class ServerExtensionRepresentation extends MappingRepresentation
         @Override
         protected void serialize( MappingSerializer serializer )
         {
-            for ( ExtensionPointRepresentation extension : extensions )
-            {
-                serializer.putMapping( extension.getName(), extension );
-            }
+            extensions.forEach(extension -> serializer.putMapping(extension.getName(), extension));
         }
     }
 }

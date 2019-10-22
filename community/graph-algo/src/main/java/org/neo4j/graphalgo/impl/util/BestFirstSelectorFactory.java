@@ -35,22 +35,28 @@ import org.neo4j.graphdb.traversal.TraversalContext;
 public abstract class BestFirstSelectorFactory<P extends Comparable<P>, D>
         implements BranchOrderingPolicy
 {
-    private final PathInterest<P> interest;
+    public static final Converter<Node, TraversalBranch> CONVERTER = Path::endNode;
+	private final PathInterest<P> interest;
 
-    public BestFirstSelectorFactory( PathInterest<P> interest )
+	public BestFirstSelectorFactory( PathInterest<P> interest )
     {
         this.interest = interest;
     }
 
-    @Override
+	@Override
     public BranchSelector create( TraversalBranch startSource, PathExpander expander )
     {
         return new BestFirstSelector( startSource, getStartData(), expander );
     }
 
-    protected abstract P getStartData();
+	protected abstract P getStartData();
 
-    private static class Visit<P extends Comparable<P>> implements Comparable<P>
+	protected abstract P addPriority( TraversalBranch source,
+            P currentAggregatedValue, D value );
+
+	protected abstract D calculateValue( TraversalBranch next );
+
+	private static class Visit<P extends Comparable<P>> implements Comparable<P>
     {
         private P cost;
         private int visitCount;
@@ -139,11 +145,4 @@ public abstract class BestFirstSelectorFactory<P extends Comparable<P>, D>
             } while ( true );
         }
     }
-
-    protected abstract P addPriority( TraversalBranch source,
-            P currentAggregatedValue, D value );
-
-    protected abstract D calculateValue( TraversalBranch next );
-
-    public static final Converter<Node, TraversalBranch> CONVERTER = Path::endNode;
 }

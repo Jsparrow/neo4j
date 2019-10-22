@@ -54,8 +54,7 @@ public class GraphCloner extends ServerPlugin
 
             HashMap<Node, Node> clonedNodes = cloneNodes( graphDb, nodes );
 
-            for ( Node oldNode : clonedNodes.keySet() )
-            {
+            clonedNodes.keySet().forEach(oldNode -> {
                 // give me the matching new node
                 Node newStartNode = clonedNodes.get( oldNode );
 
@@ -75,7 +74,7 @@ public class GraphCloner extends ServerPlugin
                         cloneProperties( oldRelationship, newRelationship );
                     }
                 }
-            }
+            });
 
             tx.success();
 
@@ -86,10 +85,7 @@ public class GraphCloner extends ServerPlugin
 
     private void cloneProperties( Relationship oldRelationship, Relationship newRelationship )
     {
-        for ( Map.Entry<String, Object> property : oldRelationship.getAllProperties().entrySet() )
-        {
-            newRelationship.setProperty( property.getKey(), property.getValue() );
-        }
+        oldRelationship.getAllProperties().entrySet().forEach(property -> newRelationship.setProperty(property.getKey(), property.getValue()));
     }
 
     private Traverser traverseToDepth( GraphDatabaseService graphDb, final Node startNode, final int depth )
@@ -117,10 +113,7 @@ public class GraphCloner extends ServerPlugin
     private Node cloneNodeData( GraphDatabaseService graphDb, Node node )
     {
         Node newNode = graphDb.createNode();
-        for ( Map.Entry<String, Object> property : node.getAllProperties().entrySet() )
-        {
-            newNode.setProperty( property.getKey(), property.getValue() );
-        }
+        node.getAllProperties().entrySet().forEach(property -> newNode.setProperty(property.getKey(), property.getValue()));
         return newNode;
     }
 

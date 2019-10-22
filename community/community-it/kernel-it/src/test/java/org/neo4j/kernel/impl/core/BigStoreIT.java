@@ -59,20 +59,25 @@ public class BigStoreIT implements RelationshipType
     private static final RelationshipType OTHER_TYPE = RelationshipType.withName( "OTHER" );
 
     private static final String PATH = "target/var/big";
-    private GraphDatabaseService db;
-    @Rule
+
+	private static final Label REFERENCE = Label.label( "Reference" );
+
+	private GraphDatabaseService db;
+
+	@Rule
     public TestName testName = new TestName()
     {
         @Override
         public String getMethodName()
         {
-            return BigStoreIT.this.getClass().getSimpleName() + "#" + super.getMethodName();
+            return new StringBuilder().append(BigStoreIT.this.getClass().getSimpleName()).append("#").append(super.getMethodName()).toString();
         }
     };
-    @Rule
+
+	@Rule
     public EmbeddedDatabaseRule dbRule = new EmbeddedDatabaseRule();
 
-    @Before
+	@Before
     public void doBefore()
     {
         // Delete before just to be sure
@@ -80,37 +85,37 @@ public class BigStoreIT implements RelationshipType
         db = dbRule.getGraphDatabaseAPI();
     }
 
-    @Override
+	@Override
     public String name()
     {
         return "BIG_TYPE";
     }
 
-    @Test
+	@Test
     public void create4BPlusStuff() throws Exception
     {
         testHighIds( (long) pow( 2, 32 ), 2, 400 );
     }
 
-    @Test
+	@Test
     public void create8BPlusStuff() throws Exception
     {
         testHighIds( (long) pow( 2, 33 ), 1, 1000 );
     }
 
-    @Test
+	@Test
     public void createAndVerify32BitGraph() throws Exception
     {
         createAndVerifyGraphStartingWithId( (long) pow( 2, 32 ), 400 );
     }
 
-    @Test
+	@Test
     public void createAndVerify33BitGraph() throws Exception
     {
         createAndVerifyGraphStartingWithId( (long) pow( 2, 33 ), 1000 );
     }
 
-    private void createAndVerifyGraphStartingWithId( long startId, int requiredHeapMb ) throws Exception
+	private void createAndVerifyGraphStartingWithId( long startId, int requiredHeapMb ) throws Exception
     {
         assumeTrue( machineIsOkToRunThisTest( requiredHeapMb ) );
 
@@ -175,9 +180,7 @@ public class BigStoreIT implements RelationshipType
         assertEquals( count, verified );
     }
 
-    private static final Label REFERENCE = Label.label( "Reference" );
-
-    private Node createReferenceNode( GraphDatabaseService db )
+	private Node createReferenceNode( GraphDatabaseService db )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -187,7 +190,7 @@ public class BigStoreIT implements RelationshipType
         }
     }
 
-    public static boolean machineIsOkToRunThisTest( int requiredHeapMb )
+	public static boolean machineIsOkToRunThisTest( int requiredHeapMb )
     {
         if ( SystemUtils.IS_OS_WINDOWS )
         {
@@ -205,7 +208,7 @@ public class BigStoreIT implements RelationshipType
         return heapMb >= requiredHeapMb;
     }
 
-    public static void assertProperties( Map<String, Object> properties, PropertyContainer entity )
+	public static void assertProperties( Map<String, Object> properties, PropertyContainer entity )
     {
         int count = 0;
         for ( String key : entity.getPropertyKeys() )
@@ -225,15 +228,12 @@ public class BigStoreIT implements RelationshipType
         assertEquals( properties.size(), count );
     }
 
-    private void setProperties( PropertyContainer entity, Map<String, Object> properties )
+	private void setProperties( PropertyContainer entity, Map<String, Object> properties )
     {
-        for ( Map.Entry<String, Object> property : properties.entrySet() )
-        {
-            entity.setProperty( property.getKey(), property.getValue() );
-        }
+        properties.entrySet().forEach(property -> entity.setProperty(property.getKey(), property.getValue()));
     }
 
-    private void testHighIds( long highMark, int minus, int requiredHeapMb ) throws IOException
+	private void testHighIds( long highMark, int minus, int requiredHeapMb ) throws IOException
     {
         if ( !machineIsOkToRunThisTest( requiredHeapMb ) )
         {
@@ -291,7 +291,7 @@ public class BigStoreIT implements RelationshipType
         }
     }
 
-    private void setHighIds( long id )
+	private void setHighIds( long id )
     {
         setHighId( IdType.NODE, id );
         setHighId( IdType.RELATIONSHIP, id );
@@ -300,12 +300,12 @@ public class BigStoreIT implements RelationshipType
         setHighId( IdType.STRING_BLOCK, id );
     }
 
-    private static <T> Collection<T> asSet( Collection<T> collection )
+	private static <T> Collection<T> asSet( Collection<T> collection )
     {
         return new HashSet<>( collection );
     }
 
-    private void setHighId( IdType type, long highId )
+	private void setHighId( IdType type, long highId )
     {
         ((GraphDatabaseAPI)db).getDependencyResolver().resolveDependency( IdGeneratorFactory.class ).get( type ).setHighId( highId );
     }

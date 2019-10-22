@@ -102,13 +102,7 @@ public class JaxRsResponse extends Response
     private MultivaluedMap<String,Object> extractMetaData( ClientResponse jettyResponse )
     {
         MultivaluedMap<String,Object> metadata = new StringKeyObjectValueIgnoreCaseMultivaluedMap();
-        for ( Map.Entry<String,List<String>> header : jettyResponse.getHeaders().entrySet() )
-        {
-            for ( Object value : header.getValue() )
-            {
-                metadata.putSingle( header.getKey(), value );
-            }
-        }
+        jettyResponse.getHeaders().entrySet().forEach(header -> header.getValue().forEach(value -> metadata.putSingle(header.getKey(), value)));
         return metadata;
     }
 

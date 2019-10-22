@@ -89,8 +89,8 @@ public class SequenceArray
             absIndex = tentativeAbsIndex;
             number++;
             assert array[absIndex] == number :
-                    "Expected index " + cursor + " to be " + number + ", but was " + array[absIndex] +
-                            ". This is for i=" + i;
+                    new StringBuilder().append("Expected index ").append(cursor).append(" to be ").append(number).append(", but was ")
+					.append(array[absIndex]).append(". This is for i=").append(i).toString();
         }
 
         // copy the meta values into the supplied meta

@@ -55,7 +55,7 @@ public class Workers<R extends Runnable> implements Iterable<R>
      */
     public void start( R toRun )
     {
-        Worker worker = new Worker( names + "-" + workers.size(), toRun );
+        Worker worker = new Worker( new StringBuilder().append(names).append("-").append(workers.size()).toString(), toRun );
         worker.start();
         workers.add( worker );
     }
@@ -98,7 +98,7 @@ public class Workers<R extends Runnable> implements Iterable<R>
     private RuntimeException handleInterrupted( InterruptedException e )
     {
         Thread.interrupted();
-        return new RuntimeException( "Got interrupted while awaiting workers (" + names + ") to complete", e );
+        return new RuntimeException( new StringBuilder().append("Got interrupted while awaiting workers (").append(names).append(") to complete").toString(), e );
     }
 
     @Override

@@ -93,13 +93,13 @@ import static org.neo4j.values.storable.Values.timeArray;
 @ExtendWith( RandomExtension.class )
 class GenericKeyTest
 {
-    private final IndexSpecificSpaceFillingCurveSettingsCache noSpecificIndexSettings =
-            new IndexSpecificSpaceFillingCurveSettingsCache( new ConfiguredSpaceFillingCurveSettingsCache( Config.defaults() ), new HashMap<>() );
-
     @Inject
     private static RandomRule random;
 
-    @BeforeEach
+	private final IndexSpecificSpaceFillingCurveSettingsCache noSpecificIndexSettings =
+            new IndexSpecificSpaceFillingCurveSettingsCache( new ConfiguredSpaceFillingCurveSettingsCache( Config.defaults() ), new HashMap<>() );
+
+	@BeforeEach
     void setupRandomConfig()
     {
         random = random.withConfiguration( new RandomValues.Configuration()
@@ -137,9 +137,7 @@ class GenericKeyTest
         random.reset();
     }
 
-    /* TESTS FOR SLOT STATE (not including entityId) */
-
-    @ParameterizedTest
+	@ParameterizedTest
     @MethodSource( "validValueGenerators" )
     void readWhatIsWritten( ValueGenerator valueGenerator )
     {
@@ -163,7 +161,7 @@ class GenericKeyTest
         assertEquals( value, readValue, "deserialized values are not equal" );
     }
 
-    @ParameterizedTest
+	@ParameterizedTest
     @MethodSource( "validValueGenerators" )
     void copyShouldCopy( ValueGenerator valueGenerator )
     {
@@ -180,7 +178,7 @@ class GenericKeyTest
         assertEquals( 0, from.compareValueTo( to ), "states not equals after copy" );
     }
 
-    @Test
+	@Test
     void copyShouldCopyExtremeValues()
     {
         // Given
@@ -201,7 +199,7 @@ class GenericKeyTest
         }
     }
 
-    @ParameterizedTest
+	@ParameterizedTest
     @MethodSource( "validComparableValueGenerators" )
     void compareToMustAlignWithValuesCompareTo( ValueGenerator valueGenerator )
     {
@@ -228,7 +226,7 @@ class GenericKeyTest
         }
     }
 
-    @Test
+	@Test
     void comparePointsMustOnlyReturnZeroForEqualPoints()
     {
         PointValue firstPoint = random.randomValues().nextPointValue();
@@ -254,7 +252,7 @@ class GenericKeyTest
         assertEquals( 0, firstKey.compareValueTo( noCoordsKey ), "expected keys to be equal" );
     }
 
-    @Test
+	@Test
     void comparePointArraysMustOnlyReturnZeroForEqualArrays()
     {
         PointArray firstArray = random.randomValues().nextPointArray();
@@ -287,7 +285,7 @@ class GenericKeyTest
         assertEquals( 0, firstKey.compareValueTo( noCoordsKey ), "expected keys to be equal" );
     }
 
-    // The reason this test doesn't test incomparable values is that it relies on ordering being same as that of the Values module.
+	// The reason this test doesn't test incomparable values is that it relies on ordering being same as that of the Values module.
     @ParameterizedTest
     @MethodSource( "validComparableValueGenerators" )
     void mustProduceValidMinimalSplitters( ValueGenerator valueGenerator )
@@ -304,14 +302,14 @@ class GenericKeyTest
         assertValidMinimalSplitter( left, right );
     }
 
-    @ParameterizedTest
+	@ParameterizedTest
     @MethodSource( "validValueGenerators" )
     void mustProduceValidMinimalSplittersWhenValuesAreEqual( ValueGenerator valueGenerator )
     {
         assertValidMinimalSplitterForEqualValues( valueGenerator.next() );
     }
 
-    @ParameterizedTest
+	@ParameterizedTest
     @MethodSource( "validValueGenerators" )
     void mustReportCorrectSize( ValueGenerator valueGenerator )
     {
@@ -333,7 +331,7 @@ class GenericKeyTest
                 String.format( "did not report correct size, value=%s, actualSize=%d, reportedSize=%d", value, actualSize, reportedSize ) );
     }
 
-    @Test
+	@Test
     void lowestMustBeLowest()
     {
         // GEOMETRY
@@ -390,7 +388,7 @@ class GenericKeyTest
         assertLowest( of( new double[0] ) );
     }
 
-    @Test
+	@Test
     void highestMustBeHighest()
     {
         // GEOMETRY
@@ -449,7 +447,7 @@ class GenericKeyTest
         assertHighest( doubleArray( new double[]{Double.POSITIVE_INFINITY} ) );
     }
 
-    @Test
+	@Test
     void shouldNeverOverwriteDereferencedTextValues()
     {
         // Given a value that we dereference
@@ -483,21 +481,19 @@ class GenericKeyTest
         assertEquals( srcValue, dereferencedValue );
     }
 
-    @Test
+	@Test
     void indexedCharShouldComeBackAsCharValue()
     {
         shouldReadBackToExactOriginalValue( random.randomValues().nextCharValue() );
     }
 
-    @Test
+	@Test
     void indexedCharArrayShouldComeBackAsCharArrayValue()
     {
         shouldReadBackToExactOriginalValue( random.randomValues().nextCharArray() );
     }
 
-    /* TESTS FOR KEY STATE (including entityId) */
-
-    @ParameterizedTest
+	@ParameterizedTest
     @MethodSource( "validValueGenerators" )
     void minimalSplitterForSameValueShouldDivideLeftAndRight( ValueGenerator valueGenerator )
     {
@@ -524,7 +520,7 @@ class GenericKeyTest
                 "Expected right to be greater than or equal to minimal splitter but wasn't for value " + value );
     }
 
-    @ParameterizedTest
+	@ParameterizedTest
     @MethodSource( "validValueGenerators" )
     void minimalSplitterShouldRemoveEntityIdIfPossible( ValueGenerator valueGenerator )
     {
@@ -550,11 +546,10 @@ class GenericKeyTest
 
         // Then that minimal splitter should have entity id shaved off
         assertEquals( NO_ENTITY_ID, minimalSplitter.getEntityId(),
-                "Expected minimal splitter to have entityId removed when constructed from keys with unique values: " +
-                        "left=" + leftValue + ", right=" + rightValue );
+                new StringBuilder().append("Expected minimal splitter to have entityId removed when constructed from keys with unique values: ").append("left=").append(leftValue).append(", right=").append(rightValue).toString() );
     }
 
-    @ParameterizedTest
+	@ParameterizedTest
     @MethodSource( "validValueGenerators" )
     void minimalSplitterForSameValueShouldDivideLeftAndRightCompositeKey( ValueGenerator valueGenerator )
     {
@@ -585,7 +580,7 @@ class GenericKeyTest
                 "Expected right to be greater than or equal to minimal splitter but wasn't for value " + Arrays.toString( values ) );
     }
 
-    @ParameterizedTest
+	@ParameterizedTest
     @MethodSource( "validValueGenerators" )
     void minimalSplitterShouldRemoveEntityIdIfPossibleCompositeKey( ValueGenerator valueGenerator )
     {
@@ -621,11 +616,10 @@ class GenericKeyTest
 
         // Then that minimal splitter should have entity id shaved off
         assertEquals( NO_ENTITY_ID, minimalSplitter.getEntityId(),
-                "Expected minimal splitter to have entityId removed when constructed from keys with unique values: " +
-                        "left=" + leftValue + ", right=" + rightValue );
+                new StringBuilder().append("Expected minimal splitter to have entityId removed when constructed from keys with unique values: ").append("left=").append(leftValue).append(", right=").append(rightValue).toString() );
     }
 
-    private void shouldReadBackToExactOriginalValue( Value srcValue )
+	private void shouldReadBackToExactOriginalValue( Value srcValue )
     {
         // given
         GenericKey state = newKeyState();
@@ -652,7 +646,7 @@ class GenericKeyTest
         assertEquals( srcValue.getClass(), retrievedValueAfterReadFromCursor.getClass() );
     }
 
-    private void assertHighestStringArray()
+	private void assertHighestStringArray()
     {
         for ( int i = 0; i < 1000; i++ )
         {
@@ -660,7 +654,7 @@ class GenericKeyTest
         }
     }
 
-    private void assertHighestString()
+	private void assertHighestString()
     {
         for ( int i = 0; i < 1000; i++ )
         {
@@ -668,7 +662,7 @@ class GenericKeyTest
         }
     }
 
-    private void assertHighest( Value value )
+	private void assertHighest( Value value )
     {
         GenericKey highestOfAll = newKeyState();
         GenericKey highestInValueGroup = newKeyState();
@@ -682,7 +676,7 @@ class GenericKeyTest
                 "highestOfAll not higher than highestInValueGroup" );
     }
 
-    private void assertLowest( Value value )
+	private void assertLowest( Value value )
     {
         GenericKey lowestOfAll = newKeyState();
         GenericKey lowestInValueGroup = newKeyState();
@@ -695,17 +689,17 @@ class GenericKeyTest
         assertTrue( lowestOfAll.compareValueTo( lowestInValueGroup ) <= 0 );
     }
 
-    private Value pickSmaller( Value value1, Value value2 )
+	private Value pickSmaller( Value value1, Value value2 )
     {
         return COMPARATOR.compare( value1, value2 ) < 0 ? value1 : value2;
     }
 
-    private Value pickOther( Value value1, Value value2, Value currentValue )
+	private Value pickOther( Value value1, Value value2, Value currentValue )
     {
         return currentValue == value1 ? value2 : value1;
     }
 
-    private Value uniqueSecondValue( ValueGenerator valueGenerator, Value firstValue )
+	private Value uniqueSecondValue( ValueGenerator valueGenerator, Value firstValue )
     {
         Value secondValue;
         do
@@ -716,7 +710,7 @@ class GenericKeyTest
         return secondValue;
     }
 
-    private void assertValidMinimalSplitter( Value left, Value right )
+	private void assertValidMinimalSplitter( Value left, Value right )
     {
         GenericKey leftState = newKeyState();
         leftState.writeValue( left, NEUTRAL );
@@ -727,12 +721,14 @@ class GenericKeyTest
         rightState.minimalSplitter( leftState, rightState, minimalSplitter );
 
         assertTrue( leftState.compareValueTo( minimalSplitter ) < 0,
-                "left state not less than minimal splitter, leftState=" + leftState + ", rightState=" + rightState + ", minimalSplitter=" + minimalSplitter );
+                new StringBuilder().append("left state not less than minimal splitter, leftState=").append(leftState).append(", rightState=").append(rightState).append(", minimalSplitter=").append(minimalSplitter)
+						.toString() );
         assertTrue( rightState.compareValueTo( minimalSplitter ) >= 0,
-                "right state not less than minimal splitter, leftState=" + leftState + ", rightState=" + rightState + ", minimalSplitter=" + minimalSplitter );
+                new StringBuilder().append("right state not less than minimal splitter, leftState=").append(leftState).append(", rightState=").append(rightState).append(", minimalSplitter=").append(minimalSplitter)
+						.toString() );
     }
 
-    private void assertValidMinimalSplitterForEqualValues( Value value )
+	private void assertValidMinimalSplitterForEqualValues( Value value )
     {
         GenericKey leftState = newKeyState();
         leftState.writeValue( value, NEUTRAL );
@@ -743,12 +739,14 @@ class GenericKeyTest
         rightState.minimalSplitter( leftState, rightState, minimalSplitter );
 
         assertEquals( 0, leftState.compareValueTo( minimalSplitter ),
-                "left state not equal to minimal splitter, leftState=" + leftState + ", rightState=" + rightState + ", minimalSplitter=" + minimalSplitter );
+                new StringBuilder().append("left state not equal to minimal splitter, leftState=").append(leftState).append(", rightState=").append(rightState).append(", minimalSplitter=").append(minimalSplitter)
+						.toString() );
         assertEquals( 0, rightState.compareValueTo( minimalSplitter ),
-                "right state not equal to minimal splitter, leftState=" + leftState + ", rightState=" + rightState + ", minimalSplitter=" + minimalSplitter );
+                new StringBuilder().append("right state not equal to minimal splitter, leftState=").append(leftState).append(", rightState=").append(rightState).append(", minimalSplitter=").append(minimalSplitter)
+						.toString() );
     }
 
-    private static Value nextValidValue( boolean includeIncomparable )
+	private static Value nextValidValue( boolean includeIncomparable )
     {
         Value value;
         do
@@ -759,12 +757,12 @@ class GenericKeyTest
         return value;
     }
 
-    private static boolean isIncomparable( Value value )
+	private static boolean isIncomparable( Value value )
     {
         return isGeometryValue( value ) || isGeometryArray( value );
     }
 
-    private static ValueGenerator[] listValueGenerators( boolean includeIncomparable )
+	private static ValueGenerator[] listValueGenerators( boolean includeIncomparable )
     {
         List<ValueGenerator> generators = new ArrayList<>( asList(
                 // single
@@ -822,17 +820,17 @@ class GenericKeyTest
         return generators.toArray( new ValueGenerator[0] );
     }
 
-    private static Stream<ValueGenerator> validValueGenerators()
+	private static Stream<ValueGenerator> validValueGenerators()
     {
         return Stream.of( listValueGenerators( true ) );
     }
 
-    private static Stream<ValueGenerator> validComparableValueGenerators()
+	private static Stream<ValueGenerator> validComparableValueGenerators()
     {
         return Stream.of( listValueGenerators( false ) );
     }
 
-    private GenericKey genericKeyStateWithSomePreviousState( ValueGenerator valueGenerator )
+	private GenericKey genericKeyStateWithSomePreviousState( ValueGenerator valueGenerator )
     {
         GenericKey to = newKeyState();
         if ( random.nextBoolean() )
@@ -846,20 +844,28 @@ class GenericKeyTest
         return to;
     }
 
-    private PageCursor newPageCursor()
+	private PageCursor newPageCursor()
     {
         return ByteArrayPageCursor.wrap( PageCache.PAGE_SIZE );
     }
 
-    private GenericKey newKeyState()
+	private GenericKey newKeyState()
     {
         return new GenericKey( noSpecificIndexSettings );
     }
 
-    private GenericLayout newLayout( int numberOfSlots )
+	private GenericLayout newLayout( int numberOfSlots )
     {
         return new GenericLayout( numberOfSlots, noSpecificIndexSettings );
     }
+
+	
+
+    /* TESTS FOR SLOT STATE (not including entityId) */
+
+    
+
+    /* TESTS FOR KEY STATE (including entityId) */
 
     @FunctionalInterface
     private interface ValueGenerator

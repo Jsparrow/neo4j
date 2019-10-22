@@ -41,14 +41,13 @@ public class AdversarialReader extends Reader
     @Override
     public int read( CharBuffer target ) throws IOException
     {
-        if ( adversary.injectFailureOrMischief(
-                IOException.class, BufferOverflowException.class, IndexOutOfBoundsException.class ) )
-        {
-            CharBuffer dup = target.duplicate();
-            dup.limit( Math.max( target.limit() / 2, 1 ) );
-            return reader.read( dup );
-        }
-        return reader.read( target );
+        if (!adversary.injectFailureOrMischief(
+                IOException.class, BufferOverflowException.class, IndexOutOfBoundsException.class )) {
+			return reader.read( target );
+		}
+		CharBuffer dup = target.duplicate();
+		dup.limit( Math.max( target.limit() / 2, 1 ) );
+		return reader.read( dup );
     }
 
     @Override
@@ -61,14 +60,13 @@ public class AdversarialReader extends Reader
     @Override
     public int read( char[] cbuf ) throws IOException
     {
-        if ( adversary.injectFailureOrMischief( IOException.class ) )
-        {
-            char[] dup = new char[ Math.max( cbuf.length / 2, 1 ) ];
-            int read = reader.read( dup );
-            System.arraycopy( dup, 0, cbuf, 0, read );
-            return read;
-        }
-        return reader.read( cbuf );
+        if (!adversary.injectFailureOrMischief( IOException.class )) {
+			return reader.read( cbuf );
+		}
+		char[] dup = new char[ Math.max( cbuf.length / 2, 1 ) ];
+		int read = reader.read( dup );
+		System.arraycopy( dup, 0, cbuf, 0, read );
+		return read;
     }
 
     @Override

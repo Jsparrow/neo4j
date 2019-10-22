@@ -54,20 +54,18 @@ public class StatementLocksFactorySelector
         {
             statementLocksFactory = new SimpleStatementLocksFactory();
 
-            log.info( "No services implementing " + serviceName + " found. " +
-                      "Using " + SimpleStatementLocksFactory.class.getSimpleName() );
+            log.info( new StringBuilder().append("No services implementing ").append(serviceName).append(" found. ").append("Using ").append(SimpleStatementLocksFactory.class.getSimpleName()).toString() );
         }
         else if ( factories.size() == 1 )
         {
             statementLocksFactory = factories.get( 0 );
 
-            log.info( "Found single implementation of " + serviceName +
-                      ". Namely " + statementLocksFactory.getClass().getSimpleName() );
+            log.info( new StringBuilder().append("Found single implementation of ").append(serviceName).append(". Namely ").append(statementLocksFactory.getClass().getSimpleName()).toString() );
         }
         else
         {
             throw new IllegalStateException(
-                    "Found more than one implementation of " + serviceName + ": " + factories );
+                    new StringBuilder().append("Found more than one implementation of ").append(serviceName).append(": ").append(factories).toString() );
         }
 
         statementLocksFactory.initialize( locks, config );

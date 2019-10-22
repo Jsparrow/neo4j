@@ -69,34 +69,34 @@ public class NativeLabelScanStoreMigrator extends AbstractStoreMigrationParticip
     public void migrate( DatabaseLayout directoryLayout, DatabaseLayout migrationLayout, ProgressReporter progressReporter,
             String versionToMigrateFrom, String versionToMigrateTo ) throws IOException
     {
-        if ( isNativeLabelScanStoreMigrationRequired( directoryLayout ) )
-        {
-            StoreFactory storeFactory = getStoreFactory( directoryLayout, versionToMigrateFrom );
-            try ( NeoStores neoStores = storeFactory.openAllNeoStores();
-                    Lifespan lifespan = new Lifespan() )
-            {
-                neoStores.verifyStoreOk();
-                // Remove any existing file to ensure we always do migration
-                deleteNativeIndexFile( migrationLayout );
+        if (!isNativeLabelScanStoreMigrationRequired( directoryLayout )) {
+			return;
+		}
+		StoreFactory storeFactory = getStoreFactory( directoryLayout, versionToMigrateFrom );
+		try ( NeoStores neoStores = storeFactory.openAllNeoStores();
+		        Lifespan lifespan = new Lifespan() )
+		{
+		    neoStores.verifyStoreOk();
+		    // Remove any existing file to ensure we always do migration
+		    deleteNativeIndexFile( migrationLayout );
 
-                progressReporter.start( neoStores.getNodeStore().getNumberOfIdsInUse() );
-                NativeLabelScanStore nativeLabelScanStore = getNativeLabelScanStore( migrationLayout, progressReporter, neoStores );
-                lifespan.add( nativeLabelScanStore );
-            }
-            nativeLabelScanStoreMigrated = true;
-        }
+		    progressReporter.start( neoStores.getNodeStore().getNumberOfIdsInUse() );
+		    NativeLabelScanStore nativeLabelScanStore = getNativeLabelScanStore( migrationLayout, progressReporter, neoStores );
+		    lifespan.add( nativeLabelScanStore );
+		}
+		nativeLabelScanStoreMigrated = true;
     }
 
     @Override
     public void moveMigratedFiles( DatabaseLayout migrationLayout, DatabaseLayout directoryLayout,
             String versionToUpgradeFrom, String versionToMigrateTo ) throws IOException
     {
-        if ( nativeLabelScanStoreMigrated )
-        {
-            File nativeLabelIndex = migrationLayout.labelScanStore();
-            moveNativeIndexFile( directoryLayout, nativeLabelIndex );
-            deleteLuceneLabelIndex( getLuceneStoreDirectory( directoryLayout ) );
-        }
+        if (!nativeLabelScanStoreMigrated) {
+			return;
+		}
+		File nativeLabelIndex = migrationLayout.labelScanStore();
+		moveNativeIndexFile( directoryLayout, nativeLabelIndex );
+		deleteLuceneLabelIndex( getLuceneStoreDirectory( directoryLayout ) );
     }
 
     private void deleteNativeIndexFile( DatabaseLayout directoryStructure ) throws IOException

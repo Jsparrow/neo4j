@@ -34,12 +34,7 @@ public enum NotificationCode
     CARTESIAN_PRODUCT(
        SeverityLevel.WARNING,
        Status.Statement.CartesianProductWarning,
-       "If a part of a query contains multiple disconnected patterns, this will build a " +
-       "cartesian product between all those parts. This may produce a large amount of data and slow down" +
-       " query processing. " +
-       "While occasionally intended, it may often be possible to reformulate the query that avoids the " +
-       "use of this cross " +
-       "product, perhaps by adding a relationship between the different parts or by using OPTIONAL MATCH"
+       new StringBuilder().append("If a part of a query contains multiple disconnected patterns, this will build a ").append("cartesian product between all those parts. This may produce a large amount of data and slow down").append(" query processing. ").append("While occasionally intended, it may often be possible to reformulate the query that avoids the ").append("use of this cross ").append("product, perhaps by adding a relationship between the different parts or by using OPTIONAL MATCH").toString()
     ),
     LEGACY_PLANNER(
         SeverityLevel.WARNING,
@@ -49,9 +44,7 @@ public enum NotificationCode
     DEPRECATED_RULE_PLANNER(
         SeverityLevel.WARNING,
         Status.Statement.FeatureDeprecationWarning,
-        "The rule planner, which was used to plan this query, is deprecated and will be discontinued soon. " +
-                "If you did not explicitly choose the rule planner, you should try to change your query so that the " +
-                "rule planner is not used"
+        new StringBuilder().append("The rule planner, which was used to plan this query, is deprecated and will be discontinued soon. ").append("If you did not explicitly choose the rule planner, you should try to change your query so that the ").append("rule planner is not used").toString()
     ),
     DEPRECATED_COMPILED_RUNTIME(
             SeverityLevel.WARNING,
@@ -144,10 +137,7 @@ public enum NotificationCode
     EAGER_LOAD_CSV(
         SeverityLevel.WARNING,
         Status.Statement.EagerOperatorWarning,
-        "Using LOAD CSV with a large data set in a query where the execution plan contains the " +
-        "Eager operator could potentially consume a lot of memory and is likely to not perform well. " +
-        "See the Neo4j Manual entry on the Eager operator for more information and hints on " +
-        "how problems could be avoided."
+        new StringBuilder().append("Using LOAD CSV with a large data set in a query where the execution plan contains the ").append("Eager operator could potentially consume a lot of memory and is likely to not perform well. ").append("See the Neo4j Manual entry on the Eager operator for more information and hints on ").append("how problems could be avoided.").toString()
     ),
     LARGE_LABEL_LOAD_CSV(
         SeverityLevel.WARNING,
@@ -182,9 +172,7 @@ public enum NotificationCode
     EXHAUSTIVE_SHORTEST_PATH(
             SeverityLevel.WARNING,
             Status.Statement.ExhaustiveShortestPathWarning,
-            "Using shortest path with an exhaustive search fallback might cause query slow down since shortest path " +
-            "graph algorithms might not work for this use case. It is recommended to introduce a WITH to separate the " +
-            "MATCH containing the shortest path from the existential predicates on that path."
+            new StringBuilder().append("Using shortest path with an exhaustive search fallback might cause query slow down since shortest path ").append("graph algorithms might not work for this use case. It is recommended to introduce a WITH to separate the ").append("MATCH containing the shortest path from the existential predicates on that path.").toString()
     ),
     CREATE_UNIQUE_UNAVAILABLE_FALLBACK(
             SeverityLevel.WARNING,
@@ -302,10 +290,8 @@ public enum NotificationCode
         @Override
         public String toString()
         {
-            return "Notification{" +
-                    "position=" + position +
-                    ", detailedDescription='" + detailedDescription + '\'' +
-                    '}';
+            return new StringBuilder().append("Notification{").append("position=").append(position).append(", detailedDescription='").append(detailedDescription).append('\'').append('}')
+					.toString();
         }
 
         @Override

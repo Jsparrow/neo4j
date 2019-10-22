@@ -30,10 +30,6 @@ import java.util.Arrays;
 @SuppressWarnings( "WeakerAccess" )
 public final class NumberValues
 {
-    private NumberValues()
-    {
-    }
-
     /*
      * Using the fact that the hashcode ∑x_i * 31^(i-1) can be expressed as
      * a dot product, [1, v_1, v_2, v_2, ..., v_n] • [31^n, 31^{n-1}, ..., 31, 1]. By expressing
@@ -41,10 +37,10 @@ public final class NumberValues
      * computation of the hash code.
      */
     static final int MAX_LENGTH = 10000;
-    private static final int[] COEFFICIENTS = new int[MAX_LENGTH + 1];
-    private static final long NON_DOUBLE_LONG = 0xFFE0_0000_0000_0000L; // doubles are exact integers up to 53 bits
+	private static final int[] COEFFICIENTS = new int[MAX_LENGTH + 1];
+	private static final long NON_DOUBLE_LONG = 0xFFE0_0000_0000_0000L; // doubles are exact integers up to 53 bits
 
-    static
+	static
     {
         //We are defining the coefficient vector backwards, [1, 31, 31^2,...]
         //makes it easier and faster do find the starting position later
@@ -55,7 +51,11 @@ public final class NumberValues
         }
     }
 
-    /*
+	private NumberValues()
+    {
+    }
+
+	/*
      * For equality semantics it is important that the hashcode of a long
      * is the same as the hashcode of an int as long as the long can fit in 32 bits.
      */
@@ -69,7 +69,7 @@ public final class NumberValues
         return Long.hashCode( number );
     }
 
-    public static int hash( double number )
+	public static int hash( double number )
     {
         long asLong = (long) number;
         if ( asLong == number )
@@ -80,7 +80,7 @@ public final class NumberValues
         return (int) (bits ^ (bits >>> 32));
     }
 
-    /*
+	/*
      * This is a slightly silly optimization but by turning the computation
      * of the hashcode into a dot product we trick the jit compiler to use SIMD
      * instructions and performance doubles.
@@ -96,7 +96,7 @@ public final class NumberValues
         return result;
     }
 
-    public static int hash( short[] values )
+	public static int hash( short[] values )
     {
         final int max = Math.min( values.length, MAX_LENGTH );
         int result = COEFFICIENTS[max];
@@ -107,7 +107,7 @@ public final class NumberValues
         return result;
     }
 
-    public static int hash( char[] values )
+	public static int hash( char[] values )
     {
         final int max = Math.min( values.length, MAX_LENGTH );
         int result = COEFFICIENTS[max];
@@ -118,7 +118,7 @@ public final class NumberValues
         return result;
     }
 
-    public static int hash( int[] values )
+	public static int hash( int[] values )
     {
         final int max = Math.min( values.length, MAX_LENGTH );
         int result = COEFFICIENTS[max];
@@ -129,7 +129,7 @@ public final class NumberValues
         return result;
     }
 
-    public static int hash( long[] values )
+	public static int hash( long[] values )
     {
         final int max = Math.min( values.length, MAX_LENGTH );
         int result = COEFFICIENTS[max];
@@ -140,7 +140,7 @@ public final class NumberValues
         return result;
     }
 
-    public static int hash( float[] values )
+	public static int hash( float[] values )
     {
         int result = 1;
         for ( float value : values )
@@ -151,7 +151,7 @@ public final class NumberValues
         return result;
     }
 
-    public static int hash( double[] values )
+	public static int hash( double[] values )
     {
         int result = 1;
         for ( double value : values )
@@ -162,12 +162,12 @@ public final class NumberValues
         return result;
     }
 
-    public static int hash( boolean[] value )
+	public static int hash( boolean[] value )
     {
         return Arrays.hashCode( value );
     }
 
-    public static boolean numbersEqual( double fpn, long in )
+	public static boolean numbersEqual( double fpn, long in )
     {
         if ( in < 0 )
         {
@@ -208,31 +208,30 @@ public final class NumberValues
         return false;
     }
 
-    // Tested by PropertyValueComparisonTest
+	// Tested by PropertyValueComparisonTest
     public static int compareDoubleAgainstLong( double lhs, long rhs )
     {
-        if ( (NON_DOUBLE_LONG & rhs) != 0L )
-        {
-            if ( Double.isNaN( lhs ) )
-            {
-                return +1;
-            }
-            if ( Double.isInfinite( lhs ) )
-            {
-                return lhs < 0 ? -1 : +1;
-            }
-            return BigDecimal.valueOf( lhs ).compareTo( BigDecimal.valueOf( rhs ) );
-        }
-        return Double.compare( lhs, rhs );
+        if (!((NON_DOUBLE_LONG & rhs) != 0L)) {
+			return Double.compare( lhs, rhs );
+		}
+		if ( Double.isNaN( lhs ) )
+		{
+		    return +1;
+		}
+		if ( Double.isInfinite( lhs ) )
+		{
+		    return lhs < 0 ? -1 : +1;
+		}
+		return BigDecimal.valueOf( lhs ).compareTo( BigDecimal.valueOf( rhs ) );
     }
 
-    // Tested by PropertyValueComparisonTest
+	// Tested by PropertyValueComparisonTest
     public static int compareLongAgainstDouble( long lhs, double rhs )
     {
         return -compareDoubleAgainstLong( rhs, lhs );
     }
 
-    public static boolean numbersEqual( IntegralArray lhs, IntegralArray rhs )
+	public static boolean numbersEqual( IntegralArray lhs, IntegralArray rhs )
     {
         int length = lhs.length();
         if ( length != rhs.length() )
@@ -249,7 +248,7 @@ public final class NumberValues
         return true;
     }
 
-    public static boolean numbersEqual( FloatingPointArray lhs, FloatingPointArray rhs )
+	public static boolean numbersEqual( FloatingPointArray lhs, FloatingPointArray rhs )
     {
         int length = lhs.length();
         if ( length != rhs.length() )
@@ -266,7 +265,7 @@ public final class NumberValues
         return true;
     }
 
-    public static boolean numbersEqual( FloatingPointArray fps, IntegralArray ins )
+	public static boolean numbersEqual( FloatingPointArray fps, IntegralArray ins )
     {
         int length = ins.length();
         if ( length != fps.length() )
@@ -283,7 +282,7 @@ public final class NumberValues
         return true;
     }
 
-    public static int compareIntegerArrays( IntegralArray a, IntegralArray b )
+	public static int compareIntegerArrays( IntegralArray a, IntegralArray b )
     {
         int i = 0;
         int x = 0;
@@ -303,7 +302,7 @@ public final class NumberValues
         return x;
     }
 
-    public static int compareIntegerVsFloatArrays( IntegralArray a, FloatingPointArray b )
+	public static int compareIntegerVsFloatArrays( IntegralArray a, FloatingPointArray b )
     {
         int i = 0;
         int x = 0;
@@ -323,7 +322,7 @@ public final class NumberValues
         return x;
     }
 
-    public static int compareFloatArrays( FloatingPointArray a, FloatingPointArray b )
+	public static int compareFloatArrays( FloatingPointArray a, FloatingPointArray b )
     {
         int i = 0;
         int x = 0;
@@ -343,7 +342,7 @@ public final class NumberValues
         return x;
     }
 
-    public static int compareBooleanArrays( BooleanArray a, BooleanArray b )
+	public static int compareBooleanArrays( BooleanArray a, BooleanArray b )
     {
         int i = 0;
         int x = 0;

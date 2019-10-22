@@ -201,18 +201,18 @@ public class IndexPopulationMissConcurrentUpdateIT
      */
     private static class ControlledSchemaIndexProvider extends KernelExtensionFactory<Supplier>
     {
-        private final Barrier.Control barrier = new Barrier.Control();
-        private final Set<Long> entitiesByScan = new ConcurrentSkipListSet<>();
-        private final Set<Long> entitiesByUpdater = new ConcurrentSkipListSet<>();
-        private volatile long populationAtId;
         static IndexProviderDescriptor INDEX_PROVIDER = new IndexProviderDescriptor( "controlled", "1" );
+		private final Barrier.Control barrier = new Barrier.Control();
+		private final Set<Long> entitiesByScan = new ConcurrentSkipListSet<>();
+		private final Set<Long> entitiesByUpdater = new ConcurrentSkipListSet<>();
+		private volatile long populationAtId;
 
-        ControlledSchemaIndexProvider()
+		ControlledSchemaIndexProvider()
         {
             super( ExtensionType.DATABASE, "controlled" );
         }
 
-        @Override
+		@Override
         public Lifecycle newInstance( KernelContext context, Supplier noDependencies )
         {
             return new IndexProvider( INDEX_PROVIDER, directoriesByProvider( new File( "not-even-persistent" ) ) )

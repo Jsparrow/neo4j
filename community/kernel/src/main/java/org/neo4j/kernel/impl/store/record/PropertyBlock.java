@@ -144,7 +144,7 @@ public class PropertyBlock implements Cloneable
     {
         int expectedPayloadSize = PropertyType.getPayloadSizeLongs();
         assert blocks == null || blocks.length <= expectedPayloadSize :
-                "I was given an array of size " + blocks.length + ", but I wanted it to be " + expectedPayloadSize;
+                new StringBuilder().append("I was given an array of size ").append(blocks.length).append(", but I wanted it to be ").append(expectedPayloadSize).toString();
         this.valueBlocks = blocks;
         if ( valueRecords != null )
         {
@@ -236,10 +236,7 @@ public class PropertyBlock implements Cloneable
         }
         if ( valueRecords != null )
         {
-            for ( DynamicRecord valueRecord : valueRecords )
-            {
-                result.addValueRecord( valueRecord.clone() );
-            }
+            valueRecords.forEach(valueRecord -> result.addValueRecord(valueRecord.clone()));
         }
         return result;
     }

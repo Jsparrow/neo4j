@@ -330,10 +330,7 @@ class BlockStorageTest
     private Iterable<List<BlockEntry<MutableLong,MutableLong>>> asOneBigBlock( List<List<BlockEntry<MutableLong,MutableLong>>> expectedBlocks )
     {
         List<BlockEntry<MutableLong,MutableLong>> all = new ArrayList<>();
-        for ( List<BlockEntry<MutableLong,MutableLong>> expectedBlock : expectedBlocks )
-        {
-            all.addAll( expectedBlock );
-        }
+        expectedBlocks.forEach(all::addAll);
         sort( all );
         return singletonList( all );
     }

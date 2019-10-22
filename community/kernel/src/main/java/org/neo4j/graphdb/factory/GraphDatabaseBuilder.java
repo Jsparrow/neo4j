@@ -41,37 +41,10 @@ import static org.neo4j.helpers.collection.MapUtil.stringMap;
  */
 public class GraphDatabaseBuilder
 {
-    /**
-     * @deprecated This will be moved to an internal package in the future.
-     */
-    @Deprecated
-    public interface DatabaseCreator
-    {
-        /**
-         * @param config initial configuration for the database.
-         * @return an instance of {@link GraphDatabaseService}.
-         * @deprecated this method will go away in 4.0. See {@link #newDatabase(Config)} instead.
-         */
-        @Deprecated
-        default GraphDatabaseService newDatabase( Map<String,String> config )
-        {
-            return newDatabase( Config.defaults( config ) );
-        }
-
-        /**
-         * @param config initial configuration for the database.
-         * @return an instance of {@link GraphDatabaseService}.
-         */
-        default GraphDatabaseService newDatabase( @Nonnull Config config )
-        {
-            return newDatabase( config.getRaw() );
-        }
-    }
-
     protected DatabaseCreator creator;
-    protected Map<String,String> config = new HashMap<>();
+	protected Map<String,String> config = new HashMap<>();
 
-    /**
+	/**
      * @deprecated
      */
     @Deprecated
@@ -80,7 +53,7 @@ public class GraphDatabaseBuilder
         this.creator = creator;
     }
 
-    /**
+	/**
      * Set a database setting to a particular value.
      *
      * @param setting Database setting to set
@@ -105,7 +78,7 @@ public class GraphDatabaseBuilder
         return this;
     }
 
-    /**
+	/**
      * Set an unvalidated configuration option.
      *
      * @param name Name of the setting
@@ -127,7 +100,7 @@ public class GraphDatabaseBuilder
         return this;
     }
 
-    /**
+	/**
      * Set a map of configuration settings into the builder. Overwrites any existing values.
      *
      * @param config Map of configuration settings
@@ -138,14 +111,11 @@ public class GraphDatabaseBuilder
     @SuppressWarnings( "deprecation" )
     public GraphDatabaseBuilder setConfig( Map<String,String> config )
     {
-        for ( Map.Entry<String,String> stringStringEntry : config.entrySet() )
-        {
-            setConfig( stringStringEntry.getKey(), stringStringEntry.getValue() );
-        }
+        config.entrySet().forEach(stringStringEntry -> setConfig(stringStringEntry.getKey(), stringStringEntry.getValue()));
         return this;
     }
 
-    /**
+	/**
      * Load a Properties file from a given file, and add the settings to
      * the builder.
      *
@@ -154,7 +124,6 @@ public class GraphDatabaseBuilder
      * @throws IllegalArgumentException if the builder was unable to load from the given filename
      */
     public GraphDatabaseBuilder loadPropertiesFromFile( String fileName )
-            throws IllegalArgumentException
     {
         try
         {
@@ -166,7 +135,7 @@ public class GraphDatabaseBuilder
         }
     }
 
-    /**
+	/**
      * Load Properties file from a given URL, and add the settings to
      * the builder.
      *
@@ -174,7 +143,6 @@ public class GraphDatabaseBuilder
      * @return the builder
      */
     public GraphDatabaseBuilder loadPropertiesFromURL( URL url )
-            throws IllegalArgumentException
     {
         Properties props = new Properties();
         try
@@ -189,17 +157,16 @@ public class GraphDatabaseBuilder
             throw new IllegalArgumentException( "Unable to load " + url, e );
         }
         Set<Map.Entry<Object,Object>> entries = props.entrySet();
-        for ( Map.Entry<Object,Object> entry : entries )
-        {
+        entries.forEach(entry -> {
             String key = (String) entry.getKey();
             String value = (String) entry.getValue();
             setConfig( key, value );
-        }
+        });
 
         return this;
     }
 
-    /**
+	/**
      * Create a new database with the configuration registered
      * through the builder.
      *
@@ -208,6 +175,33 @@ public class GraphDatabaseBuilder
     public GraphDatabaseService newGraphDatabase()
     {
         return creator.newDatabase( Config.defaults( config ) );
+    }
+
+	/**
+     * @deprecated This will be moved to an internal package in the future.
+     */
+    @Deprecated
+    public interface DatabaseCreator
+    {
+        /**
+         * @param config initial configuration for the database.
+         * @return an instance of {@link GraphDatabaseService}.
+         * @deprecated this method will go away in 4.0. See {@link #newDatabase(Config)} instead.
+         */
+        @Deprecated
+        default GraphDatabaseService newDatabase( Map<String,String> config )
+        {
+            return newDatabase( Config.defaults( config ) );
+        }
+
+        /**
+         * @param config initial configuration for the database.
+         * @return an instance of {@link GraphDatabaseService}.
+         */
+        default GraphDatabaseService newDatabase( @Nonnull Config config )
+        {
+            return newDatabase( config.getRaw() );
+        }
     }
 
     /**
@@ -247,14 +241,14 @@ public class GraphDatabaseBuilder
         }
 
         @Override
-        public GraphDatabaseBuilder loadPropertiesFromFile( String fileName ) throws IllegalArgumentException
+        public GraphDatabaseBuilder loadPropertiesFromFile( String fileName )
         {
             actual.loadPropertiesFromFile( fileName );
             return this;
         }
 
         @Override
-        public GraphDatabaseBuilder loadPropertiesFromURL( URL url ) throws IllegalArgumentException
+        public GraphDatabaseBuilder loadPropertiesFromURL( URL url )
         {
             actual.loadPropertiesFromURL( url );
             return this;

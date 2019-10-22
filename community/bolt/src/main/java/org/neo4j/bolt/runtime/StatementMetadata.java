@@ -25,8 +25,6 @@ package org.neo4j.bolt.runtime;
  */
 public interface StatementMetadata
 {
-    String[] fieldNames();
-
     StatementMetadata EMPTY = new StatementMetadata()
     {
         private final String[] emptyFields = new String[0];
@@ -37,4 +35,6 @@ public interface StatementMetadata
             return emptyFields;
         }
     };
+
+	String[] fieldNames();
 }

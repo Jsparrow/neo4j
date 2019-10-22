@@ -41,7 +41,7 @@ public class CypherOldEndpointIT extends AbstractRestFunctionalTestBase
             // begin
             HTTP.Response begin = http.POST(
                     "db/data/cypher",
-                    quotedJson( "{ 'query': 'USING PERIODIC COMMIT 100 LOAD CSV FROM \\\"" + url + "\\\" AS line CREATE ();' }" )
+                    quotedJson( new StringBuilder().append("{ 'query': 'USING PERIODIC COMMIT 100 LOAD CSV FROM \\\"").append(url).append("\\\" AS line CREATE ();' }").toString() )
             );
             assertThat( begin.status(), equalTo( 200 ) );
         } );

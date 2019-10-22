@@ -36,7 +36,145 @@ import static org.neo4j.io.fs.FileUtils.path;
  */
 public abstract class IndexDirectoryStructure
 {
-    /**
+    private static final IndexDirectoryStructure NO_DIRECTORY_STRUCTURE = new IndexDirectoryStructure()
+    {
+        @Override
+        public File rootDirectory()
+        {
+            return null; // meaning there's no persistent storage
+        }
+
+        @Override
+        public File directoryForIndex( long indexId )
+        {
+            return null; // meaning there's no persistent storage
+        }
+    };
+
+	/**
+     * Useful for some in-memory index providers or similar.
+     */
+    public static final Factory NONE = descriptor -> NO_DIRECTORY_STRUCTURE;
+
+	/**
+     * Returns the base schema index directory, i.e.
+     *
+     * <pre>
+     * &lt;db&gt;/schema/index/
+     * </pre>
+     *
+     * @param databaseStoreDir database store directory, i.e. {@code db} in the example above, where e.g. {@code nodestore} lives.
+     * @return the base directory of schema indexing.
+     */
+    public static File baseSchemaIndexFolder( File databaseStoreDir )
+    {
+        return path( databaseStoreDir, "schema", "index" );
+    }
+
+	/**
+     * @param databaseStoreDir store directory of database, i.e. {@code db} in the example above.
+     * @return {@link Factory} for creating {@link IndexDirectoryStructure} returning directories looking something like:
+     *
+     * <pre>
+     * &lt;db&gt;/schema/index/&lt;providerKey&gt;/&lt;indexId&gt;/
+     * </pre>
+     */
+    public static Factory directoriesByProviderKey( File databaseStoreDir )
+    {
+        return descriptor -> new SubDirectoryByIndexId(
+                path( baseSchemaIndexFolder( databaseStoreDir ), fileNameFriendly( descriptor.getKey() ) ) );
+    }
+
+	/**
+    * @param databaseStoreDir store directory of database, i.e. {@code db} in the example above.
+    * @return {@link Factory} for creating {@link IndexDirectoryStructure} returning directories looking something like:
+    *
+    * <pre>
+    * &lt;db&gt;/schema/index/&lt;providerKey&gt;-&lt;providerVersion&gt;/&lt;indexId&gt;/
+    * </pre>
+    */
+    public static Factory directoriesByProvider( File databaseStoreDir )
+    {
+        return descriptor -> new SubDirectoryByIndexId(
+                path( baseSchemaIndexFolder( databaseStoreDir ), fileNameFriendly( descriptor ) ) );
+    }
+
+	/**
+     * @param directoryStructure existing {@link IndexDirectoryStructure}.
+     * @return a {@link Factory} returning an already existing {@link IndexDirectoryStructure}.
+     */
+    public static Factory given( IndexDirectoryStructure directoryStructure )
+    {
+        return descriptor -> directoryStructure;
+    }
+
+	/**
+     * Useful when combining multiple {@link IndexProvider} into one.
+     *
+     * @param parentStructure {@link IndexDirectoryStructure} of the parent.
+     * @return {@link Factory} creating {@link IndexDirectoryStructure} looking something like:
+     *
+     * <pre>
+     * &lt;db&gt;/schema/index/.../&lt;indexId&gt;/&lt;childProviderKey&gt;-&lt;childProviderVersion&gt;/
+     * </pre>
+     */
+    public static Factory directoriesBySubProvider( IndexDirectoryStructure parentStructure )
+    {
+        return descriptor -> new IndexDirectoryStructure()
+        {
+            @Override
+            public File rootDirectory()
+            {
+                return parentStructure.rootDirectory();
+            }
+
+            @Override
+            public File directoryForIndex( long indexId )
+            {
+                return path( parentStructure.directoryForIndex( indexId ), fileNameFriendly( descriptor ) );
+            }
+        };
+    }
+
+	private static String fileNameFriendly( String name )
+    {
+        return name.replaceAll( "\\+", "_" );
+    }
+
+	private static String fileNameFriendly( IndexProviderDescriptor descriptor )
+    {
+        return fileNameFriendly( new StringBuilder().append(descriptor.getKey()).append("-").append(descriptor.getVersion()).toString() );
+    }
+
+	/**
+     * Returns root directory. Must be parent (one or more steps) to all sub-directories returned from {@link #directoryForIndex(long)}.
+     * Returns something equivalent to:
+     *
+     * <pre>
+     * &lt;db&gt;/schema/index/&lt;provider&gt;/
+     * </pre>
+     *
+     * @return {@link File} denoting root directory for this provider.
+     * May return {@code null} if there's no root directory, i.e. no persistent storage at all.
+     */
+    public abstract File rootDirectory();
+
+	/**
+     * Returns a sub-directory (somewhere under {@link #rootDirectory()}) for a specific index id, looking something equivalent to:
+     *
+     * <pre>
+     * &lt;db&gt;/schema/index/&lt;provider&gt;/&lt;indexId&gt;/
+     * </pre>
+     *
+     * I.e. the root of the schema indexes for this specific provider.
+     *
+     * @param indexId index id to return directory for.
+     * @return {@link File} denoting directory for the specific {@code indexId} for this provider.
+     * May return {@code null} if there's no root directory, i.e. no persistent storage at all.
+     */
+    public abstract File directoryForIndex( long indexId );
+
+	/**
      * Creates an {@link IndexDirectoryStructure} for a {@link IndexProviderDescriptor} for a {@link IndexProvider}.
      */
     public interface Factory
@@ -65,142 +203,4 @@ public abstract class IndexDirectoryStructure
             return path( providerRootFolder, String.valueOf( indexId ) );
         }
     }
-
-    /**
-     * Returns the base schema index directory, i.e.
-     *
-     * <pre>
-     * &lt;db&gt;/schema/index/
-     * </pre>
-     *
-     * @param databaseStoreDir database store directory, i.e. {@code db} in the example above, where e.g. {@code nodestore} lives.
-     * @return the base directory of schema indexing.
-     */
-    public static File baseSchemaIndexFolder( File databaseStoreDir )
-    {
-        return path( databaseStoreDir, "schema", "index" );
-    }
-
-    /**
-     * @param databaseStoreDir store directory of database, i.e. {@code db} in the example above.
-     * @return {@link Factory} for creating {@link IndexDirectoryStructure} returning directories looking something like:
-     *
-     * <pre>
-     * &lt;db&gt;/schema/index/&lt;providerKey&gt;/&lt;indexId&gt;/
-     * </pre>
-     */
-    public static Factory directoriesByProviderKey( File databaseStoreDir )
-    {
-        return descriptor -> new SubDirectoryByIndexId(
-                path( baseSchemaIndexFolder( databaseStoreDir ), fileNameFriendly( descriptor.getKey() ) ) );
-    }
-
-    /**
-    * @param databaseStoreDir store directory of database, i.e. {@code db} in the example above.
-    * @return {@link Factory} for creating {@link IndexDirectoryStructure} returning directories looking something like:
-    *
-    * <pre>
-    * &lt;db&gt;/schema/index/&lt;providerKey&gt;-&lt;providerVersion&gt;/&lt;indexId&gt;/
-    * </pre>
-    */
-    public static Factory directoriesByProvider( File databaseStoreDir )
-    {
-        return descriptor -> new SubDirectoryByIndexId(
-                path( baseSchemaIndexFolder( databaseStoreDir ), fileNameFriendly( descriptor ) ) );
-    }
-
-    /**
-     * @param directoryStructure existing {@link IndexDirectoryStructure}.
-     * @return a {@link Factory} returning an already existing {@link IndexDirectoryStructure}.
-     */
-    public static Factory given( IndexDirectoryStructure directoryStructure )
-    {
-        return descriptor -> directoryStructure;
-    }
-
-    /**
-     * Useful when combining multiple {@link IndexProvider} into one.
-     *
-     * @param parentStructure {@link IndexDirectoryStructure} of the parent.
-     * @return {@link Factory} creating {@link IndexDirectoryStructure} looking something like:
-     *
-     * <pre>
-     * &lt;db&gt;/schema/index/.../&lt;indexId&gt;/&lt;childProviderKey&gt;-&lt;childProviderVersion&gt;/
-     * </pre>
-     */
-    public static Factory directoriesBySubProvider( IndexDirectoryStructure parentStructure )
-    {
-        return descriptor -> new IndexDirectoryStructure()
-        {
-            @Override
-            public File rootDirectory()
-            {
-                return parentStructure.rootDirectory();
-            }
-
-            @Override
-            public File directoryForIndex( long indexId )
-            {
-                return path( parentStructure.directoryForIndex( indexId ), fileNameFriendly( descriptor ) );
-            }
-        };
-    }
-
-    private static String fileNameFriendly( String name )
-    {
-        return name.replaceAll( "\\+", "_" );
-    }
-
-    private static String fileNameFriendly( IndexProviderDescriptor descriptor )
-    {
-        return fileNameFriendly( descriptor.getKey() + "-" + descriptor.getVersion() );
-    }
-
-    private static final IndexDirectoryStructure NO_DIRECTORY_STRUCTURE = new IndexDirectoryStructure()
-    {
-        @Override
-        public File rootDirectory()
-        {
-            return null; // meaning there's no persistent storage
-        }
-
-        @Override
-        public File directoryForIndex( long indexId )
-        {
-            return null; // meaning there's no persistent storage
-        }
-    };
-
-    /**
-     * Useful for some in-memory index providers or similar.
-     */
-    public static final Factory NONE = descriptor -> NO_DIRECTORY_STRUCTURE;
-
-    /**
-     * Returns root directory. Must be parent (one or more steps) to all sub-directories returned from {@link #directoryForIndex(long)}.
-     * Returns something equivalent to:
-     *
-     * <pre>
-     * &lt;db&gt;/schema/index/&lt;provider&gt;/
-     * </pre>
-     *
-     * @return {@link File} denoting root directory for this provider.
-     * May return {@code null} if there's no root directory, i.e. no persistent storage at all.
-     */
-    public abstract File rootDirectory();
-
-    /**
-     * Returns a sub-directory (somewhere under {@link #rootDirectory()}) for a specific index id, looking something equivalent to:
-     *
-     * <pre>
-     * &lt;db&gt;/schema/index/&lt;provider&gt;/&lt;indexId&gt;/
-     * </pre>
-     *
-     * I.e. the root of the schema indexes for this specific provider.
-     *
-     * @param indexId index id to return directory for.
-     * @return {@link File} denoting directory for the specific {@code indexId} for this provider.
-     * May return {@code null} if there's no root directory, i.e. no persistent storage at all.
-     */
-    public abstract File directoryForIndex( long indexId );
 }

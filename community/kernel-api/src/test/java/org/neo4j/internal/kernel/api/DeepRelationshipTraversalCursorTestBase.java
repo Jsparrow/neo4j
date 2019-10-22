@@ -36,8 +36,9 @@ import static org.neo4j.graphdb.RelationshipType.withName;
 public abstract class DeepRelationshipTraversalCursorTestBase<G extends KernelAPIReadTestSupport>
         extends KernelAPIReadTestBase<G>
 {
-    private static long three_root;
-    private static int expected_total, expected_unique;
+    private static long threeRoot;
+    private static int expectedTotal;
+	private static int expectedUnique;
 
     private RelationshipType PARENT = withName( "PARENT" );
 
@@ -47,14 +48,15 @@ public abstract class DeepRelationshipTraversalCursorTestBase<G extends KernelAP
         try ( Transaction tx = graphDb.beginTx() )
         {
             Node root = graphDb.createNode();
-            three_root = root.getId();
+            threeRoot = root.getId();
 
             Node[] leafs = new Node[32];
             for ( int i = 0; i < leafs.length; i++ )
             {
                 leafs[i] = graphDb.createNode();
             }
-            int offset = 0, duplicate = 12;
+            int offset = 0;
+			int duplicate = 12;
 
             Node interdup = graphDb.createNode();
             interdup.createRelationshipTo( root, PARENT );
@@ -77,8 +79,8 @@ public abstract class DeepRelationshipTraversalCursorTestBase<G extends KernelAP
             inter.createRelationshipTo( root, PARENT );
             offset = relate( 1, leafs, offset, inter );
 
-            expected_total = offset + duplicate;
-            expected_unique = leafs.length;
+            expectedTotal = offset + duplicate;
+            expectedUnique = leafs.length;
 
             tx.success();
         }
@@ -105,7 +107,7 @@ public abstract class DeepRelationshipTraversalCursorTestBase<G extends KernelAP
             long total = 0;
 
             // when
-            read.singleNode( three_root, node );
+            read.singleNode( threeRoot, node );
             assertTrue( "access root node", node.next() );
             node.relationships( group );
             assertFalse( "single root", node.next() );
@@ -134,8 +136,8 @@ public abstract class DeepRelationshipTraversalCursorTestBase<G extends KernelAP
             }
 
             // then
-            assertEquals( "total number of leaf nodes", expected_total, total );
-            assertEquals( "number of distinct leaf nodes", expected_unique, leafs.size() );
+            assertEquals( "total number of leaf nodes", expectedTotal, total );
+            assertEquals( "number of distinct leaf nodes", expectedUnique, leafs.size() );
         }
     }
 }

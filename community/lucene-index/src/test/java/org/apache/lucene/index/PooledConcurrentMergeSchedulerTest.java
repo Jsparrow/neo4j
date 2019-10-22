@@ -109,7 +109,7 @@ class PooledConcurrentMergeSchedulerTest
 
             assertEquals( 1, mergeScheduler.getWriterTaskCount() );
 
-            Thread closeSchedulerThread = ThreadTestUtils.fork( () -> mergeScheduler.close() );
+            Thread closeSchedulerThread = ThreadTestUtils.fork( mergeScheduler::close );
             ThreadTestUtils.awaitThreadState( closeSchedulerThread, TimeUnit.SECONDS.toMillis( 5 ), Thread.State.TIMED_WAITING );
             mergeScheduler.getExecutionLatch().countDown();
             closeSchedulerThread.join();

@@ -162,7 +162,7 @@ public abstract class AbstractEditionModule
 
                     if ( innerErrorMessage != null )
                     {
-                        log.error( errorMessage + " Caused by: " + innerErrorMessage, e );
+                        log.error( new StringBuilder().append(errorMessage).append(" Caused by: ").append(innerErrorMessage).toString(), e );
                     }
                     else
                     {
@@ -172,7 +172,7 @@ public abstract class AbstractEditionModule
                 }
             }
         }
-        String errorMessage = "Failed to load security module with key '" + key + "'.";
+        String errorMessage = new StringBuilder().append("Failed to load security module with key '").append(key).append("'.").toString();
         log.error( errorMessage );
         throw new IllegalArgumentException( errorMessage );
     }

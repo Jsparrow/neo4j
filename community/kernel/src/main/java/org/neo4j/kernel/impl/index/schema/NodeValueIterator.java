@@ -42,13 +42,12 @@ public class NodeValueIterator extends PrimitiveLongCollections.PrimitiveLongBas
     protected boolean fetchNext()
     {
         // progressor.next() will progress underlying SeekCursor
-        // and feed result into this with node( long reference, Value... values )
-        if ( closed || !progressor.next() )
-        {
-            close();
-            return false;
-        }
-        return true;
+		// and feed result into this with node( long reference, Value... values )
+		if (!(closed || !progressor.next())) {
+			return true;
+		}
+		close();
+		return false;
     }
 
     @Override
@@ -76,11 +75,11 @@ public class NodeValueIterator extends PrimitiveLongCollections.PrimitiveLongBas
     @Override
     public void close()
     {
-        if ( !closed )
-        {
-            closed = true;
-            progressor.close();
-            progressor = null;
-        }
+        if (closed) {
+			return;
+		}
+		closed = true;
+		progressor.close();
+		progressor = null;
     }
 }

@@ -229,6 +229,6 @@ public interface Relationship extends Entity
         {
             return start;
         }
-        throw new NotFoundException( "Node[" + id + "] not connected to this relationship[" + getId() + "]" );
+        throw new NotFoundException( new StringBuilder().append("Node[").append(id).append("] not connected to this relationship[").append(getId()).append("]").toString() );
     }
 }

@@ -47,14 +47,8 @@ public class ConsistencySummaryStatistics
         StringBuilder result = new StringBuilder( getClass().getSimpleName() ).append( '{' );
         result.append( "\n\tNumber of errors: " ).append( errorCount );
         result.append( "\n\tNumber of warnings: " ).append( warningCount );
-        for ( Map.Entry<RecordType, AtomicInteger> entry : inconsistentRecordCount.entrySet() )
-        {
-            if ( entry.getValue().get() != 0 )
-            {
-                result.append( "\n\tNumber of inconsistent " )
-                      .append( entry.getKey() ).append( " records: " ).append( entry.getValue() );
-            }
-        }
+        inconsistentRecordCount.entrySet().stream().filter(entry -> entry.getValue().get() != 0).forEach(entry -> result.append("\n\tNumber of inconsistent ").append(entry.getKey()).append(" records: ")
+				.append(entry.getValue()));
         return result.append( "\n}" ).toString();
     }
 

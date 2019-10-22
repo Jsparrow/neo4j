@@ -36,7 +36,7 @@ public abstract class IntegralValue extends NumberValue
             return ((IntegralValue) value).longValue();
         }
         throw new IllegalArgumentException(
-                name + " must be an integer value, but was a " + value.getClass().getSimpleName() );
+                new StringBuilder().append(name).append(" must be an integer value, but was a ").append(value.getClass().getSimpleName()).toString() );
     }
 
     @Override

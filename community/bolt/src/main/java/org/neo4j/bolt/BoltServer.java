@@ -203,8 +203,7 @@ public class BoltServer extends LifecycleAdapter
         }
         catch ( Exception e )
         {
-            throw new RuntimeException( "Failed to initialize SSL encryption support, which is required to start this connector. " +
-                                        "Error was: " + e.getMessage(), e );
+            throw new RuntimeException( new StringBuilder().append("Failed to initialize SSL encryption support, which is required to start this connector. ").append("Error was: ").append(e.getMessage()).toString(), e );
         }
     }
 

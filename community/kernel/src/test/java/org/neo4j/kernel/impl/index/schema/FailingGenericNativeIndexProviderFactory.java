@@ -64,22 +64,15 @@ public class FailingGenericNativeIndexProviderFactory extends KernelExtensionFac
 {
     public static final String INITIAL_STATE_FAILURE_MESSAGE = "Override initial state as failed";
     public static final String POPULATION_FAILURE_MESSAGE = "Fail on update during population";
+	private final GenericNativeIndexProviderFactory actual;
+	private final EnumSet<FailureType> failureTypes;
 
-    public enum FailureType
-    {
-        POPULATION,
-        INITIAL_STATE
-    }
-
-    private final GenericNativeIndexProviderFactory actual;
-    private final EnumSet<FailureType> failureTypes;
-
-    public FailingGenericNativeIndexProviderFactory( FailureType... failureTypes )
+	public FailingGenericNativeIndexProviderFactory( FailureType... failureTypes )
     {
         this( new GenericNativeIndexProviderFactory(), 10_000, failureTypes );
     }
 
-    private FailingGenericNativeIndexProviderFactory( GenericNativeIndexProviderFactory actual, int priority, FailureType... failureTypes )
+	private FailingGenericNativeIndexProviderFactory( GenericNativeIndexProviderFactory actual, int priority, FailureType... failureTypes )
     {
         super( ExtensionType.DATABASE, actual.getKeys().iterator().next() );
         if ( failureTypes.length == 0 )
@@ -90,7 +83,7 @@ public class FailingGenericNativeIndexProviderFactory extends KernelExtensionFac
         this.failureTypes = EnumSet.of( failureTypes[0], copyOfRange( failureTypes, 1, failureTypes.length ) );
     }
 
-    @Override
+	@Override
     public Lifecycle newInstance( KernelContext context, GenericNativeIndexProviderFactory.Dependencies dependencies )
     {
         IndexProvider actualProvider = actual.newInstance( context, dependencies );
@@ -169,7 +162,7 @@ public class FailingGenericNativeIndexProviderFactory extends KernelExtensionFac
             }
 
             @Override
-            public String getPopulationFailure( StoreIndexDescriptor descriptor ) throws IllegalStateException
+            public String getPopulationFailure( StoreIndexDescriptor descriptor )
             {
                 return failureTypes.contains( FailureType.INITIAL_STATE ) ? INITIAL_STATE_FAILURE_MESSAGE : actualProvider.getPopulationFailure( descriptor );
             }
@@ -192,5 +185,11 @@ public class FailingGenericNativeIndexProviderFactory extends KernelExtensionFac
                 return actualProvider.storeMigrationParticipant( fs, pageCache );
             }
         };
+    }
+
+	public enum FailureType
+    {
+        POPULATION,
+        INITIAL_STATE
     }
 }

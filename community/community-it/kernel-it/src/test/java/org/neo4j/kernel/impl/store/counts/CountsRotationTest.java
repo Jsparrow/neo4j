@@ -88,9 +88,9 @@ import static org.neo4j.register.Registers.newDoubleLongRegister;
 
 public class CountsRotationTest
 {
-    private final Label A = Label.label( "A" );
-    private final Label B = Label.label( "B" );
-    private final Label C = Label.label( "C" );
+    private final Label a = Label.label( "A" );
+    private final Label b = Label.label( "B" );
+    private final Label c = Label.label( "C" );
 
     private final PageCacheRule pcRule = new PageCacheRule();
     private final EphemeralFileSystemRule fsRule = new EphemeralFileSystemRule();
@@ -203,7 +203,7 @@ public class CountsRotationTest
         {
             try ( Transaction tx = db.beginTx() )
             {
-                db.createNode( B );
+                db.createNode( b );
                 tx.success();
             }
             checkPoint( db );
@@ -238,7 +238,7 @@ public class CountsRotationTest
         GraphDatabaseAPI db = (GraphDatabaseAPI) dbBuilder.newGraphDatabase();
         try ( Transaction tx = db.beginTx() )
         {
-            db.createNode( A );
+            db.createNode( a );
             tx.success();
         }
 
@@ -270,7 +270,7 @@ public class CountsRotationTest
         // WHEN doing a transaction (actually two, the label-mini-tx also counts)
         try ( Transaction tx = db.beginTx() )
         {
-            db.createNode( B );
+            db.createNode( b );
             tx.success();
         }
         // and rotating the log (which implies flushing)
@@ -278,7 +278,7 @@ public class CountsRotationTest
         // and creating another node after it
         try ( Transaction tx = db.beginTx() )
         {
-            db.createNode( C );
+            db.createNode( c );
             tx.success();
         }
 
@@ -310,7 +310,7 @@ public class CountsRotationTest
         {
             KernelTransaction transaction =
                     db.getDependencyResolver().resolveDependency( ThreadToStatementContextBridge.class ).getKernelTransactionBoundToThisThread( true );
-            labelId = transaction.tokenRead().nodeLabel( C.name() );
+            labelId = transaction.tokenRead().nodeLabel( c.name() );
         }
         assertEquals( 1, tracker.nodeCount( labelId, newDoubleLongRegister() ).readSecond() );
 

@@ -68,8 +68,19 @@ import static org.neo4j.unsafe.impl.batchimport.cache.NumberArrayFactory.AUTO_WI
 public class RelationshipGroupDefragmenterTest
 {
     private static final Configuration CONFIG = Configuration.DEFAULT;
+	private final TestDirectory directory = TestDirectory.testDirectory();
+	private final RandomRule random = new RandomRule();
+	private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	@Rule
+    public final RuleChain ruleChain = RuleChain.outerRule( directory ).around( random ).around( fileSystemRule );
+	@Parameter( 0 )
+    public RecordFormats format;
+	@Parameter( 1 )
+    public int units;
+	private BatchingNeoStores stores;
+	private JobScheduler jobScheduler;
 
-    @Parameters
+	@Parameters
     public static Collection<Object[]> formats()
     {
         return asList(
@@ -77,22 +88,7 @@ public class RelationshipGroupDefragmenterTest
                 new Object[] {new ForcedSecondaryUnitRecordFormats( Standard.LATEST_RECORD_FORMATS ), 2} );
     }
 
-    private final TestDirectory directory = TestDirectory.testDirectory();
-    private final RandomRule random = new RandomRule();
-    private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
-
-    @Rule
-    public final RuleChain ruleChain = RuleChain.outerRule( directory ).around( random ).around( fileSystemRule );
-
-    @Parameter( 0 )
-    public RecordFormats format;
-    @Parameter( 1 )
-    public int units;
-
-    private BatchingNeoStores stores;
-    private JobScheduler jobScheduler;
-
-    @Before
+	@Before
     public void start() throws IOException
     {
         jobScheduler = new ThreadPoolJobScheduler();
@@ -102,14 +98,14 @@ public class RelationshipGroupDefragmenterTest
         stores.createNew();
     }
 
-    @After
+	@After
     public void stop() throws Exception
     {
         stores.close();
         jobScheduler.close();
     }
 
-    @Test
+	@Test
     public void shouldDefragmentRelationshipGroupsWhenAllDense()
     {
         // GIVEN some nodes which has their groups scattered
@@ -148,7 +144,7 @@ public class RelationshipGroupDefragmenterTest
         verifyGroupsAreSequentiallyOrderedByNode();
     }
 
-    @Test
+	@Test
     public void shouldDefragmentRelationshipGroupsWhenSomeDense()
     {
         // GIVEN some nodes which has their groups scattered
@@ -196,7 +192,7 @@ public class RelationshipGroupDefragmenterTest
         verifyGroupsAreSequentiallyOrderedByNode();
     }
 
-    private void defrag( int nodeCount, RecordStore<RelationshipGroupRecord> groupStore )
+	private void defrag( int nodeCount, RecordStore<RelationshipGroupRecord> groupStore )
     {
         Monitor monitor = mock( Monitor.class );
         RelationshipGroupDefragmenter defragmenter = new RelationshipGroupDefragmenter( CONFIG,
@@ -212,7 +208,7 @@ public class RelationshipGroupDefragmenterTest
         verify( monitor, atMost( 10 ) ).defragmentingNodeRange( anyLong(), anyLong() );
     }
 
-    private void verifyGroupsAreSequentiallyOrderedByNode()
+	private void verifyGroupsAreSequentiallyOrderedByNode()
     {
         RelationshipGroupStore store = stores.getRelationshipGroupStore();
         long firstId = store.getNumberOfReservedLowIds();
@@ -238,7 +234,8 @@ public class RelationshipGroupDefragmenterTest
 
             long nodeId = groupRecord.getOwningNode();
             assertTrue(
-                    "Expected a group for node >= " + currentNodeId + ", but was " + nodeId + " in " + groupRecord,
+                    new StringBuilder().append("Expected a group for node >= ").append(currentNodeId).append(", but was ").append(nodeId).append(" in ").append(groupRecord)
+							.toString(),
                     nodeId >= currentNodeId );
             if ( nodeId != currentNodeId )
             {
@@ -252,11 +249,10 @@ public class RelationshipGroupDefragmenterTest
             }
             currentGroupLength++;
 
-            assertTrue( "Expected this group to have a next of current + " + units + " OR NULL, " +
-                    "but was " + groupRecord.toString(),
+            assertTrue( new StringBuilder().append("Expected this group to have a next of current + ").append(units).append(" OR NULL, ").append("but was ").append(groupRecord.toString()).toString(),
                     groupRecord.getNext() == groupRecord.getId() + 1 ||
                     groupRecord.getNext() == Record.NO_NEXT_RELATIONSHIP.intValue() );
-            assertTrue( "Expected " + groupRecord + " to have type > " + currentTypeId,
+            assertTrue( new StringBuilder().append("Expected ").append(groupRecord).append(" to have type > ").append(currentTypeId).toString(),
                     groupRecord.getType() > currentTypeId );
             currentTypeId = groupRecord.getType();
         }

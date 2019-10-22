@@ -25,7 +25,27 @@ import org.neo4j.internal.kernel.api.schema.SchemaDescriptorSupplier;
 
 public interface ConstraintDescriptor extends SchemaDescriptorSupplier
 {
-    enum Type
+    @Override
+    SchemaDescriptor schema();
+
+	Type type();
+
+	boolean enforcesUniqueness();
+
+	boolean enforcesPropertyExistence();
+
+	String userDescription( TokenNameLookup tokenNameLookup );
+
+	/**
+     * Checks whether a constraint descriptor Supplier supplies this constraint descriptor.
+     * @param supplier supplier to get a constraint descriptor from
+     * @return true if the supplied constraint descriptor equals this constraint descriptor
+     */
+    boolean isSame( Supplier supplier );
+
+	String prettyPrint( TokenNameLookup tokenNameLookup );
+
+	enum Type
     {
         UNIQUE( true, false ),
         EXISTS( false, true ),
@@ -51,28 +71,8 @@ public interface ConstraintDescriptor extends SchemaDescriptorSupplier
         }
     }
 
-    @Override
-    SchemaDescriptor schema();
-
-    Type type();
-
-    boolean enforcesUniqueness();
-
-    boolean enforcesPropertyExistence();
-
-    String userDescription( TokenNameLookup tokenNameLookup );
-
-    /**
-     * Checks whether a constraint descriptor Supplier supplies this constraint descriptor.
-     * @param supplier supplier to get a constraint descriptor from
-     * @return true if the supplied constraint descriptor equals this constraint descriptor
-     */
-    boolean isSame( Supplier supplier );
-
-    interface Supplier
+	interface Supplier
     {
         ConstraintDescriptor getConstraintDescriptor();
     }
-
-    String prettyPrint( TokenNameLookup tokenNameLookup );
 }

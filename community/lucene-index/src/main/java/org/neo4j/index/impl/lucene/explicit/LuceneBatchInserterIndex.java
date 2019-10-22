@@ -68,11 +68,6 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
     private final int commitBatchSize = 500000;
     private final RelationshipLookup relationshipLookup;
 
-    interface RelationshipLookup
-    {
-        EntityId lookup( long id );
-    }
-
     LuceneBatchInserterIndex( File dbStoreDir,
             IndexIdentifier identifier, Map<String, String> config, RelationshipLookup relationshipLookup )
     {
@@ -85,18 +80,17 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         this.searcherManager = instantiateSearcherManager( writer );
     }
 
-    @Override
+	@Override
     public void add( long id, Map<String, Object> properties )
     {
         try
         {
             Document document = IndexType.newDocument( entityId( id ) );
-            for ( Map.Entry<String, Object> entry : properties.entrySet() )
-            {
+            properties.entrySet().forEach(entry -> {
                 String key = entry.getKey();
                 Object value = entry.getValue();
                 addSingleProperty( id, document, key, value );
-            }
+            });
             writer.addDocument( document );
             if ( ++updateCount == commitBatchSize )
             {
@@ -110,7 +104,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         }
     }
 
-    private EntityId entityId( long id )
+	private EntityId entityId( long id )
     {
         if ( identifier.entityType == IndexEntityType.Node )
         {
@@ -120,7 +114,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         return relationshipLookup.lookup( id );
     }
 
-    private void addSingleProperty( long entityId, Document document, String key, Object value )
+	private void addSingleProperty( long entityId, Document document, String key, Object value )
     {
         for ( Object oneValue : IoPrimitiveUtils.asArray(value) )
         {
@@ -137,7 +131,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         }
     }
 
-    private void addToCache( long entityId, String key, Object value )
+	private void addToCache( long entityId, String key, Object value )
     {
         if ( this.cache == null )
         {
@@ -146,19 +140,19 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
 
         String valueAsString = value.toString();
         LruCache<String, Collection<EntityId>> cache = this.cache.get( key );
-        if ( cache != null )
-        {
-            Collection<EntityId> ids = cache.get( valueAsString );
-            if ( ids == null )
-            {
-                ids = new HashSet<>();
-                cache.put( valueAsString, ids );
-            }
-            ids.add( new EntityId.IdData( entityId ) );
-        }
+        if (cache == null) {
+			return;
+		}
+		Collection<EntityId> ids = cache.get( valueAsString );
+		if ( ids == null )
+		{
+		    ids = new HashSet<>();
+		    cache.put( valueAsString, ids );
+		}
+		ids.add( new EntityId.IdData( entityId ) );
     }
 
-    private void addToCache( Collection<EntityId> ids, String key, Object value )
+	private void addToCache( Collection<EntityId> ids, String key, Object value )
     {
         if ( this.cache == null )
         {
@@ -173,7 +167,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         }
     }
 
-    private ExplicitIndexHits getFromCache( String key, Object value )
+	private ExplicitIndexHits getFromCache( String key, Object value )
     {
         if ( this.cache == null )
         {
@@ -193,7 +187,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         return null;
     }
 
-    @Override
+	@Override
     public void updateOrAdd( long entityId, Map<String, Object> properties )
     {
         try
@@ -208,7 +202,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         }
     }
 
-    private void removeFromCache( long entityId ) throws IOException
+	private void removeFromCache( long entityId ) throws IOException
     {
         IndexSearcher searcher = searcherManager.acquire();
         try
@@ -218,12 +212,11 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
             if ( docs.totalHits > 0 )
             {
                 Document document = searcher.doc( docs.scoreDocs[0].doc );
-                for ( IndexableField field : document.getFields() )
-                {
+                document.getFields().forEach(field -> {
                     String key = field.name();
                     Object value = field.stringValue();
                     removeFromCache( entityId, key, value );
-                }
+                });
             }
         }
         finally
@@ -232,7 +225,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         }
     }
 
-    private void removeFromCache( long entityId, String key, Object value )
+	private void removeFromCache( long entityId, String key, Object value )
     {
         if ( this.cache == null )
         {
@@ -241,17 +234,17 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
 
         String valueAsString = value.toString();
         LruCache<String, Collection<EntityId>> cache = this.cache.get( key );
-        if ( cache != null )
-        {
-            Collection<EntityId> ids = cache.get( valueAsString );
-            if ( ids != null )
-            {
-                ids.remove( new EntityId.IdData( entityId ) );
-            }
-        }
+        if (cache == null) {
+			return;
+		}
+		Collection<EntityId> ids = cache.get( valueAsString );
+		if ( ids != null )
+		{
+		    ids.remove( new EntityId.IdData( entityId ) );
+		}
     }
 
-    private IndexWriter instantiateWriter( File folder )
+	private IndexWriter instantiateWriter( File folder )
     {
         Directory dir = null;
         try
@@ -268,14 +261,14 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         }
     }
 
-    private double determineGoodBufferSize( double atLeast )
+	private double determineGoodBufferSize( double atLeast )
     {
         double heapHint = Runtime.getRuntime().maxMemory() / (1024 * 1024 * 14);
         double result = Math.max( atLeast, heapHint );
         return Math.min( result, 700 );
     }
 
-    private static SearcherManager instantiateSearcherManager( IndexWriter writer )
+	private static SearcherManager instantiateSearcherManager( IndexWriter writer )
     {
         try
         {
@@ -287,7 +280,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         }
     }
 
-    private void closeSearcher()
+	private void closeSearcher()
     {
         try
         {
@@ -306,7 +299,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         }
     }
 
-    private void closeWriter()
+	private void closeWriter()
     {
         try
         {
@@ -325,7 +318,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         }
     }
 
-    private IndexHits<Long> query( Query query, final String key, final Object value )
+	private IndexHits<Long> query( Query query, final String key, final Object value )
     {
         IndexSearcher searcher;
         try
@@ -383,7 +376,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         }
     }
 
-    private IndexHits<Long> wrapIndexHits( final ExplicitIndexHits ids )
+	private IndexHits<Long> wrapIndexHits( final ExplicitIndexHits ids )
     {
         return new IndexHits<Long>()
         {
@@ -450,43 +443,42 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         };
     }
 
-    @Override
+	@Override
     public IndexHits<Long> get( String key, Object value )
     {
         ExplicitIndexHits cached = getFromCache( key, value );
         return cached != null ? wrapIndexHits( cached ) : query( type.get( key, value ), key, value );
     }
 
-    @Override
+	@Override
     public IndexHits<Long> query( String key, Object queryOrQueryObject )
     {
         return query( type.query( key, queryOrQueryObject, null ), null, null );
     }
 
-    @Override
+	@Override
     public IndexHits<Long> query( Object queryOrQueryObject )
     {
         return query( type.query( null, queryOrQueryObject, null ), null, null );
     }
 
-    public void shutdown()
+	public void shutdown()
     {
         closeSearcher();
         closeWriter();
     }
 
-    private File getStoreDir( File dbStoreDir )
+	private File getStoreDir( File dbStoreDir )
     {
         File dir = new File( dbStoreDir, "index" );
         if ( !dir.exists() && !dir.mkdirs() )
         {
-            throw new RuntimeException( "Unable to create directory path["
-                    + dir.getAbsolutePath() + "] for Neo4j store." );
+            throw new RuntimeException( new StringBuilder().append("Unable to create directory path[").append(dir.getAbsolutePath()).append("] for Neo4j store.").toString() );
         }
         return dir;
     }
 
-    @Override
+	@Override
     public void flush()
     {
         try
@@ -499,7 +491,7 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
         }
     }
 
-    @Override
+	@Override
     public void setCacheCapacity( String key, int size )
     {
         if ( this.cache == null )
@@ -516,5 +508,10 @@ class LuceneBatchInserterIndex implements BatchInserterIndex
             cache = new LruCache<>( "Batch inserter cache for " + key, size );
             this.cache.put( key, cache );
         }
+    }
+
+	interface RelationshipLookup
+    {
+        EntityId lookup( long id );
     }
 }

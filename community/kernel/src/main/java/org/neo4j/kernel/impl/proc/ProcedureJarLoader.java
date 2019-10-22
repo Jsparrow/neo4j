@@ -185,55 +185,54 @@ public class ProcedureJarLoader
 
     public static class Callables
     {
-        private final List<CallableProcedure> procedures = new ArrayList<>();
-        private final List<CallableUserFunction> functions = new ArrayList<>();
-        private final List<CallableUserAggregationFunction> aggregationFunctions = new ArrayList<>();
+        private static Callables empty = new Callables();
+		private final List<CallableProcedure> procedures = new ArrayList<>();
+		private final List<CallableUserFunction> functions = new ArrayList<>();
+		private final List<CallableUserAggregationFunction> aggregationFunctions = new ArrayList<>();
 
-        public void add( CallableProcedure proc )
+		public void add( CallableProcedure proc )
         {
             procedures.add( proc );
         }
 
-        public void add( CallableUserFunction func )
+		public void add( CallableUserFunction func )
         {
             functions.add( func );
         }
 
-        public List<CallableProcedure> procedures()
+		public List<CallableProcedure> procedures()
         {
             return procedures;
         }
 
-        public List<CallableUserFunction> functions()
+		public List<CallableUserFunction> functions()
         {
             return functions;
         }
 
-        public List<CallableUserAggregationFunction> aggregationFunctions()
+		public List<CallableUserAggregationFunction> aggregationFunctions()
         {
             return aggregationFunctions;
         }
 
-        void addAllProcedures( List<CallableProcedure> callableProcedures )
+		void addAllProcedures( List<CallableProcedure> callableProcedures )
         {
             procedures.addAll( callableProcedures );
         }
 
-        void addAllFunctions( List<CallableUserFunction> callableFunctions )
+		void addAllFunctions( List<CallableUserFunction> callableFunctions )
         {
             functions.addAll( callableFunctions );
         }
 
-        public void addAllAggregationFunctions( List<CallableUserAggregationFunction> callableFunctions )
+		public void addAllAggregationFunctions( List<CallableUserAggregationFunction> callableFunctions )
         {
             aggregationFunctions.addAll( callableFunctions );
         }
 
-        private static Callables EMPTY = new Callables();
-
-        public static Callables empty()
+		public static Callables empty()
         {
-            return EMPTY;
+            return empty;
         }
     }
 }

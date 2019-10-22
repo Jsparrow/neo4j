@@ -66,7 +66,7 @@ public final class NodeRepresentation extends ObjectRepresentation implements Ex
 
     private String path( String path )
     {
-        return "node/" + node.getId() + path;
+        return new StringBuilder().append("node/").append(node.getId()).append(path).toString();
     }
 
     static String path( Node node )
@@ -175,18 +175,18 @@ public final class NodeRepresentation extends ObjectRepresentation implements Ex
     @Override
     void extraData( MappingSerializer serializer )
     {
-        if ( !isDeleted() )
-        {
-            MappingWriter writer = serializer.writer;
-            MappingWriter properties = writer.newMapping( RepresentationType.PROPERTIES, "data" );
-            new PropertiesRepresentation( node ).serialize( properties );
-            if ( writer.isInteractive() )
-            {
-                serializer.putList( "relationship_types", ListRepresentation.relationshipTypes(
-                        node.getGraphDatabase().getAllRelationshipTypes() ) );
-            }
-            properties.done();
-        }
+        if (isDeleted()) {
+			return;
+		}
+		MappingWriter writer = serializer.writer;
+		MappingWriter properties = writer.newMapping( RepresentationType.PROPERTIES, "data" );
+		new PropertiesRepresentation( node ).serialize( properties );
+		if ( writer.isInteractive() )
+		{
+		    serializer.putList( "relationship_types", ListRepresentation.relationshipTypes(
+		            node.getGraphDatabase().getAllRelationshipTypes() ) );
+		}
+		properties.done();
     }
 
     public static ListRepresentation list( Iterable<Node> nodes )

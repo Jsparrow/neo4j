@@ -98,14 +98,12 @@ public class JsonHelper
                jsonObject instanceof Boolean) )
         {
             throw new PropertyValueException(
-                    "Unsupported value type " + jsonObject.getClass() + "."
-                    + " Supported value types are all java primitives (byte, char, short, int, "
-                    + "long, float, double) and String, as well as arrays of all those types" );
+                    new StringBuilder().append("Unsupported value type ").append(jsonObject.getClass()).append(".").append(" Supported value types are all java primitives (byte, char, short, int, ").append("long, float, double) and String, as well as arrays of all those types").toString() );
         }
         return jsonObject;
     }
 
-    public static String createJsonFrom( Object data ) throws JsonBuildRuntimeException
+    public static String createJsonFrom( Object data )
     {
         try
         {

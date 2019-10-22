@@ -73,12 +73,11 @@ public class ExtendedPath implements Path
                 {
                     return startRelationships.next();
                 }
-                if ( !lastReturned )
-                {
-                    lastReturned = true;
-                    return lastRelationship;
-                }
-                return null;
+                if (lastReturned) {
+					return null;
+				}
+				lastReturned = true;
+				return lastRelationship;
             }
         };
     }
@@ -94,12 +93,11 @@ public class ExtendedPath implements Path
             @Override
             protected Relationship fetchNextOrNull()
             {
-                if ( !endReturned )
-                {
-                    endReturned = true;
-                    return lastRelationship;
-                }
-                return startRelationships.hasNext() ? startRelationships.next() : null;
+                if (endReturned) {
+					return startRelationships.hasNext() ? startRelationships.next() : null;
+				}
+				endReturned = true;
+				return lastRelationship;
             }
         };
     }
@@ -119,12 +117,11 @@ public class ExtendedPath implements Path
                 {
                     return startNodes.next();
                 }
-                if ( !lastReturned )
-                {
-                    lastReturned = true;
-                    return endNode;
-                }
-                return null;
+                if (lastReturned) {
+					return null;
+				}
+				lastReturned = true;
+				return endNode;
             }
         };
     }
@@ -140,12 +137,11 @@ public class ExtendedPath implements Path
             @Override
             protected Node fetchNextOrNull()
             {
-                if ( !endReturned )
-                {
-                    endReturned = true;
-                    return endNode;
-                }
-                return startNodes.hasNext() ? startNodes.next() : null;
+                if (endReturned) {
+					return startNodes.hasNext() ? startNodes.next() : null;
+				}
+				endReturned = true;
+				return endNode;
             }
         };
     }

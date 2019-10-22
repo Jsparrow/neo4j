@@ -28,7 +28,7 @@ public class MismatchingStoreIdException extends StoreFailureException
 
     public MismatchingStoreIdException( StoreId expected, StoreId encountered )
     {
-        super( "Expected:" + expected + ", encountered:" + encountered );
+        super( new StringBuilder().append("Expected:").append(expected).append(", encountered:").append(encountered).toString() );
         this.expected = expected;
         this.encountered = encountered;
     }

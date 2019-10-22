@@ -102,7 +102,25 @@ public class NeoStoresRule extends ExternalResource
         }
     }
 
-    public class Builder
+    private PageCache rulePageCache( Config dbConfig, FileSystemAbstraction fs, JobScheduler scheduler )
+    {
+        return rulePageCache = getOrCreatePageCache( dbConfig, fs, scheduler );
+    }
+
+	private EphemeralFileSystemAbstraction ruleFs()
+    {
+        return ruleFs = new EphemeralFileSystemAbstraction();
+    }
+
+	private static PageCache getOrCreatePageCache( Config config, FileSystemAbstraction fs, JobScheduler jobScheduler )
+    {
+        Log log = NullLog.getInstance();
+        ConfiguringPageCacheFactory pageCacheFactory = new ConfiguringPageCacheFactory( fs, config, NULL,
+                PageCursorTracerSupplier.NULL, log, EmptyVersionContextSupplier.EMPTY, jobScheduler );
+        return pageCacheFactory.getOrCreatePageCache();
+    }
+
+	public class Builder
     {
         private FileSystemAbstraction fs;
         private String[] config;
@@ -166,23 +184,5 @@ public class NeoStoresRule extends ExternalResource
             }
             return open( fs, pageCache, format, idGeneratorFactory, config );
         }
-    }
-
-    private PageCache rulePageCache( Config dbConfig, FileSystemAbstraction fs, JobScheduler scheduler )
-    {
-        return rulePageCache = getOrCreatePageCache( dbConfig, fs, scheduler );
-    }
-
-    private EphemeralFileSystemAbstraction ruleFs()
-    {
-        return ruleFs = new EphemeralFileSystemAbstraction();
-    }
-
-    private static PageCache getOrCreatePageCache( Config config, FileSystemAbstraction fs, JobScheduler jobScheduler )
-    {
-        Log log = NullLog.getInstance();
-        ConfiguringPageCacheFactory pageCacheFactory = new ConfiguringPageCacheFactory( fs, config, NULL,
-                PageCursorTracerSupplier.NULL, log, EmptyVersionContextSupplier.EMPTY, jobScheduler );
-        return pageCacheFactory.getOrCreatePageCache();
     }
 }

@@ -32,84 +32,84 @@ import org.neo4j.io.pagecache.tracing.cursor.context.VersionContextSupplier;
 
 abstract class DeadState<Key> extends ProgressiveState<Key>
 {
-    @Override
-    protected Headers headers()
-    {
-        throw new IllegalStateException( "Cannot read in state: " + stateName() );
-    }
-
-    @Override
-    protected boolean lookup( Key key, ValueSink sink )
-    {
-        throw new IllegalStateException( "Cannot read in state: " + stateName() );
-    }
-
-    @Override
-    protected DataProvider dataProvider()
-    {
-        throw new IllegalStateException( "Cannot read in state: " + stateName() );
-    }
-
-    @Override
-    protected int storedEntryCount()
-    {
-        throw new IllegalStateException( "Cannot read in state: " + stateName() );
-    }
-
-    @Override
-    protected Optional<EntryUpdater<Key>> optionalUpdater( long version, Lock lock )
-    {
-        throw new IllegalStateException( "Cannot write in state: " + stateName() );
-    }
-
-    @Override
-    protected EntryUpdater<Key> unsafeUpdater( Lock lock )
-    {
-        throw new IllegalStateException( "Cannot write in state: " + stateName() );
-    }
-
-    @Override
-    protected boolean hasChanges()
-    {
-        return false;
-    }
-
-    @Override
-    public void close()
-    {
-        throw new IllegalStateException( "Cannot close() in state: " + stateName() );
-    }
-
-    @Override
-    protected File file()
-    {
-        throw new IllegalStateException( "No file assigned in state: " + stateName() );
-    }
-
-    @Override
-    protected long version()
-    {
-        return keys.version( null );
-    }
-
-    @Override
-    protected KeyFormat<Key> keyFormat()
-    {
-        return keys;
-    }
-
     private final KeyFormat<Key> keys;
-    final ActiveState.Factory stateFactory;
-    final VersionContextSupplier versionContextSupplier;
+	final ActiveState.Factory stateFactory;
+	final VersionContextSupplier versionContextSupplier;
 
-    private DeadState( KeyFormat<Key> keys, ActiveState.Factory stateFactory, VersionContextSupplier versionContextSupplier )
+	private DeadState( KeyFormat<Key> keys, ActiveState.Factory stateFactory, VersionContextSupplier versionContextSupplier )
     {
         this.keys = keys;
         this.stateFactory = stateFactory;
         this.versionContextSupplier = versionContextSupplier;
     }
 
-    static class Stopped<Key> extends DeadState<Key>
+	@Override
+    protected Headers headers()
+    {
+        throw new IllegalStateException( "Cannot read in state: " + stateName() );
+    }
+
+	@Override
+    protected boolean lookup( Key key, ValueSink sink )
+    {
+        throw new IllegalStateException( "Cannot read in state: " + stateName() );
+    }
+
+	@Override
+    protected DataProvider dataProvider()
+    {
+        throw new IllegalStateException( "Cannot read in state: " + stateName() );
+    }
+
+	@Override
+    protected int storedEntryCount()
+    {
+        throw new IllegalStateException( "Cannot read in state: " + stateName() );
+    }
+
+	@Override
+    protected Optional<EntryUpdater<Key>> optionalUpdater( long version, Lock lock )
+    {
+        throw new IllegalStateException( "Cannot write in state: " + stateName() );
+    }
+
+	@Override
+    protected EntryUpdater<Key> unsafeUpdater( Lock lock )
+    {
+        throw new IllegalStateException( "Cannot write in state: " + stateName() );
+    }
+
+	@Override
+    protected boolean hasChanges()
+    {
+        return false;
+    }
+
+	@Override
+    public void close()
+    {
+        throw new IllegalStateException( "Cannot close() in state: " + stateName() );
+    }
+
+	@Override
+    protected File file()
+    {
+        throw new IllegalStateException( "No file assigned in state: " + stateName() );
+    }
+
+	@Override
+    protected long version()
+    {
+        return keys.version( null );
+    }
+
+	@Override
+    protected KeyFormat<Key> keyFormat()
+    {
+        return keys;
+    }
+
+	static class Stopped<Key> extends DeadState<Key>
     {
         Stopped( KeyFormat<Key> keys, ActiveState.Factory stateFactory, VersionContextSupplier versionContextSupplier )
         {
@@ -232,7 +232,7 @@ abstract class DeadState<Key> extends ProgressiveState<Key>
         }
 
         @Override
-        public NeedsCreation<Key> apply( ActiveState<Key> keyActiveState ) throws RuntimeException
+        public NeedsCreation<Key> apply( ActiveState<Key> keyActiveState )
         {
             return this;
         }

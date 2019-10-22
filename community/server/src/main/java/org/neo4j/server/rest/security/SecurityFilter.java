@@ -81,7 +81,7 @@ public class SecurityFilter implements Filter
 
     public static String basicAuthenticationResponse( String realm )
     {
-        return "Basic realm=\"" + realm + "\"";
+        return new StringBuilder().append("Basic realm=\"").append(realm).append("\"").toString();
     }
 
     @Override

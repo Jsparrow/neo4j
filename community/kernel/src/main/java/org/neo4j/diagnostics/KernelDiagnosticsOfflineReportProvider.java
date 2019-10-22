@@ -90,14 +90,13 @@ public class KernelDiagnosticsOfflineReportProvider extends DiagnosticsOfflineRe
     private void listPlugins( List<DiagnosticsReportSource> sources )
     {
         File pluginDirectory = config.get( GraphDatabaseSettings.plugin_dir );
-        if ( fs.fileExists( pluginDirectory ) )
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.append( "List of plugin directory:" ).append( System.lineSeparator() );
-            listContentOfDirectory( pluginDirectory, "  ", sb );
-
-            sources.add( newDiagnosticsString( "plugins.txt", sb::toString ) );
-        }
+        if (!fs.fileExists( pluginDirectory )) {
+			return;
+		}
+		StringBuilder sb = new StringBuilder();
+		sb.append( "List of plugin directory:" ).append( System.lineSeparator() );
+		listContentOfDirectory( pluginDirectory, "  ", sb );
+		sources.add( newDiagnosticsString( "plugins.txt", sb::toString ) );
     }
 
     private void listContentOfDirectory( File directory, String prefix, StringBuilder sb )
@@ -112,7 +111,7 @@ public class KernelDiagnosticsOfflineReportProvider extends DiagnosticsOfflineRe
         {
             if ( fs.isDirectory( file ) )
             {
-                listContentOfDirectory( file, prefix + File.separator + file.getName(), sb );
+                listContentOfDirectory( file, new StringBuilder().append(prefix).append(File.separator).append(file.getName()).toString(), sb );
             }
             else
             {

@@ -186,7 +186,13 @@ public abstract class RelationshipSparseSelectionTestBase<Traverser extends Rela
 
     abstract void assertEmpty( Traverser cursor );
 
-    public static class IteratorTest extends RelationshipSparseSelectionTestBase<RelationshipSparseSelectionIterator<R>>
+    private void assertEmptyAndClosed( Traverser traverser, RelationshipTraversalCursor inner )
+    {
+        assertEmpty( traverser );
+        assertTrue( "closed traversal cursor", inner.isClosed() );
+    }
+
+	public static class IteratorTest extends RelationshipSparseSelectionTestBase<RelationshipSparseSelectionIterator<R>>
     {
         @Override
         protected RelationshipSparseSelectionIterator<R> make()
@@ -250,11 +256,5 @@ public abstract class RelationshipSparseSelectionTestBase<Traverser extends Rela
         {
             assertEmpty( (RelationshipSelectionCursor) iterator );
         }
-    }
-
-    private void assertEmptyAndClosed( Traverser traverser, RelationshipTraversalCursor inner )
-    {
-        assertEmpty( traverser );
-        assertTrue( "closed traversal cursor", inner.isClosed() );
     }
 }

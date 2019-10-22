@@ -37,34 +37,11 @@ public class Validators
     {
         if ( matchingFiles( file ).isEmpty() )
         {
-            throw new IllegalArgumentException( "File '" + file + "' doesn't exist" );
+            throw new IllegalArgumentException( new StringBuilder().append("File '").append(file).append("' doesn't exist").toString() );
         }
     };
 
-    private Validators()
-    {
-    }
-
-    static List<File> matchingFiles( File fileWithRegexInName )
-    {
-        File parent = fileWithRegexInName.getAbsoluteFile().getParentFile();
-        if ( parent == null || !parent.exists() )
-        {
-            throw new IllegalArgumentException( "Directory of " + fileWithRegexInName + " doesn't exist" );
-        }
-        final Pattern pattern = Pattern.compile( fileWithRegexInName.getName() );
-        List<File> files = new ArrayList<>();
-        for ( File file : parent.listFiles() )
-        {
-            if ( pattern.matcher( file.getName() ).matches() )
-            {
-                files.add( file );
-            }
-        }
-        return files;
-    }
-
-    public static final Validator<File> DIRECTORY_IS_WRITABLE = value ->
+	public static final Validator<File> DIRECTORY_IS_WRITABLE = value ->
     {
         if ( value.mkdirs() )
         {   // It's OK, we created the directory right now, which means we have write access to it
@@ -78,7 +55,7 @@ public class Validators
         }
         catch ( IOException e )
         {
-            throw new IllegalArgumentException( "Directory '" + value + "' not writable: " + e.getMessage() );
+            throw new IllegalArgumentException( new StringBuilder().append("Directory '").append(value).append("' not writable: ").append(e.getMessage()).toString() );
         }
         finally
         {
@@ -86,13 +63,13 @@ public class Validators
         }
     };
 
-    public static final Validator<File> CONTAINS_NO_EXISTING_DATABASE = value ->
+	public static final Validator<File> CONTAINS_NO_EXISTING_DATABASE = value ->
     {
         try ( FileSystemAbstraction fileSystem = new DefaultFileSystemAbstraction() )
         {
             if ( isExistingDatabase( fileSystem, DatabaseLayout.of( value ) ) )
             {
-                throw new IllegalArgumentException( "Directory '" + value + "' already contains a database" );
+                throw new IllegalArgumentException( new StringBuilder().append("Directory '").append(value).append("' already contains a database").toString() );
             }
         }
         catch ( IOException e )
@@ -101,13 +78,13 @@ public class Validators
         }
     };
 
-    public static final Validator<File> CONTAINS_EXISTING_DATABASE = dbDir ->
+	public static final Validator<File> CONTAINS_EXISTING_DATABASE = dbDir ->
     {
         try ( FileSystemAbstraction fileSystem = new DefaultFileSystemAbstraction() )
         {
             if ( !isExistingDatabase( fileSystem, DatabaseLayout.of( dbDir ) ) )
             {
-                throw new IllegalArgumentException( "Directory '" + dbDir + "' does not contain a database" );
+                throw new IllegalArgumentException( new StringBuilder().append("Directory '").append(dbDir).append("' does not contain a database").toString() );
             }
         }
         catch ( IOException e )
@@ -116,42 +93,64 @@ public class Validators
         }
     };
 
-    private static boolean isExistingDatabase( FileSystemAbstraction fileSystem, DatabaseLayout layout )
+	private Validators()
+    {
+    }
+
+	static List<File> matchingFiles( File fileWithRegexInName )
+    {
+        File parent = fileWithRegexInName.getAbsoluteFile().getParentFile();
+        if ( parent == null || !parent.exists() )
+        {
+            throw new IllegalArgumentException( new StringBuilder().append("Directory of ").append(fileWithRegexInName).append(" doesn't exist").toString() );
+        }
+        final Pattern pattern = Pattern.compile( fileWithRegexInName.getName() );
+        List<File> files = new ArrayList<>();
+        for ( File file : parent.listFiles() )
+        {
+            if ( pattern.matcher( file.getName() ).matches() )
+            {
+                files.add( file );
+            }
+        }
+        return files;
+    }
+
+	private static boolean isExistingDatabase( FileSystemAbstraction fileSystem, DatabaseLayout layout )
     {
         return fileSystem.fileExists( layout.metadataStore() );
     }
 
-    public static Validator<String> inList( String[] validStrings )
+	public static Validator<String> inList( String[] validStrings )
     {
         return value ->
         {
             if ( Arrays.stream( validStrings ).noneMatch( s -> s.equals( value ) ) )
             {
-                throw new IllegalArgumentException( "'" + value + "' found but must be one of: " +
-                    Arrays.toString( validStrings ) + "." );
+                throw new IllegalArgumentException( new StringBuilder().append("'").append(value).append("' found but must be one of: ").append(Arrays.toString( validStrings )).append(".").toString() );
             }
         };
     }
 
-    public static <T> Validator<T[]> atLeast( final String key, final int length )
+	public static <T> Validator<T[]> atLeast( final String key, final int length )
     {
         return value ->
         {
             if ( value.length < length )
             {
-                throw new IllegalArgumentException( "Expected '" + key + "' to have at least " +
-                        length + " valid item" + (length == 1 ? "" : "s") + ", but had " + value.length +
-                        " " + Arrays.toString( value ) );
+                throw new IllegalArgumentException( new StringBuilder().append("Expected '").append(key).append("' to have at least ").append(length).append(" valid item")
+						.append(length == 1 ? "" : "s").append(", but had ").append(value.length).append(" ")
+						.append(Arrays.toString( value )).toString() );
             }
         };
     }
 
-    public static <T> Validator<T> emptyValidator()
+	public static <T> Validator<T> emptyValidator()
     {
         return value -> {};
     }
 
-    public static <T> Validator<T> all( Validator<T>... validators )
+	public static <T> Validator<T> all( Validator<T>... validators )
     {
         return value ->
         {

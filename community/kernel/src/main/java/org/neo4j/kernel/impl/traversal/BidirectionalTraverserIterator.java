@@ -47,16 +47,6 @@ class BidirectionalTraverserIterator extends AbstractTraverserIterator
     private final Map<Direction, Side> sides = new EnumMap<>( Direction.class );
     private final BidirectionalUniquenessFilter uniqueness;
 
-    private static class Side
-    {
-        private final MonoDirectionalTraversalDescription description;
-
-        Side( MonoDirectionalTraversalDescription description )
-        {
-            this.description = description;
-        }
-    }
-
     BidirectionalTraverserIterator( Resource resource,
                                     MonoDirectionalTraversalDescription start,
                                     MonoDirectionalTraversalDescription end,
@@ -84,14 +74,14 @@ class BidirectionalTraverserIterator extends AbstractTraverserIterator
         this.collisionDetector = collisionPolicy.create( collisionEvaluator, uniqueness::checkFull );
     }
 
-    private BidirectionalUniquenessFilter makeSureStartAndEndHasSameUniqueness( MonoDirectionalTraversalDescription
+	private BidirectionalUniquenessFilter makeSureStartAndEndHasSameUniqueness( MonoDirectionalTraversalDescription
             start,
                                                                    MonoDirectionalTraversalDescription end )
     {
         if ( !start.uniqueness.equals( end.uniqueness ) )
         {
-            throw new IllegalArgumentException( "Start and end uniqueness factories differ, they need to be the " +
-                    "same currently. Start side has " + start.uniqueness + ", end side has " + end.uniqueness );
+            throw new IllegalArgumentException( new StringBuilder().append("Start and end uniqueness factories differ, they need to be the ").append("same currently. Start side has ").append(start.uniqueness).append(", end side has ").append(end.uniqueness)
+					.toString() );
         }
 
         boolean parameterDiffers = start.uniquenessParameter == null || end.uniquenessParameter == null ?
@@ -99,9 +89,8 @@ class BidirectionalTraverserIterator extends AbstractTraverserIterator
                 !start.uniquenessParameter.equals( end.uniquenessParameter );
         if ( parameterDiffers )
         {
-            throw new IllegalArgumentException( "Start and end uniqueness parameters differ, they need to be the " +
-                    "same currently. Start side has " + start.uniquenessParameter + ", " +
-                    "end side has " + end.uniquenessParameter );
+            throw new IllegalArgumentException( new StringBuilder().append("Start and end uniqueness parameters differ, they need to be the ").append("same currently. Start side has ").append(start.uniquenessParameter).append(", ").append("end side has ")
+					.append(end.uniquenessParameter).toString() );
         }
 
         UniquenessFilter uniqueness = start.uniqueness.create( start.uniquenessParameter );
@@ -113,7 +102,7 @@ class BidirectionalTraverserIterator extends AbstractTraverserIterator
         return (BidirectionalUniquenessFilter) uniqueness;
     }
 
-    private SideSelector fixedSide( final Direction direction )
+	private SideSelector fixedSide( final Direction direction )
     {
         return new SideSelector()
         {
@@ -131,7 +120,7 @@ class BidirectionalTraverserIterator extends AbstractTraverserIterator
         };
     }
 
-    @Override
+	@Override
     protected Path fetchNextOrNull()
     {
         if ( foundPaths != null )
@@ -167,26 +156,36 @@ class BidirectionalTraverserIterator extends AbstractTraverserIterator
         }
     }
 
-    private Side currentSideDescription()
+	private Side currentSideDescription()
     {
         return sides.get( selector.currentSide() );
     }
 
-    @Override
+	@Override
     public Evaluation evaluate( TraversalBranch branch, BranchState state )
     {
         return currentSideDescription().description.evaluator.evaluate( branch, state );
     }
 
-    @Override
+	@Override
     public boolean isUniqueFirst( TraversalBranch branch )
     {
         return uniqueness.checkFirst( branch );
     }
 
-    @Override
+	@Override
     public boolean isUnique( TraversalBranch branch )
     {
         return uniqueness.check( branch );
+    }
+
+	private static class Side
+    {
+        private final MonoDirectionalTraversalDescription description;
+
+        Side( MonoDirectionalTraversalDescription description )
+        {
+            this.description = description;
+        }
     }
 }

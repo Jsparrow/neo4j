@@ -46,10 +46,7 @@ final class PooledJobHandle implements JobHandle
     public void cancel( boolean mayInterruptIfRunning )
     {
         future.cancel( mayInterruptIfRunning );
-        for ( CancelListener cancelListener : cancelListeners )
-        {
-            cancelListener.cancelled( mayInterruptIfRunning );
-        }
+        cancelListeners.forEach(cancelListener -> cancelListener.cancelled(mayInterruptIfRunning));
         registry.remove( registryKey );
     }
 

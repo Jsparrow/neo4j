@@ -51,8 +51,8 @@ import static org.neo4j.ext.udc.UdcConstants.ID;
  */
 public class PingerTest extends LocalServerTestBase
 {
-    private final String EXPECTED_KERNEL_VERSION = "1.0";
-    private final String EXPECTED_STORE_ID = "CAFE";
+    private final String expectedKernelVersion = "1.0";
+    private final String expectedStoreId = "CAFE";
     private String hostname = "localhost";
     private String serverUrl;
 
@@ -67,7 +67,7 @@ public class PingerTest extends LocalServerTestBase
         this.serverBootstrap.registerHandler( "/*", handler );
         HttpHost target = start();
         hostname = target.getHostName();
-        serverUrl = "http://" + hostname + ":" + target.getPort();
+        serverUrl = new StringBuilder().append("http://").append(hostname).append(":").append(target.getPort()).toString();
     }
 
     @Override
@@ -114,15 +114,15 @@ public class PingerTest extends LocalServerTestBase
     {
         final HostnamePort hostURL = new HostnamePort( hostname, server.getLocalPort() );
         final Map<String,String> udcFields = new HashMap<>();
-        udcFields.put( ID, EXPECTED_STORE_ID );
-        udcFields.put( UdcConstants.VERSION, EXPECTED_KERNEL_VERSION );
+        udcFields.put( ID, expectedStoreId );
+        udcFields.put( UdcConstants.VERSION, expectedKernelVersion );
 
         Pinger p = new Pinger( hostURL, new TestUdcCollector( udcFields ) );
         p.ping();
 
         Map<String,String> actualQueryMap = handler.getQueryMap();
         assertThat( actualQueryMap, notNullValue() );
-        assertThat( actualQueryMap.get( ID ), is( EXPECTED_STORE_ID ) );
+        assertThat( actualQueryMap.get( ID ), is( expectedStoreId ) );
     }
 
     @Test

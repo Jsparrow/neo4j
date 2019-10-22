@@ -37,7 +37,10 @@ import static org.neo4j.test.DoubleLatch.awaitLatch;
 
 public class LazySingleReferenceTest
 {
-    @Test
+    private OtherThreadExecutor<Void> t1;
+	private OtherThreadExecutor<Void> t2;
+
+	@Test
     public void shouldOnlyAllowSingleThreadToInitialize() throws Exception
     {
         // GIVEN
@@ -67,7 +70,7 @@ public class LazySingleReferenceTest
         assertEquals( "T2 evaluation", 1, e2 );
     }
 
-    @Test
+	@Test
     public void shouldMutexAccessBetweenInvalidateAndinstance() throws Exception
     {
         // GIVEN
@@ -96,7 +99,7 @@ public class LazySingleReferenceTest
         assertEquals( "Evaluation", 1, e );
     }
 
-    @Test
+	@Test
     public void shouldInitializeAgainAfterInvalidated()
     {
         // GIVEN
@@ -119,7 +122,7 @@ public class LazySingleReferenceTest
         assertEquals( "Second evaluation", 2, e2 );
     }
 
-    @Test
+	@Test
     public void shouldRespondToIsInitialized()
     {
         // GIVEN
@@ -148,29 +151,26 @@ public class LazySingleReferenceTest
         assertTrue( "Should be initialized after a re-evaluation", fourthResult );
     }
 
-    private OtherThreadExecutor<Void> t1;
-    private OtherThreadExecutor<Void> t2;
-
-    @Before
+	@Before
     public void before()
     {
         t1 = new OtherThreadExecutor<>( "T1", null );
         t2 = new OtherThreadExecutor<>( "T2", null );
     }
 
-    @After
+	@After
     public void after()
     {
         t2.close();
         t1.close();
     }
 
-    private WorkerCommand<Void,Integer> evaluate( final LazySingleReference<Integer> ref )
+	private WorkerCommand<Void,Integer> evaluate( final LazySingleReference<Integer> ref )
     {
         return state -> ref.get();
     }
 
-    private WorkerCommand<Void,Void> invalidate( final LazySingleReference<Integer> ref )
+	private WorkerCommand<Void,Void> invalidate( final LazySingleReference<Integer> ref )
     {
         return state ->
         {

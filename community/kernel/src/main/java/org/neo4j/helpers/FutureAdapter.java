@@ -47,38 +47,6 @@ public abstract class FutureAdapter<V> implements Future<V>
     }
 
     /**
-     * This class will be deleted as part of next major release. Please use {@link CompletableFuture#complete(Object)}
-     * instead.
-     */
-    @Deprecated
-    public static class Present<V> extends FutureAdapter<V>
-    {
-        private final V value;
-
-        public Present( V value )
-        {
-            this.value = value;
-        }
-
-        @Override
-        public boolean isDone()
-        {
-            return true;
-        }
-
-        @Override
-        public V get()
-        {
-            return value;
-        }
-        @Override
-        public V get( long timeout, TimeUnit unit )
-        {
-            return value;
-        }
-    }
-
-    /**
      * @param <T> type of values that this {@link Future} have.
      * @param value result value.
      * @return {@link Present} future with already specified result
@@ -92,7 +60,7 @@ public abstract class FutureAdapter<V> implements Future<V>
         return new Present<>( value );
     }
 
-    @Deprecated
+	@Deprecated
     public static <T> Future<T> latchGuardedValue( final Supplier<T> supplier, final CountDownLatch guardedByLatch,
                                                    final String jobDescription )
     {
@@ -116,15 +84,14 @@ public abstract class FutureAdapter<V> implements Future<V>
             {
                 if ( !guardedByLatch.await( timeout, unit ) )
                 {
-                    throw new TimeoutException( jobDescription + " didn't complete within " +
-                            timeout + " " + unit );
+                    throw new TimeoutException( new StringBuilder().append(jobDescription).append(" didn't complete within ").append(timeout).append(" ").append(unit).toString() );
                 }
                 return supplier.get();
             }
         };
     }
 
-    @Deprecated
+	@Deprecated
     public static Future<Integer> processFuture( final Process process )
     {
         return new FutureAdapter<Integer>()
@@ -166,17 +133,50 @@ public abstract class FutureAdapter<V> implements Future<V>
                     }
                     Thread.sleep( 10 );
                 }
-                throw new TimeoutException( "Process '" + process + "' didn't exit within " + timeout + " " + unit );
+                throw new TimeoutException( new StringBuilder().append("Process '").append(process).append("' didn't exit within ").append(timeout).append(" ").append(unit)
+						.toString() );
             }
         };
     }
 
-    @Deprecated
+	@Deprecated
     public static <T> Future<T> future( final Callable<T> task )
     {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<T> future = executor.submit( task );
         executor.shutdown();
         return future;
+    }
+
+	/**
+     * This class will be deleted as part of next major release. Please use {@link CompletableFuture#complete(Object)}
+     * instead.
+     */
+    @Deprecated
+    public static class Present<V> extends FutureAdapter<V>
+    {
+        private final V value;
+
+        public Present( V value )
+        {
+            this.value = value;
+        }
+
+        @Override
+        public boolean isDone()
+        {
+            return true;
+        }
+
+        @Override
+        public V get()
+        {
+            return value;
+        }
+        @Override
+        public V get( long timeout, TimeUnit unit )
+        {
+            return value;
+        }
     }
 }

@@ -38,12 +38,11 @@ class CommandUsage
 
     void printDetailed( Consumer<String> output )
     {
-        for ( Arguments arguments : command.possibleArguments() )
-        {
+        command.possibleArguments().forEach(arguments -> {
             String left = format( "usage: %s %s", scriptName, command.name() );
 
             output.accept( Arguments.rightColumnFormatted( left, arguments.usage(), left.length() + 1 ) );
-        }
+        });
         output.accept( "" );
         Usage.printEnvironmentVariables( output );
         output.accept( command.allArguments().description( command.description() ) );

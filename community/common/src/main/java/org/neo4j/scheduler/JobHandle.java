@@ -24,18 +24,18 @@ import java.util.concurrent.ExecutionException;
 
 public interface JobHandle
 {
-    void cancel( boolean mayInterruptIfRunning );
+    JobHandle nullInstance = new NullJobHandle();
 
-    void waitTermination() throws InterruptedException, ExecutionException, CancellationException;
+	void cancel( boolean mayInterruptIfRunning );
 
-    default void registerCancelListener( CancelListener listener )
+	void waitTermination() throws InterruptedException, ExecutionException;
+
+	default void registerCancelListener( CancelListener listener )
     {
         throw new UnsupportedOperationException( "Unsupported in this implementation" );
     }
 
-    JobHandle nullInstance = new NullJobHandle();
-
-    class NullJobHandle implements JobHandle
+	class NullJobHandle implements JobHandle
     {
 
         @Override
@@ -44,7 +44,7 @@ public interface JobHandle
         }
 
         @Override
-        public void waitTermination() throws CancellationException
+        public void waitTermination()
         {   // no-op
         }
     }

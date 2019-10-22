@@ -36,16 +36,16 @@ import static org.neo4j.unsafe.impl.batchimport.stats.Keys.done_batches;
 @RunWith( Parameterized.class )
 public class CoarseBoundedProgressExecutionMonitorTest
 {
-    @Parameterized.Parameters( name = "{0}" )
+    @Parameter
+    public int batchSize;
+
+	@Parameterized.Parameters( name = "{0}" )
     public static Iterable<Integer> parameters()
     {
         return Arrays.asList(1, 10, 123);
     }
 
-    @Parameter
-    public int batchSize;
-
-    @Test
+	@Test
     public void shouldReportProgressOnSingleExecution()
     {
         // GIVEN
@@ -59,7 +59,7 @@ public class CoarseBoundedProgressExecutionMonitorTest
         assertEquals( total, progressExecutionMonitor.getProgress() );
     }
 
-    @Test
+	@Test
     public void progressOnMultipleExecutions()
     {
         Configuration config = config();
@@ -77,7 +77,7 @@ public class CoarseBoundedProgressExecutionMonitorTest
         assertEquals( "Each item should be completed", total, progressExecutionMonitor.getProgress());
     }
 
-    private long monitorSingleStageExecution( ProgressExecutionMonitor progressExecutionMonitor, Configuration config )
+	private long monitorSingleStageExecution( ProgressExecutionMonitor progressExecutionMonitor, Configuration config )
     {
         progressExecutionMonitor.start( execution( 0, config ) );
         long total = progressExecutionMonitor.total();
@@ -91,14 +91,14 @@ public class CoarseBoundedProgressExecutionMonitorTest
         return total;
     }
 
-    private StageExecution execution( long doneBatches, Configuration config )
+	private StageExecution execution( long doneBatches, Configuration config )
     {
         Step<?> step = ControlledStep.stepWithStats( "Test", 0, done_batches, doneBatches );
         StageExecution execution = new StageExecution( "Test", null, config, Collections.singletonList( step ), 0 );
         return execution;
     }
 
-    private Configuration config()
+	private Configuration config()
     {
         return new Configuration.Overridden( Configuration.DEFAULT )
         {
@@ -110,7 +110,7 @@ public class CoarseBoundedProgressExecutionMonitorTest
         };
     }
 
-    private class ProgressExecutionMonitor extends CoarseBoundedProgressExecutionMonitor
+	private class ProgressExecutionMonitor extends CoarseBoundedProgressExecutionMonitor
     {
         private long progress;
 

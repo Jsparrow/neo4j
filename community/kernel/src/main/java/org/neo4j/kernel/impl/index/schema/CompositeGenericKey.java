@@ -102,7 +102,7 @@ class CompositeGenericKey extends GenericKey
         int slots = numberOfStateSlots();
         if ( key.numberOfStateSlots() != slots )
         {
-            throw new IllegalArgumentException( "Different state lengths " + key.numberOfStateSlots() + " vs " + slots );
+            throw new IllegalArgumentException( new StringBuilder().append("Different state lengths ").append(key.numberOfStateSlots()).append(" vs ").append(slots).toString() );
         }
 
         for ( int i = 0; i < slots; i++ )

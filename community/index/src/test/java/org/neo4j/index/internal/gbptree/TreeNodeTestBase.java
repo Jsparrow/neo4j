@@ -558,7 +558,7 @@ public abstract class TreeNodeTestBase<KEY,VALUE>
                     assertEquals( 0, layout.compare( expectedKey, readKey ),
                             String.format( "Key differ with expected%n    readKey=%s %nexpectedKey=%s%n", readKey, expectedKey ) );
                     assertEquals( 0, layout.compareValue( expectedValue, readValue ),
-                            "Value differ with expected, value=" + readValue + ", expectedValue=" + expectedValue );
+                            new StringBuilder().append("Value differ with expected, value=").append(readValue).append(", expectedValue=").append(expectedValue).toString() );
 
                     TreeNode.setKeyCount( cursor, --expectedKeyCount );
                 }
@@ -578,12 +578,12 @@ public abstract class TreeNodeTestBase<KEY,VALUE>
         {
             KEY expectedKey = expectedKeys.get( i );
             node.keyAt( cursor, actualKey, i, LEAF );
-            assertEquals( 0, layout.compare( expectedKey, actualKey ), "Key differ with expected, actualKey=" + actualKey + ", expectedKey=" + expectedKey );
+            assertEquals( 0, layout.compare( expectedKey, actualKey ), new StringBuilder().append("Key differ with expected, actualKey=").append(actualKey).append(", expectedKey=").append(expectedKey).toString() );
 
             VALUE expectedValue = expectedValues.get( i );
             node.valueAt( cursor, actualValue, i );
             assertEquals( 0, layout.compareValue( expectedValue, actualValue ),
-                    "Value differ with expected, actualValue=" + actualValue + ", expectedValue=" + expectedValue );
+                    new StringBuilder().append("Value differ with expected, actualValue=").append(actualValue).append(", expectedValue=").append(expectedValue).toString() );
         }
     }
 

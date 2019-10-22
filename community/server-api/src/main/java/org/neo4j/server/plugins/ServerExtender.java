@@ -83,7 +83,7 @@ public final class ServerExtender
         }
         if ( plugin == null )
         {
-            throw new PluginLookupException( "No plugin \"" + method + "\" for " + type );
+            throw new PluginLookupException( new StringBuilder().append("No plugin \"").append(method).append("\" for ").append(type).toString() );
         }
         return plugin;
     }
@@ -121,8 +121,7 @@ public final class ServerExtender
         if ( extensions.get( plugin.name() ) != null )
         {
             throw new IllegalArgumentException(
-                    "This plugin already has an plugin point with the name \""
-                            + plugin.name() + "\"" );
+                    new StringBuilder().append("This plugin already has an plugin point with the name \"").append(plugin.name()).append("\"").toString() );
         }
         extensions.put( plugin.name(), plugin );
     }

@@ -149,7 +149,8 @@ public abstract class ConstraintTestBase<G extends KernelAPIWriteTestSupport> ex
     public void shouldCheckUniquenessWhenAddingLabel() throws Exception
     {
         // GIVEN
-        long nodeConflicting, nodeNotConflicting;
+        long nodeConflicting;
+		long nodeNotConflicting;
         addConstraints( "FOO", "prop" );
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
@@ -207,7 +208,8 @@ public abstract class ConstraintTestBase<G extends KernelAPIWriteTestSupport> ex
     public void shouldCheckUniquenessWhenAddingProperties() throws Exception
     {
         // GIVEN
-        long nodeConflicting, nodeNotConflicting;
+        long nodeConflicting;
+		long nodeNotConflicting;
         addConstraints( "FOO", "prop" );
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {

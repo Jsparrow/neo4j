@@ -51,15 +51,18 @@ import org.neo4j.values.virtual.VirtualValues;
  */
 class TruncatedQuerySnapshot
 {
-    final int fullQueryTextHash;
-    final String queryText;
-    final Supplier<ExecutionPlanDescription> queryPlanSupplier;
-    final MapValue queryParameters;
-    final Long elapsedTimeMicros;
-    final Long compilationTimeMicros;
-    final Long startTimestampMillis;
+    private static ValueTruncater valueTruncater = new ValueTruncater();
+	private static int maxTextParameterLength = 100;
+	private static int maxParameterKeyLength = 1000;
+	final int fullQueryTextHash;
+	final String queryText;
+	final Supplier<ExecutionPlanDescription> queryPlanSupplier;
+	final MapValue queryParameters;
+	final Long elapsedTimeMicros;
+	final Long compilationTimeMicros;
+	final Long startTimestampMillis;
 
-    TruncatedQuerySnapshot( String fullQueryText,
+	TruncatedQuerySnapshot( String fullQueryText,
                             Supplier<ExecutionPlanDescription> queryPlanSupplier,
                             MapValue queryParameters,
                             Long elapsedTimeMicros,
@@ -76,12 +79,12 @@ class TruncatedQuerySnapshot
         this.startTimestampMillis = startTimestampMillis;
     }
 
-    private static String truncateQueryText( String queryText, int maxLength )
+	private static String truncateQueryText( String queryText, int maxLength )
     {
         return queryText.length() > maxLength ? queryText.substring( 0, maxLength ) : queryText;
     }
 
-    private static MapValue truncateParameters( MapValue parameters )
+	private static MapValue truncateParameters( MapValue parameters )
     {
         String[] keys = new String[parameters.size()];
         AnyValue[] values = new AnyValue[keys.length];
@@ -89,25 +92,21 @@ class TruncatedQuerySnapshot
         int i = 0;
         for ( String key : parameters.keySet() )
         {
-            keys[i] = key.length() <= MAX_PARAMETER_KEY_LENGTH ? key : key.substring( 0, MAX_PARAMETER_KEY_LENGTH );
-            values[i] = parameters.get( key ).map( VALUE_TRUNCATER );
+            keys[i] = key.length() <= maxParameterKeyLength ? key : key.substring( 0, maxParameterKeyLength );
+            values[i] = parameters.get( key ).map( valueTruncater );
             i++;
         }
 
         return VirtualValues.map( keys, values );
     }
 
-    private static ValueTruncater VALUE_TRUNCATER = new ValueTruncater();
-    private static int MAX_TEXT_PARAMETER_LENGTH = 100;
-    private static int MAX_PARAMETER_KEY_LENGTH = 1000;
-
-    static class ValueTruncater implements ValueMapper<AnyValue>
+	static class ValueTruncater implements ValueMapper<AnyValue>
     {
 
         @Override
         public AnyValue mapPath( PathValue value )
         {
-            return Values.stringValue( "§PATH[" + value.size() + "]" );
+            return Values.stringValue( new StringBuilder().append("§PATH[").append(value.size()).append("]").toString() );
         }
 
         @Override
@@ -135,7 +134,7 @@ class TruncatedQuerySnapshot
         @Override
         public AnyValue mapMap( MapValue map )
         {
-            return Values.stringValue( "§MAP[" + map.size() + "]" );
+            return Values.stringValue( new StringBuilder().append("§MAP[").append(map.size()).append("]").toString() );
         }
 
         @Override
@@ -147,15 +146,15 @@ class TruncatedQuerySnapshot
         @Override
         public AnyValue mapSequence( SequenceValue value )
         {
-            return Values.stringValue( "§LIST[" + value.length() + "]" );
+            return Values.stringValue( new StringBuilder().append("§LIST[").append(value.length()).append("]").toString() );
         }
 
         @Override
         public AnyValue mapText( TextValue value )
         {
-            if ( value.length() > MAX_TEXT_PARAMETER_LENGTH )
+            if ( value.length() > maxTextParameterLength )
             {
-                return Values.stringValue( value.stringValue().substring( 0, MAX_TEXT_PARAMETER_LENGTH ) );
+                return Values.stringValue( value.stringValue().substring( 0, maxTextParameterLength ) );
             }
             return value;
         }

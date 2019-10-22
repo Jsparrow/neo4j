@@ -60,7 +60,7 @@ public class SessionFactoryImpl implements ConsoleSessionFactory
             return getOrInstantiateSession( database, engineName + "-console-session", engineCreators.get( engineName ), logProvider );
         }
 
-        throw new IllegalArgumentException( "Unknown console engine '" + engineName + "'." );
+        throw new IllegalArgumentException( new StringBuilder().append("Unknown console engine '").append(engineName).append("'.").toString() );
     }
 
     @Override
@@ -82,16 +82,8 @@ public class SessionFactoryImpl implements ConsoleSessionFactory
 
     private void enableEngines( List<String> supportedEngines )
     {
-        for ( ConsoleSessionCreator creator : creators )
-        {
-            for ( String engineName : supportedEngines )
-            {
-                if ( creator.name().equalsIgnoreCase( engineName ) )
-                {
-                    engineCreators.put( engineName.toLowerCase(), creator );
-                }
-            }
-        }
+        creators.forEach(creator -> supportedEngines.stream().filter(engineName -> creator.name().equalsIgnoreCase(engineName))
+				.forEach(engineName -> engineCreators.put(engineName.toLowerCase(), creator)));
     }
 
 }

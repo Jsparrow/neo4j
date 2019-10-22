@@ -77,29 +77,66 @@ public class DataStatistics implements Iterable<DataStatistics.RelationshipTypeC
 
     private synchronized void closeClient()
     {
-        if ( --opened == 0 )
-        {
-            int highestTypeId = 0;
-            for ( Client client : clients )
-            {
-                highestTypeId = max( highestTypeId, client.highestTypeId );
-            }
-
-            long[] counts = new long[highestTypeId + 1];
-            for ( Client client : clients )
-            {
-                client.addTo( counts );
-            }
-            typeCounts = new RelationshipTypeCount[counts.length];
-            for ( int i = 0; i < counts.length; i++ )
-            {
-                typeCounts[i] = new RelationshipTypeCount( i, counts[i] );
-            }
-            Arrays.sort( typeCounts );
-        }
+        if (!(--opened == 0)) {
+			return;
+		}
+		int highestTypeId = 0;
+		for ( Client client : clients )
+		{
+		    highestTypeId = max( highestTypeId, client.highestTypeId );
+		}
+		long[] counts = new long[highestTypeId + 1];
+		clients.forEach(client -> client.addTo(counts));
+		typeCounts = new RelationshipTypeCount[counts.length];
+		for ( int i = 0; i < counts.length; i++ )
+		{
+		    typeCounts[i] = new RelationshipTypeCount( i, counts[i] );
+		}
+		Arrays.sort( typeCounts );
     }
 
-    public static class RelationshipTypeCount implements Comparable<RelationshipTypeCount>
+    public RelationshipTypeCount get( int index )
+    {
+        return typeCounts[index];
+    }
+
+	public IntSet types( int startingFromType, int upToType )
+    {
+        final MutableIntSet set = new IntHashSet( (upToType - startingFromType) * 2 );
+        for ( int i = startingFromType; i < upToType; i++ )
+        {
+            set.add( get( i ).getTypeId() );
+        }
+        return set;
+    }
+
+	public long getNodeCount()
+    {
+        return entityCounts.nodesImported();
+    }
+
+	public long getPropertyCount()
+    {
+        return entityCounts.propertiesImported();
+    }
+
+	public long getRelationshipCount()
+    {
+        long sum = 0;
+        for ( RelationshipTypeCount type : typeCounts )
+        {
+            sum += type.count;
+        }
+        return sum;
+    }
+
+	@Override
+    public String toString()
+    {
+        return format( "Imported:%n  %d nodes%n  %d relationships%n  %d properties", getNodeCount(), getRelationshipCount(), getPropertyCount() );
+    }
+
+	public static class RelationshipTypeCount implements Comparable<RelationshipTypeCount>
     {
         private final int typeId;
         private final long count;
@@ -189,46 +226,5 @@ public class DataStatistics implements Iterable<DataStatistics.RelationshipTypeC
                 counts[i] += this.counts[i];
             }
         }
-    }
-
-    public RelationshipTypeCount get( int index )
-    {
-        return typeCounts[index];
-    }
-
-    public IntSet types( int startingFromType, int upToType )
-    {
-        final MutableIntSet set = new IntHashSet( (upToType - startingFromType) * 2 );
-        for ( int i = startingFromType; i < upToType; i++ )
-        {
-            set.add( get( i ).getTypeId() );
-        }
-        return set;
-    }
-
-    public long getNodeCount()
-    {
-        return entityCounts.nodesImported();
-    }
-
-    public long getPropertyCount()
-    {
-        return entityCounts.propertiesImported();
-    }
-
-    public long getRelationshipCount()
-    {
-        long sum = 0;
-        for ( RelationshipTypeCount type : typeCounts )
-        {
-            sum += type.count;
-        }
-        return sum;
-    }
-
-    @Override
-    public String toString()
-    {
-        return format( "Imported:%n  %d nodes%n  %d relationships%n  %d properties", getNodeCount(), getRelationshipCount(), getPropertyCount() );
     }
 }

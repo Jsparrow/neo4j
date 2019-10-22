@@ -181,13 +181,13 @@ class RecordRelationshipGroupCursor extends RelationshipGroupRecord implements S
     @Override
     public void reset()
     {
-        if ( open )
-        {
-            open = false;
-            bufferedGroup = null;
-            setId( NO_ID );
-            clear();
-        }
+        if (!open) {
+			return;
+		}
+		open = false;
+		bufferedGroup = null;
+		setId( NO_ID );
+		clear();
     }
 
     @Override
@@ -289,7 +289,8 @@ class RecordRelationshipGroupCursor extends RelationshipGroupRecord implements S
             {
                 mode = mode + "direct";
             }
-            return "RelationshipGroupCursor[id=" + getId() + ", open state with: " + mode + ", underlying record=" + super.toString() + "]";
+            return new StringBuilder().append("RelationshipGroupCursor[id=").append(getId()).append(", open state with: ").append(mode).append(", underlying record=")
+					.append(super.toString()).append("]").toString();
         }
     }
 
@@ -337,11 +338,11 @@ class RecordRelationshipGroupCursor extends RelationshipGroupRecord implements S
             edgePage = null;
         }
 
-        if ( page != null )
-        {
-            page.close();
-            page = null;
-        }
+        if (page == null) {
+			return;
+		}
+		page.close();
+		page = null;
     }
 
     @Override
@@ -350,7 +351,20 @@ class RecordRelationshipGroupCursor extends RelationshipGroupRecord implements S
         return getId();
     }
 
-    static class BufferedGroup
+    private PageCursor groupPage( long reference )
+    {
+        return groupStore.openPageCursorForReading( reference );
+    }
+
+	private void group( RelationshipGroupRecord record, long reference, PageCursor page )
+    {
+        // We need to load forcefully here since otherwise we cannot traverse over groups
+        // records which have been concurrently deleted (flagged as inUse = false).
+        // @see #org.neo4j.kernel.impl.store.RelationshipChainPointerChasingTest
+        groupStore.getRecordByCursor( reference, record, RecordLoad.FORCE, page );
+    }
+
+	static class BufferedGroup
     {
         final int label;
         final BufferedGroup next;
@@ -414,18 +428,5 @@ class RecordRelationshipGroupCursor extends RelationshipGroupRecord implements S
         {
             return firstLoop;
         }
-    }
-
-    private PageCursor groupPage( long reference )
-    {
-        return groupStore.openPageCursorForReading( reference );
-    }
-
-    private void group( RelationshipGroupRecord record, long reference, PageCursor page )
-    {
-        // We need to load forcefully here since otherwise we cannot traverse over groups
-        // records which have been concurrently deleted (flagged as inUse = false).
-        // @see #org.neo4j.kernel.impl.store.RelationshipChainPointerChasingTest
-        groupStore.getRecordByCursor( reference, record, RecordLoad.FORCE, page );
     }
 }

@@ -67,18 +67,17 @@ public class PathsIT extends AbstractRestFunctionalTestBase
         String response = gen()
         .expectedStatus( Status.OK.getStatusCode() )
         .payload( getAllShortestPathPayLoad( g ) )
-        .post( getServerUri() + "db/data/node/" + a + "/paths" )
+        .post( new StringBuilder().append(getServerUri()).append("db/data/node/").append(a).append("/paths").toString() )
         .entity();
         Collection<?> result = (Collection<?>) JsonHelper.readJson( response );
         assertEquals( 2, result.size() );
-        for ( Object representation : result )
-        {
+        result.forEach(representation -> {
             Map<?, ?> path = (Map<?, ?>) representation;
 
             assertThatPathStartsWith( path, a );
             assertThatPathEndsWith( path, g );
             assertThatPathHasLength( path, 2 );
-        }
+        });
     }
 
 //      Layout
@@ -105,7 +104,7 @@ public class PathsIT extends AbstractRestFunctionalTestBase
         String response = gen()
         .expectedStatus( Status.OK.getStatusCode() )
         .payload( getAllShortestPathPayLoad( g ) )
-        .post( getServerUri() + "db/data/node/" + a + "/path" )
+        .post( new StringBuilder().append(getServerUri()).append("db/data/node/").append(a).append("/path").toString() )
         .entity();
         // Get single shortest path
 
@@ -118,14 +117,14 @@ public class PathsIT extends AbstractRestFunctionalTestBase
 
     private void assertThatPathStartsWith( final Map<?, ?> path, final long start )
     {
-        assertTrue( "Path should start with " + start + "\nBut it was " + path, path.get( "start" )
+        assertTrue( new StringBuilder().append("Path should start with ").append(start).append("\nBut it was ").append(path).toString(), path.get( "start" )
                 .toString()
                 .endsWith( "/node/" + start ) );
     }
 
     private void assertThatPathEndsWith( final Map<?, ?> path, final long start )
     {
-        assertTrue( "Path should end with " + start + "\nBut it was " + path, path.get( "end" )
+        assertTrue( new StringBuilder().append("Path should end with ").append(start).append("\nBut it was ").append(path).toString(), path.get( "end" )
                 .toString()
                 .endsWith( "/node/" + start ) );
     }
@@ -134,7 +133,7 @@ public class PathsIT extends AbstractRestFunctionalTestBase
     {
         Object actual = path.get( "length" );
 
-        assertEquals( "Expected path to have a length of " + length + "\nBut it was " + actual, length, actual );
+        assertEquals( new StringBuilder().append("Expected path to have a length of ").append(length).append("\nBut it was ").append(actual).toString(), length, actual );
     }
 
 //      Layout
@@ -174,7 +173,7 @@ public class PathsIT extends AbstractRestFunctionalTestBase
         long e = nodeId( data.get(), "e" );
         String response = gen().expectedStatus( Status.OK.getStatusCode() )
                 .payload( getAllPathsUsingDijkstraPayLoad( e, false ) )
-                .post( getServerUri() + "db/data/node/" + a + "/path" )
+                .post( new StringBuilder().append(getServerUri()).append("db/data/node/").append(a).append("/path").toString() )
                 .entity();
         //
         Map<?, ?> path = JsonHelper.jsonToMap( response );
@@ -222,7 +221,7 @@ public class PathsIT extends AbstractRestFunctionalTestBase
         long e = nodeId( data.get(), "e" );
         String response = gen().expectedStatus( Status.OK.getStatusCode() )
                 .payload( getAllPathsUsingDijkstraPayLoad( e, false ) )
-                .post( getServerUri() + "db/data/node/" + a + "/paths" )
+                .post( new StringBuilder().append(getServerUri()).append("db/data/node/").append(a).append("/paths").toString() )
                 .entity();
         //
         List<Map<String, Object>> list = JsonHelper.jsonToList( response );
@@ -282,7 +281,7 @@ public class PathsIT extends AbstractRestFunctionalTestBase
         String response = gen()
                 .expectedStatus( Status.OK.getStatusCode() )
                 .payload( getAllPathsUsingDijkstraPayLoad( e, false ) )
-                .post( getServerUri() + "db/data/node/" + a + "/path" )
+                .post( new StringBuilder().append(getServerUri()).append("db/data/node/").append(a).append("/path").toString() )
                 .entity();
 
         Map<?, ?> path = JsonHelper.jsonToMap( response );
@@ -309,13 +308,11 @@ public class PathsIT extends AbstractRestFunctionalTestBase
     {
         long a = nodeId( data.get(), "a" );
         long g = nodeId( data.get(), "g" );
-        String noHitsJson = "{\"to\":\""
-            + nodeUri( g )
-            + "\", \"max_depth\":1, \"relationships\":{\"type\":\"dummy\", \"direction\":\"in\"}, \"algorithm\":\"shortestPath\"}";
+        String noHitsJson = new StringBuilder().append("{\"to\":\"").append(nodeUri( g )).append("\", \"max_depth\":1, \"relationships\":{\"type\":\"dummy\", \"direction\":\"in\"}, \"algorithm\":\"shortestPath\"}").toString();
         String entity = gen()
         .expectedStatus( Status.NOT_FOUND.getStatusCode() )
         .payload( noHitsJson )
-        .post( getServerUri() + "db/data/node/" + a + "/path" )
+        .post( new StringBuilder().append(getServerUri()).append("db/data/node/").append(a).append("/path").toString() )
         .entity();
         System.out.println( entity );
     }
@@ -328,23 +325,20 @@ public class PathsIT extends AbstractRestFunctionalTestBase
 
     private String nodeUri( final long l )
     {
-        return getServerUri() + "db/data/node/" + l;
+        return new StringBuilder().append(getServerUri()).append("db/data/node/").append(l).toString();
     }
 
     private String getAllShortestPathPayLoad( final long to )
     {
-        String json = "{\"to\":\""
-            + nodeUri( to )
-            + "\", \"max_depth\":3, \"relationships\":{\"type\":\"to\", \"direction\":\"out\"}, \"algorithm\":\"shortestPath\"}";
+        String json = new StringBuilder().append("{\"to\":\"").append(nodeUri( to )).append("\", \"max_depth\":3, \"relationships\":{\"type\":\"to\", \"direction\":\"out\"}, \"algorithm\":\"shortestPath\"}").toString();
         return json;
     }
 
     //
     private String getAllPathsUsingDijkstraPayLoad( final long to, final boolean includeDefaultCost )
     {
-        String json = "{\"to\":\"" + nodeUri( to ) + "\"" + ", \"cost_property\":\"cost\""
-        + ( includeDefaultCost ? ", \"default_cost\":1" : "" )
-        + ", \"relationships\":{\"type\":\"to\", \"direction\":\"out\"}, \"algorithm\":\"dijkstra\"}";
+        String json = new StringBuilder().append("{\"to\":\"").append(nodeUri( to )).append("\"").append(", \"cost_property\":\"cost\"").append(includeDefaultCost ? ", \"default_cost\":1" : "")
+				.append(", \"relationships\":{\"type\":\"to\", \"direction\":\"out\"}, \"algorithm\":\"dijkstra\"}").toString();
         return json;
     }
 

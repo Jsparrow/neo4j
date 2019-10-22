@@ -94,9 +94,10 @@ public class DBMSModuleTest
                 return argument.contains( UserService.class.getName() );
             }
 
-            public String toString()
+            @Override
+			public String toString()
             {
-                return "<List containing " + UserService.class.getName() + ">";
+                return new StringBuilder().append("<List containing ").append(UserService.class.getName()).append(">").toString();
             }
         } ), anyString(), anyCollection() );
     }

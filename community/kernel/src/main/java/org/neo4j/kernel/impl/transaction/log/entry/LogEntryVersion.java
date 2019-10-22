@@ -127,7 +127,7 @@ public enum LogEntryVersion
         LogEntryParser<LogEntry> candidate = (type >= 0 && type < entryTypes.length) ? entryTypes[type] : null;
         if ( candidate == null )
         {
-            throw new IllegalArgumentException( "Unknown entry type " + type + " for version " + version );
+            throw new IllegalArgumentException( new StringBuilder().append("Unknown entry type ").append(type).append(" for version ").append(version).toString() );
         }
         return candidate;
     }
@@ -167,9 +167,7 @@ public enum LogEntryVersion
                     positiveVersion, positiveCurrentVersion ) );
         }
         throw new UnsupportedLogVersionException( String.format(
-                "Transaction logs contains entries with prefix %d, and the lowest supported prefix is %d. This " +
-                        "indicates that the log files originates from an older version of neo4j, which we don't support " +
-                        "migrations from.",
+                new StringBuilder().append("Transaction logs contains entries with prefix %d, and the lowest supported prefix is %d. This ").append("indicates that the log files originates from an older version of neo4j, which we don't support ").append("migrations from.").toString(),
                 positiveVersion, LOWEST_VERSION ) );
     }
 

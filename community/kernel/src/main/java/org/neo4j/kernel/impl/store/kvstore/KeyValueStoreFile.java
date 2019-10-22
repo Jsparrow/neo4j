@@ -167,7 +167,7 @@ public class KeyValueStoreFile implements Closeable
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[" + file + "]";
+        return new StringBuilder().append(getClass().getSimpleName()).append("[").append(file).append("]").toString();
     }
 
     static <Buffer extends BigEndianByteArrayBuffer> void scanAll( PagedFile file, int startOffset,
@@ -236,7 +236,7 @@ public class KeyValueStoreFile implements Closeable
 
     private static void throwFailedRead( PageCursor cursor, int offset )
     {
-        throwReadError( cursor, offset, "Failed to read after " + MAX_LOOKUP_RETRY_COUNT + " retries" );
+        throwReadError( cursor, offset, new StringBuilder().append("Failed to read after ").append(MAX_LOOKUP_RETRY_COUNT).append(" retries").toString() );
     }
 
     private static void throwOutOfBounds( PageCursor cursor, int offset )
@@ -250,8 +250,8 @@ public class KeyValueStoreFile implements Closeable
         int pageSize = cursor.getCurrentPageSize();
         String file = cursor.getCurrentFile().getAbsolutePath();
         throw new UnderlyingStorageException(
-                error + " when reading key-value pair from offset " + offset + " into page " +
-                pageId + " (with a size of " + pageSize + " bytes) of file " + file );
+                new StringBuilder().append(error).append(" when reading key-value pair from offset ").append(offset).append(" into page ").append(pageId).append(" (with a size of ")
+						.append(pageSize).append(" bytes) of file ").append(file).toString() );
     }
 
     /**

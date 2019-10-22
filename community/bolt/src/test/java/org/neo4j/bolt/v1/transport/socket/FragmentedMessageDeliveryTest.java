@@ -155,12 +155,8 @@ public class FragmentedMessageDeliveryTest
         }
         catch ( AssertionError e )
         {
-            throw new AssertionError( "Failed to handle fragmented delivery.\n" +
-                                      "Messages: " + Arrays.toString( messages ) + "\n" +
-                                      "Chunk size: " + chunkSize + "\n" +
-                                      "Serialized data delivered in fragments: " + describeFragments( fragments ) +
-                                      "\n" +
-                                      "Unfragmented data: " + HexPrinter.hex( unfragmented ) + "\n", e );
+            throw new AssertionError( new StringBuilder().append("Failed to handle fragmented delivery.\n").append("Messages: ").append(Arrays.toString( messages )).append("\n").append("Chunk size: ").append(chunkSize).append("\n")
+					.append("Serialized data delivered in fragments: ").append(describeFragments( fragments )).append("\n").append("Unfragmented data: ").append(HexPrinter.hex( unfragmented )).append("\n").toString(), e );
         }
     }
 

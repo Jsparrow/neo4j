@@ -75,21 +75,19 @@ public class DiagnosticsReportCommand implements AdminCommand
             .withArgument( new OptionalForceArgument() )
             .withArgument( new OptionalNamedArg( PID_KEY, "1234", "", "Specify process id of running neo4j instance" ) )
             .withPositionalArgument( new ClassifierFiltersArgument() );
-
-    private final Path homeDir;
-    private final Path configDir;
-    static final String[] DEFAULT_CLASSIFIERS = new String[]{"logs", "config", "plugins", "tree", "metrics", "threads", "env", "sysprop", "ps"};
-
-    private JMXDumper jmxDumper;
-    private boolean verbose;
-    private final PrintStream out;
-    private final FileSystemAbstraction fs;
-    private final PrintStream err;
-    private static final DateTimeFormatter filenameDateTimeFormatter =
+	static final String[] DEFAULT_CLASSIFIERS = new String[]{"logs", "config", "plugins", "tree", "metrics", "threads", "env", "sysprop", "ps"};
+	private static final DateTimeFormatter filenameDateTimeFormatter =
             new DateTimeFormatterBuilder().appendPattern( "yyyy-MM-dd_HHmmss" ).toFormatter();
-    private long pid;
+	private final Path homeDir;
+	private final Path configDir;
+	private JMXDumper jmxDumper;
+	private boolean verbose;
+	private final PrintStream out;
+	private final FileSystemAbstraction fs;
+	private final PrintStream err;
+	private long pid;
 
-    DiagnosticsReportCommand( Path homeDir, Path configDir, OutsideWorld outsideWorld )
+	DiagnosticsReportCommand( Path homeDir, Path configDir, OutsideWorld outsideWorld )
     {
         this.homeDir = homeDir;
         this.configDir = configDir;
@@ -98,12 +96,12 @@ public class DiagnosticsReportCommand implements AdminCommand
         err = outsideWorld.errorStream();
     }
 
-    public static Arguments allArguments()
+	public static Arguments allArguments()
     {
         return arguments;
     }
 
-    @Override
+	@Override
     public void execute( String[] stringArgs ) throws IncorrectUsage, CommandFailed
     {
         Args args = Args.withFlags( "list", "to", "verbose", "force", PID_KEY ).parse( stringArgs );
@@ -136,7 +134,7 @@ public class DiagnosticsReportCommand implements AdminCommand
         }
     }
 
-    private static long parsePid( Args args ) throws CommandFailed
+	private static long parsePid( Args args ) throws CommandFailed
     {
         if ( args.has( PID_KEY ) )
         {
@@ -152,14 +150,14 @@ public class DiagnosticsReportCommand implements AdminCommand
         return NO_PID;
     }
 
-    private String getDefaultFilename() throws UnknownHostException
+	private String getDefaultFilename() throws UnknownHostException
     {
         String hostName = InetAddress.getLocalHost().getHostName();
         String safeFilename = hostName.replaceAll( "[^a-zA-Z0-9._]+", "_" );
-        return safeFilename + "-" + LocalDateTime.now().format( filenameDateTimeFormatter ) + ".zip";
+        return new StringBuilder().append(safeFilename).append("-").append(LocalDateTime.now().format( filenameDateTimeFormatter )).append(".zip").toString();
     }
 
-    private DiagnosticsReporterProgress buildProgress()
+	private DiagnosticsReporterProgress buildProgress()
     {
         DiagnosticsReporterProgress progress;
         if ( System.console() != null )
@@ -173,7 +171,7 @@ public class DiagnosticsReportCommand implements AdminCommand
         return progress;
     }
 
-    private Optional<Set<String>> parseAndValidateArguments( Args args, DiagnosticsReporter reporter ) throws IncorrectUsage
+	private Optional<Set<String>> parseAndValidateArguments( Args args, DiagnosticsReporter reporter ) throws IncorrectUsage
     {
         Set<String> availableClassifiers = reporter.getAvailableClassifiers();
 
@@ -192,7 +190,7 @@ public class DiagnosticsReportCommand implements AdminCommand
             {
                 classifiers.remove( "all" );
                 throw new IncorrectUsage(
-                        "If you specify 'all' this has to be the only classifier. Found ['" + String.join( "','", classifiers ) + "'] as well." );
+                        new StringBuilder().append("If you specify 'all' this has to be the only classifier. Found ['").append(String.join( "','", classifiers )).append("'] as well.").toString() );
             }
         }
         else
@@ -208,7 +206,7 @@ public class DiagnosticsReportCommand implements AdminCommand
         return Optional.of( classifiers );
     }
 
-    private void validateClassifiers( Set<String> availableClassifiers, Set<String> orphans ) throws IncorrectUsage
+	private void validateClassifiers( Set<String> availableClassifiers, Set<String> orphans ) throws IncorrectUsage
     {
         for ( String classifier : orphans )
         {
@@ -219,7 +217,7 @@ public class DiagnosticsReportCommand implements AdminCommand
         }
     }
 
-    private void addDefaultClassifiers( Set<String> availableClassifiers, Set<String> orphans )
+	private void addDefaultClassifiers( Set<String> availableClassifiers, Set<String> orphans )
     {
         for ( String classifier : DEFAULT_CLASSIFIERS )
         {
@@ -230,16 +228,13 @@ public class DiagnosticsReportCommand implements AdminCommand
         }
     }
 
-    private void listClassifiers( Set<String> availableClassifiers )
+	private void listClassifiers( Set<String> availableClassifiers )
     {
         out.println( "All available classifiers:" );
-        for ( String classifier : availableClassifiers )
-        {
-            out.printf( "  %-10s %s%n", classifier, describeClassifier( classifier ) );
-        }
+        availableClassifiers.forEach(classifier -> out.printf("  %-10s %s%n", classifier, describeClassifier(classifier)));
     }
 
-    private DiagnosticsReporter createAndRegisterSources() throws CommandFailed
+	private DiagnosticsReporter createAndRegisterSources() throws CommandFailed
     {
         DiagnosticsReporter reporter = new DiagnosticsReporter();
         File configFile = configDir.resolve( Config.DEFAULT_CONFIG_FILE_NAME ).toFile();
@@ -260,7 +255,7 @@ public class DiagnosticsReportCommand implements AdminCommand
         return reporter;
     }
 
-    private void registerJMXSources( DiagnosticsReporter reporter )
+	private void registerJMXSources( DiagnosticsReporter reporter )
     {
         Optional<JmxDump> jmxDump;
         if ( pid == NO_PID )
@@ -281,7 +276,7 @@ public class DiagnosticsReportCommand implements AdminCommand
         } );
     }
 
-    private Config getConfig( File configFile ) throws CommandFailed
+	private Config getConfig( File configFile ) throws CommandFailed
     {
         if ( !fs.fileExists( configFile ) )
         {
@@ -297,7 +292,7 @@ public class DiagnosticsReportCommand implements AdminCommand
         }
     }
 
-    static String describeClassifier( String classifier )
+	static String describeClassifier( String classifier )
     {
         switch ( classifier )
         {
@@ -334,7 +329,7 @@ public class DiagnosticsReportCommand implements AdminCommand
         throw new IllegalArgumentException( "Unknown classifier: " + classifier );
     }
 
-    private static DiagnosticsReportSource runningProcesses()
+	private static DiagnosticsReportSource runningProcesses()
     {
         return DiagnosticsReportSources.newDiagnosticsString( "ps.csv", () ->
         {
@@ -352,19 +347,12 @@ public class DiagnosticsReportCommand implements AdminCommand
                     .append( escapeCsv( "Priority" ) ).append( ',' )
                     .append( escapeCsv( "Full command" ) ).append( '\n' );
 
-            for ( final ProcessInfo processInfo : processesList )
-            {
-                sb.append( processInfo.getPid() ).append( ',' )
-                        .append( escapeCsv( processInfo.getName() ) ).append( ',' )
-                        .append( processInfo.getTime() ).append( ',' )
-                        .append( escapeCsv( processInfo.getUser() ) ).append( ',' )
-                        .append( processInfo.getVirtualMemory() ).append( ',' )
-                        .append( processInfo.getPhysicalMemory() ).append( ',' )
-                        .append( processInfo.getCpuUsage() ).append( ',' )
-                        .append( processInfo.getStartTime() ).append( ',' )
-                        .append( processInfo.getPriority() ).append( ',' )
-                        .append( escapeCsv( processInfo.getCommand() ) ).append( '\n' );
-            }
+            processesList.forEach((final ProcessInfo processInfo) -> sb.append(processInfo.getPid()).append(',').append(escapeCsv(processInfo.getName())).append(',')
+					.append(processInfo.getTime()).append(',').append(escapeCsv(processInfo.getUser())).append(',')
+					.append(processInfo.getVirtualMemory()).append(',').append(processInfo.getPhysicalMemory())
+					.append(',').append(processInfo.getCpuUsage()).append(',').append(processInfo.getStartTime())
+					.append(',').append(processInfo.getPriority()).append(',')
+					.append(escapeCsv(processInfo.getCommand())).append('\n'));
             return sb.toString();
         } );
     }

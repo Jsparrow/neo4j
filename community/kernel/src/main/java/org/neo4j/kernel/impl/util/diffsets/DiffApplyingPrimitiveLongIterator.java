@@ -33,7 +33,76 @@ import org.neo4j.graphdb.Resource;
  */
 class DiffApplyingPrimitiveLongIterator extends PrimitiveLongBaseIterator implements PrimitiveLongResourceIterator
 {
-    protected enum Phase
+    private final LongIterator source;
+	private final LongIterator addedElementsIterator;
+	private final LongSet addedElements;
+	private final LongSet removedElements;
+	@Nullable
+    private final Resource resource;
+	private Phase phase;
+
+	private DiffApplyingPrimitiveLongIterator( LongIterator source, LongSet addedElements,
+            LongSet removedElements,
+            @Nullable Resource resource )
+    {
+        this.source = source;
+        this.addedElements = addedElements.freeze();
+        this.addedElementsIterator = this.addedElements.longIterator();
+        this.removedElements = removedElements;
+        this.resource = resource;
+        this.phase = Phase.FILTERED_SOURCE;
+    }
+
+	static LongIterator augment( LongIterator source, LongSet addedElements, LongSet removedElements )
+    {
+        return new DiffApplyingPrimitiveLongIterator( source, addedElements, removedElements, null );
+    }
+
+	static PrimitiveLongResourceIterator augment( PrimitiveLongResourceIterator source, LongSet addedElements, LongSet removedElements )
+    {
+        return new DiffApplyingPrimitiveLongIterator( source, addedElements, removedElements, source );
+    }
+
+	@Override
+    protected boolean fetchNext()
+    {
+        return phase.fetchNext( this );
+    }
+
+	private boolean computeNextFromSourceAndFilter()
+    {
+        while ( source.hasNext() )
+        {
+            long value = source.next();
+            if ( !removedElements.contains( value ) && !addedElements.contains( value ) )
+            {
+                return next( value );
+            }
+        }
+        transitionToAddedElements();
+        return phase.fetchNext( this );
+    }
+
+	private void transitionToAddedElements()
+    {
+        phase = addedElementsIterator.hasNext() ? Phase.ADDED_ELEMENTS : Phase.NO_ADDED_ELEMENTS;
+    }
+
+	private boolean computeNextFromAddedElements()
+    {
+        return addedElementsIterator.hasNext() && next( addedElementsIterator.next() );
+    }
+
+	@Override
+    public void close()
+    {
+        if ( resource != null )
+        {
+            resource.close();
+        }
+    }
+
+	protected enum Phase
     {
         FILTERED_SOURCE
                 {
@@ -63,74 +132,5 @@ class DiffApplyingPrimitiveLongIterator extends PrimitiveLongBaseIterator implem
                 };
 
         abstract boolean fetchNext( DiffApplyingPrimitiveLongIterator self );
-    }
-
-    private final LongIterator source;
-    private final LongIterator addedElementsIterator;
-    private final LongSet addedElements;
-    private final LongSet removedElements;
-    @Nullable
-    private final Resource resource;
-    private Phase phase;
-
-    private DiffApplyingPrimitiveLongIterator( LongIterator source, LongSet addedElements,
-            LongSet removedElements,
-            @Nullable Resource resource )
-    {
-        this.source = source;
-        this.addedElements = addedElements.freeze();
-        this.addedElementsIterator = this.addedElements.longIterator();
-        this.removedElements = removedElements;
-        this.resource = resource;
-        this.phase = Phase.FILTERED_SOURCE;
-    }
-
-    static LongIterator augment( LongIterator source, LongSet addedElements, LongSet removedElements )
-    {
-        return new DiffApplyingPrimitiveLongIterator( source, addedElements, removedElements, null );
-    }
-
-    static PrimitiveLongResourceIterator augment( PrimitiveLongResourceIterator source, LongSet addedElements, LongSet removedElements )
-    {
-        return new DiffApplyingPrimitiveLongIterator( source, addedElements, removedElements, source );
-    }
-
-    @Override
-    protected boolean fetchNext()
-    {
-        return phase.fetchNext( this );
-    }
-
-    private boolean computeNextFromSourceAndFilter()
-    {
-        while ( source.hasNext() )
-        {
-            long value = source.next();
-            if ( !removedElements.contains( value ) && !addedElements.contains( value ) )
-            {
-                return next( value );
-            }
-        }
-        transitionToAddedElements();
-        return phase.fetchNext( this );
-    }
-
-    private void transitionToAddedElements()
-    {
-        phase = addedElementsIterator.hasNext() ? Phase.ADDED_ELEMENTS : Phase.NO_ADDED_ELEMENTS;
-    }
-
-    private boolean computeNextFromAddedElements()
-    {
-        return addedElementsIterator.hasNext() && next( addedElementsIterator.next() );
-    }
-
-    @Override
-    public void close()
-    {
-        if ( resource != null )
-        {
-            resource.close();
-        }
     }
 }

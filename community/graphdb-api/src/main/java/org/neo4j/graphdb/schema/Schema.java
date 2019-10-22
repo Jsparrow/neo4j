@@ -36,18 +36,6 @@ import org.neo4j.graphdb.index.IndexPopulationProgress;
 public interface Schema
 {
     /**
-     * The states that an index can be in. This mostly relates to tracking the background
-     * population of an index, to tell when it is done populating and is online serving
-     * requests.
-     */
-    enum IndexState
-    {
-        ONLINE,
-        POPULATING,
-        FAILED
-    }
-
-    /**
      * Returns an {@link IndexCreator} where details about the index to create can be
      * specified. When all details have been entered {@link IndexCreator#create() create}
      * must be called for it to actually be created.
@@ -64,18 +52,18 @@ public interface Schema
      */
     IndexCreator indexFor( Label label );
 
-    /**
+	/**
      * @param label the {@link Label} to get {@link IndexDefinition indexes} for.
      * @return all {@link IndexDefinition indexes} attached to the given {@link Label label}.
      */
     Iterable<IndexDefinition> getIndexes( Label label );
 
-    /**
+	/**
      * @return all {@link IndexDefinition indexes} in this database.
      */
     Iterable<IndexDefinition> getIndexes();
 
-    /**
+	/**
      * Poll the database for the state of a given index. This can be used to track in which
      * state the creation of the index is, for example if it's still
      * {@link IndexState#POPULATING populating} in the background, or has come
@@ -86,7 +74,7 @@ public interface Schema
      */
     IndexState getIndexState( IndexDefinition index );
 
-    /**
+	/**
      * Poll the database for the population progress. This can be used to track the progress of the
      * population job associated to the given index. If the index is
      * {@link IndexState#POPULATING populating} or {@link IndexState#ONLINE online}, the state will contain current
@@ -99,7 +87,7 @@ public interface Schema
      */
     IndexPopulationProgress getIndexPopulationProgress( IndexDefinition index );
 
-    /**
+	/**
      * If {@link #getIndexState(IndexDefinition)} return {@link IndexState#FAILED} this method will
      * return the failure description.
      * @param index the {@link IndexDefinition} to get failure from.
@@ -108,7 +96,7 @@ public interface Schema
      */
     String getIndexFailure( IndexDefinition index );
 
-    /**
+	/**
      * Returns a {@link ConstraintCreator} where details about the constraint can be
      * specified. When all details have been entered {@link ConstraintCreator#create()}
      * must be called for it to actually be created.
@@ -123,24 +111,24 @@ public interface Schema
      */
     ConstraintCreator constraintFor( Label label );
 
-    /**
+	/**
      * @param label the {@linkplain Label label} to get constraints for.
      * @return all constraints for the given label.
      */
     Iterable<ConstraintDefinition> getConstraints( Label label );
 
-    /**
+	/**
      * @param type the {@linkplain RelationshipType relationship type} to get constraints for.
      * @return all constraints for the given relationship type.
      */
     Iterable<ConstraintDefinition> getConstraints( RelationshipType type );
 
-    /**
+	/**
      * @return all constraints
      */
     Iterable<ConstraintDefinition> getConstraints();
 
-    /**
+	/**
      * Wait until an index comes online
      *
      * @param index the index that we want to wait for
@@ -152,7 +140,7 @@ public interface Schema
      */
     void awaitIndexOnline( IndexDefinition index, long duration, TimeUnit unit );
 
-    /**
+	/**
      * Wait until all indices comes online
      *
      * @param duration duration to wait for all indexes to come online
@@ -163,11 +151,23 @@ public interface Schema
      */
     void awaitIndexesOnline( long duration, TimeUnit unit );
 
-    /**
+	/**
      * Get an {@link IndexDefinition} by the given name of the index.
      * @param indexName The given name of the index.
      * @return The index with that given name.
      * @throws IllegalArgumentException if there is no index with that given name.
      */
     IndexDefinition getIndexByName( String indexName );
+
+	/**
+     * The states that an index can be in. This mostly relates to tracking the background
+     * population of an index, to tell when it is done populating and is online serving
+     * requests.
+     */
+    enum IndexState
+    {
+        ONLINE,
+        POPULATING,
+        FAILED
+    }
 }

@@ -44,12 +44,10 @@ public class DropConstraintFailureException extends SchemaKernelException
     public String getUserMessage( TokenNameLookup tokenNameLookup )
     {
         String message = "Unable to drop " + constraint.userDescription( tokenNameLookup );
-        if ( getCause() instanceof KernelException )
-        {
-            KernelException cause = (KernelException) getCause();
-
-            return String.format( "%s:%n%s", message, cause.getUserMessage( tokenNameLookup ) );
-        }
-        return message;
+        if (!(getCause() instanceof KernelException)) {
+			return message;
+		}
+		KernelException cause = (KernelException) getCause();
+		return String.format( "%s:%n%s", message, cause.getUserMessage( tokenNameLookup ) );
     }
 }

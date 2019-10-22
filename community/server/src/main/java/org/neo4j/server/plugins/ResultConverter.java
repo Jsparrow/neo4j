@@ -36,12 +36,109 @@ import org.neo4j.server.rest.repr.ValueRepresentation;
 
 abstract class ResultConverter
 {
-    static ResultConverter get( Type type )
+    private static final ResultConverter IDENTITY_RESULT = new ResultConverter()
+            {
+                @Override
+                Representation convert( Object obj )
+                {
+                    return (Representation) obj;
+                }
+
+                @Override
+                RepresentationType type()
+                {
+                    return null;
+                }
+            };
+	private static final ResultConverter NODE_RESULT = new ValueResult( RepresentationType.NODE )
+            {
+                @Override
+                Representation convert( Object obj )
+                {
+                    return new NodeRepresentation( (Node) obj );
+                }
+            };
+	private static final ResultConverter RELATIONSHIP_RESULT = new ValueResult( RepresentationType.RELATIONSHIP )
+            {
+                @Override
+                Representation convert( Object obj )
+                {
+                    return new RelationshipRepresentation( (Relationship) obj );
+                }
+            };
+	private static final ResultConverter PATH_RESULT = new ValueResult( RepresentationType.PATH )
+            {
+                @Override
+                Representation convert( Object obj )
+                {
+                    return new PathRepresentation<>( (Path) obj );
+                }
+            };
+	private static final ResultConverter STRING_RESULT = new ValueResult( RepresentationType.STRING )
+            {
+                @Override
+                Representation convert( Object obj )
+                {
+                    return ValueRepresentation.string( (String) obj );
+                }
+            };
+	private static final ResultConverter LONG_RESULT = new ValueResult( RepresentationType.LONG )
+            {
+                @Override
+                Representation convert( Object obj )
+                {
+                    return ValueRepresentation.number( ( (Number) obj ).longValue() );
+                }
+            };
+	private static final ResultConverter DOUBLE_RESULT = new ValueResult( RepresentationType.DOUBLE )
+            {
+                @Override
+                Representation convert( Object obj )
+                {
+                    return ValueRepresentation.number( ( (Number) obj ).doubleValue() );
+                }
+            };
+	private static final ResultConverter BOOL_RESULT = new ValueResult( RepresentationType.BOOLEAN )
+            {
+                @Override
+                @SuppressWarnings( "boxing" )
+                Representation convert( Object obj )
+                {
+                    return ValueRepresentation.bool( (Boolean) obj );
+                }
+            };
+	private static final ResultConverter INT_RESULT = new ValueResult( RepresentationType.INTEGER )
+            {
+                @Override
+                Representation convert( Object obj )
+                {
+                    return ValueRepresentation.number( ( (Number) obj ).intValue() );
+                }
+            };
+	private static final ResultConverter CHAR_RESULT = new ValueResult( RepresentationType.CHAR )
+            {
+                @Override
+                @SuppressWarnings( "boxing" )
+                Representation convert( Object obj )
+                {
+                    return ValueRepresentation.number( (Character) obj );
+                }
+            };
+	private static final ResultConverter VOID_RESULT = new ValueResult( RepresentationType.NOTHING )
+            {
+                @Override
+                Representation convert( Object obj )
+                {
+                    return Representation.emptyRepresentation();
+                }
+            };
+
+	static ResultConverter get( Type type )
     {
         return get( type, true );
     }
 
-    private static ResultConverter get( Type type, boolean allowComplex )
+	private static ResultConverter get( Type type, boolean allowComplex )
     {
         if ( type instanceof Class<?> )
         {
@@ -88,9 +185,9 @@ abstract class ResultConverter
                 return CHAR_RESULT;
             }
             else if ( cls.isPrimitive() || ( Number.class.isAssignableFrom( cls ) && //
-                      cls.getPackage()
-                              .getName()
-                              .equals( "java.lang" ) ) )
+                      "java.lang"
+                              .equals( cls.getPackage()
+							          .getName() ) ) )
             {
                 return INT_RESULT;
             }
@@ -113,11 +210,11 @@ abstract class ResultConverter
         throw new IllegalStateException( "Illegal result type: " + type );
     }
 
-    abstract Representation convert( Object obj );
+	abstract Representation convert( Object obj );
 
-    abstract RepresentationType type();
+	abstract RepresentationType type();
 
-    private abstract static class ValueResult extends ResultConverter
+	private abstract static class ValueResult extends ResultConverter
     {
         private final RepresentationType type;
 
@@ -132,103 +229,6 @@ abstract class ResultConverter
             return type;
         }
     }
-
-    private static final ResultConverter IDENTITY_RESULT = new ResultConverter()
-            {
-                @Override
-                Representation convert( Object obj )
-                {
-                    return (Representation) obj;
-                }
-
-                @Override
-                RepresentationType type()
-                {
-                    return null;
-                }
-            };
-    private static final ResultConverter NODE_RESULT = new ValueResult( RepresentationType.NODE )
-            {
-                @Override
-                Representation convert( Object obj )
-                {
-                    return new NodeRepresentation( (Node) obj );
-                }
-            };
-    private static final ResultConverter RELATIONSHIP_RESULT = new ValueResult( RepresentationType.RELATIONSHIP )
-            {
-                @Override
-                Representation convert( Object obj )
-                {
-                    return new RelationshipRepresentation( (Relationship) obj );
-                }
-            };
-    private static final ResultConverter PATH_RESULT = new ValueResult( RepresentationType.PATH )
-            {
-                @Override
-                Representation convert( Object obj )
-                {
-                    return new PathRepresentation<>( (Path) obj );
-                }
-            };
-    private static final ResultConverter STRING_RESULT = new ValueResult( RepresentationType.STRING )
-            {
-                @Override
-                Representation convert( Object obj )
-                {
-                    return ValueRepresentation.string( (String) obj );
-                }
-            };
-    private static final ResultConverter LONG_RESULT = new ValueResult( RepresentationType.LONG )
-            {
-                @Override
-                Representation convert( Object obj )
-                {
-                    return ValueRepresentation.number( ( (Number) obj ).longValue() );
-                }
-            };
-    private static final ResultConverter DOUBLE_RESULT = new ValueResult( RepresentationType.DOUBLE )
-            {
-                @Override
-                Representation convert( Object obj )
-                {
-                    return ValueRepresentation.number( ( (Number) obj ).doubleValue() );
-                }
-            };
-    private static final ResultConverter BOOL_RESULT = new ValueResult( RepresentationType.BOOLEAN )
-            {
-                @Override
-                @SuppressWarnings( "boxing" )
-                Representation convert( Object obj )
-                {
-                    return ValueRepresentation.bool( (Boolean) obj );
-                }
-            };
-    private static final ResultConverter INT_RESULT = new ValueResult( RepresentationType.INTEGER )
-            {
-                @Override
-                Representation convert( Object obj )
-                {
-                    return ValueRepresentation.number( ( (Number) obj ).intValue() );
-                }
-            };
-    private static final ResultConverter CHAR_RESULT = new ValueResult( RepresentationType.CHAR )
-            {
-                @Override
-                @SuppressWarnings( "boxing" )
-                Representation convert( Object obj )
-                {
-                    return ValueRepresentation.number( (Character) obj );
-                }
-            };
-    private static final ResultConverter VOID_RESULT = new ValueResult( RepresentationType.NOTHING )
-            {
-                @Override
-                Representation convert( Object obj )
-                {
-                    return Representation.emptyRepresentation();
-                }
-            };
 
     private static class ListResult extends ResultConverter
     {

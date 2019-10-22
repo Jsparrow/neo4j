@@ -64,8 +64,7 @@ public enum Direction
             case BOTH:
                 return BOTH;
             default:
-                throw new IllegalStateException( "Unknown Direction "
-                    + "enum: " + this );
+                throw new IllegalStateException( new StringBuilder().append("Unknown Direction ").append("enum: ").append(this).toString() );
         }
     }
 }

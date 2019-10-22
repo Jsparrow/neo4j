@@ -48,12 +48,7 @@ public class CheckConsistencyCommandProvider extends AdminCommand.Provider
     public String description()
     {
         return format(
-                "This command allows for checking the consistency of a database or a backup thereof. It cannot " +
-                        "be used with a database which is currently in use.%n" +
-                        "%n" +
-                        "All checks except 'check-graph' can be quite expensive so it may be useful to turn them off" +
-                        " for very large databases. Increasing the heap size can also be a good idea." +
-                        " See 'neo4j-admin help' for details." );
+                new StringBuilder().append("This command allows for checking the consistency of a database or a backup thereof. It cannot ").append("be used with a database which is currently in use.%n").append("%n").append("All checks except 'check-graph' can be quite expensive so it may be useful to turn them off").append(" for very large databases. Increasing the heap size can also be a good idea.").append(" See 'neo4j-admin help' for details.").toString() );
     }
 
     @Override

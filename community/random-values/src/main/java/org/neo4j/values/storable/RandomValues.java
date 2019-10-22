@@ -76,74 +76,27 @@ import static org.neo4j.values.storable.Values.shortValue;
  */
 public class RandomValues
 {
-    public interface Configuration
-    {
-        int stringMinLength();
-
-        int stringMaxLength();
-
-        int arrayMinLength();
-
-        int arrayMaxLength();
-
-        int maxCodePoint();
-    }
-
-    public static class Default implements Configuration
-    {
-        @Override
-        public int stringMinLength()
-        {
-            return 5;
-        }
-
-        @Override
-        public int stringMaxLength()
-        {
-            return 20;
-        }
-
-        @Override
-        public int arrayMinLength()
-        {
-            return 1;
-        }
-
-        @Override
-        public int arrayMaxLength()
-        {
-            return 10;
-        }
-
-        @Override
-        public int maxCodePoint()
-        {
-            return Character.MAX_CODE_POINT;
-        }
-    }
-
     public static final int MAX_BMP_CODE_POINT = 0xFFFF;
-    public static final Configuration DEFAULT_CONFIGURATION = new Default();
-    static final int MAX_ASCII_CODE_POINT = 0x7F;
-    private static final ValueType[] ALL_TYPES = ValueType.values();
-    private static final ValueType[] ARRAY_TYPES = ValueType.arrayTypes();
-    private static final long NANOS_PER_SECOND = 1_000_000_000L;
+	public static final Configuration DEFAULT_CONFIGURATION = new Default();
+	static final int MAX_ASCII_CODE_POINT = 0x7F;
+	private static final ValueType[] ALL_TYPES = ValueType.values();
+	private static final ValueType[] ARRAY_TYPES = ValueType.arrayTypes();
+	private static final long NANOS_PER_SECOND = 1_000_000_000L;
+	private final Generator generator;
+	private final Configuration configuration;
 
-    private final Generator generator;
-    private final Configuration configuration;
-
-    private RandomValues( Generator generator )
+	private RandomValues( Generator generator )
     {
         this( generator, DEFAULT_CONFIGURATION );
     }
 
-    private RandomValues( Generator generator, Configuration configuration )
+	private RandomValues( Generator generator, Configuration configuration )
     {
         this.generator = generator;
         this.configuration = configuration;
     }
 
-    /**
+	/**
      * Create a {@code RandomValues} with default configuration
      *
      * @return a {@code RandomValues} instance
@@ -153,7 +106,7 @@ public class RandomValues
         return new RandomValues( new RandomGenerator( ThreadLocalRandom.current() ) );
     }
 
-    /**
+	/**
      * Create a {@code RandomValues} with the given configuration
      *
      * @return a {@code RandomValues} instance
@@ -163,7 +116,7 @@ public class RandomValues
         return new RandomValues( new RandomGenerator( ThreadLocalRandom.current() ), configuration );
     }
 
-    /**
+	/**
      * Create a {@code RandomValues} using the given {@link Random} with given configuration
      *
      * @return a {@code RandomValues} instance
@@ -173,7 +126,7 @@ public class RandomValues
         return new RandomValues( new RandomGenerator( random ), configuration );
     }
 
-    /**
+	/**
      * Create a {@code RandomValues} using the given {@link Random} with default configuration
      *
      * @return a {@code RandomValues} instance
@@ -183,7 +136,7 @@ public class RandomValues
         return new RandomValues( new RandomGenerator( random ) );
     }
 
-    /**
+	/**
      * Create a {@code RandomValues} using the given {@link SplittableRandom} with given configuration
      *
      * @return a {@code RandomValues} instance
@@ -193,7 +146,7 @@ public class RandomValues
         return new RandomValues( new SplittableRandomGenerator( random ), configuration );
     }
 
-    /**
+	/**
      * Create a {@code RandomValues} using the given {@link SplittableRandom} with default configuration
      *
      * @return a {@code RandomValues} instance
@@ -203,7 +156,7 @@ public class RandomValues
         return new RandomValues( new SplittableRandomGenerator( random ) );
     }
 
-    /**
+	/**
      * Returns the next {@link Value}, distributed uniformly among the supported Value types.
      *
      * @see RandomValues
@@ -213,7 +166,7 @@ public class RandomValues
         return nextValueOfType( among( ALL_TYPES ) );
     }
 
-    /**
+	/**
      * Returns the next {@link Value}, distributed uniformly among the provided value types.
      *
      * @see RandomValues
@@ -223,14 +176,14 @@ public class RandomValues
         return nextValueOfType( among( types ) );
     }
 
-    public static ValueType[] including( Predicate<ValueType> include )
+	public static ValueType[] including( Predicate<ValueType> include )
     {
         return Arrays.stream( ValueType.values() )
                 .filter( include )
                 .toArray( ValueType[]::new );
     }
 
-    /**
+	/**
      * Create an array containing all value types, excluding provided types.
      */
     public static ValueType[] excluding( ValueType... exclude )
@@ -238,26 +191,26 @@ public class RandomValues
         return excluding( ValueType.values(), exclude );
     }
 
-    public static ValueType[] excluding( ValueType[] among, ValueType... exclude )
+	public static ValueType[] excluding( ValueType[] among, ValueType... exclude )
     {
         return excluding( among, t -> ArrayUtils.contains( exclude, t ) );
     }
 
-    public static ValueType[] excluding( ValueType[] among, Predicate<ValueType> exclude )
+	public static ValueType[] excluding( ValueType[] among, Predicate<ValueType> exclude )
     {
         return Arrays.stream( among )
                 .filter( Predicates.not( exclude ) )
                 .toArray( ValueType[]::new );
     }
 
-    public static ValueType[] typesOfGroup( ValueGroup valueGroup )
+	public static ValueType[] typesOfGroup( ValueGroup valueGroup )
     {
         return Arrays.stream( ValueType.values() )
                 .filter( t -> t.valueGroup == valueGroup )
                 .toArray( ValueType[]::new );
     }
 
-    /**
+	/**
      * Returns the next {@link Value} of provided type.
      *
      * @see RandomValues
@@ -363,7 +316,7 @@ public class RandomValues
         }
     }
 
-    /**
+	/**
      * Returns the next {@link ArrayValue}, distributed uniformly among all array types.
      *
      * @see RandomValues
@@ -373,7 +326,7 @@ public class RandomValues
         return (ArrayValue) nextValueOfType( among( ARRAY_TYPES ) );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public BooleanValue nextBooleanValue()
@@ -381,7 +334,7 @@ public class RandomValues
         return Values.booleanValue( generator.nextBoolean() );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public boolean nextBoolean()
@@ -389,7 +342,7 @@ public class RandomValues
         return generator.nextBoolean();
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public ByteValue nextByteValue()
@@ -397,7 +350,7 @@ public class RandomValues
         return byteValue( (byte) generator.nextInt() );
     }
 
-    /**
+	/**
      * Returns the next {@link ByteValue} between 0 (inclusive) and the specified value (exclusive)
      *
      * @param bound the upper bound (exclusive).  Must be positive.
@@ -408,7 +361,7 @@ public class RandomValues
         return byteValue( (byte) generator.nextInt( bound ) );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public ShortValue nextShortValue()
@@ -416,7 +369,7 @@ public class RandomValues
         return shortValue( (short) generator.nextInt() );
     }
 
-    /**
+	/**
      * Returns the next {@link ShortValue} between 0 (inclusive) and the specified value (exclusive)
      *
      * @param bound the upper bound (exclusive).  Must be positive.
@@ -427,7 +380,7 @@ public class RandomValues
         return shortValue( (short) generator.nextInt( bound ) );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public IntValue nextIntValue()
@@ -435,7 +388,7 @@ public class RandomValues
         return intValue( generator.nextInt() );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public int nextInt()
@@ -443,7 +396,7 @@ public class RandomValues
         return generator.nextInt();
     }
 
-    /**
+	/**
      * Returns the next {@link IntValue} between 0 (inclusive) and the specified value (exclusive)
      *
      * @param bound the upper bound (exclusive).  Must be positive.
@@ -455,7 +408,7 @@ public class RandomValues
         return intValue( generator.nextInt( bound ) );
     }
 
-    /**
+	/**
      * Returns the next {@code int} between 0 (inclusive) and the specified value (exclusive)
      *
      * @param bound the upper bound (exclusive).  Must be positive.
@@ -467,7 +420,7 @@ public class RandomValues
         return generator.nextInt( bound );
     }
 
-    /**
+	/**
      * Returns an {@code int} between the given lower bound (inclusive) and the upper bound (inclusive)
      *
      * @param min minimum value that can be chosen (inclusive)
@@ -480,7 +433,7 @@ public class RandomValues
         return min + generator.nextInt( max - min + 1 );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public long nextLong()
@@ -488,7 +441,7 @@ public class RandomValues
         return generator.nextLong();
     }
 
-    /**
+	/**
      * Returns the next {@code long} between 0 (inclusive) and the specified value (exclusive)
      *
      * @param bound the upper bound (exclusive).  Must be positive.
@@ -500,7 +453,7 @@ public class RandomValues
         return abs( generator.nextLong() ) % bound;
     }
 
-    /**
+	/**
      * Returns a {@code long} between the given lower bound (inclusive) and the upper bound (inclusive)
      *
      * @param min minimum value that can be chosen (inclusive)
@@ -513,7 +466,7 @@ public class RandomValues
         return nextLong( (max - min) + 1L ) + min;
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public LongValue nextLongValue()
@@ -521,7 +474,7 @@ public class RandomValues
         return longValue( generator.nextLong() );
     }
 
-    /**
+	/**
      * Returns the next {@link LongValue} between 0 (inclusive) and the specified value (exclusive)
      *
      * @param bound the upper bound (exclusive).  Must be positive.
@@ -533,7 +486,7 @@ public class RandomValues
         return longValue( nextLong( bound ) );
     }
 
-    /**
+	/**
      * Returns the next {@link LongValue} between the specified lower bound (inclusive) and the specified upper bound (inclusive)
      *
      * @param lower the lower bound (inclusive).
@@ -546,7 +499,7 @@ public class RandomValues
         return longValue( nextLong( (upper - lower) + 1L ) + lower );
     }
 
-    /**
+	/**
      * Returns the next {@link FloatValue} between 0 (inclusive) and 1.0 (exclusive)
      *
      * @return {@link FloatValue}
@@ -557,7 +510,7 @@ public class RandomValues
         return floatValue( generator.nextFloat() );
     }
 
-    /**
+	/**
      * Returns the next {@code float} between 0 (inclusive) and 1.0 (exclusive)
      *
      * @return {@code float}
@@ -568,7 +521,7 @@ public class RandomValues
         return generator.nextFloat();
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public DoubleValue nextDoubleValue()
@@ -576,7 +529,7 @@ public class RandomValues
         return doubleValue( nextDouble() );
     }
 
-    /**
+	/**
      * Returns the next {@code double} between 0 (inclusive) and 1.0 (exclusive)
      *
      * @return {@code float}
@@ -587,12 +540,12 @@ public class RandomValues
         return generator.nextDouble();
     }
 
-    private double doubleBetween( double min, double max )
+	private double doubleBetween( double min, double max )
     {
         return nextDouble() * (max - min) + min;
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public NumberValue nextNumberValue()
@@ -617,19 +570,19 @@ public class RandomValues
         }
     }
 
-    public CharValue nextCharValue()
+	public CharValue nextCharValue()
     {
         return Values.charValue( nextCharRaw() );
     }
 
-    public char nextCharRaw()
+	public char nextCharRaw()
     {
         int codePoint = bmpCodePoint();
         assert (codePoint & ~0xFFFF) == 0;
         return (char) codePoint;
     }
 
-    /**
+	/**
      * @return a {@link TextValue} consisting only of ascii alphabetic and numerical characters.
      * @see RandomValues
      */
@@ -638,7 +591,7 @@ public class RandomValues
         return nextAlphaNumericTextValue( minString(), maxString() );
     }
 
-    /**
+	/**
      * @param minLength the minimum length of the string
      * @param maxLength the maximum length of the string
      * @return a {@link TextValue} consisting only of ascii alphabetic and numerical characters.
@@ -649,7 +602,7 @@ public class RandomValues
         return nextTextValue( minLength, maxLength, this::alphaNumericCodePoint );
     }
 
-    /**
+	/**
      * @return a {@link TextValue} consisting only of ascii characters.
      * @see RandomValues
      */
@@ -658,7 +611,7 @@ public class RandomValues
         return nextAsciiTextValue( minString(), maxString() );
     }
 
-    /**
+	/**
      * @param minLength the minimum length of the string
      * @param maxLength the maximum length of the string
      * @return a {@link TextValue} consisting only of ascii characters.
@@ -669,7 +622,7 @@ public class RandomValues
         return nextTextValue( minLength, maxLength, this::asciiCodePoint );
     }
 
-    /**
+	/**
      * @return a {@link TextValue} consisting only of characters in the Basic Multilingual Plane(BMP).
      * @see RandomValues
      */
@@ -678,7 +631,7 @@ public class RandomValues
         return nextTextValue( minString(), maxString(), this::bmpCodePoint );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public TextValue nextTextValue()
@@ -686,7 +639,7 @@ public class RandomValues
         return nextTextValue( minString(), maxString() );
     }
 
-    /**
+	/**
      * @param minLength the minimum length of the string
      * @param maxLength the maximum length of the string
      * @return {@link TextValue}.
@@ -697,7 +650,7 @@ public class RandomValues
         return nextTextValue( minLength, maxLength, this::nextValidCodePoint );
     }
 
-    private TextValue nextTextValue( int minLength, int maxLength, CodePointFactory codePointFactory )
+	private TextValue nextTextValue( int minLength, int maxLength, CodePointFactory codePointFactory )
     {
         // todo should we generate UTF8StringValue or StringValue? Or maybe both? Randomly?
         int length = intBetween( minLength, maxLength );
@@ -710,7 +663,7 @@ public class RandomValues
         return builder.build();
     }
 
-    /**
+	/**
      * Generate next code point that is valid for composition of a string.
      * Additional limitation on code point range is given by configuration.
      *
@@ -721,7 +674,7 @@ public class RandomValues
         return nextValidCodePoint( configuration.maxCodePoint() );
     }
 
-    /**
+	/**
      * Generate next code point that is valid for composition of a string.
      * Additional limitation on code point range is given by method argument.
      *
@@ -743,7 +696,7 @@ public class RandomValues
         return codePoint;
     }
 
-    /**
+	/**
      * @return next code point limited to the ascii characters.
      */
     private int asciiCodePoint()
@@ -751,7 +704,7 @@ public class RandomValues
         return nextValidCodePoint( MAX_ASCII_CODE_POINT );
     }
 
-    /**
+	/**
      * @return next code point limited to the alpha numeric characters.
      */
     private int alphaNumericCodePoint()
@@ -772,7 +725,7 @@ public class RandomValues
         }
     }
 
-    /**
+	/**
      * @return next code point limited to the Basic Multilingual Plane (BMP).
      */
     private int bmpCodePoint()
@@ -780,7 +733,7 @@ public class RandomValues
         return nextValidCodePoint( MAX_BMP_CODE_POINT );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public TimeValue nextTimeValue()
@@ -788,7 +741,7 @@ public class RandomValues
         return time( nextTimeRaw() );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public LocalDateTimeValue nextLocalDateTimeValue()
@@ -796,7 +749,7 @@ public class RandomValues
         return localDateTime( nextLocalDateTimeRaw() );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public DateValue nextDateValue()
@@ -804,7 +757,7 @@ public class RandomValues
         return date( nextDateRaw() );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public LocalTimeValue nextLocalTimeValue()
@@ -812,7 +765,7 @@ public class RandomValues
         return localTime( nextLocalTimeRaw() );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public DateTimeValue nextDateTimeValue()
@@ -820,7 +773,7 @@ public class RandomValues
         return nextDateTimeValue( UTC );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public DateTimeValue nextDateTimeValue( ZoneId zoneId )
@@ -828,7 +781,7 @@ public class RandomValues
         return datetime( nextZonedDateTimeRaw( zoneId ) );
     }
 
-    /**
+	/**
      * @return next {@link DurationValue} based on java {@link Period} (years, months and days).
      * @see RandomValues
      */
@@ -837,7 +790,7 @@ public class RandomValues
         return duration( nextPeriodRaw() );
     }
 
-    /**
+	/**
      * @return next {@link DurationValue} based on java {@link Duration} (seconds, nanos).
      * @see RandomValues
      */
@@ -846,7 +799,7 @@ public class RandomValues
         return duration( nextDurationRaw() );
     }
 
-    /**
+	/**
      * Returns a randomly selected temporal value spread uniformly over the supported types.
      *
      * @return a randomly selected temporal value
@@ -879,7 +832,7 @@ public class RandomValues
         }
     }
 
-    /**
+	/**
      * @return the next pseudorandom two-dimensional cartesian {@link PointValue}.
      * @see RandomValues
      */
@@ -890,7 +843,7 @@ public class RandomValues
         return Values.pointValue( CoordinateReferenceSystem.Cartesian, x, y );
     }
 
-    /**
+	/**
      * @return the next pseudorandom three-dimensional cartesian {@link PointValue}.
      * @see RandomValues
      */
@@ -902,7 +855,7 @@ public class RandomValues
         return Values.pointValue( CoordinateReferenceSystem.Cartesian_3D, x, y, z );
     }
 
-    /**
+	/**
      * @return the next pseudorandom two-dimensional geographic {@link PointValue}.
      * @see RandomValues
      */
@@ -913,7 +866,7 @@ public class RandomValues
         return Values.pointValue( CoordinateReferenceSystem.WGS84, longitude, latitude );
     }
 
-    /**
+	/**
      * @return the next pseudorandom three-dimensional geographic {@link PointValue}.
      * @see RandomValues
      */
@@ -925,28 +878,28 @@ public class RandomValues
         return Values.pointValue( CoordinateReferenceSystem.WGS84_3D, longitude, latitude, z );
     }
 
-    private double randomLatitude()
+	private double randomLatitude()
     {
         double spatialDefaultMinLatitude = -90;
         double spatialDefaultMaxLatitude = 90;
         return doubleBetween( spatialDefaultMinLatitude, spatialDefaultMaxLatitude );
     }
 
-    private double randomLongitude()
+	private double randomLongitude()
     {
         double spatialDefaultMinLongitude = -180;
         double spatialDefaultMaxLongitude = 180;
         return doubleBetween( spatialDefaultMinLongitude, spatialDefaultMaxLongitude );
     }
 
-    private double randomCartesianCoordinate()
+	private double randomCartesianCoordinate()
     {
         double spatialDefaultMinExtent = -1000000;
         double spatialDefaultMaxExtent = 1000000;
         return doubleBetween( spatialDefaultMinExtent, spatialDefaultMaxExtent );
     }
 
-    /**
+	/**
      * Returns a randomly selected point value spread uniformly over the supported types of points.
      *
      * @return a randomly selected point value
@@ -973,12 +926,12 @@ public class RandomValues
         }
     }
 
-    public CharArray nextCharArray()
+	public CharArray nextCharArray()
     {
         return Values.charArray( nextCharArrayRaw( minArray(), maxArray() ) );
     }
 
-    private char[] nextCharArrayRaw( int minLength, int maxLength )
+	private char[] nextCharArrayRaw( int minLength, int maxLength )
     {
         int length = intBetween( minLength, maxLength );
         char[] array = new char[length];
@@ -989,7 +942,7 @@ public class RandomValues
         return array;
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public DoubleArray nextDoubleArray()
@@ -998,7 +951,7 @@ public class RandomValues
         return Values.doubleArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public double[] nextDoubleArrayRaw( int minLength, int maxLength )
@@ -1012,7 +965,7 @@ public class RandomValues
         return doubles;
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public FloatArray nextFloatArray()
@@ -1021,7 +974,7 @@ public class RandomValues
         return Values.floatArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public float[] nextFloatArrayRaw( int minLength, int maxLength )
@@ -1035,7 +988,7 @@ public class RandomValues
         return floats;
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public LongArray nextLongArray()
@@ -1044,7 +997,7 @@ public class RandomValues
         return Values.longArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public long[] nextLongArrayRaw( int minLength, int maxLength )
@@ -1058,7 +1011,7 @@ public class RandomValues
         return longs;
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public IntArray nextIntArray()
@@ -1067,7 +1020,7 @@ public class RandomValues
         return Values.intArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public int[] nextIntArrayRaw( int minLength, int maxLength )
@@ -1081,7 +1034,7 @@ public class RandomValues
         return ints;
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public ByteArray nextByteArray()
@@ -1089,7 +1042,7 @@ public class RandomValues
         return nextByteArray( minArray(), maxArray() );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public ByteArray nextByteArray( int minLength, int maxLength )
@@ -1098,7 +1051,7 @@ public class RandomValues
         return Values.byteArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public byte[] nextByteArrayRaw( int minLength, int maxLength )
@@ -1124,7 +1077,7 @@ public class RandomValues
         return bytes;
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public ShortArray nextShortArray()
@@ -1133,7 +1086,7 @@ public class RandomValues
         return Values.shortArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public short[] nextShortArrayRaw( int minLength, int maxLength )
@@ -1147,7 +1100,7 @@ public class RandomValues
         return shorts;
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public BooleanArray nextBooleanArray()
@@ -1156,7 +1109,7 @@ public class RandomValues
         return Values.booleanArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public boolean[] nextBooleanArrayRaw( int minLength, int maxLength )
@@ -1170,7 +1123,7 @@ public class RandomValues
         return booleans;
     }
 
-    /**
+	/**
      * @return the next {@link TextArray} containing strings with only alpha-numeric characters.
      * @see RandomValues
      */
@@ -1180,7 +1133,7 @@ public class RandomValues
         return Values.stringArray( array );
     }
 
-    /**
+	/**
      * @return the next {@code String[]} containing strings with only alpha-numeric characters.
      * @see RandomValues
      */
@@ -1189,7 +1142,7 @@ public class RandomValues
         return nextArray( String[]::new, () -> nextStringRaw( minStringLength, maxStringLength, this::alphaNumericCodePoint ), minLength, maxLength );
     }
 
-    /**
+	/**
      * @return the next {@link TextArray} containing strings with only ascii characters.
      * @see RandomValues
      */
@@ -1199,7 +1152,7 @@ public class RandomValues
         return Values.stringArray( array );
     }
 
-    /**
+	/**
      * @return the next {@link TextArray} containing strings with only characters in the Basic Multilingual Plane (BMP).
      * @see RandomValues
      */
@@ -1209,7 +1162,7 @@ public class RandomValues
         return Values.stringArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public TextArray nextTextArray()
@@ -1218,7 +1171,7 @@ public class RandomValues
         return Values.stringArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public String[] nextStringArrayRaw( int minLength, int maxLength, int minStringLength, int maxStringLength )
@@ -1226,7 +1179,7 @@ public class RandomValues
         return nextArray( String[]::new, () -> nextStringRaw( minStringLength, maxStringLength, this::nextValidCodePoint ), minLength, maxLength );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public LocalTimeArray nextLocalTimeArray()
@@ -1235,7 +1188,7 @@ public class RandomValues
         return Values.localTimeArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public LocalTime[] nextLocalTimeArrayRaw( int minLength, int maxLength )
@@ -1243,7 +1196,7 @@ public class RandomValues
         return nextArray( LocalTime[]::new, this::nextLocalTimeRaw, minLength, maxLength );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public TimeArray nextTimeArray()
@@ -1252,7 +1205,7 @@ public class RandomValues
         return Values.timeArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public OffsetTime[] nextTimeArrayRaw( int minLength, int maxLength )
@@ -1260,7 +1213,7 @@ public class RandomValues
         return nextArray( OffsetTime[]::new, this::nextTimeRaw, minLength, maxLength );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public DateTimeArray nextDateTimeArray()
@@ -1269,7 +1222,7 @@ public class RandomValues
         return Values.dateTimeArray( array );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public ZonedDateTime[] nextDateTimeArrayRaw( int minLength, int maxLength )
@@ -1277,7 +1230,7 @@ public class RandomValues
         return nextArray( ZonedDateTime[]::new, () -> nextZonedDateTimeRaw( UTC ), minLength, maxLength );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public LocalDateTimeArray nextLocalDateTimeArray()
@@ -1285,7 +1238,7 @@ public class RandomValues
         return Values.localDateTimeArray( nextLocalDateTimeArrayRaw( minArray(), maxArray() ) );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public LocalDateTime[] nextLocalDateTimeArrayRaw( int minLength, int maxLength )
@@ -1293,7 +1246,7 @@ public class RandomValues
         return nextArray( LocalDateTime[]::new, this::nextLocalDateTimeRaw, minLength, maxLength );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public DateArray nextDateArray()
@@ -1301,7 +1254,7 @@ public class RandomValues
         return Values.dateArray( nextDateArrayRaw( minArray(), maxArray() ) );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public LocalDate[] nextDateArrayRaw( int minLength, int maxLength )
@@ -1309,7 +1262,7 @@ public class RandomValues
         return nextArray( LocalDate[]::new, this::nextDateRaw, minLength, maxLength );
     }
 
-    /**
+	/**
      * @return next {@link DurationArray} based on java {@link Period} (years, months and days).
      * @see RandomValues
      */
@@ -1318,7 +1271,7 @@ public class RandomValues
         return Values.durationArray( nextPeriodArrayRaw( minArray(), maxArray() ) );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public Period[] nextPeriodArrayRaw( int minLength, int maxLength )
@@ -1326,7 +1279,7 @@ public class RandomValues
         return nextArray( Period[]::new, this::nextPeriodRaw, minLength, maxLength );
     }
 
-    /**
+	/**
      * @return next {@link DurationValue} based on java {@link Duration} (seconds, nanos).
      * @see RandomValues
      */
@@ -1335,7 +1288,7 @@ public class RandomValues
         return Values.durationArray( nextDurationArrayRaw( minArray(), maxArray() ) );
     }
 
-    /**
+	/**
      * @see RandomValues
      */
     public Duration[] nextDurationArrayRaw( int minLength, int maxLength )
@@ -1343,7 +1296,7 @@ public class RandomValues
         return nextArray( Duration[]::new, this::nextDurationRaw, minLength, maxLength );
     }
 
-    /**
+	/**
      * @return the next random {@link PointArray}.
      * @see RandomValues
      */
@@ -1369,7 +1322,7 @@ public class RandomValues
         }
     }
 
-    /**
+	/**
      * @return the next {@link PointArray} containing two-dimensional cartesian {@link PointValue}.
      * @see RandomValues
      */
@@ -1378,7 +1331,7 @@ public class RandomValues
         return nextCartesianPointArray( minArray(), maxArray() );
     }
 
-    /**
+	/**
      * @return the next {@link PointArray} containing two-dimensional cartesian {@link PointValue}.
      * @see RandomValues
      */
@@ -1388,7 +1341,7 @@ public class RandomValues
         return Values.pointArray( array );
     }
 
-    /**
+	/**
      * @return the next {@link PointArray} containing three-dimensional cartesian {@link PointValue}.
      * @see RandomValues
      */
@@ -1397,7 +1350,7 @@ public class RandomValues
         return nextCartesian3DPointArray( minArray(), maxArray() );
     }
 
-    /**
+	/**
      * @return the next {@link PointArray} containing three-dimensional cartesian {@link PointValue}.
      * @see RandomValues
      */
@@ -1407,7 +1360,7 @@ public class RandomValues
         return Values.pointArray( array );
     }
 
-    /**
+	/**
      * @return the next {@link PointArray} containing two-dimensional geographic {@link PointValue}.
      * @see RandomValues
      */
@@ -1416,7 +1369,7 @@ public class RandomValues
         return nextGeographicPointArray( minArray(), maxArray() );
     }
 
-    /**
+	/**
      * @return the next {@link PointArray} containing two-dimensional geographic {@link PointValue}.
      * @see RandomValues
      */
@@ -1426,7 +1379,7 @@ public class RandomValues
         return Values.pointArray( array );
     }
 
-    /**
+	/**
      * @return the next {@link PointArray} containing three-dimensional geographic {@link PointValue}.
      * @see RandomValues
      */
@@ -1435,7 +1388,7 @@ public class RandomValues
         return nextGeographic3DPointArray( minArray(), maxArray() );
     }
 
-    /**
+	/**
      * @return the next {@link PointArray} containing three-dimensional geographic {@link PointValue}.
      * @see RandomValues
      */
@@ -1445,7 +1398,7 @@ public class RandomValues
         return Values.pointArray( points );
     }
 
-    /**
+	/**
      * Create an randomly sized array filled with elements provided by factory.
      *
      * @param arrayFactory creates array with length equal to provided argument.
@@ -1466,14 +1419,12 @@ public class RandomValues
         return array;
     }
 
-    /* Single raw element */
-
-    private String nextStringRaw( CodePointFactory codePointFactory )
+	private String nextStringRaw( CodePointFactory codePointFactory )
     {
         return nextStringRaw( minString(), maxString(), codePointFactory );
     }
 
-    private String nextStringRaw( int minStringLength, int maxStringLength, CodePointFactory codePointFactory )
+	private String nextStringRaw( int minStringLength, int maxStringLength, CodePointFactory codePointFactory )
     {
         int length = intBetween( minStringLength, maxStringLength );
         StringBuilder sb = new StringBuilder( length );
@@ -1484,48 +1435,48 @@ public class RandomValues
         return sb.toString();
     }
 
-    private LocalTime nextLocalTimeRaw()
+	private LocalTime nextLocalTimeRaw()
     {
         return ofNanoOfDay( longBetween( LocalTime.MIN.toNanoOfDay(), LocalTime.MAX.toNanoOfDay() ) );
     }
 
-    private LocalDateTime nextLocalDateTimeRaw()
+	private LocalDateTime nextLocalDateTimeRaw()
     {
         return LocalDateTime.ofInstant( nextInstantRaw(), UTC );
     }
 
-    private OffsetTime nextTimeRaw()
+	private OffsetTime nextTimeRaw()
     {
         return OffsetTime.ofInstant( nextInstantRaw(), UTC );
     }
 
-    private ZonedDateTime nextZonedDateTimeRaw( ZoneId utc )
+	private ZonedDateTime nextZonedDateTimeRaw( ZoneId utc )
     {
         return ZonedDateTime.ofInstant( nextInstantRaw(), utc );
     }
 
-    private LocalDate nextDateRaw()
+	private LocalDate nextDateRaw()
     {
         return ofEpochDay( longBetween( LocalDate.MIN.toEpochDay(), LocalDate.MAX.toEpochDay() ) );
     }
 
-    private Instant nextInstantRaw()
+	private Instant nextInstantRaw()
     {
         return Instant.ofEpochSecond(
                 longBetween( LocalDateTime.MIN.toEpochSecond( UTC ), LocalDateTime.MAX.toEpochSecond( UTC ) ), nextLong( NANOS_PER_SECOND ) );
     }
 
-    private Period nextPeriodRaw()
+	private Period nextPeriodRaw()
     {
         return Period.of( generator.nextInt(), generator.nextInt( 12 ), generator.nextInt( 28 ) );
     }
 
-    private Duration nextDurationRaw()
+	private Duration nextDurationRaw()
     {
         return Duration.ofSeconds( nextLong( DAYS.getDuration().getSeconds() ), nextLong( NANOS_PER_SECOND ) );
     }
 
-    /**
+	/**
      * Returns a random element from the provided array.
      *
      * @param among the array to choose a random element from.
@@ -1536,7 +1487,7 @@ public class RandomValues
         return among[generator.nextInt( among.length )];
     }
 
-    /**
+	/**
      * Returns a random element of the provided list
      *
      * @param among the list to choose a random element from
@@ -1547,7 +1498,7 @@ public class RandomValues
         return among.get( generator.nextInt( among.size() ) );
     }
 
-    /**
+	/**
      * Picks a random element of the provided list and feeds it to the provided {@link Consumer}
      *
      * @param among the list to pick from
@@ -1555,14 +1506,14 @@ public class RandomValues
      */
     public <T> void among( List<T> among, Consumer<T> action )
     {
-        if ( !among.isEmpty() )
-        {
-            T item = among( among );
-            action.accept( item );
-        }
+        if (among.isEmpty()) {
+			return;
+		}
+		T item = among( among );
+		action.accept( item );
     }
 
-    /**
+	/**
      * Returns a random selection of the provided array.
      *
      * @param among the array to pick elements from
@@ -1594,30 +1545,80 @@ public class RandomValues
         return result;
     }
 
-    private static int nextPowerOf2( int i )
+	private static int nextPowerOf2( int i )
     {
         return 1 << (32 - Integer.numberOfLeadingZeros( i ));
     }
 
-    private int maxArray()
+	private int maxArray()
     {
         return configuration.arrayMaxLength();
     }
 
-    private int minArray()
+	private int minArray()
     {
         return configuration.arrayMinLength();
     }
 
-    private int maxString()
+	private int maxString()
     {
         return configuration.stringMaxLength();
     }
 
-    private int minString()
+	private int minString()
     {
         return configuration.stringMinLength();
     }
+
+	public interface Configuration
+    {
+        int stringMinLength();
+
+        int stringMaxLength();
+
+        int arrayMinLength();
+
+        int arrayMaxLength();
+
+        int maxCodePoint();
+    }
+
+    public static class Default implements Configuration
+    {
+        @Override
+        public int stringMinLength()
+        {
+            return 5;
+        }
+
+        @Override
+        public int stringMaxLength()
+        {
+            return 20;
+        }
+
+        @Override
+        public int arrayMinLength()
+        {
+            return 1;
+        }
+
+        @Override
+        public int arrayMaxLength()
+        {
+            return 10;
+        }
+
+        @Override
+        public int maxCodePoint()
+        {
+            return Character.MAX_CODE_POINT;
+        }
+    }
+
+    
+
+    /* Single raw element */
 
     @FunctionalInterface
     private interface ElementFactory<T>

@@ -115,261 +115,25 @@ import static org.neo4j.unsafe.impl.batchimport.input.csv.DataFactories.defaultF
 public class ImportTool
 {
     private static final String INPUT_FILES_DESCRIPTION =
-            "Multiple files will be logically seen as one big file " +
-            "from the perspective of the importer. " +
-            "The first line must contain the header. " +
-            "Multiple data sources like these can be specified in one import, " +
-            "where each data source has its own header. " +
-            "Note that file groups must be enclosed in quotation marks. " +
-            "Each file can be a regular expression and will then include all matching files. " +
-            "The file matching is done with number awareness such that e.g. files:" +
-            "'File1Part_001.csv', 'File12Part_003' will be ordered in that order for a pattern like: 'File.*'";
+            new StringBuilder().append("Multiple files will be logically seen as one big file ").append("from the perspective of the importer. ").append("The first line must contain the header. ").append("Multiple data sources like these can be specified in one import, ").append("where each data source has its own header. ").append("Note that file groups must be enclosed in quotation marks. ").append("Each file can be a regular expression and will then include all matching files. ").append("The file matching is done with number awareness such that e.g. files:")
+			.append("'File1Part_001.csv', 'File12Part_003' will be ordered in that order for a pattern like: 'File.*'").toString();
 
     private static final String UNLIMITED = "true";
 
-    enum Options
-    {
-        FILE( "f", null,
-                "<file name>",
-                "File containing all arguments, used as an alternative to supplying all arguments on the command line directly."
-                        + "Each argument can be on a separate line or multiple arguments per line separated by space."
-                        + "Arguments containing spaces needs to be quoted."
-                        + "Supplying other arguments in addition to this file argument is not supported." ),
-        STORE_DIR( "into", null,
-                "<store-dir>",
-                "Database directory to import into. " + "Must not contain existing database." ),
-        DB_NAME( "database", null,
-                "<database-name>",
-                "Database name to import into. " + "Must not contain existing database.", true ),
-        NODE_DATA( "nodes", null,
-                "[:Label1:Label2] \"<file1>" + MULTI_FILE_DELIMITER + "<file2>" + MULTI_FILE_DELIMITER + "...\"",
-                "Node CSV header and data. " + INPUT_FILES_DESCRIPTION,
-                        true, true ),
-        RELATIONSHIP_DATA( "relationships", null,
-                "[:RELATIONSHIP_TYPE] \"<file1>" + MULTI_FILE_DELIMITER + "<file2>" +
-                MULTI_FILE_DELIMITER + "...\"",
-                "Relationship CSV header and data. " + INPUT_FILES_DESCRIPTION,
-                        true, true ),
-        DELIMITER( "delimiter", null,
-                "<delimiter-character>",
-                "Delimiter character, or 'TAB', between values in CSV data. The default option is `" + COMMAS.delimiter() + "`." ),
-        ARRAY_DELIMITER( "array-delimiter", null,
-                "<array-delimiter-character>",
-                "Delimiter character, or 'TAB', between array elements within a value in CSV data. " +
-                        "The default option is `" + COMMAS.arrayDelimiter() + "`." ),
-        QUOTE( "quote", null,
-                "<quotation-character>",
-                "Character to treat as quotation character for values in CSV data. "
-                        + "The default option is `" + COMMAS.quotationCharacter() + "`. "
-                        + "Quotes inside quotes escaped like `\"\"\"Go away\"\", he said.\"` and "
-                        + "`\"\\\"Go away\\\", he said.\"` are supported. "
-                        + "If you have set \"`'`\" to be used as the quotation character, "
-                        + "you could write the previous example like this instead: " + "`'\"Go away\", he said.'`" ),
-        MULTILINE_FIELDS( "multiline-fields", org.neo4j.csv.reader.Configuration.DEFAULT.multilineFields(),
-                "<true/false>",
-                "Whether or not fields from input source can span multiple lines, i.e. contain newline characters." ),
-
-        TRIM_STRINGS( "trim-strings", org.neo4j.csv.reader.Configuration.DEFAULT.trimStrings(),
-                "<true/false>",
-                "Whether or not strings should be trimmed for whitespaces." ),
-
-        INPUT_ENCODING( "input-encoding", null,
-                "<character set>",
-                "Character set that input data is encoded in. Provided value must be one out of the available "
-                        + "character sets in the JVM, as provided by Charset#availableCharsets(). "
-                        + "If no input encoding is provided, the default character set of the JVM will be used.",
-                true ),
-        IGNORE_EMPTY_STRINGS( "ignore-empty-strings", org.neo4j.csv.reader.Configuration.DEFAULT.emptyQuotedStringsAsNull(),
-                "<true/false>",
-                "Whether or not empty string fields, i.e. \"\" from input source are ignored, i.e. treated as null." ),
-        ID_TYPE( "id-type", IdType.STRING,
-                "<id-type>",
-                "One out of " + Arrays.toString( IdType.values() )
-                        + " and specifies how ids in node/relationship "
-                        + "input files are treated.\n"
-                        + IdType.STRING + ": arbitrary strings for identifying nodes.\n"
-                        + IdType.INTEGER + ": arbitrary integer values for identifying nodes.\n"
-                        + IdType.ACTUAL + ": (advanced) actual node ids. The default option is `" + IdType.STRING  +
-                        "`.", true ),
-        PROCESSORS( "processors", null,
-                "<max processor count>",
-                "(advanced) Max number of processors used by the importer. Defaults to the number of "
-                        + "available processors reported by the JVM"
-                        + availableProcessorsHint()
-                        + ". There is a certain amount of minimum threads needed so for that reason there "
-                        + "is no lower bound for this value. For optimal performance this value shouldn't be "
-                        + "greater than the number of available processors." ),
-        STACKTRACE( "stacktrace", false,
-                "<true/false>",
-                "Enable printing of error stack traces." ),
-        BAD_TOLERANCE( "bad-tolerance", 1000,
-                "<max number of bad entries, or " + UNLIMITED + " for unlimited>",
-                "Number of bad entries before the import is considered failed. This tolerance threshold is "
-                        + "about relationships referring to missing nodes. Format errors in input data are "
-                        + "still treated as errors" ),
-        SKIP_BAD_ENTRIES_LOGGING( "skip-bad-entries-logging", Boolean.FALSE, "<true/false>",
-                "Whether or not to skip logging bad entries detected during import." ),
-        SKIP_BAD_RELATIONSHIPS( "skip-bad-relationships", Boolean.TRUE,
-                "<true/false>",
-                "Whether or not to skip importing relationships that refers to missing node ids, i.e. either "
-                        + "start or end node id/group referring to node that wasn't specified by the "
-                        + "node input data. "
-                        + "Skipped nodes will be logged"
-                        + ", containing at most number of entities specified by " + BAD_TOLERANCE.key() + ", unless "
-                        + "otherwise specified by " + SKIP_BAD_ENTRIES_LOGGING.key() + " option." ),
-        SKIP_DUPLICATE_NODES( "skip-duplicate-nodes", Boolean.FALSE,
-                "<true/false>",
-                "Whether or not to skip importing nodes that have the same id/group. In the event of multiple "
-                        + "nodes within the same group having the same id, the first encountered will be imported "
-                        + "whereas consecutive such nodes will be skipped. "
-                        + "Skipped nodes will be logged"
-                        + ", containing at most number of entities specified by " + BAD_TOLERANCE.key() + ", unless "
-                        + "otherwise specified by " + SKIP_BAD_ENTRIES_LOGGING.key() + "option." ),
-        IGNORE_EXTRA_COLUMNS( "ignore-extra-columns", Boolean.FALSE,
-                "<true/false>",
-                "Whether or not to ignore extra columns in the data not specified by the header. "
-                        + "Skipped columns will be logged, containing at most number of entities specified by "
-                        + BAD_TOLERANCE.key() + ", unless "
-                        + "otherwise specified by " + SKIP_BAD_ENTRIES_LOGGING.key() + "option." ),
-        DATABASE_CONFIG( "db-config", null, "<path/to/" + Config.DEFAULT_CONFIG_FILE_NAME + ">",
-                "(advanced) Option is deprecated and replaced by 'additional-config'. " ),
-        ADDITIONAL_CONFIG( "additional-config", null,
-                "<path/to/" + Config.DEFAULT_CONFIG_FILE_NAME + ">",
-                "(advanced) File specifying database-specific configuration. For more information consult "
-                        + "manual about available configuration options for a neo4j configuration file. "
-                        + "Only configuration affecting store at time of creation will be read. "
-                        + "Examples of supported config are:\n"
-                        + GraphDatabaseSettings.dense_node_threshold.name() + "\n"
-                        + GraphDatabaseSettings.string_block_size.name() + "\n"
-                        + GraphDatabaseSettings.array_block_size.name(), true ),
-        LEGACY_STYLE_QUOTING( "legacy-style-quoting", Configuration.DEFAULT_LEGACY_STYLE_QUOTING,
-                "<true/false>",
-                "Whether or not backslash-escaped quote e.g. \\\" is interpreted as inner quote." ),
-        READ_BUFFER_SIZE( "read-buffer-size", org.neo4j.csv.reader.Configuration.DEFAULT.bufferSize(),
-                "<bytes, e.g. 10k, 4M>",
-                "Size of each buffer for reading input data. It has to at least be large enough to hold the " +
-                "biggest single value in the input data." ),
-        MAX_MEMORY( "max-memory", null,
-                "<max memory that importer can use>",
-                "(advanced) Maximum memory that importer can use for various data structures and caching " +
-                "to improve performance. If left as unspecified (null) it is set to " + DEFAULT_MAX_MEMORY_PERCENT +
-                "% of (free memory on machine - max JVM memory). " +
-                "Values can be plain numbers, like 10000000 or e.g. 20G for 20 gigabyte, or even e.g. 70%." ),
-        CACHE_ON_HEAP( "cache-on-heap",
-                DEFAULT.allowCacheAllocationOnHeap(),
-                "Whether or not to allow allocating memory for the cache on heap",
-                "(advanced) Whether or not to allow allocating memory for the cache on heap. " +
-                "If 'false' then caches will still be allocated off-heap, but the additional free memory " +
-                "inside the JVM will not be allocated for the caches. This to be able to have better control " +
-                "over the heap memory" ),
-        HIGH_IO( "high-io", null, "Assume a high-throughput storage subsystem",
-                "(advanced) Ignore environment-based heuristics, and assume that the target storage subsystem can " +
-                "support parallel IO with high throughput." ),
-        DETAILED_PROGRESS( "detailed-progress", false, "true/false", "Use the old detailed 'spectrum' progress printing" );
-
-        private final String key;
-        private final Object defaultValue;
-        private final String usage;
-        private final String description;
-        private final boolean keyAndUsageGoTogether;
-        private final boolean supported;
-
-        Options( String key, Object defaultValue, String usage, String description )
-        {
-            this( key, defaultValue, usage, description, false, false );
-        }
-
-        Options( String key, Object defaultValue, String usage, String description, boolean supported )
-        {
-            this( key, defaultValue, usage, description, supported, false );
-        }
-
-        Options( String key, Object defaultValue, String usage, String description, boolean supported, boolean keyAndUsageGoTogether )
-        {
-            this.key = key;
-            this.defaultValue = defaultValue;
-            this.usage = usage;
-            this.description = description;
-            this.supported = supported;
-            this.keyAndUsageGoTogether = keyAndUsageGoTogether;
-        }
-
-        String key()
-        {
-            return key;
-        }
-
-        String argument()
-        {
-            return "--" + key();
-        }
-
-        void printUsage( PrintStream out )
-        {
-            out.println( argument() + spaceInBetweenArgumentAndUsage() + usage );
-            for ( String line : Args.splitLongLine( descriptionWithDefaultValue().replace( "`", "" ), 80 ) )
-            {
-                out.println( "\t" + line );
-            }
-        }
-
-        private String spaceInBetweenArgumentAndUsage()
-        {
-            return keyAndUsageGoTogether ? "" : " ";
-        }
-
-        String descriptionWithDefaultValue()
-        {
-            String result = description;
-            if ( defaultValue != null )
-            {
-                if ( !result.endsWith( "." ) )
-                {
-                    result += ".";
-                }
-                result += " Default value: " + defaultValue;
-            }
-            return result;
-        }
-
-        String manPageEntry()
-        {
-            String filteredDescription = descriptionWithDefaultValue().replace( availableProcessorsHint(), "" );
-            String usageString = (usage.length() > 0) ? spaceInBetweenArgumentAndUsage() + usage : "";
-            return "*" + argument() + usageString + "*::\n" + filteredDescription + "\n\n";
-        }
-
-        String manualEntry()
-        {
-            return "[[import-tool-option-" + key() + "]]\n" + manPageEntry() + "//^\n\n";
-        }
-
-        Object defaultValue()
-        {
-            return defaultValue;
-        }
-
-        private static String availableProcessorsHint()
-        {
-            return " (in your case " + Runtime.getRuntime().availableProcessors() + ")";
-        }
-
-        public boolean isSupportedOption()
-        {
-            return this.supported;
-        }
-    }
-
-    /**
+	/**
      * Delimiter used between files in an input group.
      */
     static final String MULTI_FILE_DELIMITER = ",";
 
-    private ImportTool()
+	private static final Function<String,IdType> TO_ID_TYPE = from -> IdType.valueOf( from.toUpperCase() );
+
+	private static final Function<String,Character> CHARACTER_CONVERTER = new CharacterConverter();
+
+	private ImportTool()
     {
     }
 
-    /**
+	/**
      * Runs the import tool given the supplied arguments.
      *
      * @param incomingArguments arguments for specifying input and configuration for the import.
@@ -379,7 +143,7 @@ public class ImportTool
         main( incomingArguments, false );
     }
 
-    /**
+	/**
      * Runs the import tool given the supplied arguments.
      *
      * @param incomingArguments arguments for specifying input and configuration for the import.
@@ -501,7 +265,7 @@ public class ImportTool
         }
     }
 
-    public static Args useArgumentsFromFileArgumentIfPresent( Args args ) throws IOException
+	public static Args useArgumentsFromFileArgumentIfPresent( Args args ) throws IOException
     {
         String fileArgument = args.get( Options.FILE.key(), null );
         if ( fileArgument != null )
@@ -510,7 +274,7 @@ public class ImportTool
             if ( args.asMap().size() > 1 )
             {
                 throw new IllegalArgumentException(
-                        "Supplying arguments in addition to " + Options.FILE.argument() + " isn't supported." );
+                        new StringBuilder().append("Supplying arguments in addition to ").append(Options.FILE.argument()).append(" isn't supported.").toString() );
             }
 
             // Read the arguments from the -f file and use those instead
@@ -519,36 +283,33 @@ public class ImportTool
         return args;
     }
 
-    public static String[] parseFileArgumentList( File file ) throws IOException
+	public static String[] parseFileArgumentList( File file ) throws IOException
     {
         List<String> arguments = new ArrayList<>();
         readTextFile( file, line -> arguments.addAll( asList( tokenizeStringWithQuotes( line, true, true, false ) ) ) );
         return arguments.toArray( new String[arguments.size()] );
     }
 
-    static Long parseMaxMemory( String maxMemoryString )
+	static Long parseMaxMemory( String maxMemoryString )
     {
-        if ( maxMemoryString != null )
-        {
-            maxMemoryString = maxMemoryString.trim();
-            if ( maxMemoryString.endsWith( "%" ) )
-            {
-                int percent = Integer.parseInt( maxMemoryString.substring( 0, maxMemoryString.length() - 1 ) );
-                long result = calculateMaxMemoryFromPercent( percent );
-                if ( !canDetectFreeMemory() )
-                {
-                    System.err.println( "WARNING: amount of free memory couldn't be detected so defaults to " +
-                            bytes( result ) + ". For optimal performance instead explicitly specify amount of " +
-                            "memory that importer is allowed to use using " + Options.MAX_MEMORY.argument() );
-                }
-                return result;
-            }
-            return Settings.parseLongWithUnit( maxMemoryString );
-        }
-        return null;
+        if (maxMemoryString == null) {
+			return null;
+		}
+		maxMemoryString = maxMemoryString.trim();
+		if ( maxMemoryString.endsWith( "%" ) )
+		{
+		    int percent = Integer.parseInt( maxMemoryString.substring( 0, maxMemoryString.length() - 1 ) );
+		    long result = calculateMaxMemoryFromPercent( percent );
+		    if ( !canDetectFreeMemory() )
+		    {
+		        System.err.println( new StringBuilder().append("WARNING: amount of free memory couldn't be detected so defaults to ").append(bytes( result )).append(". For optimal performance instead explicitly specify amount of ").append("memory that importer is allowed to use using ").append(Options.MAX_MEMORY.argument()).toString() );
+		    }
+		    return result;
+		}
+		return Settings.parseLongWithUnit( maxMemoryString );
     }
 
-    public static void doImport( PrintStream out, PrintStream err, InputStream in, DatabaseLayout databaseLayout, File badFile,
+	public static void doImport( PrintStream out, PrintStream err, InputStream in, DatabaseLayout databaseLayout, File badFile,
                                  FileSystemAbstraction fs, Collection<Option<File[]>> nodesFiles,
                                  Collection<Option<File[]>> relationshipsFiles, boolean enableStacktrace, Input input,
                                  Config dbConfig, OutputStream badOutput,
@@ -592,28 +353,22 @@ public class ImportTool
             collector.close();
             IOUtils.closeAll( badOutput );
 
-            if ( badFile != null )
-            {
-                if ( numberOfBadEntries > 0 )
-                {
-                    System.out.println( "There were bad entries which were skipped and logged into " +
-                            badFile.getAbsolutePath() );
-                }
-            }
+            boolean condition = badFile != null && numberOfBadEntries > 0;
+			if ( condition ) {
+			    System.out.println( "There were bad entries which were skipped and logged into " +
+			            badFile.getAbsolutePath() );
+			}
 
             life.shutdown();
 
             if ( !success )
             {
-                err.println( "WARNING Import failed. The store files in " + databaseLayout.databaseDirectory().getAbsolutePath() +
-                        " are left as they are, although they are likely in an unusable state. " +
-                        "Starting a database on these store files will likely fail or observe inconsistent records so " +
-                        "start at your own risk or delete the store manually" );
+                err.println( new StringBuilder().append("WARNING Import failed. The store files in ").append(databaseLayout.databaseDirectory().getAbsolutePath()).append(" are left as they are, although they are likely in an unusable state. ").append("Starting a database on these store files will likely fail or observe inconsistent records so ").append("start at your own risk or delete the store manually").toString() );
             }
         }
     }
 
-    public static Collection<Option<File[]>> extractInputFiles( Args args, String key, PrintStream err )
+	public static Collection<Option<File[]>> extractInputFiles( Args args, String key, PrintStream err )
     {
         return args
                 .interpretOptionsWithMetadata( key, Converters.optional(),
@@ -622,7 +377,7 @@ public class ImportTool
                         Validators.atLeast( "--" + key, 1 ) );
     }
 
-    private static Validator<File[]> filesExist( PrintStream err )
+	private static Validator<File[]> filesExist( PrintStream err )
     {
         return files ->
         {
@@ -630,16 +385,14 @@ public class ImportTool
             {
                 if ( file.getName().startsWith( ":" ) )
                 {
-                    err.println( "It looks like you're trying to specify default label or relationship type (" +
-                                      file.getName() + "). Please put such directly on the key, f.ex. " +
-                                      Options.NODE_DATA.argument() + ":MyLabel" );
+                    err.println( new StringBuilder().append("It looks like you're trying to specify default label or relationship type (").append(file.getName()).append("). Please put such directly on the key, f.ex. ").append(Options.NODE_DATA.argument()).append(":MyLabel").toString() );
                 }
                 Validators.REGEX_FILE_EXISTS.validate( file );
             }
         };
     }
 
-    private static Collector getBadCollector( long badTolerance, boolean skipBadRelationships,
+	private static Collector getBadCollector( long badTolerance, boolean skipBadRelationships,
             boolean skipDuplicateNodes, boolean ignoreExtraColumns, boolean skipBadEntriesLogging,
             OutputStream badOutput )
     {
@@ -647,23 +400,23 @@ public class ImportTool
         return skipBadEntriesLogging ? silentBadCollector( badTolerance, collect ) : badCollector( badOutput, badTolerance, collect );
     }
 
-    private static long parseNumberOrUnlimited( Args args, Options option )
+	private static long parseNumberOrUnlimited( Args args, Options option )
     {
         String value = args.get( option.key(), option.defaultValue().toString() );
         return UNLIMITED.equals( value ) ? BadCollector.UNLIMITED_TOLERANCE : Long.parseLong( value );
     }
 
-    private static Config loadDbConfig( File file )
+	private static Config loadDbConfig( File file )
     {
         return Config.fromFile( file ).build();
     }
 
-    static void printOverview( File storeDir, Collection<Option<File[]>> nodesFiles,
+	static void printOverview( File storeDir, Collection<Option<File[]>> nodesFiles,
             Collection<Option<File[]>> relationshipsFiles,
             org.neo4j.unsafe.impl.batchimport.Configuration configuration, PrintStream out )
     {
         out.println( "Neo4j version: " + Version.getNeo4jVersion() );
-        out.println( "Importing the contents of these files into " + storeDir + ":" );
+        out.println( new StringBuilder().append("Importing the contents of these files into ").append(storeDir).append(":").toString() );
         printInputFiles( "Nodes", nodesFiles, out );
         printInputFiles( "Relationships", relationshipsFiles, out );
         out.println();
@@ -677,7 +430,7 @@ public class ImportTool
         out.println();
     }
 
-    private static void printInputFiles( String name, Collection<Option<File[]>> files, PrintStream out )
+	private static void printInputFiles( String name, Collection<Option<File[]>> files, PrintStream out )
     {
         if ( files.isEmpty() )
         {
@@ -703,25 +456,25 @@ public class ImportTool
         }
     }
 
-    private static void printIndented( Object value, PrintStream out )
+	private static void printIndented( Object value, PrintStream out )
     {
         out.println( "  " + value );
     }
 
-    public static void validateInputFiles( Collection<Option<File[]>> nodesFiles,
+	public static void validateInputFiles( Collection<Option<File[]>> nodesFiles,
             Collection<Option<File[]>> relationshipsFiles )
     {
-        if ( nodesFiles.isEmpty() )
-        {
-            if ( relationshipsFiles.isEmpty() )
-            {
-                throw new IllegalArgumentException( "No input specified, nothing to import" );
-            }
-            throw new IllegalArgumentException( "No node input specified, cannot import relationships without nodes" );
-        }
+        if (!nodesFiles.isEmpty()) {
+			return;
+		}
+		if ( relationshipsFiles.isEmpty() )
+		{
+		    throw new IllegalArgumentException( "No input specified, nothing to import" );
+		}
+		throw new IllegalArgumentException( "No node input specified, cannot import relationships without nodes" );
     }
 
-    public static org.neo4j.unsafe.impl.batchimport.Configuration importConfiguration(
+	public static org.neo4j.unsafe.impl.batchimport.Configuration importConfiguration(
             Number processors, boolean defaultSettingsSuitableForTests, Config dbConfig, File storeDir, Boolean defaultHighIO )
     {
         return importConfiguration(
@@ -729,7 +482,7 @@ public class ImportTool
                 DEFAULT.allowCacheAllocationOnHeap(), defaultHighIO );
     }
 
-    public static org.neo4j.unsafe.impl.batchimport.Configuration importConfiguration(
+	public static org.neo4j.unsafe.impl.batchimport.Configuration importConfiguration(
             Number processors, boolean defaultSettingsSuitableForTests, Config dbConfig, Long maxMemory, File storeDir,
             boolean allowCacheOnHeap, Boolean defaultHighIO )
     {
@@ -773,18 +526,17 @@ public class ImportTool
         };
     }
 
-    private static String manualReference( ManualPage page, Anchor anchor )
+	private static String manualReference( ManualPage page, Anchor anchor )
     {
         // Docs are versioned major.minor-suffix, so drop the patch version.
         String[] versionParts = Version.getNeo4jVersion().split("-");
         versionParts[0] = versionParts[0].substring(0, 3);
         String docsVersion = String.join("-", versionParts);
 
-        return " https://neo4j.com/docs/operations-manual/" + docsVersion + "/" +
-               page.getReference( anchor );
+        return new StringBuilder().append(" https://neo4j.com/docs/operations-manual/").append(docsVersion).append("/").append(page.getReference( anchor )).toString();
     }
 
-    /**
+	/**
      * Method name looks strange, but look at how it's used and you'll see why it's named like that.
      * @param stackTrace whether or not to also print the stack trace of the error.
      * @param err
@@ -795,17 +547,12 @@ public class ImportTool
         // List of common errors that can be explained to the user
         if ( DuplicateInputIdException.class.equals( e.getClass() ) )
         {
-            printErrorMessage( "Duplicate input ids that would otherwise clash can be put into separate id space, " +
-                               "read more about how to use id spaces in the manual:" +
-                               manualReference( ManualPage.IMPORT_TOOL_FORMAT, Anchor.ID_SPACES ), e, stackTrace,
+            printErrorMessage( new StringBuilder().append("Duplicate input ids that would otherwise clash can be put into separate id space, ").append("read more about how to use id spaces in the manual:").append(manualReference( ManualPage.IMPORT_TOOL_FORMAT, Anchor.ID_SPACES )).toString(), e, stackTrace,
                     err );
         }
         else if ( MissingRelationshipDataException.class.equals( e.getClass() ) )
         {
-            printErrorMessage( "Relationship missing mandatory field '" +
-                               ((MissingRelationshipDataException) e).getFieldType() + "', read more about " +
-                               "relationship format in the manual: " +
-                               manualReference( ManualPage.IMPORT_TOOL_FORMAT, Anchor.RELATIONSHIP ), e, stackTrace,
+            printErrorMessage( new StringBuilder().append("Relationship missing mandatory field '").append(((MissingRelationshipDataException) e).getFieldType()).append("', read more about ").append("relationship format in the manual: ").append(manualReference( ManualPage.IMPORT_TOOL_FORMAT, Anchor.RELATIONSHIP )).toString(), e, stackTrace,
                     err );
         }
         // This type of exception is wrapped since our input code throws InputException consistently,
@@ -813,10 +560,7 @@ public class ImportTool
         // therefore it's wrapped.
         else if ( Exceptions.contains( e, IllegalMultilineFieldException.class ) )
         {
-            printErrorMessage( "Detected field which spanned multiple lines for an import where " +
-                               Options.MULTILINE_FIELDS.argument() + "=false. If you know that your input data " +
-                               "include fields containing new-line characters then import with this option set to " +
-                               "true.", e, stackTrace, err );
+            printErrorMessage( new StringBuilder().append("Detected field which spanned multiple lines for an import where ").append(Options.MULTILINE_FIELDS.argument()).append("=false. If you know that your input data ").append("include fields containing new-line characters then import with this option set to ").append("true.").toString(), e, stackTrace, err );
         }
         else if ( Exceptions.contains( e, InputException.class ) )
         {
@@ -825,7 +569,7 @@ public class ImportTool
         // Fallback to printing generic error and stack trace
         else
         {
-            printErrorMessage( typeOfError + ": " + e.getMessage(), e, true, err );
+            printErrorMessage( new StringBuilder().append(typeOfError).append(": ").append(e.getMessage()).toString(), e, true, err );
         }
         err.println();
 
@@ -841,7 +585,7 @@ public class ImportTool
         return new RuntimeException( e ); // throw in order to have process exit with !0
     }
 
-    private static void printErrorMessage( String string, Exception e, boolean stackTrace, PrintStream err )
+	private static void printErrorMessage( String string, Exception e, boolean stackTrace, PrintStream err )
     {
         err.println( string );
         err.println( "Caused by:" + e.getMessage() );
@@ -851,7 +595,7 @@ public class ImportTool
         }
     }
 
-    public static Iterable<DataFactory>
+	public static Iterable<DataFactory>
             relationshipData( final Charset encoding, Collection<Option<File[]>> relationshipsFiles )
     {
         return new IterableWrapper<DataFactory,Option<File[]>>( relationshipsFiles )
@@ -864,7 +608,7 @@ public class ImportTool
         };
     }
 
-    public static Iterable<DataFactory> nodeData( final Charset encoding,
+	public static Iterable<DataFactory> nodeData( final Charset encoding,
             Collection<Option<File[]>> nodesFiles )
     {
         return new IterableWrapper<DataFactory,Option<File[]>>( nodesFiles )
@@ -880,14 +624,10 @@ public class ImportTool
         };
     }
 
-    private static void printUsage( PrintStream out )
+	private static void printUsage( PrintStream out )
     {
         out.println( "Neo4j Import Tool" );
-        for ( String line : Args.splitLongLine( "neo4j-import is used to create a new Neo4j database "
-                                                + "from data in CSV files. "
-                                                +
-                                                "See the chapter \"Import Tool\" in the Neo4j Manual for details on the CSV file format "
-                                                + "- a special kind of header is required.", 80 ) )
+        for ( String line : Args.splitLongLine( new StringBuilder().append("neo4j-import is used to create a new Neo4j database ").append("from data in CSV files. ").append("See the chapter \"Import Tool\" in the Neo4j Manual for details on the CSV file format ").append("- a special kind of header is required.").toString(), 80 ) )
         {
             out.println( "\t" + line );
         }
@@ -905,32 +645,18 @@ public class ImportTool
                 TAB + "--relationships:ORDERED customer_orders_header.csv,orders1.csv,orders2.csv" ) );
     }
 
-    private static boolean asksForUsage( Args args )
+	private static boolean asksForUsage( Args args )
     {
-        for ( String orphan : args.orphans() )
-        {
-            if ( isHelpKey( orphan ) )
-            {
-                return true;
-            }
-        }
-
-        for ( Entry<String,String> option : args.asMap().entrySet() )
-        {
-            if ( isHelpKey( option.getKey() ) )
-            {
-                return true;
-            }
-        }
-        return false;
+        return args.orphans().stream().filter(ImportTool::isHelpKey).findFirst().map(orphan -> true)
+				.orElse(args.asMap().entrySet().stream().anyMatch(option -> isHelpKey(option.getKey())));
     }
 
-    private static boolean isHelpKey( String key )
+	private static boolean isHelpKey( String key )
     {
-        return key.equals( "?" ) || key.equals( "help" );
+        return "?".equals( key ) || "help".equals( key );
     }
 
-    public static Configuration csvConfiguration( Args args, final boolean defaultSettingsSuitableForTests )
+	public static Configuration csvConfiguration( Args args, final boolean defaultSettingsSuitableForTests )
     {
         final Configuration defaultConfiguration = COMMAS;
         final Character specificDelimiter = args.interpretOption( Options.DELIMITER.key(),
@@ -1014,11 +740,198 @@ public class ImportTool
         };
     }
 
-    private static final Function<String,IdType> TO_ID_TYPE = from -> IdType.valueOf( from.toUpperCase() );
+	enum Options
+    {
+        FILE( "f", null,
+                "<file name>",
+                new StringBuilder().append("File containing all arguments, used as an alternative to supplying all arguments on the command line directly.").append("Each argument can be on a separate line or multiple arguments per line separated by space.").append("Arguments containing spaces needs to be quoted.").append("Supplying other arguments in addition to this file argument is not supported.").toString() ),
+        STORE_DIR( "into", null,
+                "<store-dir>",
+                "Database directory to import into. " + "Must not contain existing database." ),
+        DB_NAME( "database", null,
+                "<database-name>",
+                "Database name to import into. " + "Must not contain existing database.", true ),
+        NODE_DATA( "nodes", null,
+                new StringBuilder().append("[:Label1:Label2] \"<file1>").append(MULTI_FILE_DELIMITER).append("<file2>").append(MULTI_FILE_DELIMITER).append("...\"").toString(),
+                "Node CSV header and data. " + INPUT_FILES_DESCRIPTION,
+                        true, true ),
+        RELATIONSHIP_DATA( "relationships", null,
+                new StringBuilder().append("[:RELATIONSHIP_TYPE] \"<file1>").append(MULTI_FILE_DELIMITER).append("<file2>").append(MULTI_FILE_DELIMITER).append("...\"").toString(),
+                "Relationship CSV header and data. " + INPUT_FILES_DESCRIPTION,
+                        true, true ),
+        DELIMITER( "delimiter", null,
+                "<delimiter-character>",
+                new StringBuilder().append("Delimiter character, or 'TAB', between values in CSV data. The default option is `").append(COMMAS.delimiter()).append("`.").toString() ),
+        ARRAY_DELIMITER( "array-delimiter", null,
+                "<array-delimiter-character>",
+                new StringBuilder().append("Delimiter character, or 'TAB', between array elements within a value in CSV data. ").append("The default option is `").append(COMMAS.arrayDelimiter()).append("`.").toString() ),
+        QUOTE( "quote", null,
+                "<quotation-character>",
+                new StringBuilder().append("Character to treat as quotation character for values in CSV data. ").append("The default option is `").append(COMMAS.quotationCharacter()).append("`. ").append("Quotes inside quotes escaped like `\"\"\"Go away\"\", he said.\"` and ").append("`\"\\\"Go away\\\", he said.\"` are supported. ").append("If you have set \"`'`\" to be used as the quotation character, ")
+						.append("you could write the previous example like this instead: ").append("`'\"Go away\", he said.'`").toString() ),
+        MULTILINE_FIELDS( "multiline-fields", org.neo4j.csv.reader.Configuration.DEFAULT.multilineFields(),
+                "<true/false>",
+                "Whether or not fields from input source can span multiple lines, i.e. contain newline characters." ),
 
-    private static final Function<String,Character> CHARACTER_CONVERTER = new CharacterConverter();
+        TRIM_STRINGS( "trim-strings", org.neo4j.csv.reader.Configuration.DEFAULT.trimStrings(),
+                "<true/false>",
+                "Whether or not strings should be trimmed for whitespaces." ),
 
-    private enum ManualPage
+        INPUT_ENCODING( "input-encoding", null,
+                "<character set>",
+                new StringBuilder().append("Character set that input data is encoded in. Provided value must be one out of the available ").append("character sets in the JVM, as provided by Charset#availableCharsets(). ").append("If no input encoding is provided, the default character set of the JVM will be used.").toString(),
+                true ),
+        IGNORE_EMPTY_STRINGS( "ignore-empty-strings", org.neo4j.csv.reader.Configuration.DEFAULT.emptyQuotedStringsAsNull(),
+                "<true/false>",
+                "Whether or not empty string fields, i.e. \"\" from input source are ignored, i.e. treated as null." ),
+        ID_TYPE( "id-type", IdType.STRING,
+                "<id-type>",
+                new StringBuilder().append("One out of ").append(Arrays.toString( IdType.values() )).append(" and specifies how ids in node/relationship ").append("input files are treated.\n").append(IdType.STRING)
+						.append(": arbitrary strings for identifying nodes.\n").append(IdType.INTEGER).append(": arbitrary integer values for identifying nodes.\n").append(IdType.ACTUAL).append(": (advanced) actual node ids. The default option is `")
+						.append(IdType.STRING).append("`.").toString(), true ),
+        PROCESSORS( "processors", null,
+                "<max processor count>",
+                new StringBuilder().append("(advanced) Max number of processors used by the importer. Defaults to the number of ").append("available processors reported by the JVM").append(availableProcessorsHint()).append(". There is a certain amount of minimum threads needed so for that reason there ").append("is no lower bound for this value. For optimal performance this value shouldn't be ").append("greater than the number of available processors.").toString() ),
+        STACKTRACE( "stacktrace", false,
+                "<true/false>",
+                "Enable printing of error stack traces." ),
+        BAD_TOLERANCE( "bad-tolerance", 1000,
+                new StringBuilder().append("<max number of bad entries, or ").append(UNLIMITED).append(" for unlimited>").toString(),
+                new StringBuilder().append("Number of bad entries before the import is considered failed. This tolerance threshold is ").append("about relationships referring to missing nodes. Format errors in input data are ").append("still treated as errors").toString() ),
+        SKIP_BAD_ENTRIES_LOGGING( "skip-bad-entries-logging", Boolean.FALSE, "<true/false>",
+                "Whether or not to skip logging bad entries detected during import." ),
+        SKIP_BAD_RELATIONSHIPS( "skip-bad-relationships", Boolean.TRUE,
+                "<true/false>",
+                new StringBuilder().append("Whether or not to skip importing relationships that refers to missing node ids, i.e. either ").append("start or end node id/group referring to node that wasn't specified by the ").append("node input data. ").append("Skipped nodes will be logged").append(", containing at most number of entities specified by ").append(BAD_TOLERANCE.key()).append(", unless ")
+						.append("otherwise specified by ").append(SKIP_BAD_ENTRIES_LOGGING.key()).append(" option.").toString() ),
+        SKIP_DUPLICATE_NODES( "skip-duplicate-nodes", Boolean.FALSE,
+                "<true/false>",
+                new StringBuilder().append("Whether or not to skip importing nodes that have the same id/group. In the event of multiple ").append("nodes within the same group having the same id, the first encountered will be imported ").append("whereas consecutive such nodes will be skipped. ").append("Skipped nodes will be logged").append(", containing at most number of entities specified by ").append(BAD_TOLERANCE.key()).append(", unless ")
+						.append("otherwise specified by ").append(SKIP_BAD_ENTRIES_LOGGING.key()).append("option.").toString() ),
+        IGNORE_EXTRA_COLUMNS( "ignore-extra-columns", Boolean.FALSE,
+                "<true/false>",
+                new StringBuilder().append("Whether or not to ignore extra columns in the data not specified by the header. ").append("Skipped columns will be logged, containing at most number of entities specified by ").append(BAD_TOLERANCE.key()).append(", unless ").append("otherwise specified by ").append(SKIP_BAD_ENTRIES_LOGGING.key())
+						.append("option.").toString() ),
+        DATABASE_CONFIG( "db-config", null, new StringBuilder().append("<path/to/").append(Config.DEFAULT_CONFIG_FILE_NAME).append(">").toString(),
+                "(advanced) Option is deprecated and replaced by 'additional-config'. " ),
+        ADDITIONAL_CONFIG( "additional-config", null,
+                new StringBuilder().append("<path/to/").append(Config.DEFAULT_CONFIG_FILE_NAME).append(">").toString(),
+                new StringBuilder().append("(advanced) File specifying database-specific configuration. For more information consult ").append("manual about available configuration options for a neo4j configuration file. ").append("Only configuration affecting store at time of creation will be read. ").append("Examples of supported config are:\n").append(GraphDatabaseSettings.dense_node_threshold.name()).append("\n")
+						.append(GraphDatabaseSettings.string_block_size.name()).append("\n").append(GraphDatabaseSettings.array_block_size.name()).toString(), true ),
+        LEGACY_STYLE_QUOTING( "legacy-style-quoting", Configuration.DEFAULT_LEGACY_STYLE_QUOTING,
+                "<true/false>",
+                "Whether or not backslash-escaped quote e.g. \\\" is interpreted as inner quote." ),
+        READ_BUFFER_SIZE( "read-buffer-size", org.neo4j.csv.reader.Configuration.DEFAULT.bufferSize(),
+                "<bytes, e.g. 10k, 4M>",
+                "Size of each buffer for reading input data. It has to at least be large enough to hold the " +
+                "biggest single value in the input data." ),
+        MAX_MEMORY( "max-memory", null,
+                "<max memory that importer can use>",
+                new StringBuilder().append("(advanced) Maximum memory that importer can use for various data structures and caching ").append("to improve performance. If left as unspecified (null) it is set to ").append(DEFAULT_MAX_MEMORY_PERCENT).append("% of (free memory on machine - max JVM memory). ").append("Values can be plain numbers, like 10000000 or e.g. 20G for 20 gigabyte, or even e.g. 70%.").toString() ),
+        CACHE_ON_HEAP( "cache-on-heap",
+                DEFAULT.allowCacheAllocationOnHeap(),
+                "Whether or not to allow allocating memory for the cache on heap",
+                new StringBuilder().append("(advanced) Whether or not to allow allocating memory for the cache on heap. ").append("If 'false' then caches will still be allocated off-heap, but the additional free memory ").append("inside the JVM will not be allocated for the caches. This to be able to have better control ").append("over the heap memory").toString() ),
+        HIGH_IO( "high-io", null, "Assume a high-throughput storage subsystem",
+                "(advanced) Ignore environment-based heuristics, and assume that the target storage subsystem can " +
+                "support parallel IO with high throughput." ),
+        DETAILED_PROGRESS( "detailed-progress", false, "true/false", "Use the old detailed 'spectrum' progress printing" );
+
+        private final String key;
+        private final Object defaultValue;
+        private final String usage;
+        private final String description;
+        private final boolean keyAndUsageGoTogether;
+        private final boolean supported;
+
+        Options( String key, Object defaultValue, String usage, String description )
+        {
+            this( key, defaultValue, usage, description, false, false );
+        }
+
+        Options( String key, Object defaultValue, String usage, String description, boolean supported )
+        {
+            this( key, defaultValue, usage, description, supported, false );
+        }
+
+        Options( String key, Object defaultValue, String usage, String description, boolean supported, boolean keyAndUsageGoTogether )
+        {
+            this.key = key;
+            this.defaultValue = defaultValue;
+            this.usage = usage;
+            this.description = description;
+            this.supported = supported;
+            this.keyAndUsageGoTogether = keyAndUsageGoTogether;
+        }
+
+        String key()
+        {
+            return key;
+        }
+
+        String argument()
+        {
+            return "--" + key();
+        }
+
+        void printUsage( PrintStream out )
+        {
+            out.println( new StringBuilder().append(argument()).append(spaceInBetweenArgumentAndUsage()).append(usage).toString() );
+            for ( String line : Args.splitLongLine( descriptionWithDefaultValue().replace( "`", "" ), 80 ) )
+            {
+                out.println( "\t" + line );
+            }
+        }
+
+        private String spaceInBetweenArgumentAndUsage()
+        {
+            return keyAndUsageGoTogether ? "" : " ";
+        }
+
+        String descriptionWithDefaultValue()
+        {
+            String result = description;
+            if ( defaultValue != null )
+            {
+                if ( !result.endsWith( "." ) )
+                {
+                    result += ".";
+                }
+                result += " Default value: " + defaultValue;
+            }
+            return result;
+        }
+
+        String manPageEntry()
+        {
+            String filteredDescription = descriptionWithDefaultValue().replace( availableProcessorsHint(), "" );
+            String usageString = (usage.length() > 0) ? spaceInBetweenArgumentAndUsage() + usage : "";
+            return new StringBuilder().append("*").append(argument()).append(usageString).append("*::\n").append(filteredDescription).append("\n\n")
+					.toString();
+        }
+
+        String manualEntry()
+        {
+            return new StringBuilder().append("[[import-tool-option-").append(key()).append("]]\n").append(manPageEntry()).append("//^\n\n").toString();
+        }
+
+        Object defaultValue()
+        {
+            return defaultValue;
+        }
+
+        private static String availableProcessorsHint()
+        {
+            return new StringBuilder().append(" (in your case ").append(Runtime.getRuntime().availableProcessors()).append(")").toString();
+        }
+
+        public boolean isSupportedOption()
+        {
+            return this.supported;
+        }
+    }
+
+	private enum ManualPage
     {
         IMPORT_TOOL_FORMAT( "tools/import/file-header-format/" );
 
@@ -1032,11 +945,11 @@ public class ImportTool
         public String getReference( Anchor anchor )
         {
             // As long as the the operations manual is single-page we only use the anchor.
-            return page + "#" + anchor.anchor;
+            return new StringBuilder().append(page).append("#").append(anchor.anchor).toString();
         }
     }
 
-    private enum Anchor
+	private enum Anchor
     {
         ID_SPACES( "import-tool-id-spaces" ),
         RELATIONSHIP( "import-tool-header-format-rels" );

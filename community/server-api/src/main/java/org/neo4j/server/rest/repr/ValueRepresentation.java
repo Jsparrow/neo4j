@@ -33,140 +33,6 @@ import org.neo4j.server.helpers.PropertyTypeDispatcher;
 
 public class ValueRepresentation extends Representation
 {
-    private final Object value;
-
-    private ValueRepresentation( RepresentationType type, Object value )
-    {
-        super( type );
-        this.value = value;
-    }
-
-    @Override
-    String serialize( RepresentationFormat format, URI baseUri, ExtensionInjector extensions )
-    {
-        final String result = format.serializeValue(type, value);
-        format.complete();
-        return result;
-    }
-
-    @Override
-    void addTo( ListSerializer serializer )
-    {
-        serializer.writer.writeValue( type, value );
-    }
-
-    @Override
-    void putTo( MappingSerializer serializer, String key )
-    {
-        serializer.writer.writeValue( type, key, value );
-    }
-
-    public static ValueRepresentation ofNull()
-    {
-        return new ValueRepresentation( RepresentationType.NULL, null );
-    }
-
-    public static ValueRepresentation string( String value )
-    {
-        return new ValueRepresentation( RepresentationType.STRING, value );
-    }
-
-    public static ValueRepresentation point( Point value )
-    {
-        return new ValueRepresentation( RepresentationType.POINT, value );
-    }
-
-    public static ValueRepresentation temporal( Temporal value )
-    {
-        return new ValueRepresentation( RepresentationType.TEMPORAL, value.toString() );
-    }
-
-    public static ValueRepresentation temporalAmount( TemporalAmount value )
-    {
-        return new ValueRepresentation( RepresentationType.TEMPORAL_AMOUNT, value.toString() );
-    }
-
-    @SuppressWarnings( "boxing" )
-    public static ValueRepresentation number( int value )
-    {
-        return new ValueRepresentation( RepresentationType.INTEGER, value );
-    }
-
-    @SuppressWarnings( "boxing" )
-    public static ValueRepresentation number( long value )
-    {
-        return new ValueRepresentation( RepresentationType.LONG, value );
-    }
-
-    @SuppressWarnings( "boxing" )
-    public static ValueRepresentation number( double value )
-    {
-        return new ValueRepresentation( RepresentationType.DOUBLE, value );
-    }
-
-    public static ValueRepresentation bool( boolean value )
-    {
-        return new ValueRepresentation( RepresentationType.BOOLEAN, value );
-    }
-
-    public static ValueRepresentation relationshipType( RelationshipType type )
-    {
-        return new ValueRepresentation( RepresentationType.RELATIONSHIP_TYPE, type.name() );
-    }
-
-    public static ValueRepresentation uri( final String path )
-    {
-        return new ValueRepresentation( RepresentationType.URI, null )
-        {
-            @Override
-            String serialize( RepresentationFormat format, URI baseUri, ExtensionInjector extensions )
-            {
-                return Serializer.joinBaseWithRelativePath( baseUri, path );
-            }
-
-            @Override
-            void addTo( ListSerializer serializer )
-            {
-                serializer.addUri( path );
-            }
-
-            @Override
-            void putTo( MappingSerializer serializer, String key )
-            {
-                serializer.putRelativeUri( key, path );
-            }
-        };
-    }
-
-    public static ValueRepresentation template( final String path )
-    {
-        return new ValueRepresentation( RepresentationType.TEMPLATE, null )
-        {
-            @Override
-            String serialize( RepresentationFormat format, URI baseUri, ExtensionInjector extensions )
-            {
-                return Serializer.joinBaseWithRelativePath( baseUri, path );
-            }
-
-            @Override
-            void addTo( ListSerializer serializer )
-            {
-                serializer.addUriTemplate( path );
-            }
-
-            @Override
-            void putTo( MappingSerializer serializer, String key )
-            {
-                serializer.putRelativeUriTemplate( key, path );
-            }
-        };
-    }
-
-    static Representation property( Object property )
-    {
-        return PROPERTY_REPRESENTATION.dispatch( property, null );
-    }
-
     private static final PropertyTypeDispatcher<Void,Representation> PROPERTY_REPRESENTATION =
             new PropertyTypeDispatcher<Void,Representation>()
             {
@@ -342,4 +208,137 @@ public class ValueRepresentation extends Representation
                     return toListRepresentation( RepresentationType.BOOLEAN, array );
                 }
             };
+	private final Object value;
+
+	private ValueRepresentation( RepresentationType type, Object value )
+    {
+        super( type );
+        this.value = value;
+    }
+
+	@Override
+    String serialize( RepresentationFormat format, URI baseUri, ExtensionInjector extensions )
+    {
+        final String result = format.serializeValue(type, value);
+        format.complete();
+        return result;
+    }
+
+	@Override
+    void addTo( ListSerializer serializer )
+    {
+        serializer.writer.writeValue( type, value );
+    }
+
+	@Override
+    void putTo( MappingSerializer serializer, String key )
+    {
+        serializer.writer.writeValue( type, key, value );
+    }
+
+	public static ValueRepresentation ofNull()
+    {
+        return new ValueRepresentation( RepresentationType.NULL, null );
+    }
+
+	public static ValueRepresentation string( String value )
+    {
+        return new ValueRepresentation( RepresentationType.STRING, value );
+    }
+
+	public static ValueRepresentation point( Point value )
+    {
+        return new ValueRepresentation( RepresentationType.POINT, value );
+    }
+
+	public static ValueRepresentation temporal( Temporal value )
+    {
+        return new ValueRepresentation( RepresentationType.TEMPORAL, value.toString() );
+    }
+
+	public static ValueRepresentation temporalAmount( TemporalAmount value )
+    {
+        return new ValueRepresentation( RepresentationType.TEMPORAL_AMOUNT, value.toString() );
+    }
+
+	@SuppressWarnings( "boxing" )
+    public static ValueRepresentation number( int value )
+    {
+        return new ValueRepresentation( RepresentationType.INTEGER, value );
+    }
+
+	@SuppressWarnings( "boxing" )
+    public static ValueRepresentation number( long value )
+    {
+        return new ValueRepresentation( RepresentationType.LONG, value );
+    }
+
+	@SuppressWarnings( "boxing" )
+    public static ValueRepresentation number( double value )
+    {
+        return new ValueRepresentation( RepresentationType.DOUBLE, value );
+    }
+
+	public static ValueRepresentation bool( boolean value )
+    {
+        return new ValueRepresentation( RepresentationType.BOOLEAN, value );
+    }
+
+	public static ValueRepresentation relationshipType( RelationshipType type )
+    {
+        return new ValueRepresentation( RepresentationType.RELATIONSHIP_TYPE, type.name() );
+    }
+
+	public static ValueRepresentation uri( final String path )
+    {
+        return new ValueRepresentation( RepresentationType.URI, null )
+        {
+            @Override
+            String serialize( RepresentationFormat format, URI baseUri, ExtensionInjector extensions )
+            {
+                return Serializer.joinBaseWithRelativePath( baseUri, path );
+            }
+
+            @Override
+            void addTo( ListSerializer serializer )
+            {
+                serializer.addUri( path );
+            }
+
+            @Override
+            void putTo( MappingSerializer serializer, String key )
+            {
+                serializer.putRelativeUri( key, path );
+            }
+        };
+    }
+
+	public static ValueRepresentation template( final String path )
+    {
+        return new ValueRepresentation( RepresentationType.TEMPLATE, null )
+        {
+            @Override
+            String serialize( RepresentationFormat format, URI baseUri, ExtensionInjector extensions )
+            {
+                return Serializer.joinBaseWithRelativePath( baseUri, path );
+            }
+
+            @Override
+            void addTo( ListSerializer serializer )
+            {
+                serializer.addUriTemplate( path );
+            }
+
+            @Override
+            void putTo( MappingSerializer serializer, String key )
+            {
+                serializer.putRelativeUriTemplate( key, path );
+            }
+        };
+    }
+
+	static Representation property( Object property )
+    {
+        return PROPERTY_REPRESENTATION.dispatch( property, null );
+    }
 }

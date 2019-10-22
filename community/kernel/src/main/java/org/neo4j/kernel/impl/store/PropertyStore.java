@@ -268,15 +268,12 @@ public class PropertyStore extends CommonAbstractStore<PropertyRecord,NoStoreHea
 
         PropertyType type = block.getType();
         RecordStore<DynamicRecord> dynamicStore = dynamicStoreForValueType( type );
-        if ( dynamicStore != null )
-        {
-            List<DynamicRecord> dynamicRecords = dynamicStore.getRecords( block.getSingleValueLong(), NORMAL );
-            for ( DynamicRecord dynamicRecord : dynamicRecords )
-            {
-                dynamicRecord.setType( type.intValue() );
-            }
-            block.setValueRecords( dynamicRecords );
-        }
+        if (dynamicStore == null) {
+			return;
+		}
+		List<DynamicRecord> dynamicRecords = dynamicStore.getRecords( block.getSingleValueLong(), NORMAL );
+		dynamicRecords.forEach(dynamicRecord -> dynamicRecord.setType(type.intValue()));
+		block.setValueRecords( dynamicRecords );
     }
 
     private RecordStore<DynamicRecord> dynamicStoreForValueType( PropertyType type )
@@ -326,10 +323,7 @@ public class PropertyStore extends CommonAbstractStore<PropertyRecord,NoStoreHea
             List<DynamicRecord> arrayRecords = new ArrayList<>();
             allocateArrayRecords( arrayRecords, asObject, arrayAllocator, allowStorePointsAndTemporal );
             setSingleBlockValue( block, keyId, PropertyType.ARRAY, Iterables.first( arrayRecords ).getId() );
-            for ( DynamicRecord valueRecord : arrayRecords )
-            {
-                valueRecord.setType( PropertyType.ARRAY.intValue() );
-            }
+            arrayRecords.forEach(valueRecord -> valueRecord.setType(PropertyType.ARRAY.intValue()));
             block.setValueRecords( arrayRecords );
         }
         else
@@ -399,284 +393,58 @@ public class PropertyStore extends CommonAbstractStore<PropertyRecord,NoStoreHea
         return ByteBuffer.allocate( capacity ).order( ByteOrder.LITTLE_ENDIAN ).put( buffer );
     }
 
-    private static class PropertyBlockValueWriter extends TemporalValueWriterAdapter<IllegalArgumentException>
-    {
-
-        private final PropertyBlock block;
-        private final int keyId;
-        private final DynamicRecordAllocator stringAllocator;
-        private final boolean allowStorePointsAndTemporal;
-        PropertyBlockValueWriter( PropertyBlock block, int keyId, DynamicRecordAllocator stringAllocator, boolean allowStorePointsAndTemporal )
-        {
-            this.block = block;
-            this.keyId = keyId;
-            this.stringAllocator = stringAllocator;
-            this.allowStorePointsAndTemporal = allowStorePointsAndTemporal;
-        }
-
-        @Override
-        public void writeNull() throws IllegalArgumentException
-        {
-            throw new IllegalArgumentException( "Cannot write null values to the property store" );
-        }
-
-        @Override
-        public void writeBoolean( boolean value ) throws IllegalArgumentException
-        {
-            setSingleBlockValue( block, keyId, PropertyType.BOOL, value ? 1L : 0L );
-        }
-
-        @Override
-        public void writeInteger( byte value ) throws IllegalArgumentException
-        {
-            setSingleBlockValue( block, keyId, PropertyType.BYTE, value );
-        }
-
-        @Override
-        public void writeInteger( short value ) throws IllegalArgumentException
-        {
-            setSingleBlockValue( block, keyId, PropertyType.SHORT, value );
-        }
-
-        @Override
-        public void writeInteger( int value ) throws IllegalArgumentException
-        {
-            setSingleBlockValue( block, keyId, PropertyType.INT, value );
-        }
-
-        @Override
-        public void writeInteger( long value ) throws IllegalArgumentException
-        {
-            long keyAndType = keyId | (((long) PropertyType.LONG.intValue()) <<
-                                       StandardFormatSettings.PROPERTY_TOKEN_MAXIMUM_ID_BITS);
-            if ( ShortArray.LONG.getRequiredBits( value ) <= 35 )
-            {   // We only need one block for this value, special layout compared to, say, an integer
-                block.setSingleBlock( keyAndType | (1L << 28) | (value << 29) );
-            }
-            else
-            {   // We need two blocks for this value
-                block.setValueBlocks( new long[]{keyAndType, value} );
-            }
-        }
-
-        @Override
-        public void writeFloatingPoint( float value ) throws IllegalArgumentException
-        {
-            setSingleBlockValue( block, keyId, PropertyType.FLOAT, Float.floatToRawIntBits( value ) );
-        }
-
-        @Override
-        public void writeFloatingPoint( double value ) throws IllegalArgumentException
-        {
-            block.setValueBlocks( new long[]{
-                    keyId | (((long) PropertyType.DOUBLE.intValue())
-                             << StandardFormatSettings.PROPERTY_TOKEN_MAXIMUM_ID_BITS),
-                    Double.doubleToRawLongBits( value )
-            } );
-        }
-
-        @Override
-        public void writeString( String value ) throws IllegalArgumentException
-        {
-            // Try short string first, i.e. inlined in the property block
-            if ( LongerShortString.encode( keyId, value, block, PropertyType.getPayloadSize() ) )
-            {
-                return;
-            }
-
-            // Fall back to dynamic string store
-            byte[] encodedString = encodeString( value );
-            List<DynamicRecord> valueRecords = new ArrayList<>();
-            allocateStringRecords( valueRecords, encodedString, stringAllocator );
-            setSingleBlockValue( block, keyId, PropertyType.STRING, Iterables.first( valueRecords ).getId() );
-            for ( DynamicRecord valueRecord : valueRecords )
-            {
-                valueRecord.setType( PropertyType.STRING.intValue() );
-            }
-            block.setValueRecords( valueRecords );
-        }
-
-        @Override
-        public void writeString( char value ) throws IllegalArgumentException
-        {
-            setSingleBlockValue( block, keyId, PropertyType.CHAR, value );
-        }
-
-        @Override
-        public void beginArray( int size, ArrayType arrayType ) throws IllegalArgumentException
-        {
-            throw new IllegalArgumentException( "Cannot persist arrays to property store using ValueWriter" );
-        }
-
-        @Override
-        public void endArray() throws IllegalArgumentException
-        {
-            throw new IllegalArgumentException( "Cannot persist arrays to property store using ValueWriter" );
-        }
-
-        @Override
-        public void writeByteArray( byte[] value ) throws IllegalArgumentException
-        {
-            throw new IllegalArgumentException( "Cannot persist arrays to property store using ValueWriter" );
-        }
-
-        @Override
-        public void writePoint( CoordinateReferenceSystem crs, double[] coordinate ) throws IllegalArgumentException
-        {
-            if ( allowStorePointsAndTemporal )
-            {
-                block.setValueBlocks( GeometryType.encodePoint( keyId, crs, coordinate ) );
-            }
-            else
-            {
-                throw new UnsupportedFormatCapabilityException( Capability.POINT_PROPERTIES );
-            }
-        }
-
-        @Override
-        public void writeDuration( long months, long days, long seconds, int nanos ) throws IllegalArgumentException
-        {
-            if ( allowStorePointsAndTemporal )
-            {
-                block.setValueBlocks( TemporalType.encodeDuration( keyId, months, days, seconds, nanos) );
-            }
-            else
-            {
-                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
-            }
-        }
-
-        @Override
-        public void writeDate( long epochDay ) throws IllegalArgumentException
-        {
-            if ( allowStorePointsAndTemporal )
-            {
-                block.setValueBlocks( TemporalType.encodeDate( keyId, epochDay ) );
-            }
-            else
-            {
-                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
-            }
-        }
-
-        @Override
-        public void writeLocalTime( long nanoOfDay ) throws IllegalArgumentException
-        {
-            if ( allowStorePointsAndTemporal )
-            {
-                block.setValueBlocks( TemporalType.encodeLocalTime( keyId, nanoOfDay ) );
-            }
-            else
-            {
-                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
-            }
-        }
-
-        @Override
-        public void writeTime( long nanosOfDayUTC, int offsetSeconds ) throws IllegalArgumentException
-        {
-            if ( allowStorePointsAndTemporal )
-            {
-                block.setValueBlocks( TemporalType.encodeTime( keyId, nanosOfDayUTC, offsetSeconds ) );
-            }
-            else
-            {
-                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
-            }
-        }
-
-        @Override
-        public void writeLocalDateTime( long epochSecond, int nano ) throws IllegalArgumentException
-        {
-            if ( allowStorePointsAndTemporal )
-            {
-                block.setValueBlocks( TemporalType.encodeLocalDateTime( keyId, epochSecond, nano ) );
-            }
-            else
-            {
-                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
-            }
-        }
-
-        @Override
-        public void writeDateTime( long epochSecondUTC, int nano, int offsetSeconds ) throws IllegalArgumentException
-        {
-            if ( allowStorePointsAndTemporal )
-            {
-                block.setValueBlocks( TemporalType.encodeDateTime( keyId, epochSecondUTC, nano, offsetSeconds ) );
-            }
-            else
-            {
-                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
-            }
-        }
-
-        @Override
-        public void writeDateTime( long epochSecondUTC, int nano, String zoneId ) throws IllegalArgumentException
-        {
-            if ( allowStorePointsAndTemporal )
-            {
-                block.setValueBlocks( TemporalType.encodeDateTime( keyId, epochSecondUTC, nano, zoneId ) );
-            }
-            else
-            {
-                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
-            }
-        }
-
-    }
     public static void setSingleBlockValue( PropertyBlock block, int keyId, PropertyType type, long longValue )
     {
         block.setSingleBlock( singleBlockLongValue( keyId, type, longValue ) );
     }
 
-    public static long singleBlockLongValue( int keyId, PropertyType type, long longValue )
+	public static long singleBlockLongValue( int keyId, PropertyType type, long longValue )
     {
         return keyId | (((long) type.intValue()) << StandardFormatSettings.PROPERTY_TOKEN_MAXIMUM_ID_BITS) |
                (longValue << 28);
     }
 
-    public static byte[] encodeString( String string )
+	public static byte[] encodeString( String string )
     {
         return UTF8.encode( string );
     }
 
-    public static String decodeString( byte[] byteArray )
+	public static String decodeString( byte[] byteArray )
     {
         return UTF8.decode( byteArray );
     }
 
-    String getStringFor( PropertyBlock propertyBlock )
+	String getStringFor( PropertyBlock propertyBlock )
     {
         ensureHeavy( propertyBlock );
         return getStringFor( propertyBlock.getValueRecords() );
     }
 
-    private String getStringFor( Collection<DynamicRecord> dynamicRecords )
+	private String getStringFor( Collection<DynamicRecord> dynamicRecords )
     {
         Pair<byte[], byte[]> source = stringStore.readFullByteArray( dynamicRecords, PropertyType.STRING );
         // A string doesn't have a header in the data array
         return decodeString( source.other() );
     }
 
-    Value getArrayFor( PropertyBlock propertyBlock )
+	Value getArrayFor( PropertyBlock propertyBlock )
     {
         ensureHeavy( propertyBlock );
         return getArrayFor( propertyBlock.getValueRecords() );
     }
 
-    private Value getArrayFor( Iterable<DynamicRecord> records )
+	private Value getArrayFor( Iterable<DynamicRecord> records )
     {
         return getRightArray( arrayStore.readFullByteArray( records, PropertyType.ARRAY ) );
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return super.toString() + "[blocksPerRecord:" + PropertyType.getPayloadSizeLongs() + "]";
+        return new StringBuilder().append(super.toString()).append("[blocksPerRecord:").append(PropertyType.getPayloadSizeLongs()).append("]").toString();
     }
 
-    public Collection<PropertyRecord> getPropertyRecordChain( long firstRecordId )
+	public Collection<PropertyRecord> getPropertyRecordChain( long firstRecordId )
     {
         long nextProp = firstRecordId;
         List<PropertyRecord> toReturn = new LinkedList<>();
@@ -690,18 +458,18 @@ public class PropertyStore extends CommonAbstractStore<PropertyRecord,NoStoreHea
         return toReturn;
     }
 
-    @Override
+	@Override
     public PropertyRecord newRecord()
     {
         return new PropertyRecord( -1 );
     }
 
-    public boolean allowStorePointsAndTemporal()
+	public boolean allowStorePointsAndTemporal()
     {
         return allowStorePointsAndTemporal;
     }
 
-    /**
+	/**
      * @return a calculator of property value sizes. The returned instance is designed to be used multiple times by a single thread only.
      */
     public ToIntFunction<Value[]> newValueEncodedSizeCalculator()
@@ -709,7 +477,7 @@ public class PropertyStore extends CommonAbstractStore<PropertyRecord,NoStoreHea
         return new PropertyValueRecordSizeCalculator( this );
     }
 
-    public static ArrayValue readArrayFromBuffer( ByteBuffer buffer )
+	public static ArrayValue readArrayFromBuffer( ByteBuffer buffer )
     {
         if ( buffer.limit() <= 0 )
         {
@@ -774,5 +542,229 @@ public class PropertyStore extends CommonAbstractStore<PropertyRecord,NoStoreHea
         {
             buffer.order( ByteOrder.LITTLE_ENDIAN );
         }
+    }
+
+	private static class PropertyBlockValueWriter extends TemporalValueWriterAdapter<IllegalArgumentException>
+    {
+
+        private final PropertyBlock block;
+        private final int keyId;
+        private final DynamicRecordAllocator stringAllocator;
+        private final boolean allowStorePointsAndTemporal;
+        PropertyBlockValueWriter( PropertyBlock block, int keyId, DynamicRecordAllocator stringAllocator, boolean allowStorePointsAndTemporal )
+        {
+            this.block = block;
+            this.keyId = keyId;
+            this.stringAllocator = stringAllocator;
+            this.allowStorePointsAndTemporal = allowStorePointsAndTemporal;
+        }
+
+        @Override
+        public void writeNull()
+        {
+            throw new IllegalArgumentException( "Cannot write null values to the property store" );
+        }
+
+        @Override
+        public void writeBoolean( boolean value )
+        {
+            setSingleBlockValue( block, keyId, PropertyType.BOOL, value ? 1L : 0L );
+        }
+
+        @Override
+        public void writeInteger( byte value )
+        {
+            setSingleBlockValue( block, keyId, PropertyType.BYTE, value );
+        }
+
+        @Override
+        public void writeInteger( short value )
+        {
+            setSingleBlockValue( block, keyId, PropertyType.SHORT, value );
+        }
+
+        @Override
+        public void writeInteger( int value )
+        {
+            setSingleBlockValue( block, keyId, PropertyType.INT, value );
+        }
+
+        @Override
+        public void writeInteger( long value )
+        {
+            long keyAndType = keyId | (((long) PropertyType.LONG.intValue()) <<
+                                       StandardFormatSettings.PROPERTY_TOKEN_MAXIMUM_ID_BITS);
+            if ( ShortArray.LONG.getRequiredBits( value ) <= 35 )
+            {   // We only need one block for this value, special layout compared to, say, an integer
+                block.setSingleBlock( keyAndType | (1L << 28) | (value << 29) );
+            }
+            else
+            {   // We need two blocks for this value
+                block.setValueBlocks( new long[]{keyAndType, value} );
+            }
+        }
+
+        @Override
+        public void writeFloatingPoint( float value )
+        {
+            setSingleBlockValue( block, keyId, PropertyType.FLOAT, Float.floatToRawIntBits( value ) );
+        }
+
+        @Override
+        public void writeFloatingPoint( double value )
+        {
+            block.setValueBlocks( new long[]{
+                    keyId | (((long) PropertyType.DOUBLE.intValue())
+                             << StandardFormatSettings.PROPERTY_TOKEN_MAXIMUM_ID_BITS),
+                    Double.doubleToRawLongBits( value )
+            } );
+        }
+
+        @Override
+        public void writeString( String value )
+        {
+            // Try short string first, i.e. inlined in the property block
+            if ( LongerShortString.encode( keyId, value, block, PropertyType.getPayloadSize() ) )
+            {
+                return;
+            }
+
+            // Fall back to dynamic string store
+            byte[] encodedString = encodeString( value );
+            List<DynamicRecord> valueRecords = new ArrayList<>();
+            allocateStringRecords( valueRecords, encodedString, stringAllocator );
+            setSingleBlockValue( block, keyId, PropertyType.STRING, Iterables.first( valueRecords ).getId() );
+            valueRecords.forEach(valueRecord -> valueRecord.setType(PropertyType.STRING.intValue()));
+            block.setValueRecords( valueRecords );
+        }
+
+        @Override
+        public void writeString( char value )
+        {
+            setSingleBlockValue( block, keyId, PropertyType.CHAR, value );
+        }
+
+        @Override
+        public void beginArray( int size, ArrayType arrayType )
+        {
+            throw new IllegalArgumentException( "Cannot persist arrays to property store using ValueWriter" );
+        }
+
+        @Override
+        public void endArray()
+        {
+            throw new IllegalArgumentException( "Cannot persist arrays to property store using ValueWriter" );
+        }
+
+        @Override
+        public void writeByteArray( byte[] value )
+        {
+            throw new IllegalArgumentException( "Cannot persist arrays to property store using ValueWriter" );
+        }
+
+        @Override
+        public void writePoint( CoordinateReferenceSystem crs, double[] coordinate )
+        {
+            if ( allowStorePointsAndTemporal )
+            {
+                block.setValueBlocks( GeometryType.encodePoint( keyId, crs, coordinate ) );
+            }
+            else
+            {
+                throw new UnsupportedFormatCapabilityException( Capability.POINT_PROPERTIES );
+            }
+        }
+
+        @Override
+        public void writeDuration( long months, long days, long seconds, int nanos )
+        {
+            if ( allowStorePointsAndTemporal )
+            {
+                block.setValueBlocks( TemporalType.encodeDuration( keyId, months, days, seconds, nanos) );
+            }
+            else
+            {
+                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
+            }
+        }
+
+        @Override
+        public void writeDate( long epochDay )
+        {
+            if ( allowStorePointsAndTemporal )
+            {
+                block.setValueBlocks( TemporalType.encodeDate( keyId, epochDay ) );
+            }
+            else
+            {
+                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
+            }
+        }
+
+        @Override
+        public void writeLocalTime( long nanoOfDay )
+        {
+            if ( allowStorePointsAndTemporal )
+            {
+                block.setValueBlocks( TemporalType.encodeLocalTime( keyId, nanoOfDay ) );
+            }
+            else
+            {
+                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
+            }
+        }
+
+        @Override
+        public void writeTime( long nanosOfDayUTC, int offsetSeconds )
+        {
+            if ( allowStorePointsAndTemporal )
+            {
+                block.setValueBlocks( TemporalType.encodeTime( keyId, nanosOfDayUTC, offsetSeconds ) );
+            }
+            else
+            {
+                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
+            }
+        }
+
+        @Override
+        public void writeLocalDateTime( long epochSecond, int nano )
+        {
+            if ( allowStorePointsAndTemporal )
+            {
+                block.setValueBlocks( TemporalType.encodeLocalDateTime( keyId, epochSecond, nano ) );
+            }
+            else
+            {
+                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
+            }
+        }
+
+        @Override
+        public void writeDateTime( long epochSecondUTC, int nano, int offsetSeconds )
+        {
+            if ( allowStorePointsAndTemporal )
+            {
+                block.setValueBlocks( TemporalType.encodeDateTime( keyId, epochSecondUTC, nano, offsetSeconds ) );
+            }
+            else
+            {
+                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
+            }
+        }
+
+        @Override
+        public void writeDateTime( long epochSecondUTC, int nano, String zoneId )
+        {
+            if ( allowStorePointsAndTemporal )
+            {
+                block.setValueBlocks( TemporalType.encodeDateTime( keyId, epochSecondUTC, nano, zoneId ) );
+            }
+            else
+            {
+                throw new UnsupportedFormatCapabilityException( Capability.TEMPORAL_PROPERTIES );
+            }
+        }
+
     }
 }

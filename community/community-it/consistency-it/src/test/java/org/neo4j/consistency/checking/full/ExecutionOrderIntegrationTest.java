@@ -167,15 +167,15 @@ public class ExecutionOrderIntegrationTest
                 }
             }
             String message = entry.append( ')' ).toString();
-            if ( null != data.put( message, new Throwable( message ) ) )
-            {
-                Integer cur = duplicates.get( message );
-                if ( cur == null )
-                {
-                    cur = 1;
-                }
-                duplicates.put( message, cur + 1 );
-            }
+            if (null == data.put( message, new Throwable( message ) )) {
+				return;
+			}
+			Integer cur = duplicates.get( message );
+			if ( cur == null )
+			{
+			    cur = 1;
+			}
+			duplicates.put( message, cur + 1 );
         }
     }
 

@@ -27,16 +27,6 @@ package org.neo4j.graphdb.config;
 public interface Configuration
 {
     /**
-     * Retrieve the value of a configuration {@link Setting}.
-     *
-     * @param setting The configuration property
-     * @param <T> The type of the configuration property
-     * @return The value of the configuration property if the property is found, otherwise, return the default value
-     * of the given property.
-     */
-    <T> T get( Setting<T> setting );
-
-    /**
      * Empty configuration without any settings.
      */
     Configuration EMPTY = new Configuration()
@@ -47,5 +37,15 @@ public interface Configuration
             return null;
         }
     };
+
+	/**
+     * Retrieve the value of a configuration {@link Setting}.
+     *
+     * @param setting The configuration property
+     * @param <T> The type of the configuration property
+     * @return The value of the configuration property if the property is found, otherwise, return the default value
+     * of the given property.
+     */
+    <T> T get( Setting<T> setting );
 
 }

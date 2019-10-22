@@ -289,9 +289,7 @@ public class BuiltInProceduresTest
                         "Wait for all indexes to come online (for example: CALL db.awaitIndexes(\"500\")).", "READ" ),
                 record( "db.constraints", "db.constraints() :: (description :: STRING?)",
                         "List all constraints in the database.", "READ" ),
-                record( "db.indexes", "db.indexes() :: (description :: STRING?, indexName :: STRING?, " +
-                                "tokenNames :: LIST? OF STRING?, properties :: LIST? OF STRING?, state :: STRING?, " +
-                                "type :: STRING?, progress :: FLOAT?, provider :: MAP?, id :: INTEGER?, failureMessage :: STRING?)",
+                record( "db.indexes", new StringBuilder().append("db.indexes() :: (description :: STRING?, indexName :: STRING?, ").append("tokenNames :: LIST? OF STRING?, properties :: LIST? OF STRING?, state :: STRING?, ").append("type :: STRING?, progress :: FLOAT?, provider :: MAP?, id :: INTEGER?, failureMessage :: STRING?)").toString(),
                         "List all indexes in the database.", "READ" ),
                 record( "db.labels", "db.labels() :: (label :: STRING?)", "List all labels in the database.", "READ" ),
                 record( "db.propertyKeys", "db.propertyKeys() :: (propertyKey :: STRING?)",
@@ -367,9 +365,7 @@ public class BuiltInProceduresTest
                         "key =  <[9895b15e-8693-4a21-a58b-4b7b87e09b8e]>  :: STRING?) :: (success :: BOOLEAN?)",
                         "Remove a node from an explicit index with an optional key", "WRITE" ),
                 record( "db.index.explicit.removeRelationship",
-                        "db.index.explicit.removeRelationship(indexName :: STRING?, relationship :: RELATIONSHIP?, " +
-                        "key =  <[9895b15e-8693-4a21-a58b-4b7b87e09b8e]>  :: STRING?) :: " +
-                        "(success :: BOOLEAN?)",
+                        new StringBuilder().append("db.index.explicit.removeRelationship(indexName :: STRING?, relationship :: RELATIONSHIP?, ").append("key =  <[9895b15e-8693-4a21-a58b-4b7b87e09b8e]>  :: STRING?) :: ").append("(success :: BOOLEAN?)").toString(),
                         "Remove a relationship from an explicit index with an optional key", "WRITE" ),
                 record( "db.index.explicit.drop",
                         "db.index.explicit.drop(indexName :: STRING?) :: " +
@@ -415,9 +411,7 @@ public class BuiltInProceduresTest
                 record( "db.createUniquePropertyConstraint",
                         "db.createUniquePropertyConstraint(index :: STRING?, providerName :: STRING?) :: " +
                                 "(index :: STRING?, providerName :: STRING?, status :: STRING?)",
-                        "Create a unique property constraint with index backed by specified index provider " +
-                                "(for example: CALL db.createUniquePropertyConstraint(\":Person(name)\", \"lucene+native-2.0\")) - " +
-                                "YIELD index, providerName, status", "SCHEMA" )
+                        new StringBuilder().append("Create a unique property constraint with index backed by specified index provider ").append("(for example: CALL db.createUniquePropertyConstraint(\":Person(name)\", \"lucene+native-2.0\")) - ").append("YIELD index, providerName, status").toString(), "SCHEMA" )
         ) );
     }
 

@@ -52,19 +52,6 @@ public class DijkstraIteratorTest extends Neo4jAlgoTestCase
                 MyRelTypes.R1 );
         }
 
-        protected class TestIterator extends Dijkstra<Double>.DijkstraIterator
-        {
-            public TestIterator( Node startNode,
-                HashMap<Node,List<Relationship>> predecessors,
-                HashMap<Node,Double> mySeen, HashMap<Node,Double> otherSeen,
-                HashMap<Node,Double> myDistances,
-                HashMap<Node,Double> otherDistances, boolean backwards )
-            {
-                super( startNode, predecessors, mySeen, otherSeen, myDistances,
-                    otherDistances, backwards );
-            }
-        }
-
         @Test
         public void runTest()
         {
@@ -124,6 +111,19 @@ public class DijkstraIteratorTest extends Neo4jAlgoTestCase
                 ++count;
             }
             assertEquals( 3, count );
+        }
+
+		protected class TestIterator extends Dijkstra<Double>.DijkstraIterator
+        {
+            public TestIterator( Node startNode,
+                HashMap<Node,List<Relationship>> predecessors,
+                HashMap<Node,Double> mySeen, HashMap<Node,Double> otherSeen,
+                HashMap<Node,Double> myDistances,
+                HashMap<Node,Double> otherDistances, boolean backwards )
+            {
+                super( startNode, predecessors, mySeen, otherSeen, myDistances,
+                    otherDistances, backwards );
+            }
         }
     }
 }

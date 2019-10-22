@@ -156,10 +156,7 @@ public class Recovery extends LifecycleAdapter
     static void throwUnableToCleanRecover( Throwable t )
     {
         throw new RuntimeException(
-                "Error reading transaction logs, recovery not possible. To force the database to start anyway, you can specify '" +
-                        GraphDatabaseSettings.fail_on_corrupted_log_files.name() + "=false'. This will try to recover as much " +
-                        "as possible and then truncate the corrupt part of the transaction log. Doing this means your database " +
-                        "integrity might be compromised, please consider restoring from a consistent backup instead.", t );
+                new StringBuilder().append("Error reading transaction logs, recovery not possible. To force the database to start anyway, you can specify '").append(GraphDatabaseSettings.fail_on_corrupted_log_files.name()).append("=false'. This will try to recover as much ").append("as possible and then truncate the corrupt part of the transaction log. Doing this means your database ").append("integrity might be compromised, please consider restoring from a consistent backup instead.").toString(), t );
     }
 
     private void initProgressReporter( RecoveryStartInformation recoveryStartInformation,

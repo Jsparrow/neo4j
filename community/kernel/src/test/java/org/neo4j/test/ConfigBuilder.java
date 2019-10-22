@@ -67,38 +67,38 @@ import org.neo4j.graphdb.config.Setting;
  */
 public final class ConfigBuilder
 {
-    public static ConfigBuilder configure( Setting<?> key, String value )
+    private final Map<Setting<?>,String> config;
+
+	private ConfigBuilder( Map<Setting<?>,String> config )
+    {
+        this.config = config;
+    }
+
+	public static ConfigBuilder configure( Setting<?> key, String value )
     {
         Map<Setting<?>,String> config = new HashMap<>();
         config.put( key, value );
         return new ConfigBuilder( config );
     }
 
-    private final Map<Setting<?>,String> config;
-
-    private ConfigBuilder( Map<Setting<?>,String> config )
-    {
-        this.config = config;
-    }
-
-    public Map<Setting<?>,String> configuration()
+	public Map<Setting<?>,String> configuration()
     {
         return Collections.unmodifiableMap( config );
     }
 
-    public ConfigBuilder and( Setting<?> key, String value )
+	public ConfigBuilder and( Setting<?> key, String value )
     {
         Map<Setting<?>,String> config = new HashMap<>( this.config );
         config.put( key, value );
         return new ConfigBuilder( config );
     }
 
-    public Object[] asParameters()
+	public Object[] asParameters()
     {
         return new Object[] {this};
     }
 
-    @Override
+	@Override
     public String toString()
     {
         return config.toString();

@@ -139,15 +139,6 @@ public abstract class IndexProviderCompatibilityTestSuite
         final List<NodeAndValue> valueSet1;
         final List<NodeAndValue> valueSet2;
 
-        @Before
-        public void setup()
-        {
-            fs = pageCacheAndDependenciesRule.fileSystem();
-            graphDbDir = pageCacheAndDependenciesRule.directory().databaseDir();
-            PageCache pageCache = pageCacheAndDependenciesRule.pageCache();
-            indexProvider = testSuite.createIndexProvider( pageCache, fs, graphDbDir );
-        }
-
         public Compatibility( IndexProviderCompatibilityTestSuite testSuite, IndexDescriptor descriptor )
         {
             this.testSuite = testSuite;
@@ -275,12 +266,21 @@ public abstract class IndexProviderCompatibilityTestSuite
             ruleChain = RuleChain.outerRule( pageCacheAndDependenciesRule ).around( random );
         }
 
-        void withPopulator( IndexPopulator populator, ThrowingConsumer<IndexPopulator,Exception> runWithPopulator ) throws Exception
+		@Before
+        public void setup()
+        {
+            fs = pageCacheAndDependenciesRule.fileSystem();
+            graphDbDir = pageCacheAndDependenciesRule.directory().databaseDir();
+            PageCache pageCache = pageCacheAndDependenciesRule.pageCache();
+            indexProvider = testSuite.createIndexProvider( pageCache, fs, graphDbDir );
+        }
+
+		void withPopulator( IndexPopulator populator, ThrowingConsumer<IndexPopulator,Exception> runWithPopulator ) throws Exception
         {
             withPopulator( populator, runWithPopulator, true );
         }
 
-        void withPopulator( IndexPopulator populator, ThrowingConsumer<IndexPopulator,Exception> runWithPopulator, boolean closeSuccessfully ) throws Exception
+		void withPopulator( IndexPopulator populator, ThrowingConsumer<IndexPopulator,Exception> runWithPopulator, boolean closeSuccessfully ) throws Exception
         {
             try
             {
@@ -298,19 +298,19 @@ public abstract class IndexProviderCompatibilityTestSuite
             }
         }
 
-        List<IndexEntryUpdate<?>> updates( List<NodeAndValue> values )
+		List<IndexEntryUpdate<?>> updates( List<NodeAndValue> values )
         {
             return updates( values, 0 );
         }
 
-        List<IndexEntryUpdate<?>> updates( List<NodeAndValue> values, long nodeIdOffset )
+		List<IndexEntryUpdate<?>> updates( List<NodeAndValue> values, long nodeIdOffset )
         {
             List<IndexEntryUpdate<?>> updates = new ArrayList<>();
             values.forEach( entry -> updates.add( IndexEntryUpdate.add( nodeIdOffset + entry.nodeId, descriptor.schema(), entry.value ) ) );
             return updates;
         }
 
-        private static List<NodeAndValue> allValues( boolean supportsSpatial,
+		private static List<NodeAndValue> allValues( boolean supportsSpatial,
                                                      List<Value> common,
                                                      List<Value> temporal,
                                                      List<Value> spatial )
@@ -335,7 +335,7 @@ public abstract class IndexProviderCompatibilityTestSuite
             return result;
         }
 
-        static class NodeAndValue
+		static class NodeAndValue
         {
             final long nodeId;
             final Value value;

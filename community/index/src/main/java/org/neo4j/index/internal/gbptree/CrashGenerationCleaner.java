@@ -230,14 +230,14 @@ class CrashGenerationCleaner
         cleanCrashedGSPP( cursor, TreeNode.BYTE_POS_LEFTSIBLING, cleanedPointers );
         cleanCrashedGSPP( cursor, TreeNode.BYTE_POS_RIGHTSIBLING, cleanedPointers );
 
-        if ( TreeNode.isInternal( cursor ) )
-        {
-            int keyCount = TreeNode.keyCount( cursor );
-            for ( int i = 0; i <= keyCount && treeNode.reasonableChildCount( i ); i++ )
-            {
-                cleanCrashedGSPP( cursor, treeNode.childOffset( i ), cleanedPointers );
-            }
-        }
+        if (!TreeNode.isInternal( cursor )) {
+			return;
+		}
+		int keyCount = TreeNode.keyCount( cursor );
+		for ( int i = 0; i <= keyCount && treeNode.reasonableChildCount( i ); i++ )
+		{
+		    cleanCrashedGSPP( cursor, treeNode.childOffset( i ), cleanedPointers );
+		}
     }
 
     private void cleanCrashedGSPP( PageCursor cursor, int gsppOffset, AtomicInteger cleanedPointers )
@@ -251,16 +251,16 @@ class CrashGenerationCleaner
      */
     private void cleanCrashedGSP( PageCursor cursor, int gspOffset, AtomicInteger cleanedPointers )
     {
-        if ( hasCrashedGSP( cursor, gspOffset ) )
-        {
-            cursor.setOffset( gspOffset );
-            GenerationSafePointer.clean( cursor );
-            cleanedPointers.incrementAndGet();
-        }
+        if (!hasCrashedGSP( cursor, gspOffset )) {
+			return;
+		}
+		cursor.setOffset( gspOffset );
+		GenerationSafePointer.clean( cursor );
+		cleanedPointers.incrementAndGet();
     }
 
     private String unexpectedGenerations( )
     {
-        return "Unexpected generations, stableGeneration=" + stableGeneration + ", unstableGeneration=" + unstableGeneration;
+        return new StringBuilder().append("Unexpected generations, stableGeneration=").append(stableGeneration).append(", unstableGeneration=").append(unstableGeneration).toString();
     }
 }

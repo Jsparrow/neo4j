@@ -103,7 +103,7 @@ public class CompositeRandomizedIndexAccessorCompatibility extends IndexAccessor
                         exact( 101, update.values()[1] ),
                         exact( 102, update.values()[2] ),
                         exact( 103, update.values()[3] ) );
-                assertEquals( update + " " + hits.toString(), 1, hits.size() );
+                assertEquals( new StringBuilder().append(update).append(" ").append(hits.toString()).toString(), 1, hits.size() );
                 assertThat( single( hits ), equalTo( update.getEntityId() ) );
             }
         }
@@ -264,10 +264,7 @@ public class CompositeRandomizedIndexAccessorCompatibility extends IndexAccessor
         private List<IndexEntryUpdate<?>> generateUpdatesFromValues( List<ValueTuple> values, MutableLong nextId )
         {
             List<IndexEntryUpdate<?>> updates = new ArrayList<>();
-            for ( ValueTuple value : values )
-            {
-                updates.add( add( nextId.getAndIncrement(), descriptor.schema(), (Object[]) value.getValues() ) );
-            }
+            values.forEach(value -> updates.add(add(nextId.getAndIncrement(), descriptor.schema(), (Object[]) value.getValues())));
             return updates;
         }
     }

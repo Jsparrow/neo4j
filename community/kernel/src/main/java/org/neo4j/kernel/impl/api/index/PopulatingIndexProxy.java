@@ -160,7 +160,7 @@ public class PopulatingIndexProxy implements IndexProxy
     }
 
     @Override
-    public IndexPopulationFailure getPopulationFailure() throws IllegalStateException
+    public IndexPopulationFailure getPopulationFailure()
     {
         throw new IllegalStateException( this + " is POPULATING" );
     }
@@ -174,7 +174,7 @@ public class PopulatingIndexProxy implements IndexProxy
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[job:" + job + "]";
+        return new StringBuilder().append(getClass().getSimpleName()).append("[job:").append(job).append("]").toString();
     }
 
     private abstract class PopulatingIndexUpdater implements IndexUpdater

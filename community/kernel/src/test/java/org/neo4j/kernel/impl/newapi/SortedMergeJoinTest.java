@@ -42,7 +42,10 @@ import static org.hamcrest.Matchers.equalTo;
 @RunWith( Parameterized.class )
 public class SortedMergeJoinTest
 {
-    @Parameterized.Parameters()
+    @Parameterized.Parameter
+    public IndexOrder indexOrder;
+
+	@Parameterized.Parameters()
     public static Iterable<Object[]> data()
     {
         return Arrays.asList(new Object[][] {
@@ -50,16 +53,13 @@ public class SortedMergeJoinTest
         });
     }
 
-    @Parameterized.Parameter
-    public IndexOrder indexOrder;
-
-    @Test
+	@Test
     public void shouldWorkWithEmptyLists()
     {
         assertThatItWorksOneWay( Collections.emptyList(), Collections.emptyList() );
     }
 
-    @Test
+	@Test
     public void shouldWorkWithAList()
     {
         assertThatItWorks( Arrays.asList(
@@ -70,7 +70,7 @@ public class SortedMergeJoinTest
                            Collections.emptyList() );
     }
 
-    @Test
+	@Test
     public void shouldWorkWith2Lists()
     {
         assertThatItWorks( Arrays.asList(
@@ -85,7 +85,7 @@ public class SortedMergeJoinTest
                                    node( 8L, "d" ) ) );
     }
 
-    @Test
+	@Test
     public void shouldWorkWithSameElements()
     {
         assertThatItWorks( Arrays.asList(
@@ -98,7 +98,7 @@ public class SortedMergeJoinTest
                                    node( 6L, "ca" ) ) );
     }
 
-    @Test
+	@Test
     public void shouldWorkWithCompositeValues()
     {
         assertThatItWorks( Arrays.asList(
@@ -112,13 +112,13 @@ public class SortedMergeJoinTest
                                    node( 6L, "c", "e" ) ) );
     }
 
-    private void assertThatItWorks( List<NodeWithPropertyValues> listA, List<NodeWithPropertyValues> listB )
+	private void assertThatItWorks( List<NodeWithPropertyValues> listA, List<NodeWithPropertyValues> listB )
     {
         assertThatItWorksOneWay( listA, listB );
         assertThatItWorksOneWay( listB, listA );
     }
 
-    private void assertThatItWorksOneWay( List<NodeWithPropertyValues> listA, List<NodeWithPropertyValues> listB )
+	private void assertThatItWorksOneWay( List<NodeWithPropertyValues> listA, List<NodeWithPropertyValues> listB )
     {
         SortedMergeJoin sortedMergeJoin = new SortedMergeJoin();
         sortedMergeJoin.initialize( indexOrder );
@@ -140,7 +140,7 @@ public class SortedMergeJoinTest
         assertThat( result, equalTo( expected ) );
     }
 
-    private List<NodeWithPropertyValues> process( SortedMergeJoin sortedMergeJoin,
+	private List<NodeWithPropertyValues> process( SortedMergeJoin sortedMergeJoin,
                                                   Iterator<NodeWithPropertyValues> iteratorA,
                                                   Iterator<NodeWithPropertyValues> iteratorB )
     {
@@ -163,12 +163,12 @@ public class SortedMergeJoinTest
         return collector.result;
     }
 
-    private NodeWithPropertyValues node( long id, Object... values )
+	private NodeWithPropertyValues node( long id, Object... values )
     {
         return new NodeWithPropertyValues( id, Stream.of( values ).map( Values::of ).toArray( Value[]::new ) );
     }
 
-    class Collector implements SortedMergeJoin.Sink
+	class Collector implements SortedMergeJoin.Sink
     {
         final List<NodeWithPropertyValues> result = new ArrayList<>();
         boolean done;

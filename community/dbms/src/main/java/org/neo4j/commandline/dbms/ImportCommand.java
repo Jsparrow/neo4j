@@ -77,14 +77,41 @@ public class ImportCommand implements AdminCommand
             .withArgument( new OptionalNamedArg( "mode", allowedModes, "csv",
                     "Import a collection of CSV files or a pre-3.0 installation." ) );
 
-    private static void includeDatabaseArguments( Arguments arguments )
+    static
+    {
+        includeDatabaseArguments( databaseArguments );
+        includeDatabaseArguments( allArguments );
+
+        includeCsvArguments( csvArguments );
+        includeCsvArguments( allArguments );
+    }
+
+	private final Path homeDir;
+	private final Path configDir;
+	private final OutsideWorld outsideWorld;
+	private final ImporterFactory importerFactory;
+
+	public ImportCommand( Path homeDir, Path configDir, OutsideWorld outsideWorld )
+    {
+        this( homeDir, configDir, outsideWorld, new ImporterFactory() );
+    }
+
+	ImportCommand( Path homeDir, Path configDir, OutsideWorld outsideWorld, ImporterFactory importerFactory )
+    {
+        this.homeDir = homeDir;
+        this.configDir = configDir;
+        this.outsideWorld = outsideWorld;
+        this.importerFactory = importerFactory;
+    }
+
+	private static void includeDatabaseArguments( Arguments arguments )
     {
         arguments
             .withArgument( new OptionalNamedArg( "from", "source-directory", "",
                     "The location of the pre-3.0 database (e.g. <neo4j-root>/data/graph.db)." ) );
     }
 
-    private static void includeCsvArguments( Arguments arguments )
+	private static void includeCsvArguments( Arguments arguments )
     {
         arguments
             .withArgument( new OptionalNamedArg( "report-file", "filename", DEFAULT_REPORT_FILE_NAME,
@@ -92,28 +119,15 @@ public class ImportCommand implements AdminCommand
             .withArgument( new OptionalNamedArgWithMetadata( "nodes",
                     ":Label1:Label2",
                     "\"file1,file2,...\"", "",
-                    "Node CSV header and data. Multiple files will be logically seen as " +
-                            "one big file from the perspective of the importer. The first line " +
-                            "must contain the header. Multiple data sources like these can be " +
-                            "specified in one import, where each data source has its own header. " +
-                    "Note that file groups must be enclosed in quotation marks." ) )
+                    new StringBuilder().append("Node CSV header and data. Multiple files will be logically seen as ").append("one big file from the perspective of the importer. The first line ").append("must contain the header. Multiple data sources like these can be ").append("specified in one import, where each data source has its own header. ").append("Note that file groups must be enclosed in quotation marks.").toString() ) )
             .withArgument( new OptionalNamedArgWithMetadata( "relationships",
                     ":RELATIONSHIP_TYPE",
                     "\"file1,file2,...\"",
                     "",
-                    "Relationship CSV header and data. Multiple files will be logically " +
-                            "seen as one big file from the perspective of the importer. The first " +
-                            "line must contain the header. Multiple data sources like these can be " +
-                            "specified in one import, where each data source has its own header. " +
-                    "Note that file groups must be enclosed in quotation marks." ) )
+                    new StringBuilder().append("Relationship CSV header and data. Multiple files will be logically ").append("seen as one big file from the perspective of the importer. The first ").append("line must contain the header. Multiple data sources like these can be ").append("specified in one import, where each data source has its own header. ").append("Note that file groups must be enclosed in quotation marks.").toString() ) )
             .withArgument( new OptionalNamedArg( "id-type", new String[]{"STRING", "INTEGER", "ACTUAL"},
-                    "STRING", "Each node must provide a unique id. This is used to find the correct " +
-                    "nodes when creating relationships. Possible values are:\n" +
-                    "  STRING: arbitrary strings for identifying nodes,\n" +
-                    "  INTEGER: arbitrary integer values for identifying nodes,\n" +
-                    "  ACTUAL: (advanced) actual node ids.\n" +
-                    "For more information on id handling, please see the Neo4j Manual: " +
-                    "https://neo4j.com/docs/operations-manual/current/tools/import/" ) )
+                    "STRING", new StringBuilder().append("Each node must provide a unique id. This is used to find the correct ").append("nodes when creating relationships. Possible values are:\n").append("  STRING: arbitrary strings for identifying nodes,\n").append("  INTEGER: arbitrary integer values for identifying nodes,\n").append("  ACTUAL: (advanced) actual node ids.\n").append("For more information on id handling, please see the Neo4j Manual: ").append("https://neo4j.com/docs/operations-manual/current/tools/import/")
+							.toString() ) )
             .withArgument( new OptionalNamedArg( "input-encoding", "character-set", "UTF-8",
                     "Character set that input data is encoded in." ) )
             .withArgument( new OptionalBooleanArg( "ignore-extra-columns", false,
@@ -137,72 +151,37 @@ public class ImportCommand implements AdminCommand
             .withArgument( new OptionalNamedArg( "quote",
                     "quotation-character",
                     String.valueOf( COMMAS.quotationCharacter() ),
-                    "Character to treat as quotation character for values in CSV data. "
-                            + "Quotes can be escaped as per RFC 4180 by doubling them, for example \"\" would be " +
-                            "interpreted as a literal \". You cannot escape using \\." ) )
+                    new StringBuilder().append("Character to treat as quotation character for values in CSV data. ").append("Quotes can be escaped as per RFC 4180 by doubling them, for example \"\" would be ").append("interpreted as a literal \". You cannot escape using \\.").toString() ) )
             .withArgument( new OptionalNamedArg( "max-memory",
                     "max-memory-that-importer-can-use",
                     String.valueOf( DEFAULT_MAX_MEMORY_PERCENT ) + "%",
-                    "Maximum memory that neo4j-admin can use for various data structures and caching " +
-                            "to improve performance. " +
-                            "Values can be plain numbers, like 10000000 or e.g. 20G for 20 gigabyte, or even e.g. 70%" +
-                            "." ) )
+                    new StringBuilder().append("Maximum memory that neo4j-admin can use for various data structures and caching ").append("to improve performance. ").append("Values can be plain numbers, like 10000000 or e.g. 20G for 20 gigabyte, or even e.g. 70%").append(".").toString() ) )
             .withArgument( new OptionalNamedArg( "f",
                     "File containing all arguments to this import",
                     "",
-                    "File containing all arguments, used as an alternative to supplying all arguments on the command line directly."
-                            + "Each argument can be on a separate line or multiple arguments per line separated by space."
-                            + "Arguments containing spaces needs to be quoted."
-                            + "Supplying other arguments in addition to this file argument is not supported." ) )
+                    new StringBuilder().append("File containing all arguments, used as an alternative to supplying all arguments on the command line directly.").append("Each argument can be on a separate line or multiple arguments per line separated by space.").append("Arguments containing spaces needs to be quoted.").append("Supplying other arguments in addition to this file argument is not supported.").toString() ) )
             .withArgument( new OptionalNamedArg( "high-io",
                     "true/false",
                     null,
                     "Ignore environment-based heuristics, and assume that the target storage subsystem can support parallel IO with high throughput." ) );
     }
 
-    static
-    {
-        includeDatabaseArguments( databaseArguments );
-        includeDatabaseArguments( allArguments );
-
-        includeCsvArguments( csvArguments );
-        includeCsvArguments( allArguments );
-    }
-
-    public static Arguments databaseArguments()
+	public static Arguments databaseArguments()
     {
         return databaseArguments;
     }
 
-    public static Arguments csvArguments()
+	public static Arguments csvArguments()
     {
         return csvArguments;
     }
 
-    public static Arguments allArguments()
+	public static Arguments allArguments()
     {
         return allArguments;
     }
 
-    private final Path homeDir;
-    private final Path configDir;
-    private final OutsideWorld outsideWorld;
-    private final ImporterFactory importerFactory;
-
-    public ImportCommand( Path homeDir, Path configDir, OutsideWorld outsideWorld )
-    {
-        this( homeDir, configDir, outsideWorld, new ImporterFactory() );
-    }
-
-    ImportCommand( Path homeDir, Path configDir, OutsideWorld outsideWorld, ImporterFactory importerFactory )
-    {
-        this.homeDir = homeDir;
-        this.configDir = configDir;
-        this.outsideWorld = outsideWorld;
-        this.importerFactory = importerFactory;
-    }
-
-    @Override
+	@Override
     public void execute( String[] userSupplierArguments ) throws IncorrectUsage, CommandFailed
     {
         final String[] args;
@@ -245,19 +224,19 @@ public class ImportCommand implements AdminCommand
         }
     }
 
-    private static String[] getImportToolArgs( String[] userSupplierArguments ) throws IOException, IncorrectUsage
+	private static String[] getImportToolArgs( String[] userSupplierArguments ) throws IOException, IncorrectUsage
     {
         allArguments.parse( userSupplierArguments );
         Optional<Path> fileArgument = allArguments.getOptionalPath( "f" );
         return fileArgument.isPresent() ? parseFileArgumentList( fileArgument.get().toFile() ) : userSupplierArguments;
     }
 
-    private static Config loadAdditionalConfig( Optional<Path> additionalConfigFile )
+	private static Config loadAdditionalConfig( Optional<Path> additionalConfigFile )
     {
         return additionalConfigFile.map( path -> Config.fromFile( path ).build() ).orElseGet( Config::defaults );
     }
 
-    private static Config loadNeo4jConfig( Path homeDir, Path configDir, String databaseName, Config additionalConfig )
+	private static Config loadNeo4jConfig( Path homeDir, Path configDir, String databaseName, Config additionalConfig )
     {
         Config config = Config.fromFile( configDir.resolve( Config.DEFAULT_CONFIG_FILE_NAME ) )
                 .withHome( homeDir )

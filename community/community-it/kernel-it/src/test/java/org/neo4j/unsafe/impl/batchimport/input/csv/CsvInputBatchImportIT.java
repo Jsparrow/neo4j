@@ -113,16 +113,18 @@ public class CsvInputBatchImportIT
     /** Don't support these counts at the moment so don't compute them */
     private static final boolean COMPUTE_DOUBLE_SIDED_RELATIONSHIP_COUNTS = false;
 
-    @Rule
+	private static final Supplier<ZoneId> testDefaultTimeZone = () -> ZoneId.of( "Asia/Shanghai" );
+
+	@Rule
     public final TestDirectory directory = TestDirectory.testDirectory();
-    @Rule
+
+	@Rule
     public final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
-    @Rule
+
+	@Rule
     public final RandomRule random = new RandomRule();
 
-    private static final Supplier<ZoneId> testDefaultTimeZone = () -> ZoneId.of( "Asia/Shanghai" );
-
-    @Test
+	@Test
     public void shouldImportDataComingFromCsvFiles() throws Exception
     {
         // GIVEN
@@ -143,7 +145,7 @@ public class CsvInputBatchImportIT
         }
     }
 
-    public static Input csv( File nodes, File relationships, IdType idType,
+	public static Input csv( File nodes, File relationships, IdType idType,
             org.neo4j.unsafe.impl.batchimport.input.csv.Configuration configuration, Collector badCollector )
     {
         return new CsvInput(
@@ -157,7 +159,7 @@ public class CsvInputBatchImportIT
                 CsvInput.NO_MONITOR );
     }
 
-    private static org.neo4j.unsafe.impl.batchimport.input.csv.Configuration lowBufferSize(
+	private static org.neo4j.unsafe.impl.batchimport.input.csv.Configuration lowBufferSize(
             org.neo4j.unsafe.impl.batchimport.input.csv.Configuration actual )
     {
         return new org.neo4j.unsafe.impl.batchimport.input.csv.Configuration.Overridden( actual )
@@ -170,11 +172,7 @@ public class CsvInputBatchImportIT
         };
     }
 
-    // ======================================================
-    // Below is code for generating import data
-    // ======================================================
-
-    private List<InputEntity> randomNodeData()
+	private List<InputEntity> randomNodeData()
     {
         List<InputEntity> nodes = new ArrayList<>();
         for ( int i = 0; i < 300; i++ )
@@ -182,8 +180,8 @@ public class CsvInputBatchImportIT
             InputEntity node = new InputEntity();
             node.id( UUID.randomUUID().toString(), Group.GLOBAL );
             node.property( "name", "Node " + i );
-            node.property( "pointA", "\"   { x : -4.2, y : " + i + ", crs: WGS-84 } \"" );
-            node.property( "pointB", "\" { x : -8, y : " + i + " } \"" );
+            node.property( "pointA", new StringBuilder().append("\"   { x : -4.2, y : ").append(i).append(", crs: WGS-84 } \"").toString() );
+            node.property( "pointB", new StringBuilder().append("\" { x : -8, y : ").append(i).append(" } \"").toString() );
             node.property( "date", LocalDate.of( 2018, i % 12 + 1, i % 28 + 1 ) );
             node.property( "time", OffsetTime.of( 1, i % 60, 0, 0, ZoneOffset.ofHours( 9 ) ) );
             node.property( "dateTime",
@@ -199,7 +197,7 @@ public class CsvInputBatchImportIT
         return nodes;
     }
 
-    private String[] randomLabels( Random random )
+	private String[] randomLabels( Random random )
     {
         String[] labels = new String[random.nextInt( 3 )];
         for ( int i = 0; i < labels.length; i++ )
@@ -209,7 +207,7 @@ public class CsvInputBatchImportIT
         return labels;
     }
 
-    private Configuration smallBatchSizeConfig()
+	private Configuration smallBatchSizeConfig()
     {
         return new Configuration()
         {
@@ -227,7 +225,7 @@ public class CsvInputBatchImportIT
         };
     }
 
-    private File relationshipDataAsFile( List<InputEntity> relationshipData ) throws IOException
+	private File relationshipDataAsFile( List<InputEntity> relationshipData ) throws IOException
     {
         File file = directory.file( "relationships.csv" );
         try ( Writer writer = fileSystemRule.get().openAsWriter( file, StandardCharsets.UTF_8, false ) )
@@ -238,13 +236,14 @@ public class CsvInputBatchImportIT
             // Data
             for ( InputEntity relationship : relationshipData )
             {
-                println( writer, relationship.startId() + "," + relationship.endId() + "," + relationship.stringType );
+                println( writer, new StringBuilder().append(relationship.startId()).append(",").append(relationship.endId()).append(",").append(relationship.stringType)
+						.toString() );
             }
         }
         return file;
     }
 
-    private File nodeDataAsFile( List<InputEntity> nodeData ) throws IOException
+	private File nodeDataAsFile( List<InputEntity> nodeData ) throws IOException
     {
         File file = directory.file( "nodes.csv" );
         try ( Writer writer = fileSystemRule.get().openAsWriter( file, StandardCharsets.UTF_8, false ) )
@@ -269,7 +268,7 @@ public class CsvInputBatchImportIT
         return file;
     }
 
-    private String csvLabels( String[] labels )
+	private String csvLabels( String[] labels )
     {
         if ( labels == null || labels.length == 0 )
         {
@@ -283,12 +282,12 @@ public class CsvInputBatchImportIT
         return builder.toString();
     }
 
-    private void println( Writer writer, String string ) throws IOException
+	private void println( Writer writer, String string ) throws IOException
     {
         writer.write( string + "\n" );
     }
 
-    private List<InputEntity> randomRelationshipData( List<InputEntity> nodeData )
+	private List<InputEntity> randomRelationshipData( List<InputEntity> nodeData )
     {
         List<InputEntity> relationships = new ArrayList<>();
         for ( int i = 0; i < 1000; i++ )
@@ -302,11 +301,7 @@ public class CsvInputBatchImportIT
         return relationships;
     }
 
-    // ======================================================
-    // Below is code for verifying the imported data
-    // ======================================================
-
-    private void verifyImportedData( List<InputEntity> nodeData, List<InputEntity> relationshipData )
+	private void verifyImportedData( List<InputEntity> nodeData, List<InputEntity> relationshipData )
     {
         // Build up expected data for the verification below
         Map<String/*id*/, InputEntity> expectedNodes = new HashMap<>();
@@ -406,72 +401,38 @@ public class CsvInputBatchImportIT
         }
     }
 
-    private static class RelationshipCountKey
-    {
-        private final int startLabel;
-        private final int type;
-        private final int endLabel;
-
-        RelationshipCountKey( int startLabel, int type, int endLabel )
-        {
-            this.startLabel = startLabel;
-            this.type = type;
-            this.endLabel = endLabel;
-        }
-
-        @Override
-        public String toString()
-        {
-            return format( "[start:%d, type:%d, end:%d]", startLabel, type, endLabel );
-        }
-    }
-
-    private Iterable<Pair<RelationshipCountKey,Long>> allRelationshipCounts(
+	private Iterable<Pair<RelationshipCountKey,Long>> allRelationshipCounts(
             Function<String, Integer> labelTranslationTable,
             Function<String, Integer> relationshipTypeTranslationTable,
             Map<String, Map<String, Map<String, AtomicLong>>> counts )
     {
         Collection<Pair<RelationshipCountKey,Long>> result = new ArrayList<>();
-        for ( Map.Entry<String, Map<String, Map<String, AtomicLong>>> startLabel : counts.entrySet() )
-        {
-            for ( Map.Entry<String, Map<String, AtomicLong>> type : startLabel.getValue().entrySet() )
-            {
-                for ( Map.Entry<String, AtomicLong> endLabel : type.getValue().entrySet() )
-                {
-                    RelationshipCountKey key = new RelationshipCountKey(
-                            labelTranslationTable.apply( startLabel.getKey() ),
-                            relationshipTypeTranslationTable.apply( type.getKey() ),
-                            labelTranslationTable.apply( endLabel.getKey() ) );
-                    result.add( Pair.of( key, endLabel.getValue().longValue() ) );
-                }
-            }
-        }
+        counts.entrySet().forEach(startLabel -> startLabel.getValue().entrySet().forEach(type -> type.getValue().entrySet().forEach(endLabel -> {
+			RelationshipCountKey key = new RelationshipCountKey(labelTranslationTable.apply(startLabel.getKey()),
+					relationshipTypeTranslationTable.apply(type.getKey()),
+					labelTranslationTable.apply(endLabel.getKey()));
+			result.add(Pair.of(key, endLabel.getValue().longValue()));
+		})));
         return result;
     }
 
-    private Iterable<Pair<Integer,Long>> allNodeCounts( Function<String, Integer> labelTranslationTable,
+	private Iterable<Pair<Integer,Long>> allNodeCounts( Function<String, Integer> labelTranslationTable,
             Map<String, AtomicLong> counts )
     {
         Collection<Pair<Integer,Long>> result = new ArrayList<>();
-        for ( Map.Entry<String, AtomicLong> count : counts.entrySet() )
-        {
-            result.add( Pair.of( labelTranslationTable.apply( count.getKey() ), count.getValue().get() ) );
-        }
+        counts.entrySet().forEach(count -> result.add(Pair.of(labelTranslationTable.apply(count.getKey()), count.getValue().get())));
         counts.put( null, new AtomicLong( counts.size() ) );
         return result;
     }
 
-    private Function<String, Integer> translationTable( TokenStore<?> tokenStore, final int anyValue )
+	private Function<String, Integer> translationTable( TokenStore<?> tokenStore, final int anyValue )
     {
         final Map<String, Integer> translationTable = new HashMap<>();
-        for ( NamedToken token : tokenStore.getTokens() )
-        {
-            translationTable.put( token.name(), token.id() );
-        }
+        tokenStore.getTokens().forEach(token -> translationTable.put(token.name(), token.id()));
         return from -> from == null ? anyValue : translationTable.get( from );
     }
 
-    private static Set<String> names( Iterable<Label> labels )
+	private static Set<String> names( Iterable<Label> labels )
     {
         Set<String> names = new HashSet<>();
         for ( Label label : labels )
@@ -481,13 +442,12 @@ public class CsvInputBatchImportIT
         return names;
     }
 
-    private static void buildUpExpectedData( List<InputEntity> nodeData, List<InputEntity> relationshipData, Map<String,InputEntity> expectedNodes,
+	private static void buildUpExpectedData( List<InputEntity> nodeData, List<InputEntity> relationshipData, Map<String,InputEntity> expectedNodes,
             Map<String,String[]> expectedNodeNames, Map<String,Map<String,Consumer<Object>>> expectedNodePropertyVerifiers,
             Map<String,Map<String,Map<String,AtomicInteger>>> expectedRelationships, Map<String,AtomicLong> nodeCounts,
             Map<String,Map<String,Map<String,AtomicLong>>> relationshipCounts )
     {
-        for ( InputEntity node : nodeData )
-        {
+        nodeData.forEach(node -> {
             expectedNodes.put( (String) node.id(), node );
             expectedNodeNames.put( nameOf( node ), node.labels() );
 
@@ -552,7 +512,7 @@ public class CsvInputBatchImportIT
                 PointValue v = (PointValue) actualValue;
                 double actualY = v.getCoordinates().get( 0 ).getCoordinate().get( 1 );
                 double expectedY = indexOf( node );
-                String message = actualValue.toString() + " does not have y=" + expectedY;
+                String message = new StringBuilder().append(actualValue.toString()).append(" does not have y=").append(expectedY).toString();
                 assertEquals( message, expectedY, actualY, 0.1 );
                 message = actualValue.toString() + " does not have crs=wgs-84";
                 assertEquals( message, CoordinateReferenceSystem.WGS84.getName(), v.getCoordinateReferenceSystem().getName() );
@@ -566,7 +526,7 @@ public class CsvInputBatchImportIT
                 PointValue v = (PointValue) actualValue;
                 double actualY = v.getCoordinates().get( 0 ).getCoordinate().get( 1 );
                 double expectedY = indexOf( node );
-                String message = actualValue.toString() + " does not have y=" + expectedY;
+                String message = new StringBuilder().append(actualValue.toString()).append(" does not have y=").append(expectedY).toString();
                 assertEquals( message, expectedY, actualY, 0.1 );
                 message = actualValue.toString() + " does not have crs=cartesian";
                 assertEquals( message, CoordinateReferenceSystem.Cartesian.getName(), v.getCoordinateReferenceSystem().getName() );
@@ -576,9 +536,8 @@ public class CsvInputBatchImportIT
             expectedNodePropertyVerifiers.put( nameOf( node ), propertyVerifiers );
 
             countNodeLabels( nodeCounts, node.labels() );
-        }
-        for ( InputEntity relationship : relationshipData )
-        {
+        });
+        relationshipData.forEach(relationship -> {
             // Expected relationship counts per node, type and direction
             InputEntity startNode = expectedNodes.get( relationship.startId() );
             InputEntity endNode = expectedNodes.get( relationship.endId() );
@@ -593,30 +552,26 @@ public class CsvInputBatchImportIT
             // Let's do what CountsState#addRelationship does, roughly
             relationshipCounts.get( null ).get( null ).get( null ).incrementAndGet();
             relationshipCounts.get( null ).get( relationship.stringType ).get( null ).incrementAndGet();
-            for ( String startNodeLabelName : asSet( startNode.labels() ) )
-            {
-                Map<String, Map<String, AtomicLong>> startLabelCounts = relationshipCounts.get( startNodeLabelName );
-                startLabelCounts.get( null ).get( null ).incrementAndGet();
-                Map<String, AtomicLong> typeCounts = startLabelCounts.get( relationship.stringType );
-                typeCounts.get( null ).incrementAndGet();
-                if ( COMPUTE_DOUBLE_SIDED_RELATIONSHIP_COUNTS )
+            asSet( startNode.labels() ).stream().map(relationshipCounts::get).forEach(startLabelCounts -> {
+				startLabelCounts.get( null ).get( null ).incrementAndGet();
+				Map<String, AtomicLong> typeCounts = startLabelCounts.get( relationship.stringType );
+				typeCounts.get( null ).incrementAndGet();
+				if ( COMPUTE_DOUBLE_SIDED_RELATIONSHIP_COUNTS )
                 {
-                    for ( String endNodeLabelName : asSet( endNode.labels() ) )
-                    {
+                    asSet( endNode.labels() ).forEach(endNodeLabelName -> {
                         startLabelCounts.get( null ).get( endNodeLabelName ).incrementAndGet();
                         typeCounts.get( endNodeLabelName ).incrementAndGet();
-                    }
+                    });
                 }
-            }
-            for ( String endNodeLabelName : asSet( endNode.labels() ) )
-            {
+			});
+            asSet( endNode.labels() ).forEach(endNodeLabelName -> {
                 relationshipCounts.get( null ).get( null ).get( endNodeLabelName ).incrementAndGet();
                 relationshipCounts.get( null ).get( relationship.stringType ).get( endNodeLabelName ).incrementAndGet();
-            }
-        }
+            });
+        });
     }
 
-    private static void countNodeLabels( Map<String,AtomicLong> nodeCounts, String[] labels )
+	private static void countNodeLabels( Map<String,AtomicLong> nodeCounts, String[] labels )
     {
         Set<String> seen = new HashSet<>();
         for ( String labelName : labels )
@@ -628,14 +583,46 @@ public class CsvInputBatchImportIT
         }
     }
 
-    private static String nameOf( InputEntity node )
+	private static String nameOf( InputEntity node )
     {
         return (String) node.properties()[1];
     }
 
-    private static int indexOf( InputEntity node )
+	private static int indexOf( InputEntity node )
     {
         return Integer.parseInt( ((String) node.properties()[1]).split( "\\s" )[1] );
+    }
+
+    
+
+    // ======================================================
+    // Below is code for generating import data
+    // ======================================================
+
+    
+
+    // ======================================================
+    // Below is code for verifying the imported data
+    // ======================================================
+
+    private static class RelationshipCountKey
+    {
+        private final int startLabel;
+        private final int type;
+        private final int endLabel;
+
+        RelationshipCountKey( int startLabel, int type, int endLabel )
+        {
+            this.startLabel = startLabel;
+            this.type = type;
+            this.endLabel = endLabel;
+        }
+
+        @Override
+        public String toString()
+        {
+            return format( "[start:%d, type:%d, end:%d]", startLabel, type, endLabel );
+        }
     }
 
 }

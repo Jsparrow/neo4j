@@ -36,14 +36,14 @@ public class PageCacheArrayFactoryMonitor implements NumberArrayFactory.Monitor
     public void allocationSuccessful( long memory, NumberArrayFactory successfulFactory,
             Iterable<NumberArrayFactory.AllocationFailure> attemptedAllocationFailures )
     {
-        if ( successfulFactory instanceof PageCachedNumberArrayFactory )
-        {
-            StringBuilder builder =
-                    new StringBuilder( format( "Memory allocation of %s ended up in page cache, which may impact performance negatively", bytes( memory ) ) );
-            attemptedAllocationFailures.forEach(
-                    failure -> builder.append( format( "%n%s: %s", failure.getFactory(), failure.getFailure() ) ) );
-            failedFactoriesDescription.compareAndSet( null, builder.toString() );
-        }
+        if (!(successfulFactory instanceof PageCachedNumberArrayFactory)) {
+			return;
+		}
+		StringBuilder builder =
+		        new StringBuilder( format( "Memory allocation of %s ended up in page cache, which may impact performance negatively", bytes( memory ) ) );
+		attemptedAllocationFailures.forEach(
+		        failure -> builder.append( format( "%n%s: %s", failure.getFactory(), failure.getFailure() ) ) );
+		failedFactoriesDescription.compareAndSet( null, builder.toString() );
     }
 
     /**

@@ -31,52 +31,38 @@ import org.neo4j.util.concurrent.BinaryLatch;
  */
 final class LatchMap
 {
-    static final class Latch extends BinaryLatch
-    {
-        private LatchMap latchMap;
-        private int index;
-
-        @Override
-        public void release()
-        {
-            latchMap.setLatch( index, null );
-            super.release();
-        }
-    }
-
     private static final int faultLockStriping = FeatureToggles.getInteger( LatchMap.class, "faultLockStriping", 128 );
-    private static final long faultLockMask = faultLockStriping - 1;
-    private static final int latchesArrayBase = UnsafeUtil.arrayBaseOffset( Latch[].class );
-    private static final int latchesArrayScale = UnsafeUtil.arrayIndexScale( Latch[].class );
+	private static final long faultLockMask = faultLockStriping - 1;
+	private static final int latchesArrayBase = UnsafeUtil.arrayBaseOffset( Latch[].class );
+	private static final int latchesArrayScale = UnsafeUtil.arrayIndexScale( Latch[].class );
+	private final Latch[] latches;
 
-    private final Latch[] latches;
-
-    LatchMap()
+	LatchMap()
     {
         latches = new Latch[faultLockStriping];
     }
 
-    private long offset( int index )
+	private long offset( int index )
     {
         return UnsafeUtil.arrayOffset( index, latchesArrayBase, latchesArrayScale );
     }
 
-    private void setLatch( int index, BinaryLatch newValue )
+	private void setLatch( int index, BinaryLatch newValue )
     {
         UnsafeUtil.putObjectVolatile( latches, offset( index ), newValue );
     }
 
-    private boolean compareAndSetLatch( int index, Latch expected, Latch update )
+	private boolean compareAndSetLatch( int index, Latch expected, Latch update )
     {
         return UnsafeUtil.compareAndSwapObject( latches, offset( index ), expected, update );
     }
 
-    private Latch getLatch( int index )
+	private Latch getLatch( int index )
     {
         return (Latch) UnsafeUtil.getObjectVolatile( latches, offset( index ) );
     }
 
-    /**
+	/**
      * If a latch is currently installed for the given (or any colliding) identifier, then it will be waited upon and
      * {@code null} will be returned.
      *
@@ -104,16 +90,29 @@ final class LatchMap
         return null;
     }
 
-    private int index( long identifier )
+	private int index( long identifier )
     {
         return (int) (mix( identifier ) & faultLockMask);
     }
 
-    private long mix( long identifier )
+	private long mix( long identifier )
     {
         identifier ^= identifier << 21;
         identifier ^= identifier >>> 35;
         identifier ^= identifier << 4;
         return identifier;
+    }
+
+	static final class Latch extends BinaryLatch
+    {
+        private LatchMap latchMap;
+        private int index;
+
+        @Override
+        public void release()
+        {
+            latchMap.setLatch( index, null );
+            super.release();
+        }
     }
 }

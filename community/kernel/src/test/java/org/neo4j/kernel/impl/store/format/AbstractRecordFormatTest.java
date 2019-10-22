@@ -180,8 +180,8 @@ public abstract class AbstractRecordFormatTest
                 }
                 catch ( Throwable t )
                 {
-                    Exceptions.setMessage( t, t.getMessage() + " : written:" + written + ", read:" + read +
-                            ", seed:" + random.seed() + ", iteration:" + i );
+                    Exceptions.setMessage( t, new StringBuilder().append(t.getMessage()).append(" : written:").append(written).append(", read:").append(read)
+							.append(", seed:").append(random.seed()).append(", iteration:").append(i).toString() );
                     throw t;
                 }
             }
@@ -252,7 +252,7 @@ public abstract class AbstractRecordFormatTest
     {
         if ( cursor.checkAndClearBoundsFlag() )
         {
-            fail( "Out-of-bounds when " + operation + " record " + record );
+            fail( new StringBuilder().append("Out-of-bounds when ").append(operation).append(" record ").append(record).toString() );
         }
     }
 

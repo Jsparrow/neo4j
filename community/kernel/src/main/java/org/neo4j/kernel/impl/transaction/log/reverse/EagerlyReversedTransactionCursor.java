@@ -56,12 +56,11 @@ public class EagerlyReversedTransactionCursor implements TransactionCursor
     @Override
     public boolean next()
     {
-        if ( indexToReturn > 0 )
-        {
-            indexToReturn--;
-            return true;
-        }
-        return false;
+        if (indexToReturn <= 0) {
+			return false;
+		}
+		indexToReturn--;
+		return true;
     }
 
     @Override

@@ -30,11 +30,13 @@ import org.neo4j.unsafe.impl.batchimport.input.csv.Decorator;
  */
 public class InputEntityDecorators
 {
-    private InputEntityDecorators()
+    public static final Decorator NO_DECORATOR = value -> value;
+
+	private InputEntityDecorators()
     {
     }
 
-    /**
+	/**
      * Ensures that all input nodes will at least have the given set of labels.
      */
     public static Decorator additiveLabels( final String[] labelNamesToAdd )
@@ -47,7 +49,7 @@ public class InputEntityDecorators
         return node -> new AdditiveLabelsDecorator( node, labelNamesToAdd );
     }
 
-    /**
+	/**
      * Ensures that input relationships without a specified relationship type will get
      * the specified default relationship type.
      */
@@ -58,7 +60,29 @@ public class InputEntityDecorators
                 : relationship -> new RelationshipTypeDecorator( relationship, defaultType );
     }
 
-    private static final class AdditiveLabelsDecorator extends InputEntityVisitor.Delegate
+	public static Decorator decorators( final Decorator... decorators )
+    {
+        return new Decorator()
+        {
+            @Override
+            public InputEntityVisitor apply( InputEntityVisitor from )
+            {
+                for ( Decorator decorator : decorators )
+                {
+                    from = decorator.apply( from );
+                }
+                return from;
+            }
+
+            @Override
+            public boolean isMutable()
+            {
+                return Stream.of( decorators ).anyMatch( Decorator::isMutable );
+            }
+        };
+    }
+
+	private static final class AdditiveLabelsDecorator extends InputEntityVisitor.Delegate
     {
         private final String[] transport = new String[1];
         private final String[] labelNamesToAdd;
@@ -159,28 +183,4 @@ public class InputEntityDecorators
             super.endOfEntity();
         }
     }
-
-    public static Decorator decorators( final Decorator... decorators )
-    {
-        return new Decorator()
-        {
-            @Override
-            public InputEntityVisitor apply( InputEntityVisitor from )
-            {
-                for ( Decorator decorator : decorators )
-                {
-                    from = decorator.apply( from );
-                }
-                return from;
-            }
-
-            @Override
-            public boolean isMutable()
-            {
-                return Stream.of( decorators ).anyMatch( Decorator::isMutable );
-            }
-        };
-    }
-
-    public static final Decorator NO_DECORATOR = value -> value;
 }

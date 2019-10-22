@@ -73,14 +73,11 @@ public interface IndexReaderFactory
         @Override
         public void close()
         {
-            if ( indexReaders != null )
-            {
-                for ( IndexReader indexReader : indexReaders.values() )
-                {
-                    indexReader.close();
-                }
-                indexReaders.clear();
-            }
+            if (indexReaders == null) {
+				return;
+			}
+			indexReaders.values().forEach(IndexReader::close);
+			indexReaders.clear();
         }
     }
 }

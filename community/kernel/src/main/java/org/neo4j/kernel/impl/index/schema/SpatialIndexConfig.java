@@ -68,6 +68,6 @@ final class SpatialIndexConfig
 
     private static String prefix( String crsName )
     {
-        return SPATIAL_CONFIG_PREFIX + "." + crsName;
+        return new StringBuilder().append(SPATIAL_CONFIG_PREFIX).append(".").append(crsName).toString();
     }
 }

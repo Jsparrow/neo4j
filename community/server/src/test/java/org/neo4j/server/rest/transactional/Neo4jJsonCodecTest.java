@@ -27,7 +27,6 @@ import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +55,7 @@ import static org.neo4j.test.mockito.mock.SpatialMocks.mockCartesian;
 import static org.neo4j.test.mockito.mock.SpatialMocks.mockCartesian_3D;
 import static org.neo4j.test.mockito.mock.SpatialMocks.mockWGS84;
 import static org.neo4j.test.mockito.mock.SpatialMocks.mockWGS84_3D;
+import java.util.Collections;
 
 public class Neo4jJsonCodecTest extends TxStateCheckerTestSupport
 {
@@ -142,7 +142,7 @@ public class Neo4jJsonCodecTest extends TxStateCheckerTestSupport
         Path path = mock( Path.class );
         PropertyContainer propertyContainer = mock( PropertyContainer.class );
         when( propertyContainer.getAllProperties() ).thenThrow( RuntimeException.class );
-        when( path.iterator() ).thenReturn( Arrays.asList(propertyContainer).listIterator() );
+        when( path.iterator() ).thenReturn( Collections.singletonList(propertyContainer).listIterator() );
 
         //When
         try
@@ -168,7 +168,7 @@ public class Neo4jJsonCodecTest extends TxStateCheckerTestSupport
         //When
         try
         {
-            jsonCodec.writeValue( jsonGenerator, Arrays.asList( propertyContainer ) );
+            jsonCodec.writeValue( jsonGenerator, Collections.singletonList( propertyContainer ) );
         }
         catch ( Exception ignored )
         {

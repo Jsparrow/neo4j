@@ -80,15 +80,12 @@ class CombinedPartSeeker<KEY,VALUE> implements RawCursor<Hit<KEY,VALUE>,IOExcept
                 }
             }
 
-            // Was our candidate lower than lowest we've seen so far this round?
-            if ( candidate != null )
-            {
-                if ( nextKeyIndex == -1 || layout.compare( candidate, nextKey ) < 0 )
-                {
-                    nextKey = candidate;
-                    nextKeyIndex = i;
-                }
-            }
+            boolean condition = candidate != null && (nextKeyIndex == -1 || layout.compare( candidate, nextKey ) < 0);
+			// Was our candidate lower than lowest we've seen so far this round?
+            if ( condition ) {
+			    nextKey = candidate;
+			    nextKeyIndex = i;
+			}
         }
 
         if ( nextKeyIndex != -1 )

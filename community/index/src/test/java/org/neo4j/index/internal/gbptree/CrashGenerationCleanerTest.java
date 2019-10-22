@@ -53,36 +53,34 @@ import static org.neo4j.test.rule.PageCacheRule.config;
 
 public class CrashGenerationCleanerTest
 {
-    private final FileSystemRule fileSystemRule = new DefaultFileSystemRule();
-    private final PageCacheRule pageCacheRule = new PageCacheRule();
-    private final TestDirectory testDirectory = TestDirectory.testDirectory( this.getClass(), fileSystemRule.get() );
-    private final RandomRule randomRule = new RandomRule();
-    @Rule
+    private static final String FILE_NAME = "index";
+	private static final int PAGE_SIZE = 256;
+	private final FileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	private final PageCacheRule pageCacheRule = new PageCacheRule();
+	private final TestDirectory testDirectory = TestDirectory.testDirectory( this.getClass(), fileSystemRule.get() );
+	private final RandomRule randomRule = new RandomRule();
+	@Rule
     public RuleChain ruleChain = RuleChain
             .outerRule( fileSystemRule ).around( testDirectory ).around( pageCacheRule ).around( randomRule );
-
-    private static final String FILE_NAME = "index";
-    private static final int PAGE_SIZE = 256;
-
-    private PagedFile pagedFile;
-    private final Layout<MutableLong,MutableLong> layout = longLayout().build();
-    private final TreeNode<MutableLong,MutableLong> treeNode = new TreeNodeFixedSize<>( PAGE_SIZE, layout );
-    private final ExecutorService executor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
-    private final TreeState checkpointedTreeState = new TreeState( 0, 9, 10, 0, 0, 0, 0, 0, 0, 0, true, true );
-    private final TreeState unstableTreeState = new TreeState( 0, 10, 12, 0, 0, 0, 0, 0, 0, 0, true, true );
-    private final List<GBPTreeCorruption.PageCorruption> possibleCorruptionsInInternal = Arrays.asList(
+	private PagedFile pagedFile;
+	private final Layout<MutableLong,MutableLong> layout = longLayout().build();
+	private final TreeNode<MutableLong,MutableLong> treeNode = new TreeNodeFixedSize<>( PAGE_SIZE, layout );
+	private final ExecutorService executor = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
+	private final TreeState checkpointedTreeState = new TreeState( 0, 9, 10, 0, 0, 0, 0, 0, 0, 0, true, true );
+	private final TreeState unstableTreeState = new TreeState( 0, 10, 12, 0, 0, 0, 0, 0, 0, 0, true, true );
+	private final List<GBPTreeCorruption.PageCorruption> possibleCorruptionsInInternal = Arrays.asList(
             GBPTreeCorruption.crashed( GBPTreePointerType.leftSibling() ),
             GBPTreeCorruption.crashed( GBPTreePointerType.rightSibling() ),
             GBPTreeCorruption.crashed( GBPTreePointerType.successor() ),
             GBPTreeCorruption.crashed( GBPTreePointerType.child( 0 ) )
     );
-    private final List<GBPTreeCorruption.PageCorruption> possibleCorruptionsInLeaf = Arrays.asList(
+	private final List<GBPTreeCorruption.PageCorruption> possibleCorruptionsInLeaf = Arrays.asList(
             GBPTreeCorruption.crashed( GBPTreePointerType.leftSibling() ),
             GBPTreeCorruption.crashed( GBPTreePointerType.rightSibling() ),
             GBPTreeCorruption.crashed( GBPTreePointerType.successor() )
     );
 
-    @Before
+	@Before
     public void setupPagedFile() throws IOException
     {
         PageCache pageCache = pageCacheRule
@@ -91,13 +89,13 @@ public class CrashGenerationCleanerTest
                 .map( testDirectory.file( FILE_NAME ), PAGE_SIZE, CREATE, DELETE_ON_CLOSE );
     }
 
-    @After
+	@After
     public void teardownPagedFile() throws IOException
     {
         pagedFile.close();
     }
 
-    @Test
+	@Test
     public void shouldNotCrashOnEmptyFile() throws Exception
     {
         // GIVEN
@@ -113,7 +111,7 @@ public class CrashGenerationCleanerTest
         assertCleanedCrashPointers( monitor, 0 );
     }
 
-    @Test
+	@Test
     public void shouldNotReportErrorsOnCleanPages() throws Exception
     {
         // GIVEN
@@ -132,7 +130,7 @@ public class CrashGenerationCleanerTest
         assertCleanedCrashPointers( monitor, 0 );
     }
 
-    @Test
+	@Test
     public void shouldCleanOneCrashPerPage() throws Exception
     {
         // GIVEN
@@ -163,7 +161,7 @@ public class CrashGenerationCleanerTest
         assertCleanedCrashPointers( monitor, 7 );
     }
 
-    @Test
+	@Test
     public void shouldCleanMultipleCrashPerPage() throws Exception
     {
         // GIVEN
@@ -189,7 +187,7 @@ public class CrashGenerationCleanerTest
         assertCleanedCrashPointers( monitor, 7 );
     }
 
-    @Test
+	@Test
     public void shouldCleanLargeFile() throws Exception
     {
         // GIVEN
@@ -214,42 +212,40 @@ public class CrashGenerationCleanerTest
         assertCleanedCrashPointers( monitor, totalNumberOfCorruptions.getValue() );
     }
 
-    private CrashGenerationCleaner crashGenerationCleaner( PagedFile pagedFile, int lowTreeNodeId, int highTreeNodeId,
+	private CrashGenerationCleaner crashGenerationCleaner( PagedFile pagedFile, int lowTreeNodeId, int highTreeNodeId,
             SimpleCleanupMonitor monitor )
     {
         return new CrashGenerationCleaner( pagedFile, treeNode, lowTreeNodeId, highTreeNodeId,
                 unstableTreeState.stableGeneration(), unstableTreeState.unstableGeneration(), monitor );
     }
 
-    private void initializeFile( PagedFile pagedFile, Page... pages ) throws IOException
+	private void initializeFile( PagedFile pagedFile, Page... pages ) throws IOException
     {
         try ( PageCursor cursor = pagedFile.io( 0, PagedFile.PF_SHARED_WRITE_LOCK ) )
         {
             for ( Page page : pages )
             {
                 cursor.next();
-                page.write( pagedFile, cursor, treeNode, layout, checkpointedTreeState, unstableTreeState );
+                page.write( cursor, treeNode, layout, checkpointedTreeState, unstableTreeState );
             }
         }
     }
 
-    /* Assertions */
+	/* Assertions */
     private void assertCleanedCrashPointers( SimpleCleanupMonitor monitor,
             int expectedNumberOfCleanedCrashPointers )
     {
-        assertEquals( "Expected number of cleaned crash pointers to be " +
-                        expectedNumberOfCleanedCrashPointers + " but was " + monitor.numberOfCleanedCrashPointers,
+        assertEquals( new StringBuilder().append("Expected number of cleaned crash pointers to be ").append(expectedNumberOfCleanedCrashPointers).append(" but was ").append(monitor.numberOfCleanedCrashPointers).toString(),
                 expectedNumberOfCleanedCrashPointers, monitor.numberOfCleanedCrashPointers );
     }
 
-    private void assertPagesVisited( SimpleCleanupMonitor monitor, int expectedNumberOfPagesVisited )
+	private void assertPagesVisited( SimpleCleanupMonitor monitor, int expectedNumberOfPagesVisited )
     {
-        assertEquals( "Expected number of visited pages to be " + expectedNumberOfPagesVisited +
-                        " but was " + monitor.numberOfPagesVisited,
+        assertEquals( new StringBuilder().append("Expected number of visited pages to be ").append(expectedNumberOfPagesVisited).append(" but was ").append(monitor.numberOfPagesVisited).toString(),
                 expectedNumberOfPagesVisited, monitor.numberOfPagesVisited );
     }
 
-    /* Random page */
+	/* Random page */
     private Page randomPage( int corruptionPercent, MutableInt totalNumberOfCorruptions )
     {
         int numberOfCorruptions = 0;
@@ -263,7 +259,7 @@ public class CrashGenerationCleanerTest
         return internal ? randomInternal( numberOfCorruptions ) : randomLeaf( numberOfCorruptions );
     }
 
-    private Page randomLeaf( int numberOfCorruptions )
+	private Page randomLeaf( int numberOfCorruptions )
     {
         Collections.shuffle( possibleCorruptionsInLeaf );
         GBPTreeCorruption.PageCorruption[] corruptions = new GBPTreeCorruption.PageCorruption[numberOfCorruptions];
@@ -274,7 +270,7 @@ public class CrashGenerationCleanerTest
         return leafWith( corruptions );
     }
 
-    private Page randomInternal( int numberOfCorruptions )
+	private Page randomInternal( int numberOfCorruptions )
     {
         Collections.shuffle( possibleCorruptionsInInternal );
         GBPTreeCorruption.PageCorruption[] corruptions = new GBPTreeCorruption.PageCorruption[numberOfCorruptions];
@@ -285,45 +281,23 @@ public class CrashGenerationCleanerTest
         return internalWith( corruptions );
     }
 
-    /* Page */
+	/* Page */
     private Page[] with( Page... pages )
     {
         return pages;
     }
 
-    private Page leafWith( GBPTreeCorruption.PageCorruption<MutableLong,MutableLong>... pageCorruptions )
+	private Page leafWith( GBPTreeCorruption.PageCorruption<MutableLong,MutableLong>... pageCorruptions )
     {
         return new Page( PageType.LEAF, pageCorruptions );
     }
 
-    private Page internalWith( GBPTreeCorruption.PageCorruption<MutableLong,MutableLong>... pageCorruptions )
+	private Page internalWith( GBPTreeCorruption.PageCorruption<MutableLong,MutableLong>... pageCorruptions )
     {
         return new Page( PageType.INTERNAL, pageCorruptions );
     }
 
-    private class Page
-    {
-        private final PageType type;
-        private final GBPTreeCorruption.PageCorruption<MutableLong,MutableLong>[] pageCorruptions;
-
-        private Page( PageType type, GBPTreeCorruption.PageCorruption<MutableLong,MutableLong>... pageCorruptions )
-        {
-            this.type = type;
-            this.pageCorruptions = pageCorruptions;
-        }
-
-        private void write( PagedFile pagedFile, PageCursor cursor, TreeNode<MutableLong,MutableLong> node, Layout<MutableLong,MutableLong> layout,
-                TreeState checkpointedTreeState, TreeState unstableTreeState ) throws IOException
-        {
-            type.write( cursor, node, layout, checkpointedTreeState );
-            for ( GBPTreeCorruption.PageCorruption<MutableLong,MutableLong> pc : pageCorruptions )
-            {
-                pc.corrupt( cursor, layout, node, unstableTreeState );
-            }
-        }
-    }
-
-    enum PageType
+	enum PageType
     {
         LEAF
                 {
@@ -355,5 +329,27 @@ public class CrashGenerationCleanerTest
 
         abstract void write( PageCursor cursor, TreeNode<MutableLong,MutableLong> treeNode,
                 Layout<MutableLong,MutableLong> layout, TreeState treeState );
+    }
+
+	private class Page
+    {
+        private final PageType type;
+        private final GBPTreeCorruption.PageCorruption<MutableLong,MutableLong>[] pageCorruptions;
+
+        private Page( PageType type, GBPTreeCorruption.PageCorruption<MutableLong,MutableLong>... pageCorruptions )
+        {
+            this.type = type;
+            this.pageCorruptions = pageCorruptions;
+        }
+
+        private void write( PageCursor cursor, TreeNode<MutableLong,MutableLong> node, Layout<MutableLong,MutableLong> layout,
+                TreeState checkpointedTreeState, TreeState unstableTreeState ) throws IOException
+        {
+            type.write( cursor, node, layout, checkpointedTreeState );
+            for ( GBPTreeCorruption.PageCorruption<MutableLong,MutableLong> pc : pageCorruptions )
+            {
+                pc.corrupt( cursor, layout, node, unstableTreeState );
+            }
+        }
     }
 }

@@ -124,7 +124,7 @@ public class KernelData extends LifecycleAdapter
         if ( instances.containsKey( instanceId ) )
         {
             throw new IllegalStateException(
-                    "There is already a kernel started with " + forced_kernel_id.name() + "='" + instanceId + "'." );
+                    new StringBuilder().append("There is already a kernel started with ").append(forced_kernel_id.name()).append("='").append(instanceId).append("'.").toString() );
         }
         instances.put( instanceId, instance );
         return instanceId;

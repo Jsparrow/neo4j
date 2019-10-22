@@ -111,7 +111,7 @@ class ResultHandlerTest
         @Override
         public String toString()
         {
-            return "TestBoltResult{" + "records=" + Arrays.toString( records ) + '}';
+            return new StringBuilder().append("TestBoltResult{").append("records=").append(Arrays.toString( records )).append('}').toString();
         }
     }
 }

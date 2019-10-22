@@ -40,7 +40,19 @@ import static org.neo4j.internal.kernel.api.InternalIndexState.POPULATING;
 @RunWith( Parameterized.class )
 public class NativeIndexProviderTest extends NativeIndexProviderTests
 {
-    @Parameterized.Parameters( name = "{index} {0}" )
+    @Parameterized.Parameter
+    public String name;
+
+	@Parameterized.Parameter( 1 )
+    public ProviderFactory providerFactory;
+
+	@Parameterized.Parameter( 2 )
+    public InternalIndexState expectedStateOnNonExistingSubIndex;
+
+	@Parameterized.Parameter( 3 )
+    public Value someValue;
+
+	@Parameterized.Parameters( name = "{index} {0}" )
     public static Object[][] data()
     {
         return new Object[][]{
@@ -72,50 +84,38 @@ public class NativeIndexProviderTest extends NativeIndexProviderTests
         };
     }
 
-    private static ProviderFactory genericProviderFactory()
+	private static ProviderFactory genericProviderFactory()
     {
         return ( pageCache, fs, dir, monitor, collector, readOnly ) ->
                 new GenericNativeIndexProvider( dir, pageCache, fs, monitor, collector, readOnly, Config.defaults() );
     }
 
-    private static ProviderFactory spatialProviderFactory()
+	private static ProviderFactory spatialProviderFactory()
     {
         return ( pageCache, fs, dir, monitor, collector, readOnly ) ->
                 new SpatialIndexProvider( pageCache, fs, dir, monitor, collector, readOnly, Config.defaults() );
     }
 
-    @Parameterized.Parameter
-    public String name;
-
-    @Parameterized.Parameter( 1 )
-    public ProviderFactory providerFactory;
-
-    @Parameterized.Parameter( 2 )
-    public InternalIndexState expectedStateOnNonExistingSubIndex;
-
-    @Parameterized.Parameter( 3 )
-    public Value someValue;
-
-    @Override
+	@Override
     protected InternalIndexState expectedStateOnNonExistingSubIndex()
     {
         return expectedStateOnNonExistingSubIndex;
     }
 
-    @Override
+	@Override
     protected Value someValue()
     {
         return someValue;
     }
 
-    @Override
+	@Override
     IndexProvider newProvider( PageCache pageCache, FileSystemAbstraction fs, IndexDirectoryStructure.Factory dir, IndexProvider.Monitor monitor,
             RecoveryCleanupWorkCollector collector, boolean readOnly )
     {
         return providerFactory.create( pageCache, fs, dir, monitor, collector, readOnly );
     }
 
-    @FunctionalInterface
+	@FunctionalInterface
     private interface ProviderFactory
     {
         IndexProvider create( PageCache pageCache, FileSystemAbstraction fs, IndexDirectoryStructure.Factory dir, IndexProvider.Monitor monitor,

@@ -26,7 +26,7 @@ import org.neo4j.helpers.Service;
 
 public interface BlockerLocator
 {
-    Iterable<AdminCommand.Blocker> findBlockers( String name ) throws NoSuchElementException;
+    Iterable<AdminCommand.Blocker> findBlockers( String name );
 
     static BlockerLocator fromServiceLocator()
     {

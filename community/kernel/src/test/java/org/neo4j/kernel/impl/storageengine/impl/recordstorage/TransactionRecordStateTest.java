@@ -123,27 +123,37 @@ import static org.neo4j.storageengine.api.schema.IndexDescriptorFactory.forSchem
 
 public class TransactionRecordStateTest
 {
-    @Rule
+    private static final String LONG_STRING = "string value long enough not to be stored as a short string";
+
+	private static final int propertyId1 = 1;
+
+	private static final int propertyId2 = 2;
+
+	private static final Value value1 = Values.of( "first" );
+
+	private static final Value value2 = Values.of( 4 );
+
+	private static final long[] noLabels = new long[0];
+
+	@Rule
     public final NeoStoresRule neoStoresRule = new NeoStoresRule( getClass() );
 
-    private static final String LONG_STRING = "string value long enough not to be stored as a short string";
-    private static final int propertyId1 = 1;
-    private static final int propertyId2 = 2;
-    private static final Value value1 = Values.of( "first" );
-    private static final Value value2 = Values.of( 4 );
-    private static final long[] noLabels = new long[0];
-    private final long[] oneLabelId = new long[]{3};
-    private final long[] secondLabelId = new long[]{4};
-    private final long[] bothLabelIds = new long[]{3, 4};
-    private final IntegrityValidator integrityValidator = mock( IntegrityValidator.class );
-    private RecordChangeSet recordChangeSet;
+	private final long[] oneLabelId = new long[]{3};
 
-    private static void assertRelationshipGroupDoesNotExist( RecordChangeSet recordChangeSet, NodeRecord node, int type )
+	private final long[] secondLabelId = new long[]{4};
+
+	private final long[] bothLabelIds = new long[]{3, 4};
+
+	private final IntegrityValidator integrityValidator = mock( IntegrityValidator.class );
+
+	private RecordChangeSet recordChangeSet;
+
+	private static void assertRelationshipGroupDoesNotExist( RecordChangeSet recordChangeSet, NodeRecord node, int type )
     {
         assertNull( getRelationshipGroup( recordChangeSet, node, type ) );
     }
 
-    private static void assertDenseRelationshipCounts( RecordChangeSet recordChangeSet, long nodeId, int type, int outCount, int inCount )
+	private static void assertDenseRelationshipCounts( RecordChangeSet recordChangeSet, long nodeId, int type, int outCount, int inCount )
     {
         RelationshipGroupRecord group = getRelationshipGroup( recordChangeSet,
                 recordChangeSet.getNodeRecords().getOrLoad( nodeId, null ).forReadingData(), type ).forReadingData();
@@ -161,16 +171,16 @@ public class TransactionRecordStateTest
         }
 
         relId = group.getFirstIn();
-        if ( relId != Record.NO_NEXT_RELATIONSHIP.intValue() )
-        {
-            rel = recordChangeSet.getRelRecords().getOrLoad( relId, null ).forReadingData();
-            assertEquals( "Stored relationship count for INCOMING differs", inCount, rel.getSecondPrevRel() );
-            assertEquals( "Manually counted relationships for INCOMING differs", inCount,
-                    manuallyCountRelationships( recordChangeSet, nodeId, relId ) );
-        }
+        if (relId == Record.NO_NEXT_RELATIONSHIP.intValue()) {
+			return;
+		}
+		rel = recordChangeSet.getRelRecords().getOrLoad( relId, null ).forReadingData();
+		assertEquals( "Stored relationship count for INCOMING differs", inCount, rel.getSecondPrevRel() );
+		assertEquals( "Manually counted relationships for INCOMING differs", inCount,
+		        manuallyCountRelationships( recordChangeSet, nodeId, relId ) );
     }
 
-    private static RecordProxy<RelationshipGroupRecord, Integer> getRelationshipGroup(
+	private static RecordProxy<RelationshipGroupRecord, Integer> getRelationshipGroup(
             RecordChangeSet recordChangeSet, NodeRecord node, int type )
     {
         long groupId = node.getNextRel();
@@ -191,7 +201,7 @@ public class TransactionRecordStateTest
         return null;
     }
 
-    private static int manuallyCountRelationships( RecordChangeSet recordChangeSet, long nodeId, long firstRelId )
+	private static int manuallyCountRelationships( RecordChangeSet recordChangeSet, long nodeId, long firstRelId )
     {
         int count = 0;
         long relId = firstRelId;
@@ -204,7 +214,7 @@ public class TransactionRecordStateTest
         return count;
     }
 
-    @Test
+	@Test
     public void shouldCreateEqualEntityPropertyUpdatesOnRecoveryOfCreatedEntities() throws Exception
     {
         /* There was an issue where recovering a tx where a node with a label and a property
@@ -255,7 +265,7 @@ public class TransactionRecordStateTest
         assertEquals( relId, recoveredRelIds.longIterator().next() );
     }
 
-    @Test
+	@Test
     public void shouldWriteProperPropertyRecordsWhenOnlyChangingLinkage() throws Exception
     {
         /* There was an issue where GIVEN:
@@ -313,7 +323,7 @@ public class TransactionRecordStateTest
         } ) );
     }
 
-    @Test
+	@Test
     public void shouldConvertLabelAdditionToNodePropertyUpdates() throws Exception
     {
         // GIVEN
@@ -337,7 +347,7 @@ public class TransactionRecordStateTest
         assertEquals( expected, Iterables.single( indexUpdates ) );
     }
 
-    @Test
+	@Test
     public void shouldConvertMixedLabelAdditionAndSetPropertyToNodePropertyUpdates() throws Exception
     {
         // GIVEN
@@ -363,7 +373,7 @@ public class TransactionRecordStateTest
         assertEquals( expected, Iterables.single( indexUpdates ) );
     }
 
-    @Test
+	@Test
     public void shouldConvertLabelRemovalToNodePropertyUpdates() throws Exception
     {
         // GIVEN
@@ -386,7 +396,7 @@ public class TransactionRecordStateTest
         assertEquals( expected, Iterables.single( indexUpdates ) );
     }
 
-    @Test
+	@Test
     public void shouldConvertMixedLabelRemovalAndRemovePropertyToNodePropertyUpdates() throws Exception
     {
         // GIVEN
@@ -412,7 +422,7 @@ public class TransactionRecordStateTest
         assertEquals( expected, Iterables.single( indexUpdates ) );
     }
 
-    @Test
+	@Test
     public void shouldConvertMixedLabelRemovalAndAddPropertyToNodePropertyUpdates() throws Exception
     {
         // GIVEN
@@ -438,7 +448,7 @@ public class TransactionRecordStateTest
         assertEquals( expected, Iterables.single( indexUpdates ) );
     }
 
-    @Test
+	@Test
     public void shouldConvertChangedPropertyToNodePropertyUpdates() throws Exception
     {
         // GIVEN
@@ -467,7 +477,7 @@ public class TransactionRecordStateTest
         assertEquals( expected, Iterables.single( indexUpdates ) );
     }
 
-    @Test
+	@Test
     public void shouldConvertRemovedPropertyToNodePropertyUpdates() throws Exception
     {
         // GIVEN
@@ -495,7 +505,7 @@ public class TransactionRecordStateTest
         assertEquals( expected, Iterables.single( indexUpdates ) );
     }
 
-    @Test
+	@Test
     public void shouldDeleteDynamicLabelsForDeletedNode() throws Throwable
     {
         // GIVEN a store that has got a node with a dynamic label record
@@ -514,7 +524,7 @@ public class TransactionRecordStateTest
         assertDynamicLabelRecordInUse( store, dynamicLabelRecordId.get(), false );
     }
 
-    @Test
+	@Test
     public void shouldDeleteDynamicLabelsForDeletedNodeForRecoveredTransaction() throws Throwable
     {
         // GIVEN a store that has got a node with a dynamic label record
@@ -538,7 +548,7 @@ public class TransactionRecordStateTest
         assertDynamicLabelRecordInUse( store, dynamicLabelRecordId.get(), false );
     }
 
-    @Test
+	@Test
     public void shouldExtractCreatedCommandsInCorrectOrder() throws Throwable
     {
         // GIVEN
@@ -567,7 +577,7 @@ public class TransactionRecordStateTest
         assertFalse( commandIterator.hasNext() );
     }
 
-    @Test
+	@Test
     public void shouldExtractUpdateCommandsInCorrectOrder() throws Throwable
     {
         // GIVEN
@@ -611,7 +621,7 @@ public class TransactionRecordStateTest
         assertFalse( commandIterator.hasNext() );
     }
 
-    @Test
+	@Test
     public void shouldIgnoreRelationshipGroupCommandsForGroupThatIsCreatedAndDeletedInThisTx() throws Exception
     {
         /*
@@ -652,7 +662,7 @@ public class TransactionRecordStateTest
         assertEquals( relationshipA, group.getAfter().getType() );
     }
 
-    @Test
+	@Test
     public void shouldExtractDeleteCommandsInCorrectOrder() throws Exception
     {
         // GIVEN
@@ -698,7 +708,7 @@ public class TransactionRecordStateTest
         assertFalse( commandIterator.hasNext() );
     }
 
-    @Test
+	@Test
     public void shouldValidateConstraintIndexAsPartOfExtraction() throws Throwable
     {
         // GIVEN
@@ -717,7 +727,7 @@ public class TransactionRecordStateTest
         verify( integrityValidator ).validateSchemaRule( any() );
     }
 
-    @Test
+	@Test
     public void shouldCreateProperBeforeAndAfterPropertyCommandsWhenAddingProperty() throws Exception
     {
         // GIVEN
@@ -743,7 +753,7 @@ public class TransactionRecordStateTest
         assertEquals( 1, count( after ) );
     }
 
-    @Test
+	@Test
     public void shouldConvertAddedPropertyToNodePropertyUpdates() throws Exception
     {
         // GIVEN
@@ -766,7 +776,7 @@ public class TransactionRecordStateTest
         assertEquals( expected, Iterables.single( updates ) );
     }
 
-    @Test
+	@Test
     public void shouldLockUpdatedNodes() throws Exception
     {
         // given
@@ -777,7 +787,7 @@ public class TransactionRecordStateTest
             {
                 // This is necessary because finalize() will also be called
                 String name = invocation.getMethod().getName();
-                if ( name.equals( "acquireNodeLock" ) || name.equals( "acquireRelationshipLock" ) )
+                if ( "acquireNodeLock".equals( name ) || "acquireRelationshipLock".equals( name ) )
                 {
                     return mock( Lock.class, invocationOnMock -> null );
                 }
@@ -839,7 +849,7 @@ public class TransactionRecordStateTest
         verify( locks, times( 2 ) ).acquireNodeLock( nodes[6], LockService.LockType.WRITE_LOCK );
     }
 
-    @Test
+	@Test
     public void movingBilaterallyOfTheDenseNodeThresholdIsConsistent() throws Exception
     {
         // GIVEN
@@ -901,7 +911,7 @@ public class TransactionRecordStateTest
         assertTrue( "Did not create relationship group command", foundRelationshipGroupInUse.get() );
     }
 
-    @Test
+	@Test
     public void shouldConvertToDenseNodeRepresentationWhenHittingThresholdWithDifferentTypes() throws Exception
     {
         // GIVEN a node with a total of denseNodeThreshold-1 relationships
@@ -937,7 +947,7 @@ public class TransactionRecordStateTest
         assertDenseRelationshipCounts( recordChangeSet, nodeId, typeC, 10, 11 );
     }
 
-    @Test
+	@Test
     public void shouldConvertToDenseNodeRepresentationWhenHittingThresholdWithTheSameTypeDifferentDirection()
             throws Exception
     {
@@ -963,7 +973,7 @@ public class TransactionRecordStateTest
         assertDenseRelationshipCounts( recordChangeSet, nodeId, typeA, 24, 26 );
     }
 
-    @Test
+	@Test
     public void shouldConvertToDenseNodeRepresentationWhenHittingThresholdWithTheSameTypeSameDirection()
             throws Exception
     {
@@ -988,7 +998,7 @@ public class TransactionRecordStateTest
         assertDenseRelationshipCounts( recordChangeSet, nodeId, typeA, 9, 0 );
     }
 
-    @Test
+	@Test
     public void shouldMaintainCorrectDataWhenDeletingFromDenseNodeWithOneType() throws Exception
     {
         // GIVEN a node with a total of denseNodeThreshold-1 relationships
@@ -1008,7 +1018,7 @@ public class TransactionRecordStateTest
         assertDenseRelationshipCounts( recordChangeSet, nodeId, typeA, 0, 14 );
     }
 
-    @Test
+	@Test
     public void shouldMaintainCorrectDataWhenDeletingFromDenseNodeWithManyTypes() throws Exception
     {
         // GIVEN a node with a total of denseNodeThreshold-1 relationships
@@ -1090,7 +1100,7 @@ public class TransactionRecordStateTest
                 typeC );
     }
 
-    @Test
+	@Test
     public void shouldSortRelationshipGroups() throws Throwable
     {
         // GIVEN
@@ -1160,7 +1170,7 @@ public class TransactionRecordStateTest
         }
     }
 
-    @Test
+	@Test
     public void shouldPrepareRelevantRecords() throws Exception
     {
         // GIVEN
@@ -1205,7 +1215,7 @@ public class TransactionRecordStateTest
         assertEquals( 1, groups );
     }
 
-    private void addLabelsToNode( TransactionRecordState recordState, long nodeId, long[] labelIds )
+	private void addLabelsToNode( TransactionRecordState recordState, long nodeId, long[] labelIds )
     {
         for ( long labelId : labelIds )
         {
@@ -1213,7 +1223,7 @@ public class TransactionRecordStateTest
         }
     }
 
-    private void removeLabelsFromNode( TransactionRecordState recordState, long nodeId, long[] labelIds )
+	private void removeLabelsFromNode( TransactionRecordState recordState, long nodeId, long[] labelIds )
     {
         for ( long labelId : labelIds )
         {
@@ -1221,7 +1231,7 @@ public class TransactionRecordStateTest
         }
     }
 
-    private long[] createRelationships( NeoStores neoStores, TransactionRecordState tx, long nodeId, int type,
+	private long[] createRelationships( NeoStores neoStores, TransactionRecordState tx, long nodeId, int type,
             Direction direction, int count )
     {
         long[] result = new long[count];
@@ -1238,7 +1248,7 @@ public class TransactionRecordStateTest
         return result;
     }
 
-    private void assertRelationshipGroupsInOrder( NeoStores neoStores, long nodeId, int... types )
+	private void assertRelationshipGroupsInOrder( NeoStores neoStores, long nodeId, int... types )
     {
         NodeStore nodeStore = neoStores.getNodeStore();
         NodeRecord node = nodeStore.getRecord( nodeId, nodeStore.newRecord(), NORMAL );
@@ -1258,13 +1268,13 @@ public class TransactionRecordStateTest
         assertEquals( "Not enough relationship group records found in chain for " + node, types.length, cursor );
     }
 
-    private Iterable<EntityUpdates> indexUpdatesOf( NeoStores neoStores, TransactionRecordState state )
+	private Iterable<EntityUpdates> indexUpdatesOf( NeoStores neoStores, TransactionRecordState state )
             throws IOException, TransactionFailureException
     {
         return indexUpdatesOf( neoStores, transactionRepresentationOf( state ) );
     }
 
-    private Iterable<EntityUpdates> indexUpdatesOf( NeoStores neoStores, TransactionRepresentation transaction )
+	private Iterable<EntityUpdates> indexUpdatesOf( NeoStores neoStores, TransactionRepresentation transaction )
             throws IOException
     {
         PropertyCommandsExtractor extractor = new PropertyCommandsExtractor();
@@ -1277,7 +1287,7 @@ public class TransactionRecordStateTest
         return indexingUpdateService.entityUpdatesList;
     }
 
-    private PhysicalTransactionRepresentation transactionRepresentationOf( TransactionRecordState writeTransaction )
+	private PhysicalTransactionRepresentation transactionRepresentationOf( TransactionRecordState writeTransaction )
             throws TransactionFailureException
     {
         List<StorageCommand> commands = new ArrayList<>();
@@ -1287,12 +1297,12 @@ public class TransactionRecordStateTest
         return tx;
     }
 
-    private void assertCommand( StorageCommand next, Class<?> klass )
+	private void assertCommand( StorageCommand next, Class<?> klass )
     {
-        assertTrue( "Expected " + klass + ". was: " + next, klass.isInstance( next ) );
+        assertTrue( new StringBuilder().append("Expected ").append(klass).append(". was: ").append(next).toString(), klass.isInstance( next ) );
     }
 
-    private CommittedTransactionRepresentation readFromChannel( ReadableLogChannel channel )
+	private CommittedTransactionRepresentation readFromChannel( ReadableLogChannel channel )
             throws IOException
     {
         LogEntryReader<ReadableLogChannel> logEntryReader = new VersionAwareLogEntryReader<>();
@@ -1304,13 +1314,13 @@ public class TransactionRecordStateTest
         }
     }
 
-    private void writeToChannel( TransactionRepresentation transaction, FlushableChannel channel ) throws IOException
+	private void writeToChannel( TransactionRepresentation transaction, FlushableChannel channel ) throws IOException
     {
         TransactionLogWriter writer = new TransactionLogWriter( new LogEntryWriter( channel ) );
         writer.append( transaction, 2 );
     }
 
-    private TransactionRecordState nodeWithDynamicLabelRecord( NeoStores store, AtomicLong nodeId,
+	private TransactionRecordState nodeWithDynamicLabelRecord( NeoStores store, AtomicLong nodeId,
             AtomicLong dynamicLabelRecordId )
     {
         TransactionRecordState recordState = newTransactionRecordState( store );
@@ -1336,33 +1346,33 @@ public class TransactionRecordStateTest
         return recordState;
     }
 
-    private TransactionRecordState deleteNode( NeoStores store, long nodeId )
+	private TransactionRecordState deleteNode( NeoStores store, long nodeId )
     {
         TransactionRecordState recordState = newTransactionRecordState( store );
         recordState.nodeDelete( nodeId );
         return recordState;
     }
 
-    private void apply( BatchTransactionApplier applier, TransactionRepresentation transaction ) throws Exception
+	private void apply( BatchTransactionApplier applier, TransactionRepresentation transaction ) throws Exception
     {
         CommandHandlerContract.apply( applier, new TransactionToApply( transaction ) );
     }
 
-    private void apply( NeoStores neoStores, TransactionRepresentation transaction ) throws Exception
+	private void apply( NeoStores neoStores, TransactionRepresentation transaction ) throws Exception
     {
         BatchTransactionApplier applier = new NeoStoreBatchTransactionApplier( neoStores, mock( CacheAccessBackDoor.class ),
                 LockService.NO_LOCK_SERVICE );
         apply( applier, transaction );
     }
 
-    private void apply( NeoStores neoStores, TransactionRecordState state ) throws Exception
+	private void apply( NeoStores neoStores, TransactionRecordState state ) throws Exception
     {
         BatchTransactionApplier applier = new NeoStoreBatchTransactionApplier( neoStores, mock( CacheAccessBackDoor.class ),
                 LockService.NO_LOCK_SERVICE );
         apply( applier, transactionRepresentationOf( state ) );
     }
 
-    private TransactionRecordState newTransactionRecordState( NeoStores neoStores )
+	private TransactionRecordState newTransactionRecordState( NeoStores neoStores )
     {
         Loaders loaders = new Loaders( neoStores );
         recordChangeSet = new RecordChangeSet( loaders );
@@ -1379,7 +1389,7 @@ public class TransactionRecordStateTest
                 propertyDeleter );
     }
 
-    private TransactionRepresentation transaction( TransactionRecordState recordState )
+	private TransactionRepresentation transaction( TransactionRecordState recordState )
             throws TransactionFailureException
     {
         List<StorageCommand> commands = new ArrayList<>();
@@ -1389,14 +1399,14 @@ public class TransactionRecordStateTest
         return transaction;
     }
 
-    private void assertDynamicLabelRecordInUse( NeoStores store, long id, boolean inUse )
+	private void assertDynamicLabelRecordInUse( NeoStores store, long id, boolean inUse )
     {
         DynamicArrayStore dynamicLabelStore = store.getNodeStore().getDynamicLabelStore();
         DynamicRecord record = dynamicLabelStore.getRecord( id, dynamicLabelStore.nextRecord(), FORCE );
         assertEquals( inUse, record.inUse() );
     }
 
-    private Value string( int length )
+	private Value string( int length )
     {
         StringBuilder result = new StringBuilder();
         char ch = 'a';
@@ -1407,17 +1417,17 @@ public class TransactionRecordStateTest
         return Values.of( result.toString() );
     }
 
-    private PropertyCommand singlePropertyCommand( Collection<StorageCommand> commands )
+	private PropertyCommand singlePropertyCommand( Collection<StorageCommand> commands )
     {
         return (PropertyCommand) Iterables.single( filter( t -> t instanceof PropertyCommand, commands ) );
     }
 
-    private RelationshipGroupCommand singleRelationshipGroupCommand( Collection<StorageCommand> commands )
+	private RelationshipGroupCommand singleRelationshipGroupCommand( Collection<StorageCommand> commands )
     {
         return (RelationshipGroupCommand) Iterables.single( filter( t -> t instanceof RelationshipGroupCommand, commands ) );
     }
 
-    public LongIterable entityIds( EntityCommandGrouper.Cursor cursor )
+	public LongIterable entityIds( EntityCommandGrouper.Cursor cursor )
     {
         LongArrayList list = new LongArrayList();
         if ( cursor.nextEntity() )
@@ -1431,7 +1441,7 @@ public class TransactionRecordStateTest
         return list;
     }
 
-    private class CollectingIndexingUpdateService implements IndexingUpdateService
+	private class CollectingIndexingUpdateService implements IndexingUpdateService
     {
         final List<EntityUpdates> entityUpdatesList = new ArrayList<>();
 

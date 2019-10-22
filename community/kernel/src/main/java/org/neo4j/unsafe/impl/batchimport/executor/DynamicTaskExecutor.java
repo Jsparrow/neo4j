@@ -62,7 +62,7 @@ public class DynamicTaskExecutor<LOCAL> implements TaskExecutor<LOCAL>
         this.maxProcessorCount = maxProcessorCount == 0 ? Integer.MAX_VALUE : maxProcessorCount;
 
         assert this.maxProcessorCount >= initialProcessorCount :
-                "Unexpected initial processor count " + initialProcessorCount + " for max " + maxProcessorCount;
+                new StringBuilder().append("Unexpected initial processor count ").append(initialProcessorCount).append(" for max ").append(maxProcessorCount).toString();
 
         this.parkStrategy = parkStrategy;
         this.processorThreadNamePrefix = processorThreadNamePrefix;
@@ -95,7 +95,7 @@ public class DynamicTaskExecutor<LOCAL> implements TaskExecutor<LOCAL>
                     Processor[] newProcessors = Arrays.copyOf( processors, requestedNumber );
                     for ( int i = processors.length; i < requestedNumber; i++ )
                     {
-                        newProcessors[i] = new Processor( processorThreadNamePrefix + "-" + i );
+                        newProcessors[i] = new Processor( new StringBuilder().append(processorThreadNamePrefix).append("-").append(i).toString() );
                     }
                     this.processors = newProcessors;
                 }

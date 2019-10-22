@@ -27,13 +27,12 @@ import org.neo4j.storageengine.api.txstate.ReadableTransactionState;
  */
 public interface TransactionHook<OUTCOME extends TransactionHook.Outcome>
 {
-    interface Outcome
+    OUTCOME beforeCommit( ReadableTransactionState state, KernelTransaction transaction, StorageReader storageReader );
+	void afterCommit( ReadableTransactionState state, KernelTransaction transaction, OUTCOME outcome );
+	void afterRollback( ReadableTransactionState state, KernelTransaction transaction, OUTCOME outcome );
+	interface Outcome
     {
         boolean isSuccessful();
         Throwable failure();
     }
-
-    OUTCOME beforeCommit( ReadableTransactionState state, KernelTransaction transaction, StorageReader storageReader );
-    void afterCommit( ReadableTransactionState state, KernelTransaction transaction, OUTCOME outcome );
-    void afterRollback( ReadableTransactionState state, KernelTransaction transaction, OUTCOME outcome );
 }

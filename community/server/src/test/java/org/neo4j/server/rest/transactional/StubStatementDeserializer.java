@@ -36,11 +36,6 @@ public class StubStatementDeserializer extends StatementDeserializer
     private boolean hasNext;
     private Statement next;
 
-    public static StubStatementDeserializer statements( Statement... statements )
-    {
-        return new StubStatementDeserializer( emptyIterator(), iterator( statements ) );
-    }
-
     public StubStatementDeserializer( Iterator<Neo4jError> errors, Iterator<Statement> statements )
     {
         super( new ByteArrayInputStream( new byte[]{} ) );
@@ -50,7 +45,12 @@ public class StubStatementDeserializer extends StatementDeserializer
         computeNext();
     }
 
-    private void computeNext()
+	public static StubStatementDeserializer statements( Statement... statements )
+    {
+        return new StubStatementDeserializer( emptyIterator(), iterator( statements ) );
+    }
+
+	private void computeNext()
     {
         hasNext = statements.hasNext();
         if ( hasNext )
@@ -63,13 +63,13 @@ public class StubStatementDeserializer extends StatementDeserializer
         }
     }
 
-    @Override
+	@Override
     public boolean hasNext()
     {
         return hasNext;
     }
 
-    @Override
+	@Override
     public Statement peek()
     {
         if ( hasNext )
@@ -82,7 +82,7 @@ public class StubStatementDeserializer extends StatementDeserializer
         }
     }
 
-    @Override
+	@Override
     public Statement next()
     {
         Statement result = next;
@@ -90,7 +90,7 @@ public class StubStatementDeserializer extends StatementDeserializer
         return result;
     }
 
-    @Override
+	@Override
     public Iterator<Neo4jError> errors()
     {
         return errors;

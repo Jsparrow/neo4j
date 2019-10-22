@@ -48,12 +48,12 @@ import java.util.concurrent.locks.LockSupport;
 @SuppressWarnings( {"unchecked", "NumberEquality"} )
 public class WorkSync<Material, W extends Work<Material,W>>
 {
-    private final Material material;
-    private final AtomicReference<WorkUnit<Material,W>> stack;
     private static final WorkUnit<?,?> stackEnd = new WorkUnit<>( null, null );
-    private final AtomicReference<Thread> lock;
+	private final Material material;
+	private final AtomicReference<WorkUnit<Material,W>> stack;
+	private final AtomicReference<Thread> lock;
 
-    /**
+	/**
      * Create a new WorkSync that will synchronize the application of work to
      * the given material.
      *
@@ -67,7 +67,7 @@ public class WorkSync<Material, W extends Work<Material,W>>
         this.lock = new AtomicReference<>();
     }
 
-    /**
+	/**
      * Apply the given work to the material in a thread-safe way, possibly by
      * combining it with other work.
      *
@@ -93,7 +93,7 @@ public class WorkSync<Material, W extends Work<Material,W>>
         while ( !unit.isDone() );
     }
 
-    /**
+	/**
      * Apply the given work to the material in a thread-safe way, possibly asynchronously if contention is observed
      * with other threads, and possibly by combining it with other work.
      * <p>
@@ -140,14 +140,14 @@ public class WorkSync<Material, W extends Work<Material,W>>
         };
     }
 
-    private WorkUnit<Material,W> enqueueWork( W work )
+	private WorkUnit<Material,W> enqueueWork( W work )
     {
         WorkUnit<Material,W> unit = new WorkUnit<>( work, Thread.currentThread() );
         unit.next = stack.getAndSet( unit ); // benign race, see the batch.next read-loop in combine()
         return unit;
     }
 
-    private Throwable tryDoWork( WorkUnit<Material,W> unit, int tryCount, boolean block )
+	private Throwable tryDoWork( WorkUnit<Material,W> unit, int tryCount, boolean block )
     {
         if ( tryLock( tryCount, unit, block ) )
         {
@@ -166,7 +166,7 @@ public class WorkSync<Material, W extends Work<Material,W>>
         return null;
     }
 
-    private void unparkAnyWaiters()
+	private void unparkAnyWaiters()
     {
         WorkUnit<Material,W> waiter = stack.get();
         if ( waiter != stackEnd )
@@ -175,7 +175,7 @@ public class WorkSync<Material, W extends Work<Material,W>>
         }
     }
 
-    private void checkFailure( Throwable failure ) throws ExecutionException
+	private void checkFailure( Throwable failure ) throws ExecutionException
     {
         if ( failure != null )
         {
@@ -183,7 +183,7 @@ public class WorkSync<Material, W extends Work<Material,W>>
         }
     }
 
-    private boolean tryLock( int tryCount, WorkUnit<Material,W> unit, boolean block )
+	private boolean tryLock( int tryCount, WorkUnit<Material,W> unit, boolean block )
     {
         if ( lock.compareAndSet( null, Thread.currentThread() ) )
         {
@@ -205,7 +205,7 @@ public class WorkSync<Material, W extends Work<Material,W>>
         return false;
     }
 
-    private void unlock()
+	private void unlock()
     {
         if ( lock.getAndSet( null ) != Thread.currentThread() )
         {
@@ -214,12 +214,12 @@ public class WorkSync<Material, W extends Work<Material,W>>
         }
     }
 
-    private WorkUnit<Material,W> grabBatch()
+	private WorkUnit<Material,W> grabBatch()
     {
         return stack.getAndSet( (WorkUnit<Material,W>) stackEnd );
     }
 
-    private Throwable doSynchronizedWork( WorkUnit<Material,W> batch )
+	private Throwable doSynchronizedWork( WorkUnit<Material,W> batch )
     {
         W combinedWork = combine( batch );
         Throwable failure = null;
@@ -238,7 +238,7 @@ public class WorkSync<Material, W extends Work<Material,W>>
         return failure;
     }
 
-    private W combine( WorkUnit<Material,W> batch )
+	private W combine( WorkUnit<Material,W> batch )
     {
         W result = null;
         while ( batch != stackEnd )
@@ -267,7 +267,7 @@ public class WorkSync<Material, W extends Work<Material,W>>
         return result;
     }
 
-    private void markAsDone( WorkUnit<Material,W> batch )
+	private void markAsDone( WorkUnit<Material,W> batch )
     {
         while ( batch != stackEnd )
         {
@@ -276,7 +276,7 @@ public class WorkSync<Material, W extends Work<Material,W>>
         }
     }
 
-    private static class WorkUnit<Material, W extends Work<Material,W>> extends AtomicInteger
+	private static class WorkUnit<Material, W extends Work<Material,W>> extends AtomicInteger
     {
         static final int STATE_QUEUED = 0;
         static final int STATE_PARKED = 1;
@@ -294,11 +294,11 @@ public class WorkSync<Material, W extends Work<Material,W>>
 
         void park( long time, TimeUnit unit )
         {
-            if ( compareAndSet( STATE_QUEUED, STATE_PARKED ) )
-            {
-                LockSupport.parkNanos( unit.toNanos( time ) );
-                compareAndSet( STATE_PARKED, STATE_QUEUED );
-            }
+            if (!compareAndSet( STATE_QUEUED, STATE_PARKED )) {
+				return;
+			}
+			LockSupport.parkNanos( unit.toNanos( time ) );
+			compareAndSet( STATE_PARKED, STATE_QUEUED );
         }
 
         boolean isDone()

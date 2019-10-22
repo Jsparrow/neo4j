@@ -102,7 +102,18 @@ public class AuthTokenUtil
         } );
     }
 
-    public static class AuthTokenMatcher extends BaseMatcher<Map<String,Object>>
+    public static AuthTokenMatcher authTokenMatcher( Map<String,Object> authToken )
+    {
+        return new AuthTokenMatcher( authToken );
+    }
+
+	public static Map<String,Object> authTokenArgumentMatcher( Map<String,Object> authToken )
+    {
+        mockingProgress().getArgumentMatcherStorage().reportMatcher( new AuthTokenArgumentMatcher( authToken ) );
+        return null;
+    }
+
+	public static class AuthTokenMatcher extends BaseMatcher<Map<String,Object>>
     {
         private final Map<String,Object> expectedValue;
 
@@ -124,11 +135,6 @@ public class AuthTokenUtil
         }
     }
 
-    public static AuthTokenMatcher authTokenMatcher( Map<String,Object> authToken )
-    {
-        return new AuthTokenMatcher( authToken );
-    }
-
     public static class AuthTokenArgumentMatcher implements ArgumentMatcher<Map<String,Object>>, Serializable
     {
 
@@ -139,20 +145,16 @@ public class AuthTokenUtil
             this.wanted = authToken;
         }
 
-        public boolean matches( Map<String,Object> actual )
+        @Override
+		public boolean matches( Map<String,Object> actual )
         {
             return AuthTokenUtil.matches( wanted, actual );
         }
 
-        public String toString()
+        @Override
+		public String toString()
         {
-            return "authTokenArgumentMatcher(" + wanted + ")";
+            return new StringBuilder().append("authTokenArgumentMatcher(").append(wanted).append(")").toString();
         }
-    }
-
-    public static Map<String,Object> authTokenArgumentMatcher( Map<String,Object> authToken )
-    {
-        mockingProgress().getArgumentMatcherStorage().reportMatcher( new AuthTokenArgumentMatcher( authToken ) );
-        return null;
     }
 }

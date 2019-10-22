@@ -23,7 +23,13 @@ import java.util.Arrays;
 
 public interface ResourceLocker
 {
-    /**
+    ResourceLocker NONE = ( tracer, resourceType, resourceIds ) ->
+    {
+        throw new UnsupportedOperationException(
+                new StringBuilder().append("Unexpected call to lock a resource ").append(resourceType).append(" ").append(Arrays.toString( resourceIds )).toString() );
+    };
+
+	/**
      * Can be grabbed when no other client holds locks on the relevant resources. No other clients can hold locks
      * while one client holds an exclusive lock. If the lock cannot be acquired,
      * behavior is specified by the {@link WaitStrategy} for the given {@link ResourceType}.
@@ -32,11 +38,5 @@ public interface ResourceLocker
      * @param resourceType type or resource(s) to lock.
      * @param resourceIds id(s) of resources to lock. Multiple ids should be ordered consistently by all callers
      */
-    void acquireExclusive( LockTracer tracer, ResourceType resourceType, long... resourceIds ) throws AcquireLockTimeoutException;
-
-    ResourceLocker NONE = ( tracer, resourceType, resourceIds ) ->
-    {
-        throw new UnsupportedOperationException(
-                "Unexpected call to lock a resource " + resourceType + " " + Arrays.toString( resourceIds ) );
-    };
+    void acquireExclusive( LockTracer tracer, ResourceType resourceType, long... resourceIds );
 }

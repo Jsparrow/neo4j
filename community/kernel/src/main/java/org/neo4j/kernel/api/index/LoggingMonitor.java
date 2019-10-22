@@ -42,7 +42,7 @@ public class LoggingMonitor implements IndexProvider.Monitor
     @Override
     public void failedToOpenIndex( StoreIndexDescriptor descriptor, String action, Exception cause )
     {
-        log.error( "Failed to open index:" + descriptor.getId() + ". " + action, cause );
+        log.error( new StringBuilder().append("Failed to open index:").append(descriptor.getId()).append(". ").append(action).toString(), cause );
     }
 
     @Override
@@ -62,7 +62,7 @@ public class LoggingMonitor implements IndexProvider.Monitor
             long numberOfPagesVisited, long numberOfCleanedCrashPointers, long durationMillis )
     {
         StringJoiner joiner =
-                new StringJoiner( ", ", "Schema index cleanup job finished: " + indexDescription( indexFile, indexDescriptor ) + " ", "" );
+                new StringJoiner( ", ", new StringBuilder().append("Schema index cleanup job finished: ").append(indexDescription( indexFile, indexDescriptor )).append(" ").toString(), "" );
         joiner.add( "Number of pages visited: " + numberOfPagesVisited );
         joiner.add( "Number of cleaned crashed pointers: " + numberOfCleanedCrashPointers );
         joiner.add( "Time spent: " + duration( durationMillis ) );
@@ -84,6 +84,6 @@ public class LoggingMonitor implements IndexProvider.Monitor
 
     private String indexDescription( File indexFile, IndexDescriptor indexDescriptor )
     {
-        return "descriptor=" + indexDescriptor.toString() + ", indexFile=" + indexFile.getAbsolutePath();
+        return new StringBuilder().append("descriptor=").append(indexDescriptor.toString()).append(", indexFile=").append(indexFile.getAbsolutePath()).toString();
     }
 }

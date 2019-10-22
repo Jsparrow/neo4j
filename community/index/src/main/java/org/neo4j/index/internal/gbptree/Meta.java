@@ -69,7 +69,13 @@ public class Meta
     private final int layoutMajorVersion;
     private final int layoutMinorVersion;
 
-    private Meta( byte formatIdentifier, byte formatVersion, byte unusedVersionSlot3, byte unusedVersionSlot4,
+    Meta( byte formatIdentifier, byte formatVersion, int pageSize, Layout<?,?> layout )
+    {
+        this( formatIdentifier, formatVersion, UNUSED_VERSION, UNUSED_VERSION,
+                pageSize, layout.identifier(), layout.majorVersion(), layout.minorVersion() );
+    }
+
+	private Meta( byte formatIdentifier, byte formatVersion, byte unusedVersionSlot3, byte unusedVersionSlot4,
             int pageSize, long layoutIdentifier, int layoutMajorVersion, int layoutMinorVersion )
     {
         this.formatIdentifier = formatIdentifier;
@@ -82,13 +88,7 @@ public class Meta
         this.layoutMinorVersion = layoutMinorVersion;
     }
 
-    Meta( byte formatIdentifier, byte formatVersion, int pageSize, Layout<?,?> layout )
-    {
-        this( formatIdentifier, formatVersion, UNUSED_VERSION, UNUSED_VERSION,
-                pageSize, layout.identifier(), layout.majorVersion(), layout.minorVersion() );
-    }
-
-    private static Meta parseMeta( int format, int pageSize, long layoutIdentifier, int majorVersion, int minorVersion )
+	private static Meta parseMeta( int format, int pageSize, long layoutIdentifier, int majorVersion, int minorVersion )
     {
         return new Meta( extractIndividualVersion( format, SHIFT_FORMAT_IDENTIFIER ),
                 extractIndividualVersion( format, SHIFT_FORMAT_VERSION ),
@@ -97,7 +97,7 @@ public class Meta
                 pageSize, layoutIdentifier, majorVersion, minorVersion );
     }
 
-    /**
+	/**
      * Reads meta information from the meta page. Reading meta information also involves {@link Layout} in that
      * it can have written layout-specific information to this page too. The layout identifier and its version
      * that the returned {@link Meta} instance will have are the ones read from the page, not retrieved from {@link Layout}.
@@ -143,23 +143,21 @@ public class Meta
         return parseMeta( format, pageSize, layoutIdentifier, layoutMajorVersion, layoutMinorVersion );
     }
 
-    public void verify( Layout<?,?> layout )
+	public void verify( Layout<?,?> layout )
     {
         if ( unusedVersionSlot3 != Meta.UNUSED_VERSION )
         {
-            throw new MetadataMismatchException( "Unexpected version " + unusedVersionSlot3 + " for unused version slot 3" );
+            throw new MetadataMismatchException( new StringBuilder().append("Unexpected version ").append(unusedVersionSlot3).append(" for unused version slot 3").toString() );
         }
         if ( unusedVersionSlot4 != Meta.UNUSED_VERSION )
         {
-            throw new MetadataMismatchException( "Unexpected version " + unusedVersionSlot4 + " for unused version slot 4" );
+            throw new MetadataMismatchException( new StringBuilder().append("Unexpected version ").append(unusedVersionSlot4).append(" for unused version slot 4").toString() );
         }
 
         if ( !layout.compatibleWith( layoutIdentifier, layoutMajorVersion, layoutMinorVersion ) )
         {
             throw new MetadataMismatchException(
-                    "Tried to open using layout not compatible with " +
-                    "what the index was created with. Created with: layoutIdentifier=%d,majorVersion=%d,minorVersion=%d. " +
-                    "Opened with layoutIdentifier=%d,majorVersion=%d,minorVersion=%d",
+                    new StringBuilder().append("Tried to open using layout not compatible with ").append("what the index was created with. Created with: layoutIdentifier=%d,majorVersion=%d,minorVersion=%d. ").append("Opened with layoutIdentifier=%d,majorVersion=%d,minorVersion=%d").toString(),
                     layoutIdentifier, layoutMajorVersion, layoutMinorVersion,
                     layout.identifier(), layout.majorVersion(), layout.minorVersion() );
         }
@@ -174,7 +172,7 @@ public class Meta
         }
     }
 
-    /**
+	/**
      * Writes meta information to the meta page. Writing meta information also involves {@link Layout} in that
      * it can write layout-specific information to this page too.
      *
@@ -192,52 +190,52 @@ public class Meta
         checkOutOfBounds( cursor );
     }
 
-    private static byte extractIndividualVersion( int format, int shift )
+	private static byte extractIndividualVersion( int format, int shift )
     {
         return (byte) ((format >>> shift) & MASK_BYTE);
     }
 
-    private int allVersionsCombined()
+	private int allVersionsCombined()
     {
         return formatIdentifier << SHIFT_FORMAT_IDENTIFIER | formatVersion << SHIFT_FORMAT_VERSION;
     }
 
-    int getPageSize()
+	int getPageSize()
     {
         return pageSize;
     }
 
-    byte getFormatIdentifier()
+	byte getFormatIdentifier()
     {
         return formatIdentifier;
     }
 
-    byte getFormatVersion()
+	byte getFormatVersion()
     {
         return formatVersion;
     }
 
-    byte getUnusedVersionSlot3()
+	byte getUnusedVersionSlot3()
     {
         return unusedVersionSlot3;
     }
 
-    byte getUnusedVersionSlot4()
+	byte getUnusedVersionSlot4()
     {
         return unusedVersionSlot4;
     }
 
-    long getLayoutIdentifier()
+	long getLayoutIdentifier()
     {
         return layoutIdentifier;
     }
 
-    int getLayoutMajorVersion()
+	int getLayoutMajorVersion()
     {
         return layoutMajorVersion;
     }
 
-    int getLayoutMinorVersion()
+	int getLayoutMinorVersion()
     {
         return layoutMinorVersion;
     }

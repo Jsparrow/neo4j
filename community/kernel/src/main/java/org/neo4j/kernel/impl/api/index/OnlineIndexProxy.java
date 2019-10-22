@@ -98,17 +98,16 @@ public class OnlineIndexProxy implements IndexProxy
 
     private IndexUpdateMode escalateModeIfNecessary( IndexUpdateMode mode )
     {
-        if ( forcedIdempotentMode )
-        {
-            // If this proxy is flagged with taking extra care about idempotency then escalate ONLINE to ONLINE_IDEMPOTENT.
-            if ( mode != IndexUpdateMode.ONLINE )
-            {
-                throw new IllegalArgumentException( "Unexpected mode " + mode + " given that " + this +
-                        " has been marked with forced idempotent mode. Expected mode " + IndexUpdateMode.ONLINE );
-            }
-            return IndexUpdateMode.ONLINE_IDEMPOTENT;
-        }
-        return mode;
+        if (!forcedIdempotentMode) {
+			return mode;
+		}
+		// If this proxy is flagged with taking extra care about idempotency then escalate ONLINE to ONLINE_IDEMPOTENT.
+		if ( mode != IndexUpdateMode.ONLINE )
+		{
+		    throw new IllegalArgumentException( new StringBuilder().append("Unexpected mode ").append(mode).append(" given that ").append(this).append(" has been marked with forced idempotent mode. Expected mode ").append(IndexUpdateMode.ONLINE)
+					.toString() );
+		}
+		return IndexUpdateMode.ONLINE_IDEMPOTENT;
     }
 
     private IndexUpdater updateCountingUpdater( final IndexUpdater indexUpdater )
@@ -184,7 +183,7 @@ public class OnlineIndexProxy implements IndexProxy
     }
 
     @Override
-    public IndexPopulationFailure getPopulationFailure() throws IllegalStateException
+    public IndexPopulationFailure getPopulationFailure()
     {
         throw new IllegalStateException( this + " is ONLINE" );
     }
@@ -210,7 +209,8 @@ public class OnlineIndexProxy implements IndexProxy
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[accessor:" + accessor + ", descriptor:" + capableIndexDescriptor + "]";
+        return new StringBuilder().append(getClass().getSimpleName()).append("[accessor:").append(accessor).append(", descriptor:").append(capableIndexDescriptor).append("]")
+				.toString();
     }
 
     @Override

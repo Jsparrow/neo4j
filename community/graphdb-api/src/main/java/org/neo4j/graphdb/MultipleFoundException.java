@@ -27,7 +27,6 @@ public class MultipleFoundException extends RuntimeException
 {
     public MultipleFoundException()
     {
-        super();
     }
 
     public MultipleFoundException( String message )

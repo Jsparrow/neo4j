@@ -47,9 +47,7 @@ public abstract class ConnectorValidator implements SettingGroup<Object>
                     .map( Enum::name )
                     .collect( toSet() );
     static final String DEPRECATED_CONNECTOR_MSG =
-            "Warning: connectors with names other than [http,https,bolt] are%n" +
-                    "deprecated and support for them will be removed in a future%n" +
-                    "version of Neo4j. Offending lines in " + Config.DEFAULT_CONFIG_FILE_NAME + ":%n%n%s";
+            new StringBuilder().append("Warning: connectors with names other than [http,https,bolt] are%n").append("deprecated and support for them will be removed in a future%n").append("version of Neo4j. Offending lines in ").append(Config.DEFAULT_CONFIG_FILE_NAME).append(":%n%n%s").toString();
     protected final Connector.ConnectorType type;
 
     public ConnectorValidator( @Nonnull Connector.ConnectorType type )
@@ -66,14 +64,14 @@ public abstract class ConnectorValidator implements SettingGroup<Object>
      * @throws InvalidSettingException if an answer can not be determined, for example in case of a missing second
      * mandatory setting.
      */
-    public boolean owns( @Nonnull String key, @Nonnull Map<String,String> rawConfig ) throws InvalidSettingException
+    public boolean owns( @Nonnull String key, @Nonnull Map<String,String> rawConfig )
     {
         String[] parts = key.split( "\\." );
         if ( parts.length < 2 )
         {
             return false;
         }
-        if ( !parts[0].equals( "dbms" ) || !parts[1].equals( "connector" ) )
+        if ( !"dbms".equals( parts[0] ) || !"connector".equals( parts[1] ) )
         {
             return false;
         }
@@ -97,11 +95,11 @@ public abstract class ConnectorValidator implements SettingGroup<Object>
         if ( typeValue == null )
         {
             // We can infer the type of the connector from some names
-            if ( groupKey.equalsIgnoreCase( "http" ) || groupKey.equalsIgnoreCase( "https" ) )
+            if ( "http".equalsIgnoreCase( groupKey ) || "https".equalsIgnoreCase( groupKey ) )
             {
                 typeValue = Connector.ConnectorType.HTTP.name();
             }
-            else if ( groupKey.equalsIgnoreCase( "bolt" ) )
+            else if ( "bolt".equalsIgnoreCase( groupKey ) )
             {
                 typeValue = Connector.ConnectorType.BOLT.name();
             }
@@ -125,7 +123,6 @@ public abstract class ConnectorValidator implements SettingGroup<Object>
 
     @Nonnull
     public Stream<Entry<String,String>> ownedEntries( @Nonnull Map<String,String> params )
-            throws InvalidSettingException
     {
         return params.entrySet().stream()
                 .filter( it -> owns( it.getKey(), params ) );
@@ -134,7 +131,6 @@ public abstract class ConnectorValidator implements SettingGroup<Object>
     @Override
     @Nonnull
     public Map<String,String> validate( @Nonnull Map<String,String> rawConfig, @Nonnull Consumer<String> warningConsumer )
-            throws InvalidSettingException
     {
         final HashMap<String,String> result = new HashMap<>();
 
@@ -175,8 +171,8 @@ public abstract class ConnectorValidator implements SettingGroup<Object>
 
     protected boolean isDeprecatedConnectorName( String name )
     {
-        return !( name.equalsIgnoreCase( "http" ) || name.equalsIgnoreCase( "https" ) || name
-                .equalsIgnoreCase( "bolt" ) );
+        return !( "http".equalsIgnoreCase( name ) || "https".equalsIgnoreCase( name ) || "bolt"
+                .equalsIgnoreCase( name ) );
     }
 
     @Override

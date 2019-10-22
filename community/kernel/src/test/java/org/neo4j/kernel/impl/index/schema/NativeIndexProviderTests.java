@@ -60,26 +60,29 @@ import static org.neo4j.kernel.impl.index.schema.ByteBufferFactory.heapBufferFac
 
 public abstract class NativeIndexProviderTests
 {
-    @Rule
+    private static final int indexId = 1;
+
+	private static final int labelId = 1;
+
+	private static final int propId = 1;
+
+	@Rule
     public PageCacheAndDependenciesRule rules = new PageCacheAndDependenciesRule();
 
-    private static final int indexId = 1;
-    private static final int labelId = 1;
-    private static final int propId = 1;
-    private IndexProvider provider;
-    private final AssertableLogProvider logging = new AssertableLogProvider();
-    private final IndexProvider.Monitor monitor = new LoggingMonitor( logging.getLog( "test" ) );
+	private IndexProvider provider;
 
-    @Before
+	private final AssertableLogProvider logging = new AssertableLogProvider();
+
+	private final IndexProvider.Monitor monitor = new LoggingMonitor( logging.getLog( "test" ) );
+
+	@Before
     public void setup() throws IOException
     {
         File nativeSchemaIndexStoreDirectory = newProvider().directoryStructure().rootDirectory();
         rules.fileSystem().mkdirs( nativeSchemaIndexStoreDirectory );
     }
 
-    /* getPopulator */
-
-    @Test
+	@Test
     public void getPopulatorMustThrowIfInReadOnlyMode()
     {
         // given
@@ -98,9 +101,7 @@ public abstract class NativeIndexProviderTests
         }
     }
 
-    /* getOnlineAccessor */
-
-    @Test
+	@Test
     public void shouldNotCheckConflictsWhenApplyingUpdatesInOnlineAccessor() throws IOException, IndexEntryConflictException
     {
         // given
@@ -120,9 +121,7 @@ public abstract class NativeIndexProviderTests
         }
     }
 
-    /* getPopulationFailure */
-
-    @Test
+	@Test
     public void getPopulationFailureMustThrowIfNoFailure()
     {
         // given
@@ -147,7 +146,7 @@ public abstract class NativeIndexProviderTests
         }
     }
 
-    @Test
+	@Test
     public void getPopulationFailureMustThrowEvenIfFailureOnOtherIndex()
     {
         // given
@@ -179,7 +178,7 @@ public abstract class NativeIndexProviderTests
         }
     }
 
-    @Test
+	@Test
     public void getPopulationFailureMustReturnReportedFailure()
     {
         // given
@@ -197,7 +196,7 @@ public abstract class NativeIndexProviderTests
         assertThat( populationFailure, is( failureMessage ) );
     }
 
-    @Test
+	@Test
     public void getPopulationFailureMustReturnReportedFailuresForDifferentIndexIds()
     {
         // given
@@ -235,7 +234,7 @@ public abstract class NativeIndexProviderTests
         }
     }
 
-    @Test
+	@Test
     public void getPopulationFailureMustPersistReportedFailure()
     {
         // given
@@ -254,10 +253,7 @@ public abstract class NativeIndexProviderTests
         assertThat( populationFailure, is( failureMessage ) );
     }
 
-    /* getInitialState */
-    // pattern: open populator, markAsFailed, close populator, getInitialState, getPopulationFailure
-
-    @Test
+	@Test
     public void shouldReportCorrectInitialStateIfIndexDoesntExist()
     {
         // given
@@ -279,7 +275,7 @@ public abstract class NativeIndexProviderTests
         }
     }
 
-    @Test
+	@Test
     public void shouldReportInitialStateAsPopulatingIfPopulationStartedButIncomplete()
     {
         // given
@@ -295,7 +291,7 @@ public abstract class NativeIndexProviderTests
         populator.close( true );
     }
 
-    @Test
+	@Test
     public void shouldReportInitialStateAsFailedIfMarkedAsFailed()
     {
         // given
@@ -312,7 +308,7 @@ public abstract class NativeIndexProviderTests
         assertEquals( InternalIndexState.FAILED, state );
     }
 
-    @Test
+	@Test
     public void shouldReportInitialStateAsOnlineIfPopulationCompletedSuccessfully()
     {
         // given
@@ -328,57 +324,76 @@ public abstract class NativeIndexProviderTests
         assertEquals( InternalIndexState.ONLINE, state );
     }
 
-    /* storeMigrationParticipant */
+	protected abstract InternalIndexState expectedStateOnNonExistingSubIndex();
 
-    protected abstract InternalIndexState expectedStateOnNonExistingSubIndex();
+	protected abstract Value someValue();
 
-    protected abstract Value someValue();
-
-    abstract IndexProvider newProvider( PageCache pageCache, FileSystemAbstraction fs, IndexDirectoryStructure.Factory dir,
+	abstract IndexProvider newProvider( PageCache pageCache, FileSystemAbstraction fs, IndexDirectoryStructure.Factory dir,
             IndexProvider.Monitor monitor, RecoveryCleanupWorkCollector collector, boolean readOnly );
 
-    private IndexProvider newProvider()
+	private IndexProvider newProvider()
     {
         return newProvider( pageCache(), fs(), directoriesByProvider( baseDir() ), monitor, immediate(), false );
     }
 
-    private IndexProvider newReadOnlyProvider()
+	private IndexProvider newReadOnlyProvider()
     {
         return newProvider( pageCache(), fs(), directoriesByProvider( baseDir() ), monitor, immediate(), true );
     }
 
-    private IndexSamplingConfig samplingConfig()
+	private IndexSamplingConfig samplingConfig()
     {
         return new IndexSamplingConfig( Config.defaults() );
     }
 
-    private StoreIndexDescriptor descriptor()
+	private StoreIndexDescriptor descriptor()
     {
         return IndexDescriptorFactory.forSchema( forLabel( labelId, propId ), PROVIDER_DESCRIPTOR ).withId( indexId );
     }
 
-    private StoreIndexDescriptor descriptor( long indexId )
+	private StoreIndexDescriptor descriptor( long indexId )
     {
         return IndexDescriptorFactory.forSchema( forLabel( labelId, propId ), PROVIDER_DESCRIPTOR ).withId( indexId );
     }
 
-    private StoreIndexDescriptor descriptorUnique()
+	private StoreIndexDescriptor descriptorUnique()
     {
         return IndexDescriptorFactory.uniqueForSchema( forLabel( labelId, propId ), PROVIDER_DESCRIPTOR ).withId( indexId );
     }
 
-    private PageCache pageCache()
+	private PageCache pageCache()
     {
         return rules.pageCache();
     }
 
-    private FileSystemAbstraction fs()
+	private FileSystemAbstraction fs()
     {
         return rules.fileSystem();
     }
 
-    private File baseDir()
+	private File baseDir()
     {
         return rules.directory().absolutePath();
     }
+
+    /* getPopulator */
+
+    
+
+    /* getOnlineAccessor */
+
+    
+
+    /* getPopulationFailure */
+
+    
+
+    /* getInitialState */
+    // pattern: open populator, markAsFailed, close populator, getInitialState, getPopulationFailure
+
+    
+
+    /* storeMigrationParticipant */
+
+    
 }

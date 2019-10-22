@@ -73,14 +73,17 @@ public class FusionIndexProviderTest
     private static final IndexProviderDescriptor DESCRIPTOR = new IndexProviderDescriptor( "test-fusion", "1" );
     public static final StoreIndexDescriptor AN_INDEX =
             IndexDescriptorFactory.forSchema( forLabel( 0, 0 ), PROVIDER_DESCRIPTOR ).withId( 0 );
+	@Parameterized.Parameter
+    public static FusionVersion fusionVersion;
+	private EnumMap<IndexSlot,IndexProvider> providers;
+	private IndexProvider[] aliveProviders;
+	private IndexProvider fusionIndexProvider;
+	private SlotSelector slotSelector;
+	private InstanceSelector<IndexProvider> instanceSelector;
+	@Rule
+    public RandomRule random = new RandomRule();
 
-    private EnumMap<IndexSlot,IndexProvider> providers;
-    private IndexProvider[] aliveProviders;
-    private IndexProvider fusionIndexProvider;
-    private SlotSelector slotSelector;
-    private InstanceSelector<IndexProvider> instanceSelector;
-
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static FusionVersion[] versions()
     {
         return new FusionVersion[]
@@ -89,20 +92,14 @@ public class FusionIndexProviderTest
                 };
     }
 
-    @Parameterized.Parameter
-    public static FusionVersion fusionVersion;
-
-    @Before
+	@Before
     public void setup()
     {
         slotSelector = fusionVersion.slotSelector();
         setupMocks();
     }
 
-    @Rule
-    public RandomRule random = new RandomRule();
-
-    private void setupMocks()
+	private void setupMocks()
     {
         IndexSlot[] aliveSlots = fusionVersion.aliveSlots();
         aliveProviders = new IndexProvider[aliveSlots.length];
@@ -151,14 +148,14 @@ public class FusionIndexProviderTest
         instanceSelector = new InstanceSelector<>( providers );
     }
 
-    private static IndexProvider mockProvider( Class<? extends IndexProvider> providerClass, String name )
+	private static IndexProvider mockProvider( Class<? extends IndexProvider> providerClass, String name )
     {
         IndexProvider mock = mock( providerClass );
         when( mock.getProviderDescriptor() ).thenReturn( new IndexProviderDescriptor( name, "1" ) );
         return mock;
     }
 
-    @Test
+	@Test
     public void mustSelectCorrectTargetForAllGivenValueCombinations()
     {
         // given
@@ -192,7 +189,7 @@ public class FusionIndexProviderTest
         }
     }
 
-    @Test
+	@Test
     public void mustCombineSamples()
     {
         // given
@@ -220,7 +217,7 @@ public class FusionIndexProviderTest
         assertEquals( sumSampleSize, fusionSample.sampleSize() );
     }
 
-    @Test
+	@Test
     public void getPopulationFailureMustThrowIfNoFailure()
     {
         // when
@@ -242,7 +239,7 @@ public class FusionIndexProviderTest
         }
     }
 
-    @Test
+	@Test
     public void getPopulationFailureMustReportFailureWhenAnyFailed()
     {
         for ( IndexProvider failingProvider : aliveProviders )
@@ -267,27 +264,24 @@ public class FusionIndexProviderTest
         }
     }
 
-    @Test
+	@Test
     public void getPopulationFailureMustReportFailureWhenMultipleFail()
     {
         // when
         List<String> failureMessages = new ArrayList<>();
         for ( IndexProvider aliveProvider : aliveProviders )
         {
-            String failureMessage = "FAILURE[" + aliveProvider + "]";
+            String failureMessage = new StringBuilder().append("FAILURE[").append(aliveProvider).append("]").toString();
             failureMessages.add( failureMessage );
             when( aliveProvider.getPopulationFailure( any( StoreIndexDescriptor.class ) ) ).thenReturn( failureMessage );
         }
 
         // then
         String populationFailure = fusionIndexProvider.getPopulationFailure( AN_INDEX );
-        for ( String failureMessage : failureMessages )
-        {
-            assertThat( populationFailure, containsString( failureMessage ) );
-        }
+        failureMessages.forEach(failureMessage -> assertThat(populationFailure, containsString(failureMessage)));
     }
 
-    @Test
+	@Test
     public void shouldReportFailedIfAnyIsFailed()
     {
         // given
@@ -310,7 +304,7 @@ public class FusionIndexProviderTest
         }
     }
 
-    @Test
+	@Test
     public void shouldReportPopulatingIfAnyIsPopulating()
     {
         // given
@@ -331,12 +325,12 @@ public class FusionIndexProviderTest
         }
     }
 
-    private void setInitialState( IndexProvider mockedProvider, InternalIndexState state )
+	private void setInitialState( IndexProvider mockedProvider, InternalIndexState state )
     {
         when( mockedProvider.getInitialState( any( StoreIndexDescriptor.class ) ) ).thenReturn( state );
     }
 
-    private IndexProvider orLucene( IndexProvider provider )
+	private IndexProvider orLucene( IndexProvider provider )
     {
         return provider != IndexProvider.EMPTY ? provider : providers.get( LUCENE );
     }

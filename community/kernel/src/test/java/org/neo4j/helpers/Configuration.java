@@ -63,7 +63,7 @@ public class Configuration extends ExternalResource
             // restore before we throw
             sysProperties.remove( key );
             updateSystemProperty( key, value );
-            throw new IllegalArgumentException( "Cannot update '" + key + "' more than once." );
+            throw new IllegalArgumentException( new StringBuilder().append("Cannot update '").append(key).append("' more than once.").toString() );
         }
         return this;
     }
@@ -71,10 +71,7 @@ public class Configuration extends ExternalResource
     @Override
     protected void after()
     {
-        for ( Map.Entry<String, String> entry : sysProperties.entrySet() )
-        {
-            updateSystemProperty( entry.getKey(), entry.getValue() );
-        }
+        sysProperties.entrySet().forEach(entry -> updateSystemProperty(entry.getKey(), entry.getValue()));
     }
 
     private static String updateSystemProperty( String key, String value )

@@ -36,23 +36,23 @@ public class PackedMultiFieldCache
     private ByteArrayBitsManipulator slots;
     private long[] initValues;
 
-    static ByteArray defaultArray()
-    {
-        return AUTO_WITHOUT_PAGECACHE.newDynamicByteArray( 1_000_000, new byte[ByteArrayBitsManipulator.MAX_BYTES] );
-    }
-
     public PackedMultiFieldCache( int... slotSizes )
     {
         this( defaultArray(), slotSizes );
     }
 
-    public PackedMultiFieldCache( ByteArray array, int... slotSizes )
+	public PackedMultiFieldCache( ByteArray array, int... slotSizes )
     {
         this.array = array;
         setSlotSizes( slotSizes );
     }
 
-    public void put( long index, long... values )
+	static ByteArray defaultArray()
+    {
+        return AUTO_WITHOUT_PAGECACHE.newDynamicByteArray( 1_000_000, new byte[ByteArrayBitsManipulator.MAX_BYTES] );
+    }
+
+	public void put( long index, long... values )
     {
         for ( int i = 0; i < values.length; i++ )
         {
@@ -60,23 +60,23 @@ public class PackedMultiFieldCache
         }
     }
 
-    public void put( long index, int slot, long value )
+	public void put( long index, int slot, long value )
     {
         slots.set( array, index, slot, value );
     }
 
-    public long get( long index, int slot )
+	public long get( long index, int slot )
     {
         return slots.get( array, index, slot );
     }
 
-    public void setSlotSizes( int... slotSizes )
+	public void setSlotSizes( int... slotSizes )
     {
         this.slots = new ByteArrayBitsManipulator( slotSizes );
         this.initValues = getInitVals( slotSizes );
     }
 
-    public void clear()
+	public void clear()
     {
         long length = array.length();
         for ( long i = 0; i < length; i++ )
@@ -85,12 +85,12 @@ public class PackedMultiFieldCache
         }
     }
 
-    public void clear( long index )
+	public void clear( long index )
     {
         put( index, initValues );
     }
 
-    private static long[] getInitVals( int[] slotSizes )
+	private static long[] getInitVals( int[] slotSizes )
     {
         long[] initVals = new long[slotSizes.length];
         for ( int i = 0; i < initVals.length; i++ )
@@ -100,7 +100,7 @@ public class PackedMultiFieldCache
         return initVals;
     }
 
-    private static boolean isId( int[] slotSizes, int i )
+	private static boolean isId( int[] slotSizes, int i )
     {
         return slotSizes[i] >= ID_SLOT_SIZE;
     }

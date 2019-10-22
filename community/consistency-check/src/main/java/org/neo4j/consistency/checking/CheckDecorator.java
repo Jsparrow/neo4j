@@ -38,38 +38,38 @@ import org.neo4j.kernel.impl.store.record.RelationshipTypeTokenRecord;
 
 public interface CheckDecorator
 {
-    /**
+    CheckDecorator NONE = new Adapter();
+
+	/**
      * Called before each pass over the store(s) to check.
      */
     void prepare();
 
-    OwningRecordCheck<NeoStoreRecord, NeoStoreConsistencyReport> decorateNeoStoreChecker(
+	OwningRecordCheck<NeoStoreRecord, NeoStoreConsistencyReport> decorateNeoStoreChecker(
             OwningRecordCheck<NeoStoreRecord, NeoStoreConsistencyReport> checker );
 
-    OwningRecordCheck<NodeRecord, NodeConsistencyReport> decorateNodeChecker(
+	OwningRecordCheck<NodeRecord, NodeConsistencyReport> decorateNodeChecker(
             OwningRecordCheck<NodeRecord, NodeConsistencyReport> checker );
 
-    OwningRecordCheck<RelationshipRecord, RelationshipConsistencyReport> decorateRelationshipChecker(
+	OwningRecordCheck<RelationshipRecord, RelationshipConsistencyReport> decorateRelationshipChecker(
             OwningRecordCheck<RelationshipRecord, RelationshipConsistencyReport> checker );
 
-    RecordCheck<PropertyRecord, PropertyConsistencyReport> decoratePropertyChecker(
+	RecordCheck<PropertyRecord, PropertyConsistencyReport> decoratePropertyChecker(
             RecordCheck<PropertyRecord, PropertyConsistencyReport> checker );
 
-    RecordCheck<PropertyKeyTokenRecord, PropertyKeyTokenConsistencyReport> decoratePropertyKeyTokenChecker(
+	RecordCheck<PropertyKeyTokenRecord, PropertyKeyTokenConsistencyReport> decoratePropertyKeyTokenChecker(
             RecordCheck<PropertyKeyTokenRecord, PropertyKeyTokenConsistencyReport> checker );
 
-    RecordCheck<RelationshipTypeTokenRecord, RelationshipTypeConsistencyReport> decorateRelationshipTypeTokenChecker(
+	RecordCheck<RelationshipTypeTokenRecord, RelationshipTypeConsistencyReport> decorateRelationshipTypeTokenChecker(
             RecordCheck<RelationshipTypeTokenRecord, RelationshipTypeConsistencyReport> checker );
 
-    RecordCheck<LabelTokenRecord, LabelTokenConsistencyReport> decorateLabelTokenChecker(
+	RecordCheck<LabelTokenRecord, LabelTokenConsistencyReport> decorateLabelTokenChecker(
             RecordCheck<LabelTokenRecord, LabelTokenConsistencyReport> checker );
 
-    RecordCheck<RelationshipGroupRecord, RelationshipGroupConsistencyReport> decorateRelationshipGroupChecker(
+	RecordCheck<RelationshipGroupRecord, RelationshipGroupConsistencyReport> decorateRelationshipGroupChecker(
             RecordCheck<RelationshipGroupRecord, RelationshipGroupConsistencyReport> checker );
 
-    CheckDecorator NONE = new Adapter();
-
-    class Adapter implements CheckDecorator
+	class Adapter implements CheckDecorator
     {
         @Override
         public void prepare()

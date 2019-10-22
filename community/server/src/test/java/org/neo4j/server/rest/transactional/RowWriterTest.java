@@ -36,6 +36,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.neo4j.helpers.collection.MapUtil.map;
 import static org.neo4j.server.rest.domain.JsonHelper.jsonNode;
+import java.util.Collections;
 
 public class RowWriterTest
 {
@@ -59,7 +60,7 @@ public class RowWriterTest
     {
         json.writeStartObject();
         // RETURN {one:{two:[true, {three: 42}]}}
-        resultDataContentWriter.write( json, asList( "the column" ), new MapRow(
+        resultDataContentWriter.write( json, Collections.singletonList( "the column" ), new MapRow(
                 map( "the column", map( "one", map( "two", asList( true, map( "three", 42 ) ) ) ) ) ), null );
         json.writeEndObject();
         json.flush();

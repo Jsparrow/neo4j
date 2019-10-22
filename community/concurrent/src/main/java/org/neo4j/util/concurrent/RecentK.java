@@ -96,8 +96,7 @@ public class RecentK<Type> implements Iterable<Type>
      */
     private void halveCounts()
     {
-        for ( AtomicLong count : recentItems.values() )
-        {
+        recentItems.values().forEach(count -> {
             long prev;
             long next;
             do
@@ -107,7 +106,7 @@ public class RecentK<Type> implements Iterable<Type>
             }
             while ( !count.compareAndSet( prev, next ) );
 
-        }
+        });
     }
 
     private void removeItemWithLowestCount()

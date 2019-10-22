@@ -44,7 +44,7 @@ public class PartitionedIndexWriter implements LuceneIndexWriter
 
     // by default we still keep a spare of 10% to the maximum partition size: During concurrent updates
     // it could happen that 2 threads reserve space in a partition (without claiming it by doing addDocument):
-    private final Integer MAXIMUM_PARTITION_SIZE = Integer.getInteger( "luceneSchemaIndex.maxPartitionSize",
+    private final Integer maximumPartitionSize = Integer.getInteger( "luceneSchemaIndex.maxPartitionSize",
             IndexWriter.MAX_DOCS - (IndexWriter.MAX_DOCS / 10) );
 
     public PartitionedIndexWriter( WritableAbstractDatabaseIndex index )
@@ -131,7 +131,7 @@ public class PartitionedIndexWriter implements LuceneIndexWriter
 
     private boolean writablePartition( AbstractIndexPartition partition, int numDocs )
     {
-        return MAXIMUM_PARTITION_SIZE - partition.getIndexWriter().maxDoc() >= numDocs;
+        return maximumPartitionSize - partition.getIndexWriter().maxDoc() >= numDocs;
     }
 }
 

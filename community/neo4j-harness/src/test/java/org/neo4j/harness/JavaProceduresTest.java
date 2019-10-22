@@ -48,87 +48,13 @@ public class JavaProceduresTest
     @Rule
     public SuppressOutput suppressOutput = SuppressOutput.suppressAll();
 
-    public static class MyProcedures
-    {
-        public static class OutputRecord
-        {
-            public long someNumber = 1337;
-        }
-
-        @Procedure
-        public Stream<OutputRecord> myProc()
-        {
-            return Stream.of( new OutputRecord() );
-        }
-
-        @Procedure
-        public Stream<OutputRecord> procThatThrows()
-        {
-            throw new RuntimeException( "This is an exception" );
-        }
-    }
-
-    public static class MyProceduresUsingMyService
-    {
-        public static class OutputRecord
-        {
-            public String result;
-        }
-
-        @Context
-        public SomeService service;
-
-        @Procedure( "hello" )
-        public Stream<OutputRecord> hello()
-        {
-            OutputRecord t = new OutputRecord();
-            t.result = service.hello();
-            return Stream.of( t );
-        }
-    }
-
-    public static class MyProceduresUsingMyCoreAPI
-    {
-        public static class LongResult
-        {
-            public Long value;
-        }
-
-        @Context
-        public MyCoreAPI myCoreAPI;
-
-        @Procedure( value = "makeNode", mode = Mode.WRITE )
-        public Stream<LongResult> makeNode( @Name( "label" ) String label ) throws ProcedureException
-        {
-            LongResult t = new LongResult();
-            t.value = myCoreAPI.makeNode( label );
-            return Stream.of( t );
-        }
-
-        @Procedure( value = "willFail", mode = Mode.READ )
-        public Stream<LongResult> willFail() throws ProcedureException
-        {
-            LongResult t = new LongResult();
-            t.value = myCoreAPI.makeNode( "Test" );
-            return Stream.of( t );
-        }
-
-        @Procedure( "countNodes" )
-        public Stream<LongResult> countNodes()
-        {
-            LongResult t = new LongResult();
-            t.value = myCoreAPI.countNodes();
-            return Stream.of( t );
-        }
-    }
-
     private TestServerBuilder createServer( Class<?> procedureClass )
     {
         return TestServerBuilders.newInProcessBuilder()
                                  .withProcedure( procedureClass );
     }
 
-    @Test
+	@Test
     public void shouldLaunchWithDeclaredProcedures() throws Exception
     {
         // When
@@ -145,7 +71,7 @@ public class JavaProceduresTest
         }
     }
 
-    @Test
+	@Test
     public void shouldGetHelpfulErrorOnProcedureThrowsException() throws Exception
     {
         // When
@@ -161,7 +87,7 @@ public class JavaProceduresTest
         }
     }
 
-    @Test
+	@Test
     public void shouldWorkWithInjectableFromKernelExtension() throws Throwable
     {
         // When
@@ -178,7 +104,7 @@ public class JavaProceduresTest
         }
     }
 
-    @Test
+	@Test
     public void shouldWorkWithInjectableFromKernelExtensionWithMorePower() throws Throwable
     {
         // When
@@ -195,10 +121,10 @@ public class JavaProceduresTest
         }
     }
 
-    private void assertQueryGetsValue( ServerControls server, String query, long value ) throws Throwable
+	private void assertQueryGetsValue( ServerControls server, String query, long value ) throws Throwable
     {
         HTTP.Response response = HTTP.POST( server.httpURI().resolve( "db/data/transaction/commit" ).toString(),
-                quotedJson( "{ 'statements': [ { 'statement': '" + query + "' } ] }" ) );
+                quotedJson( new StringBuilder().append("{ 'statements': [ { 'statement': '").append(query).append("' } ] }").toString() ) );
 
         assertEquals( "[]", response.get( "errors" ).toString() );
         JsonNode result = response.get( "results" ).get( 0 );
@@ -206,11 +132,85 @@ public class JavaProceduresTest
         assertEquals( value, result.get( "data" ).get( 0 ).get( "row" ).get( 0 ).asLong() );
     }
 
-    private void assertQueryGetsError( ServerControls server, String query, String error ) throws Throwable
+	private void assertQueryGetsError( ServerControls server, String query, String error ) throws Throwable
     {
         HTTP.Response response = HTTP.POST( server.httpURI().resolve( "db/data/transaction/commit" ).toString(),
-                quotedJson( "{ 'statements': [ { 'statement': '" + query + "' } ] }" ) );
+                quotedJson( new StringBuilder().append("{ 'statements': [ { 'statement': '").append(query).append("' } ] }").toString() ) );
 
         assertThat( response.get( "errors" ).toString(), containsString( error ) );
+    }
+
+	public static class MyProcedures
+    {
+        @Procedure
+        public Stream<OutputRecord> myProc()
+        {
+            return Stream.of( new OutputRecord() );
+        }
+
+		@Procedure
+        public Stream<OutputRecord> procThatThrows()
+        {
+            throw new RuntimeException( "This is an exception" );
+        }
+
+		public static class OutputRecord
+        {
+            public long someNumber = 1337;
+        }
+    }
+
+    public static class MyProceduresUsingMyService
+    {
+        @Context
+        public SomeService service;
+
+		@Procedure( "hello" )
+        public Stream<OutputRecord> hello()
+        {
+            OutputRecord t = new OutputRecord();
+            t.result = service.hello();
+            return Stream.of( t );
+        }
+
+		public static class OutputRecord
+        {
+            public String result;
+        }
+    }
+
+    public static class MyProceduresUsingMyCoreAPI
+    {
+        @Context
+        public MyCoreAPI myCoreAPI;
+
+		@Procedure( value = "makeNode", mode = Mode.WRITE )
+        public Stream<LongResult> makeNode( @Name( "label" ) String label ) throws ProcedureException
+        {
+            LongResult t = new LongResult();
+            t.value = myCoreAPI.makeNode( label );
+            return Stream.of( t );
+        }
+
+		@Procedure( value = "willFail", mode = Mode.READ )
+        public Stream<LongResult> willFail() throws ProcedureException
+        {
+            LongResult t = new LongResult();
+            t.value = myCoreAPI.makeNode( "Test" );
+            return Stream.of( t );
+        }
+
+		@Procedure( "countNodes" )
+        public Stream<LongResult> countNodes()
+        {
+            LongResult t = new LongResult();
+            t.value = myCoreAPI.countNodes();
+            return Stream.of( t );
+        }
+
+		public static class LongResult
+        {
+            public Long value;
+        }
     }
 }

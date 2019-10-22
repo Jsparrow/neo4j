@@ -61,103 +61,97 @@ import org.neo4j.kernel.api.exceptions.Status;
  */
 public interface Transaction extends AutoCloseable
 {
-    enum Type
-    {
-        implicit,
-        explicit
-    }
-
     /**
      * The store id of a rolled back transaction.
      */
     long ROLLBACK = -1;
 
-    /**
+	/**
      * The store id of a read-only transaction.
      */
     long READ_ONLY = 0;
 
-    /**
+	/**
      * Marks this transaction as successful. When this transaction later gets {@link #close() closed}
      * its changes, if any, will be committed. If this method hasn't been called or if {@link #failure()}
      * has been called then any changes in this transaction will be rolled back as part of {@link #close() closing}.
      */
     void success();
 
-    /**
+	/**
      * Marks this transaction as failed. No amount of calls to {@link #success()} will clear this flag.
      * When {@link #close() closing} this transaction any changes will be rolled back.
      */
     void failure();
 
-    /**
+	/**
      * @return The Read operations of the graph. The returned instance targets the active transaction state layer.
      */
     Read dataRead();
 
-    /**
+	/**
      * @return The Write operations of the graph. The returned instance writes to the active transaction state layer.
      * @throws InvalidTransactionTypeKernelException when transaction cannot be upgraded to a write transaction. This
      * can happen when there have been schema modifications.
      */
     Write dataWrite() throws InvalidTransactionTypeKernelException;
 
-    /**
+	/**
      * @return The explicit index read operations of the graph.
      */
     ExplicitIndexRead indexRead();
 
-    /**
+	/**
      * @return The explicit index write operations of the graph.
      */
     ExplicitIndexWrite indexWrite() throws InvalidTransactionTypeKernelException;
 
-    /**
+	/**
      * @return Token read operations
      */
     TokenRead tokenRead();
 
-    /**
+	/**
      * @return Token read operations
      */
     TokenWrite tokenWrite();
 
-    /**
+	/**
      * @return Token read and write operations
      */
     Token token();
 
-    /**
+	/**
      * @return The schema index read operations of the graph, used for finding indexes.
      */
     SchemaRead schemaRead();
 
-    /**
+	/**
      * @return The schema index write operations of the graph, used for creating and dropping indexes and constraints.
      */
     SchemaWrite schemaWrite() throws InvalidTransactionTypeKernelException;
 
-    /**
+	/**
      * @return The lock operations of the graph.
      */
     Locks locks();
 
-    /**
+	/**
      * @return The cursor factory
      */
     CursorFactory cursors();
 
-    /**
+	/**
      * @return Returns procedure operations
      */
     Procedures procedures();
 
-    /**
+	/**
      * @return statistics about the execution
      */
     ExecutionStatistics executionStatistics();
 
-    /**
+	/**
      * Closes this transaction, committing its changes if {@link #success()} has been called and neither
      * {@link #failure()} nor {@link #markForTermination(Status)} has been called.
      * Otherwise its changes will be rolled back.
@@ -167,7 +161,7 @@ public interface Transaction extends AutoCloseable
      */
     long closeTransaction() throws TransactionFailureException;
 
-    /**
+	/**
      * Closes this transaction, committing its changes if {@link #success()} has been called and neither
      * {@link #failure()} nor {@link #markForTermination(Status)} has been called.
      * Otherwise its changes will be rolled back.
@@ -178,25 +172,31 @@ public interface Transaction extends AutoCloseable
         closeTransaction();
     }
 
-    /**
+	/**
      * @return {@code true} if the transaction is still open, i.e. if {@link #close()} hasn't been called yet.
      */
     boolean isOpen();
 
-    /**
+	/**
      * @return {@link Status} if {@link #markForTermination(Status)} has been invoked, otherwise empty optional.
      */
     Optional<Status> getReasonIfTerminated();
 
-    /**
+	/**
      * @return true if transaction was terminated, otherwise false
      */
     boolean isTerminated();
 
-    /**
+	/**
      * Marks this transaction for termination, such that it cannot commit successfully and will try to be
      * terminated by having other methods throw a specific termination exception, as to sooner reach the assumed
      * point where {@link #close()} will be invoked.
      */
     void markForTermination( Status reason );
+
+	enum Type
+    {
+        implicit,
+        explicit
+    }
 }

@@ -44,7 +44,7 @@ class TransactionLogFilesHelper
 
     File getLogFileForVersion( long version )
     {
-        return new File( logBaseName.getPath() + VERSION_SUFFIX + version );
+        return new File( new StringBuilder().append(logBaseName.getPath()).append(VERSION_SUFFIX).append(version).toString() );
     }
 
     long getLogVersion( String historyLogFilename )
@@ -52,7 +52,7 @@ class TransactionLogFilesHelper
         int index = historyLogFilename.lastIndexOf( VERSION_SUFFIX );
         if ( index == -1 )
         {
-            throw new RuntimeException( "Invalid log file '" + historyLogFilename + "'" );
+            throw new RuntimeException( new StringBuilder().append("Invalid log file '").append(historyLogFilename).append("'").toString() );
         }
         return Long.parseLong( historyLogFilename.substring( index + VERSION_SUFFIX.length() ) );
     }
@@ -73,7 +73,7 @@ class TransactionLogFilesHelper
 
         LogicalLogFilenameFilter( String name )
         {
-            logFilenamePattern = compile( name + REGEX_VERSION_SUFFIX + ".*" );
+            logFilenamePattern = compile( new StringBuilder().append(name).append(REGEX_VERSION_SUFFIX).append(".*").toString() );
         }
 
         @Override

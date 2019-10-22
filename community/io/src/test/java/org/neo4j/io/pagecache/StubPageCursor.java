@@ -96,11 +96,11 @@ public class StubPageCursor extends PageCursor
     public void close()
     {
         closed = true;
-        if ( linkedCursor != null )
-        {
-            linkedCursor.close();
-            linkedCursor = null;
-        }
+        if (linkedCursor == null) {
+			return;
+		}
+		linkedCursor.close();
+		linkedCursor = null;
     }
 
     public boolean isClosed()
@@ -445,10 +445,7 @@ public class StubPageCursor extends PageCursor
     @Override
     public String toString()
     {
-        return "PageCursor{" +
-               "currentOffset=" + currentOffset +
-               ", page=" + page +
-               '}';
+        return new StringBuilder().append("PageCursor{").append("currentOffset=").append(currentOffset).append(", page=").append(page).append('}').toString();
     }
 
     @Override

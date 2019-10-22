@@ -39,27 +39,26 @@ import static org.junit.Assert.assertTrue;
 
 public class CompactJsonIT extends AbstractRestFunctionalTestBase
 {
-    private long thomasAnderson;
-    private long trinity;
-    private long thomasAndersonLovesTrinity;
-
     private static FunctionalTestHelper functionalTestHelper;
-    private static GraphDbHelper helper;
+	private static GraphDbHelper helper;
+	private long thomasAnderson;
+	private long trinity;
+	private long thomasAndersonLovesTrinity;
 
-    @BeforeClass
+	@BeforeClass
     public static void setupServer()
     {
         functionalTestHelper = new FunctionalTestHelper( server() );
         helper = functionalTestHelper.getGraphDbHelper();
     }
 
-    @Before
+	@Before
     public void setupTheDatabase()
     {
         createTheMatrix();
     }
 
-    private void createTheMatrix()
+	private void createTheMatrix()
     {
         // Create the matrix example
         thomasAnderson = createAndIndexNode( "Thomas Anderson" );
@@ -82,7 +81,7 @@ public class CompactJsonIT extends AbstractRestFunctionalTestBase
         helper.addRelationshipToIndex( "relationships2", "key2", "value2", knowsRelationshipId );
     }
 
-    private long createAndIndexNode( String name )
+	private long createAndIndexNode( String name )
     {
         long id = helper.createNode();
         helper.setNodeProperties( id, Collections.singletonMap( "name", name ) );
@@ -90,7 +89,7 @@ public class CompactJsonIT extends AbstractRestFunctionalTestBase
         return id;
     }
 
-    @Test
+	@Test
     public void shouldGetThomasAndersonDirectly()
     {
         JaxRsResponse response = RestRequest.req().get(functionalTestHelper.nodeUri(thomasAnderson), CompactJsonFormat.MEDIA_TYPE);
@@ -101,7 +100,7 @@ public class CompactJsonIT extends AbstractRestFunctionalTestBase
         response.close();
     }
 
-    private void assertValidJson( String entity )
+	private void assertValidJson( String entity )
     {
         try
         {

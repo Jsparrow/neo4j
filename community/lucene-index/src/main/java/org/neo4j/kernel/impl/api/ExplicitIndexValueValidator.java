@@ -46,7 +46,7 @@ public class ExplicitIndexValueValidator implements Validator<Object>
         }
         if ( !(value instanceof Number) && value.toString() == null )
         {
-            throw new IllegalArgumentException( "Value of type " + value.getClass() + " has null toString" );
+            throw new IllegalArgumentException( new StringBuilder().append("Value of type ").append(value.getClass()).append(" has null toString").toString() );
         }
     }
 }

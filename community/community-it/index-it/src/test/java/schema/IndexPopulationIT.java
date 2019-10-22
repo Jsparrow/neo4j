@@ -183,12 +183,11 @@ public class IndexPopulationIT
         waitForOnlineIndexes();
 
         // then
-        try ( Transaction tx = database.beginTx() )
+        try ( Transaction tx = database.beginTx();
+				ResourceIterator<Node> nodes = database.findNodes(nodeLabel, key, value) )
         {
-            ResourceIterator<Node> nodes = database.findNodes( nodeLabel, key, value );
             long nodeCount = Iterators.count( nodes );
             assertEquals( "expected exactly one hit in index but was ",1, nodeCount );
-            nodes.close();
             tx.success();
         }
         AssertableLogProvider.LogMatcher matcher = inLog( IndexPopulationJob.class ).info( containsString( "TIME/PHASE Final:" ) );

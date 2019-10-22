@@ -63,27 +63,26 @@ import static org.mockito.Mockito.when;
 
 public class CheckPointSchedulerTest
 {
-    private final IOLimiter ioLimiter = mock( IOLimiter.class );
-    private final CheckPointer checkPointer = mock( CheckPointer.class );
-    private final OnDemandJobScheduler jobScheduler = spy( new OnDemandJobScheduler() );
-    private final DatabaseHealth health = mock( DatabaseHealth.class );
-
     private static ExecutorService executor;
+	private final IOLimiter ioLimiter = mock( IOLimiter.class );
+	private final CheckPointer checkPointer = mock( CheckPointer.class );
+	private final OnDemandJobScheduler jobScheduler = spy( new OnDemandJobScheduler() );
+	private final DatabaseHealth health = mock( DatabaseHealth.class );
 
-    @BeforeClass
+	@BeforeClass
     public static void setUpExecutor()
     {
         executor = Executors.newCachedThreadPool();
     }
 
-    @AfterClass
+	@AfterClass
     public static void tearDownExecutor() throws InterruptedException
     {
         executor.shutdown();
         executor.awaitTermination( 30, TimeUnit.SECONDS );
     }
 
-    @Test
+	@Test
     public void shouldScheduleTheCheckPointerJobOnStart()
     {
         // given
@@ -100,7 +99,7 @@ public class CheckPointSchedulerTest
                 eq( 20L ), eq( TimeUnit.MILLISECONDS ) );
     }
 
-    @Test
+	@Test
     public void shouldRescheduleTheJobAfterARun() throws Throwable
     {
         // given
@@ -123,7 +122,7 @@ public class CheckPointSchedulerTest
         assertEquals( scheduledJob, jobScheduler.getJob() );
     }
 
-    @Test
+	@Test
     public void shouldNotRescheduleAJobWhenStopped()
     {
         // given
@@ -142,7 +141,7 @@ public class CheckPointSchedulerTest
         assertNull( jobScheduler.getJob() );
     }
 
-    @Test
+	@Test
     public void stoppedJobCantBeInvoked() throws Throwable
     {
         CheckPointScheduler scheduler = new CheckPointScheduler( checkPointer, ioLimiter, jobScheduler, 10L, health );
@@ -161,7 +160,7 @@ public class CheckPointSchedulerTest
         verifyNoMoreInteractions( checkPointer );
     }
 
-    // Timeout as fallback safety if test deadlocks
+	// Timeout as fallback safety if test deadlocks
     @Test( timeout = 60_000 )
     public void shouldWaitOnStopUntilTheRunningCheckpointIsDone() throws Throwable
     {
@@ -245,7 +244,7 @@ public class CheckPointSchedulerTest
         assertNull( ex.get() );
     }
 
-    @Test
+	@Test
     public void shouldContinueThroughSporadicFailures()
     {
         // GIVEN
@@ -268,7 +267,7 @@ public class CheckPointSchedulerTest
         }
     }
 
-    @Test( timeout = 10_000 )
+	@Test( timeout = 10_000 )
     public void checkpointOnStopShouldFlushAsFastAsPossible() throws Throwable
     {
         CheckableIOLimiter ioLimiter = new CheckableIOLimiter();
@@ -287,7 +286,7 @@ public class CheckPointSchedulerTest
         assertTrue( "Limiter should be enabled in the end.", ioLimiter.isLimited() );
     }
 
-    @Test
+	@Test
     public void shouldCausePanicAfterSomeFailures() throws Throwable
     {
         // GIVEN
@@ -319,7 +318,7 @@ public class CheckPointSchedulerTest
         }
     }
 
-    private static class ControlledCheckPointer implements CheckPointer
+	private static class ControlledCheckPointer implements CheckPointer
     {
         volatile boolean fail;
 

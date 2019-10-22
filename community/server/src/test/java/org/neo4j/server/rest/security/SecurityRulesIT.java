@@ -90,8 +90,7 @@ public class SecurityRulesIT extends ExclusiveServerTestBase
                 "WWW-Authenticate" ).post( functionalTestHelper.nodeUri() ).response();
 
         assertThat( response.getHeaders().getFirst( "WWW-Authenticate" ),
-                containsString( "Basic realm=\""
-                        + PermanentlyFailingSecurityRule.REALM + "\"" ) );
+                containsString( new StringBuilder().append("Basic realm=\"").append(PermanentlyFailingSecurityRule.REALM).append("\"").toString() ) );
     }
 
     @Test
@@ -110,8 +109,7 @@ public class SecurityRulesIT extends ExclusiveServerTestBase
                 "WWW-Authenticate" ).post( functionalTestHelper.nodeUri() ).response();
 
         assertThat( response.getHeaders().getFirst( "WWW-Authenticate" ),
-                containsString( "Basic realm=\""
-                        + PermanentlyFailingSecurityRule.REALM + "\"" ) );
+                containsString( new StringBuilder().append("Basic realm=\"").append(PermanentlyFailingSecurityRule.REALM).append("\"").toString() ) );
     }
 
     @Test
@@ -188,8 +186,7 @@ public class SecurityRulesIT extends ExclusiveServerTestBase
                 .expectedStatus( 401 )
                 .expectedType( MediaType.APPLICATION_JSON_TYPE )
                 .expectedHeader( "WWW-Authenticate" )
-                .get( trimTrailingSlash( functionalTestHelper.baseUri() )
-                        + mountPoint + "/more/stuff" )
+                .get( new StringBuilder().append(trimTrailingSlash( functionalTestHelper.baseUri() )).append(mountPoint).append("/more/stuff").toString() )
                 .response();
 
         assertEquals(401, clientResponse.getStatus());
@@ -226,8 +223,7 @@ public class SecurityRulesIT extends ExclusiveServerTestBase
                 .expectedStatus( 401 )
                 .expectedType( MediaType.APPLICATION_JSON_TYPE )
                 .expectedHeader( "WWW-Authenticate" )
-                .get( trimTrailingSlash( functionalTestHelper.baseUri() )
-                        + mountPoint + "/more/stuff" )
+                .get( new StringBuilder().append(trimTrailingSlash( functionalTestHelper.baseUri() )).append(mountPoint).append("/more/stuff").toString() )
                 .response();
 
         assertEquals( 401, clientResponse.getStatus() );

@@ -111,7 +111,8 @@ public class RunMessage implements RequestMessage
     @Override
     public String toString()
     {
-        return "RUN " + statement + ' ' + params + ' ' + meta;
+        return new StringBuilder().append("RUN ").append(statement).append(' ').append(params).append(' ').append(meta)
+				.toString();
     }
 
     public Bookmark bookmark()

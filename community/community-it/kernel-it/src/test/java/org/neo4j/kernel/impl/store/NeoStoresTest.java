@@ -153,7 +153,7 @@ public class NeoStoresTest
         propertyKeyTokenHolder = new DelegatingTokenHolder( this::createPropertyKeyToken, TokenHolder.TYPE_PROPERTY_KEY );
     }
 
-    private int createPropertyKeyToken( String name )
+    private int createPropertyKeyToken( )
     {
         return (int) nextId( PropertyKeyTokenRecord.class );
     }
@@ -197,8 +197,7 @@ public class NeoStoresTest
 
         exception.expect( IllegalStateException.class );
         exception.expectMessage(
-                "Specified store was not initialized. Please specify " + StoreType.META_DATA.name() +
-                " as one of the stores types that should be open to be able to use it." );
+                new StringBuilder().append("Specified store was not initialized. Please specify ").append(StoreType.META_DATA.name()).append(" as one of the stores types that should be open to be able to use it.").toString() );
         try ( NeoStores neoStores = sf.openNeoStores( true, StoreType.NODE_LABEL ) )
         {
             neoStores.getMetaDataStore();
@@ -394,8 +393,7 @@ public class NeoStoresTest
 
     private void relDelete( long id )
     {
-        RelationshipVisitor<RuntimeException> visitor = ( relId, type, startNode, endNode ) ->
-                transaction.relationshipDoDelete( relId, type, startNode, endNode );
+        RelationshipVisitor<RuntimeException> visitor = transaction::relationshipDoDelete;
         if ( !transaction.relationshipVisit( id, visitor ) )
         {
             try
@@ -1017,7 +1015,7 @@ public class NeoStoresTest
 
     private void validateNodeRel2( long node, StorageProperty prop1,
             StorageProperty prop2, StorageProperty prop3,
-            long rel1, long rel2, int relType1, int relType2 ) throws IOException, RuntimeException, TokenNotFoundException
+            long rel1, long rel2, int relType1, int relType2 ) throws IOException, TokenNotFoundException
     {
         assertTrue( nodeExists( node ) );
         Map<Integer,Pair<StorageProperty,Long>> props = new HashMap<>();
@@ -1272,17 +1270,6 @@ public class NeoStoresTest
         assertHasRelationships( secondNode );
     }
 
-    private static class CountingPropertyReceiver implements PropertyReceiver<StorageProperty>
-    {
-        private int count;
-
-        @Override
-        public void receive( StorageProperty property, long propertyRecordId )
-        {
-            count++;
-        }
-    }
-
     private void deleteRel2( long rel, StorageProperty prop1, StorageProperty prop2,
             StorageProperty prop3, long firstNode, long secondNode, int relType )
             throws Exception
@@ -1331,7 +1318,7 @@ public class NeoStoresTest
 
     }
 
-    private void assertHasRelationships( long node )
+	private void assertHasRelationships( long node )
     {
         try ( KernelStatement statement = (KernelStatement) tx.acquireStatement();
               StorageNodeCursor nodeCursor = allocateNodeCursor( node ) )
@@ -1344,7 +1331,7 @@ public class NeoStoresTest
         }
     }
 
-    private void deleteNode1( long node, StorageProperty prop1,
+	private void deleteNode1( long node, StorageProperty prop1,
             StorageProperty prop2, StorageProperty prop3 ) throws IOException, TokenNotFoundException
     {
         Map<Integer,Pair<StorageProperty,Long>> props = new HashMap<>();
@@ -1386,7 +1373,7 @@ public class NeoStoresTest
         transaction.nodeDoDelete( node );
     }
 
-    private void deleteNode2( long node, StorageProperty prop1,
+	private void deleteNode2( long node, StorageProperty prop1,
             StorageProperty prop2, StorageProperty prop3 ) throws IOException, TokenNotFoundException
     {
         Map<Integer,Pair<StorageProperty,Long>> props = new HashMap<>();
@@ -1430,7 +1417,7 @@ public class NeoStoresTest
         transaction.nodeDoDelete( node );
     }
 
-    private void testGetRels( long[] relIds )
+	private void testGetRels( long[] relIds )
     {
         for ( long relId : relIds )
         {
@@ -1442,7 +1429,7 @@ public class NeoStoresTest
         }
     }
 
-    private void deleteRelationships( long nodeId )
+	private void deleteRelationships( long nodeId )
     {
         try ( KernelStatement statement = (KernelStatement) tx.acquireStatement();
               StorageNodeCursor nodeCursor = allocateNodeCursor( nodeId ) )
@@ -1458,50 +1445,60 @@ public class NeoStoresTest
         }
     }
 
-    private GraphDatabaseService createTestDatabase( FileSystemAbstraction fileSystem, File storeDir )
+	private GraphDatabaseService createTestDatabase( FileSystemAbstraction fileSystem, File storeDir )
     {
         return new TestGraphDatabaseFactory()
                 .setFileSystem( new UncloseableDelegatingFileSystemAbstraction( fileSystem ) )
                 .newImpermanentDatabase( storeDir );
     }
 
-    private <RECEIVER extends PropertyReceiver> void nodeLoadProperties( long nodeId, RECEIVER receiver )
+	private <RECEIVER extends PropertyReceiver> void nodeLoadProperties( long nodeId, RECEIVER receiver )
     {
         NodeRecord nodeRecord = nodeStore.getRecord( nodeId, nodeStore.newRecord(), NORMAL );
         loadProperties( nodeRecord.getNextProp(), receiver );
     }
 
-    private <RECEIVER extends PropertyReceiver> void relLoadProperties( long relId, RECEIVER receiver )
+	private <RECEIVER extends PropertyReceiver> void relLoadProperties( long relId, RECEIVER receiver )
     {
         RelationshipRecord relRecord = relStore.getRecord( relId, relStore.newRecord(), NORMAL );
         loadProperties( relRecord.getNextProp(), receiver );
     }
 
-    private <RECEIVER extends PropertyReceiver> void loadProperties( long nextProp, RECEIVER receiver )
+	private <RECEIVER extends PropertyReceiver> void loadProperties( long nextProp, RECEIVER receiver )
     {
         Collection<PropertyRecord> chain = pStore.getPropertyRecordChain( nextProp );
         receivePropertyChain( receiver, chain );
     }
 
-    private <RECEIVER extends PropertyReceiver> void receivePropertyChain( RECEIVER receiver,
+	private <RECEIVER extends PropertyReceiver> void receivePropertyChain( RECEIVER receiver,
             Collection<PropertyRecord> chain )
     {
         if ( chain != null )
         {
-            for ( PropertyRecord propRecord : chain )
-            {
+            chain.forEach(propRecord -> {
                 for ( PropertyBlock propBlock : propRecord )
                 {
                     receiver.receive( propBlock.newPropertyKeyValue( pStore ), propRecord.getId() );
                 }
-            }
+            });
         }
     }
 
-    private StoreFactory getStoreFactory( Config config, DatabaseLayout databaseLayout, FileSystemAbstraction ephemeralFileSystemAbstraction,
+	private StoreFactory getStoreFactory( Config config, DatabaseLayout databaseLayout, FileSystemAbstraction ephemeralFileSystemAbstraction,
             NullLogProvider instance )
     {
         return new StoreFactory( databaseLayout, config, new DefaultIdGeneratorFactory( ephemeralFileSystemAbstraction ), pageCache,
                 ephemeralFileSystemAbstraction, instance, EmptyVersionContextSupplier.EMPTY );
+    }
+
+	private static class CountingPropertyReceiver implements PropertyReceiver<StorageProperty>
+    {
+        private int count;
+
+        @Override
+        public void receive( StorageProperty property, long propertyRecordId )
+        {
+            count++;
+        }
     }
 }

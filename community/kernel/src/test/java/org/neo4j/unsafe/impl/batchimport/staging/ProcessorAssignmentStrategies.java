@@ -147,16 +147,13 @@ public class ProcessorAssignmentStrategies
         {
             // For debugging purposes. Includes information about how many processors each step got.
             StringBuilder builder = new StringBuilder();
-            for ( String stage : processors.keySet() )
-            {
-                builder.append( stage ).append( ':' );
-                Map<String,Integer> byStage = processors.get( stage );
-                for ( String step : byStage.keySet() )
-                {
-                    builder.append( format( "%n  %s:%d", step, byStage.get( step ) ) );
-                }
-                builder.append( format( "%n" ) );
-            }
+            processors.keySet().stream().map(stage -> {
+				builder.append( stage ).append( ':' );
+				return processors.get( stage );
+			}).forEach(byStage -> {
+				byStage.keySet().forEach(step -> builder.append(format("%n  %s:%d", step, byStage.get(step))));
+				builder.append( format( "%n" ) );
+			});
             return builder.toString();
         }
     }

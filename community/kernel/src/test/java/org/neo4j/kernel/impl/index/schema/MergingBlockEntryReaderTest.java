@@ -44,13 +44,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ExtendWith( RandomExtension.class )
 class MergingBlockEntryReaderTest
 {
-    @Inject
+    private static final SimpleLongLayout layout = SimpleLongLayout.longLayout().build();
+
+	private static final Comparator<BlockEntry<MutableLong,MutableLong>> blockEntryComparator = ( b1, b2 ) -> layout.compare( b1.key(), b2.key() );
+
+	@Inject
     protected RandomRule rnd;
 
-    private static final SimpleLongLayout layout = SimpleLongLayout.longLayout().build();
-    private static final Comparator<BlockEntry<MutableLong,MutableLong>> blockEntryComparator = ( b1, b2 ) -> layout.compare( b1.key(), b2.key() );
-
-    @Test
+	@Test
     void shouldMergeSingleReader() throws IOException
     {
         // given
@@ -65,7 +66,7 @@ class MergingBlockEntryReaderTest
         verifyMerged( expected, merger );
     }
 
-    @Test
+	@Test
     void shouldMergeSingleEmptyReader() throws IOException
     {
         // given
@@ -79,7 +80,7 @@ class MergingBlockEntryReaderTest
         assertFalse( merger.next() );
     }
 
-    @Test
+	@Test
     void shouldMergeMultipleReaders() throws IOException
     {
         // given
@@ -100,7 +101,7 @@ class MergingBlockEntryReaderTest
         verifyMerged( expected, merger );
     }
 
-    @Test
+	@Test
     void shouldCloseAllReaderEvenEmpty() throws IOException
     {
         // given
@@ -118,7 +119,7 @@ class MergingBlockEntryReaderTest
         assertTrue( nonEmpty.closed );
     }
 
-    @Test
+	@Test
     void shouldCloseAllReaderEvenEmptyAndExhausted() throws IOException
     {
         // given
@@ -139,7 +140,7 @@ class MergingBlockEntryReaderTest
         assertTrue( nonEmpty.closed );
     }
 
-    private static void verifyMerged( List<BlockEntry<MutableLong,MutableLong>> expected, MergingBlockEntryReader<MutableLong,MutableLong> merger )
+	private static void verifyMerged( List<BlockEntry<MutableLong,MutableLong>> expected, MergingBlockEntryReader<MutableLong,MutableLong> merger )
             throws IOException
     {
         for ( BlockEntry<MutableLong,MutableLong> expectedEntry : expected )
@@ -151,7 +152,7 @@ class MergingBlockEntryReaderTest
         assertFalse( merger.next() );
     }
 
-    private static List<BlockEntry<MutableLong,MutableLong>> sortAll( Iterable<List<BlockEntry<MutableLong,MutableLong>>> data )
+	private static List<BlockEntry<MutableLong,MutableLong>> sortAll( Iterable<List<BlockEntry<MutableLong,MutableLong>>> data )
     {
         List<BlockEntry<MutableLong,MutableLong>> result = new ArrayList<>();
         for ( List<BlockEntry<MutableLong,MutableLong>> list : data )
@@ -162,12 +163,12 @@ class MergingBlockEntryReaderTest
         return result;
     }
 
-    private static CloseTrackingBlockEntryCursor newReader( List<BlockEntry<MutableLong,MutableLong>> expected )
+	private static CloseTrackingBlockEntryCursor newReader( List<BlockEntry<MutableLong,MutableLong>> expected )
     {
         return new CloseTrackingBlockEntryCursor( expected );
     }
 
-    private List<BlockEntry<MutableLong,MutableLong>> someBlockEntries( Set<MutableLong> uniqueKeys )
+	private List<BlockEntry<MutableLong,MutableLong>> someBlockEntries( Set<MutableLong> uniqueKeys )
     {
         List<BlockEntry<MutableLong,MutableLong>> entries = new ArrayList<>();
         int size = rnd.nextInt( 10 );
@@ -186,7 +187,7 @@ class MergingBlockEntryReaderTest
         return entries;
     }
 
-    private static class CloseTrackingBlockEntryCursor extends ListBasedBlockEntryCursor<MutableLong,MutableLong>
+	private static class CloseTrackingBlockEntryCursor extends ListBasedBlockEntryCursor<MutableLong,MutableLong>
     {
         private boolean closed;
 

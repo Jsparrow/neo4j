@@ -56,11 +56,11 @@ class CommitContext implements Closeable
 
     void ensureWriterInstantiated() throws ExplicitIndexNotFoundKernelException
     {
-        if ( searcher == null )
-        {
-            searcher = dataSource.getIndexSearcher( identifier );
-            writer = searcher.getWriter();
-        }
+        if (searcher != null) {
+			return;
+		}
+		searcher = dataSource.getIndexSearcher( identifier );
+		writer = searcher.getWriter();
     }
 
     DocumentContext getDocument( EntityId entityId, boolean allowCreate )
@@ -138,7 +138,8 @@ class CommitContext implements Closeable
         @Override
         public String toString()
         {
-            return "DocumentContext[document=" + document + ", exists=" + exists + ", entityId=" + entityId + "]";
+            return new StringBuilder().append("DocumentContext[document=").append(document).append(", exists=").append(exists).append(", entityId=").append(entityId)
+					.append("]").toString();
         }
     }
 }

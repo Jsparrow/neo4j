@@ -37,7 +37,187 @@ import org.neo4j.values.storable.Value;
 
 public class InternalAutoIndexOperations implements AutoIndexOperations
 {
-    public enum EntityType
+    private AtomicReference<Set<String>> propertyKeysToInclude = new AtomicReference<>( Collections.emptySet() );
+
+	private final TokenHolder propertyKeyLookup;
+
+	private final EntityType type;
+
+	private volatile boolean enabled;
+
+	private volatile boolean indexCreated;
+
+	public InternalAutoIndexOperations( TokenHolder propertyKeyLookup, EntityType type )
+    {
+        this.propertyKeyLookup = propertyKeyLookup;
+        this.type = type;
+    }
+
+	@Override
+    public void propertyAdded( ExplicitIndexWrite ops, long entityId, int propertyKeyId, Value value ) throws
+            AutoIndexingKernelException
+    {
+        if ( enabled )
+        {
+            try
+            {
+                String name = propertyKeyLookup.getTokenById( propertyKeyId ).name();
+                if ( propertyKeysToInclude.get().contains( name ) )
+                {
+                    ensureIndexExists( ops );
+                    type.add( ops, entityId, name, value.asObject() );
+                }
+            }
+            catch ( KernelException e )
+            {
+                throw new AutoIndexingKernelException( e );
+            }
+            catch ( TokenNotFoundException e )
+            {
+                // TODO: TokenNotFoundException was added before there was a kernel. It should be converted to a
+                // KernelException now
+                throw new AutoIndexingKernelException( new PropertyKeyIdNotFoundKernelException( propertyKeyId, e ) );
+            }
+        }
+    }
+
+	@Override
+    public void propertyChanged( ExplicitIndexWrite ops, long entityId, int propertyKeyId, Value oldValue,
+            Value newValue )
+            throws AutoIndexingKernelException
+    {
+        if ( enabled )
+        {
+            try
+            {
+                String name = propertyKeyLookup.getTokenById( propertyKeyId ).name();
+                if ( propertyKeysToInclude.get().contains( name ) )
+                {
+                    ensureIndexExists( ops );
+                    type.remove( ops, entityId, name, oldValue.asObject() );
+                    type.add( ops, entityId, name, newValue.asObject() );
+                }
+            }
+            catch ( KernelException e )
+            {
+                throw new AutoIndexingKernelException( e );
+            }
+            catch ( TokenNotFoundException e )
+            {
+                // TODO: TokenNotFoundException was added before there was a kernel. It should be converted to a
+                // KernelException now
+                throw new AutoIndexingKernelException( new PropertyKeyIdNotFoundKernelException( propertyKeyId, e ) );
+            }
+        }
+    }
+
+	@Override
+    public void propertyRemoved( ExplicitIndexWrite ops, long entityId, int propertyKey )
+            throws AutoIndexingKernelException
+    {
+        if ( enabled )
+        {
+            try
+            {
+                String name = propertyKeyLookup.getTokenById( propertyKey ).name();
+                if ( propertyKeysToInclude.get().contains( name ) )
+                {
+                    ensureIndexExists( ops );
+                    type.remove( ops, entityId, name );
+                }
+            }
+            catch ( KernelException e )
+            {
+                throw new AutoIndexingKernelException( e );
+            }
+            catch ( TokenNotFoundException e )
+            {
+                // TODO: TokenNotFoundException was added before there was a kernel. It should be converted to a
+                // KernelException now
+                throw new AutoIndexingKernelException( new PropertyKeyIdNotFoundKernelException( propertyKey, e ) );
+            }
+        }
+    }
+
+	@Override
+    public void entityRemoved( ExplicitIndexWrite ops, long entityId ) throws AutoIndexingKernelException
+    {
+        if ( enabled )
+        {
+            try
+            {
+                ensureIndexExists( ops );
+                type.remove( ops, entityId );
+            }
+            catch ( KernelException e )
+            {
+                throw new AutoIndexingKernelException( e );
+            }
+        }
+    }
+
+	// Trap door needed to keep this as an enum
+    void replacePropertyKeysToInclude( List<String> propertyKeysToIncludeNow )
+    {
+        Set<String> copiedPropertyKeysToIncludeNow = new HashSet<>( propertyKeysToIncludeNow.size() );
+        copiedPropertyKeysToIncludeNow.addAll( propertyKeysToIncludeNow );
+        this.propertyKeysToInclude.set( copiedPropertyKeysToIncludeNow );
+    }
+
+	@Override
+    public void enabled( boolean enabled )
+    {
+        this.enabled = enabled;
+    }
+
+	@Override
+    public boolean enabled()
+    {
+        return enabled;
+    }
+
+	@Override
+    public void startAutoIndexingProperty( String propName )
+    {
+        propertyKeysToInclude.getAndUpdate( current ->
+        {
+            Set<String> updated = new HashSet<>();
+            updated.addAll( current );
+            updated.add( propName );
+            return updated;
+        });
+    }
+
+	@Override
+    public void stopAutoIndexingProperty( String propName )
+    {
+        propertyKeysToInclude.getAndUpdate( current ->
+        {
+            Set<String> updated = new HashSet<>();
+            updated.addAll( current );
+            updated.remove( propName );
+            return updated;
+        });
+    }
+
+	@Override
+    public Set<String> getAutoIndexedProperties()
+    {
+        return Collections.unmodifiableSet( propertyKeysToInclude.get() );
+    }
+
+	private void ensureIndexExists( ExplicitIndexWrite ops )
+    {
+        // Known racy, but this is safe because ensureIndexExists is concurrency safe, we just want to avoid calling it
+		// for every single write we make.
+		if (indexCreated) {
+			return;
+		}
+		type.ensureIndexExists( ops );
+		indexCreated = true;
+    }
+
+	public enum EntityType
     {
         NODE
                 {
@@ -129,183 +309,5 @@ public class InternalAutoIndexOperations implements AutoIndexOperations
                 throws KernelException;
 
         public abstract void ensureIndexExists( ExplicitIndexWrite write );
-    }
-
-    private AtomicReference<Set<String>> propertyKeysToInclude = new AtomicReference<>( Collections.emptySet() );
-
-    private final TokenHolder propertyKeyLookup;
-    private final EntityType type;
-
-    private volatile boolean enabled;
-    private volatile boolean indexCreated;
-
-    public InternalAutoIndexOperations( TokenHolder propertyKeyLookup, EntityType type )
-    {
-        this.propertyKeyLookup = propertyKeyLookup;
-        this.type = type;
-    }
-
-    @Override
-    public void propertyAdded( ExplicitIndexWrite ops, long entityId, int propertyKeyId, Value value ) throws
-            AutoIndexingKernelException
-    {
-        if ( enabled )
-        {
-            try
-            {
-                String name = propertyKeyLookup.getTokenById( propertyKeyId ).name();
-                if ( propertyKeysToInclude.get().contains( name ) )
-                {
-                    ensureIndexExists( ops );
-                    type.add( ops, entityId, name, value.asObject() );
-                }
-            }
-            catch ( KernelException e )
-            {
-                throw new AutoIndexingKernelException( e );
-            }
-            catch ( TokenNotFoundException e )
-            {
-                // TODO: TokenNotFoundException was added before there was a kernel. It should be converted to a
-                // KernelException now
-                throw new AutoIndexingKernelException( new PropertyKeyIdNotFoundKernelException( propertyKeyId, e ) );
-            }
-        }
-    }
-
-    @Override
-    public void propertyChanged( ExplicitIndexWrite ops, long entityId, int propertyKeyId, Value oldValue,
-            Value newValue )
-            throws AutoIndexingKernelException
-    {
-        if ( enabled )
-        {
-            try
-            {
-                String name = propertyKeyLookup.getTokenById( propertyKeyId ).name();
-                if ( propertyKeysToInclude.get().contains( name ) )
-                {
-                    ensureIndexExists( ops );
-                    type.remove( ops, entityId, name, oldValue.asObject() );
-                    type.add( ops, entityId, name, newValue.asObject() );
-                }
-            }
-            catch ( KernelException e )
-            {
-                throw new AutoIndexingKernelException( e );
-            }
-            catch ( TokenNotFoundException e )
-            {
-                // TODO: TokenNotFoundException was added before there was a kernel. It should be converted to a
-                // KernelException now
-                throw new AutoIndexingKernelException( new PropertyKeyIdNotFoundKernelException( propertyKeyId, e ) );
-            }
-        }
-    }
-
-    @Override
-    public void propertyRemoved( ExplicitIndexWrite ops, long entityId, int propertyKey )
-            throws AutoIndexingKernelException
-    {
-        if ( enabled )
-        {
-            try
-            {
-                String name = propertyKeyLookup.getTokenById( propertyKey ).name();
-                if ( propertyKeysToInclude.get().contains( name ) )
-                {
-                    ensureIndexExists( ops );
-                    type.remove( ops, entityId, name );
-                }
-            }
-            catch ( KernelException e )
-            {
-                throw new AutoIndexingKernelException( e );
-            }
-            catch ( TokenNotFoundException e )
-            {
-                // TODO: TokenNotFoundException was added before there was a kernel. It should be converted to a
-                // KernelException now
-                throw new AutoIndexingKernelException( new PropertyKeyIdNotFoundKernelException( propertyKey, e ) );
-            }
-        }
-    }
-
-    @Override
-    public void entityRemoved( ExplicitIndexWrite ops, long entityId ) throws AutoIndexingKernelException
-    {
-        if ( enabled )
-        {
-            try
-            {
-                ensureIndexExists( ops );
-                type.remove( ops, entityId );
-            }
-            catch ( KernelException e )
-            {
-                throw new AutoIndexingKernelException( e );
-            }
-        }
-    }
-
-    // Trap door needed to keep this as an enum
-    void replacePropertyKeysToInclude( List<String> propertyKeysToIncludeNow )
-    {
-        Set<String> copiedPropertyKeysToIncludeNow = new HashSet<>( propertyKeysToIncludeNow.size() );
-        copiedPropertyKeysToIncludeNow.addAll( propertyKeysToIncludeNow );
-        this.propertyKeysToInclude.set( copiedPropertyKeysToIncludeNow );
-    }
-
-    @Override
-    public void enabled( boolean enabled )
-    {
-        this.enabled = enabled;
-    }
-
-    @Override
-    public boolean enabled()
-    {
-        return enabled;
-    }
-
-    @Override
-    public void startAutoIndexingProperty( String propName )
-    {
-        propertyKeysToInclude.getAndUpdate( current ->
-        {
-            Set<String> updated = new HashSet<>();
-            updated.addAll( current );
-            updated.add( propName );
-            return updated;
-        });
-    }
-
-    @Override
-    public void stopAutoIndexingProperty( String propName )
-    {
-        propertyKeysToInclude.getAndUpdate( current ->
-        {
-            Set<String> updated = new HashSet<>();
-            updated.addAll( current );
-            updated.remove( propName );
-            return updated;
-        });
-    }
-
-    @Override
-    public Set<String> getAutoIndexedProperties()
-    {
-        return Collections.unmodifiableSet( propertyKeysToInclude.get() );
-    }
-
-    private void ensureIndexExists( ExplicitIndexWrite ops )
-    {
-        // Known racy, but this is safe because ensureIndexExists is concurrency safe, we just want to avoid calling it
-        // for every single write we make.
-        if ( !indexCreated )
-        {
-            type.ensureIndexExists( ops );
-            indexCreated = true;
-        }
     }
 }

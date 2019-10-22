@@ -144,8 +144,7 @@ public class Tracers
                 }
                 catch ( Exception e )
                 {
-                    msgLog.warn( "Failed to instantiate desired tracer implementations '" +
-                                 desiredImplementationName + "'", e );
+                    msgLog.warn( new StringBuilder().append("Failed to instantiate desired tracer implementations '").append(desiredImplementationName).append("'").toString(), e );
                 }
             }
 

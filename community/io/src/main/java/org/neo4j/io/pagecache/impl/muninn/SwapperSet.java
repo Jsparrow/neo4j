@@ -53,21 +53,6 @@ final class SwapperSet
     private int freeCounter; // Used in `free`; Guarded by `this`
 
     /**
-     * The mapping entry between a {@link PageSwapper} and its swapper id.
-     */
-    static final class SwapperMapping
-    {
-        public final int id;
-        public final PageSwapper swapper;
-
-        private SwapperMapping( int id, PageSwapper swapper )
-        {
-            this.id = id;
-            this.swapper = swapper;
-        }
-    }
-
-    /**
      * Get the {@link SwapperMapping} for the given swapper id.
      */
     SwapperMapping getAllocation( int id )
@@ -81,7 +66,7 @@ final class SwapperSet
         return swapperMapping;
     }
 
-    private void checkId( int id )
+	private void checkId( int id )
     {
         if ( id == 0 )
         {
@@ -89,7 +74,7 @@ final class SwapperSet
         }
     }
 
-    /**
+	/**
      * Allocate a new swapper id for the given {@link PageSwapper}.
      */
     synchronized int allocate( PageSwapper swapper )
@@ -121,7 +106,7 @@ final class SwapperSet
         return id;
     }
 
-    /**
+	/**
      * Free the given swapper id, and return {@code true} if it is time for a
      * {@link MuninnPageCache#vacuum(SwapperSet)}, otherwise it returns {@code false}.
      */
@@ -133,20 +118,19 @@ final class SwapperSet
         if ( current == null || current == TOMBSTONE )
         {
             throw new IllegalStateException(
-                    "PageSwapper allocation id " + id + " is currently not allocated. Likely a double free bug." );
+                    new StringBuilder().append("PageSwapper allocation id ").append(id).append(" is currently not allocated. Likely a double free bug.").toString() );
         }
         swapperMappings[id] = TOMBSTONE;
         this.swapperMappings = swapperMappings; // Volatile store synchronizes-with loads in getters.
         freeCounter++;
-        if ( freeCounter == 20 )
-        {
-            freeCounter = 0;
-            return true;
-        }
-        return false;
+        if (freeCounter != 20) {
+			return false;
+		}
+		freeCounter = 0;
+		return true;
     }
 
-    /**
+	/**
      * Collect all freed page swapper ids, and pass them to the given callback, after which the freed ids will be
      * eligible for reuse.
      * This is done with careful synchronisation such that allocating and freeing of ids is allowed to mostly proceed
@@ -198,12 +182,27 @@ final class SwapperSet
         }
     }
 
-    synchronized int countAvailableIds()
+	synchronized int countAvailableIds()
     {
         // the max id is one less than the allowed count, but we subtract one for the reserved id 0
         int available = MAX_SWAPPER_ID;
         available -= swapperMappings.length; // ids that are allocated are not available
         available += free.size(); // add back the ids that are free to be reused
         return available;
+    }
+
+	/**
+     * The mapping entry between a {@link PageSwapper} and its swapper id.
+     */
+    static final class SwapperMapping
+    {
+        public final int id;
+        public final PageSwapper swapper;
+
+        private SwapperMapping( int id, PageSwapper swapper )
+        {
+            this.id = id;
+            this.swapper = swapper;
+        }
     }
 }

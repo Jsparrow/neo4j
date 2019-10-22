@@ -21,7 +21,9 @@ package org.neo4j.collection.primitive;
 
 public interface PrimitiveLongVisitor<E extends Exception>
 {
-    /**
+    PrimitiveLongVisitor<RuntimeException> EMPTY = value -> false;
+
+	/**
      * Visit the given entry.
      *
      * @param value A distinct value from the set.
@@ -30,6 +32,4 @@ public interface PrimitiveLongVisitor<E extends Exception>
      * @throws E any thrown exception of type 'E' will bubble up through the 'visit' method.
      */
     boolean visited( long value ) throws E;
-
-    PrimitiveLongVisitor<RuntimeException> EMPTY = value -> false;
 }

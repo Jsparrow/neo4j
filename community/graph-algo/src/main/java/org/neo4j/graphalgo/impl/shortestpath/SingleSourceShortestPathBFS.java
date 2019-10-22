@@ -55,7 +55,6 @@ public class SingleSourceShortestPathBFS implements
     public SingleSourceShortestPathBFS( Node startNode,
         Direction relationShipDirection, RelationshipType... relationShipTypes )
     {
-        super();
         this.startNode = startNode;
         this.relationShipDirection = relationShipDirection;
         this.relationShipTypes = relationShipTypes;
@@ -305,10 +304,7 @@ public class SingleSourceShortestPathBFS implements
         {
             return null;
         }
-        for ( Relationship relationship : predecessorRelationShips )
-        {
-            result.add( relationship.getOtherNode( node ) );
-        }
+        predecessorRelationShips.forEach(relationship -> result.add(relationship.getOtherNode(node)));
         return result;
     }
 

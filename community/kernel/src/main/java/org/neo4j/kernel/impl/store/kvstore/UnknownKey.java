@@ -21,13 +21,13 @@ package org.neo4j.kernel.impl.store.kvstore;
 
 public class UnknownKey extends Exception
 {
-    public interface Visitor
-    {
-        boolean visitUnknownKey( ReadableBuffer key, ReadableBuffer value );
-    }
-
     public UnknownKey( String message )
     {
         super( message );
+    }
+
+	public interface Visitor
+    {
+        boolean visitUnknownKey( ReadableBuffer key, ReadableBuffer value );
     }
 }

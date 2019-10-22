@@ -84,18 +84,19 @@ import static org.neo4j.values.storable.Values.stringValue;
 @RunWith( Parameterized.class )
 public class FusionIndexAccessorTest
 {
-    private FusionIndexAccessor fusionIndexAccessor;
-    private final long indexId = 0;
-    private final IndexDropAction dropAction = mock( IndexDropAction.class );
-    private EnumMap<IndexSlot,IndexAccessor> accessors;
-    private IndexAccessor[] aliveAccessors;
-    private StoreIndexDescriptor indexDescriptor =
+    @Parameterized.Parameter
+    public static FusionVersion fusionVersion;
+	private FusionIndexAccessor fusionIndexAccessor;
+	private final long indexId = 0;
+	private final IndexDropAction dropAction = mock( IndexDropAction.class );
+	private EnumMap<IndexSlot,IndexAccessor> accessors;
+	private IndexAccessor[] aliveAccessors;
+	private StoreIndexDescriptor indexDescriptor =
             IndexDescriptorFactory.forSchema( SchemaDescriptorFactory.forLabel( 1, 42 ) ).withId( indexId );
-
-    @Rule
+	@Rule
     public RandomRule random = new RandomRule();
 
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static FusionVersion[] versions()
     {
         return new FusionVersion[]
@@ -104,16 +105,13 @@ public class FusionIndexAccessorTest
                 };
     }
 
-    @Parameterized.Parameter
-    public static FusionVersion fusionVersion;
-
-    @Before
+	@Before
     public void setup()
     {
         initiateMocks();
     }
 
-    private void initiateMocks()
+	private void initiateMocks()
     {
         IndexSlot[] activeSlots = fusionVersion.aliveSlots();
         accessors = new EnumMap<>( IndexSlot.class );
@@ -147,7 +145,7 @@ public class FusionIndexAccessorTest
         fusionIndexAccessor = new FusionIndexAccessor(  fusionVersion.slotSelector(), new InstanceSelector<>( accessors ), indexDescriptor, dropAction );
     }
 
-    private void resetMocks()
+	private void resetMocks()
     {
         for ( IndexAccessor accessor : aliveAccessors )
         {
@@ -155,9 +153,7 @@ public class FusionIndexAccessorTest
         }
     }
 
-    /* drop */
-
-    @Test
+	@Test
     public void dropMustDropAll()
     {
         // when
@@ -172,7 +168,7 @@ public class FusionIndexAccessorTest
         verify( dropAction ).drop( indexId );
     }
 
-    @Test
+	@Test
     public void dropMustThrowIfDropAnyFail()
     {
         for ( IndexAccessor accessor : aliveAccessors )
@@ -182,7 +178,7 @@ public class FusionIndexAccessorTest
         }
     }
 
-    @Test
+	@Test
     public void fusionIndexIsDirtyWhenAnyIsDirty()
     {
         for ( IndexAccessor dirtyAccessor : aliveAccessors )
@@ -198,7 +194,7 @@ public class FusionIndexAccessorTest
         }
     }
 
-    private static void verifyFailOnSingleDropFailure( IndexAccessor failingAccessor, FusionIndexAccessor fusionIndexAccessor )
+	private static void verifyFailOnSingleDropFailure( IndexAccessor failingAccessor, FusionIndexAccessor fusionIndexAccessor )
     {
         UncheckedIOException expectedFailure = new UncheckedIOException( new IOException( "fail" ) );
         doThrow( expectedFailure ).when( failingAccessor ).drop();
@@ -214,7 +210,7 @@ public class FusionIndexAccessorTest
         doAnswer( invocation -> null ).when( failingAccessor ).drop();
     }
 
-    @Test
+	@Test
     public void dropMustThrowIfAllFail()
     {
         // given
@@ -239,9 +235,7 @@ public class FusionIndexAccessorTest
         }
     }
 
-    /* close */
-
-    @Test
+	@Test
     public void closeMustCloseAll()
     {
         // when
@@ -255,39 +249,33 @@ public class FusionIndexAccessorTest
         }
     }
 
-    @Test
+	@Test
     public void closeMustThrowIfOneThrow() throws Exception
     {
         //noinspection ForLoopReplaceableByForEach - aliveAccessors is updated in initiateMocks()
-        for ( int i = 0; i < aliveAccessors.length; i++ )
-        {
-            IndexAccessor accessor = aliveAccessors[i];
+		for (IndexAccessor accessor : aliveAccessors) {
             verifyFusionCloseThrowOnSingleCloseThrow( accessor, fusionIndexAccessor );
             initiateMocks();
         }
     }
 
-    @Test
+	@Test
     public void closeMustCloseOthersIfOneThrow() throws Exception
     {
         //noinspection ForLoopReplaceableByForEach - aliveAccessors is updated in initiateMocks()
-        for ( int i = 0; i < aliveAccessors.length; i++ )
-        {
-            IndexAccessor accessor = aliveAccessors[i];
+		for (IndexAccessor accessor : aliveAccessors) {
             verifyOtherIsClosedOnSingleThrow( accessor, fusionIndexAccessor, without( aliveAccessors, accessor ) );
             initiateMocks();
         }
     }
 
-    @Test
+	@Test
     public void closeMustThrowIfAllFail() throws Exception
     {
         verifyFusionCloseThrowIfAllThrow( fusionIndexAccessor, aliveAccessors );
     }
 
-    // newAllEntriesReader
-
-    @Test
+	@Test
     public void allEntriesReaderMustCombineResultFromAll()
     {
         // given
@@ -309,7 +297,7 @@ public class FusionIndexAccessorTest
         }
     }
 
-    @Test
+	@Test
     public void allEntriesReaderMustCombineResultFromAllEmpty()
     {
         // given
@@ -327,7 +315,7 @@ public class FusionIndexAccessorTest
         assertTrue( result.isEmpty() );
     }
 
-    @Test
+	@Test
     public void allEntriesReaderMustCombineResultFromAllAccessors()
     {
         // given
@@ -352,12 +340,12 @@ public class FusionIndexAccessorTest
         }
     }
 
-    @Test
+	@Test
     public void allEntriesReaderMustCloseAll() throws Exception
     {
         // given
         BoundedIterable<Long>[] allEntriesReaders = Arrays.stream( aliveAccessors )
-                .map( accessor -> mockSingleAllEntriesReader( accessor, Arrays.asList() ) )
+                .map( accessor -> mockSingleAllEntriesReader( accessor, Collections.emptyList() ) )
                 .toArray( BoundedIterable[]::new );
 
         // when
@@ -370,7 +358,7 @@ public class FusionIndexAccessorTest
         }
     }
 
-    @Test
+	@Test
     public void allEntriesReaderMustCloseOthersIfOneThrow() throws Exception
     {
         for ( int i = 0; i < aliveAccessors.length; i++ )
@@ -378,7 +366,7 @@ public class FusionIndexAccessorTest
             // given
             BoundedIterable<Long>[] allEntriesReaders =
                     Arrays.stream( aliveAccessors )
-                            .map( accessor -> mockSingleAllEntriesReader( accessor, Arrays.asList() ) )
+                            .map( accessor -> mockSingleAllEntriesReader( accessor, Collections.emptyList() ) )
                             .toArray( BoundedIterable[]::new );
 
             // then
@@ -389,7 +377,7 @@ public class FusionIndexAccessorTest
         }
     }
 
-    @Test
+	@Test
     public void allEntriesReaderMustThrowIfOneThrow() throws Exception
     {
         for ( IndexAccessor failingAccessor : aliveAccessors )
@@ -410,7 +398,7 @@ public class FusionIndexAccessorTest
         }
     }
 
-    @Test
+	@Test
     public void allEntriesReaderMustReportUnknownMaxCountIfAnyReportUnknownMaxCount()
     {
         for ( int i = 0; i < aliveAccessors.length; i++ )
@@ -434,7 +422,7 @@ public class FusionIndexAccessorTest
         }
     }
 
-    @Test
+	@Test
     public void allEntriesReaderMustReportFusionMaxCountOfAll()
     {
         long lastId = 0;
@@ -448,7 +436,7 @@ public class FusionIndexAccessorTest
         assertThat( fusionAllEntriesReader.maxCount(), is( lastId ) );
     }
 
-    @Test
+	@Test
     public void shouldFailValueValidationIfAnyPartFail()
     {
         // given
@@ -480,7 +468,7 @@ public class FusionIndexAccessorTest
         }
     }
 
-    @Test
+	@Test
     public void shouldSucceedValueValidationIfAllSucceed()
     {
         // when
@@ -489,33 +477,29 @@ public class FusionIndexAccessorTest
         // then no exception was thrown
     }
 
-    @Test
+	@Test
     public void shouldInstantiateReadersLazily()
     {
         // when getting a new reader, no part-reader should be instantiated
         IndexReader fusionReader = fusionIndexAccessor.newReader();
-        for ( int j = 0; j < aliveAccessors.length; j++ )
-        {
+        for (IndexAccessor aliveAccessor : aliveAccessors) {
             // then
-            verifyNoMoreInteractions( aliveAccessors[j] );
+            verifyNoMoreInteractions( aliveAccessor );
         }
     }
 
-    @Test
+	@Test
     public void shouldInstantiateUpdatersLazily()
     {
         // when getting a new reader, no part-reader should be instantiated
         IndexUpdater updater = fusionIndexAccessor.newUpdater( IndexUpdateMode.ONLINE );
-        for ( int j = 0; j < aliveAccessors.length; j++ )
-        {
+        for (IndexAccessor aliveAccessor : aliveAccessors) {
             // then
-            verifyNoMoreInteractions( aliveAccessors[j] );
+            verifyNoMoreInteractions( aliveAccessor );
         }
     }
 
-    /* Consistency check */
-
-    @Test
+	@Test
     public void mustCheckConsistencyOnAllAliveAccessors()
     {
         for ( IndexAccessor accessor : aliveAccessors )
@@ -529,7 +513,7 @@ public class FusionIndexAccessorTest
         }
     }
 
-    @Test
+	@Test
     public void mustFailConsistencyCheckIfOneAliveAccessorFails()
     {
         for ( IndexAccessor failingAccessor : aliveAccessors )
@@ -550,38 +534,35 @@ public class FusionIndexAccessorTest
         }
     }
 
-    private static void assertResultContainsAll( Set<Long> result, List<Long> expectedEntries )
+	private static void assertResultContainsAll( Set<Long> result, List<Long> expectedEntries )
     {
-        for ( long expectedEntry : expectedEntries )
-        {
-            assertTrue( "Expected to contain " + expectedEntry + ", but was " + result, result.contains( expectedEntry ) );
-        }
+        expectedEntries.stream().mapToLong(Long::valueOf).forEach(expectedEntry -> assertTrue(new StringBuilder().append("Expected to contain ").append(expectedEntry).append(", but was ").append(result).toString(), result.contains(expectedEntry)));
     }
 
-    private static BoundedIterable<Long> mockSingleAllEntriesReader( IndexAccessor targetAccessor, List<Long> entries )
+	private static BoundedIterable<Long> mockSingleAllEntriesReader( IndexAccessor targetAccessor, List<Long> entries )
     {
         BoundedIterable<Long> allEntriesReader = mockedAllEntriesReader( entries );
         when( targetAccessor.newAllEntriesReader() ).thenReturn( allEntriesReader );
         return allEntriesReader;
     }
 
-    private static BoundedIterable<Long> mockedAllEntriesReader( List<Long> entries )
+	private static BoundedIterable<Long> mockedAllEntriesReader( List<Long> entries )
     {
         return mockedAllEntriesReader( true, entries );
     }
 
-    private static void mockSingleAllEntriesReaderWithUnknownMaxCount( IndexAccessor targetAccessor, List<Long> entries )
+	private static void mockSingleAllEntriesReaderWithUnknownMaxCount( IndexAccessor targetAccessor, List<Long> entries )
     {
         BoundedIterable<Long> allEntriesReader = mockedAllEntriesReaderUnknownMaxCount( entries );
         when( targetAccessor.newAllEntriesReader() ).thenReturn( allEntriesReader );
     }
 
-    private static BoundedIterable<Long> mockedAllEntriesReaderUnknownMaxCount( List<Long> entries )
+	private static BoundedIterable<Long> mockedAllEntriesReaderUnknownMaxCount( List<Long> entries )
     {
         return mockedAllEntriesReader( false, entries );
     }
 
-    private static BoundedIterable<Long> mockedAllEntriesReader( boolean knownMaxCount, List<Long> entries )
+	private static BoundedIterable<Long> mockedAllEntriesReader( boolean knownMaxCount, List<Long> entries )
     {
         BoundedIterable<Long> mockedAllEntriesReader = mock( BoundedIterable.class );
         when( mockedAllEntriesReader.maxCount() ).thenReturn( knownMaxCount ? entries.size() : BoundedIterable.UNKNOWN_MAX_COUNT );
@@ -589,11 +570,27 @@ public class FusionIndexAccessorTest
         return mockedAllEntriesReader;
     }
 
-    private void mockAllEntriesReaders( List<Long>... entries )
+	private void mockAllEntriesReaders( List<Long>... entries )
     {
         for ( int i = 0; i < entries.length; i++ )
         {
             mockSingleAllEntriesReader( aliveAccessors[i], entries[i] );
         }
     }
+
+    /* drop */
+
+    
+
+    /* close */
+
+    
+
+    // newAllEntriesReader
+
+    
+
+    /* Consistency check */
+
+    
 }

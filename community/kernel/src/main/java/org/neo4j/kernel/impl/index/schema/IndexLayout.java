@@ -93,14 +93,11 @@ abstract class IndexLayout<KEY extends NativeIndexKey<KEY>, VALUE extends Native
     public final int compare( KEY o1, KEY o2 )
     {
         int valueComparison = compareValue( o1, o2 );
-        if ( valueComparison == 0 )
-        {
-            // This is a special case where we need also compare entityId to support inclusive/exclusive
-            if ( o1.getCompareId() & o2.getCompareId() )
-            {
-                return Long.compare( o1.getEntityId(), o2.getEntityId() );
-            }
-        }
+        boolean condition = valueComparison == 0 && (o1.getCompareId() & o2.getCompareId());
+		// This is a special case where we need also compare entityId to support inclusive/exclusive
+		if ( condition ) {
+		    return Long.compare( o1.getEntityId(), o2.getEntityId() );
+		}
         return valueComparison;
     }
 

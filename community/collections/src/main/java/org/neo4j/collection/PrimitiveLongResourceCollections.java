@@ -70,11 +70,11 @@ public class PrimitiveLongResourceCollections
         @Override
         public void close()
         {
-            if ( resource != null )
-            {
-                resource.close();
-                resource = null;
-            }
+            if (resource == null) {
+				return;
+			}
+			resource.close();
+			resource = null;
         }
     }
 
@@ -99,11 +99,11 @@ public class PrimitiveLongResourceCollections
         @Override
         public void close()
         {
-            if ( !closed )
-            {
-                closed = true;
-                ResourceUtils.closeAll( iterators );
-            }
+            if (closed) {
+				return;
+			}
+			closed = true;
+			ResourceUtils.closeAll( iterators );
         }
     }
 }

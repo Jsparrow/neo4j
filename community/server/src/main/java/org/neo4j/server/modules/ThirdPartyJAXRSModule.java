@@ -31,7 +31,7 @@ import org.neo4j.server.configuration.ThirdPartyJaxRsPackage;
 import org.neo4j.server.plugins.Injectable;
 import org.neo4j.server.web.WebServer;
 
-import static java.util.Arrays.asList;
+import java.util.Collections;
 
 public class ThirdPartyJAXRSModule implements ServerModule
 {
@@ -55,18 +55,17 @@ public class ThirdPartyJAXRSModule implements ServerModule
     public void start()
     {
         this.packages = config.get( ServerSettings.third_party_packages );
-        for ( ThirdPartyJaxRsPackage tpp : packages )
-        {
+        packages.forEach(tpp -> {
             List<String> packageNames = packagesFor( tpp );
             Collection<Injectable<?>> injectables = extensionInitializer.initializePackages( packageNames );
             webServer.addJAXRSPackages( packageNames, tpp.getMountPoint(), injectables );
             log.info( "Mounted unmanaged extension [%s] at [%s]", tpp.getPackageName(), tpp.getMountPoint() );
-        }
+        });
     }
 
     private List<String> packagesFor( ThirdPartyJaxRsPackage tpp )
     {
-        return asList( tpp.getPackageName() );
+        return Collections.singletonList( tpp.getPackageName() );
     }
 
     @Override
@@ -77,10 +76,7 @@ public class ThirdPartyJAXRSModule implements ServerModule
             return;
         }
 
-        for ( ThirdPartyJaxRsPackage tpp : packages )
-        {
-            webServer.removeJAXRSPackages( packagesFor( tpp ), tpp.getMountPoint() );
-        }
+        packages.forEach(tpp -> webServer.removeJAXRSPackages(packagesFor(tpp), tpp.getMountPoint()));
 
         extensionInitializer.stop();
     }

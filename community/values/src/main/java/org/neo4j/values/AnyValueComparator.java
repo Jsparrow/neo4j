@@ -69,11 +69,11 @@ class AnyValueComparator implements Comparator<AnyValue>, TernaryComparator<AnyV
         }
         else if ( isSequence1 )
         {
-            return Comparison.from( compareSequenceAndNonSequence( (SequenceValue) v1, v2 ) );
+            return Comparison.from( compareSequenceAndNonSequence( v2 ) );
         }
         else if ( isSequence2 )
         {
-            return Comparison.from( -compareSequenceAndNonSequence( (SequenceValue) v2, v1 ) );
+            return Comparison.from( -compareSequenceAndNonSequence( v1 ) );
         }
 
         // Handle remaining AnyValues
@@ -145,7 +145,7 @@ class AnyValueComparator implements Comparator<AnyValue>, TernaryComparator<AnyV
         return x;
     }
 
-    private int compareSequenceAndNonSequence( SequenceValue v1, AnyValue v2 )
+    private int compareSequenceAndNonSequence( AnyValue v2 )
     {
         boolean isValue2 = v2 instanceof Value;
         if ( isValue2 )

@@ -50,22 +50,21 @@ import static org.junit.Assert.assertThat;
 
 public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTestBase
 {
-    private long nodeWithRelationships;
-    private long nodeWithoutRelationships;
-    private long nonExistingNode;
-
     private static FunctionalTestHelper functionalTestHelper;
-    private static GraphDbHelper helper;
-    private long likes;
+	private static GraphDbHelper helper;
+	private long nodeWithRelationships;
+	private long nodeWithoutRelationships;
+	private long nonExistingNode;
+	private long likes;
 
-    @BeforeClass
+	@BeforeClass
     public static void setupServer()
     {
         functionalTestHelper = new FunctionalTestHelper( server() );
         helper = functionalTestHelper.getGraphDbHelper();
     }
 
-    @Before
+	@Before
     public void setupTheDatabase()
     {
         nodeWithRelationships = helper.createNode();
@@ -77,28 +76,25 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         helper.deleteNode( nonExistingNode );
     }
 
-    private JaxRsResponse sendRetrieveRequestToServer( long nodeId, String path )
+	private JaxRsResponse sendRetrieveRequestToServer( long nodeId, String path )
     {
-        return RestRequest.req().get( functionalTestHelper.nodeUri() + "/" + nodeId + "/relationships" + path );
+        return RestRequest.req().get( new StringBuilder().append(functionalTestHelper.nodeUri()).append("/").append(nodeId).append("/relationships").append(path).toString() );
     }
 
-    private void verifyRelReps( int expectedSize, String json ) throws JsonParseException
+	private void verifyRelReps( int expectedSize, String json ) throws JsonParseException
     {
         List<Map<String, Object>> relreps = JsonHelper.jsonToList( json );
         assertEquals( expectedSize, relreps.size() );
-        for ( Map<String, Object> relrep : relreps )
-        {
-            RelationshipRepresentationTest.verifySerialisation( relrep );
-        }
+        relreps.forEach(RelationshipRepresentationTest::verifySerialisation);
     }
 
-    @Test
+	@Test
     public void shouldParameteriseUrisInRelationshipRepresentationWithHostHeaderValue() throws Exception
     {
         HttpClient httpclient = new DefaultHttpClient();
         try
         {
-            HttpGet httpget = new HttpGet( getServerUri() + "db/data/relationship/" + likes );
+            HttpGet httpget = new HttpGet( new StringBuilder().append(getServerUri()).append("db/data/relationship/").append(likes).toString() );
             httpget.setHeader( "Accept", "application/json" );
             httpget.setHeader( "Host", "dummy.neo4j.org" );
             HttpResponse response = httpclient.execute( httpget );
@@ -117,13 +113,13 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         }
     }
 
-    @Test
+	@Test
     public void shouldParameteriseUrisInRelationshipRepresentationWithoutHostHeaderUsingRequestUri() throws Exception
     {
         HttpClient httpclient = new DefaultHttpClient();
         try
         {
-            HttpGet httpget = new HttpGet( getServerUri() + "db/data/relationship/" + likes );
+            HttpGet httpget = new HttpGet( new StringBuilder().append(getServerUri()).append("db/data/relationship/").append(likes).toString() );
 
             httpget.setHeader( "Accept", "application/json" );
             HttpResponse response = httpclient.execute( httpget );
@@ -131,7 +127,7 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
 
             String entityBody = IOUtils.toString( entity.getContent(), StandardCharsets.UTF_8 );
 
-            assertThat( entityBody, containsString( getServerUri() + "db/data/relationship/" + likes ) );
+            assertThat( entityBody, containsString( new StringBuilder().append(getServerUri()).append("db/data/relationship/").append(likes).toString() ) );
         }
         finally
         {
@@ -139,55 +135,55 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         }
     }
 
-    @Documented( "Get all relationships." )
+	@Documented( "Get all relationships." )
     @Test
     public void shouldRespondWith200AndListOfRelationshipRepresentationsWhenGettingAllRelationshipsForANode()
             throws JsonParseException
     {
         String entity = gen.get()
                 .expectedStatus( 200 )
-                .get( functionalTestHelper.nodeUri() + "/" + nodeWithRelationships + "/relationships" + "/all" )
+                .get( new StringBuilder().append(functionalTestHelper.nodeUri()).append("/").append(nodeWithRelationships).append("/relationships").append("/all").toString() )
                 .entity();
         verifyRelReps( 3, entity );
     }
 
-    @Test
+	@Test
     public void shouldRespondWith200AndListOfRelationshipRepresentationsWhenGettingAllRelationshipsForANodeStreaming()
             throws JsonParseException
     {
         String entity = gen.get()
                 .withHeader(StreamingJsonFormat.STREAM_HEADER,"true")
                 .expectedStatus(200)
-                .get( functionalTestHelper.nodeUri() + "/" + nodeWithRelationships + "/relationships" + "/all" )
+                .get( new StringBuilder().append(functionalTestHelper.nodeUri()).append("/").append(nodeWithRelationships).append("/relationships").append("/all").toString() )
                 .entity();
         verifyRelReps( 3, entity );
     }
 
-    @Documented( "Get incoming relationships." )
+	@Documented( "Get incoming relationships." )
     @Test
     public void shouldRespondWith200AndListOfRelationshipRepresentationsWhenGettingIncomingRelationshipsForANode()
             throws JsonParseException
     {
         String entity = gen.get()
                 .expectedStatus( 200 )
-                .get( functionalTestHelper.nodeUri() + "/" + nodeWithRelationships + "/relationships" + "/in" )
+                .get( new StringBuilder().append(functionalTestHelper.nodeUri()).append("/").append(nodeWithRelationships).append("/relationships").append("/in").toString() )
                 .entity();
         verifyRelReps( 1, entity );
     }
 
-    @Documented( "Get outgoing relationships." )
+	@Documented( "Get outgoing relationships." )
     @Test
     public void shouldRespondWith200AndListOfRelationshipRepresentationsWhenGettingOutgoingRelationshipsForANode()
             throws JsonParseException
     {
         String entity = gen.get()
                 .expectedStatus( 200 )
-                .get( functionalTestHelper.nodeUri() + "/" + nodeWithRelationships + "/relationships" + "/out" )
+                .get( new StringBuilder().append(functionalTestHelper.nodeUri()).append("/").append(nodeWithRelationships).append("/relationships").append("/out").toString() )
                 .entity();
         verifyRelReps( 2, entity );
     }
 
-    @Documented( "Get typed relationships.\n" +
+	@Documented( "Get typed relationships.\n" +
                  "\n" +
                  "Note that the \"+&+\" needs to be encoded like \"+%26+\" for example when\n" +
                  "using http://curl.haxx.se/[cURL] from the terminal." )
@@ -197,13 +193,12 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
     {
         String entity = gen.get()
                 .expectedStatus( 200 )
-                .get( functionalTestHelper.nodeUri() + "/" + nodeWithRelationships + "/relationships"
-                        + "/all/LIKES&HATES" )
+                .get( new StringBuilder().append(functionalTestHelper.nodeUri()).append("/").append(nodeWithRelationships).append("/relationships").append("/all/LIKES&HATES").toString() )
                 .entity();
         verifyRelReps( 3, entity );
     }
 
-    @Test
+	@Test
     public void shouldRespondWith200AndListOfRelationshipRepresentationsWhenGettingIncomingTypedRelationshipsForANode()
             throws JsonParseException
     {
@@ -214,7 +209,7 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldRespondWith200AndListOfRelationshipRepresentationsWhenGettingOutgoingTypedRelationshipsForANode()
             throws JsonParseException
     {
@@ -225,19 +220,19 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         response.close();
     }
 
-    @Documented( "Get relationships on a node without relationships." )
+	@Documented( "Get relationships on a node without relationships." )
     @Test
     public void shouldRespondWith200AndEmptyListOfRelationshipRepresentationsWhenGettingAllRelationshipsForANodeWithoutRelationships()
             throws JsonParseException
     {
         String entity = gen.get()
                 .expectedStatus( 200 )
-                .get( functionalTestHelper.nodeUri() + "/" + nodeWithoutRelationships + "/relationships" + "/all" )
+                .get( new StringBuilder().append(functionalTestHelper.nodeUri()).append("/").append(nodeWithoutRelationships).append("/relationships").append("/all").toString() )
                 .entity();
         verifyRelReps( 0, entity );
     }
 
-    @Test
+	@Test
     public void shouldRespondWith200AndEmptyListOfRelationshipRepresentationsWhenGettingIncomingRelationshipsForANodeWithoutRelationships()
             throws JsonParseException
     {
@@ -248,7 +243,7 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldRespondWith200AndEmptyListOfRelationshipRepresentationsWhenGettingOutgoingRelationshipsForANodeWithoutRelationships()
             throws JsonParseException
     {
@@ -259,7 +254,7 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldRespondWith404WhenGettingAllRelationshipsForNonExistingNode()
     {
         JaxRsResponse response = sendRetrieveRequestToServer( nonExistingNode, "/all" );
@@ -267,7 +262,7 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldRespondWith404WhenGettingIncomingRelationshipsForNonExistingNode()
     {
         JaxRsResponse response = sendRetrieveRequestToServer( nonExistingNode, "/in" );
@@ -275,16 +270,16 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldRespondWith404WhenGettingIncomingRelationshipsForNonExistingNodeStreaming()
     {
         JaxRsResponse response = RestRequest.req().header( StreamingJsonFormat.STREAM_HEADER, "true" )
-                .get( functionalTestHelper.nodeUri() + "/" + nonExistingNode + "/relationships" + "/in" );
+                .get( new StringBuilder().append(functionalTestHelper.nodeUri()).append("/").append(nonExistingNode).append("/relationships").append("/in").toString() );
         assertEquals( 404, response.getStatus() );
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldRespondWith404WhenGettingOutgoingRelationshipsForNonExistingNode()
     {
         JaxRsResponse response = sendRetrieveRequestToServer( nonExistingNode, "/out" );
@@ -292,7 +287,7 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldGet200WhenRetrievingValidRelationship()
     {
         long relationshipId = helper.createRelationship( "LIKES" );
@@ -303,7 +298,7 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldGetARelationshipRepresentationInJsonWhenRetrievingValidRelationship() throws Exception
     {
         long relationshipId = helper.createRelationship( "LIKES" );
@@ -316,12 +311,12 @@ public class RetrieveRelationshipsFromNodeIT extends AbstractRestFunctionalDocTe
         response.close();
     }
 
-    private String getServerUri()
+	private String getServerUri()
     {
         return server().baseUri().toString();
     }
 
-    private void isLegalJson( String entity ) throws JsonParseException
+	private void isLegalJson( String entity ) throws JsonParseException
     {
         JsonHelper.jsonToMap( entity );
     }

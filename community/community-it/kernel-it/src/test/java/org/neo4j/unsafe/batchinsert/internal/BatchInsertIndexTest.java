@@ -74,18 +74,18 @@ public class BatchInsertIndexTest
     @Rule
     public RuleChain ruleChain = RuleChain.outerRule( storeDir ).around( fileSystemRule ).around( pageCacheRule );
 
-    @Parameterized.Parameters( name = "{0}" )
-    public static GraphDatabaseSettings.SchemaIndex[] data()
-    {
-        return GraphDatabaseSettings.SchemaIndex.values();
-    }
-
     public BatchInsertIndexTest( GraphDatabaseSettings.SchemaIndex schemaIndex )
     {
         this.schemaIndex = schemaIndex;
     }
 
-    @Test
+	@Parameterized.Parameters( name = "{0}" )
+    public static GraphDatabaseSettings.SchemaIndex[] data()
+    {
+        return GraphDatabaseSettings.SchemaIndex.values();
+    }
+
+	@Test
     public void batchInserterShouldUseConfiguredIndexProvider() throws Exception
     {
         Config config = Config.defaults( stringMap( default_schema_provider.name(), schemaIndex.providerName() ) );
@@ -114,7 +114,7 @@ public class BatchInsertIndexTest
         }
     }
 
-    @Test
+	@Test
     public void shouldPopulateIndexWithUniquePointsThatCollideOnSpaceFillingCurve() throws Exception
     {
         Config config = Config.defaults( stringMap( default_schema_provider.name(), schemaIndex.providerName() ) );
@@ -142,7 +142,7 @@ public class BatchInsertIndexTest
         }
     }
 
-    @Test
+	@Test
     public void shouldThrowWhenPopulatingWithNonUniquePoints() throws Exception
     {
         Config config = Config.defaults( stringMap( default_schema_provider.name(), schemaIndex.providerName() ) );
@@ -170,7 +170,7 @@ public class BatchInsertIndexTest
         }
     }
 
-    private void assertSingleCorrectHit( GraphDatabaseService db, PointValue point )
+	private void assertSingleCorrectHit( GraphDatabaseService db, PointValue point )
     {
         ResourceIterator<Node> nodes = db.findNodes( TestLabels.LABEL_ONE, "prop", point );
         assertTrue( nodes.hasNext() );
@@ -180,12 +180,12 @@ public class BatchInsertIndexTest
         assertFalse( nodes.hasNext() );
     }
 
-    private BatchInserter newBatchInserter( Config config ) throws Exception
+	private BatchInserter newBatchInserter( Config config ) throws Exception
     {
         return BatchInserters.inserter( storeDir.databaseDir(), fileSystemRule.get(), config.getRaw() );
     }
 
-    private GraphDatabaseService graphDatabaseService( Config config )
+	private GraphDatabaseService graphDatabaseService( Config config )
     {
         TestGraphDatabaseFactory factory = new TestGraphDatabaseFactory();
         factory.setFileSystem( fileSystemRule.get() );
@@ -195,7 +195,7 @@ public class BatchInsertIndexTest
                 .newGraphDatabase();
     }
 
-    private void awaitIndexesOnline( GraphDatabaseService db )
+	private void awaitIndexesOnline( GraphDatabaseService db )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -204,8 +204,8 @@ public class BatchInsertIndexTest
         }
     }
 
-    private static String unexpectedIndexProviderMessage( IndexReference index )
+	private static String unexpectedIndexProviderMessage( IndexReference index )
     {
-        return "Unexpected provider: key=" + index.providerKey() + ", version=" + index.providerVersion();
+        return new StringBuilder().append("Unexpected provider: key=").append(index.providerKey()).append(", version=").append(index.providerVersion()).toString();
     }
 }

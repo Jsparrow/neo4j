@@ -33,7 +33,38 @@ import org.neo4j.graphdb.Transaction;
 public class GraphDescription implements GraphDefinition
 {
 
-    private static class RelationshipDescription
+    private final RelationshipDescription[] description;
+
+	public GraphDescription( String... description )
+    {
+        List<RelationshipDescription> lines = new ArrayList<>();
+        for ( String part : description )
+        {
+            for ( String line : part.split( "\n" ) )
+            {
+                lines.add( new RelationshipDescription( line ) );
+            }
+        }
+        this.description = lines.toArray( new RelationshipDescription[lines.size()] );
+    }
+
+	@Override
+    public Node create( GraphDatabaseService graphdb )
+    {
+        Map<String, Node> nodes = new HashMap<>();
+        Node node = null;
+        try ( Transaction tx = graphdb.beginTx() )
+        {
+            for ( RelationshipDescription rel : description )
+            {
+                node = rel.create( graphdb, nodes ).getEndNode();
+            }
+            tx.success();
+        }
+        return node;
+    }
+
+	private static class RelationshipDescription
     {
         private final String end;
         private final String start;
@@ -44,8 +75,7 @@ public class GraphDescription implements GraphDefinition
             String[] parts = rel.split( " " );
             if ( parts.length != 3 )
             {
-                throw new IllegalArgumentException( "syntax error: \"" + rel
-                                                    + "\"" );
+                throw new IllegalArgumentException( new StringBuilder().append("syntax error: \"").append(rel).append("\"").toString() );
             }
             start = parts[0];
             type = RelationshipType.withName( parts[1] );
@@ -66,7 +96,7 @@ public class GraphDescription implements GraphDefinition
             Node node = nodes.get( name );
             if ( node == null )
             {
-                if ( nodes.size() == 0 )
+                if ( nodes.isEmpty() )
                 {
                     node = graphdb.createNode();
                 }
@@ -79,36 +109,5 @@ public class GraphDescription implements GraphDefinition
             }
             return node;
         }
-    }
-
-    private final RelationshipDescription[] description;
-
-    public GraphDescription( String... description )
-    {
-        List<RelationshipDescription> lines = new ArrayList<>();
-        for ( String part : description )
-        {
-            for ( String line : part.split( "\n" ) )
-            {
-                lines.add( new RelationshipDescription( line ) );
-            }
-        }
-        this.description = lines.toArray( new RelationshipDescription[lines.size()] );
-    }
-
-    @Override
-    public Node create( GraphDatabaseService graphdb )
-    {
-        Map<String, Node> nodes = new HashMap<>();
-        Node node = null;
-        try ( Transaction tx = graphdb.beginTx() )
-        {
-            for ( RelationshipDescription rel : description )
-            {
-                node = rel.create( graphdb, nodes ).getEndNode();
-            }
-            tx.success();
-        }
-        return node;
     }
 }

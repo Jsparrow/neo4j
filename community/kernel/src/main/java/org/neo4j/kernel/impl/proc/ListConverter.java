@@ -44,7 +44,7 @@ public class ListConverter implements Function<String,DefaultParameterValue>
     public DefaultParameterValue apply( String s )
     {
         String value = s.trim();
-        if ( value.equalsIgnoreCase( "null" ) )
+        if ( "null".equalsIgnoreCase( value ) )
         {
             return ntList( null, neoType );
         }

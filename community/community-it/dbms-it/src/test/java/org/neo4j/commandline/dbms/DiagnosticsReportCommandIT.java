@@ -86,7 +86,7 @@ public class DiagnosticsReportCommandIT
         // Run command, should detect running instance
         try ( RealOutsideWorld outsideWorld = new RealOutsideWorld() )
         {
-            String[] args = {"threads", "--to=" + testDirectory.absolutePath().getAbsolutePath() + "/reports"};
+            String[] args = {"threads", new StringBuilder().append("--to=").append(testDirectory.absolutePath().getAbsolutePath()).append("/reports").toString()};
             Path homeDir = testDirectory.directory().toPath();
             DiagnosticsReportCommand diagnosticsReportCommand =
                     new DiagnosticsReportCommand( homeDir, homeDir, outsideWorld );
@@ -94,7 +94,7 @@ public class DiagnosticsReportCommandIT
         }
         catch ( IncorrectUsage e )
         {
-            if ( e.getMessage().equals( "Unknown classifier: threads" ) )
+            if ( "Unknown classifier: threads".equals( e.getMessage() ) )
             {
                 return; // If we get attach API is not available for example in some IBM jdk installs, ignore this test
             }

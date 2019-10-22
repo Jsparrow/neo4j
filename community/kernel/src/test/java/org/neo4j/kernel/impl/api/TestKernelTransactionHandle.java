@@ -172,6 +172,6 @@ public class TestKernelTransactionHandle implements KernelTransactionHandle
     @Override
     public String toString()
     {
-        return "TestKernelTransactionHandle{tx=" + tx + "}";
+        return new StringBuilder().append("TestKernelTransactionHandle{tx=").append(tx).append("}").toString();
     }
 }

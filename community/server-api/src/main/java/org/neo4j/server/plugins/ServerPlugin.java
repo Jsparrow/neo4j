@@ -134,7 +134,7 @@ public abstract class ServerPlugin
     @Override
     public String toString()
     {
-        return "ServerPlugin[" + name + "]";
+        return new StringBuilder().append("ServerPlugin[").append(name).append("]").toString();
     }
 
     static Iterable<ServerPlugin> load()
@@ -155,10 +155,7 @@ public abstract class ServerPlugin
     @Deprecated
     protected void loadServerExtender( ServerExtender extender )
     {
-        for ( PluginPoint plugin : getDefaultExtensionPoints( extender.getPluginPointFactory() ) )
-        {
-            extender.addExtension( plugin.forType(), plugin );
-        }
+        getDefaultExtensionPoints( extender.getPluginPointFactory() ).forEach(plugin -> extender.addExtension(plugin.forType(), plugin));
     }
 
     /**

@@ -160,7 +160,7 @@ public class JULBridge extends Handler
     }
 
     @Override
-    public void close() throws SecurityException
+    public void close()
     {
     }
 }

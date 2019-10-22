@@ -28,25 +28,25 @@ import org.neo4j.kernel.lifecycle.Lifecycle;
 
 public class DummyExtensionFactory extends KernelExtensionFactory<DummyExtensionFactory.Dependencies>
 {
-    public interface Dependencies
+    static final String EXTENSION_ID = "dummy";
+
+	public DummyExtensionFactory()
+    {
+        super( EXTENSION_ID );
+    }
+
+	@Override
+    public Lifecycle newInstance( KernelContext context, Dependencies dependencies )
+    {
+        return new DummyExtension( dependencies );
+    }
+
+	public interface Dependencies
     {
         Config getConfig();
 
         KernelData getKernel();
 
         DatabaseManager getDatabaseManager();
-    }
-
-    static final String EXTENSION_ID = "dummy";
-
-    public DummyExtensionFactory()
-    {
-        super( EXTENSION_ID );
-    }
-
-    @Override
-    public Lifecycle newInstance( KernelContext context, Dependencies dependencies )
-    {
-        return new DummyExtension( dependencies );
     }
 }

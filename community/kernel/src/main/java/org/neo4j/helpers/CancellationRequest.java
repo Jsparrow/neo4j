@@ -27,13 +27,13 @@ package org.neo4j.helpers;
 @Deprecated
 public interface CancellationRequest
 {
-    /**
+    @Deprecated
+    CancellationRequest NEVER_CANCELLED = () -> false;
+
+	/**
      * @return True iff a request for cancellation has been issued. It is assumed that the request cannot be withdrawn
      * so once this method returns true it must always return true on all subsequent calls.
      */
     @Deprecated
     boolean cancellationRequested();
-
-    @Deprecated
-    CancellationRequest NEVER_CANCELLED = () -> false;
 }

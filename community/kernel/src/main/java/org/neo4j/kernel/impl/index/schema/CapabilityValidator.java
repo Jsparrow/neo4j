@@ -35,17 +35,17 @@ class CapabilityValidator
 {
     static void validateQuery( IndexCapability capability, IndexOrder indexOrder, IndexQuery[] predicates )
     {
-        if ( indexOrder != IndexOrder.NONE )
-        {
-            ValueCategory valueCategory = predicates[0].valueGroup().category();
-            IndexOrder[] orderCapability = capability.orderCapability( valueCategory );
-            if ( !ArrayUtil.contains( orderCapability, indexOrder ) )
-            {
-                orderCapability = ArrayUtils.add( orderCapability, IndexOrder.NONE );
-                throw new UnsupportedOperationException(
-                        format( "Tried to query index with unsupported order %s. Supported orders for query %s are %s.", indexOrder,
-                                Arrays.toString( predicates ), Arrays.toString( orderCapability ) ) );
-            }
-        }
+        if (indexOrder == IndexOrder.NONE) {
+			return;
+		}
+		ValueCategory valueCategory = predicates[0].valueGroup().category();
+		IndexOrder[] orderCapability = capability.orderCapability( valueCategory );
+		if ( !ArrayUtil.contains( orderCapability, indexOrder ) )
+		{
+		    orderCapability = ArrayUtils.add( orderCapability, IndexOrder.NONE );
+		    throw new UnsupportedOperationException(
+		            format( "Tried to query index with unsupported order %s. Supported orders for query %s are %s.", indexOrder,
+		                    Arrays.toString( predicates ), Arrays.toString( orderCapability ) ) );
+		}
     }
 }

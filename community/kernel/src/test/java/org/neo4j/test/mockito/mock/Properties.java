@@ -32,19 +32,9 @@ import org.neo4j.test.Property;
 
 public class Properties implements Answer<Object>, Iterable<String>
 {
-    public static Properties properties( Property... properties )
-    {
-        return new Properties( properties );
-    }
-
-    public static Properties properties( Map<String, Object> properties )
-    {
-        return new Properties( properties );
-    }
-
     private final SortedMap<String, Object> properties = new TreeMap<>();
 
-    private Properties( Property[] properties )
+	private Properties( Property[] properties )
     {
         for ( Property property : properties )
         {
@@ -52,12 +42,22 @@ public class Properties implements Answer<Object>, Iterable<String>
         }
     }
 
-    private Properties( Map<String, Object> properties )
+	private Properties( Map<String, Object> properties )
     {
         this.properties.putAll( properties );
     }
 
-    @Override
+	public static Properties properties( Property... properties )
+    {
+        return new Properties( properties );
+    }
+
+	public static Properties properties( Map<String, Object> properties )
+    {
+        return new Properties( properties );
+    }
+
+	@Override
     public Object answer( InvocationOnMock invocation )
     {
         Object[] arguments = invocation.getArguments();
@@ -77,13 +77,13 @@ public class Properties implements Answer<Object>, Iterable<String>
         return result;
     }
 
-    @Override
+	@Override
     public Iterator<String> iterator()
     {
         return properties.keySet().iterator();
     }
 
-    public SortedMap<String, Object> getProperties()
+	public SortedMap<String, Object> getProperties()
     {
         return properties;
     }

@@ -32,6 +32,17 @@ import org.neo4j.logging.Logger;
 public interface DiagnosticsExtractor<T>
 {
     /**
+     * Dump the diagnostic information of the specified source for the specified
+     * {@link DiagnosticsPhase phase} to the provided {@link Logger logger}.
+     *
+     * @see DiagnosticsProvider#dump(DiagnosticsPhase, Logger)
+     * @param source the source to get diagnostics information from.
+     * @param phase the {@link DiagnosticsPhase phase} to dump information for.
+     * @param logger the {@link Logger logger} to dump information to.
+     */
+    void dumpDiagnostics( T source, DiagnosticsPhase phase, Logger logger );
+
+	/**
      * A {@link DiagnosticsExtractor} capable of
      * {@link DiagnosticsProvider#acceptDiagnosticsVisitor(Object) accepting
      * visitors}.
@@ -53,15 +64,4 @@ public interface DiagnosticsExtractor<T>
          */
         void dispatchDiagnosticsVisitor( T source, Object visitor );
     }
-
-    /**
-     * Dump the diagnostic information of the specified source for the specified
-     * {@link DiagnosticsPhase phase} to the provided {@link Logger logger}.
-     *
-     * @see DiagnosticsProvider#dump(DiagnosticsPhase, Logger)
-     * @param source the source to get diagnostics information from.
-     * @param phase the {@link DiagnosticsPhase phase} to dump information for.
-     * @param logger the {@link Logger logger} to dump information to.
-     */
-    void dumpDiagnostics( T source, DiagnosticsPhase phase, Logger logger );
 }

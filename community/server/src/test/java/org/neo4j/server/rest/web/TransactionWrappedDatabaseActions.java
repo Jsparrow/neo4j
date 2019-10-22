@@ -78,7 +78,7 @@ public class TransactionWrappedDatabaseActions extends DatabaseActions
     }
 
     @Override
-    public void deleteNode( long nodeId ) throws NodeNotFoundException, ConstraintViolationException
+    public void deleteNode( long nodeId ) throws NodeNotFoundException
     {
         try ( Transaction transaction = graph.beginTx() )
         {

@@ -50,8 +50,7 @@ public class LoggingPhaseTrackerTest
         phaseTracker.stop();
 
         EnumMap<PhaseTracker.Phase,LoggingPhaseTracker.Logger> times = phaseTracker.times();
-        for ( PhaseTracker.Phase phase : times.keySet() )
-        {
+        times.keySet().forEach(phase -> {
             LoggingPhaseTracker.Logger logger = times.get( phase );
             if ( phase == PhaseTracker.Phase.SCAN )
             {
@@ -62,7 +61,7 @@ public class LoggingPhaseTrackerTest
             {
                 assertEquals( 0, logger.totalTime );
             }
-        }
+        });
     }
 
     @Test
@@ -77,8 +76,7 @@ public class LoggingPhaseTrackerTest
         phaseTracker.stop();
 
         EnumMap<PhaseTracker.Phase,LoggingPhaseTracker.Logger> times = phaseTracker.times();
-        for ( PhaseTracker.Phase phase : times.keySet() )
-        {
+        times.keySet().forEach(phase -> {
             LoggingPhaseTracker.Logger logger = times.get( phase );
             if ( phase == PhaseTracker.Phase.SCAN ||
                     phase == PhaseTracker.Phase.WRITE )
@@ -90,7 +88,7 @@ public class LoggingPhaseTrackerTest
             {
                 assertEquals( 0, logger.totalTime );
             }
-        }
+        });
     }
 
     @Test
@@ -155,10 +153,7 @@ public class LoggingPhaseTrackerTest
 
         // then
         AssertableLogProvider.LogMatcher logMatcher = AssertableLogProvider.inLog( IndexPopulationJob.class ).info(
-                "TIME/PHASE Final: " +
-                        "SCAN[totalTime=200ms, avgTime=100ms, minTime=0ns, maxTime=100ms, nbrOfReports=2], " +
-                        "WRITE[totalTime=200ms, avgTime=100ms, minTime=0ns, maxTime=100ms, nbrOfReports=2], " +
-                        "MERGE[totalTime=100ms], BUILD[totalTime=100ms], APPLY_EXTERNAL[totalTime=100ms], FLIP[totalTime=100ms]" );
+                new StringBuilder().append("TIME/PHASE Final: ").append("SCAN[totalTime=200ms, avgTime=100ms, minTime=0ns, maxTime=100ms, nbrOfReports=2], ").append("WRITE[totalTime=200ms, avgTime=100ms, minTime=0ns, maxTime=100ms, nbrOfReports=2], ").append("MERGE[totalTime=100ms], BUILD[totalTime=100ms], APPLY_EXTERNAL[totalTime=100ms], FLIP[totalTime=100ms]").toString() );
         logProvider.assertAtLeastOnce( logMatcher );
     }
 
@@ -197,10 +192,7 @@ public class LoggingPhaseTrackerTest
         // then
         AssertableLogProvider.LogMatcher thirdEntry =
                 AssertableLogProvider.inLog( IndexPopulationJob.class )
-                        .debug( "TIME/PHASE Total: " +
-                                "SCAN[totalTime=2s, avgTime=1s, minTime=0ns, maxTime=1s, nbrOfReports=2], " +
-                                "WRITE[totalTime=1s], " +
-                                "Last 1 sec: SCAN[totalTime=1s]" );
+                        .debug( new StringBuilder().append("TIME/PHASE Total: ").append("SCAN[totalTime=2s, avgTime=1s, minTime=0ns, maxTime=1s, nbrOfReports=2], ").append("WRITE[totalTime=1s], ").append("Last 1 sec: SCAN[totalTime=1s]").toString() );
         logProvider.assertExactly( firstEntry, secondEntry, thirdEntry );
     }
 

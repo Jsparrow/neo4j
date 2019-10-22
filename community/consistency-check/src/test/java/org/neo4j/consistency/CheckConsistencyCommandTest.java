@@ -293,56 +293,13 @@ class CheckConsistencyCommandTest
             Usage usage = new Usage( "neo4j-admin", mock( CommandLocator.class ) );
             usage.printUsageForCommand( new CheckConsistencyCommandProvider(), ps::println );
 
-            assertEquals( String.format( "usage: neo4j-admin check-consistency [--database=<name>]%n" +
-                            "                                     [--backup=</path/to/backup>]%n" +
-                            "                                     [--verbose[=<true|false>]]%n" +
-                            "                                     [--report-dir=<directory>]%n" +
-                            "                                     [--additional-config=<config-file-path>]%n" +
-                            "                                     [--check-graph[=<true|false>]]%n" +
-                            "                                     [--check-indexes[=<true|false>]]%n" +
-                            "                                     [--check-index-structure[=<true|false>]]%n" +
-                            "                                     [--check-label-scan-store[=<true|false>]]%n" +
-                            "                                     [--check-property-owners[=<true|false>]]%n" +
-                            "%n" +
-                            "environment variables:%n" +
-                            "    NEO4J_CONF    Path to directory which contains neo4j.conf.%n" +
-                            "    NEO4J_DEBUG   Set to anything to enable debug output.%n" +
-                            "    NEO4J_HOME    Neo4j home directory.%n" +
-                            "    HEAP_SIZE     Set JVM maximum heap size during command execution.%n" +
-                            "                  Takes a number and a unit, for example 512m.%n" +
-                            "%n" +
-                            "This command allows for checking the consistency of a database or a backup%n" +
-                            "thereof. It cannot be used with a database which is currently in use.%n" +
-                            "%n" +
-                            "All checks except 'check-graph' can be quite expensive so it may be useful to%n" +
-                            "turn them off for very large databases. Increasing the heap size can also be a%n" +
-                            "good idea. See 'neo4j-admin help' for details.%n" +
-                            "%n" +
-                            "options:%n" +
-                            "  --database=<name>                        Name of database. [default:" + GraphDatabaseSettings.DEFAULT_DATABASE_NAME + "]%n" +
-                            "  --backup=</path/to/backup>               Path to backup to check consistency%n" +
-                            "                                           of. Cannot be used together with%n" +
-                            "                                           --database. [default:]%n" +
-                            "  --verbose=<true|false>                   Enable verbose output.%n" +
-                            "                                           [default:false]%n" +
-                            "  --report-dir=<directory>                 Directory to write report file in.%n" +
-                            "                                           [default:.]%n" +
-                            "  --additional-config=<config-file-path>   Configuration file to supply%n" +
-                            "                                           additional configuration in. This%n" +
-                            "                                           argument is DEPRECATED. [default:]%n" +
-                            "  --check-graph=<true|false>               Perform checks between nodes,%n" +
-                            "                                           relationships, properties, types and%n" +
-                            "                                           tokens. [default:true]%n" +
-                            "  --check-indexes=<true|false>             Perform checks on indexes.%n" +
-                            "                                           [default:true]%n" +
-                            "  --check-index-structure=<true|false>     Perform structure checks on indexes.%n" +
-                            "                                           [default:false]%n" +
-                            "  --check-label-scan-store=<true|false>    Perform checks on the label scan%n" +
-                            "                                           store. [default:true]%n" +
-                            "  --check-property-owners=<true|false>     Perform additional checks on property%n" +
-                            "                                           ownership. This check is *very*%n" +
-                            "                                           expensive in time and memory.%n" +
-                            "                                           [default:false]%n" ),
+            assertEquals( String.format( new StringBuilder().append("usage: neo4j-admin check-consistency [--database=<name>]%n").append("                                     [--backup=</path/to/backup>]%n").append("                                     [--verbose[=<true|false>]]%n").append("                                     [--report-dir=<directory>]%n").append("                                     [--additional-config=<config-file-path>]%n").append("                                     [--check-graph[=<true|false>]]%n").append("                                     [--check-indexes[=<true|false>]]%n").append("                                     [--check-index-structure[=<true|false>]]%n")
+					.append("                                     [--check-label-scan-store[=<true|false>]]%n").append("                                     [--check-property-owners[=<true|false>]]%n").append("%n").append("environment variables:%n").append("    NEO4J_CONF    Path to directory which contains neo4j.conf.%n").append("    NEO4J_DEBUG   Set to anything to enable debug output.%n").append("    NEO4J_HOME    Neo4j home directory.%n").append("    HEAP_SIZE     Set JVM maximum heap size during command execution.%n").append("                  Takes a number and a unit, for example 512m.%n")
+					.append("%n").append("This command allows for checking the consistency of a database or a backup%n").append("thereof. It cannot be used with a database which is currently in use.%n").append("%n").append("All checks except 'check-graph' can be quite expensive so it may be useful to%n").append("turn them off for very large databases. Increasing the heap size can also be a%n").append("good idea. See 'neo4j-admin help' for details.%n").append("%n").append("options:%n")
+					.append("  --database=<name>                        Name of database. [default:").append(GraphDatabaseSettings.DEFAULT_DATABASE_NAME).append("]%n").append("  --backup=</path/to/backup>               Path to backup to check consistency%n").append("                                           of. Cannot be used together with%n").append("                                           --database. [default:]%n").append("  --verbose=<true|false>                   Enable verbose output.%n")
+					.append("                                           [default:false]%n").append("  --report-dir=<directory>                 Directory to write report file in.%n").append("                                           [default:.]%n").append("  --additional-config=<config-file-path>   Configuration file to supply%n").append("                                           additional configuration in. This%n").append("                                           argument is DEPRECATED. [default:]%n").append("  --check-graph=<true|false>               Perform checks between nodes,%n").append("                                           relationships, properties, types and%n").append("                                           tokens. [default:true]%n")
+					.append("  --check-indexes=<true|false>             Perform checks on indexes.%n").append("                                           [default:true]%n").append("  --check-index-structure=<true|false>     Perform structure checks on indexes.%n").append("                                           [default:false]%n").append("  --check-label-scan-store=<true|false>    Perform checks on the label scan%n").append("                                           store. [default:true]%n").append("  --check-property-owners=<true|false>     Perform additional checks on property%n").append("                                           ownership. This check is *very*%n").append("                                           expensive in time and memory.%n")
+					.append("                                           [default:false]%n").toString() ),
                     baos.toString() );
         }
     }

@@ -122,7 +122,7 @@ public class LuceneIndexImplementation extends LifecycleAdapter implements Index
         {
             // Type is only considered if "analyzer" isn't supplied
             String type = result.computeIfAbsent( KEY_TYPE, k -> "exact" );
-            if ( type.equals( "fulltext" ) && !result.containsKey( LuceneIndexImplementation.KEY_TO_LOWER_CASE ) )
+            if ( "fulltext".equals( type ) && !result.containsKey( LuceneIndexImplementation.KEY_TO_LOWER_CASE ) )
             {
                 result.put( KEY_TO_LOWER_CASE, "true" );
             }
@@ -148,23 +148,19 @@ public class LuceneIndexImplementation extends LifecycleAdapter implements Index
     {
         String value1 = storedConfig.get( key );
         String value2 = config.get( key );
-        if ( value1 == null || value2 == null )
-        {
-            if ( value1 == value2 )
-            {
-                return true;
-            }
-            if ( defaultValue != null )
-            {
-                value1 = value1 != null ? value1 : defaultValue;
-                value2 = value2 != null ? value2 : defaultValue;
-                return value1.equals( value2 );
-            }
-        }
-        else
-        {
-            return value1.equals( value2 );
-        }
+        if (!(value1 == null || value2 == null)) {
+			return value1.equals( value2 );
+		}
+		if ( value1.equals(value2) )
+		{
+		    return true;
+		}
+		if ( defaultValue != null )
+		{
+		    value1 = value1 != null ? value1 : defaultValue;
+		    value2 = value2 != null ? value2 : defaultValue;
+		    return value1.equals( value2 );
+		}
         return false;
     }
 

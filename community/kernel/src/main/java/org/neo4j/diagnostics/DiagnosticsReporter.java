@@ -60,19 +60,10 @@ public class DiagnosticsReporter
     {
         // Collect sources
         List<DiagnosticsReportSource> sources = new ArrayList<>();
-        for ( DiagnosticsOfflineReportProvider provider : providers )
-        {
-            sources.addAll( provider.getDiagnosticsSources( classifiers ) );
-        }
+        providers.forEach(provider -> sources.addAll(provider.getDiagnosticsSources(classifiers)));
 
         // Add additional sources
-        for ( Map.Entry<String,List<DiagnosticsReportSource>> classifier : additionalSources.entrySet() )
-        {
-            if ( classifiers.contains( "all" ) || classifiers.contains( classifier.getKey() ) )
-            {
-                sources.addAll( classifier.getValue() );
-            }
-        }
+		additionalSources.entrySet().stream().filter(classifier -> classifiers.contains( "all" ) || classifiers.contains( classifier.getKey() )).forEach(classifier -> sources.addAll(classifier.getValue()));
 
         // Make sure target directory exists
         Path destinationFolder = destination.getParent();
@@ -132,13 +123,13 @@ public class DiagnosticsReporter
         }
 
         long freeSpace = destinationFolder.toFile().getFreeSpace();
-        if ( estimatedFinalSize > freeSpace )
-        {
-            String message = String.format(
-                    "Free available disk space for %s is %s, worst case estimate is %s. To ignore add '--force' to the command.",
-                    destination.getFileName(), Format.bytes( freeSpace ), Format.bytes( estimatedFinalSize ) );
-            throw new RuntimeException( message );
-        }
+        if (estimatedFinalSize <= freeSpace) {
+			return;
+		}
+		String message = String.format(
+		        "Free available disk space for %s is %s, worst case estimate is %s. To ignore add '--force' to the command.",
+		        destination.getFileName(), Format.bytes( freeSpace ), Format.bytes( estimatedFinalSize ) );
+		throw new RuntimeException( message );
     }
 
     public Set<String> getAvailableClassifiers()

@@ -33,29 +33,13 @@ import org.neo4j.helpers.collection.ArrayIterator;
  */
 public abstract class PropertyTypeDispatcher<K, T>
 {
-    public abstract static class PropertyArray<A, T> implements Iterable<T>
-    {
-        private PropertyArray()
-        {
-        }
-
-        public abstract int length();
-
-        public abstract A getClonedArray();
-
-        public abstract Class<?> getType();
-    }
-
     public static void consumeProperties( PropertyTypeDispatcher<String, Void> dispatcher,
             PropertyContainer entity )
     {
-        for ( Map.Entry<String, Object> property : entity.getAllProperties().entrySet() )
-        {
-            dispatcher.dispatch( property.getValue(), property.getKey() );
-        }
+        entity.getAllProperties().entrySet().forEach(property -> dispatcher.dispatch(property.getValue(), property.getKey()));
     }
 
-    @SuppressWarnings( "boxing" )
+	@SuppressWarnings( "boxing" )
     public final T dispatch( Object property, K param )
     {
         if ( property == null )
@@ -125,7 +109,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }
     }
 
-    private T dispatchPrimitiveArray( Object property, K param )
+	private T dispatchPrimitiveArray( Object property, K param )
     {
         if ( property instanceof byte[] )
         {
@@ -165,7 +149,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }
     }
 
-    protected T dispatchOtherArray( Object[] property, K param )
+	protected T dispatchOtherArray( Object[] property, K param )
     {
         if ( property instanceof Byte[] )
         {
@@ -206,7 +190,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }
     }
 
-    @SuppressWarnings( "boxing" )
+	@SuppressWarnings( "boxing" )
     protected T dispatchNumberProperty( Number property, K param )
     {
         if ( property instanceof Long )
@@ -239,60 +223,60 @@ public abstract class PropertyTypeDispatcher<K, T>
         }
     }
 
-    protected T dispatchNullProperty( K param )
+	protected T dispatchNullProperty( K param )
     {
         return null;
     }
 
-    @SuppressWarnings( "boxing" )
+	@SuppressWarnings( "boxing" )
     protected abstract T dispatchByteProperty( byte property, K param );
 
-    @SuppressWarnings( "boxing" )
+	@SuppressWarnings( "boxing" )
     protected abstract T dispatchCharacterProperty( char property, K param );
 
-    @SuppressWarnings( "boxing" )
+	@SuppressWarnings( "boxing" )
     protected abstract T dispatchShortProperty( short property, K param );
 
-    @SuppressWarnings( "boxing" )
+	@SuppressWarnings( "boxing" )
     protected abstract T dispatchIntegerProperty( int property, K param );
 
-    @SuppressWarnings( "boxing" )
+	@SuppressWarnings( "boxing" )
     protected abstract T dispatchLongProperty( long property, K param );
 
-    @SuppressWarnings( "boxing" )
+	@SuppressWarnings( "boxing" )
     protected abstract T dispatchFloatProperty( float property, K param );
 
-    @SuppressWarnings( "boxing" )
+	@SuppressWarnings( "boxing" )
     protected abstract T dispatchDoubleProperty( double property, K param );
 
-    @SuppressWarnings( "boxing" )
+	@SuppressWarnings( "boxing" )
     protected abstract T dispatchBooleanProperty( boolean property, K param );
 
-    //not abstract in order to not break existing code, since this was fixed in point release
+	//not abstract in order to not break existing code, since this was fixed in point release
     protected T dispatchPointProperty( Point property, K param )
     {
         return dispatchOtherProperty( property, param );
     }
 
-    //not abstract in order to not break existing code, since this was fixed in point release
+	//not abstract in order to not break existing code, since this was fixed in point release
     protected T dispatchTemporalProperty( Temporal property, K param )
     {
         return dispatchOtherProperty( property, param );
     }
 
-    //not abstract in order to not break existing code, since this was fixed in point release
+	//not abstract in order to not break existing code, since this was fixed in point release
     protected T dispatchTemporalAmountProperty( TemporalAmount property, K param )
     {
         return dispatchOtherProperty( property, param );
     }
 
-    protected T dispatchOtherProperty( Object property, K param )
+	protected T dispatchOtherProperty( Object property, K param )
     {
         throw new IllegalArgumentException( "Unsupported property type: "
                 + property.getClass() );
     }
 
-    protected T dispatchByteArrayProperty( final byte[] property, K param )
+	protected T dispatchByteArrayProperty( final byte[] property, K param )
     {
         return dispatchByteArrayProperty( new PrimitiveArray<byte[], Byte>()
         {
@@ -323,7 +307,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchCharacterArrayProperty( final char[] property, K param )
+	protected T dispatchCharacterArrayProperty( final char[] property, K param )
     {
         return dispatchCharacterArrayProperty( new PrimitiveArray<char[], Character>()
         {
@@ -354,7 +338,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchShortArrayProperty( final short[] property, K param )
+	protected T dispatchShortArrayProperty( final short[] property, K param )
     {
         return dispatchShortArrayProperty( new PrimitiveArray<short[], Short>()
         {
@@ -385,7 +369,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchIntegerArrayProperty( final int[] property, K param )
+	protected T dispatchIntegerArrayProperty( final int[] property, K param )
     {
         return dispatchIntegerArrayProperty( new PrimitiveArray<int[], Integer>()
         {
@@ -416,7 +400,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchLongArrayProperty( final long[] property, K param )
+	protected T dispatchLongArrayProperty( final long[] property, K param )
     {
         return dispatchLongArrayProperty( new PrimitiveArray<long[], Long>()
         {
@@ -447,7 +431,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchFloatArrayProperty( final float[] property, K param )
+	protected T dispatchFloatArrayProperty( final float[] property, K param )
     {
         return dispatchFloatArrayProperty( new PrimitiveArray<float[], Float>()
         {
@@ -478,7 +462,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchDoubleArrayProperty( final double[] property, K param )
+	protected T dispatchDoubleArrayProperty( final double[] property, K param )
     {
         return dispatchDoubleArrayProperty( new PrimitiveArray<double[], Double>()
         {
@@ -509,7 +493,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchBooleanArrayProperty( final boolean[] property, K param )
+	protected T dispatchBooleanArrayProperty( final boolean[] property, K param )
     {
         return dispatchBooleanArrayProperty( new PrimitiveArray<boolean[], Boolean>()
         {
@@ -540,7 +524,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchByteArrayProperty( final Byte[] property, K param )
+	protected T dispatchByteArrayProperty( final Byte[] property, K param )
     {
         return dispatchByteArrayProperty( new BoxedArray<byte[], Byte>( property )
         {
@@ -558,7 +542,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchCharacterArrayProperty( final Character[] property, K param )
+	protected T dispatchCharacterArrayProperty( final Character[] property, K param )
     {
         return dispatchCharacterArrayProperty( new BoxedArray<char[], Character>( property )
         {
@@ -576,7 +560,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchShortArrayProperty( final Short[] property, K param )
+	protected T dispatchShortArrayProperty( final Short[] property, K param )
     {
         return dispatchShortArrayProperty( new BoxedArray<short[], Short>( property )
         {
@@ -594,7 +578,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchIntegerArrayProperty( final Integer[] property, K param )
+	protected T dispatchIntegerArrayProperty( final Integer[] property, K param )
     {
         return dispatchIntegerArrayProperty( new BoxedArray<int[], Integer>( property )
         {
@@ -612,7 +596,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchLongArrayProperty( final Long[] property, K param )
+	protected T dispatchLongArrayProperty( final Long[] property, K param )
     {
         return dispatchLongArrayProperty( new BoxedArray<long[], Long>( property )
         {
@@ -630,7 +614,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchFloatArrayProperty( final Float[] property, K param )
+	protected T dispatchFloatArrayProperty( final Float[] property, K param )
     {
         return dispatchFloatArrayProperty( new BoxedArray<float[], Float>( property )
         {
@@ -648,7 +632,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchDoubleArrayProperty( final Double[] property, K param )
+	protected T dispatchDoubleArrayProperty( final Double[] property, K param )
     {
         return dispatchDoubleArrayProperty( new BoxedArray<double[], Double>( property )
         {
@@ -666,7 +650,7 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchBooleanArrayProperty( final Boolean[] property, K param )
+	protected T dispatchBooleanArrayProperty( final Boolean[] property, K param )
     {
         return dispatchBooleanArrayProperty( new BoxedArray<boolean[], Boolean>( property )
         {
@@ -684,9 +668,9 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected abstract T dispatchStringProperty( String property, K param );
+	protected abstract T dispatchStringProperty( String property, K param );
 
-    protected T dispatchStringArrayProperty( final String[] property, K param )
+	protected T dispatchStringArrayProperty( final String[] property, K param )
     {
         return dispatchStringArrayProperty( new BoxedArray<String[], String>( property )
         {
@@ -698,12 +682,12 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchStringArrayProperty( PropertyArray<String[], String> array, K param )
+	protected T dispatchStringArrayProperty( PropertyArray<String[], String> array, K param )
     {
         return dispatchArray( array, param );
     }
 
-    protected T dispatchPointArrayProperty( final Point[] property, K param )
+	protected T dispatchPointArrayProperty( final Point[] property, K param )
     {
         return dispatchPointArrayProperty( new BoxedArray<Point[], Point>( property )
         {
@@ -715,17 +699,17 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchPointArrayProperty( PropertyArray<Point[], Point> array, K param )
+	protected T dispatchPointArrayProperty( PropertyArray<Point[], Point> array, K param )
     {
         return dispatchArray( array, param );
     }
 
-    protected T dispatchTemporalArrayProperty( PropertyArray<Temporal[], Temporal> array, K param )
+	protected T dispatchTemporalArrayProperty( PropertyArray<Temporal[], Temporal> array, K param )
     {
         return dispatchArray( array, param );
     }
 
-    protected T dispatchTemporalArrayProperty( final Temporal[] property, K param )
+	protected T dispatchTemporalArrayProperty( final Temporal[] property, K param )
     {
         return dispatchTemporalArrayProperty( new BoxedArray<Temporal[], Temporal>( property )
         {
@@ -737,12 +721,12 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchTemporalAmountArrayProperty( PropertyArray<TemporalAmount[], TemporalAmount> array, K param )
+	protected T dispatchTemporalAmountArrayProperty( PropertyArray<TemporalAmount[], TemporalAmount> array, K param )
     {
         return dispatchArray( array, param );
     }
 
-    protected T dispatchTemporalAmountArrayProperty( final TemporalAmount[] property, K param )
+	protected T dispatchTemporalAmountArrayProperty( final TemporalAmount[] property, K param )
     {
         return dispatchTemporalAmountArrayProperty( new BoxedArray<TemporalAmount[], TemporalAmount>( property )
         {
@@ -754,54 +738,67 @@ public abstract class PropertyTypeDispatcher<K, T>
         }, param );
     }
 
-    protected T dispatchByteArrayProperty( PropertyArray<byte[], Byte> array, K param )
+	protected T dispatchByteArrayProperty( PropertyArray<byte[], Byte> array, K param )
     {
         return dispatchNumberArray( array, param );
     }
 
-    protected T dispatchCharacterArrayProperty( PropertyArray<char[], Character> array, K param )
+	protected T dispatchCharacterArrayProperty( PropertyArray<char[], Character> array, K param )
     {
         return dispatchArray( array, param );
     }
 
-    protected T dispatchShortArrayProperty( PropertyArray<short[], Short> array, K param )
+	protected T dispatchShortArrayProperty( PropertyArray<short[], Short> array, K param )
     {
         return dispatchNumberArray( array, param );
     }
 
-    protected T dispatchIntegerArrayProperty( PropertyArray<int[], Integer> array, K param )
+	protected T dispatchIntegerArrayProperty( PropertyArray<int[], Integer> array, K param )
     {
         return dispatchNumberArray( array, param );
     }
 
-    protected T dispatchLongArrayProperty( PropertyArray<long[], Long> array, K param )
+	protected T dispatchLongArrayProperty( PropertyArray<long[], Long> array, K param )
     {
         return dispatchNumberArray( array, param );
     }
 
-    protected T dispatchFloatArrayProperty( PropertyArray<float[], Float> array, K param )
+	protected T dispatchFloatArrayProperty( PropertyArray<float[], Float> array, K param )
     {
         return dispatchNumberArray( array, param );
     }
 
-    protected T dispatchDoubleArrayProperty( PropertyArray<double[], Double> array, K param )
+	protected T dispatchDoubleArrayProperty( PropertyArray<double[], Double> array, K param )
     {
         return dispatchNumberArray( array, param );
     }
 
-    protected T dispatchBooleanArrayProperty( PropertyArray<boolean[], Boolean> array, K param )
+	protected T dispatchBooleanArrayProperty( PropertyArray<boolean[], Boolean> array, K param )
     {
         return dispatchArray( array, param );
     }
 
-    protected T dispatchNumberArray( PropertyArray<?, ? extends Number> array, K param )
+	protected T dispatchNumberArray( PropertyArray<?, ? extends Number> array, K param )
     {
         return dispatchArray( array, param );
     }
 
-    protected T dispatchArray( PropertyArray<?, ?> array, K param )
+	protected T dispatchArray( PropertyArray<?, ?> array, K param )
     {
         throw new UnsupportedOperationException( "Unhandled array type: " + array.getType() );
+    }
+
+	public abstract static class PropertyArray<A, T> implements Iterable<T>
+    {
+        private PropertyArray()
+        {
+        }
+
+        public abstract int length();
+
+        public abstract A getClonedArray();
+
+        public abstract Class<?> getType();
     }
 
     private abstract static class BoxedArray<A, T> extends PropertyArray<A, T>

@@ -43,7 +43,38 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
 {
     // DEPRECATED PRE-PARSER OPTIONS
 
-    @Test
+    private Matcher<Notification> deprecatedFeatureWarning =
+            deprecation( "The query used a deprecated function." );
+
+	private Matcher<Notification> deprecatedRulePlanner =
+            deprecation( new StringBuilder().append("The rule planner, which was used to plan this query, is deprecated and will ").append("be discontinued soon. If you did not explicitly choose the rule planner, ").append("you should try to change your query so that the rule planner is not used").toString() );
+
+	private Matcher<Notification> deprecatedCompiledRuntime =
+            deprecation( "The compiled runtime, which was requested to execute this query, is deprecated " +
+                         "and will be removed in a future release." );
+
+	private Matcher<Notification> deprecatedStartWarning =
+            deprecation( "START has been deprecated and will be removed in a future version. " );
+
+	private Matcher<Notification> deprecatedCreateUnique =
+            deprecation( "CREATE UNIQUE is deprecated and will be removed in a future version." );
+
+	private Matcher<Notification> deprecatedProcedureWarning =
+            deprecation( "The query used a deprecated procedure." );
+
+	private Matcher<Notification> deprecatedProcedureReturnFieldWarning =
+            deprecation( "The query used a deprecated field from a procedure." );
+
+	private Matcher<Notification> deprecatedBindingWarning =
+            deprecation( "Binding relationships to a list in a variable length pattern is deprecated." );
+
+	private Matcher<Notification> deprecatedSeparatorWarning =
+            deprecation( new StringBuilder().append("The semantics of using colon in the separation of alternative relationship ").append("types in conjunction with the use of variable binding, inlined property ").append("predicates, or variable length will change in a future version.").toString() );
+
+	private Matcher<Notification> deprecatedParameterSyntax =
+            deprecation( "The parameter syntax `{param}` is deprecated, please use `$param` instead" );
+
+	@Test
     public void deprecatedRulePlanner()
     {
         // when
@@ -54,7 +85,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
         result.close();
     }
 
-    @Test
+	@Test
     public void deprecatedCompiledRuntime()
     {
         // when
@@ -65,9 +96,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
         result.close();
     }
 
-    // DEPRECATED FUNCTIONS
-
-    @Test
+	@Test
     public void deprecatedToInt()
     {
         Stream.of( "CYPHER 3.1", "CYPHER 3.5" )
@@ -75,7 +104,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
                                                           containsItem( deprecatedFeatureWarning ) ) );
     }
 
-    @Test
+	@Test
     public void deprecatedUpper()
     {
         Stream.of( "CYPHER 3.1", "CYPHER 3.5" )
@@ -83,7 +112,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
                                                           containsItem( deprecatedFeatureWarning ) ) );
     }
 
-    @Test
+	@Test
     public void deprecatedLower()
     {
         Stream.of( "CYPHER 3.1", "CYPHER 3.5" )
@@ -91,7 +120,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
                                                           containsItem( deprecatedFeatureWarning ) ) );
     }
 
-    @Test
+	@Test
     public void deprecatedRels()
     {
         Stream.of( "CYPHER 3.1", "CYPHER 3.5" )
@@ -99,34 +128,34 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
                                                           containsItem( deprecatedFeatureWarning ) ) );
     }
 
-    @Test
+	@Test
     public void deprecatedFilter()
     {
         assertNotifications( "EXPLAIN WITH [1,2,3] AS list RETURN filter(x IN list WHERE x % 2 = 1) AS odds",
                                                           containsItem( deprecatedFeatureWarning ) );
     }
 
-    @Test
+	@Test
     public void deprecatedExtract()
     {
         assertNotifications( "EXPLAIN WITH [1,2,3] AS list RETURN extract(x IN list | x * 10) AS tens",
                              containsItem( deprecatedFeatureWarning ) );
     }
 
-    @Test
+	@Test
     public void deprecatedParameterSyntax()
     {
         assertNotifications( "EXPLAIN RETURN {param} AS parameter",
                 containsItem( deprecatedParameterSyntax ) );
     }
 
-    @Test
+	@Test
     public void deprecatedParameterSyntaxForPropertyMap()
     {
         assertNotifications( "EXPLAIN CREATE (:Label {props})", containsItem( deprecatedParameterSyntax ) );
     }
 
-    @Test
+	@Test
     public void deprecatedFilterShouldNotHitCacheForNewVersion()
     {
         assertNotifications( "EXPLAIN WITH [1,2,3] AS list RETURN filter(x IN list WHERE x % 2 = 1) AS odds",
@@ -139,7 +168,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
 
     }
 
-    @Test
+	@Test
     public void deprecatedExtractShouldNotHitCacheForNewVersion()
     {
         assertNotifications( "EXPLAIN WITH [1,2,3] AS list RETURN extract(x IN list | x * 10) AS tens",
@@ -151,7 +180,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
         }
     }
 
-    @Test
+	@Test
     public void deprecatedProcedureCalls() throws Exception
     {
         db().getDependencyResolver().provideDependency( Procedures.class ).get().registerProcedure( TestProcedures.class );
@@ -164,9 +193,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
                                                          } );
     }
 
-    // DEPRECATED PROCEDURE THINGS
-
-    @Test
+	@Test
     public void deprecatedProcedureResultField() throws Exception
     {
         db().getDependencyResolver().provideDependency( Procedures.class ).get().registerProcedure( TestProcedures.class );
@@ -177,27 +204,25 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
                 ) );
     }
 
-    // DEPRECATED START
-
-    @Test
+	@Test
     public void deprecatedStartAllNodeScan()
     {
         assertNotifications( "EXPLAIN START n=node(*) RETURN n", containsItem( deprecatedStartWarning ) );
     }
 
-    @Test
+	@Test
     public void deprecatedStartNodeById()
     {
         assertNotifications( "EXPLAIN START n=node(1337) RETURN n", containsItem( deprecatedStartWarning ) );
     }
 
-    @Test
+	@Test
     public void deprecatedStartNodeByIds()
     {
         assertNotifications( "EXPLAIN START n=node(42,1337) RETURN n", containsItem( deprecatedStartWarning ) );
     }
 
-    @Test
+	@Test
     public void deprecatedStartNodeIndexSeek()
     {
         try ( Transaction ignore = db().beginTx() )
@@ -207,7 +232,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
         assertNotifications( "EXPLAIN START n=node:index(key = 'value') RETURN n", containsItem( deprecatedStartWarning ) );
     }
 
-    @Test
+	@Test
     public void deprecatedStartNodeIndexSearch()
     {
         try ( Transaction ignore = db().beginTx() )
@@ -217,25 +242,25 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
         assertNotifications( "EXPLAIN START n=node:index('key:value*') RETURN n", containsItem( deprecatedStartWarning ) );
     }
 
-    @Test
+	@Test
     public void deprecatedStartAllRelScan()
     {
         assertNotifications( "EXPLAIN START r=relationship(*) RETURN r", containsItem( deprecatedStartWarning ) );
     }
 
-    @Test
+	@Test
     public void deprecatedStartRelById()
     {
         assertNotifications( "EXPLAIN START r=relationship(1337) RETURN r", containsItem( deprecatedStartWarning ) );
     }
 
-    @Test
+	@Test
     public void deprecatedStartRelByIds()
     {
         assertNotifications( "EXPLAIN START r=relationship(42,1337) RETURN r", containsItem( deprecatedStartWarning ) );
     }
 
-    @Test
+	@Test
     public void deprecatedStartRelIndexSeek()
     {
         try ( Transaction ignore = db().beginTx() )
@@ -245,7 +270,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
         assertNotifications( "EXPLAIN START r=relationship:index(key = 'value') RETURN r", containsItem( deprecatedStartWarning ) );
     }
 
-    @Test
+	@Test
     public void deprecatedStartRelIndexSearch()
     {
         try ( Transaction ignore = db().beginTx() )
@@ -255,9 +280,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
         assertNotifications( "EXPLAIN START r=relationship:index('key:value*') RETURN r", containsItem( deprecatedStartWarning ) );
     }
 
-    // DEPRECATED CREATE UNIQUE
-
-    @Test
+	@Test
     public void shouldNotifyWhenUsingCreateUniqueWhenCypherVersionIsDefault()
     {
         // when
@@ -268,7 +291,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
         result.close();
     }
 
-    @Test
+	@Test
     public void shouldNotifyWhenUsingCreateUniqueWhenCypherVersionIs3_5()
     {
         // when
@@ -280,9 +303,7 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
         result.close();
     }
 
-    // DEPRECATED SYNTAX
-
-    @Test
+	@Test
     public void deprecatedFutureAmbiguousRelTypeSeparator()
     {
         List<String> deprecatedQueries = Arrays.asList( "explain MATCH (a)-[:A|:B|:C {foo:'bar'}]-(b) RETURN a,b", "explain MATCH (a)-[x:A|:B|:C]-() RETURN a",
@@ -292,18 +313,12 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
                 Arrays.asList( "explain MATCH (a)-[:A|B|C {foo:'bar'}]-(b) RETURN a,b", "explain MATCH (a)-[:A|:B|:C]-(b) RETURN a,b",
                                "explain MATCH (a)-[:A|B|C]-(b) RETURN a,b" );
 
-        for ( String query : deprecatedQueries )
-        {
-            assertNotifications( "CYPHER 3.5 " + query, containsItem( deprecatedSeparatorWarning ) );
-        }
+        deprecatedQueries.forEach(query -> assertNotifications("CYPHER 3.5 " + query, containsItem(deprecatedSeparatorWarning)));
 
-        for ( String query : nonDeprecatedQueries )
-        {
-            assertNotifications( "CYPHER 3.5 " + query, containsNoItem( deprecatedSeparatorWarning ) );
-        }
+        nonDeprecatedQueries.forEach(query -> assertNotifications("CYPHER 3.5 " + query, containsNoItem(deprecatedSeparatorWarning)));
     }
 
-    @Test
+	@Test
     public void deprecatedBindingVariableLengthRelationship()
     {
         assertNotifications( "CYPHER 3.5 explain MATCH ()-[rs*]-() RETURN rs", containsItem( deprecatedBindingWarning
@@ -312,6 +327,34 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
         assertNotifications( "CYPHER 3.5 explain MATCH p = ()-[*]-() RETURN relationships(p) AS rs", containsNoItem(
                 deprecatedBindingWarning ) );
     }
+
+	private Matcher<Notification> deprecation( String message )
+    {
+        return notification( "Neo.ClientNotification.Statement.FeatureDeprecationWarning",
+                             containsString( message ), any( InputPosition.class ), SeverityLevel.WARNING );
+    }
+
+	
+
+    // DEPRECATED FUNCTIONS
+
+    
+
+    // DEPRECATED PROCEDURE THINGS
+
+    
+
+    // DEPRECATED START
+
+    
+
+    // DEPRECATED CREATE UNIQUE
+
+    
+
+    // DEPRECATED SYNTAX
+
+    
 
     // MATCHERS & HELPERS
 
@@ -341,46 +384,5 @@ public class DeprecationAcceptanceTest extends NotificationTestSupport
         {
             return Stream.of( new ChangedResults() );
         }
-    }
-
-    private Matcher<Notification> deprecatedFeatureWarning =
-            deprecation( "The query used a deprecated function." );
-
-    private Matcher<Notification> deprecatedRulePlanner =
-            deprecation( "The rule planner, which was used to plan this query, is deprecated and will " +
-                         "be discontinued soon. If you did not explicitly choose the rule planner, " +
-                         "you should try to change your query so that the rule planner is not used" );
-
-    private Matcher<Notification> deprecatedCompiledRuntime =
-            deprecation( "The compiled runtime, which was requested to execute this query, is deprecated " +
-                         "and will be removed in a future release." );
-
-    private Matcher<Notification> deprecatedStartWarning =
-            deprecation( "START has been deprecated and will be removed in a future version. " );
-
-    private Matcher<Notification> deprecatedCreateUnique =
-            deprecation( "CREATE UNIQUE is deprecated and will be removed in a future version." );
-
-    private Matcher<Notification> deprecatedProcedureWarning =
-            deprecation( "The query used a deprecated procedure." );
-
-    private Matcher<Notification> deprecatedProcedureReturnFieldWarning =
-            deprecation( "The query used a deprecated field from a procedure." );
-
-    private Matcher<Notification> deprecatedBindingWarning =
-            deprecation( "Binding relationships to a list in a variable length pattern is deprecated." );
-
-    private Matcher<Notification> deprecatedSeparatorWarning =
-            deprecation( "The semantics of using colon in the separation of alternative relationship " +
-                         "types in conjunction with the use of variable binding, inlined property " +
-                         "predicates, or variable length will change in a future version." );
-
-    private Matcher<Notification> deprecatedParameterSyntax =
-            deprecation( "The parameter syntax `{param}` is deprecated, please use `$param` instead" );
-
-    private Matcher<Notification> deprecation( String message )
-    {
-        return notification( "Neo.ClientNotification.Statement.FeatureDeprecationWarning",
-                             containsString( message ), any( InputPosition.class ), SeverityLevel.WARNING );
     }
 }

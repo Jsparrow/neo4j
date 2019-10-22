@@ -59,8 +59,7 @@ public class FailedIndexProxy extends AbstractSwallowingIndexProxy
     public void drop()
     {
         indexCountsRemover.remove();
-        String message = "FailedIndexProxy#drop index on " + indexUserDescription + " dropped due to:\n" +
-                     getPopulationFailure().asString();
+        String message = new StringBuilder().append("FailedIndexProxy#drop index on ").append(indexUserDescription).append(" dropped due to:\n").append(getPopulationFailure().asString()).toString();
         log.info( message );
         populator.drop();
     }

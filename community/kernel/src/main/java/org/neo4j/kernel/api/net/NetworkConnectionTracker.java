@@ -28,16 +28,6 @@ import static java.util.Collections.emptyList;
  */
 public interface NetworkConnectionTracker
 {
-    String newConnectionId( String connector );
-
-    void add( TrackedNetworkConnection connection );
-
-    void remove( TrackedNetworkConnection connection );
-
-    TrackedNetworkConnection get( String id );
-
-    List<TrackedNetworkConnection> activeConnections();
-
     NetworkConnectionTracker NO_OP = new NetworkConnectionTracker()
     {
         private final NetworkConnectionIdGenerator idGenerator = new NetworkConnectionIdGenerator();
@@ -71,4 +61,14 @@ public interface NetworkConnectionTracker
             return emptyList();
         }
     };
+
+	String newConnectionId( String connector );
+
+	void add( TrackedNetworkConnection connection );
+
+	void remove( TrackedNetworkConnection connection );
+
+	TrackedNetworkConnection get( String id );
+
+	List<TrackedNetworkConnection> activeConnections();
 }

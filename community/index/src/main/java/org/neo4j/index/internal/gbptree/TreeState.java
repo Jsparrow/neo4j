@@ -294,9 +294,7 @@ class TreeState
     @Override
     public String toString()
     {
-        return String.format( "pageId=%d, stableGeneration=%d, unstableGeneration=%d, rootId=%d, rootGeneration=%d, " +
-                "lastId=%d, freeListWritePageId=%d, freeListReadPageId=%d, freeListWritePos=%d, freeListReadPos=%d, " +
-                "clean=%b, valid=%b",
+        return String.format( new StringBuilder().append("pageId=%d, stableGeneration=%d, unstableGeneration=%d, rootId=%d, rootGeneration=%d, ").append("lastId=%d, freeListWritePageId=%d, freeListReadPageId=%d, freeListWritePos=%d, freeListReadPos=%d, ").append("clean=%b, valid=%b").toString(),
                 pageId, stableGeneration, unstableGeneration, rootId, rootGeneration, lastId,
                 freeListWritePageId, freeListReadPageId, freeListWritePos, freeListReadPos, clean, valid );
     }

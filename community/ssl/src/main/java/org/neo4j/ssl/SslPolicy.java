@@ -186,18 +186,13 @@ public class SslPolicy
     @Override
     public String toString()
     {
-        return "SslPolicy{" +
-               "keyCertChain=" + describeCertChain() +
-               ", ciphers=" + ciphers +
-               ", tlsVersions=" + Arrays.toString( tlsVersions ) +
-               ", clientAuth=" + clientAuth +
-               '}';
+        return new StringBuilder().append("SslPolicy{").append("keyCertChain=").append(describeCertChain()).append(", ciphers=").append(ciphers).append(", tlsVersions=")
+				.append(Arrays.toString( tlsVersions )).append(", clientAuth=").append(clientAuth).append('}').toString();
     }
 
     private String describeCertificate( X509Certificate certificate )
     {
-        return "Subject: " + certificate.getSubjectDN() +
-               ", Issuer: " + certificate.getIssuerDN();
+        return new StringBuilder().append("Subject: ").append(certificate.getSubjectDN()).append(", Issuer: ").append(certificate.getIssuerDN()).toString();
     }
 
     private String describeCertChain()

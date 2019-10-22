@@ -30,16 +30,15 @@ import org.neo4j.kernel.api.exceptions.InvalidArgumentsException;
 class QueryCollectorConfig
 {
     private static final IntOption DURATION_SECONDS = new IntOption( "durationSeconds", -1 );
+	final int collectSeconds;
 
-    static QueryCollectorConfig of( Map<String, Object> userMap ) throws InvalidArgumentsException
-    {
-        return new QueryCollectorConfig( DURATION_SECONDS.parseOrDefault( userMap ) );
-    }
-
-    final int collectSeconds;
-
-    private QueryCollectorConfig( int collectSeconds )
+	private QueryCollectorConfig( int collectSeconds )
     {
         this.collectSeconds = collectSeconds;
+    }
+
+	static QueryCollectorConfig of( Map<String, Object> userMap ) throws InvalidArgumentsException
+    {
+        return new QueryCollectorConfig( DURATION_SECONDS.parseOrDefault( userMap ) );
     }
 }

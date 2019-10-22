@@ -63,7 +63,7 @@ public class KernelToken implements Token
             // Temporary workaround for the property store based label implementation.
             // Actual implementation should not depend on internal kernel exception messages like this.
             if ( e.getCause() instanceof UnderlyingStorageException &&
-                    e.getCause().getMessage().equals( "Id capacity exceeded" ) )
+                    "Id capacity exceeded".equals( e.getCause().getMessage() ) )
             {
                 throw new TooManyLabelsException( e );
             }
@@ -84,7 +84,7 @@ public class KernelToken implements Token
             // Temporary workaround for the property store based label implementation.
             // Actual implementation should not depend on internal kernel exception messages like this.
             if ( e.getCause() instanceof UnderlyingStorageException &&
-                    e.getCause().getMessage().equals( "Id capacity exceeded" ) )
+                    "Id capacity exceeded".equals( e.getCause().getMessage() ) )
             {
                 throw new TooManyLabelsException( e );
             }

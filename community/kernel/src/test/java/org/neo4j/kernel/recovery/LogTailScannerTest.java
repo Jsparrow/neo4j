@@ -521,7 +521,44 @@ public class LogTailScannerTest
         };
     }
 
-    interface LogCreator
+    private static StartEntry start()
+    {
+        return new StartEntry();
+    }
+
+	private static CommitEntry commit( long txId )
+    {
+        return new CommitEntry( txId );
+    }
+
+	private static CheckPointEntry checkPoint()
+    {
+        return checkPoint( null/*means self-position*/ );
+    }
+
+	private static CheckPointEntry checkPoint( Entry forEntry )
+    {
+        return new CheckPointEntry( forEntry );
+    }
+
+	private static PositionEntry position()
+    {
+        return new PositionEntry();
+    }
+
+	private void assertLatestCheckPoint( boolean hasCheckPointEntry, boolean commitsAfterLastCheckPoint,
+            long firstTxIdAfterLastCheckPoint, long logVersion, LogTailInformation logTailInformation )
+    {
+        assertEquals( hasCheckPointEntry, logTailInformation.lastCheckPoint != null );
+        assertEquals( commitsAfterLastCheckPoint, logTailInformation.commitsAfterLastCheckpoint() );
+        if ( commitsAfterLastCheckPoint )
+        {
+            assertEquals( firstTxIdAfterLastCheckPoint, logTailInformation.firstTxIdAfterLastCheckPoint );
+        }
+        assertEquals( logVersion, logTailInformation.oldestLogVersionFound );
+    }
+
+	interface LogCreator
     {
         void create( long version, Map<Entry,LogPosition> positions );
     }
@@ -529,31 +566,6 @@ public class LogTailScannerTest
     // Marker interface, helping compilation/test creation
     interface Entry
     {
-    }
-
-    private static StartEntry start()
-    {
-        return new StartEntry();
-    }
-
-    private static CommitEntry commit( long txId )
-    {
-        return new CommitEntry( txId );
-    }
-
-    private static CheckPointEntry checkPoint()
-    {
-        return checkPoint( null/*means self-position*/ );
-    }
-
-    private static CheckPointEntry checkPoint( Entry forEntry )
-    {
-        return new CheckPointEntry( forEntry );
-    }
-
-    private static PositionEntry position()
-    {
-        return new PositionEntry();
     }
 
     private static class StartEntry implements Entry
@@ -582,18 +594,6 @@ public class LogTailScannerTest
 
     private static class PositionEntry implements Entry
     {
-    }
-
-    private void assertLatestCheckPoint( boolean hasCheckPointEntry, boolean commitsAfterLastCheckPoint,
-            long firstTxIdAfterLastCheckPoint, long logVersion, LogTailInformation logTailInformation )
-    {
-        assertEquals( hasCheckPointEntry, logTailInformation.lastCheckPoint != null );
-        assertEquals( commitsAfterLastCheckPoint, logTailInformation.commitsAfterLastCheckpoint() );
-        if ( commitsAfterLastCheckPoint )
-        {
-            assertEquals( firstTxIdAfterLastCheckPoint, logTailInformation.firstTxIdAfterLastCheckPoint );
-        }
-        assertEquals( logVersion, logTailInformation.oldestLogVersionFound );
     }
 
     private static class FirstTxIdConfigurableTailScanner extends LogTailScanner

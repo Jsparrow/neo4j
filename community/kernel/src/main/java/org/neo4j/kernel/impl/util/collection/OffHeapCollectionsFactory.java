@@ -85,10 +85,10 @@ public class OffHeapCollectionsFactory implements CollectionsFactory
     {
         resources.forEach( Resource::close );
         resources.clear();
-        if ( valuesContainer != null )
-        {
-            valuesContainer.close();
-            valuesContainer = null;
-        }
+        if (valuesContainer == null) {
+			return;
+		}
+		valuesContainer.close();
+		valuesContainer = null;
     }
 }

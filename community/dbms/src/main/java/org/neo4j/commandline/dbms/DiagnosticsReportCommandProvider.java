@@ -61,11 +61,7 @@ public class DiagnosticsReportCommandProvider extends AdminCommand.Provider
     @Override
     public String description()
     {
-        return "Will collect information about the system and package everything in an archive. If you specify 'all', " +
-                "everything will be included. You can also fine tune the selection by passing classifiers to the tool, " +
-                "e.g 'logs tx threads'. For a complete list of all available classifiers call the tool with " +
-                "the '--list' flag. If no classifiers are passed, the default list of `" +
-                String.join( " ", DEFAULT_CLASSIFIERS ) + "` will be used." ;
+        return new StringBuilder().append("Will collect information about the system and package everything in an archive. If you specify 'all', ").append("everything will be included. You can also fine tune the selection by passing classifiers to the tool, ").append("e.g 'logs tx threads'. For a complete list of all available classifiers call the tool with ").append("the '--list' flag. If no classifiers are passed, the default list of `").append(String.join( " ", DEFAULT_CLASSIFIERS )).append("` will be used.").toString() ;
     }
 
     @Nonnull

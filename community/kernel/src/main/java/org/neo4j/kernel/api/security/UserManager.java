@@ -30,28 +30,7 @@ public interface UserManager
 {
     String INITIAL_USER_NAME = "neo4j";
     String INITIAL_PASSWORD = "neo4j";
-
-    /**
-     * NOTE: The initialPassword byte array will be cleared (overwritten with zeroes)
-     */
-    User newUser( String username, byte[] initialPassword, boolean requirePasswordChange )
-            throws IOException, InvalidArgumentsException;
-
-    boolean deleteUser( String username ) throws IOException, InvalidArgumentsException;
-
-    User getUser( String username ) throws InvalidArgumentsException;
-
-    User silentlyGetUser( String username );
-
-    /**
-     * NOTE: The password byte array will be cleared (overwritten with zeroes)
-     */
-    void setUserPassword( String username, byte[] password, boolean requirePasswordChange )
-            throws IOException, InvalidArgumentsException;
-
-    Set<String> getAllUsernames();
-
-    UserManager NO_AUTH = new UserManager()
+	UserManager NO_AUTH = new UserManager()
     {
         @Override
         public User newUser( String username, byte[] initialPassword, boolean requirePasswordChange )
@@ -96,4 +75,24 @@ public interface UserManager
             return null;
         }
     };
+
+	/**
+     * NOTE: The initialPassword byte array will be cleared (overwritten with zeroes)
+     */
+    User newUser( String username, byte[] initialPassword, boolean requirePasswordChange )
+            throws IOException, InvalidArgumentsException;
+
+	boolean deleteUser( String username ) throws IOException, InvalidArgumentsException;
+
+	User getUser( String username ) throws InvalidArgumentsException;
+
+	User silentlyGetUser( String username );
+
+	/**
+     * NOTE: The password byte array will be cleared (overwritten with zeroes)
+     */
+    void setUserPassword( String username, byte[] password, boolean requirePasswordChange )
+            throws IOException, InvalidArgumentsException;
+
+	Set<String> getAllUsernames();
 }

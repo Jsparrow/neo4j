@@ -100,16 +100,16 @@ class PropertyEntryImpl<T extends PropertyContainer> implements PropertyEntry<T>
     @Override
     public String toString()
     {
-        return "PropertyEntry[entity=" + entity + ", key=" + key + ", value=" + value + ", valueBeforeTx="
-                + valueBeforeTx + "]";
+        return new StringBuilder().append("PropertyEntry[entity=").append(entity).append(", key=").append(key).append(", value=").append(value).append(", valueBeforeTx=")
+				.append(valueBeforeTx).append("]").toString();
     }
 
     public static <T extends PropertyContainer> void assertEqualsMaybeNull( Object o1, Object o2, T entity, String key )
     {
-        String entityDescription = "For " + entity + " and " + key;
+        String entityDescription = new StringBuilder().append("For ").append(entity).append(" and ").append(key).toString();
         if ( o1 == null || o2 == null )
         {
-            assertSame( entityDescription + ". " + Strings.prettyPrint( o1 ) + " != " + Strings.prettyPrint( o2 ), o1, o2 );
+            assertSame( new StringBuilder().append(entityDescription).append(". ").append(Strings.prettyPrint( o1 )).append(" != ").append(Strings.prettyPrint( o2 )).toString(), o1, o2 );
         }
         else
         {

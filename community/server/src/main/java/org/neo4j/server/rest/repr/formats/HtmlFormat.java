@@ -44,7 +44,148 @@ public class HtmlFormat extends RepresentationFormat
         super( MediaType.TEXT_HTML_TYPE );
     }
 
-    private enum MappingTemplate
+    private static void transfer( Map<?, ?> from, Map<Object, Object> to, String... keys )
+    {
+        for ( String key : keys )
+        {
+            Object value = from.get( key );
+            if ( value != null )
+            {
+                to.put( key, value );
+            }
+        }
+    }
+
+	private static String renderIndex( Map<String, Object> serialized )
+    {
+        String javascript = "";
+        StringBuilder builder = HtmlHelper.start( HtmlHelper.ObjectType.INDEX_ROOT, javascript );
+        int counter = 0;
+        for ( String indexName : serialized.keySet() )
+        {
+            Map<?, ?> indexMapObject = (Map<?, ?>) serialized.get( indexName );
+            builder.append( "<ul>" );
+            {
+                builder.append( "<li>" );
+                Map<?, ?> indexMap = indexMapObject;
+                String keyId = "key_" + counter;
+                String valueId = "value_" + counter;
+                builder.append( "<form action='javascript:neo4jHtmlBrowse.search(\"" )
+                        .append( indexMap.get( "template" ) )
+                        .append( "\",\"" )
+                        .append( keyId )
+                        .append( "\",\"" )
+                        .append( valueId )
+                        .append( "\");'><fieldset><legend> name: " )
+                        .append( indexName )
+                        .append( " (configuration: " )
+                        .append( indexMap.get( "type" ) )
+                        .append( ")</legend>\n" );
+                builder.append( "<label for='" )
+                        .append( keyId )
+                        .append( "'>Key</label><input id='" )
+                        .append( keyId )
+                        .append( "'>\n" );
+                builder.append( "<label for='" )
+                        .append( valueId )
+                        .append( "'>Value</label><input id='" )
+                        .append( valueId )
+                        .append( "'>\n" );
+                builder.append( "<button>Search</button>\n" );
+                builder.append( "</fieldset></form>\n" );
+                builder.append( "</li>\n" );
+                counter++;
+            }
+            builder.append( "</ul>" );
+        }
+        return HtmlHelper.end( builder );
+    }
+
+	@Override
+    protected String complete( ListWriter serializer )
+    {
+        return ( (HtmlList) serializer ).complete();
+    }
+
+	@Override
+    protected String complete( MappingWriter serializer )
+    {
+        return ( (HtmlMap) serializer ).complete();
+    }
+
+	@Override
+    protected ListWriter serializeList( String type )
+    {
+        if ( Representation.NODE_LIST.equals( type ) )
+        {
+            return new HtmlList( ListTemplate.NODES );
+        }
+        else if ( Representation.RELATIONSHIP_LIST.equals( type ) )
+        {
+            return new HtmlList( ListTemplate.RELATIONSHIPS );
+        }
+        else
+        {
+            throw new WebApplicationException( Response.status( Response.Status.NOT_ACCEPTABLE )
+                    .entity( new StringBuilder().append("Cannot represent \"").append(type).append("\" as html").toString() )
+                    .build() );
+        }
+    }
+
+	@Override
+    protected MappingWriter serializeMapping( String type )
+    {
+        MappingTemplate template = MappingTemplate.TEMPLATES.get( type );
+        if ( template == null )
+        {
+            throw new WebApplicationException( Response.status( Response.Status.NOT_ACCEPTABLE )
+                    .entity( new StringBuilder().append("Cannot represent \"").append(type).append("\" as html").toString() )
+                    .build() );
+        }
+        return new HtmlMap( template );
+    }
+
+	@Override
+    protected String serializeValue( String type, Object value )
+    {
+        throw new WebApplicationException( Response.status( Response.Status.NOT_ACCEPTABLE )
+                .entity( new StringBuilder().append("Cannot represent \"").append(type).append("\" as html").toString() )
+                .build() );
+    }
+
+	@Override
+    public List<Object> readList( String input )
+    {
+        throw new WebApplicationException( Response.status( Response.Status.UNSUPPORTED_MEDIA_TYPE )
+                .entity( "Cannot read html" )
+                .build() );
+    }
+
+	@Override
+    public Map<String, Object> readMap( String input, String... requiredKeys )
+    {
+        throw new WebApplicationException( Response.status( Response.Status.UNSUPPORTED_MEDIA_TYPE )
+                .entity( "Cannot read html" )
+                .build() );
+    }
+
+	@Override
+    public URI readUri( String input )
+    {
+        throw new WebApplicationException( Response.status( Response.Status.UNSUPPORTED_MEDIA_TYPE )
+                .entity( "Cannot read html" )
+                .build() );
+    }
+
+	@Override
+    public Object readValue( String input )
+    {
+        throw new WebApplicationException( Response.status( Response.Status.UNSUPPORTED_MEDIA_TYPE )
+                .entity( "Cannot read html" )
+                .build() );
+    }
+
+	private enum MappingTemplate
     {
         NODE( Representation.NODE )
         {
@@ -70,14 +211,13 @@ public class HtmlFormat extends RepresentationFormat
                 builder.append( "</select>\n" );
                 builder.append( "<label for='types'>for type(s)</label><select id='types' multiple='multiple'>" );
 
-                for ( String relationshipType : (List<String>) serialized.get( "relationship_types" ) )
-                {
+                ((List<String>) serialized.get( "relationship_types" )).forEach(relationshipType -> {
                     builder.append( "<option selected='selected' value='" )
                             .append( relationshipType )
                             .append( "'>" );
                     builder.append( relationshipType )
                             .append( "</option>" );
-                }
+                });
                 builder.append( "</select>\n" );
                 builder.append( "<button>Get</button>\n" );
                 builder.append( "</fieldset></form>\n" );
@@ -140,10 +280,7 @@ public class HtmlFormat extends RepresentationFormat
                 List<Object> tb = (List<Object>) serialized.get( "stackTrace" );
                 if ( tb != null )
                 {
-                    for ( Object el : tb )
-                    {
-                        entity.append( "\n\tat " + el );
-                    }
+                    tb.forEach(el -> entity.append("\n\tat " + el));
                 }
                 entity.append( "</pre></p>" )
                         .append( "</body></html>" );
@@ -169,7 +306,7 @@ public class HtmlFormat extends RepresentationFormat
         abstract String render( Map<String, Object> data );
     }
 
-    private enum ListTemplate
+	private enum ListTemplate
     {
         NODES
         {
@@ -222,64 +359,7 @@ public class HtmlFormat extends RepresentationFormat
         abstract String render( List<Object> data );
     }
 
-    private static void transfer( Map<?, ?> from, Map<Object, Object> to, String... keys )
-    {
-        for ( String key : keys )
-        {
-            Object value = from.get( key );
-            if ( value != null )
-            {
-                to.put( key, value );
-            }
-        }
-    }
-
-    private static String renderIndex( Map<String, Object> serialized )
-    {
-        String javascript = "";
-        StringBuilder builder = HtmlHelper.start( HtmlHelper.ObjectType.INDEX_ROOT, javascript );
-        int counter = 0;
-        for ( String indexName : serialized.keySet() )
-        {
-            Map<?, ?> indexMapObject = (Map<?, ?>) serialized.get( indexName );
-            builder.append( "<ul>" );
-            {
-                builder.append( "<li>" );
-                Map<?, ?> indexMap = indexMapObject;
-                String keyId = "key_" + counter;
-                String valueId = "value_" + counter;
-                builder.append( "<form action='javascript:neo4jHtmlBrowse.search(\"" )
-                        .append( indexMap.get( "template" ) )
-                        .append( "\",\"" )
-                        .append( keyId )
-                        .append( "\",\"" )
-                        .append( valueId )
-                        .append( "\");'><fieldset><legend> name: " )
-                        .append( indexName )
-                        .append( " (configuration: " )
-                        .append( indexMap.get( "type" ) )
-                        .append( ")</legend>\n" );
-                builder.append( "<label for='" )
-                        .append( keyId )
-                        .append( "'>Key</label><input id='" )
-                        .append( keyId )
-                        .append( "'>\n" );
-                builder.append( "<label for='" )
-                        .append( valueId )
-                        .append( "'>Value</label><input id='" )
-                        .append( valueId )
-                        .append( "'>\n" );
-                builder.append( "<button>Search</button>\n" );
-                builder.append( "</fieldset></form>\n" );
-                builder.append( "</li>\n" );
-                counter++;
-            }
-            builder.append( "</ul>" );
-        }
-        return HtmlHelper.end( builder );
-    }
-
-    private static class HtmlMap extends MapWrappingWriter
+	private static class HtmlMap extends MapWrappingWriter
     {
         private final MappingTemplate template;
 
@@ -309,89 +389,5 @@ public class HtmlFormat extends RepresentationFormat
         {
             return template.render( this.data );
         }
-    }
-
-    @Override
-    protected String complete( ListWriter serializer )
-    {
-        return ( (HtmlList) serializer ).complete();
-    }
-
-    @Override
-    protected String complete( MappingWriter serializer )
-    {
-        return ( (HtmlMap) serializer ).complete();
-    }
-
-    @Override
-    protected ListWriter serializeList( String type )
-    {
-        if ( Representation.NODE_LIST.equals( type ) )
-        {
-            return new HtmlList( ListTemplate.NODES );
-        }
-        else if ( Representation.RELATIONSHIP_LIST.equals( type ) )
-        {
-            return new HtmlList( ListTemplate.RELATIONSHIPS );
-        }
-        else
-        {
-            throw new WebApplicationException( Response.status( Response.Status.NOT_ACCEPTABLE )
-                    .entity( "Cannot represent \"" + type + "\" as html" )
-                    .build() );
-        }
-    }
-
-    @Override
-    protected MappingWriter serializeMapping( String type )
-    {
-        MappingTemplate template = MappingTemplate.TEMPLATES.get( type );
-        if ( template == null )
-        {
-            throw new WebApplicationException( Response.status( Response.Status.NOT_ACCEPTABLE )
-                    .entity( "Cannot represent \"" + type + "\" as html" )
-                    .build() );
-        }
-        return new HtmlMap( template );
-    }
-
-    @Override
-    protected String serializeValue( String type, Object value )
-    {
-        throw new WebApplicationException( Response.status( Response.Status.NOT_ACCEPTABLE )
-                .entity( "Cannot represent \"" + type + "\" as html" )
-                .build() );
-    }
-
-    @Override
-    public List<Object> readList( String input )
-    {
-        throw new WebApplicationException( Response.status( Response.Status.UNSUPPORTED_MEDIA_TYPE )
-                .entity( "Cannot read html" )
-                .build() );
-    }
-
-    @Override
-    public Map<String, Object> readMap( String input, String... requiredKeys )
-    {
-        throw new WebApplicationException( Response.status( Response.Status.UNSUPPORTED_MEDIA_TYPE )
-                .entity( "Cannot read html" )
-                .build() );
-    }
-
-    @Override
-    public URI readUri( String input )
-    {
-        throw new WebApplicationException( Response.status( Response.Status.UNSUPPORTED_MEDIA_TYPE )
-                .entity( "Cannot read html" )
-                .build() );
-    }
-
-    @Override
-    public Object readValue( String input )
-    {
-        throw new WebApplicationException( Response.status( Response.Status.UNSUPPORTED_MEDIA_TYPE )
-                .entity( "Cannot read html" )
-                .build() );
     }
 }

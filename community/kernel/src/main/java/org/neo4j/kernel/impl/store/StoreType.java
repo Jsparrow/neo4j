@@ -220,7 +220,7 @@ public enum StoreType
         StoreType[] values = StoreType.values();
         for ( StoreType value : values )
         {
-            if ( value.getDatabaseFile().equals( databaseFile ) )
+            if ( value.getDatabaseFile() == databaseFile )
             {
                 return Optional.of( value );
             }

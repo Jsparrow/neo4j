@@ -53,8 +53,19 @@ public class GBPTreeFormatTest extends FormatCompatibilityVerifier
     private static final int INITIAL_KEY_COUNT = 10_000;
     private static final String CURRENT_FIXED_SIZE_FORMAT_ZIP = "current-format.zip";
     private static final String CURRENT_DYNAMIC_SIZE_FORMAT_ZIP = "current-dynamic-format.zip";
+	@Parameter
+    public SimpleLongLayout layout;
+	@Parameter( 1 )
+    public String zipName;
+	private final PageCacheRule pageCacheRule = new PageCacheRule();
+	private final RandomRule random = new RandomRule();
+	private final List<Long> initialKeys = initialKeys();
+	private final List<Long> keysToAdd = keysToAdd();
+	private List<Long> allKeys;
+	@Rule
+    public final RuleChain chain = RuleChain.outerRule( random ).around( pageCacheRule );
 
-    @Parameters
+	@Parameters
     public static List<Object[]> data()
     {
         return asList(
@@ -62,18 +73,7 @@ public class GBPTreeFormatTest extends FormatCompatibilityVerifier
                 new Object[] {longLayout().withFixedSize( false ).build(), CURRENT_DYNAMIC_SIZE_FORMAT_ZIP} );
     }
 
-    @Parameter
-    public SimpleLongLayout layout;
-    @Parameter( 1 )
-    public String zipName;
-
-    private final PageCacheRule pageCacheRule = new PageCacheRule();
-    private final RandomRule random = new RandomRule();
-    private final List<Long> initialKeys = initialKeys();
-    private final List<Long> keysToAdd = keysToAdd();
-    private List<Long> allKeys;
-
-    @Before
+	@Before
     public void setup()
     {
         allKeys = new ArrayList<>();
@@ -82,22 +82,19 @@ public class GBPTreeFormatTest extends FormatCompatibilityVerifier
         allKeys.sort( Long::compare );
     }
 
-    @Rule
-    public final RuleChain chain = RuleChain.outerRule( random ).around( pageCacheRule );
-
-    @Override
+	@Override
     protected String zipName()
     {
         return zipName;
     }
 
-    @Override
+	@Override
     protected String storeFileName()
     {
         return STORE;
     }
 
-    @Override
+	@Override
     protected void createStoreFile( File storeFile ) throws IOException
     {
         List<Long> initialKeys = initialKeys();
@@ -107,16 +104,13 @@ public class GBPTreeFormatTest extends FormatCompatibilityVerifier
         {
             try ( Writer<MutableLong,MutableLong> writer = tree.writer() )
             {
-                for ( Long key : initialKeys )
-                {
-                    put( writer, key );
-                }
+                initialKeys.forEach(key -> put(writer, key));
             }
             tree.checkpoint( IOLimiter.UNLIMITED );
         }
     }
 
-    /**
+	/**
      * Throws {@link FormatViolationException} if format has changed.
      */
     @SuppressWarnings( "EmptyTryBlock" )
@@ -134,7 +128,7 @@ public class GBPTreeFormatTest extends FormatCompatibilityVerifier
         }
     }
 
-    @Override
+	@Override
     public void verifyContent( File storeFile ) throws IOException
     {
         PageCache pageCache = pageCacheRule.getPageCache( globalFs.get() );
@@ -218,12 +212,12 @@ public class GBPTreeFormatTest extends FormatCompatibilityVerifier
         }
     }
 
-    private static long value( long key )
+	private static long value( long key )
     {
         return key * 2;
     }
 
-    private static List<Long> initialKeys()
+	private static List<Long> initialKeys()
     {
         List<Long> initialKeys = new ArrayList<>();
         for ( long i = 0, key = 0; i < INITIAL_KEY_COUNT; i++, key += 2 )
@@ -233,7 +227,7 @@ public class GBPTreeFormatTest extends FormatCompatibilityVerifier
         return initialKeys;
     }
 
-    private static List<Long> keysToAdd()
+	private static List<Long> keysToAdd()
     {
         List<Long> keysToAdd = new ArrayList<>();
         for ( long i = 0, key = 1; i < INITIAL_KEY_COUNT; i++, key += 2 )
@@ -243,7 +237,7 @@ public class GBPTreeFormatTest extends FormatCompatibilityVerifier
         return keysToAdd;
     }
 
-    private static void assertHit( RawCursor<Hit<MutableLong,MutableLong>,IOException> cursor, Long expectedKey ) throws IOException
+	private static void assertHit( RawCursor<Hit<MutableLong,MutableLong>,IOException> cursor, Long expectedKey ) throws IOException
     {
         assertTrue( "Had no next when expecting key " + expectedKey, cursor.next() );
         Hit<MutableLong,MutableLong> hit = cursor.get();
@@ -251,7 +245,7 @@ public class GBPTreeFormatTest extends FormatCompatibilityVerifier
         assertEquals( value( expectedKey ), hit.value().longValue() );
     }
 
-    private void put( Writer<MutableLong,MutableLong> writer, long key )
+	private void put( Writer<MutableLong,MutableLong> writer, long key )
     {
         MutableLong insertKey = layout.key( key );
         MutableLong insertValue = layout.value( value( key ) );

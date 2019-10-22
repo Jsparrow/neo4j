@@ -136,17 +136,6 @@ class UsageTest
         ordered.verifyNoMoreInteractions();
     }
 
-    private static class TestGeneralSection extends AdminCommandSection
-    {
-
-        @Override
-        @Nonnull
-        public String printable()
-        {
-            return "General";
-        }
-    }
-
     private static AdminCommand.Provider mockCommand( String name, String summary, AdminCommandSection section )
     {
         AdminCommand.Provider commandProvider = mock( AdminCommand.Provider.class );
@@ -157,5 +146,16 @@ class UsageTest
         when( commandProvider.description() ).thenReturn( "description" );
         when( commandProvider.commandSection() ).thenReturn( section );
         return commandProvider;
+    }
+
+	private static class TestGeneralSection extends AdminCommandSection
+    {
+
+        @Override
+        @Nonnull
+        public String printable()
+        {
+            return "General";
+        }
     }
 }

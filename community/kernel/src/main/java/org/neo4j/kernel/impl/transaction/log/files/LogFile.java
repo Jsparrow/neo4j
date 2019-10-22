@@ -34,17 +34,12 @@ import org.neo4j.kernel.impl.transaction.log.ReadableLogChannel;
  */
 public interface LogFile
 {
-    interface LogFileVisitor
-    {
-        boolean visit( ReadableClosablePositionAwareChannel channel ) throws IOException;
-    }
-
     /**
      * @return {@link FlushableChannel} capable of appending data to this log.
      */
     FlushablePositionAwareChannel getWriter();
 
-    /**
+	/**
      * Opens a {@link ReadableLogChannel reader} at the desired {@link LogPosition}, capable of reading log entries
      * from that position and onwards, through physical log versions.
      *
@@ -54,7 +49,7 @@ public interface LogFile
      */
     ReadableLogChannel getReader( LogPosition position ) throws IOException;
 
-    /**
+	/**
      * Opens a {@link ReadableLogChannel reader} at the desired {@link LogPosition}, capable of reading log entries
      * from that position and onwards, with the given {@link LogVersionBridge}.
      *
@@ -65,13 +60,18 @@ public interface LogFile
      */
     ReadableLogChannel getReader( LogPosition position, LogVersionBridge logVersionBridge ) throws IOException;
 
-    void accept( LogFileVisitor visitor, LogPosition startingFromPosition ) throws IOException;
+	void accept( LogFileVisitor visitor, LogPosition startingFromPosition ) throws IOException;
 
-    /**
+	/**
      * @return {@code true} if a rotation is needed.
      * @throws IOException on I/O error.
      */
     boolean rotationNeeded();
 
-    void rotate() throws IOException;
+	void rotate() throws IOException;
+
+	interface LogFileVisitor
+    {
+        boolean visit( ReadableClosablePositionAwareChannel channel ) throws IOException;
+    }
 }

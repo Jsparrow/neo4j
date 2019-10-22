@@ -447,25 +447,22 @@ public class DocValuesCollector extends SimpleCollector
         @Override
         public long getValue( String field )
         {
-            if ( ensureValidDisi() )
-            {
-                if ( docValuesCache.containsKey( field ) )
-                {
-                    return docValuesCache.get( field ).get( currentIdIterator.docID() );
-                }
-
-                NumericDocValues docValues = currentDocs.readDocValues( field );
-                docValuesCache.put( field, docValues );
-
-                return docValues.get( currentIdIterator.docID() );
-            }
-            else
-            {
-                // same as DocValues.emptyNumeric()#get
+            // same as DocValues.emptyNumeric()#get
+			// which means, getValue carries over the semantics of NDV
+			// -1 would also be a possibility here.
+			if (!ensureValidDisi()) {
+				// same as DocValues.emptyNumeric()#get
                 // which means, getValue carries over the semantics of NDV
                 // -1 would also be a possibility here.
                 return 0;
-            }
+			}
+			if ( docValuesCache.containsKey( field ) )
+			{
+			    return docValuesCache.get( field ).get( currentIdIterator.docID() );
+			}
+			NumericDocValues docValues = currentDocs.readDocValues( field );
+			docValuesCache.put( field, docValues );
+			return docValues.get( currentIdIterator.docID() );
         }
 
         @Override
@@ -577,8 +574,8 @@ public class DocValuesCollector extends SimpleCollector
                         actual = fi.getDocValuesType();
                     }
                     throw new IllegalStateException(
-                            "The field '" + field + "' is not indexed properly, expected NumericDV, but got '" +
-                            actual + "'" );
+                            new StringBuilder().append("The field '").append(field).append("' is not indexed properly, expected NumericDV, but got '").append(actual).append("'")
+									.toString() );
                 }
                 return dv;
             }
@@ -878,13 +875,12 @@ public class DocValuesCollector extends SimpleCollector
         @Override
         protected boolean fetchNext()
         {
-            if ( scoreDocs.hasNext() )
-            {
-                scoreDocs.next();
-                index++;
-                return currentValue != -1 && next( currentValue );
-            }
-            return false;
+            if (!scoreDocs.hasNext()) {
+				return false;
+			}
+			scoreDocs.next();
+			index++;
+			return currentValue != -1 && next( currentValue );
         }
 
         @Override
@@ -914,7 +910,7 @@ public class DocValuesCollector extends SimpleCollector
             }
             catch ( IOException e )
             {
-                throw new RuntimeException( "Fail to read numeric doc values field " + field + " from the document.", e );
+                throw new RuntimeException( new StringBuilder().append("Fail to read numeric doc values field ").append(field).append(" from the document.").toString(), e );
             }
         }
 

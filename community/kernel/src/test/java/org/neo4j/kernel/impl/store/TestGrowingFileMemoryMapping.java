@@ -91,8 +91,8 @@ public class TestGrowingFileMemoryMapping
         {
             record.setId( startingId + i );
             nodeStore.getRecord( i, record, NORMAL );
-            assertTrue( "record[" + i + "] should be in use", record.inUse() );
-            assertThat( "record[" + i + "] should have nextRelId of " + i,
+            assertTrue( new StringBuilder().append("record[").append(i).append("] should be in use").toString(), record.inUse() );
+            assertThat( new StringBuilder().append("record[").append(i).append("] should have nextRelId of ").append(i).toString(),
                     record.getNextRel(), is( (long) i ) );
         }
 

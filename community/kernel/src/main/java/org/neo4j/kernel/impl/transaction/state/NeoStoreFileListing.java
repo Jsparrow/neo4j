@@ -46,17 +46,17 @@ import static org.neo4j.helpers.collection.Iterators.resourceIterator;
 
 public class NeoStoreFileListing
 {
-    private final DatabaseLayout databaseLayout;
-    private final LogFiles logFiles;
-    private final StorageEngine storageEngine;
     private static final Function<File,StoreFileMetadata> toNotAStoreTypeFile =
             file -> new StoreFileMetadata( file, RecordFormat.NO_RECORD_SIZE );
-    private static final Function<File, StoreFileMetadata> logFileMapper =
+	private static final Function<File, StoreFileMetadata> logFileMapper =
             file -> new StoreFileMetadata( file, RecordFormat.NO_RECORD_SIZE, true );
-    private final NeoStoreFileIndexListing neoStoreFileIndexListing;
-    private final Collection<StoreFileProvider> additionalProviders;
+	private final DatabaseLayout databaseLayout;
+	private final LogFiles logFiles;
+	private final StorageEngine storageEngine;
+	private final NeoStoreFileIndexListing neoStoreFileIndexListing;
+	private final Collection<StoreFileProvider> additionalProviders;
 
-    public NeoStoreFileListing( DatabaseLayout databaseLayout, LogFiles logFiles,
+	public NeoStoreFileListing( DatabaseLayout databaseLayout, LogFiles logFiles,
             LabelScanStore labelScanStore, IndexingService indexingService,
             ExplicitIndexProvider explicitIndexProviders, StorageEngine storageEngine )
     {
@@ -67,32 +67,22 @@ public class NeoStoreFileListing
         this.additionalProviders = new CopyOnWriteArraySet<>();
     }
 
-    public StoreFileListingBuilder builder()
+	public StoreFileListingBuilder builder()
     {
         return new StoreFileListingBuilder();
     }
 
-    public NeoStoreFileIndexListing getNeoStoreFileIndexListing()
+	public NeoStoreFileIndexListing getNeoStoreFileIndexListing()
     {
         return neoStoreFileIndexListing;
     }
 
-    public void registerStoreFileProvider( StoreFileProvider provider )
+	public void registerStoreFileProvider( StoreFileProvider provider )
     {
         additionalProviders.add( provider );
     }
 
-    public interface StoreFileProvider
-    {
-        /**
-         * @param fileMetadataCollection the collection to add the files to
-         * @return A {@link Resource} that should be closed when we are done working with the files added to the collection
-         * @throws IOException if the provider is unable to prepare the file listing
-         */
-        Resource addFilesTo( Collection<StoreFileMetadata> fileMetadataCollection ) throws IOException;
-    }
-
-    private void placeMetaDataStoreLast( List<StoreFileMetadata> files )
+	private void placeMetaDataStoreLast( List<StoreFileMetadata> files )
     {
         int index = 0;
         for ( StoreFileMetadata file : files )
@@ -103,14 +93,14 @@ public class NeoStoreFileListing
             }
             index++;
         }
-        if ( index < files.size() - 1 )
-        {
-            StoreFileMetadata metaDataStoreFile = files.remove( index );
-            files.add( metaDataStoreFile );
-        }
+        if (!(index < files.size() - 1)) {
+			return;
+		}
+		StoreFileMetadata metaDataStoreFile = files.remove( index );
+		files.add( metaDataStoreFile );
     }
 
-    private void gatherNonRecordStores( Collection<StoreFileMetadata> files, boolean includeLogs )
+	private void gatherNonRecordStores( Collection<StoreFileMetadata> files, boolean includeLogs )
     {
         File[] indexFiles = databaseLayout.listDatabaseFiles( ( dir, name ) -> name.equals( IndexConfigStore.INDEX_DB_FILE_NAME ) );
         if ( indexFiles != null )
@@ -120,14 +110,29 @@ public class NeoStoreFileListing
                 files.add( toNotAStoreTypeFile.apply( file ) );
             }
         }
-        if ( includeLogs )
-        {
-            File[] logFiles = this.logFiles.logFiles();
-            for ( File logFile : logFiles )
-            {
-                files.add( logFileMapper.apply( logFile ) );
-            }
-        }
+        if (!includeLogs) {
+			return;
+		}
+		File[] logFiles = this.logFiles.logFiles();
+		for ( File logFile : logFiles )
+		{
+		    files.add( logFileMapper.apply( logFile ) );
+		}
+    }
+
+	private void gatherNeoStoreFiles( final Collection<StoreFileMetadata> targetFiles )
+    {
+        targetFiles.addAll( storageEngine.listStorageFiles() );
+    }
+
+	public interface StoreFileProvider
+    {
+        /**
+         * @param fileMetadataCollection the collection to add the files to
+         * @return A {@link Resource} that should be closed when we are done working with the files added to the collection
+         * @throws IOException if the provider is unable to prepare the file listing
+         */
+        Resource addFilesTo( Collection<StoreFileMetadata> fileMetadataCollection ) throws IOException;
     }
 
     public class StoreFileListingBuilder
@@ -300,10 +305,5 @@ public class NeoStoreFileListing
 
             return resourceIterator( files.iterator(), new MultiResource( resources ) );
         }
-    }
-
-    private void gatherNeoStoreFiles( final Collection<StoreFileMetadata> targetFiles )
-    {
-        targetFiles.addAll( storageEngine.listStorageFiles() );
     }
 }

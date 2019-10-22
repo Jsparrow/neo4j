@@ -74,7 +74,7 @@ public class BatchOperationIT extends AbstractRestFunctionalDocTestBase
             .array()
                 .object()
                     .key("method")  .value("PUT")
-                    .key("to")      .value("/node/" + idJoe + "/properties")
+                    .key("to")      .value(new StringBuilder().append("/node/").append(idJoe).append("/properties").toString())
                     .key("body")
                         .object()
                             .key("age").value(1)
@@ -126,7 +126,7 @@ public class BatchOperationIT extends AbstractRestFunctionalDocTestBase
         assertEquals(3, secondPostResult.get("id"));
 
         // Should contain "from"
-        assertEquals("/node/" + idJoe + "/properties", putResult.get("from"));
+        assertEquals(new StringBuilder().append("/node/").append(idJoe).append("/properties").toString(), putResult.get("from"));
         assertEquals("/node/" + idJoe, getResult.get("from"));
         assertEquals("/node", firstPostResult.get("from"));
         assertEquals("/node", secondPostResult.get("from"));
@@ -275,8 +275,7 @@ public class BatchOperationIT extends AbstractRestFunctionalDocTestBase
     }
 
     @Test
-    public void shouldRollbackAllWhenGivenIncorrectRequest() throws ClientHandlerException,
-            UniformInterfaceException, JSONException
+    public void shouldRollbackAllWhenGivenIncorrectRequest()
     {
 
         String jsonString = new PrettyJSON()
@@ -381,8 +380,7 @@ public class BatchOperationIT extends AbstractRestFunctionalDocTestBase
 
     @Test
     @Graph( "Peter likes Jazz" )
-    public void shouldHandleEscapedStrings() throws ClientHandlerException,
-            UniformInterfaceException, JSONException, JsonParseException
+    public void shouldHandleEscapedStrings() throws JsonParseException
     {
         String string = "Jazz";
         Node gnode = getNode( string );
@@ -394,7 +392,7 @@ public class BatchOperationIT extends AbstractRestFunctionalDocTestBase
         .array()
             .object()
                 .key("method") .value("PUT")
-                .key("to")     .value("/node/" + gnode.getId() + "/properties")
+                .key("to")     .value(new StringBuilder().append("/node/").append(gnode.getId()).append("/properties").toString())
                 .key("body")
                     .object()
                         .key("name").value(name)
@@ -412,7 +410,7 @@ public class BatchOperationIT extends AbstractRestFunctionalDocTestBase
         .array()
             .object()
                 .key("method") .value("GET")
-                .key("to")     .value("/node/" + gnode.getId() + "/properties/name")
+                .key("to")     .value(new StringBuilder().append("/node/").append(gnode.getId()).append("/properties/name").toString())
             .endObject()
         .endArray()
         .toString();
@@ -427,8 +425,7 @@ public class BatchOperationIT extends AbstractRestFunctionalDocTestBase
     }
 
     @Test
-    public void shouldRollbackAllWhenInsertingIllegalData() throws ClientHandlerException,
-            UniformInterfaceException, JSONException
+    public void shouldRollbackAllWhenInsertingIllegalData()
     {
 
         String jsonString = new PrettyJSON()
@@ -466,8 +463,7 @@ public class BatchOperationIT extends AbstractRestFunctionalDocTestBase
     }
 
     @Test
-    public void shouldRollbackAllOnSingle404() throws ClientHandlerException,
-            UniformInterfaceException, JSONException
+    public void shouldRollbackAllOnSingle404()
     {
 
         String jsonString = new PrettyJSON()
@@ -725,7 +721,7 @@ public class BatchOperationIT extends AbstractRestFunctionalDocTestBase
                     .key("statements").array()
                     .object()
                     .key( "statement" )
-                    .value( "USING PERIODIC COMMIT LOAD CSV FROM '" + url + "' AS line CREATE ()" )
+                    .value( new StringBuilder().append("USING PERIODIC COMMIT LOAD CSV FROM '").append(url).append("' AS line CREATE ()").toString() )
                     .endObject()
                     .endArray()
                     .endObject()

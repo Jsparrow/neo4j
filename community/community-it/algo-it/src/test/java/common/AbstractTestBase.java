@@ -62,7 +62,32 @@ public abstract class AbstractTestBase
         return graphdb.beginTx();
     }
 
-    protected interface Representation<T>
+    protected static <T> void expect( Iterable<? extends T> items,
+            Representation<T> representation, String... expected )
+    {
+        expect( items, representation, new HashSet<>( Arrays.asList( expected ) ) );
+    }
+
+	protected static <T> void expect( Iterable<? extends T> items,
+            Representation<T> representation, Set<String> expected )
+    {
+        try ( Transaction tx = beginTx() )
+        {
+            for ( T item : items )
+            {
+                String repr = representation.represent( item );
+                assertTrue( repr + " not expected ", expected.remove( repr ) );
+            }
+            tx.success();
+        }
+
+        if ( !expected.isEmpty() )
+        {
+            fail( new StringBuilder().append("The expected elements ").append(expected).append(" were not returned.").toString() );
+        }
+    }
+
+	protected interface Representation<T>
     {
         String represent( T item );
     }
@@ -83,34 +108,7 @@ public abstract class AbstractTestBase
         @Override
         public String represent( Relationship item )
         {
-            return nodes.represent( item.getStartNode() ) + " "
-                   + rel.represent( item ) + " "
-                   + nodes.represent( item.getEndNode() );
-        }
-    }
-
-    protected static <T> void expect( Iterable<? extends T> items,
-            Representation<T> representation, String... expected )
-    {
-        expect( items, representation, new HashSet<>( Arrays.asList( expected ) ) );
-    }
-
-    protected static <T> void expect( Iterable<? extends T> items,
-            Representation<T> representation, Set<String> expected )
-    {
-        try ( Transaction tx = beginTx() )
-        {
-            for ( T item : items )
-            {
-                String repr = representation.represent( item );
-                assertTrue( repr + " not expected ", expected.remove( repr ) );
-            }
-            tx.success();
-        }
-
-        if ( !expected.isEmpty() )
-        {
-            fail( "The expected elements " + expected + " were not returned." );
+            return new StringBuilder().append(nodes.represent( item.getStartNode() )).append(" ").append(rel.represent( item )).append(" ").append(nodes.represent( item.getEndNode() )).toString();
         }
     }
 }

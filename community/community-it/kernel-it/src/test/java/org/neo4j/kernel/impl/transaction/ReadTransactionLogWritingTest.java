@@ -85,8 +85,7 @@ public class ReadTransactionLogWritingTest
 
         // THEN
         long actualCount = countLogEntries();
-        assertEquals( "There were " + (actualCount - logEntriesWrittenBeforeReadOperations) +
-                        " log entries written during one or more pure read transactions", logEntriesWrittenBeforeReadOperations,
+        assertEquals( new StringBuilder().append("There were ").append(actualCount - logEntriesWrittenBeforeReadOperations).append(" log entries written during one or more pure read transactions").toString(), logEntriesWrittenBeforeReadOperations,
                 actualCount );
     }
 

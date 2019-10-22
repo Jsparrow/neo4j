@@ -36,10 +36,7 @@ public class MultipleUnderlyingStorageExceptions extends UnderlyingStorageExcept
         super( buildMessage( exceptions ) );
         this.exceptions = Collections.unmodifiableSet( exceptions );
 
-        for ( Pair<SchemaDescriptor, UnderlyingStorageException> exception : exceptions )
-        {
-            this.addSuppressed( exception.other() );
-        }
+        exceptions.forEach(exception -> this.addSuppressed(exception.other()));
     }
 
     private static String buildMessage( Set<Pair<SchemaDescriptor, UnderlyingStorageException>> exceptions )
@@ -47,10 +44,7 @@ public class MultipleUnderlyingStorageExceptions extends UnderlyingStorageExcept
         StringBuilder builder = new StringBuilder( );
         builder.append("Errors when closing (flushing) index updaters:");
 
-        for ( Pair<SchemaDescriptor, UnderlyingStorageException> pair : exceptions )
-        {
-            builder.append( format( " (%s) %s", pair.first().toString(), pair.other().getMessage() ) );
-        }
+        exceptions.forEach(pair -> builder.append(format(" (%s) %s", pair.first().toString(), pair.other().getMessage())));
 
         return builder.toString();
     }

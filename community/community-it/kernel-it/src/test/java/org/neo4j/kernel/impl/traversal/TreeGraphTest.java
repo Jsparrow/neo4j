@@ -40,6 +40,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.graphdb.traversal.BranchOrderingPolicies.POSTORDER_BREADTH_FIRST;
 import static org.neo4j.graphdb.traversal.BranchOrderingPolicies.POSTORDER_DEPTH_FIRST;
+import java.util.Collections;
 
 public class TreeGraphTest extends TraversalTestBase
 {
@@ -122,7 +123,7 @@ public class TreeGraphTest extends TraversalTestBase
         levels.push( new HashSet<>( asList( "5", "6", "7", "8",
                 "9", "A", "B", "C", "D" ) ) );
         levels.push( new HashSet<>( asList( "2", "3", "4" ) ) );
-        levels.push( new HashSet<>( asList( "1" ) ) );
+        levels.push( new HashSet<>( Collections.singletonList( "1" ) ) );
 
         try ( Transaction tx = beginTx() )
         {
@@ -183,7 +184,7 @@ public class TreeGraphTest extends TraversalTestBase
     {
         Traverser traverser = getGraphDb().traversalDescription().order( POSTORDER_BREADTH_FIRST ).traverse( node( "1" ) );
         Stack<Set<String>> levels = new Stack<>();
-        levels.push( new HashSet<>( asList( "1" ) ) );
+        levels.push( new HashSet<>( Collections.singletonList( "1" ) ) );
         levels.push( new HashSet<>( asList( "2", "3", "4" ) ) );
         levels.push( new HashSet<>( asList( "5", "6", "7", "8",
                 "9", "A", "B", "C", "D" ) ) );

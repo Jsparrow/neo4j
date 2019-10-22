@@ -781,20 +781,20 @@ public class TxState implements TransactionState, RelationshipVisitor.Home
                 nodeState.removeIndexDiff( before );
             }
         }
-        if ( propertiesAfter != null )
-        {
-            MutableLongDiffSets after = getOrCreateIndexUpdatesForSeek( updates, propertiesAfter );
-            //noinspection ConstantConditions
-            after.add( nodeId );
-            if ( after.getAdded().contains( nodeId ) )
-            {
-                nodeState.addIndexDiff( after );
-            }
-            else
-            {
-                nodeState.removeIndexDiff( after );
-            }
-        }
+        if (propertiesAfter == null) {
+			return;
+		}
+		MutableLongDiffSets after = getOrCreateIndexUpdatesForSeek( updates, propertiesAfter );
+		//noinspection ConstantConditions
+		after.add( nodeId );
+		if ( after.getAdded().contains( nodeId ) )
+		{
+		    nodeState.addIndexDiff( after );
+		}
+		else
+		{
+		    nodeState.removeIndexDiff( after );
+		}
     }
 
     @VisibleForTesting
@@ -859,16 +859,15 @@ public class TxState implements TransactionState, RelationshipVisitor.Home
         @Override
         public boolean remove( long elem )
         {
-            if ( isAdded( elem ) && super.remove( elem ) )
-            {
-                if ( removedFromAdded == null )
-                {
-                    removedFromAdded = collectionsFactory.newLongSet();
-                }
-                removedFromAdded.add( elem );
-                return true;
-            }
-            return super.remove( elem );
+            if (!(isAdded( elem ) && super.remove( elem ))) {
+				return super.remove( elem );
+			}
+			if ( removedFromAdded == null )
+			{
+			    removedFromAdded = collectionsFactory.newLongSet();
+			}
+			removedFromAdded.add( elem );
+			return true;
         }
 
         private boolean wasRemoved( long id )

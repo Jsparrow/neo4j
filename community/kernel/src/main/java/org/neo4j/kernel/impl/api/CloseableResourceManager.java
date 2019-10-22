@@ -56,14 +56,13 @@ public class CloseableResourceManager implements ResourceManager
     @Override
     public final void closeAllCloseableResources()
     {
-        if ( closeableResources != null )
-        {
-            // Make sure we reset closeableResource before doing anything which may throw an exception that
-            // _may_ result in a recursive call to this close-method
-            Collection<AutoCloseable> resourcesToClose = closeableResources;
-            closeableResources = null;
-
-            IOUtils.close( ResourceCloseFailureException::new, resourcesToClose.toArray( new AutoCloseable[0] ) );
-        }
+        if (closeableResources == null) {
+			return;
+		}
+		// Make sure we reset closeableResource before doing anything which may throw an exception that
+		// _may_ result in a recursive call to this close-method
+		Collection<AutoCloseable> resourcesToClose = closeableResources;
+		closeableResources = null;
+		IOUtils.close( ResourceCloseFailureException::new, resourcesToClose.toArray( new AutoCloseable[0] ) );
     }
 }

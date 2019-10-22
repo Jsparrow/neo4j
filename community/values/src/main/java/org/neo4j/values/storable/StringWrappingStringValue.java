@@ -58,7 +58,8 @@ final class StringWrappingStringValue extends StringValue
         {
             return 0;
         }
-        int h = 1, length = value.length();
+        int h = 1;
+		int length = value.length();
         for ( int offset = 0, codePoint; offset < length; offset += Character.charCount( codePoint ) )
         {
             codePoint = value.codePointAt( offset );
@@ -167,7 +168,8 @@ final class StringWrappingStringValue extends StringValue
 
     private int ltrimIndex( String value )
     {
-        int start = 0, length = value.length();
+        int start = 0;
+		int length = value.length();
         while ( start < length )
         {
             int codePoint = value.codePointAt( start );

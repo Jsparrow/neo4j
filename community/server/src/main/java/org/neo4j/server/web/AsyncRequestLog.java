@@ -75,8 +75,7 @@ public class AsyncRequestLog
         // %h %l %user [%t{dd/MMM/yyyy:HH:mm:ss Z}] "%r" %s %b "%i{Referer}" "%i{User-Agent}" %D
         String remoteHost = swallowExceptions( request, HttpServletRequest::getRemoteHost );
         String user = swallowExceptions( request, HttpServletRequest::getRemoteUser );
-        String requestURL = swallowExceptions( request, HttpServletRequest::getRequestURI ) + "?" +
-                swallowExceptions( request, HttpServletRequest::getQueryString );
+        String requestURL = new StringBuilder().append(swallowExceptions( request, HttpServletRequest::getRequestURI )).append("?").append(swallowExceptions( request, HttpServletRequest::getQueryString )).toString();
         int statusCode = response.getStatus();
         long length = response.getContentLength();
         String referer = swallowExceptions( request, r -> r.getHeader( "Referer" ) );

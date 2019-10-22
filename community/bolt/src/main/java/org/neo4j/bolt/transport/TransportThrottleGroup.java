@@ -38,32 +38,32 @@ public class TransportThrottleGroup
 
     private final TransportThrottle writeThrottle;
 
-    private TransportThrottleGroup()
-    {
-        this.writeThrottle = NoOpTransportThrottle.INSTANCE;
-    }
-
     public TransportThrottleGroup( Config config, Clock clock )
     {
         this.writeThrottle = createWriteThrottle( config, clock );
     }
 
-    public TransportThrottle writeThrottle()
+	private TransportThrottleGroup()
+    {
+        this.writeThrottle = NoOpTransportThrottle.INSTANCE;
+    }
+
+	public TransportThrottle writeThrottle()
     {
         return writeThrottle;
     }
 
-    public void install( Channel channel )
+	public void install( Channel channel )
     {
         writeThrottle.install( channel );
     }
 
-    public void uninstall( Channel channel )
+	public void uninstall( Channel channel )
     {
         writeThrottle.uninstall( channel );
     }
 
-    private static TransportThrottle createWriteThrottle( Config config, Clock clock )
+	private static TransportThrottle createWriteThrottle( Config config, Clock clock )
     {
         if ( config.get( GraphDatabaseSettings.bolt_outbound_buffer_throttle) )
         {
@@ -75,7 +75,7 @@ public class TransportThrottleGroup
         return NoOpTransportThrottle.INSTANCE;
     }
 
-    private static class NoOpTransportThrottle implements TransportThrottle
+	private static class NoOpTransportThrottle implements TransportThrottle
     {
         private static final TransportThrottle INSTANCE = new NoOpTransportThrottle();
 

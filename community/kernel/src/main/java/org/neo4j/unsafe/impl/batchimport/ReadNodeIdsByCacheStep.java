@@ -59,7 +59,13 @@ public class ReadNodeIdsByCacheStep extends ProducerStep
         }
     }
 
-    private class NodeVisitor implements NodeChangeVisitor, AutoCloseable
+    @Override
+    protected long position()
+    {
+        return highId * Long.BYTES;
+    }
+
+	private class NodeVisitor implements NodeChangeVisitor, AutoCloseable
     {
         private long[] batch = new long[batchSize];
         private int cursor;
@@ -69,12 +75,12 @@ public class ReadNodeIdsByCacheStep extends ProducerStep
         public void change( long nodeId, ByteArray array )
         {
             batch[cursor++] = nodeId;
-            if ( cursor == batchSize )
-            {
-                send();
-                batch = new long[batchSize];
-                cursor = 0;
-            }
+            if (cursor != batchSize) {
+				return;
+			}
+			send();
+			batch = new long[batchSize];
+			cursor = 0;
         }
 
         private void send()
@@ -89,17 +95,11 @@ public class ReadNodeIdsByCacheStep extends ProducerStep
         @Override
         public void close()
         {
-            if ( cursor > 0 )
-            {
-                batch = Arrays.copyOf( batch, cursor );
-                send();
-            }
+            if (cursor <= 0) {
+				return;
+			}
+			batch = Arrays.copyOf( batch, cursor );
+			send();
         }
-    }
-
-    @Override
-    protected long position()
-    {
-        return highId * Long.BYTES;
     }
 }

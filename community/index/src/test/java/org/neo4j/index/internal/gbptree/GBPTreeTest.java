@@ -326,12 +326,11 @@ public class GBPTreeTest
                 MutableLong key = new MutableLong();
                 MutableLong value = new MutableLong();
 
-                for ( Long insert : expectedData )
-                {
+                expectedData.forEach(insert -> {
                     key.setValue( insert );
                     value.setValue( insert );
                     writer.put( key, value );
-                }
+                });
             }
             index.checkpoint( UNLIMITED );
         }
@@ -399,10 +398,9 @@ public class GBPTreeTest
     public void shouldNotBeAbleToAcquireModifierTwice() throws Exception
     {
         // GIVEN
-        try ( GBPTree<MutableLong,MutableLong> index = index().build() )
+        try ( GBPTree<MutableLong,MutableLong> index = index().build();
+				Writer<MutableLong, MutableLong> writer = index.writer() )
         {
-            Writer<MutableLong,MutableLong> writer = index.writer();
-
             // WHEN
             try
             {
@@ -415,8 +413,7 @@ public class GBPTreeTest
             }
 
             // Should be able to close old writer
-            writer.close();
-            // And open and closing a new one
+			// And open and closing a new one
             index.writer().close();
         }
     }
@@ -1166,12 +1163,11 @@ public class GBPTreeTest
     private void assertFailedDueToUnmappedFile( Future<List<CleanupJob>> cleanJob )
             throws InterruptedException, ExecutionException
     {
-        for ( CleanupJob job : cleanJob.get() )
-        {
+        cleanJob.get().forEach(job -> {
             assertTrue( job.hasFailed() );
             assertThat( job.getCause().getMessage(),
                     allOf( containsString( "File" ), containsString( "unmapped" ) ) );
-        }
+        });
     }
 
     @Test
@@ -1647,8 +1643,7 @@ public class GBPTreeTest
             {
                 // then good
                 assertThat( e.getMessage(), CoreMatchers.containsString(
-                        "Index traversal aborted due to being stuck in infinite loop. This is most likely caused by an inconsistency in the index. " +
-                                "Loop occurred when restarting search from root from page " + corruptChild + "." ) );
+                        new StringBuilder().append("Index traversal aborted due to being stuck in infinite loop. This is most likely caused by an inconsistency in the index. ").append("Loop occurred when restarting search from root from page ").append(corruptChild).append(".").toString() ) );
             }
         }
     }
@@ -1808,7 +1803,7 @@ public class GBPTreeTest
             Throwable cause = e.getCause();
             if ( !(cause instanceof TreeInconsistencyException) )
             {
-                fail( "Expected cause to be " + TreeInconsistencyException.class + " but was " + Exceptions.stringify( cause ) );
+                fail( new StringBuilder().append("Expected cause to be ").append(TreeInconsistencyException.class).append(" but was ").append(Exceptions.stringify( cause )).toString() );
             }
         }
     }
@@ -1867,7 +1862,133 @@ public class GBPTreeTest
         return createPageCache( DEFAULT_PAGE_SIZE, pageCursorTracerSupplier );
     }
 
-    private static class ControlledRecoveryCleanupWorkCollector extends RecoveryCleanupWorkCollector
+    private PageCache pageCacheThatThrowExceptionWhenToldTo( final IOException e, final AtomicBoolean throwOnNextIO )
+    {
+        return new DelegatingPageCache( createPageCache( DEFAULT_PAGE_SIZE ) )
+        {
+            @Override
+            public PagedFile map( File file, int pageSize, OpenOption... openOptions ) throws IOException
+            {
+                return new DelegatingPagedFile( super.map( file, pageSize, openOptions ) )
+                {
+                    @Override
+                    public PageCursor io( long pageId, int pf_flags ) throws IOException
+                    {
+                        maybeThrow();
+                        return super.io( pageId, pf_flags );
+                    }
+
+                    @Override
+                    public void flushAndForce( IOLimiter limiter ) throws IOException
+                    {
+                        maybeThrow();
+                        super.flushAndForce( limiter );
+                    }
+
+                    private void maybeThrow() throws IOException
+                    {
+                        if (!throwOnNextIO.get()) {
+							return;
+						}
+						throwOnNextIO.set( false );
+						assert e != null;
+						throw e;
+                    }
+                };
+            }
+        };
+    }
+
+	private PageCache pageCacheThatBlockWhenToldTo( final Barrier barrier, final AtomicBoolean blockOnNextIO )
+    {
+        return new DelegatingPageCache( createPageCache( DEFAULT_PAGE_SIZE ) )
+        {
+            @Override
+            public PagedFile map( File file, int pageSize, OpenOption... openOptions ) throws IOException
+            {
+                return new DelegatingPagedFile( super.map( file, pageSize, openOptions ) )
+                {
+                    @Override
+                    public PageCursor io( long pageId, int pf_flags ) throws IOException
+                    {
+                        maybeBlock();
+                        return super.io( pageId, pf_flags );
+                    }
+
+                    private void maybeBlock()
+                    {
+                        if ( blockOnNextIO.get() )
+                        {
+                            barrier.reached();
+                        }
+                    }
+                };
+            }
+        };
+    }
+
+	private void makeDirty() throws IOException
+    {
+        makeDirty( createPageCache( DEFAULT_PAGE_SIZE ) );
+    }
+
+	private void makeDirty( PageCache pageCache ) throws IOException
+    {
+        try ( GBPTree<MutableLong,MutableLong> index = index( pageCache ).build() )
+        {
+            // Make dirty
+            index.writer().close();
+        }
+    }
+
+	private void insert( GBPTree<MutableLong,MutableLong> index, long key, long value ) throws IOException
+    {
+        try ( Writer<MutableLong, MutableLong> writer = index.writer() )
+        {
+            writer.put( new MutableLong( key ), new MutableLong( value ) );
+        }
+    }
+
+	private void shouldWait( Future<?> future ) throws InterruptedException, ExecutionException
+    {
+        try
+        {
+            future.get( 200, TimeUnit.MILLISECONDS );
+            fail( "Expected timeout" );
+        }
+        catch ( TimeoutException e )
+        {
+            // good
+        }
+    }
+
+	private PageCache createPageCache( int pageSize )
+    {
+        return pageCacheRule.getPageCache( fs.get(), config().withPageSize( pageSize ) );
+    }
+
+	private PageCache createPageCache( int pageSize, PageCursorTracerSupplier pageCursorTracerSupplier )
+    {
+        return pageCacheRule.getPageCache( fs.get(), config().withPageSize( pageSize ).withCursorTracerSupplier( pageCursorTracerSupplier ) );
+    }
+
+	// The most common tree builds in this test
+    private GBPTreeBuilder<MutableLong,MutableLong> index()
+    {
+        return index( DEFAULT_PAGE_SIZE );
+    }
+
+	private GBPTreeBuilder<MutableLong,MutableLong> index( int pageSize )
+    {
+        return index( createPageCache( pageSize ) );
+    }
+
+	private GBPTreeBuilder<MutableLong,MutableLong> index( PageCache pageCache )
+    {
+        return new GBPTreeBuilder<>( pageCache, indexFile, layout );
+    }
+
+	private static class ControlledRecoveryCleanupWorkCollector extends RecoveryCleanupWorkCollector
     {
         Queue<CleanupJob> jobs = new LinkedList<>();
         List<CleanupJob> startedJobs = new LinkedList<>();
@@ -1905,116 +2026,6 @@ public class GBPTreeTest
         }
     }
 
-    private PageCache pageCacheThatThrowExceptionWhenToldTo( final IOException e, final AtomicBoolean throwOnNextIO )
-    {
-        return new DelegatingPageCache( createPageCache( DEFAULT_PAGE_SIZE ) )
-        {
-            @Override
-            public PagedFile map( File file, int pageSize, OpenOption... openOptions ) throws IOException
-            {
-                return new DelegatingPagedFile( super.map( file, pageSize, openOptions ) )
-                {
-                    @Override
-                    public PageCursor io( long pageId, int pf_flags ) throws IOException
-                    {
-                        maybeThrow();
-                        return super.io( pageId, pf_flags );
-                    }
-
-                    @Override
-                    public void flushAndForce( IOLimiter limiter ) throws IOException
-                    {
-                        maybeThrow();
-                        super.flushAndForce( limiter );
-                    }
-
-                    private void maybeThrow() throws IOException
-                    {
-                        if ( throwOnNextIO.get() )
-                        {
-                            throwOnNextIO.set( false );
-                            assert e != null;
-                            throw e;
-                        }
-                    }
-                };
-            }
-        };
-    }
-
-    private PageCache pageCacheThatBlockWhenToldTo( final Barrier barrier, final AtomicBoolean blockOnNextIO )
-    {
-        return new DelegatingPageCache( createPageCache( DEFAULT_PAGE_SIZE ) )
-        {
-            @Override
-            public PagedFile map( File file, int pageSize, OpenOption... openOptions ) throws IOException
-            {
-                return new DelegatingPagedFile( super.map( file, pageSize, openOptions ) )
-                {
-                    @Override
-                    public PageCursor io( long pageId, int pf_flags ) throws IOException
-                    {
-                        maybeBlock();
-                        return super.io( pageId, pf_flags );
-                    }
-
-                    private void maybeBlock()
-                    {
-                        if ( blockOnNextIO.get() )
-                        {
-                            barrier.reached();
-                        }
-                    }
-                };
-            }
-        };
-    }
-
-    private void makeDirty() throws IOException
-    {
-        makeDirty( createPageCache( DEFAULT_PAGE_SIZE ) );
-    }
-
-    private void makeDirty( PageCache pageCache ) throws IOException
-    {
-        try ( GBPTree<MutableLong,MutableLong> index = index( pageCache ).build() )
-        {
-            // Make dirty
-            index.writer().close();
-        }
-    }
-
-    private void insert( GBPTree<MutableLong,MutableLong> index, long key, long value ) throws IOException
-    {
-        try ( Writer<MutableLong, MutableLong> writer = index.writer() )
-        {
-            writer.put( new MutableLong( key ), new MutableLong( value ) );
-        }
-    }
-
-    private void shouldWait( Future<?> future ) throws InterruptedException, ExecutionException
-    {
-        try
-        {
-            future.get( 200, TimeUnit.MILLISECONDS );
-            fail( "Expected timeout" );
-        }
-        catch ( TimeoutException e )
-        {
-            // good
-        }
-    }
-
-    private PageCache createPageCache( int pageSize )
-    {
-        return pageCacheRule.getPageCache( fs.get(), config().withPageSize( pageSize ) );
-    }
-
-    private PageCache createPageCache( int pageSize, PageCursorTracerSupplier pageCursorTracerSupplier )
-    {
-        return pageCacheRule.getPageCache( fs.get(), config().withPageSize( pageSize ).withCursorTracerSupplier( pageCursorTracerSupplier ) );
-    }
-
     private static class CleanJobControlledMonitor extends Monitor.Adaptor
     {
         private final Barrier.Control barrier = new Barrier.Control();
@@ -2024,22 +2035,6 @@ public class GBPTreeTest
         {
             barrier.reached();
         }
-    }
-
-    // The most common tree builds in this test
-    private GBPTreeBuilder<MutableLong,MutableLong> index()
-    {
-        return index( DEFAULT_PAGE_SIZE );
-    }
-
-    private GBPTreeBuilder<MutableLong,MutableLong> index( int pageSize )
-    {
-        return index( createPageCache( pageSize ) );
-    }
-
-    private GBPTreeBuilder<MutableLong,MutableLong> index( PageCache pageCache )
-    {
-        return new GBPTreeBuilder<>( pageCache, indexFile, layout );
     }
 
     private static class CheckpointControlledMonitor extends Monitor.Adaptor

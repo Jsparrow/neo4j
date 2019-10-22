@@ -49,26 +49,26 @@ public class AnyValueTestUtil
 
     public static void assertEqualValues( AnyValue a, AnyValue b )
     {
-        assertEquals( a + " should be equivalent to " + b, a, b );
-        assertEquals( a + " should be equivalent to " + b, b, a );
-        assertTrue( a + " should be equal to " + b, a.ternaryEquals( b ) );
-        assertTrue( a + " should be equal to " + b, b.ternaryEquals( a ) );
+        assertEquals( new StringBuilder().append(a).append(" should be equivalent to ").append(b).toString(), a, b );
+        assertEquals( new StringBuilder().append(a).append(" should be equivalent to ").append(b).toString(), b, a );
+        assertTrue( new StringBuilder().append(a).append(" should be equal to ").append(b).toString(), a.ternaryEquals( b ) );
+        assertTrue( new StringBuilder().append(a).append(" should be equal to ").append(b).toString(), b.ternaryEquals( a ) );
     }
 
     public static void assertNotEqual( AnyValue a, AnyValue b )
     {
-        assertNotEquals( a + " should not be equivalent to " + b, a, b );
-        assertNotEquals( b + " should not be equivalent to " + a, b, a );
-        assertFalse( a + " should not equal " + b, a.ternaryEquals( b ) );
-        assertFalse( b + " should not equal " + a, b.ternaryEquals( a ) );
+        assertNotEquals( new StringBuilder().append(a).append(" should not be equivalent to ").append(b).toString(), a, b );
+        assertNotEquals( new StringBuilder().append(b).append(" should not be equivalent to ").append(a).toString(), b, a );
+        assertFalse( new StringBuilder().append(a).append(" should not equal ").append(b).toString(), a.ternaryEquals( b ) );
+        assertFalse( new StringBuilder().append(b).append(" should not equal ").append(a).toString(), b.ternaryEquals( a ) );
     }
 
     public static void assertIncomparable( AnyValue a, AnyValue b )
     {
-        assertNotEquals( a + " should not be equivalent to " + b, a, b );
-        assertNotEquals( b + " should not be equivalent to " + a, b, a );
-        assertNull( a + " should be incomparable to " + b, a.ternaryEquals( b ) );
-        assertNull( b + " should be incomparable to " + a, b.ternaryEquals( a ) );
+        assertNotEquals( new StringBuilder().append(a).append(" should not be equivalent to ").append(b).toString(), a, b );
+        assertNotEquals( new StringBuilder().append(b).append(" should not be equivalent to ").append(a).toString(), b, a );
+        assertNull( new StringBuilder().append(a).append(" should be incomparable to ").append(b).toString(), a.ternaryEquals( b ) );
+        assertNull( new StringBuilder().append(b).append(" should be incomparable to ").append(a).toString(), b.ternaryEquals( a ) );
     }
 
     public static <X extends Exception, T> X assertThrows( Class<X> exception, Supplier<T> thunk )
@@ -89,6 +89,6 @@ public class AnyValueTestUtil
                 throw new AssertionError( "Expected " + exception.getName(), e );
             }
         }
-        throw new AssertionError( "Expected " + exception.getName() + " but returned: " + value );
+        throw new AssertionError( new StringBuilder().append("Expected ").append(exception.getName()).append(" but returned: ").append(value).toString() );
     }
 }

@@ -92,10 +92,7 @@ public class TransactionId
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "{" +
-                "transactionId=" + transactionId +
-                ", checksum=" + checksum +
-                ", commitTimestamp=" + commitTimestamp +
-                '}';
+        return new StringBuilder().append(getClass().getSimpleName()).append("{").append("transactionId=").append(transactionId).append(", checksum=").append(checksum)
+				.append(", commitTimestamp=").append(commitTimestamp).append('}').toString();
     }
 }

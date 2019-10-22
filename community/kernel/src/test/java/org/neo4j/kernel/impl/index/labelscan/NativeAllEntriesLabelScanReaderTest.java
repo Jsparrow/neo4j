@@ -51,10 +51,30 @@ import static org.neo4j.kernel.impl.index.labelscan.LabelScanValue.RANGE_SIZE;
 
 public class NativeAllEntriesLabelScanReaderTest
 {
-    @Rule
+    private static final RawCursor<Hit<LabelScanKey,LabelScanValue>,IOException> EMPTY_CURSOR =
+            new RawCursor<Hit<LabelScanKey,LabelScanValue>,IOException>()
+    {
+        @Override
+        public Hit<LabelScanKey,LabelScanValue> get()
+        {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public boolean next()
+        {
+            return false;
+        }
+
+        @Override
+        public void close()
+        {   // Nothing to close
+        }
+    };
+	@Rule
     public final RandomRule random = new RandomRule();
 
-    @Test
+	@Test
     public void shouldSeeNonOverlappingRanges() throws Exception
     {
         int rangeSize = 4;
@@ -66,7 +86,7 @@ public class NativeAllEntriesLabelScanReaderTest
                 labels( 3, rangeSize, 17, 18 ) );
     }
 
-    @Test
+	@Test
     public void shouldSeeOverlappingRanges() throws Exception
     {
         int rangeSize = 4;
@@ -78,7 +98,7 @@ public class NativeAllEntriesLabelScanReaderTest
                 labels( 6, rangeSize, 4, 8, 12 ) );
     }
 
-    @Test
+	@Test
     public void shouldSeeRangesFromRandomData() throws Exception
     {
         List<Labels> labels = randomData();
@@ -86,7 +106,7 @@ public class NativeAllEntriesLabelScanReaderTest
         shouldIterateCorrectlyOver( labels.toArray( new Labels[labels.size()] ) );
     }
 
-    private void shouldIterateCorrectlyOver( Labels... data ) throws Exception
+	private void shouldIterateCorrectlyOver( Labels... data ) throws Exception
     {
         // GIVEN
         try ( AllEntriesLabelScanReader reader = new NativeAllEntriesLabelScanReader(
@@ -97,7 +117,7 @@ public class NativeAllEntriesLabelScanReaderTest
         }
     }
 
-    private List<Labels> randomData()
+	private List<Labels> randomData()
     {
         List<Labels> labels = new ArrayList<>();
         int labelCount = random.intBetween( 30, 100 );
@@ -118,7 +138,7 @@ public class NativeAllEntriesLabelScanReaderTest
         return labels;
     }
 
-    private static int highestLabelId( Labels[] data )
+	private static int highestLabelId( Labels[] data )
     {
         int highest = 0;
         for ( Labels labels : data )
@@ -128,7 +148,7 @@ public class NativeAllEntriesLabelScanReaderTest
         return highest;
     }
 
-    private static void assertRanges( AllEntriesLabelScanReader reader, Labels[] data )
+	private static void assertRanges( AllEntriesLabelScanReader reader, Labels[] data )
     {
         Iterator<NodeLabelRange> iterator = reader.iterator();
         long highestRangeId = highestRangeId( data );
@@ -141,41 +161,36 @@ public class NativeAllEntriesLabelScanReaderTest
                 NodeLabelRange range = iterator.next();
 
                 assertEquals( rangeId, range.id() );
-                for ( Map.Entry<Long,List<Long>> expectedEntry : expected.entrySet() )
-                {
+                expected.entrySet().forEach(expectedEntry -> {
                     long[] labels = range.labels( expectedEntry.getKey() );
                     assertArrayEquals( asArray( expectedEntry.getValue().iterator() ), labels );
-                }
+                });
             }
             // else there was nothing in this range
         }
         assertFalse( iterator.hasNext() );
     }
 
-    private static SortedMap<Long,List<Long>> rangeOf( Labels[] data, long rangeId )
+	private static SortedMap<Long,List<Long>> rangeOf( Labels[] data, long rangeId )
     {
         SortedMap<Long,List<Long>> result = new TreeMap<>();
         for ( Labels label : data )
         {
-            for ( Pair<LabelScanKey,LabelScanValue> entry : label.entries )
-            {
-                if ( entry.first().idRange == rangeId )
-                {
-                    long baseNodeId = entry.first().idRange * RANGE_SIZE;
-                    long bits = entry.other().bits;
-                    while ( bits != 0 )
-                    {
-                        long nodeId = baseNodeId + Long.numberOfTrailingZeros( bits );
-                        result.computeIfAbsent( nodeId, id -> new ArrayList<>() ).add( (long) label.labelId );
-                        bits &= bits - 1;
-                    }
-                }
-            }
+            label.entries.stream().filter(entry -> entry.first().idRange == rangeId).forEach(entry -> {
+			    long baseNodeId = entry.first().idRange * RANGE_SIZE;
+			    long bits = entry.other().bits;
+			    while ( bits != 0 )
+			    {
+			        long nodeId = baseNodeId + Long.numberOfTrailingZeros( bits );
+			        result.computeIfAbsent( nodeId, id -> new ArrayList<>() ).add( (long) label.labelId );
+			        bits &= bits - 1;
+			    }
+			});
         }
         return result.isEmpty() ? null : result;
     }
 
-    private static long highestRangeId( Labels[] data )
+	private static long highestRangeId( Labels[] data )
     {
         long highest = 0;
         for ( Labels labels : data )
@@ -186,7 +201,7 @@ public class NativeAllEntriesLabelScanReaderTest
         return highest;
     }
 
-    private static IntFunction<RawCursor<Hit<LabelScanKey,LabelScanValue>,IOException>> store( Labels... labels )
+	private static IntFunction<RawCursor<Hit<LabelScanKey,LabelScanValue>,IOException>> store( Labels... labels )
     {
         final MutableIntObjectMap<Labels> labelsMap = new IntObjectHashMap<>( labels.length );
         for ( Labels item : labels )
@@ -201,7 +216,7 @@ public class NativeAllEntriesLabelScanReaderTest
         };
     }
 
-    private static Labels labels( int labelId, long... nodeIds )
+	private static Labels labels( int labelId, long... nodeIds )
     {
         List<Pair<LabelScanKey,LabelScanValue>> entries = new ArrayList<>();
         long currentRange = 0;
@@ -209,14 +224,11 @@ public class NativeAllEntriesLabelScanReaderTest
         for ( long nodeId : nodeIds )
         {
             long range = nodeId / RANGE_SIZE;
-            if ( range != currentRange )
-            {
-                if ( value.bits != 0 )
-                {
-                    entries.add( Pair.of( new LabelScanKey().set( labelId, currentRange ), value ) );
-                    value = new LabelScanValue();
-                }
-            }
+            boolean condition = range != currentRange && value.bits != 0;
+			if ( condition ) {
+			    entries.add( Pair.of( new LabelScanKey().set( labelId, currentRange ), value ) );
+			    value = new LabelScanValue();
+			}
             value.set( toIntExact( nodeId % RANGE_SIZE ) );
             currentRange = range;
         }
@@ -229,7 +241,7 @@ public class NativeAllEntriesLabelScanReaderTest
         return new Labels( labelId, entries );
     }
 
-    private static class Labels
+	private static class Labels
     {
         private final int labelId;
         private final List<Pair<LabelScanKey,LabelScanValue>> entries;
@@ -272,25 +284,4 @@ public class NativeAllEntriesLabelScanReaderTest
             };
         }
     }
-
-    private static final RawCursor<Hit<LabelScanKey,LabelScanValue>,IOException> EMPTY_CURSOR =
-            new RawCursor<Hit<LabelScanKey,LabelScanValue>,IOException>()
-    {
-        @Override
-        public Hit<LabelScanKey,LabelScanValue> get()
-        {
-            throw new IllegalStateException();
-        }
-
-        @Override
-        public boolean next()
-        {
-            return false;
-        }
-
-        @Override
-        public void close()
-        {   // Nothing to close
-        }
-    };
 }

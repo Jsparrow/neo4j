@@ -129,7 +129,8 @@ public class TransactionMatchers
                     if ( errors.hasNext() )
                     {
                         JsonNode error = errors.next();
-                        fail( "Expected no more errors, but got " + error.get( "code" ) + " - '" + error.get( "message" ) + "'." );
+                        fail( new StringBuilder().append("Expected no more errors, but got ").append(error.get( "code" )).append(" - '").append(error.get( "message" )).append("'.")
+								.toString() );
                     }
                     return true;
 
@@ -310,13 +311,14 @@ public class TransactionMatchers
                     String type = node.get( "type" ).getTextValue();
                     if ( type.equals( element ) )
                     {
-                        assertEquals( "Expected " + element + " to be at indexes " + Arrays.toString( indexes ) +
-                                      ", but found it at " + metaIndex, indexes[i], metaIndex );
+                        assertEquals( new StringBuilder().append("Expected ").append(element).append(" to be at indexes ").append(Arrays.toString( indexes )).append(", but found it at ")
+								.append(metaIndex).toString(), indexes[i], metaIndex );
                         ++i;
                     }
                     else
                     {
-                        assertNotEquals( "Expected " + element + " at index " + metaIndex + ", but found " + type,
+                        assertNotEquals( new StringBuilder().append("Expected ").append(element).append(" at index ").append(metaIndex).append(", but found ")
+								.append(type).toString(),
                                 indexes[i],
                                 metaIndex );
                     }
@@ -589,15 +591,7 @@ public class TransactionMatchers
                 @SuppressWarnings( "unchecked" )
                 List<Map<String, Object>> errors = (List<Map<String, Object>>) content.get( "errors" );
 
-                for ( Map<String, Object> error : errors )
-                {
-                    if ( error.containsKey( "stackTrace" ) )
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
+                return errors.stream().noneMatch(error -> error.containsKey( "stackTrace" ));
             }
 
             @Override

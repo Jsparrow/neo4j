@@ -137,16 +137,8 @@ public class SetInitialPasswordCommandTest
             Usage usage = new Usage( "neo4j-admin", mock( CommandLocator.class ) );
             usage.printUsageForCommand( new SetInitialPasswordCommandProvider(), ps::println );
 
-            assertEquals( String.format( "usage: neo4j-admin set-initial-password <password>%n" +
-                            "%n" +
-                            "environment variables:%n" +
-                            "    NEO4J_CONF    Path to directory which contains neo4j.conf.%n" +
-                            "    NEO4J_DEBUG   Set to anything to enable debug output.%n" +
-                            "    NEO4J_HOME    Neo4j home directory.%n" +
-                            "    HEAP_SIZE     Set JVM maximum heap size during command execution.%n" +
-                            "                  Takes a number and a unit, for example 512m.%n" +
-                            "%n" +
-                            "Sets the initial password of the initial admin user ('neo4j').%n" ),
+            assertEquals( String.format( new StringBuilder().append("usage: neo4j-admin set-initial-password <password>%n").append("%n").append("environment variables:%n").append("    NEO4J_CONF    Path to directory which contains neo4j.conf.%n").append("    NEO4J_DEBUG   Set to anything to enable debug output.%n").append("    NEO4J_HOME    Neo4j home directory.%n").append("    HEAP_SIZE     Set JVM maximum heap size during command execution.%n").append("                  Takes a number and a unit, for example 512m.%n")
+					.append("%n").append("Sets the initial password of the initial admin user ('neo4j').%n").toString() ),
                     baos.toString() );
         }
     }

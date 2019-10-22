@@ -126,11 +126,10 @@ public class ConfigValue
 
     static String valueToString( Object v )
     {
-        if ( v instanceof Duration )
-        {
-            Duration d = (Duration) v;
-            return String.format( "%dms", d.toMillis() );
-        }
-        return String.valueOf( v );
+        if (!(v instanceof Duration)) {
+			return String.valueOf( v );
+		}
+		Duration d = (Duration) v;
+		return String.format( "%dms", d.toMillis() );
     }
 }

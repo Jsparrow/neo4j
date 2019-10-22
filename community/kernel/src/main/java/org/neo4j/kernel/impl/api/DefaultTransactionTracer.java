@@ -38,23 +38,14 @@ import org.neo4j.time.SystemNanoClock;
 
 public class DefaultTransactionTracer implements TransactionTracer, LogRotationMonitor
 {
-    public interface Monitor
-    {
-        void lastLogRotationEventDuration( long millis );
-    }
-
     private final SystemNanoClock clock;
-    private final Monitor monitor;
-    private final JobScheduler jobScheduler;
-
-    private final AtomicLong counter = new AtomicLong();
-    private final AtomicLong accumulatedTotalTimeNanos = new AtomicLong();
-
-    private long startTimeNanos;
-
-    private final LogRotateEvent logRotateEvent = this::updateCountersAndNotifyListeners;
-
-    private final LogAppendEvent logAppendEvent = new LogAppendEvent()
+	private final Monitor monitor;
+	private final JobScheduler jobScheduler;
+	private final AtomicLong counter = new AtomicLong();
+	private final AtomicLong accumulatedTotalTimeNanos = new AtomicLong();
+	private long startTimeNanos;
+	private final LogRotateEvent logRotateEvent = this::updateCountersAndNotifyListeners;
+	private final LogAppendEvent logAppendEvent = new LogAppendEvent()
     {
         @Override
         public void close()
@@ -92,8 +83,7 @@ public class DefaultTransactionTracer implements TransactionTracer, LogRotationM
             return LogForceEvent.NULL;
         }
     };
-
-    private final CommitEvent commitEvent = new CommitEvent()
+	private final CommitEvent commitEvent = new CommitEvent()
     {
         @Override
         public void close()
@@ -112,8 +102,7 @@ public class DefaultTransactionTracer implements TransactionTracer, LogRotationM
             return StoreApplyEvent.NULL;
         }
     };
-
-    private final TransactionEvent transactionEvent = new TransactionEvent()
+	private final TransactionEvent transactionEvent = new TransactionEvent()
     {
 
         @Override
@@ -148,37 +137,37 @@ public class DefaultTransactionTracer implements TransactionTracer, LogRotationM
         }
     };
 
-    public DefaultTransactionTracer( Monitor monitor, JobScheduler jobScheduler )
+	public DefaultTransactionTracer( Monitor monitor, JobScheduler jobScheduler )
     {
         this( Clocks.nanoClock(), monitor, jobScheduler );
     }
 
-    public DefaultTransactionTracer( SystemNanoClock clock, Monitor monitor, JobScheduler jobScheduler )
+	public DefaultTransactionTracer( SystemNanoClock clock, Monitor monitor, JobScheduler jobScheduler )
     {
         this.clock = clock;
         this.monitor = monitor;
         this.jobScheduler = jobScheduler;
     }
 
-    @Override
+	@Override
     public TransactionEvent beginTransaction()
     {
         return transactionEvent;
     }
 
-    @Override
+	@Override
     public long numberOfLogRotationEvents()
     {
         return counter.get();
     }
 
-    @Override
+	@Override
     public long logRotationAccumulatedTotalTimeMillis()
     {
         return TimeUnit.NANOSECONDS.toMillis( accumulatedTotalTimeNanos.get() );
     }
 
-    private void updateCountersAndNotifyListeners()
+	private void updateCountersAndNotifyListeners()
     {
         counter.incrementAndGet();
         long lastEventTime = clock.nanos() - startTimeNanos;
@@ -188,5 +177,10 @@ public class DefaultTransactionTracer implements TransactionTracer, LogRotationM
             long millis = TimeUnit.NANOSECONDS.toMillis( lastEventTime );
             monitor.lastLogRotationEventDuration( millis );
         } );
+    }
+
+	public interface Monitor
+    {
+        void lastLogRotationEventDuration( long millis );
     }
 }

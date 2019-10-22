@@ -100,7 +100,7 @@ public class TransactionPositionLocatorTest
         }
         catch ( NoSuchTransactionException e )
         {
-            assertEquals( "Unable to find transaction " + txId + " in any of my logical logs", e.getMessage() );
+            assertEquals( new StringBuilder().append("Unable to find transaction ").append(txId).append(" in any of my logical logs").toString(), e.getMessage() );
         }
     }
 }

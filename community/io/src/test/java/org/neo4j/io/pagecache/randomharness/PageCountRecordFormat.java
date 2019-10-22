@@ -157,9 +157,7 @@ public class PageCountRecordFormat extends RecordFormat
         @Override
         public String toString()
         {
-            return "PageCountRecord[" +
-                   "bytes=" + Arrays.toString( bytes ) +
-                   ']';
+            return new StringBuilder().append("PageCountRecord[").append("bytes=").append(Arrays.toString( bytes )).append(']').toString();
         }
     }
 }

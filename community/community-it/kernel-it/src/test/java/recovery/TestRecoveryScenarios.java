@@ -70,25 +70,25 @@ public class TestRecoveryScenarios
 
     private final FlushStrategy flush;
 
-    @SuppressWarnings( "deprecation" )
+    public TestRecoveryScenarios( FlushStrategy flush )
+    {
+        this.flush = flush;
+    }
+
+	@SuppressWarnings( "deprecation" )
     @Before
     public void before()
     {
         db = (GraphDatabaseAPI) databaseFactory( fsRule.get() ).newImpermanentDatabase();
     }
 
-    public TestRecoveryScenarios( FlushStrategy flush )
-    {
-        this.flush = flush;
-    }
-
-    @After
+	@After
     public void after()
     {
         db.shutdown();
     }
 
-    @Test
+	@Test
     public void shouldRecoverTransactionWhereNodeIsDeletedInTheFuture() throws Exception
     {
         // GIVEN
@@ -111,11 +111,11 @@ public class TestRecoveryScenarios
         }
         catch ( NotFoundException e )
         {
-            assertEquals( "Node " + node.getId() + " not found", e.getMessage() );
+            assertEquals( new StringBuilder().append("Node ").append(node.getId()).append(" not found").toString(), e.getMessage() );
         }
     }
 
-    @Test
+	@Test
     public void shouldRecoverTransactionWherePropertyIsRemovedInTheFuture() throws Exception
     {
         // GIVEN
@@ -139,7 +139,7 @@ public class TestRecoveryScenarios
         }
     }
 
-    @Test
+	@Test
     public void shouldRecoverTransactionWhereManyLabelsAreRemovedInTheFuture() throws Exception
     {
         // GIVEN
@@ -173,7 +173,7 @@ public class TestRecoveryScenarios
         }
     }
 
-    @Test
+	@Test
     public void shouldRecoverCounts() throws Exception
     {
         // GIVEN
@@ -197,7 +197,7 @@ public class TestRecoveryScenarios
         }
     }
 
-    private void removeLabels( Node node, Label... labels )
+	private void removeLabels( Node node, Label... labels )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -209,7 +209,7 @@ public class TestRecoveryScenarios
         }
     }
 
-    private void removeProperty( Node node, String key )
+	private void removeProperty( Node node, String key )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -218,7 +218,7 @@ public class TestRecoveryScenarios
         }
     }
 
-    private void addLabel( Node node, Label label )
+	private void addLabel( Node node, Label label )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -227,7 +227,7 @@ public class TestRecoveryScenarios
         }
     }
 
-    private Node createNode( Label... labels )
+	private Node createNode( Label... labels )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -237,7 +237,7 @@ public class TestRecoveryScenarios
         }
     }
 
-    private Node createNodeWithProperty( String key, String value, Label... labels )
+	private Node createNodeWithProperty( String key, String value, Label... labels )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -248,7 +248,7 @@ public class TestRecoveryScenarios
         }
     }
 
-    private void createIndex( Label label, String key )
+	private void createIndex( Label label, String key )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -262,7 +262,7 @@ public class TestRecoveryScenarios
         }
     }
 
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static List<Object[]> flushStrategy()
     {
         List<Object[]> parameters = new ArrayList<>(  );
@@ -273,7 +273,45 @@ public class TestRecoveryScenarios
         return parameters;
     }
 
-    @SuppressWarnings( "deprecation" )
+	private void checkPoint() throws IOException
+    {
+        db.getDependencyResolver().resolveDependency( CheckPointer.class ).forceCheckPoint(
+                new SimpleTriggerInfo( "test" )
+        );
+    }
+
+	private void deleteNode( Node node )
+    {
+        try ( Transaction tx = db.beginTx() )
+        {
+            node.delete();
+            tx.success();
+        }
+    }
+
+	private void setProperty( Node node, String key, Object value )
+    {
+        try ( Transaction tx = db.beginTx() )
+        {
+            node.setProperty( key, value );
+            tx.success();
+        }
+    }
+
+	private TestGraphDatabaseFactory databaseFactory( FileSystemAbstraction fs )
+    {
+        return new TestGraphDatabaseFactory().setFileSystem( fs );
+    }
+
+	@SuppressWarnings( "deprecation" )
+    private void crashAndRestart() throws Exception
+    {
+        final GraphDatabaseService db1 = db;
+        FileSystemAbstraction uncleanFs = fsRule.snapshot( db1::shutdown );
+        db = (GraphDatabaseAPI) databaseFactory( uncleanFs ).newImpermanentDatabase();
+    }
+
+	@SuppressWarnings( "deprecation" )
     public enum FlushStrategy
     {
         FORCE_EVERYTHING
@@ -296,43 +334,5 @@ public class TestRecoveryScenarios
         final Object[] parameters = new Object[]{this};
 
         abstract void flush( GraphDatabaseAPI db ) throws IOException;
-    }
-
-    private void checkPoint() throws IOException
-    {
-        db.getDependencyResolver().resolveDependency( CheckPointer.class ).forceCheckPoint(
-                new SimpleTriggerInfo( "test" )
-        );
-    }
-
-    private void deleteNode( Node node )
-    {
-        try ( Transaction tx = db.beginTx() )
-        {
-            node.delete();
-            tx.success();
-        }
-    }
-
-    private void setProperty( Node node, String key, Object value )
-    {
-        try ( Transaction tx = db.beginTx() )
-        {
-            node.setProperty( key, value );
-            tx.success();
-        }
-    }
-
-    private TestGraphDatabaseFactory databaseFactory( FileSystemAbstraction fs )
-    {
-        return new TestGraphDatabaseFactory().setFileSystem( fs );
-    }
-
-    @SuppressWarnings( "deprecation" )
-    private void crashAndRestart() throws Exception
-    {
-        final GraphDatabaseService db1 = db;
-        FileSystemAbstraction uncleanFs = fsRule.snapshot( db1::shutdown );
-        db = (GraphDatabaseAPI) databaseFactory( uncleanFs ).newImpermanentDatabase();
     }
 }

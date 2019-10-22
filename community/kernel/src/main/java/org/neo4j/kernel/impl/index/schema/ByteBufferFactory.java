@@ -43,80 +43,6 @@ import static java.lang.Math.toIntExact;
  */
 public class ByteBufferFactory implements AutoCloseable
 {
-    private final Allocator globalAllocator;
-    private final int threadLocalBufferSize;
-    private final ThreadLocal<ThreadLocalByteBuffer> threadLocalBuffers = ThreadLocal.withInitial( ThreadLocalByteBuffer::new );
-    private final Supplier<Allocator> allocatorFactory;
-
-    public ByteBufferFactory( Supplier<Allocator> allocatorFactory, int threadLocalBufferSize )
-    {
-        this.allocatorFactory = allocatorFactory;
-        this.globalAllocator = allocatorFactory.get();
-        this.threadLocalBufferSize = threadLocalBufferSize;
-    }
-
-    /**
-     * @return the global {@link Allocator} for private buffer allocation.
-     */
-    Allocator globalAllocator()
-    {
-        return globalAllocator;
-    }
-
-    /**
-     * @return a new {@link Allocator} for local use. Must be closed by the caller when done.
-     */
-    Allocator newLocalAllocator()
-    {
-        return allocatorFactory.get();
-    }
-
-    /**
-     * @return thread-local buffer. The returned buffer is meant to be used in a limited closure and then {@link #releaseThreadLocalBuffer() released}
-     * so that other pieces of code can use it again for this thread.
-     */
-    ByteBuffer acquireThreadLocalBuffer()
-    {
-        return threadLocalBuffers.get().acquire();
-    }
-
-    /**
-     * Releases a previously {@link #acquireThreadLocalBuffer() acquired} thread-local buffer.
-     */
-    void releaseThreadLocalBuffer()
-    {
-        ThreadLocalByteBuffer managedByteBuffer = threadLocalBuffers.get();
-        Preconditions.checkState( managedByteBuffer != null, "Buffer doesn't exist" );
-        managedByteBuffer.release();
-    }
-
-    public int bufferSize()
-    {
-        return threadLocalBufferSize;
-    }
-
-    @Override
-    public void close()
-    {
-        globalAllocator.close();
-    }
-
-    public static ByteBufferFactory heapBufferFactory( int sharedBuffersSize )
-    {
-        return new ByteBufferFactory( () -> HEAP_ALLOCATOR, sharedBuffersSize );
-    }
-
-    /**
-     * Allocator of {@link ByteBuffer} instances. Also is responsible for freeing memory of allocated buffers on {@link #close()}.
-     */
-    public interface Allocator extends AutoCloseable
-    {
-        ByteBuffer allocate( int bufferSize );
-
-        @Override
-        void close();
-    }
-
     static Allocator HEAP_ALLOCATOR = new Allocator()
     {
         @Override
@@ -131,6 +57,79 @@ public class ByteBufferFactory implements AutoCloseable
             // Nothing to close
         }
     };
+	private final Allocator globalAllocator;
+	private final int threadLocalBufferSize;
+	private final ThreadLocal<ThreadLocalByteBuffer> threadLocalBuffers = ThreadLocal.withInitial( ThreadLocalByteBuffer::new );
+	private final Supplier<Allocator> allocatorFactory;
+
+	public ByteBufferFactory( Supplier<Allocator> allocatorFactory, int threadLocalBufferSize )
+    {
+        this.allocatorFactory = allocatorFactory;
+        this.globalAllocator = allocatorFactory.get();
+        this.threadLocalBufferSize = threadLocalBufferSize;
+    }
+
+	/**
+     * @return the global {@link Allocator} for private buffer allocation.
+     */
+    Allocator globalAllocator()
+    {
+        return globalAllocator;
+    }
+
+	/**
+     * @return a new {@link Allocator} for local use. Must be closed by the caller when done.
+     */
+    Allocator newLocalAllocator()
+    {
+        return allocatorFactory.get();
+    }
+
+	/**
+     * @return thread-local buffer. The returned buffer is meant to be used in a limited closure and then {@link #releaseThreadLocalBuffer() released}
+     * so that other pieces of code can use it again for this thread.
+     */
+    ByteBuffer acquireThreadLocalBuffer()
+    {
+        return threadLocalBuffers.get().acquire();
+    }
+
+	/**
+     * Releases a previously {@link #acquireThreadLocalBuffer() acquired} thread-local buffer.
+     */
+    void releaseThreadLocalBuffer()
+    {
+        ThreadLocalByteBuffer managedByteBuffer = threadLocalBuffers.get();
+        Preconditions.checkState( managedByteBuffer != null, "Buffer doesn't exist" );
+        managedByteBuffer.release();
+    }
+
+	public int bufferSize()
+    {
+        return threadLocalBufferSize;
+    }
+
+	@Override
+    public void close()
+    {
+        globalAllocator.close();
+    }
+
+	public static ByteBufferFactory heapBufferFactory( int sharedBuffersSize )
+    {
+        return new ByteBufferFactory( () -> HEAP_ALLOCATOR, sharedBuffersSize );
+    }
+
+	/**
+     * Allocator of {@link ByteBuffer} instances. Also is responsible for freeing memory of allocated buffers on {@link #close()}.
+     */
+    public interface Allocator extends AutoCloseable
+    {
+        ByteBuffer allocate( int bufferSize );
+
+        @Override
+        void close();
+    }
 
     private class ThreadLocalByteBuffer
     {

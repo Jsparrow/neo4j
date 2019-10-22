@@ -31,27 +31,27 @@ import org.neo4j.logging.internal.LogService;
 @Deprecated
 public final class JmxExtensionFactory extends KernelExtensionFactory<JmxExtensionFactory.Dependencies>
 {
-    public interface Dependencies
+    public static final String KEY = "kernel jmx";
+
+	public JmxExtensionFactory()
+    {
+        super( KEY );
+    }
+
+	@Override
+    public Lifecycle newInstance( KernelContext context, Dependencies dependencies )
+    {
+        return new JmxKernelExtension( dependencies.getKernelData(),
+                dependencies.getDataSourceManager(),
+                dependencies.getLogService().getInternalLogProvider() );
+    }
+
+	public interface Dependencies
     {
         KernelData getKernelData();
 
         LogService getLogService();
 
         DataSourceManager getDataSourceManager();
-    }
-
-    public static final String KEY = "kernel jmx";
-
-    public JmxExtensionFactory()
-    {
-        super( KEY );
-    }
-
-    @Override
-    public Lifecycle newInstance( KernelContext context, Dependencies dependencies )
-    {
-        return new JmxKernelExtension( dependencies.getKernelData(),
-                dependencies.getDataSourceManager(),
-                dependencies.getLogService().getInternalLogProvider() );
     }
 }

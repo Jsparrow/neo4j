@@ -35,6 +35,6 @@ public class FileLockException extends IOException
 
     public FileLockException( File file )
     {
-        super( "This file is locked by another process, please ensure you don't have another Neo4j process or tool using it: '" + file + "'.'" );
+        super( new StringBuilder().append("This file is locked by another process, please ensure you don't have another Neo4j process or tool using it: '").append(file).append("'.'").toString() );
     }
 }

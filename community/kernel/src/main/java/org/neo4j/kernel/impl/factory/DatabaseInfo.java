@@ -41,7 +41,7 @@ public class DatabaseInfo
     @Override
     public String toString()
     {
-        return edition + " " + operationalMode;
+        return new StringBuilder().append(edition).append(" ").append(operationalMode).toString();
     }
 
 }

@@ -101,8 +101,7 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
         List<ClassNode> classes = new ArrayList<>( byteCodes.size() );
         List<Failure> failures = new ArrayList<>();
         // load (and verify) the structure of the generated classes
-        for ( ByteCodes byteCode : byteCodes )
-        {
+		byteCodes.forEach(byteCode -> {
             try
             {
                 classes.add( classNode( byteCode.bytes() ) );
@@ -111,7 +110,7 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
             {
                 failures.add( new Failure( e, e.toString() ) );
             }
-        }
+        });
         // if there are problems with the structure of the generated classes,
         // we are not going to be able to verify their methods
         if ( !failures.isEmpty() )
@@ -120,10 +119,7 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
         }
         // continue with verifying the methods of the classes
         AssignmentChecker check = new AssignmentChecker( classpathLoader, classes );
-        for ( ClassNode clazz : classes )
-        {
-            verify( check, clazz, failures );
-        }
+        classes.forEach(clazz -> verify(check, clazz, failures));
         if ( !failures.isEmpty() )
         {
             throw compilationFailure( failures );
@@ -181,28 +177,10 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
     private static CompilationFailureException compilationFailure( List<Failure> failures )
     {
         List<Diagnostic<?>> diagnostics = new ArrayList<>( failures.size() );
-        for ( Failure failure : failures )
-        {
-            diagnostics.add( new BytecodeDiagnostic( failure.message ) );
-        }
+        failures.forEach(failure -> diagnostics.add(new BytecodeDiagnostic(failure.message)));
         CompilationFailureException exception = new CompilationFailureException( diagnostics );
-        for ( Failure failure : failures )
-        {
-            exception.addSuppressed( failure.cause );
-        }
+        failures.forEach(failure -> exception.addSuppressed(failure.cause));
         return exception;
-    }
-
-    private static class Failure
-    {
-        final Throwable cause;
-        final String message;
-
-        Failure( Throwable cause, String message )
-        {
-            this.cause = cause;
-            this.message = message;
-        }
     }
 
     private static String detailedMessage(
@@ -269,7 +247,7 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
         return message.toString();
     }
 
-    private static void emit( PrintWriter out, List<Integer> lengths, IntFunction<Value> valueLookup, int values )
+	private static void emit( PrintWriter out, List<Integer> lengths, IntFunction<Value> valueLookup, int values )
     {
         for ( int i = 0; i < values; i++ )
         {
@@ -286,7 +264,7 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
         }
     }
 
-    private static void padding( PrintWriter out, ListIterator<Integer> lengths, char var )
+	private static void padding( PrintWriter out, ListIterator<Integer> lengths, char var )
     {
         while ( lengths.hasNext() )
         {
@@ -302,7 +280,7 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
         }
     }
 
-    private static void insert( int i, Value value, List<Integer> values )
+	private static void insert( int i, Value value, List<Integer> values )
     {
         int length = shortName( value.toString() ).length();
         while ( i >= values.size() )
@@ -315,7 +293,7 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
         }
     }
 
-    private static String shortName( String name )
+	private static String shortName( String name )
     {
         int start = name.lastIndexOf( '/' );
         int end = name.length();
@@ -324,6 +302,23 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
             end--;
         }
         return start == -1 ? name : name.substring( start + 1, end );
+    }
+
+	private static boolean isInterfaceNode( ClassNode clazz )
+    {
+        return (clazz.access & Opcodes.ACC_INTERFACE) != 0;
+    }
+
+	private static class Failure
+    {
+        final Throwable cause;
+        final String message;
+
+        Failure( Throwable cause, String message )
+        {
+            this.cause = cause;
+            this.message = message;
+        }
     }
 
     // This class might look failed in the IDE, but javac will accept it
@@ -361,10 +356,7 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
         private static List<Type> interfaces( ClassNode clazz )
         {
             List<Type> interfaces = new ArrayList<>( clazz.interfaces.size() );
-            for ( String iFace : clazz.interfaces )
-            {
-                interfaces.add( Type.getObjectType( iFace ) );
-            }
+            clazz.interfaces.forEach(iFace -> interfaces.add(Type.getObjectType(iFace)));
             return interfaces;
         }
     }
@@ -377,10 +369,7 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
         AssignmentChecker( ClassLoader classpathLoader, List<ClassNode> classes )
         {
             this.classpathLoader = classpathLoader;
-            for ( ClassNode node : classes )
-            {
-                this.classes.put( Type.getObjectType( node.name ), node );
-            }
+            classes.forEach(node -> this.classes.put(Type.getObjectType(node.name), node));
         }
 
         boolean invocableInterface( Type target, Type value )
@@ -437,14 +426,7 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
             {
                 return true;
             }
-            for ( String iFace : value.interfaces )
-            {
-                if ( isAssignableFrom( target, Type.getObjectType( iFace ) ) )
-                {
-                    return true;
-                }
-            }
-            return false;
+            return value.interfaces.stream().anyMatch(iFace -> isAssignableFrom( target, Type.getObjectType( iFace ) ));
         }
 
         private Class<?> getClass( Type type )
@@ -462,11 +444,6 @@ class ByteCodeVerifier implements ByteCodeChecker, CodeGeneratorOption
                 throw new RuntimeException( e.toString() );
             }
         }
-    }
-
-    private static boolean isInterfaceNode( ClassNode clazz )
-    {
-        return (clazz.access & Opcodes.ACC_INTERFACE) != 0;
     }
 }
 

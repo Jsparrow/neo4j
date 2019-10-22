@@ -43,17 +43,17 @@ public class Util
     {
     }
 
-    public static Path canonicalPath( Path path ) throws IllegalArgumentException
+    public static Path canonicalPath( Path path )
     {
         return canonicalPath( path.toFile() );
     }
 
-    public static Path canonicalPath( String path ) throws IllegalArgumentException
+    public static Path canonicalPath( String path )
     {
         return canonicalPath( new File( path ) );
     }
 
-    public static Path canonicalPath( File file ) throws IllegalArgumentException
+    public static Path canonicalPath( File file )
     {
         try
         {

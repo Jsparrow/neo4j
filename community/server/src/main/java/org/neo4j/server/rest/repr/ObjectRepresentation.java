@@ -31,36 +31,29 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class ObjectRepresentation extends MappingRepresentation
 {
-    @Target( ElementType.METHOD )
-    @Retention( RetentionPolicy.RUNTIME )
-    protected @interface Mapping
-    {
-        String value();
-    }
-
     private static final ConcurrentHashMap<Class<?>, Map<String, PropertyGetter>> serializations =
             new ConcurrentHashMap<>();
 
-    private final Map<String, PropertyGetter> serialization = serialization( getClass() );
+	private final Map<String, PropertyGetter> serialization = serialization( getClass() );
 
-    ObjectRepresentation( RepresentationType type )
+	public ObjectRepresentation( String type )
     {
         super( type );
     }
 
-    public ObjectRepresentation( String type )
+	ObjectRepresentation( RepresentationType type )
     {
         super( type );
     }
 
-    private static Map<String, PropertyGetter> serialization( Class<? extends ObjectRepresentation> type )
+	private static Map<String, PropertyGetter> serialization( Class<? extends ObjectRepresentation> type )
     {
         Map<String, PropertyGetter> serialization = serializations.computeIfAbsent(
                 type, ObjectRepresentation::buildSerialization );
         return serialization;
     }
 
-    private static Map<String,PropertyGetter> buildSerialization( Class<?> type )
+	private static Map<String,PropertyGetter> buildSerialization( Class<?> type )
     {
         Map<String,PropertyGetter> serialization;
         serialization = new HashMap<>();
@@ -75,7 +68,7 @@ public abstract class ObjectRepresentation extends MappingRepresentation
         return serialization;
     }
 
-    private static PropertyGetter getter( final Method method )
+	private static PropertyGetter getter( final Method method )
     {
         // If this turns out to be a bottle neck we could use a byte code
         // generation library, such as ASM, instead of reflection.
@@ -110,7 +103,25 @@ public abstract class ObjectRepresentation extends MappingRepresentation
         };
     }
 
-    private abstract static class PropertyGetter
+	@Override
+    protected final void serialize( MappingSerializer serializer )
+    {
+        serialization.entrySet().forEach(property -> property.getValue().putTo(serializer, this, property.getKey()));
+        extraData( serializer );
+    }
+
+	void extraData( MappingSerializer serializer )
+    {
+    }
+
+	@Target( ElementType.METHOD )
+    @Retention( RetentionPolicy.RUNTIME )
+    protected @interface Mapping
+    {
+        String value();
+    }
+
+	private abstract static class PropertyGetter
     {
         PropertyGetter( Method method )
         {
@@ -134,20 +145,5 @@ public abstract class ObjectRepresentation extends MappingRepresentation
         }
 
         abstract Object get( ObjectRepresentation object );
-    }
-
-    @Override
-    protected final void serialize( MappingSerializer serializer )
-    {
-        for ( Map.Entry<String, PropertyGetter> property : serialization.entrySet() )
-        {
-            property.getValue()
-                    .putTo( serializer, this, property.getKey() );
-        }
-        extraData( serializer );
-    }
-
-    void extraData( MappingSerializer serializer )
-    {
     }
 }

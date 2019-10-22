@@ -62,14 +62,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class GenericKeyStateFormatTest extends FormatCompatibilityVerifier
 {
-    @Rule
+    private static final int ENTITY_ID = 19570320;
+
+	private static final int NUMBER_OF_SLOTS = 2;
+
+	@Rule
     public PageCacheRule pageCacheRule = new PageCacheRule();
 
-    private static final int ENTITY_ID = 19570320;
-    private static final int NUMBER_OF_SLOTS = 2;
-    private List<Value> values;
+	private List<Value> values;
 
-    @Before
+	@Before
     public void setup()
     {
         values = new ArrayList<>();
@@ -162,19 +164,19 @@ public class GenericKeyStateFormatTest extends FormatCompatibilityVerifier
         } ) );
     }
 
-    @Override
+	@Override
     protected String zipName()
     {
         return "current-generic-key-state-format.zip";
     }
 
-    @Override
+	@Override
     protected String storeFileName()
     {
         return "generic-key-state-store";
     }
 
-    @Override
+	@Override
     protected void createStoreFile( File storeFile ) throws IOException
     {
         withCursor( storeFile, true, c -> {
@@ -183,7 +185,7 @@ public class GenericKeyStateFormatTest extends FormatCompatibilityVerifier
         } );
     }
 
-    @Override
+	@Override
     protected void verifyFormat( File storeFile ) throws FormatViolationException, IOException
     {
         AtomicReference<FormatViolationException> exception = new AtomicReference<>();
@@ -204,7 +206,7 @@ public class GenericKeyStateFormatTest extends FormatCompatibilityVerifier
         }
     }
 
-    @Override
+	@Override
     protected void verifyContent( File storeFile ) throws IOException
     {
         withCursor( storeFile, false, c ->
@@ -214,7 +216,7 @@ public class GenericKeyStateFormatTest extends FormatCompatibilityVerifier
         } );
     }
 
-    private void putFormatVersion( PageCursor cursor )
+	private void putFormatVersion( PageCursor cursor )
     {
         GenericLayout layout = getLayout();
         int major = layout.majorVersion();
@@ -223,25 +225,24 @@ public class GenericKeyStateFormatTest extends FormatCompatibilityVerifier
         cursor.putInt( minor );
     }
 
-    private void readFormatVersion( PageCursor c )
+	private void readFormatVersion( PageCursor c )
     {
         c.getInt(); // Major version
         c.getInt(); // Minor version
     }
 
-    private void putData( PageCursor c )
+	private void putData( PageCursor c )
     {
         GenericLayout layout = getLayout();
         GenericKey key = layout.newKey();
-        for ( Value value : values )
-        {
+        values.forEach(value -> {
             initializeFromValue( key, value );
             c.putInt( key.size() );
             layout.writeKey( c, key );
-        }
+        });
     }
 
-    private void initializeFromValue( GenericKey key, Value value )
+	private void initializeFromValue( GenericKey key, Value value )
     {
         key.initialize( ENTITY_ID );
         for ( int i = 0; i < NUMBER_OF_SLOTS; i++ )
@@ -250,13 +251,12 @@ public class GenericKeyStateFormatTest extends FormatCompatibilityVerifier
         }
     }
 
-    private void verifyData( PageCursor c )
+	private void verifyData( PageCursor c )
     {
         GenericLayout layout = getLayout();
         GenericKey readCompositeKey = layout.newKey();
         GenericKey comparison = layout.newKey();
-        for ( Value value : values )
-        {
+        values.forEach(value -> {
             int keySize = c.getInt();
             layout.readKey( c, readCompositeKey, keySize );
             for ( Value readValue : readCompositeKey.asValues() )
@@ -265,24 +265,24 @@ public class GenericKeyStateFormatTest extends FormatCompatibilityVerifier
                 assertEquals( 0, layout.compare( readCompositeKey, comparison ), detailedFailureMessage( readCompositeKey, comparison ) );
                 if ( readValue != Values.NO_VALUE )
                 {
-                    assertEquals( value, readValue, "expected read value to be " + value + ", but was " + readValue );
+                    assertEquals( value, readValue, new StringBuilder().append("expected read value to be ").append(value).append(", but was ").append(readValue).toString() );
                 }
             }
-        }
+        });
     }
 
-    private String detailedFailureMessage( GenericKey actualKey, GenericKey expectedKey )
+	private String detailedFailureMessage( GenericKey actualKey, GenericKey expectedKey )
     {
-        return "expected " + expectedKey.toDetailedString() + ", but was " + actualKey.toDetailedString();
+        return new StringBuilder().append("expected ").append(expectedKey.toDetailedString()).append(", but was ").append(actualKey.toDetailedString()).toString();
     }
 
-    private GenericLayout getLayout()
+	private GenericLayout getLayout()
     {
         return new GenericLayout( NUMBER_OF_SLOTS,
                 new IndexSpecificSpaceFillingCurveSettingsCache( new ConfiguredSpaceFillingCurveSettingsCache( Config.defaults() ), new HashMap<>() ) );
     }
 
-    private void withCursor( File storeFile, boolean create, Consumer<PageCursor> cursorConsumer ) throws IOException
+	private void withCursor( File storeFile, boolean create, Consumer<PageCursor> cursorConsumer ) throws IOException
     {
         OpenOption[] openOptions = create ?
                                    new OpenOption[]{StandardOpenOption.WRITE, StandardOpenOption.CREATE} :

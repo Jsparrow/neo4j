@@ -145,13 +145,8 @@ public final class StoreId implements Externalizable
     @Override
     public String toString()
     {
-        return "StoreId{" +
-                "creationTime=" + creationTime +
-                ", randomId=" + randomId +
-                ", storeVersion=" + storeVersion +
-                ", upgradeTime=" + upgradeTime +
-                ", upgradeId=" + upgradeId +
-                '}';
+        return new StringBuilder().append("StoreId{").append("creationTime=").append(creationTime).append(", randomId=").append(randomId).append(", storeVersion=").append(storeVersion)
+				.append(", upgradeTime=").append(upgradeTime).append(", upgradeId=").append(upgradeId).append('}').toString();
     }
 
     private static boolean internalEqual( long first, long second )

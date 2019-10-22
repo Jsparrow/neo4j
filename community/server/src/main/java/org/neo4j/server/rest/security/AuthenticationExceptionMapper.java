@@ -40,7 +40,7 @@ public class AuthenticationExceptionMapper implements ExceptionMapper<Authentica
         if ( e.getRealm() != null )
         {
             return Response.status( Status.UNAUTHORIZED )
-                    .header( "WWW-Authenticate", "Basic realm=\"" + e.getRealm() + "\"" )
+                    .header( "WWW-Authenticate", new StringBuilder().append("Basic realm=\"").append(e.getRealm()).append("\"").toString() )
                     .type( "text/plain" )
                     .entity( e.getMessage() )
                     .build();

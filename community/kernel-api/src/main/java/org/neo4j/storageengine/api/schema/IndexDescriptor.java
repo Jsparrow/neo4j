@@ -48,14 +48,6 @@ public class IndexDescriptor implements SchemaDescriptorSupplier, IndexReference
     protected final Optional<String> userSuppliedName;
     protected final IndexProviderDescriptor providerDescriptor;
 
-    IndexDescriptor( IndexDescriptor indexDescriptor )
-    {
-        this( indexDescriptor.schema,
-              indexDescriptor.type,
-              indexDescriptor.userSuppliedName,
-              indexDescriptor.providerDescriptor );
-    }
-
     public IndexDescriptor( SchemaDescriptor schema,
                             Type type,
                             Optional<String> userSuppliedName,
@@ -67,79 +59,85 @@ public class IndexDescriptor implements SchemaDescriptorSupplier, IndexReference
         this.providerDescriptor = providerDescriptor;
     }
 
-    // METHODS
+	IndexDescriptor( IndexDescriptor indexDescriptor )
+    {
+        this( indexDescriptor.schema,
+              indexDescriptor.type,
+              indexDescriptor.userSuppliedName,
+              indexDescriptor.providerDescriptor );
+    }
 
-    public Type type()
+	public Type type()
     {
         return type;
     }
 
-    @Override
+	@Override
     public SchemaDescriptor schema()
     {
         return schema;
     }
 
-    @Override
+	@Override
     public boolean isUnique()
     {
         return type == Type.UNIQUE;
     }
 
-    @Override
+	@Override
     public int[] properties()
     {
         return schema.getPropertyIds();
     }
 
-    @Override
+	@Override
     public String providerKey()
     {
         return providerDescriptor.getKey();
     }
 
-    @Override
+	@Override
     public String providerVersion()
     {
         return providerDescriptor.getVersion();
     }
 
-    @Override
+	@Override
     public String name()
     {
         return userSuppliedName.orElse( UNNAMED_INDEX );
     }
 
-    public IndexProviderDescriptor providerDescriptor()
+	public IndexProviderDescriptor providerDescriptor()
     {
         return providerDescriptor;
     }
 
-    @Override
+	@Override
     public IndexOrder[] orderCapability( ValueCategory... valueCategories )
     {
         return ORDER_NONE;
     }
 
-    @Override
+	@Override
     public IndexValueCapability valueCapability( ValueCategory... valueCategories )
     {
         return IndexValueCapability.NO;
     }
 
-    @Override
+	@Override
     public boolean isFulltextIndex()
     {
         return false;
     }
 
-    @Override
+	@Override
     public boolean isEventuallyConsistent()
     {
         return false;
     }
 
-    /**
+	/**
      * Returns a user friendly description of what this index indexes.
      *
      * @param tokenNameLookup used for looking up names for token ids.
@@ -151,30 +149,29 @@ public class IndexDescriptor implements SchemaDescriptorSupplier, IndexReference
         return format( "Index( %s, %s )", type.name(), schema.userDescription( tokenNameLookup ) );
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
-        if ( o instanceof IndexDescriptor )
-        {
-            IndexDescriptor that = (IndexDescriptor)o;
-            return this.type() == that.type() && this.schema().equals( that.schema() );
-        }
-        return false;
+        if (!(o instanceof IndexDescriptor)) {
+			return false;
+		}
+		IndexDescriptor that = (IndexDescriptor)o;
+		return this.type() == that.type() && this.schema().equals( that.schema() );
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return type.hashCode() & schema.hashCode();
     }
 
-    @Override
+	@Override
     public String toString()
     {
         return userDescription( SchemaUtil.idTokenNameLookup );
     }
 
-    /**
+	/**
      * Create a StoreIndexDescriptor, which represent the commit version of this index.
      *
      * @param id the index id of the committed index
@@ -186,7 +183,7 @@ public class IndexDescriptor implements SchemaDescriptorSupplier, IndexReference
         return new StoreIndexDescriptor( this, id );
     }
 
-    /**
+	/**
      * Create a StoreIndexDescriptor, which represent the commit version of this index, that is owned
      * by a uniqueness constraint.
      *
@@ -201,22 +198,27 @@ public class IndexDescriptor implements SchemaDescriptorSupplier, IndexReference
         return new StoreIndexDescriptor( this, id, owningConstraintId );
     }
 
-    void assertValidId( long id, String idName )
+	void assertValidId( long id, String idName )
     {
         if ( id < 0 )
         {
-            throw new IllegalArgumentException( "A " + getClass().getSimpleName() + " " + idName + " must be positive, got " + id );
+            throw new IllegalArgumentException( new StringBuilder().append("A ").append(getClass().getSimpleName()).append(" ").append(idName).append(" must be positive, got ").append(id)
+					.toString() );
         }
     }
 
-    public Optional<String> getUserSuppliedName()
+	public Optional<String> getUserSuppliedName()
     {
         return userSuppliedName;
     }
 
-    public enum Type
+	public enum Type
     {
         GENERAL,
         UNIQUE
     }
+
+    // METHODS
+
+    
 }

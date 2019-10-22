@@ -32,11 +32,10 @@ public class TaskExecutor
     {
         try
         {
-            for ( Runnable task : tasks )
-            {
+            tasks.forEach(task -> {
                 callBefore.run();
                 task.run();
-            }
+            });
         }
         catch ( Exception e )
         {

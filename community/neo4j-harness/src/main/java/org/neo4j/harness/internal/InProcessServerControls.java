@@ -150,24 +150,23 @@ public class InProcessServerControls implements ServerControls
 
     private static void printLog( String description, File file, PrintStream out )
     {
-        if ( file != null && file.exists() )
-        {
-            out.println( String.format( "---------- BEGIN %s ----------", description ) );
-
-            try ( BufferedReader reader = new BufferedReader( new FileReader( file ) ) )
-            {
-                reader.lines().forEach( out::println );
-            }
-            catch ( IOException ex )
-            {
-                out.println( "Unable to collect log files: " + ex.getMessage() );
-                ex.printStackTrace( out );
-            }
-            finally
-            {
-                out.println( String.format( "---------- END %s ----------", description ) );
-            }
-        }
+        if (!(file != null && file.exists())) {
+			return;
+		}
+		out.println( String.format( "---------- BEGIN %s ----------", description ) );
+		try ( BufferedReader reader = new BufferedReader( new FileReader( file ) ) )
+		{
+		    reader.lines().forEach( out::println );
+		}
+		catch ( IOException ex )
+		{
+		    out.println( "Unable to collect log files: " + ex.getMessage() );
+		    ex.printStackTrace( out );
+		}
+		finally
+		{
+		    out.println( String.format( "---------- END %s ----------", description ) );
+		}
     }
 
     private boolean looksLikeMd5Hash( String name )
@@ -202,7 +201,7 @@ public class InProcessServerControls implements ServerControls
     private URI connectorUri( String scheme, Connector connector )
     {
         HostnamePort hostPort = connectorPortRegister.getLocalAddress( connector.key() );
-        return URI.create( scheme + "://" + hostPort + "/" );
+        return URI.create( new StringBuilder().append(scheme).append("://").append(hostPort).append("/").toString() );
     }
 
     private static ConnectorPortRegister connectorPortRegister( NeoServer server )

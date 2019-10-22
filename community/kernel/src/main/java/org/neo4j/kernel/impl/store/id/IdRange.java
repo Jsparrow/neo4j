@@ -53,8 +53,8 @@ public class IdRange
     @Override
     public String toString()
     {
-        return "IdRange[" + rangeStart + "-" + (rangeStart + rangeLength - 1) + ", defrag " +
-                Arrays.toString( defragIds ) + "]";
+        return new StringBuilder().append("IdRange[").append(rangeStart).append("-").append(rangeStart + rangeLength - 1).append(", defrag ").append(Arrays.toString( defragIds ))
+				.append("]").toString();
     }
 
     public int totalSize()

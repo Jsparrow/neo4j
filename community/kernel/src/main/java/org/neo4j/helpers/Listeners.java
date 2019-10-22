@@ -96,10 +96,7 @@ public class Listeners<T> implements Iterable<T>
     {
         requireNonNull( notification, "notification can't be null" );
 
-        for ( T listener : listeners )
-        {
-            notifySingleListener( listener, notification );
-        }
+        listeners.forEach(listener -> notifySingleListener(listener, notification));
     }
 
     /**
@@ -116,10 +113,7 @@ public class Listeners<T> implements Iterable<T>
         requireNonNull( executor, "executor can't be null" );
         requireNonNull( notification, "notification can't be null" );
 
-        for ( T listener : listeners )
-        {
-            executor.execute( () -> notifySingleListener( listener, notification ) );
-        }
+        listeners.forEach(listener -> executor.execute(() -> notifySingleListener(listener, notification)));
     }
 
     /**

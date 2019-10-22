@@ -45,11 +45,11 @@ public abstract class AbstractIndexKeyLengthValidator implements Validator<Value
         {
             throw new IllegalArgumentException( "Null value" );
         }
-        if ( Values.isTextValue( value ) && ((TextValue)value).length() >= checkThreshold )
-        {
-            int length = indexKeyLength( value );
-            validateLength( length );
-        }
+        if (!(Values.isTextValue( value ) && ((TextValue)value).length() >= checkThreshold)) {
+			return;
+		}
+		int length = indexKeyLength( value );
+		validateLength( length );
     }
 
     void validateLength( int byteLength )

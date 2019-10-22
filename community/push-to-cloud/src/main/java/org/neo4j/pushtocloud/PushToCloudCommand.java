@@ -185,7 +185,7 @@ public class PushToCloudCommand implements AdminCommand
         Matcher matcher = pattern.matcher( boltURI );
         if ( !matcher.matches() )
         {
-            throw new IncorrectUsage( "Invalid Bolt URI '" + boltURI + "'" );
+            throw new IncorrectUsage( new StringBuilder().append("Invalid Bolt URI '").append(boltURI).append("'").toString() );
         }
 
         String databaseId = matcher.group( 1 );
@@ -216,11 +216,11 @@ public class PushToCloudCommand implements AdminCommand
             if ( database == null )
             {
                 database = new Database().defaultValue();
-                outsideWorld.stdOutLine( "Selecting default database '" + database + "'" );
+                outsideWorld.stdOutLine( new StringBuilder().append("Selecting default database '").append(database).append("'").toString() );
             }
 
             String to = arguments.get( ARG_DUMP_TO );
-            Path dumpFile = to != null ? Paths.get( to ) : homeDir.resolve( "dump-of-" + database + "-" + currentTimeMillis() );
+            Path dumpFile = to != null ? Paths.get( to ) : homeDir.resolve( new StringBuilder().append("dump-of-").append(database).append("-").append(currentTimeMillis()).toString() );
             if ( Files.exists( dumpFile ) )
             {
                 throw new CommandFailed( format( "The provided dump-to target '%s' file already exists", dumpFile ) );

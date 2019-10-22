@@ -48,18 +48,19 @@ import org.neo4j.tooling.procedure.messages.ContextFieldError;
 import org.neo4j.tooling.procedure.messages.ContextFieldWarning;
 
 import static org.neo4j.tooling.procedure.CompilerOptions.IGNORE_CONTEXT_WARNINGS_OPTION;
+import java.util.Collections;
 
 class ContextFieldVisitor extends SimpleElementVisitor8<Stream<CompilationMessage>,Void>
 {
-    private static final Set<String> SUPPORTED_TYPES = new LinkedHashSet<>(
+    private static final Set<String> SUPPORTED_TYPES = Collections.unmodifiableSet(new LinkedHashSet<>(
             Arrays.asList( GraphDatabaseService.class.getName(), Log.class.getName(), TerminationGuard.class.getName(),
-                    SecurityContext.class.getName(), ProcedureTransaction.class.getName() ) );
-    private static final Set<String> RESTRICTED_TYPES = new LinkedHashSet<>(
+                    SecurityContext.class.getName(), ProcedureTransaction.class.getName() ) ));
+    private static final Set<String> RESTRICTED_TYPES = Collections.unmodifiableSet(new LinkedHashSet<>(
             Arrays.asList( GraphDatabaseAPI.class.getName(), KernelTransaction.class.getName(),
                     DependencyResolver.class.getName(), UserManager.class.getName(),
                     // the following classes are not in the compiler classpath
                     "org.neo4j.kernel.enterprise.api.security.EnterpriseAuthManager",
-                    "org.neo4j.server.security.enterprise.log.SecurityLog" ) );
+                    "org.neo4j.server.security.enterprise.log.SecurityLog" ) ));
 
     private final Elements elements;
     private final Types types;
@@ -98,24 +99,19 @@ class ContextFieldVisitor extends SimpleElementVisitor8<Stream<CompilationMessag
             return Stream.empty();
         }
 
-        if ( injectsRestrictedType( fieldType ) )
-        {
-            if ( ignoresWarnings )
-            {
-                return Stream.empty();
-            }
-
-            return Stream.of( new ContextFieldWarning( field, "@%s usage warning: found unsupported restricted type <%s> on %s.\n" +
-                    "The procedure will not load unless declared via the configuration option 'dbms.security.procedures.unrestricted'.\n" +
-                    "You can ignore this warning by passing the option -A%s to the Java compiler",
-                    Context.class.getName(), fieldType.toString(), fieldFullName( field ),
-                    IGNORE_CONTEXT_WARNINGS_OPTION ) );
-        }
-
-        return Stream.of( new ContextFieldError( field,
-                "@%s usage error: found unknown type <%s> on field %s, expected one of: %s",
-                Context.class.getName(), fieldType.toString(), fieldFullName( field ),
-                joinTypes( SUPPORTED_TYPES ) ) );
+        if (!injectsRestrictedType( fieldType )) {
+			return Stream.of( new ContextFieldError( field,
+			        "@%s usage error: found unknown type <%s> on field %s, expected one of: %s",
+			        Context.class.getName(), fieldType.toString(), fieldFullName( field ),
+			        joinTypes( SUPPORTED_TYPES ) ) );
+		}
+		if ( ignoresWarnings )
+		{
+		    return Stream.empty();
+		}
+		return Stream.of( new ContextFieldWarning( field, new StringBuilder().append("@%s usage warning: found unsupported restricted type <%s> on %s.\n").append("The procedure will not load unless declared via the configuration option 'dbms.security.procedures.unrestricted'.\n").append("You can ignore this warning by passing the option -A%s to the Java compiler").toString(),
+		        Context.class.getName(), fieldType.toString(), fieldFullName( field ),
+		        IGNORE_CONTEXT_WARNINGS_OPTION ) );
     }
 
     private boolean injectsAllowedType( TypeMirror fieldType )

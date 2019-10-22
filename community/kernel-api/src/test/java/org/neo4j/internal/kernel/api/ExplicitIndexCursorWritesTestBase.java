@@ -99,11 +99,10 @@ public abstract class ExplicitIndexCursorWritesTestBase<G extends KernelAPIWrite
         }
 
         // Then
-        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
+        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx();
+				IndexHits<Node> hits = graphDb.index().forNodes(INDEX_NAME).get(KEY, VALUE) )
         {
-            IndexHits<Node> hits = graphDb.index().forNodes( INDEX_NAME ).get( KEY, VALUE );
             assertThat( hits.next().getId(), equalTo( nodeId ) );
-            hits.close();
             ctx.success();
         }
     }
@@ -123,11 +122,10 @@ public abstract class ExplicitIndexCursorWritesTestBase<G extends KernelAPIWrite
         }
 
         // Then
-        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
+        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx();
+				IndexHits<Node> hits = graphDb.index().forNodes(INDEX_NAME).get(KEY, VALUE) )
         {
-            IndexHits<Node> hits = graphDb.index().forNodes( INDEX_NAME ).get( KEY, VALUE );
             assertFalse( hits.hasNext() );
-            hits.close();
             ctx.success();
         }
     }
@@ -154,11 +152,10 @@ public abstract class ExplicitIndexCursorWritesTestBase<G extends KernelAPIWrite
         }
 
         // Then
-        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
+        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx();
+				IndexHits<Node> hits = graphDb.index().forNodes(INDEX_NAME).get(KEY, VALUE) )
         {
-            IndexHits<Node> hits = graphDb.index().forNodes( INDEX_NAME ).get( KEY, VALUE );
             assertFalse( hits.hasNext() );
-            hits.close();
             ctx.success();
         }
     }
@@ -178,12 +175,11 @@ public abstract class ExplicitIndexCursorWritesTestBase<G extends KernelAPIWrite
         }
 
         // Then
-        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
+        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx();
+				IndexHits<Node> hits = graphDb.index().forNodes(INDEX_NAME).get(KEY, VALUE) )
         {
-            IndexHits<Node> hits = graphDb.index().forNodes( INDEX_NAME ).get( KEY, VALUE );
             assertThat( hits.next().getId(), equalTo( nodeId ) );
             assertFalse( hits.hasNext() );
-            hits.close();
             ctx.success();
         }
     }
@@ -282,11 +278,10 @@ public abstract class ExplicitIndexCursorWritesTestBase<G extends KernelAPIWrite
         }
 
         // Then
-        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
+        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx();
+				IndexHits<Relationship> hits = graphDb.index().forRelationships(INDEX_NAME).get(KEY, VALUE) )
         {
-            IndexHits<Relationship> hits = graphDb.index().forRelationships( INDEX_NAME ).get( KEY, VALUE );
             assertThat( hits.next().getId(), equalTo( relId ) );
-            hits.close();
             ctx.success();
         }
     }
@@ -306,11 +301,10 @@ public abstract class ExplicitIndexCursorWritesTestBase<G extends KernelAPIWrite
         }
 
         // Then
-        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
+        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx();
+				IndexHits<Node> hits = graphDb.index().forNodes(INDEX_NAME).get(KEY, VALUE) )
         {
-            IndexHits<Node> hits = graphDb.index().forNodes( INDEX_NAME ).get( KEY, VALUE );
             assertFalse( hits.hasNext() );
-            hits.close();
             ctx.success();
         }
     }
@@ -337,11 +331,10 @@ public abstract class ExplicitIndexCursorWritesTestBase<G extends KernelAPIWrite
         }
 
         // Then
-        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
+        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx();
+				IndexHits<Relationship> hits = graphDb.index().forRelationships(INDEX_NAME).get(KEY, VALUE) )
         {
-            IndexHits<Relationship> hits = graphDb.index().forRelationships( INDEX_NAME ).get( KEY, VALUE );
             assertFalse( hits.hasNext() );
-            hits.close();
             ctx.success();
         }
     }
@@ -361,12 +354,11 @@ public abstract class ExplicitIndexCursorWritesTestBase<G extends KernelAPIWrite
         }
 
         // Then
-        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
+        try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx();
+				IndexHits<Relationship> hits = graphDb.index().forRelationships(INDEX_NAME).get(KEY, VALUE) )
         {
-            IndexHits<Relationship> hits = graphDb.index().forRelationships( INDEX_NAME ).get( KEY, VALUE );
             assertThat( hits.next().getId(), equalTo( relId ) );
             assertFalse( hits.hasNext() );
-            hits.close();
             ctx.success();
         }
     }

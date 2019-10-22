@@ -93,7 +93,7 @@ public class BuiltInDbmsProcedures
         long numberOfClearedQueries = queryExecutionEngine.clearQueryCaches() - 1; // this query itself does not count
 
         String result = numberOfClearedQueries == 0 ? "Query cache already empty."
-                                                    : "Query caches successfully cleared of " + numberOfClearedQueries + " queries.";
+                                                    : new StringBuilder().append("Query caches successfully cleared of ").append(numberOfClearedQueries).append(" queries.").toString();
         log.info( "Called dbms.clearQueryCaches(): " + result );
         return Stream.of( new StringResult( result ) );
     }

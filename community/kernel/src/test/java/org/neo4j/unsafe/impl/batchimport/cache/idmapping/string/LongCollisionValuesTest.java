@@ -43,17 +43,16 @@ public class LongCollisionValuesTest
 {
     @Rule
     public final RandomRule random = new RandomRule();
+	@Parameter( 0 )
+    public NumberArrayFactory factory;
 
-    @Parameters
+	@Parameters
     public static Collection<NumberArrayFactory> data()
     {
         return Arrays.asList( HEAP, OFF_HEAP, AUTO_WITHOUT_PAGECACHE, CHUNKED_FIXED_SIZE );
     }
 
-    @Parameter( 0 )
-    public NumberArrayFactory factory;
-
-    @Test
+	@Test
     public void shouldStoreAndLoadLongs()
     {
         // given

@@ -192,7 +192,7 @@ public class Arguments
 
         final String[] rightLines = wrapText( rightText, rightWidth ).split( NEWLINE );
 
-        final String fmt = "%-" + (startOnNewLine ? newLineIndent : rightAlignIndex) + "s%s";
+        final String fmt = new StringBuilder().append("%-").append(startOnNewLine ? newLineIndent : rightAlignIndex).append("s%s").toString();
         String firstLine = format( fmt, leftText, startOnNewLine ? "" : rightLines[0] );
 
         String rest = Arrays.stream( rightLines )

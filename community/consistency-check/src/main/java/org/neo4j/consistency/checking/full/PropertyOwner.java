@@ -31,15 +31,29 @@ import static org.neo4j.consistency.store.RecordReference.SkippingReference.skip
 
 abstract class PropertyOwner<RECORD extends PrimitiveRecord> implements Owner
 {
-    abstract RecordReference<RECORD> record( RecordAccess records );
+    static final PropertyOwner<NeoStoreRecord> OWNING_GRAPH = new PropertyOwner<NeoStoreRecord>()
+    {
+        @Override
+        RecordReference<NeoStoreRecord> record( RecordAccess records )
+        {
+            return records.graph();
+        }
+    };
 
-    @Override
+	private PropertyOwner()
+    {
+        // only internal subclasses
+    }
+
+	abstract RecordReference<RECORD> record( RecordAccess records );
+
+	@Override
     public void checkOrphanage()
     {
         // default: do nothing
     }
 
-    static class OwningNode extends PropertyOwner<NodeRecord>
+	static class OwningNode extends PropertyOwner<NodeRecord>
     {
         private final long id;
 
@@ -70,15 +84,6 @@ abstract class PropertyOwner<RECORD extends PrimitiveRecord> implements Owner
             return records.relationship( id );
         }
     }
-
-    static final PropertyOwner<NeoStoreRecord> OWNING_GRAPH = new PropertyOwner<NeoStoreRecord>()
-    {
-        @Override
-        RecordReference<NeoStoreRecord> record( RecordAccess records )
-        {
-            return records.graph();
-        }
-    };
 
     static class UnknownOwner extends PropertyOwner<PrimitiveRecord> implements RecordReference<PrimitiveRecord>
     {
@@ -111,11 +116,11 @@ abstract class PropertyOwner<RECORD extends PrimitiveRecord> implements Owner
 
         synchronized void markInCustody()
         {
-            if ( reporter != null )
-            {
-                reporter.skip();
-                reporter = null;
-            }
+            if (reporter == null) {
+				return;
+			}
+			reporter.skip();
+			reporter = null;
         }
 
         @Override
@@ -123,10 +128,5 @@ abstract class PropertyOwner<RECORD extends PrimitiveRecord> implements Owner
         {
             this.reporter = reporter;
         }
-    }
-
-    private PropertyOwner()
-    {
-        // only internal subclasses
     }
 }

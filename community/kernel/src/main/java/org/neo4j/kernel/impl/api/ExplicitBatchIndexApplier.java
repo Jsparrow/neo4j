@@ -87,8 +87,7 @@ public class ExplicitBatchIndexApplier extends BatchTransactionApplier.Adapter
         catch ( InterruptedException e )
         {
             Thread.currentThread().interrupt();
-            throw new IOException( "Interrupted while waiting for applying tx:" + activeTransactionId +
-                    " explicit index updates", e );
+            throw new IOException( new StringBuilder().append("Interrupted while waiting for applying tx:").append(activeTransactionId).append(" explicit index updates").toString(), e );
         }
     }
 
@@ -107,10 +106,10 @@ public class ExplicitBatchIndexApplier extends BatchTransactionApplier.Adapter
         }
 
         // Allow other batches to run
-        if ( lastTransactionId != -1 )
-        {
-            transactionOrdering.removeChecked( lastTransactionId );
-            lastTransactionId = -1;
-        }
+		if (!(lastTransactionId != -1)) {
+			return;
+		}
+		transactionOrdering.removeChecked( lastTransactionId );
+		lastTransactionId = -1;
     }
 }

@@ -101,14 +101,6 @@ public class RecordDistributor
         }
     }
 
-    /**
-     * Consumers records from a {@link QueueDistribution}, feeding into correct queue.
-     */
-    interface RecordConsumer<RECORD>
-    {
-        void accept( RECORD record, int qIndex ) throws InterruptedException;
-    }
-
     public static long calculateRecordsPerCpu( long highId, int numberOfThreads )
     {
         boolean hasRest = highId % numberOfThreads > 0;
@@ -118,5 +110,13 @@ public class RecordDistributor
             result++;
         }
         return result;
+    }
+
+	/**
+     * Consumers records from a {@link QueueDistribution}, feeding into correct queue.
+     */
+    interface RecordConsumer<RECORD>
+    {
+        void accept( RECORD record, int qIndex ) throws InterruptedException;
     }
 }

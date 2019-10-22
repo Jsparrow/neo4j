@@ -25,6 +25,6 @@ public class InvalidDumpEntryException extends IOException
 {
     public InvalidDumpEntryException( String entryName )
     {
-        super( "Dump file entry `" + entryName + "` points to a location outside of the destination database." );
+        super( new StringBuilder().append("Dump file entry `").append(entryName).append("` points to a location outside of the destination database.").toString() );
     }
 }

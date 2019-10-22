@@ -24,57 +24,6 @@ import java.util.concurrent.locks.Lock;
 
 public abstract class EntryUpdater<Key> implements AutoCloseable
 {
-    private final Lock lock;
-    private Thread thread;
-
-    EntryUpdater( Lock lock )
-    {
-        this.lock = lock;
-        if ( lock != null )
-        {
-            this.thread = Thread.currentThread();
-            lock.lock();
-        }
-    }
-
-    public abstract void apply( Key key, ValueUpdate update ) throws IOException;
-
-    @Override
-    public void close()
-    {
-        if ( thread != null )
-        {
-            if ( thread != Thread.currentThread() )
-            {
-                throw new IllegalStateException( "Closing on different thread." );
-            }
-            lock.unlock();
-            thread = null;
-        }
-    }
-
-    protected void ensureOpenOnSameThread()
-    {
-        if ( thread != Thread.currentThread() )
-        {
-            throw new IllegalStateException( "The updater is not available." );
-        }
-    }
-
-    protected void ensureOpen()
-    {
-        if ( thread == null )
-        {
-            throw new IllegalStateException( "The updater is not available." );
-        }
-    }
-
-    @SuppressWarnings( "unchecked" )
-    static <Key> EntryUpdater<Key> noUpdates()
-    {
-        return NO_UPDATES;
-    }
-
     private static final EntryUpdater NO_UPDATES = new EntryUpdater( null )
     {
         @Override
@@ -87,4 +36,54 @@ public abstract class EntryUpdater<Key> implements AutoCloseable
         {
         }
     };
+	private final Lock lock;
+	private Thread thread;
+
+	EntryUpdater( Lock lock )
+    {
+        this.lock = lock;
+        if ( lock != null )
+        {
+            this.thread = Thread.currentThread();
+            lock.lock();
+        }
+    }
+
+	public abstract void apply( Key key, ValueUpdate update ) throws IOException;
+
+	@Override
+    public void close()
+    {
+        if (thread == null) {
+			return;
+		}
+		if ( thread != Thread.currentThread() )
+		{
+		    throw new IllegalStateException( "Closing on different thread." );
+		}
+		lock.unlock();
+		thread = null;
+    }
+
+	protected void ensureOpenOnSameThread()
+    {
+        if ( thread != Thread.currentThread() )
+        {
+            throw new IllegalStateException( "The updater is not available." );
+        }
+    }
+
+	protected void ensureOpen()
+    {
+        if ( thread == null )
+        {
+            throw new IllegalStateException( "The updater is not available." );
+        }
+    }
+
+	@SuppressWarnings( "unchecked" )
+    static <Key> EntryUpdater<Key> noUpdates()
+    {
+        return NO_UPDATES;
+    }
 }

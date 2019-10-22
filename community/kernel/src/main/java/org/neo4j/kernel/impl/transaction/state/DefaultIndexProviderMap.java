@@ -60,8 +60,8 @@ public class DefaultIndexProviderMap extends LifecycleAdapter implements IndexPr
             IndexProvider existing = put( providerDescriptor, provider );
             if ( existing != null )
             {
-                throw new IllegalArgumentException( "Tried to load multiple schema index providers with the same provider descriptor " +
-                        providerDescriptor + ". First loaded " + existing + " then " + provider );
+                throw new IllegalArgumentException( new StringBuilder().append("Tried to load multiple schema index providers with the same provider descriptor ").append(providerDescriptor).append(". First loaded ").append(existing).append(" then ").append(provider)
+						.toString() );
             }
         }
         initDefaultProvider();
@@ -84,7 +84,7 @@ public class DefaultIndexProviderMap extends LifecycleAdapter implements IndexPr
     }
 
     @Override
-    public IndexProvider lookup( String providerDescriptorName ) throws IndexProviderNotFoundException
+    public IndexProvider lookup( String providerDescriptorName )
     {
         assertInit();
         IndexProvider provider = indexProvidersByName.get( providerDescriptorName );
@@ -103,9 +103,8 @@ public class DefaultIndexProviderMap extends LifecycleAdapter implements IndexPr
     {
         if ( provider == null )
         {
-            throw new IndexProviderNotFoundException( "Tried to get index provider with name " + providerDescriptorName +
-                    " whereas available providers in this session being " + indexProvidersByName.keySet() + ", and default being " +
-                    defaultIndexProvider.getProviderDescriptor().name() );
+            throw new IndexProviderNotFoundException( new StringBuilder().append("Tried to get index provider with name ").append(providerDescriptorName).append(" whereas available providers in this session being ").append(indexProvidersByName.keySet()).append(", and default being ").append(defaultIndexProvider.getProviderDescriptor().name())
+					.toString() );
         }
     }
 

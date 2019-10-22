@@ -47,12 +47,11 @@ public interface AuthToken
         Object value = authToken.get( key );
         if ( value == null )
         {
-            throw invalidToken( "missing key `" + key + "`" );
+            throw invalidToken( new StringBuilder().append("missing key `").append(key).append("`").toString() );
         }
         else if ( !(value instanceof String) )
         {
-            throw invalidToken( "the value associated with the key `" + key + "` must be a String but was: "
-                    + value.getClass().getSimpleName() );
+            throw invalidToken( new StringBuilder().append("the value associated with the key `").append(key).append("` must be a String but was: ").append(value.getClass().getSimpleName()).toString() );
         }
         return (String) value;
     }
@@ -62,12 +61,11 @@ public interface AuthToken
         Object value = authToken.get( key );
         if ( value == null )
         {
-            throw invalidToken( "missing key `" + key + "`" );
+            throw invalidToken( new StringBuilder().append("missing key `").append(key).append("`").toString() );
         }
         else if ( !(value instanceof byte[]) )
         {
-            throw invalidToken( "the value associated with the key `" + key + "` must be a UTF-8 encoded string but was: "
-                    + value.getClass().getSimpleName() );
+            throw invalidToken( new StringBuilder().append("the value associated with the key `").append(key).append("` must be a UTF-8 encoded string but was: ").append(value.getClass().getSimpleName()).toString() );
         }
         return (byte[]) value;
     }
@@ -88,8 +86,7 @@ public interface AuthToken
         else
         {
             throw new InvalidAuthTokenException(
-                    "The value associated with the key `" + key + "` must be a Map but was: " +
-                    value.getClass().getSimpleName() );
+                    new StringBuilder().append("The value associated with the key `").append(key).append("` must be a Map but was: ").append(value.getClass().getSimpleName()).toString() );
         }
     }
 

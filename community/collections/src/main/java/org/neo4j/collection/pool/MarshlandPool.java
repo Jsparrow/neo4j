@@ -82,14 +82,12 @@ public class MarshlandPool<T> implements Pool<T>
 
         // Try the reference queue, containing objects from dead threads
         LocalSlotReference<T> slotReference = (LocalSlotReference<T>) objectsFromDeadThreads.poll();
-        if ( slotReference != null && slotReference.localSlotReferenceObject != null )
-        {
-            slotReferences.remove( slotReference ); // remove from old threads
-            return slotReference.localSlotReferenceObject;
-        }
-
-        // Fall back to the delegate pool
-        return delegate.acquire();
+        if (!(slotReference != null && slotReference.localSlotReferenceObject != null)) {
+			// Fall back to the delegate pool
+			return delegate.acquire();
+		}
+		slotReferences.remove( slotReference ); // remove from old threads
+		return slotReference.localSlotReferenceObject;
     }
 
     @Override
@@ -115,8 +113,7 @@ public class MarshlandPool<T> implements Pool<T>
     @Override
     public void close()
     {
-        for ( LocalSlotReference<T> slotReference : slotReferences )
-        {
+        slotReferences.forEach(slotReference -> {
             LocalSlot<T> slot = slotReference.get();
             if ( slot != null )
             {
@@ -127,7 +124,7 @@ public class MarshlandPool<T> implements Pool<T>
                     delegate.release( obj );
                 }
             }
-        }
+        });
 
         for ( LocalSlotReference<T> reference; (reference = (LocalSlotReference<T>) objectsFromDeadThreads.poll()) != null; )
         {

@@ -123,21 +123,17 @@ class StringIndexKey extends NativeIndexSingleValueKey<StringIndexKey>
     @Override
     int compareValueTo( StringIndexKey other )
     {
-        if ( bytes != other.bytes )
-        {
-            if ( bytes == null )
-            {
-                return isHighest() ? 1 : -1;
-            }
-            if ( other.bytes == null )
-            {
-                return other.isHighest() ? -1 : 1;
-            }
-        }
-        else
-        {
-            return 0;
-        }
+        if (bytes == other.bytes) {
+			return 0;
+		}
+		if ( bytes == null )
+		{
+		    return isHighest() ? 1 : -1;
+		}
+		if ( other.bytes == null )
+		{
+		    return other.isHighest() ? -1 : 1;
+		}
 
         return lexicographicalUnsignedByteArrayCompare( bytes, bytesLength, other.bytes, other.bytesLength, ignoreLength | other.ignoreLength );
     }

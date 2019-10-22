@@ -53,11 +53,11 @@ public class RecordingTracer
 
     protected void record( Event event )
     {
-        if ( eventTypesToTrace.contains( event.getClass() ) )
-        {
-            record.add( event );
-            trip( event );
-        }
+        if (!eventTypesToTrace.contains( event.getClass() )) {
+			return;
+		}
+		record.add( event );
+		trip( event );
     }
 
     /**

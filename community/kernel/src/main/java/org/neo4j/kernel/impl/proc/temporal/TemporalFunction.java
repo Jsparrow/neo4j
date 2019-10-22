@@ -59,43 +59,13 @@ public abstract class TemporalFunction<T extends AnyValue> implements CallableUs
     private static final String DEFAULT_TEMPORAL_ARGUMENT = "DEFAULT_TEMPORAL_ARGUMENT";
     private static final TextValue DEFAULT_TEMPORAL_ARGUMENT_VALUE = Values.stringValue( DEFAULT_TEMPORAL_ARGUMENT );
     private static final DefaultParameterValue DEFAULT_PARAMETER_VALUE = new DefaultParameterValue( DEFAULT_TEMPORAL_ARGUMENT, Neo4jTypes.NTAny );
+	private static final Key<Clock> DEFAULT_CLOCK = Context.STATEMENT_CLOCK;
+	private static final List<FieldSignature> INPUT_SIGNATURE = singletonList( inputField( "input", Neo4jTypes.NTAny, DEFAULT_PARAMETER_VALUE ) );
+	private static final String[] ALLOWED = {};
+	private final UserFunctionSignature signature;
+	private final Supplier<ZoneId> defaultZone;
 
-    public static void registerTemporalFunctions( Procedures procedures, ProcedureConfig procedureConfig ) throws ProcedureException
-    {
-        Supplier<ZoneId> defaultZone = procedureConfig::getDefaultTemporalTimeZone;
-        register( new DateTimeFunction( defaultZone ), procedures );
-        register( new LocalDateTimeFunction( defaultZone ), procedures );
-        register( new DateFunction( defaultZone ), procedures );
-        register( new TimeFunction( defaultZone ), procedures );
-        register( new LocalTimeFunction( defaultZone ), procedures );
-        DurationFunction.register( procedures );
-    }
-
-    private static final Key<Clock> DEFAULT_CLOCK = Context.STATEMENT_CLOCK;
-
-    /**
-     * @param clock the clock to use
-     * @param timezone an explicit timezone or {@code null}. In the latter case, the defaultZone is used
-     * @param defaultZone configured default time zone.
-     * @return the current time/date
-     */
-    protected abstract T now( Clock clock, String timezone, Supplier<ZoneId> defaultZone );
-
-    protected abstract T parse( TextValue value, Supplier<ZoneId> defaultZone );
-
-    protected abstract T build( MapValue map, Supplier<ZoneId> defaultZone );
-
-    protected abstract T select( AnyValue from, Supplier<ZoneId> defaultZone );
-
-    protected abstract T truncate( TemporalUnit unit, TemporalValue input, MapValue fields, Supplier<ZoneId> defaultZone );
-
-    private static final List<FieldSignature> INPUT_SIGNATURE = singletonList( inputField( "input", Neo4jTypes.NTAny, DEFAULT_PARAMETER_VALUE ) );
-    private static final String[] ALLOWED = {};
-
-    private final UserFunctionSignature signature;
-    private final Supplier<ZoneId> defaultZone;
-
-    TemporalFunction( Neo4jTypes.AnyType result, Supplier<ZoneId> defaultZone )
+	TemporalFunction( Neo4jTypes.AnyType result, Supplier<ZoneId> defaultZone )
     {
         String basename = basename( getClass() );
         assert result.getClass().getSimpleName().equals( basename + "Type" ) : "result type should match function name";
@@ -107,7 +77,34 @@ public abstract class TemporalFunction<T extends AnyValue> implements CallableUs
         this.defaultZone = defaultZone;
     }
 
-    private static void register( TemporalFunction<?> base, Procedures procedures ) throws ProcedureException
+	public static void registerTemporalFunctions( Procedures procedures, ProcedureConfig procedureConfig ) throws ProcedureException
+    {
+        Supplier<ZoneId> defaultZone = procedureConfig::getDefaultTemporalTimeZone;
+        register( new DateTimeFunction( defaultZone ), procedures );
+        register( new LocalDateTimeFunction( defaultZone ), procedures );
+        register( new DateFunction( defaultZone ), procedures );
+        register( new TimeFunction( defaultZone ), procedures );
+        register( new LocalTimeFunction( defaultZone ), procedures );
+        DurationFunction.register( procedures );
+    }
+
+	/**
+     * @param clock the clock to use
+     * @param timezone an explicit timezone or {@code null}. In the latter case, the defaultZone is used
+     * @param defaultZone configured default time zone.
+     * @return the current time/date
+     */
+    protected abstract T now( Clock clock, String timezone, Supplier<ZoneId> defaultZone );
+
+	protected abstract T parse( TextValue value, Supplier<ZoneId> defaultZone );
+
+	protected abstract T build( MapValue map, Supplier<ZoneId> defaultZone );
+
+	protected abstract T select( AnyValue from, Supplier<ZoneId> defaultZone );
+
+	protected abstract T truncate( TemporalUnit unit, TemporalValue input, MapValue fields, Supplier<ZoneId> defaultZone );
+
+	private static void register( TemporalFunction<?> base, Procedures procedures ) throws ProcedureException
     {
         procedures.register( base );
         procedures.register( new Now<>( base, "transaction" ) );
@@ -117,23 +114,23 @@ public abstract class TemporalFunction<T extends AnyValue> implements CallableUs
         base.registerMore( procedures );
     }
 
-    private static String basename( Class<? extends TemporalFunction> function )
+	private static String basename( Class<? extends TemporalFunction> function )
     {
         return function.getSimpleName().replace( "Function", "" );
     }
 
-    void registerMore( Procedures procedures ) throws ProcedureException
+	void registerMore( Procedures procedures ) throws ProcedureException
     {
         // Empty by default
     }
 
-    @Override
+	@Override
     public final UserFunctionSignature signature()
     {
         return signature;
     }
 
-    @Override
+	@Override
     public final AnyValue apply( Context ctx, AnyValue[] input ) throws ProcedureException
     {
         if ( input == null || (input.length > 0 && (input[0] == NO_VALUE || input[0] == null)) )
@@ -164,12 +161,11 @@ public abstract class TemporalFunction<T extends AnyValue> implements CallableUs
         }
         else
         {
-            throw new ProcedureException( Status.Procedure.ProcedureCallFailed, "Invalid call signature for " + getClass().getSimpleName() +
-                    ": Provided input was " + Arrays.toString( input ) );
+            throw new ProcedureException( Status.Procedure.ProcedureCallFailed, new StringBuilder().append("Invalid call signature for ").append(getClass().getSimpleName()).append(": Provided input was ").append(Arrays.toString( input )).toString() );
         }
     }
 
-    private static String onlyTimezone( MapValue map )
+	private static String onlyTimezone( MapValue map )
     {
         if ( map.size() == 1 )
         {
@@ -253,8 +249,7 @@ public abstract class TemporalFunction<T extends AnyValue> implements CallableUs
             }
             else
             {
-                throw new ProcedureException( Status.Procedure.ProcedureCallFailed, "Invalid call signature for " + getClass().getSimpleName() +
-                    ": Provided input was " + Arrays.toString( input ) );
+                throw new ProcedureException( Status.Procedure.ProcedureCallFailed, new StringBuilder().append("Invalid call signature for ").append(getClass().getSimpleName()).append(": Provided input was ").append(Arrays.toString( input )).toString() );
             }
         }
     }
@@ -290,8 +285,7 @@ public abstract class TemporalFunction<T extends AnyValue> implements CallableUs
                             function.defaultZone );
                 }
             }
-            throw new ProcedureException( Status.Procedure.ProcedureCallFailed, "Invalid call signature for " + getClass().getSimpleName() +
-                    ": Provided input was " + Arrays.toString( args ) );
+            throw new ProcedureException( Status.Procedure.ProcedureCallFailed, new StringBuilder().append("Invalid call signature for ").append(getClass().getSimpleName()).append(": Provided input was ").append(Arrays.toString( args )).toString() );
         }
 
         private static TemporalUnit unit( String unit )

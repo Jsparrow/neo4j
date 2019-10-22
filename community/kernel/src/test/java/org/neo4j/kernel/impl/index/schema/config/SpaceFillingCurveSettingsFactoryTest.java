@@ -141,8 +141,8 @@ public class SpaceFillingCurveSettingsFactoryTest
         for ( int i = 0; i < min.length; i++ )
         {
             char var = "xyz".toCharArray()[i];
-            settings.put( crsPrefix + "." + var + ".min", Double.toString( min[i] ) );
-            settings.put( crsPrefix + "." + var + ".max", Double.toString( max[i] ) );
+            settings.put( new StringBuilder().append(crsPrefix).append(".").append(var).append(".min").toString(), Double.toString( min[i] ) );
+            settings.put( new StringBuilder().append(crsPrefix).append(".").append(var).append(".max").toString(), Double.toString( max[i] ) );
         }
         Config config = Config.defaults();
         config.augment( settings );
@@ -153,9 +153,9 @@ public class SpaceFillingCurveSettingsFactoryTest
     {
         ConfiguredSpaceFillingCurveSettingsCache configuredSettings = new ConfiguredSpaceFillingCurveSettingsCache( config );
         SpaceFillingCurveSettings settings = configuredSettings.forCRS( crs );
-        assertThat( "Expected " + dimensions + "D for " + crs.getName(), settings.getDimensions(), equalTo( dimensions ) );
+        assertThat( new StringBuilder().append("Expected ").append(dimensions).append("D for ").append(crs.getName()).toString(), settings.getDimensions(), equalTo( dimensions ) );
         int maxLevels = maxBits / dimensions;
-        assertThat( "Expected maxLevels=" + maxLevels + " for " + crs.getName(), settings.getMaxLevels(), equalTo( maxLevels ) );
+        assertThat( new StringBuilder().append("Expected maxLevels=").append(maxLevels).append(" for ").append(crs.getName()).toString(), settings.getMaxLevels(), equalTo( maxLevels ) );
         assertThat( "Should have normal geographic 2D extents", settings.indexExtents(), equalTo( envelope ) );
     }
 }

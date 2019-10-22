@@ -85,19 +85,16 @@ class ZonedDateTimeIndexKey extends NativeIndexSingleValueKey<ZonedDateTimeIndex
         if ( compare == 0 )
         {
             compare = Integer.compare( nanoOfSecond, other.nanoOfSecond );
-            if ( compare == 0 &&
+            boolean condition = compare == 0 &&
                     // We need to check validity upfront without throwing exceptions, because the PageCursor might give garbage bytes
                     TimeZones.validZoneOffset( zoneOffsetSeconds ) &&
-                    TimeZones.validZoneOffset( other.zoneOffsetSeconds ) )
-            {
-                if ( zoneOffsetSeconds != other.zoneOffsetSeconds ||
-                     zoneId != other.zoneId )
-                {
-                    // In the rare case of comparing the same instant in different time zones, we settle for
-                    // mapping to values and comparing using the general values comparator.
-                    compare = Values.COMPARATOR.compare( asValue(), other.asValue() );
-                }
-            }
+                    TimeZones.validZoneOffset( other.zoneOffsetSeconds ) && (zoneOffsetSeconds != other.zoneOffsetSeconds ||
+			     zoneId != other.zoneId);
+			if ( condition ) {
+			    // In the rare case of comparing the same instant in different time zones, we settle for
+			    // mapping to values and comparing using the general values comparator.
+			    compare = Values.COMPARATOR.compare( asValue(), other.asValue() );
+			}
         }
         return compare;
     }

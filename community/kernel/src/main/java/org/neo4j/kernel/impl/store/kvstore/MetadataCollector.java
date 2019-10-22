@@ -54,7 +54,7 @@ abstract class MetadataCollector extends Metadata implements EntryVisitor<BigEnd
     @Override
     public String toString()
     {
-        return "MetadataCollector[" + state + "]";
+        return new StringBuilder().append("MetadataCollector[").append(state).append("]").toString();
     }
 
     @Override
@@ -131,23 +131,18 @@ abstract class MetadataCollector extends Metadata implements EntryVisitor<BigEnd
                     throw new IllegalStateException(
                             "Expecting at least one header after the format specifier." );
                 }
-                if ( value.allZeroes() )
-                {
-                    int header = ++collector.header;
-                    assert header == 2
-                            : "End-of-header markers are always the second header after the format specifier.";
-                    if ( collector.headerFields.length > 0 )
-                    {
-                        throw new IllegalStateException( "Expected " + collector.headerFields.length +
-                                                         " header fields, none seen." );
-                    }
-                    collector.state = reading_data;
-                    return true;
-                }
-                else
-                {
-                    return (collector.state = reading_header).visit( collector, key, value );
-                }
+                if (!value.allZeroes()) {
+					return (collector.state = reading_header).visit( collector, key, value );
+				}
+				int header = ++collector.header;
+				assert header == 2
+				        : "End-of-header markers are always the second header after the format specifier.";
+				if ( collector.headerFields.length > 0 )
+				{
+				    throw new IllegalStateException( new StringBuilder().append("Expected ").append(collector.headerFields.length).append(" header fields, none seen.").toString() );
+				}
+				collector.state = reading_data;
+				return true;
             }
         },
         reading_header
@@ -176,8 +171,8 @@ abstract class MetadataCollector extends Metadata implements EntryVisitor<BigEnd
                 {
                     if ( collector.headerFields.length >= collector.header )
                     {
-                        throw new IllegalStateException( "Expected " + collector.headerFields.length +
-                                                         " header fields, only " + (collector.header - 1) + " seen." );
+                        throw new IllegalStateException( new StringBuilder().append("Expected ").append(collector.headerFields.length).append(" header fields, only ").append(collector.header - 1)
+								.append(" seen.").toString() );
                     }
                     return (collector.state = reading_data).visit( collector, key, value );
                 }
@@ -195,8 +190,8 @@ abstract class MetadataCollector extends Metadata implements EntryVisitor<BigEnd
                     if ( entries != collector.data )
                     {
                         collector.state = in_error;
-                        throw new IllegalStateException( "Number of data entries does not match. (counted=" +
-                                                         collector.data + ", trailer=" + entries + ")" );
+                        throw new IllegalStateException( new StringBuilder().append("Number of data entries does not match. (counted=").append(collector.data).append(", trailer=").append(entries).append(")")
+								.toString() );
                     }
                     collector.state = done;
                     return false;

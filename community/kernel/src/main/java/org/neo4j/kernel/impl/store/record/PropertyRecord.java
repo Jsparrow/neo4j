@@ -198,7 +198,7 @@ public class PropertyRecord extends AbstractBaseRecord implements Iterable<Prope
                 if ( !canRemoveFromIterator )
                 {
                     throw new IllegalStateException(
-                            "cursor:" + blockRecordsIteratorCursor + " canRemove:" + canRemoveFromIterator );
+                            new StringBuilder().append("cursor:").append(blockRecordsIteratorCursor).append(" canRemove:").append(canRemoveFromIterator).toString() );
                 }
 
                 if ( --blockRecordsCursor > --blockRecordsIteratorCursor )
@@ -229,9 +229,8 @@ public class PropertyRecord extends AbstractBaseRecord implements Iterable<Prope
     {
         ensureBlocksLoaded();
         assert size() + block.getSize() <= PropertyType.getPayloadSize() :
-                "Exceeded capacity of property record " + this
-                + ". My current size is reported as " + size() + "The added block was " + block +
-                " (note that size is " + block.getSize() + ")";
+                new StringBuilder().append("Exceeded capacity of property record ").append(this).append(". My current size is reported as ").append(size()).append("The added block was ").append(block).append(" (note that size is ")
+				.append(block.getSize()).append(")").toString();
 
         blockRecords[blockRecordsCursor++] = block;
     }
@@ -242,22 +241,22 @@ public class PropertyRecord extends AbstractBaseRecord implements Iterable<Prope
      */
     private void ensureBlocksLoaded()
     {
-        if ( !blocksLoaded )
-        {
-            assert blockRecordsCursor == 0;
-            // We haven't loaded the blocks yet, please do so now
-            int index = 0;
-            while ( index < blocksCursor )
-            {
-                PropertyType type = PropertyType.getPropertyTypeOrThrow( blocks[index] );
-                PropertyBlock block = new PropertyBlock();
-                int length = type.calculateNumberOfBlocksUsed( blocks[index] );
-                block.setValueBlocks( Arrays.copyOfRange( blocks, index, index + length ) );
-                blockRecords[blockRecordsCursor++] = block;
-                index += length;
-            }
-            blocksLoaded = true;
-        }
+        if (blocksLoaded) {
+			return;
+		}
+		assert blockRecordsCursor == 0;
+		// We haven't loaded the blocks yet, please do so now
+		int index = 0;
+		while ( index < blocksCursor )
+		{
+		    PropertyType type = PropertyType.getPropertyTypeOrThrow( blocks[index] );
+		    PropertyBlock block = new PropertyBlock();
+		    int length = type.calculateNumberOfBlocksUsed( blocks[index] );
+		    block.setValueBlocks( Arrays.copyOfRange( blocks, index, index + length ) );
+		    blockRecords[blockRecordsCursor++] = block;
+		    index += length;
+		}
+		blocksLoaded = true;
     }
 
     public void setPropertyBlock( PropertyBlock block )
@@ -339,10 +338,7 @@ public class PropertyRecord extends AbstractBaseRecord implements Iterable<Prope
 
         if ( deletedRecords != null )
         {
-            for ( DynamicRecord dyn : deletedRecords )
-            {
-                buf.append( ", del:" ).append( dyn );
-            }
+            deletedRecords.forEach(dyn -> buf.append(", del:").append(dyn));
         }
 
         buf.append( "]" );
@@ -382,10 +378,7 @@ public class PropertyRecord extends AbstractBaseRecord implements Iterable<Prope
         result.blocksLoaded = blocksLoaded;
         if ( deletedRecords != null )
         {
-            for ( DynamicRecord deletedRecord : deletedRecords )
-            {
-                result.addDeletedRecord( deletedRecord.clone() );
-            }
+            deletedRecords.forEach(deletedRecord -> result.addDeletedRecord(deletedRecord.clone()));
         }
         return result;
     }
@@ -397,7 +390,7 @@ public class PropertyRecord extends AbstractBaseRecord implements Iterable<Prope
 
     public void addLoadedBlock( long block )
     {
-        assert blocksCursor + 1 <= blocks.length : "Capacity of " + blocks.length + " exceeded";
+        assert blocksCursor + 1 <= blocks.length : new StringBuilder().append("Capacity of ").append(blocks.length).append(" exceeded").toString();
         blocks[blocksCursor++] = block;
     }
 

@@ -100,8 +100,7 @@ class GenerationSafePointer
     {
         if ( generation < MIN_GENERATION || generation > MAX_GENERATION )
         {
-            throw new IllegalArgumentException( "Can not write pointer with generation " + generation +
-                    " because outside boundary for valid generation." );
+            throw new IllegalArgumentException( new StringBuilder().append("Can not write pointer with generation ").append(generation).append(" because outside boundary for valid generation.").toString() );
         }
     }
 
@@ -109,8 +108,7 @@ class GenerationSafePointer
     {
         if ( (pointer > MAX_POINTER || pointer < MIN_POINTER) && TreeNode.isNode( pointer ) )
         {
-            throw new IllegalArgumentException( "Can not write pointer " + pointer +
-                    " because outside boundary for valid pointer" );
+            throw new IllegalArgumentException( new StringBuilder().append("Can not write pointer ").append(pointer).append(" because outside boundary for valid pointer").toString() );
         }
     }
 

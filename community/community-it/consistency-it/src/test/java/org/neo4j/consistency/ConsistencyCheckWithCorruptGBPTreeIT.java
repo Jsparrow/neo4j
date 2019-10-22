@@ -94,8 +94,7 @@ public class ConsistencyCheckWithCorruptGBPTreeIT
         corruptIndexes( true, ( tree, inspection ) -> heightRef.setValue( inspection.getLastLevel() ), indexFiles );
 
         final int height = heightRef.getValue();
-        assertEquals( "This test assumes height of index tree is 2 but height for this index was " + height +
-                ". This is most easily regulated by changing number of nodes in setup.", 2, height );
+        assertEquals( new StringBuilder().append("This test assumes height of index tree is 2 but height for this index was ").append(height).append(". This is most easily regulated by changing number of nodes in setup.").toString(), 2, height );
     }
 
     @Test
@@ -130,7 +129,7 @@ public class ConsistencyCheckWithCorruptGBPTreeIT
         ConsistencyCheckService.Result result = runConsistencyCheck( config );
 
         assertFalse( "Expected store to be inconsistent when checking index structure.", result.isSuccessful() );
-        assertResultContainsMessage( result, "Page: " + targetNode.getValue() + " is not a tree node page" );
+        assertResultContainsMessage( result, new StringBuilder().append("Page: ").append(targetNode.getValue()).append(" is not a tree node page").toString() );
     }
 
     @Test
@@ -177,7 +176,7 @@ public class ConsistencyCheckWithCorruptGBPTreeIT
         ConsistencyCheckService.Result result = runConsistencyCheck();
 
         assertFalse( "Expected store to be considered inconsistent.", result.isSuccessful() );
-        assertResultContainsMessage( result, "Page: " + targetNode.getValue() + " is not a tree node page." );
+        assertResultContainsMessage( result, new StringBuilder().append("Page: ").append(targetNode.getValue()).append(" is not a tree node page.").toString() );
     }
 
     @Test
@@ -194,7 +193,7 @@ public class ConsistencyCheckWithCorruptGBPTreeIT
         ConsistencyCheckService.Result result = runConsistencyCheck();
 
         assertFalse( "Expected store to be considered inconsistent.", result.isSuccessful() );
-        assertResultContainsMessage( result, "Page: " + targetNode.getValue() + " has an unknown tree node type:" );
+        assertResultContainsMessage( result, new StringBuilder().append("Page: ").append(targetNode.getValue()).append(" has an unknown tree node type:").toString() );
     }
 
     @Test
@@ -245,7 +244,7 @@ public class ConsistencyCheckWithCorruptGBPTreeIT
         ConsistencyCheckService.Result result = runConsistencyCheck();
 
         assertFalse( "Expected store to be considered inconsistent.", result.isSuccessful() );
-        assertResultContainsMessage( result, "We ended up on tree node " + targetNode.getValue() + " which has a newer generation, successor is: 6" );
+        assertResultContainsMessage( result, new StringBuilder().append("We ended up on tree node ").append(targetNode.getValue()).append(" which has a newer generation, successor is: 6").toString() );
     }
 
     @Test
@@ -327,9 +326,7 @@ public class ConsistencyCheckWithCorruptGBPTreeIT
     {
         setup( GraphDatabaseSettings.SchemaIndex.NATIVE_BTREE10 );
         File[] indexFiles = schemaIndexFiles();
-        corruptIndexes( true, ( tree, inspection ) -> {
-            tree.unsafe( GBPTreeCorruption.decrementFreelistWritePos() );
-        }, indexFiles );
+        corruptIndexes( true, ( tree, inspection ) -> tree.unsafe(GBPTreeCorruption.decrementFreelistWritePos()), indexFiles );
 
         ConsistencyCheckService.Result result = runConsistencyCheck();
 
@@ -342,9 +339,8 @@ public class ConsistencyCheckWithCorruptGBPTreeIT
     {
         setup( GraphDatabaseSettings.SchemaIndex.NATIVE_BTREE10 );
         File[] indexFiles = schemaIndexFiles();
-        corruptIndexes( true, ( tree, inspection ) -> {
-            tree.unsafe( GBPTreeCorruption.pageSpecificCorruption( inspection.getRootNode(), GBPTreeCorruption.decrementAllocOffsetInDynamicNode() ) );
-        }, indexFiles );
+        corruptIndexes( true, ( tree, inspection ) -> tree.unsafe(GBPTreeCorruption.pageSpecificCorruption(inspection.getRootNode(),
+				GBPTreeCorruption.decrementAllocOffsetInDynamicNode())), indexFiles );
 
         ConsistencyCheckService.Result result = runConsistencyCheck();
 
@@ -419,7 +415,7 @@ public class ConsistencyCheckWithCorruptGBPTreeIT
         ConsistencyCheckService.Result result = runConsistencyCheck();
 
         assertFalse( "Expected store to be considered inconsistent.", result.isSuccessful() );
-        assertResultContainsMessage( result, "Unexpected keyCount on pageId " + targetNode.getValue() + ", keyCount=" + Integer.MAX_VALUE );
+        assertResultContainsMessage( result, new StringBuilder().append("Unexpected keyCount on pageId ").append(targetNode.getValue()).append(", keyCount=").append(Integer.MAX_VALUE).toString() );
     }
 
     @Test
@@ -491,10 +487,9 @@ public class ConsistencyCheckWithCorruptGBPTreeIT
         assertResultContainsMessage( result, "Index inconsistency: Sibling pointers misaligned." );
         assertResultContainsMessage( result, "Index inconsistency: Expected range for this tree node is" );
         assertResultContainsMessage( result,
-                "Index inconsistency: Broken pointer found in tree node " + internalNode.getValue() + ", pointerType='left sibling'" );
+                new StringBuilder().append("Index inconsistency: Broken pointer found in tree node ").append(internalNode.getValue()).append(", pointerType='left sibling'").toString() );
         assertResultContainsMessage( result,
-                "Index inconsistency: Pointer (left sibling) in tree node " + internalNode.getValue() +
-                        " has pointer generation 0, but target node 0 has a higher generation 4." );
+                new StringBuilder().append("Index inconsistency: Pointer (left sibling) in tree node ").append(internalNode.getValue()).append(" has pointer generation 0, but target node 0 has a higher generation 4.").toString() );
     }
 
     @Test
@@ -510,7 +505,7 @@ public class ConsistencyCheckWithCorruptGBPTreeIT
 
         ConsistencyCheckService.Result result = runConsistencyCheck();
         assertFalse( result.isSuccessful() );
-        assertResultContainsMessage( result, "Index inconsistency: Broken pointer found in tree node " + rootNode.getValue() + ", pointerType='left sibling'" );
+        assertResultContainsMessage( result, new StringBuilder().append("Index inconsistency: Broken pointer found in tree node ").append(rootNode.getValue()).append(", pointerType='left sibling'").toString() );
         assertResultContainsMessage( result, "Number of inconsistent LABEL_SCAN_DOCUMENT records: 1" );
     }
 
@@ -553,15 +548,7 @@ public class ConsistencyCheckWithCorruptGBPTreeIT
     private void assertResultContainsMessage( ConsistencyCheckService.Result result, String expectedMessage ) throws IOException
     {
         final List<String> lines = Files.readAllLines( result.reportFile().toPath() );
-        boolean reportContainExpectedMessage = false;
-        for ( String line : lines )
-        {
-            if ( line.contains( expectedMessage ) )
-            {
-                reportContainExpectedMessage = true;
-                break;
-            }
-        }
+        boolean reportContainExpectedMessage = lines.stream().anyMatch(line -> line.contains( expectedMessage ));
         String errorMessage = format("Expected consistency report to contain message `%s'. Real result was: %s%n",
                 expectedMessage, String.join( System.lineSeparator(), lines ) );
         assertTrue( errorMessage, reportContainExpectedMessage );

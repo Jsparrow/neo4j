@@ -94,55 +94,13 @@ import static org.neo4j.unsafe.impl.internal.dragons.UnsafeUtil.setMemory;
 
 class UnsafeUtilTest
 {
-    static class Obj
-    {
-        boolean aBoolean;
-        byte aByte;
-        short aShort;
-        float aFloat;
-        char aChar;
-        int anInt;
-        long aLong;
-        double aDouble;
-        Object object;
-
-        @Override
-        public boolean equals( Object o )
-        {
-            if ( this == o )
-            {
-                return true;
-            }
-            if ( o == null || getClass() != o.getClass() )
-            {
-                return false;
-            }
-            Obj obj = (Obj) o;
-            return aBoolean == obj.aBoolean &&
-                   aByte == obj.aByte &&
-                   aShort == obj.aShort &&
-                   Float.compare( obj.aFloat, aFloat ) == 0 &&
-                   aChar == obj.aChar &&
-                   anInt == obj.anInt &&
-                   aLong == obj.aLong &&
-                   Double.compare( obj.aDouble, aDouble ) == 0 &&
-                   Objects.equals( object, obj.object );
-        }
-
-        @Override
-        public int hashCode()
-        {
-            return Objects.hash( aBoolean, aByte, aShort, aFloat, aChar, anInt, aLong, aDouble, object );
-        }
-    }
-
     @Test
     void mustHaveUnsafe()
     {
         assertHasUnsafe();
     }
 
-    @Test
+	@Test
     void pageSizeIsPowerOfTwo()
     {
         assertThat( pageSize(), isOneOf(
@@ -151,7 +109,7 @@ class UnsafeUtilTest
                 536870912, 1073741824 ) );
     }
 
-    @Test
+	@Test
     void mustSupportReadingFromAndWritingToFields()
     {
         Obj obj;
@@ -276,7 +234,7 @@ class UnsafeUtilTest
         assertThat( obj, is( new Obj() ) );
     }
 
-    @Test
+	@Test
     void mustSupportReadingAndWritingOfPrimitivesToMemory()
     {
         int sizeInBytes = 8;
@@ -359,7 +317,7 @@ class UnsafeUtilTest
         }
     }
 
-    @Test
+	@Test
     void getAndAddIntOfField()
     {
         Obj obj = new Obj();
@@ -371,7 +329,7 @@ class UnsafeUtilTest
         assertThat( obj, is( new Obj() ) );
     }
 
-    @Test
+	@Test
     void compareAndSwapLongField()
     {
         Obj obj = new Obj();
@@ -382,7 +340,7 @@ class UnsafeUtilTest
         assertThat( obj, is( new Obj() ) );
     }
 
-    @Test
+	@Test
     void compareAndSwapObjectField()
     {
         Obj obj = new Obj();
@@ -393,7 +351,7 @@ class UnsafeUtilTest
         assertThat( obj, is( new Obj() ) );
     }
 
-    @Test
+	@Test
     void getAndSetObjectField()
     {
         Obj obj = new Obj();
@@ -403,7 +361,7 @@ class UnsafeUtilTest
         assertThat( obj, is( new Obj() ) );
     }
 
-    @Test
+	@Test
     void getAndSetLongField()
     {
         Obj obj = new Obj();
@@ -412,7 +370,7 @@ class UnsafeUtilTest
         assertThat( getAndSetLong( obj, offset, -1 ), equalTo( 42L ) );
     }
 
-    @Test
+	@Test
     void compareAndSetMaxLongField()
     {
         Obj obj = new Obj();
@@ -426,7 +384,7 @@ class UnsafeUtilTest
         assertEquals( 105, getLong( obj, offset ) );
     }
 
-    @Test
+	@Test
     void unsafeArrayElementAccess()
     {
         int len = 3;
@@ -506,7 +464,7 @@ class UnsafeUtilTest
         assertThat( objects[2], is( nullValue() ) );
     }
 
-    @Test
+	@Test
     void directByteBufferCreationAndInitialisation() throws Exception
     {
         int sizeInBytes = 313;
@@ -557,7 +515,7 @@ class UnsafeUtilTest
         }
     }
 
-    @Test
+	@Test
     void getAddressOfDirectByteBuffer()
     {
         ByteBuffer buf = ByteBuffer.allocateDirect( 8 );
@@ -578,7 +536,7 @@ class UnsafeUtilTest
         }
     }
 
-    @Test
+	@Test
     void shouldAlignMemoryTo4ByteBoundary()
     {
         // GIVEN
@@ -597,7 +555,7 @@ class UnsafeUtilTest
         }
     }
 
-    @Test
+	@Test
     void shouldPutAndGetByteWiseLittleEndianShort()
     {
         // GIVEN
@@ -615,7 +573,7 @@ class UnsafeUtilTest
         assertEquals( value, readValue );
     }
 
-    @Test
+	@Test
     void shouldPutAndGetByteWiseLittleEndianInt()
     {
         // GIVEN
@@ -633,7 +591,7 @@ class UnsafeUtilTest
         assertEquals( value, readValue );
     }
 
-    @Test
+	@Test
     void shouldPutAndGetByteWiseLittleEndianLong()
     {
         // GIVEN
@@ -649,5 +607,47 @@ class UnsafeUtilTest
         // THEN
         free( p, sizeInBytes, tracker );
         assertEquals( value, readValue );
+    }
+
+	static class Obj
+    {
+        boolean aBoolean;
+        byte aByte;
+        short aShort;
+        float aFloat;
+        char aChar;
+        int anInt;
+        long aLong;
+        double aDouble;
+        Object object;
+
+        @Override
+        public boolean equals( Object o )
+        {
+            if ( this == o )
+            {
+                return true;
+            }
+            if ( o == null || getClass() != o.getClass() )
+            {
+                return false;
+            }
+            Obj obj = (Obj) o;
+            return aBoolean == obj.aBoolean &&
+                   aByte == obj.aByte &&
+                   aShort == obj.aShort &&
+                   Float.compare( obj.aFloat, aFloat ) == 0 &&
+                   aChar == obj.aChar &&
+                   anInt == obj.anInt &&
+                   aLong == obj.aLong &&
+                   Double.compare( obj.aDouble, aDouble ) == 0 &&
+                   Objects.equals( object, obj.object );
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash( aBoolean, aByte, aShort, aFloat, aChar, anInt, aLong, aDouble, object );
+        }
     }
 }

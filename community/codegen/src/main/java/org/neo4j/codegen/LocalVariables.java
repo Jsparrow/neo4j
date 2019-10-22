@@ -41,7 +41,7 @@ public class LocalVariables
         LocalVariable localVariable = new LocalVariable( type, name, counter.getAndIncrement() );
         localVariables.put( name, localVariable );
         //if 64 bit types we need to give it one more index
-        if ( type.simpleName().equals( "double" ) || type.simpleName().equals( "long" ) )
+        if ( "double".equals( type.simpleName() ) || "long".equals( type.simpleName() ) )
         {
             counter.incrementAndGet();
         }
@@ -53,7 +53,7 @@ public class LocalVariables
         LocalVariable localVariable = localVariables.get( name );
         if ( localVariable == null )
         {
-            throw new NoSuchElementException( "No variable " + name + " in scope" );
+            throw new NoSuchElementException( new StringBuilder().append("No variable ").append(name).append(" in scope").toString() );
         }
         return localVariable;
     }

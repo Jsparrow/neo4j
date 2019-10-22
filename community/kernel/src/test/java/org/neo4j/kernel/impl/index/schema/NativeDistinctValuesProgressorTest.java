@@ -137,7 +137,7 @@ public class NativeDistinctValuesProgressorTest
         }
 
         @Override
-        public boolean next() throws RuntimeException
+        public boolean next()
         {
             if ( !iterator.hasNext() )
             {
@@ -148,7 +148,7 @@ public class NativeDistinctValuesProgressorTest
         }
 
         @Override
-        public void close() throws RuntimeException
+        public void close()
         {
             // Nothing to close
         }

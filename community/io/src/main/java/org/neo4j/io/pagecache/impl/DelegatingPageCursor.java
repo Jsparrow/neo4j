@@ -33,277 +33,277 @@ public class DelegatingPageCursor extends PageCursor
 {
     protected final PageCursor delegate;
 
-    @Override
+    public DelegatingPageCursor( PageCursor delegate )
+    {
+        this.delegate = delegate;
+    }
+
+	@Override
     public byte getByte()
     {
         return delegate.getByte();
     }
 
-    @Override
+	@Override
     public int copyTo( int sourceOffset, PageCursor targetCursor, int targetOffset, int lengthInBytes )
     {
         return delegate.copyTo( sourceOffset, targetCursor, targetOffset, lengthInBytes );
     }
 
-    @Override
+	@Override
     public int copyTo( int sourceOffset, ByteBuffer targetBuffer )
     {
         return delegate.copyTo( sourceOffset, targetBuffer );
     }
 
-    @Override
+	@Override
     public void shiftBytes( int sourceOffset, int length, int shift )
     {
         delegate.shiftBytes( sourceOffset, length, shift );
     }
 
-    @Override
+	@Override
     public void putInt( int value )
     {
         delegate.putInt( value );
     }
 
-    @Override
+	@Override
     public void getBytes( byte[] data )
     {
         delegate.getBytes( data );
     }
 
-    @Override
+	@Override
     public boolean next() throws IOException
     {
         return delegate.next();
     }
 
-    @Override
+	@Override
     public void putBytes( byte[] data )
     {
         delegate.putBytes( data );
     }
 
-    @Override
+	@Override
     public short getShort()
     {
         return delegate.getShort();
     }
 
-    @Override
+	@Override
     public File getCurrentFile()
     {
         return delegate.getCurrentFile();
     }
 
-    @Override
+	@Override
     public void putShort( short value )
     {
         delegate.putShort( value );
     }
 
-    @Override
+	@Override
     public short getShort( int offset )
     {
         return delegate.getShort( offset );
     }
 
-    @Override
+	@Override
     public int getCurrentPageSize()
     {
         return delegate.getCurrentPageSize();
     }
 
-    @Override
+	@Override
     public long getLong()
     {
         return delegate.getLong();
     }
 
-    @Override
+	@Override
     public void putLong( long value )
     {
         delegate.putLong( value );
     }
 
-    @Override
+	@Override
     public int getOffset()
     {
         return delegate.getOffset();
     }
 
-    @Override
+	@Override
     public void mark()
     {
         delegate.mark();
     }
 
-    @Override
+	@Override
     public void setOffsetToMark()
     {
         delegate.setOffsetToMark();
     }
 
-    @Override
+	@Override
     public void close()
     {
         delegate.close();
     }
 
-    @Override
+	@Override
     public void putByte( int offset, byte value )
     {
         delegate.putByte( offset, value );
     }
 
-    @Override
+	@Override
     public void putInt( int offset, int value )
     {
         delegate.putInt( offset, value );
     }
 
-    @Override
+	@Override
     public void putBytes( byte[] data, int arrayOffset, int length )
     {
         delegate.putBytes( data, arrayOffset, length );
     }
 
-    @Override
+	@Override
     public void putBytes( int bytes, byte value )
     {
         delegate.putBytes( bytes, value );
     }
 
-    @Override
+	@Override
     public void rewind()
     {
         delegate.rewind();
     }
 
-    @Override
+	@Override
     public void putByte( byte value )
     {
         delegate.putByte( value );
     }
 
-    @Override
+	@Override
     public boolean checkAndClearBoundsFlag()
     {
         return delegate.checkAndClearBoundsFlag();
     }
 
-    @Override
+	@Override
     public void checkAndClearCursorException() throws CursorException
     {
         delegate.checkAndClearCursorException();
     }
 
-    @Override
+	@Override
     public void raiseOutOfBounds()
     {
         delegate.raiseOutOfBounds();
     }
 
-    @Override
+	@Override
     public void setCursorException( String message )
     {
         delegate.setCursorException( message );
     }
 
-    @Override
+	@Override
     public void clearCursorException()
     {
         delegate.clearCursorException();
     }
 
-    @Override
+	@Override
     public PageCursor openLinkedCursor( long pageId ) throws IOException
     {
         return delegate.openLinkedCursor( pageId );
     }
 
-    @Override
+	@Override
     public long getCurrentPageId()
     {
         return delegate.getCurrentPageId();
     }
 
-    @Override
+	@Override
     public void putShort( int offset, short value )
     {
         delegate.putShort( offset, value );
     }
 
-    @Override
+	@Override
     public boolean next( long pageId ) throws IOException
     {
         return delegate.next( pageId );
     }
 
-    @Override
+	@Override
     public void putLong( int offset, long value )
     {
         delegate.putLong( offset, value );
     }
 
-    @Override
+	@Override
     public long getLong( int offset )
     {
         return delegate.getLong( offset );
     }
 
-    @Override
+	@Override
     public void getBytes( byte[] data, int arrayOffset, int length )
     {
         delegate.getBytes( data, arrayOffset, length );
     }
 
-    @Override
+	@Override
     public int getInt( int offset )
     {
         return delegate.getInt( offset );
     }
 
-    @Override
+	@Override
     public void setOffset( int offset )
     {
         delegate.setOffset( offset );
     }
 
-    @Override
+	@Override
     public byte getByte( int offset )
     {
         return delegate.getByte( offset );
     }
 
-    @Override
+	@Override
     public int getInt()
     {
         return delegate.getInt();
     }
 
-    @Override
+	@Override
     public boolean shouldRetry() throws IOException
     {
         return delegate.shouldRetry();
     }
 
-    @Override
+	@Override
     public void zapPage()
     {
         delegate.zapPage();
     }
 
-    @Override
+	@Override
     public boolean isWriteLocked()
     {
         return delegate.isWriteLocked();
     }
 
-    public PageCursor unwrap()
+	public PageCursor unwrap()
     {
         return delegate;
-    }
-
-    public DelegatingPageCursor( PageCursor delegate )
-    {
-        this.delegate = delegate;
     }
 }

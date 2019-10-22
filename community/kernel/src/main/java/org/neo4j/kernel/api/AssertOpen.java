@@ -25,14 +25,14 @@ package org.neo4j.kernel.api;
  */
 public interface AssertOpen
 {
-    /**
-     * Assert that source tied to instance is open.
-     * Should throw exception with reason if source is not open.
-     */
-    void assertOpen();
-
     AssertOpen ALWAYS_OPEN = () ->
     {
         // Always open
     };
+
+	/**
+     * Assert that source tied to instance is open.
+     * Should throw exception with reason if source is not open.
+     */
+    void assertOpen();
 }

@@ -73,25 +73,23 @@ public class FileUserRepository extends AbstractUserRepository implements FileRe
     @Override
     protected ListSnapshot<User> readPersistedUsers() throws IOException
     {
-        if ( fileSystem.fileExists( authFile ) )
-        {
-            long readTime;
-            List<User> readUsers;
-            try
-            {
-                readTime = fileSystem.lastModifiedTime( authFile );
-                readUsers = serialization.loadRecordsFromFile( fileSystem, authFile );
-            }
-            catch ( FormatException e )
-            {
-                log.error( "Failed to read authentication file \"%s\" (%s)",
-                        authFile.getAbsolutePath(), e.getMessage() );
-                throw new IllegalStateException( "Failed to read authentication file: " + authFile );
-            }
-
-            return new ListSnapshot<>( readTime, readUsers, FROM_PERSISTED );
-        }
-        return null;
+        if (!fileSystem.fileExists( authFile )) {
+			return null;
+		}
+		long readTime;
+		List<User> readUsers;
+		try
+		{
+		    readTime = fileSystem.lastModifiedTime( authFile );
+		    readUsers = serialization.loadRecordsFromFile( fileSystem, authFile );
+		}
+		catch ( FormatException e )
+		{
+		    log.error( "Failed to read authentication file \"%s\" (%s)",
+		            authFile.getAbsolutePath(), e.getMessage() );
+		    throw new IllegalStateException( "Failed to read authentication file: " + authFile );
+		}
+		return new ListSnapshot<>( readTime, readUsers, FROM_PERSISTED );
     }
 
     @Override
@@ -121,7 +119,7 @@ public class FileUserRepository extends AbstractUserRepository implements FileRe
         // Delete the file
         if ( !fileSystem.deleteFile( authFile ) )
         {
-            throw new IOException( "Failed to delete file '" + authFile.getAbsolutePath() + "'" );
+            throw new IOException( new StringBuilder().append("Failed to delete file '").append(authFile.getAbsolutePath()).append("'").toString() );
         }
     }
 

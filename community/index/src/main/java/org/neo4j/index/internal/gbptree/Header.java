@@ -36,6 +36,22 @@ public class Header
     public static final int OVERHEAD =
             TreeState.SIZE +   // size of the tree state
             Integer.BYTES;     // size of the field storing the length of the additional header data
+	static final Writer CARRY_OVER_PREVIOUS_HEADER = ( from, length, to ) ->
+    {
+        int toOffset = to.getOffset();
+        from.copyTo( from.getOffset(), to, toOffset, length );
+        to.setOffset( toOffset + length );
+    };
+
+	private Header()
+    {
+    }
+
+	static Writer replace( Consumer<PageCursor> writer )
+    {
+        // Discard the previous state, just write the new
+        return ( from, length, to ) -> writer.accept( to );
+    }
 
     /**
      * Writes a header into a {@link GBPTree} state page during
@@ -51,23 +67,6 @@ public class Header
          * @param to {@link PageCursor} to write new header into.
          */
         void write( PageCursor from, int length, PageCursor to );
-    }
-
-    private Header()
-    {
-    }
-
-    static final Writer CARRY_OVER_PREVIOUS_HEADER = ( from, length, to ) ->
-    {
-        int toOffset = to.getOffset();
-        from.copyTo( from.getOffset(), to, toOffset, length );
-        to.setOffset( toOffset + length );
-    };
-
-    static Writer replace( Consumer<PageCursor> writer )
-    {
-        // Discard the previous state, just write the new
-        return ( from, length, to ) -> writer.accept( to );
     }
 
     /**

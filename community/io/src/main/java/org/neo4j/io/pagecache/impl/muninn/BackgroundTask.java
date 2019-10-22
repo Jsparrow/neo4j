@@ -36,7 +36,7 @@ abstract class BackgroundTask implements Runnable
     {
         int pageCacheId = pageCache.getPageCacheId();
         String taskName = getClass().getSimpleName();
-        String threadName = "MuninnPageCache[" + pageCacheId + "]-" + taskName;
+        String threadName = new StringBuilder().append("MuninnPageCache[").append(pageCacheId).append("]-").append(taskName).toString();
         Thread thread = Thread.currentThread();
         String previousName = thread.getName();
         try

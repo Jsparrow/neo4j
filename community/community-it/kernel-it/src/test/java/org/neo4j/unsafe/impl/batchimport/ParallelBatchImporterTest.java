@@ -103,19 +103,18 @@ import static org.neo4j.unsafe.impl.batchimport.staging.ProcessorAssignmentStrat
 public class ParallelBatchImporterTest
 {
     private static final int NUMBER_OF_ID_GROUPS = 5;
-    private final TestDirectory directory = TestDirectory.testDirectory();
-    private final RandomRule random = new RandomRule();
-    private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
-    private final SuppressOutput suppressOutput = SuppressOutput.suppressAll();
-
-    @Rule
+	private static final int NODE_COUNT = 10_000;
+	private static final int RELATIONSHIPS_PER_NODE = 5;
+	private static final int RELATIONSHIP_COUNT = NODE_COUNT * RELATIONSHIPS_PER_NODE;
+	private static final int RELATIONSHIP_TYPES = 3;
+	private static final String[] TOKENS = {"token1", "token2", "token3", "token4", "token5", "token6", "token7"};
+	private final TestDirectory directory = TestDirectory.testDirectory();
+	private final RandomRule random = new RandomRule();
+	private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	private final SuppressOutput suppressOutput = SuppressOutput.suppressAll();
+	@Rule
     public RuleChain ruleChain = RuleChain.outerRule( directory ).around( random ).around( fileSystemRule ).around( suppressOutput );
-
-    private static final int NODE_COUNT = 10_000;
-    private static final int RELATIONSHIPS_PER_NODE = 5;
-    private static final int RELATIONSHIP_COUNT = NODE_COUNT * RELATIONSHIPS_PER_NODE;
-    private static final int RELATIONSHIP_TYPES = 3;
-    protected final Configuration config = new Configuration()
+	protected final Configuration config = new Configuration()
     {
         @Override
         public int batchSize()
@@ -150,10 +149,16 @@ public class ParallelBatchImporterTest
             return random.nextInt( (int) (ratio * mebi / 2), (int) (ratio * mebi) );
         }
     };
-    private final InputIdGenerator inputIdGenerator;
-    private final Function<Groups,IdMapper> idMapper;
+	private final InputIdGenerator inputIdGenerator;
+	private final Function<Groups,IdMapper> idMapper;
 
-    @Parameterized.Parameters( name = "{0},{1},{3}" )
+	public ParallelBatchImporterTest( InputIdGenerator inputIdGenerator, Function<Groups,IdMapper> idMapper )
+    {
+        this.inputIdGenerator = inputIdGenerator;
+        this.idMapper = idMapper;
+    }
+
+	@Parameterized.Parameters( name = "{0},{1},{3}" )
     public static Collection<Object[]> data()
     {
         return Arrays.asList(
@@ -164,13 +169,7 @@ public class ParallelBatchImporterTest
         );
     }
 
-    public ParallelBatchImporterTest( InputIdGenerator inputIdGenerator, Function<Groups,IdMapper> idMapper )
-    {
-        this.inputIdGenerator = inputIdGenerator;
-        this.idMapper = idMapper;
-    }
-
-    @Test
+	@Test
     public void shouldImportCsvData() throws Exception
     {
         // GIVEN
@@ -248,7 +247,7 @@ public class ParallelBatchImporterTest
         }
     }
 
-    protected void assertConsistent( DatabaseLayout databaseLayout ) throws ConsistencyCheckIncompleteException
+	protected void assertConsistent( DatabaseLayout databaseLayout ) throws ConsistencyCheckIncompleteException
     {
         ConsistencyCheckService consistencyChecker = new ConsistencyCheckService();
         Result result = consistencyChecker.runFullConsistencyCheck( databaseLayout,
@@ -259,11 +258,232 @@ public class ParallelBatchImporterTest
                 result.isSuccessful() );
     }
 
-    protected RecordFormats getFormat()
+	protected RecordFormats getFormat()
     {
         return Standard.LATEST_RECORD_FORMATS;
     }
 
+	private void verifyData( int nodeCount, int relationshipCount, GraphDatabaseService db, IdGroupDistribution groups,
+            long nodeRandomSeed, long relationshipRandomSeed ) throws IOException
+    {
+        // Read all nodes, relationships and properties ad verify against the input data.
+        LongAdder propertyCount = new LongAdder();
+        try ( InputIterator nodes = nodes( nodeRandomSeed, nodeCount, config.batchSize(), inputIdGenerator, groups, propertyCount ).iterator();
+                InputIterator relationships = relationships( relationshipRandomSeed, relationshipCount, config.batchSize(), inputIdGenerator, groups,
+                        propertyCount, new LongAdder() ).iterator(); ResourceIterator<Node> dbNodes = db.getAllNodes().iterator() )
+        {
+            // Nodes
+            Map<String,Node> nodeByInputId = new HashMap<>( nodeCount );
+            while ( dbNodes.hasNext() )
+            {
+                Node node = dbNodes.next();
+                String id = (String) node.getProperty( "id" );
+                assertNull( nodeByInputId.put( id, node ) );
+            }
+
+            int verifiedNodes = 0;
+            long allNodesScanLabelCount = 0;
+            InputChunk chunk = nodes.newChunk();
+            InputEntity input = new InputEntity();
+            while ( nodes.next( chunk ) )
+            {
+                while ( chunk.next( input ) )
+                {
+                    String iid = uniqueId( input.idGroup, input.objectId );
+                    Node node = nodeByInputId.get( iid );
+                    assertNodeEquals( input, node );
+                    verifiedNodes++;
+                    assertDegrees( node );
+                    allNodesScanLabelCount += Iterables.count( node.getLabels() );
+                }
+            }
+            assertEquals( nodeCount, verifiedNodes );
+
+            // Labels
+            long labelScanStoreEntryCount = db.getAllLabels().stream()
+                    .flatMap( l -> db.findNodes( l ).stream() )
+                    .count();
+
+            assertEquals( format( new StringBuilder().append("Expected label scan store and node store to have same number labels. But %n").append("#labelsInNodeStore=%d%n").append("#labelsInLabelScanStore=%d%n").toString(), allNodesScanLabelCount, labelScanStoreEntryCount ),
+                    allNodesScanLabelCount, labelScanStoreEntryCount );
+
+            // Relationships
+            chunk = relationships.newChunk();
+            Map<String,Relationship> relationshipByName = new HashMap<>();
+            for ( Relationship relationship : db.getAllRelationships() )
+            {
+                relationshipByName.put( (String) relationship.getProperty( "id" ), relationship );
+            }
+            int verifiedRelationships = 0;
+            while ( relationships.next( chunk ) )
+            {
+                while ( chunk.next( input ) )
+                {
+                    if ( !inputIdGenerator.isMiss( input.objectStartId ) &&
+                         !inputIdGenerator.isMiss( input.objectEndId ) )
+                    {
+                        // A relationship referring to missing nodes. The InputIdGenerator is expected to generate
+                        // some (very few) of those. Skip it.
+                        String name = (String) propertyOf( input, "id" );
+                        Relationship relationship = relationshipByName.get( name );
+                        assertNotNull( new StringBuilder().append("Expected there to be a relationship with name '").append(name).append("'").toString(), relationship );
+                        assertEquals( nodeByInputId.get( uniqueId( input.startIdGroup, input.objectStartId ) ), relationship.getStartNode() );
+                        assertEquals( nodeByInputId.get( uniqueId( input.endIdGroup, input.objectEndId ) ), relationship.getEndNode() );
+                        assertRelationshipEquals( input, relationship );
+                    }
+                    verifiedRelationships++;
+                }
+            }
+            assertEquals( relationshipCount, verifiedRelationships );
+        }
+    }
+
+	private void assertDegrees( Node node )
+    {
+        for ( RelationshipType type : node.getRelationshipTypes() )
+        {
+            for ( Direction direction : Direction.values() )
+            {
+                long degree = node.getDegree( type, direction );
+                long actualDegree = count( node.getRelationships( type, direction ) );
+                assertEquals( actualDegree, degree );
+            }
+        }
+    }
+
+	private String uniqueId( Group group, PropertyContainer entity )
+    {
+        return uniqueId( group, entity.getProperty( "id" ) );
+    }
+
+	private String uniqueId( Group group, Object id )
+    {
+        return new StringBuilder().append(group.name()).append("_").append(id).toString();
+    }
+
+	private Object propertyOf( InputEntity input, String key )
+    {
+        Object[] properties = input.properties();
+        for ( int i = 0; i < properties.length; i++ )
+        {
+            if ( properties[i++].equals( key ) )
+            {
+                return properties[i];
+            }
+        }
+        throw new IllegalStateException( new StringBuilder().append(key).append(" not found on ").append(input).toString() );
+    }
+
+	private void assertRelationshipEquals( InputEntity input, Relationship relationship )
+    {
+        // properties
+        assertPropertiesEquals( input, relationship );
+
+        // type
+        assertEquals( input.stringType, relationship.getType().name() );
+    }
+
+	private void assertNodeEquals( InputEntity input, Node node )
+    {
+        // properties
+        assertPropertiesEquals( input, node );
+
+        // labels
+        Set<String> expectedLabels = asSet( input.labels() );
+        for ( Label label : node.getLabels() )
+        {
+            assertTrue( expectedLabels.remove( label.name() ) );
+        }
+        assertTrue( expectedLabels.isEmpty() );
+    }
+
+	private void assertPropertiesEquals( InputEntity input, PropertyContainer entity )
+    {
+        Object[] properties = input.properties();
+        for ( int i = 0; i < properties.length; i++ )
+        {
+            String key = (String) properties[i++];
+            Object value = properties[i];
+            assertPropertyValueEquals( input, entity, key, value, entity.getProperty( key ) );
+        }
+    }
+
+	private void assertPropertyValueEquals( InputEntity input, PropertyContainer entity, String key,
+            Object expected, Object array )
+    {
+        if ( expected.getClass().isArray() )
+        {
+            int length = Array.getLength( expected );
+            assertEquals( new StringBuilder().append(input).append(", ").append(entity).toString(), length, Array.getLength( array ) );
+            for ( int i = 0; i < length; i++ )
+            {
+                assertPropertyValueEquals( input, entity, key, Array.get( expected, i ), Array.get( array, i ) );
+            }
+        }
+        else
+        {
+            assertEquals( new StringBuilder().append(input).append(", ").append(entity).append(" for key:").append(key).toString(), Values.of( expected ), Values.of( array ) );
+        }
+    }
+
+	private InputIterable relationships( final long randomSeed, final long count, int batchSize,
+            final InputIdGenerator idGenerator, final IdGroupDistribution groups, LongAdder propertyCount, LongAdder relationshipCount )
+    {
+        return () -> new GeneratingInputIterator<>( count, batchSize, new RandomsStates( randomSeed ),
+                ( randoms, visitor, id ) -> {
+                    int thisPropertyCount = randomProperties( randoms, "Name " + id, visitor );
+                    ExistingId startNodeExistingId = idGenerator.randomExisting( randoms );
+                    Group startNodeGroup = groups.groupOf( startNodeExistingId.nodeIndex );
+                    ExistingId endNodeExistingId = idGenerator.randomExisting( randoms );
+                    Group endNodeGroup = groups.groupOf( endNodeExistingId.nodeIndex );
+
+                    // miss some
+                    Object startNode = idGenerator.miss( randoms, startNodeExistingId.id, 0.001f );
+                    Object endNode = idGenerator.miss( randoms, endNodeExistingId.id, 0.001f );
+
+                    if ( !inputIdGenerator.isMiss( startNode ) && !inputIdGenerator.isMiss( endNode ) )
+                    {
+                        relationshipCount.increment();
+                        propertyCount.add( thisPropertyCount );
+                    }
+
+                    visitor.startId( startNode, startNodeGroup );
+                    visitor.endId( endNode, endNodeGroup );
+
+                    String type = idGenerator.randomType( randoms );
+                    if ( randoms.nextFloat() < 0.00005 )
+                    {
+                        // Let there be a small chance of introducing a one-off relationship
+                        // with a type that no, or at least very few, other relationships have.
+                        type += "_odd";
+                    }
+                    visitor.type( type );
+                }, 0 );
+    }
+
+	private InputIterable nodes( final long randomSeed, final long count, int batchSize,
+            final InputIdGenerator inputIdGenerator, final IdGroupDistribution groups, LongAdder propertyCount )
+    {
+        return () -> new GeneratingInputIterator<>( count, batchSize, new RandomsStates( randomSeed ),
+                ( randoms, visitor, id ) -> {
+                    Object nodeId = inputIdGenerator.nextNodeId( randoms, id );
+                    Group group = groups.groupOf( id );
+                    visitor.id( nodeId, group );
+                    propertyCount.add( randomProperties( randoms, uniqueId( group, nodeId ), visitor ) );
+                    visitor.labels( randoms.selection( TOKENS, 0, TOKENS.length, true ) );
+                }, 0 );
+    }
+
+	private int randomProperties( RandomValues randoms, Object id, InputEntityVisitor visitor )
+    {
+        String[] keys = randoms.selection( TOKENS, 0, TOKENS.length, false );
+        for ( String key : keys )
+        {
+            visitor.property( key, randoms.nextValue().asObject() );
+        }
+        visitor.property( "id", id );
+        return keys.length + 1 /*the 'id' property*/;
+    }
     private static class ExistingId
     {
         private final Object id;
@@ -370,232 +590,6 @@ public class ParallelBatchImporterTest
         {
             return ((String)id).startsWith( "_" );
         }
-    }
-
-    private void verifyData( int nodeCount, int relationshipCount, GraphDatabaseService db, IdGroupDistribution groups,
-            long nodeRandomSeed, long relationshipRandomSeed ) throws IOException
-    {
-        // Read all nodes, relationships and properties ad verify against the input data.
-        LongAdder propertyCount = new LongAdder();
-        try ( InputIterator nodes = nodes( nodeRandomSeed, nodeCount, config.batchSize(), inputIdGenerator, groups, propertyCount ).iterator();
-                InputIterator relationships = relationships( relationshipRandomSeed, relationshipCount, config.batchSize(), inputIdGenerator, groups,
-                        propertyCount, new LongAdder() ).iterator(); ResourceIterator<Node> dbNodes = db.getAllNodes().iterator() )
-        {
-            // Nodes
-            Map<String,Node> nodeByInputId = new HashMap<>( nodeCount );
-            while ( dbNodes.hasNext() )
-            {
-                Node node = dbNodes.next();
-                String id = (String) node.getProperty( "id" );
-                assertNull( nodeByInputId.put( id, node ) );
-            }
-
-            int verifiedNodes = 0;
-            long allNodesScanLabelCount = 0;
-            InputChunk chunk = nodes.newChunk();
-            InputEntity input = new InputEntity();
-            while ( nodes.next( chunk ) )
-            {
-                while ( chunk.next( input ) )
-                {
-                    String iid = uniqueId( input.idGroup, input.objectId );
-                    Node node = nodeByInputId.get( iid );
-                    assertNodeEquals( input, node );
-                    verifiedNodes++;
-                    assertDegrees( node );
-                    allNodesScanLabelCount += Iterables.count( node.getLabels() );
-                }
-            }
-            assertEquals( nodeCount, verifiedNodes );
-
-            // Labels
-            long labelScanStoreEntryCount = db.getAllLabels().stream()
-                    .flatMap( l -> db.findNodes( l ).stream() )
-                    .count();
-
-            assertEquals( format( "Expected label scan store and node store to have same number labels. But %n" +
-                            "#labelsInNodeStore=%d%n" +
-                            "#labelsInLabelScanStore=%d%n", allNodesScanLabelCount, labelScanStoreEntryCount ),
-                    allNodesScanLabelCount, labelScanStoreEntryCount );
-
-            // Relationships
-            chunk = relationships.newChunk();
-            Map<String,Relationship> relationshipByName = new HashMap<>();
-            for ( Relationship relationship : db.getAllRelationships() )
-            {
-                relationshipByName.put( (String) relationship.getProperty( "id" ), relationship );
-            }
-            int verifiedRelationships = 0;
-            while ( relationships.next( chunk ) )
-            {
-                while ( chunk.next( input ) )
-                {
-                    if ( !inputIdGenerator.isMiss( input.objectStartId ) &&
-                         !inputIdGenerator.isMiss( input.objectEndId ) )
-                    {
-                        // A relationship referring to missing nodes. The InputIdGenerator is expected to generate
-                        // some (very few) of those. Skip it.
-                        String name = (String) propertyOf( input, "id" );
-                        Relationship relationship = relationshipByName.get( name );
-                        assertNotNull( "Expected there to be a relationship with name '" + name + "'", relationship );
-                        assertEquals( nodeByInputId.get( uniqueId( input.startIdGroup, input.objectStartId ) ), relationship.getStartNode() );
-                        assertEquals( nodeByInputId.get( uniqueId( input.endIdGroup, input.objectEndId ) ), relationship.getEndNode() );
-                        assertRelationshipEquals( input, relationship );
-                    }
-                    verifiedRelationships++;
-                }
-            }
-            assertEquals( relationshipCount, verifiedRelationships );
-        }
-    }
-
-    private void assertDegrees( Node node )
-    {
-        for ( RelationshipType type : node.getRelationshipTypes() )
-        {
-            for ( Direction direction : Direction.values() )
-            {
-                long degree = node.getDegree( type, direction );
-                long actualDegree = count( node.getRelationships( type, direction ) );
-                assertEquals( actualDegree, degree );
-            }
-        }
-    }
-
-    private String uniqueId( Group group, PropertyContainer entity )
-    {
-        return uniqueId( group, entity.getProperty( "id" ) );
-    }
-
-    private String uniqueId( Group group, Object id )
-    {
-        return group.name() + "_" + id;
-    }
-
-    private Object propertyOf( InputEntity input, String key )
-    {
-        Object[] properties = input.properties();
-        for ( int i = 0; i < properties.length; i++ )
-        {
-            if ( properties[i++].equals( key ) )
-            {
-                return properties[i];
-            }
-        }
-        throw new IllegalStateException( key + " not found on " + input );
-    }
-
-    private void assertRelationshipEquals( InputEntity input, Relationship relationship )
-    {
-        // properties
-        assertPropertiesEquals( input, relationship );
-
-        // type
-        assertEquals( input.stringType, relationship.getType().name() );
-    }
-
-    private void assertNodeEquals( InputEntity input, Node node )
-    {
-        // properties
-        assertPropertiesEquals( input, node );
-
-        // labels
-        Set<String> expectedLabels = asSet( input.labels() );
-        for ( Label label : node.getLabels() )
-        {
-            assertTrue( expectedLabels.remove( label.name() ) );
-        }
-        assertTrue( expectedLabels.isEmpty() );
-    }
-
-    private void assertPropertiesEquals( InputEntity input, PropertyContainer entity )
-    {
-        Object[] properties = input.properties();
-        for ( int i = 0; i < properties.length; i++ )
-        {
-            String key = (String) properties[i++];
-            Object value = properties[i];
-            assertPropertyValueEquals( input, entity, key, value, entity.getProperty( key ) );
-        }
-    }
-
-    private void assertPropertyValueEquals( InputEntity input, PropertyContainer entity, String key,
-            Object expected, Object array )
-    {
-        if ( expected.getClass().isArray() )
-        {
-            int length = Array.getLength( expected );
-            assertEquals( input + ", " + entity, length, Array.getLength( array ) );
-            for ( int i = 0; i < length; i++ )
-            {
-                assertPropertyValueEquals( input, entity, key, Array.get( expected, i ), Array.get( array, i ) );
-            }
-        }
-        else
-        {
-            assertEquals( input + ", " + entity + " for key:" + key, Values.of( expected ), Values.of( array ) );
-        }
-    }
-
-    private InputIterable relationships( final long randomSeed, final long count, int batchSize,
-            final InputIdGenerator idGenerator, final IdGroupDistribution groups, LongAdder propertyCount, LongAdder relationshipCount )
-    {
-        return () -> new GeneratingInputIterator<>( count, batchSize, new RandomsStates( randomSeed ),
-                ( randoms, visitor, id ) -> {
-                    int thisPropertyCount = randomProperties( randoms, "Name " + id, visitor );
-                    ExistingId startNodeExistingId = idGenerator.randomExisting( randoms );
-                    Group startNodeGroup = groups.groupOf( startNodeExistingId.nodeIndex );
-                    ExistingId endNodeExistingId = idGenerator.randomExisting( randoms );
-                    Group endNodeGroup = groups.groupOf( endNodeExistingId.nodeIndex );
-
-                    // miss some
-                    Object startNode = idGenerator.miss( randoms, startNodeExistingId.id, 0.001f );
-                    Object endNode = idGenerator.miss( randoms, endNodeExistingId.id, 0.001f );
-
-                    if ( !inputIdGenerator.isMiss( startNode ) && !inputIdGenerator.isMiss( endNode ) )
-                    {
-                        relationshipCount.increment();
-                        propertyCount.add( thisPropertyCount );
-                    }
-
-                    visitor.startId( startNode, startNodeGroup );
-                    visitor.endId( endNode, endNodeGroup );
-
-                    String type = idGenerator.randomType( randoms );
-                    if ( randoms.nextFloat() < 0.00005 )
-                    {
-                        // Let there be a small chance of introducing a one-off relationship
-                        // with a type that no, or at least very few, other relationships have.
-                        type += "_odd";
-                    }
-                    visitor.type( type );
-                }, 0 );
-    }
-
-    private InputIterable nodes( final long randomSeed, final long count, int batchSize,
-            final InputIdGenerator inputIdGenerator, final IdGroupDistribution groups, LongAdder propertyCount )
-    {
-        return () -> new GeneratingInputIterator<>( count, batchSize, new RandomsStates( randomSeed ),
-                ( randoms, visitor, id ) -> {
-                    Object nodeId = inputIdGenerator.nextNodeId( randoms, id );
-                    Group group = groups.groupOf( id );
-                    visitor.id( nodeId, group );
-                    propertyCount.add( randomProperties( randoms, uniqueId( group, nodeId ), visitor ) );
-                    visitor.labels( randoms.selection( TOKENS, 0, TOKENS.length, true ) );
-                }, 0 );
-    }
-
-    private static final String[] TOKENS = {"token1", "token2", "token3", "token4", "token5", "token6", "token7"};
-
-    private int randomProperties( RandomValues randoms, Object id, InputEntityVisitor visitor )
-    {
-        String[] keys = randoms.selection( TOKENS, 0, TOKENS.length, false );
-        for ( String key : keys )
-        {
-            visitor.property( key, randoms.nextValue().asObject() );
-        }
-        visitor.property( "id", id );
-        return keys.length + 1 /*the 'id' property*/;
     }
 
     private static class CapturingMonitor implements ExecutionMonitor

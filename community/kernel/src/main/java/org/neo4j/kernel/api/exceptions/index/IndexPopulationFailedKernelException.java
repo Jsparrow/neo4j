@@ -33,6 +33,6 @@ public class IndexPopulationFailedKernelException extends KernelException
 
     public IndexPopulationFailedKernelException( String indexUserDescription, String message )
     {
-        super( Status.Schema.IndexCreationFailed, FORMAT_MESSAGE + ", due to " + message, indexUserDescription );
+        super( Status.Schema.IndexCreationFailed, new StringBuilder().append(FORMAT_MESSAGE).append(", due to ").append(message).toString(), indexUserDescription );
     }
 }

@@ -49,11 +49,6 @@ public class FilteringRecordAccess extends DelegatingRecordAccess
         this.potentiallySkippableStores.addAll( asList( potentiallySkippableStores ) );
     }
 
-    enum Mode
-    {
-        SKIP, FILTER
-    }
-
     @Override
     public RecordReference<NodeRecord> node( long id )
     {
@@ -64,7 +59,7 @@ public class FilteringRecordAccess extends DelegatingRecordAccess
         return skipReference();
     }
 
-    @Override
+	@Override
     public RecordReference<RelationshipRecord> relationship( long id )
     {
         if ( shouldCheck( id, MultiPassStore.RELATIONSHIPS ) )
@@ -74,7 +69,7 @@ public class FilteringRecordAccess extends DelegatingRecordAccess
         return skipReference();
     }
 
-    @Override
+	@Override
     public RecordReference<RelationshipGroupRecord> relationshipGroup( long id )
     {
         if ( shouldCheck( id, MultiPassStore.RELATIONSHIP_GROUPS ) )
@@ -84,7 +79,7 @@ public class FilteringRecordAccess extends DelegatingRecordAccess
         return skipReference();
     }
 
-    @Override
+	@Override
     public RecordReference<PropertyRecord> property( long id )
     {
         if ( shouldCheck( id, MultiPassStore.PROPERTIES ) )
@@ -94,7 +89,7 @@ public class FilteringRecordAccess extends DelegatingRecordAccess
         return skipReference();
     }
 
-    @Override
+	@Override
     public Iterator<PropertyRecord> rawPropertyChain( long firstId )
     {
         return new FilteringIterator<>( super.rawPropertyChain( firstId ),
@@ -102,7 +97,7 @@ public class FilteringRecordAccess extends DelegatingRecordAccess
                         MultiPassStore.PROPERTIES ) );
     }
 
-    @Override
+	@Override
     public RecordReference<PropertyKeyTokenRecord> propertyKey( int id )
     {
         if ( shouldCheck( id, MultiPassStore.PROPERTY_KEYS ) )
@@ -112,7 +107,7 @@ public class FilteringRecordAccess extends DelegatingRecordAccess
         return skipReference();
     }
 
-    @Override
+	@Override
     public RecordReference<DynamicRecord> string( long id )
     {
         if ( shouldCheck( id, MultiPassStore.STRINGS ) )
@@ -122,7 +117,7 @@ public class FilteringRecordAccess extends DelegatingRecordAccess
         return skipReference();
     }
 
-    @Override
+	@Override
     public RecordReference<DynamicRecord> array( long id )
     {
         if ( shouldCheck( id, MultiPassStore.ARRAYS ) )
@@ -132,7 +127,7 @@ public class FilteringRecordAccess extends DelegatingRecordAccess
         return skipReference();
     }
 
-    @Override
+	@Override
     public RecordReference<LabelTokenRecord> label( int id )
     {
         if ( shouldCheck( id, MultiPassStore.LABELS ) )
@@ -142,7 +137,7 @@ public class FilteringRecordAccess extends DelegatingRecordAccess
         return skipReference();
     }
 
-    @Override
+	@Override
     public RecordReference<DynamicRecord> nodeLabels( long id )
     {
         if ( shouldCheck( id, MultiPassStore.LABELS ) )
@@ -152,9 +147,14 @@ public class FilteringRecordAccess extends DelegatingRecordAccess
         return skipReference();
     }
 
-    @Override
+	@Override
     public boolean shouldCheck( long id, MultiPassStore store )
     {
         return !(potentiallySkippableStores.contains( store ) && (currentStore != store));
+    }
+
+	enum Mode
+    {
+        SKIP, FILTER
     }
 }

@@ -31,7 +31,7 @@ public class ConsistencyCheckingError extends DataInconsistencyError
     public ConsistencyCheckingError( LogEntryStart startEntry, LogEntryCommit commitEntry,
                                      ConsistencySummaryStatistics summary )
     {
-        super( String.format( "Inconsistencies in transaction:\n\t%s\n\t%s\n\t%s",
+        super( String.format( "Inconsistencies in transaction:%n\t%s%n\t%s%n\t%s",
                                startEntry == null ? "NO START ENTRY" : startEntry.toString(),
                                commitEntry == null ? "NO COMMIT ENTRY" : commitEntry.toString(),
                                summary ) );

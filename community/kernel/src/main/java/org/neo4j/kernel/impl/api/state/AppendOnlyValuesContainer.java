@@ -550,14 +550,13 @@ public class AppendOnlyValuesContainer implements ValuesContainer
     private static ZoneId toZoneId( int z )
     {
         // if lowest bit is set to 1 then it's a shifted zone id
-        if ( (z & 1) != 0 )
-        {
-            final String zoneId = TimeZones.map( (short) (z >> 1) );
-            return ZoneId.of( zoneId );
-        }
-        // otherwise it's a shifted offset seconds value
-        // preserve sign bit for negative offsets
-        return ZoneOffset.ofTotalSeconds( z >> 1 );
+		if (!((z & 1) != 0)) {
+			// otherwise it's a shifted offset seconds value
+			// preserve sign bit for negative offsets
+			return ZoneOffset.ofTotalSeconds( z >> 1 );
+		}
+		final String zoneId = TimeZones.map( (short) (z >> 1) );
+		return ZoneId.of( zoneId );
     }
 
     private static ArrayValue readDateTimeArray( ByteBuffer bb, int offset )

@@ -96,7 +96,6 @@ public class AutoCreatingHashMap<K,V> extends HashMap<K,V>
 
     public AutoCreatingHashMap( Factory<V> valueCreator )
     {
-        super();
         this.valueCreator = valueCreator;
     }
 

@@ -29,23 +29,22 @@ import org.neo4j.values.storable.Values;
 
 public class ValueToObjectSerializer extends BaseToObjectValueWriter<RuntimeException>
 {
-    private final EmbeddedProxySPI EmbeddedProxySPI;
+    private final EmbeddedProxySPI embeddedProxySpi;
     public ValueToObjectSerializer( EmbeddedProxySPI EmbeddedProxySPI )
     {
-        super();
-        this.EmbeddedProxySPI = EmbeddedProxySPI;
+        this.embeddedProxySpi = EmbeddedProxySPI;
     }
 
     @Override
     protected Node newNodeProxyById( long id )
     {
-        return EmbeddedProxySPI.newNodeProxy( id );
+        return embeddedProxySpi.newNodeProxy( id );
     }
 
     @Override
     protected Relationship newRelationshipProxyById( long id )
     {
-        return EmbeddedProxySPI.newRelationshipProxy( id );
+        return embeddedProxySpi.newRelationshipProxy( id );
     }
 
     @Override

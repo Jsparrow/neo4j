@@ -192,27 +192,26 @@ public class LogFilesBuilder
             return logsDirectory;
         }
         // try to use absolute position only for default database. For other databases use database directory
-        if ( tryConfigureDefaultDatabaseLogsDirectory() )
-        {
-            File neo4jHome = config.get( GraphDatabaseSettings.neo4j_home );
-            File databasePath = config.get( database_path );
-            File logicalLogsLocation = config.get( GraphDatabaseSettings.logical_logs_location );
-            if ( databaseLayout.getStoreLayout().storeDirectory().equals( neo4jHome ) && databasePath.equals( logicalLogsLocation ) )
-            {
-                return databaseLayout.databaseDirectory();
-            }
-            if ( logicalLogsLocation.isAbsolute() )
-            {
-                return logicalLogsLocation;
-            }
-            if ( neo4jHome == null || !databaseLayout.databaseDirectory().equals( databasePath ) )
-            {
-                Path relativeLogicalLogPath = databasePath.toPath().relativize( logicalLogsLocation.toPath() );
-                return databaseLayout.file( relativeLogicalLogPath.toString() );
-            }
-            return logicalLogsLocation;
-        }
-        return databaseLayout.databaseDirectory();
+		if (!tryConfigureDefaultDatabaseLogsDirectory()) {
+			return databaseLayout.databaseDirectory();
+		}
+		File neo4jHome = config.get( GraphDatabaseSettings.neo4j_home );
+		File databasePath = config.get( database_path );
+		File logicalLogsLocation = config.get( GraphDatabaseSettings.logical_logs_location );
+		if ( databaseLayout.getStoreLayout().storeDirectory().equals( neo4jHome ) && databasePath.equals( logicalLogsLocation ) )
+		{
+		    return databaseLayout.databaseDirectory();
+		}
+		if ( logicalLogsLocation.isAbsolute() )
+		{
+		    return logicalLogsLocation;
+		}
+		if ( neo4jHome == null || !databaseLayout.databaseDirectory().equals( databasePath ) )
+		{
+		    Path relativeLogicalLogPath = databasePath.toPath().relativize( logicalLogsLocation.toPath() );
+		    return databaseLayout.file( relativeLogicalLogPath.toString() );
+		}
+		return logicalLogsLocation;
     }
 
     private boolean tryConfigureDefaultDatabaseLogsDirectory()
@@ -271,9 +270,7 @@ public class LogFilesBuilder
         {
             return () ->
             {
-                throw new UnsupportedOperationException( "Current version of log files can't perform any " +
-                    "operation that require availability of log version repository. Please build full version of log " +
-                    "files. Please build full version of log files to be able to use them." );
+                throw new UnsupportedOperationException( new StringBuilder().append("Current version of log files can't perform any ").append("operation that require availability of log version repository. Please build full version of log ").append("files. Please build full version of log files to be able to use them.").toString() );
             };
         }
         if ( readOnly )
@@ -286,8 +283,7 @@ public class LogFilesBuilder
         }
         else
         {
-            requireNonNull( dependencies, LogVersionRepository.class.getSimpleName() + " is required. " +
-                    "Please provide an instance or a dependencies where it can be found." );
+            requireNonNull( dependencies, new StringBuilder().append(LogVersionRepository.class.getSimpleName()).append(" is required. ").append("Please provide an instance or a dependencies where it can be found.").toString() );
             return getSupplier( LogVersionRepository.class );
         }
     }
@@ -306,9 +302,7 @@ public class LogFilesBuilder
         {
             return () ->
             {
-                throw new UnsupportedOperationException( "Current version of log files can't perform any " +
-                        "operation that require availability of transaction id store. Please build full version of log files " +
-                        "to be able to use them." );
+                throw new UnsupportedOperationException( new StringBuilder().append("Current version of log files can't perform any ").append("operation that require availability of transaction id store. Please build full version of log files ").append("to be able to use them.").toString() );
             };
         }
         if ( readOnly )
@@ -321,8 +315,7 @@ public class LogFilesBuilder
         }
         else
         {
-            requireNonNull( dependencies, TransactionIdStore.class.getSimpleName() + " is required. " +
-                    "Please provide an instance or a dependencies where it can be found." );
+            requireNonNull( dependencies, new StringBuilder().append(TransactionIdStore.class.getSimpleName()).append(" is required. ").append("Please provide an instance or a dependencies where it can be found.").toString() );
             return () -> resolveDependency( TransactionIdStore.class ).getLastCommittedTransactionId();
         }
     }
@@ -337,9 +330,7 @@ public class LogFilesBuilder
         {
             return () ->
             {
-                throw new UnsupportedOperationException( "Current version of log files can't perform any " +
-                        "operation that require availability of transaction id store. Please build full version of log files " +
-                        "to be able to use them." );
+                throw new UnsupportedOperationException( new StringBuilder().append("Current version of log files can't perform any ").append("operation that require availability of transaction id store. Please build full version of log files ").append("to be able to use them.").toString() );
             };
         }
         if ( readOnly )
@@ -352,8 +343,7 @@ public class LogFilesBuilder
         }
         else
         {
-            requireNonNull( dependencies, TransactionIdStore.class.getSimpleName() + " is required. " +
-                    "Please provide an instance or a dependencies where it can be found." );
+            requireNonNull( dependencies, new StringBuilder().append(TransactionIdStore.class.getSimpleName()).append(" is required. ").append("Please provide an instance or a dependencies where it can be found.").toString() );
             return () -> resolveDependency( TransactionIdStore.class ).committingTransactionId();
         }
     }

@@ -53,32 +53,27 @@ import static org.neo4j.test.rule.PageCacheRule.config;
 
 public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
 {
-    private final EphemeralFileSystemRule fs = new EphemeralFileSystemRule();
-    private final TestDirectory directory = TestDirectory.testDirectory( getClass(), fs.get() );
-    private final PageCacheRule pageCacheRule = new PageCacheRule(
-            config().withPageSize( PAGE_SIZE ).withAccessChecks( true ) );
-    private final RandomRule random = new RandomRule();
-
-    @Rule
-    public final RuleChain rules = outerRule( fs ).around( directory ).around( pageCacheRule ).around( random );
-
-    // Test config
-    private int loadCountTransactions;
-    private int minInsertCountPerBatch;
-    private int maxInsertCountPerBatch;
-    private int minRemoveCountPerBatch;
-    private int maxRemoveCountPerBatch;
-
     private static final int PAGE_SIZE = 256;
-    private final Action CHECKPOINT = new CheckpointAction();
-
-    private TestLayout<KEY,VALUE> layout;
-
-    /* Global variables for recoverFromAnything test */
+	private final EphemeralFileSystemRule fs = new EphemeralFileSystemRule();
+	private final TestDirectory directory = TestDirectory.testDirectory( getClass(), fs.get() );
+	private final PageCacheRule pageCacheRule = new PageCacheRule(
+            config().withPageSize( PAGE_SIZE ).withAccessChecks( true ) );
+	private final RandomRule random = new RandomRule();
+	@Rule
+    public final RuleChain rules = outerRule( fs ).around( directory ).around( pageCacheRule ).around( random );
+	// Test config
+    private int loadCountTransactions;
+	private int minInsertCountPerBatch;
+	private int maxInsertCountPerBatch;
+	private int minRemoveCountPerBatch;
+	private int maxRemoveCountPerBatch;
+	private final Action checkpoint = new CheckpointAction();
+	private TestLayout<KEY,VALUE> layout;
+	/* Global variables for recoverFromAnything test */
     private boolean recoverFromAnythingInitialized;
-    private int keyRange;
+	private int keyRange;
 
-    @Before
+	@Before
     public void setUp()
     {
         this.layout = getLayout( random );
@@ -89,9 +84,9 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         maxRemoveCountPerBatch = 20;
     }
 
-    protected abstract TestLayout<KEY,VALUE> getLayout( RandomRule random );
+	protected abstract TestLayout<KEY,VALUE> getLayout( RandomRule random );
 
-    @Test
+	@Test
     public void shouldRecoverFromCrashBeforeFirstCheckpoint() throws Exception
     {
         // GIVEN
@@ -135,46 +130,46 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         }
     }
 
-    @Test
+	@Test
     public void shouldRecoverFromAnythingReplayExactFromCheckpointHighKeyContention() throws Exception
     {
         initializeRecoveryFromAnythingTest( 100 );
         doShouldRecoverFromAnything( true );
     }
 
-    @Test
+	@Test
     public void shouldRecoverFromAnythingReplayFromBeforeLastCheckpointHighKeyContention() throws Exception
     {
         initializeRecoveryFromAnythingTest( 100 );
         doShouldRecoverFromAnything( false );
     }
 
-    @Test
+	@Test
     public void shouldRecoverFromAnythingReplayExactFromCheckpointLowKeyContention() throws Exception
     {
         initializeRecoveryFromAnythingTest( 1_000_000 );
         doShouldRecoverFromAnything( true );
     }
 
-    @Test
+	@Test
     public void shouldRecoverFromAnythingReplayFromBeforeLastCheckpointLowKeyContention() throws Exception
     {
         initializeRecoveryFromAnythingTest( 1_000_000 );
         doShouldRecoverFromAnything( false );
     }
 
-    private void initializeRecoveryFromAnythingTest( int keyRange )
+	private void initializeRecoveryFromAnythingTest( int keyRange )
     {
         recoverFromAnythingInitialized = true;
         this.keyRange = keyRange;
     }
 
-    private void assertInitialized()
+	private void assertInitialized()
     {
         assertTrue( recoverFromAnythingInitialized );
     }
 
-    private void doShouldRecoverFromAnything( boolean replayRecoveryExactlyFromCheckpoint ) throws Exception
+	private void doShouldRecoverFromAnything( boolean replayRecoveryExactlyFromCheckpoint ) throws Exception
     {
         assertInitialized();
         // GIVEN
@@ -260,7 +255,7 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         }
     }
 
-    /**
+	/**
      * Shuffle actions without breaking causal dependencies, i.e. without affecting the end result
      * of the data ending up in the tree. Checkpoints cannot move.
      *
@@ -304,19 +299,19 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         return Arrays.asList( arrayToShuffle );
     }
 
-    private List<Action> recoveryActions( List<Action> load, int fromIndex )
+	private List<Action> recoveryActions( List<Action> load, int fromIndex )
     {
         return load.subList( fromIndex, load.size() ).stream()
                 .filter( action -> !action.isCheckpoint() )
                 .collect( Collectors.toList() );
     }
 
-    private void recover( List<Action> load, GBPTree<KEY,VALUE> index ) throws IOException
+	private void recover( List<Action> load, GBPTree<KEY,VALUE> index ) throws IOException
     {
         execute( load, index );
     }
 
-    private void execute( List<Action> load, GBPTree<KEY,VALUE> index )
+	private void execute( List<Action> load, GBPTree<KEY,VALUE> index )
             throws IOException
     {
         for ( Action action : load )
@@ -325,7 +320,7 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         }
     }
 
-    private long[] expectedSortedAggregatedDataFromGeneratedLoad( List<Action> load )
+	private long[] expectedSortedAggregatedDataFromGeneratedLoad( List<Action> load )
     {
         TreeMap<Long,Long> map = new TreeMap<>();
         for ( Action action : load )
@@ -364,7 +359,7 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         return result;
     }
 
-    private int indexOfLastCheckpoint( List<Action> actions )
+	private int indexOfLastCheckpoint( List<Action> actions )
     {
         int i = 0;
         int lastCheckpoint = -1;
@@ -379,7 +374,7 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         return lastCheckpoint;
     }
 
-    private List<Action> generateLoad()
+	private List<Action> generateLoad()
     {
         List<Action> actions = new LinkedList<>();
         boolean hasCheckPoint = false;
@@ -387,7 +382,7 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         {
             Action action = randomAction( true );
             actions.add( action );
-            if ( action == CHECKPOINT )
+            if ( action == checkpoint )
             {
                 hasCheckPoint = true;
             }
@@ -396,11 +391,11 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         // Guarantee that there's at least one check point, i.e. if there's none then append one at the end
         if ( !hasCheckPoint )
         {
-            actions.add( CHECKPOINT );
+            actions.add( checkpoint );
         }
 
         // Guarantee that there are at least some non-checkpoint actions after last checkpoint
-        if ( actions.get( actions.size() - 1 ) == CHECKPOINT )
+        if ( actions.get( actions.size() - 1 ) == checkpoint )
         {
             int additional = random.intBetween( 1, 10 );
             for ( int i = 0; i < additional; i++ )
@@ -411,7 +406,7 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         return actions;
     }
 
-    private Action randomAction( boolean allowCheckPoint )
+	private Action randomAction( boolean allowCheckPoint )
     {
         float randomized = random.nextFloat();
         if ( randomized <= 0.7 )
@@ -428,11 +423,11 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         }
         else
         {
-            return CHECKPOINT;
+            return checkpoint;
         }
     }
 
-    private long[] modificationData( int min, int max )
+	private long[] modificationData( int min, int max )
     {
         int count = random.intBetween( min, max );
         long[] data = new long[count * 2];
@@ -444,22 +439,54 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         return data;
     }
 
-    private GBPTree<KEY,VALUE> createIndex( PageCache pageCache, File file ) throws IOException
+	private GBPTree<KEY,VALUE> createIndex( PageCache pageCache, File file ) throws IOException
     {
         return new GBPTreeBuilder<>( pageCache, file, layout ).build();
     }
 
-    private PageCache createPageCache()
+	private PageCache createPageCache()
     {
         return pageCacheRule.getPageCache( fs.get() );
     }
 
-    enum ActionType
+	private KEY key( long seed )
+    {
+        return layout.key( seed );
+    }
+
+	private VALUE value( long seed )
+    {
+        return layout.value( seed );
+    }
+
+	private void assertEqualsKey( KEY expected, KEY actual )
+    {
+        assertEquals( String.format( "expected equal, expected=%s, actual=%s", expected.toString(), actual.toString() ), 0,
+                layout.compare( expected, actual ) );
+    }
+
+	private void assertEqualsValue( VALUE expected, VALUE actual )
+    {
+        assertEquals( String.format( "expected equal, expected=%s, actual=%s", expected.toString(), actual.toString() ), 0,
+                layout.compareValue( expected, actual ) );
+    }
+
+	private long keySeed( KEY key )
+    {
+        return layout.keySeed( key );
+    }
+
+	private long valueSeed( VALUE value )
+    {
+        return layout.valueSeed( value );
+    }
+
+	enum ActionType
     {
         INSERT, REMOVE, CHECKPOINT
     }
 
-    abstract class Action
+	abstract class Action
     {
         long[] data;
         Set<Long> allKeys;
@@ -606,37 +633,5 @@ public abstract class GBPTreeRecoveryITBase<KEY,VALUE>
         {
             return ActionType.CHECKPOINT;
         }
-    }
-
-    private KEY key( long seed )
-    {
-        return layout.key( seed );
-    }
-
-    private VALUE value( long seed )
-    {
-        return layout.value( seed );
-    }
-
-    private void assertEqualsKey( KEY expected, KEY actual )
-    {
-        assertEquals( String.format( "expected equal, expected=%s, actual=%s", expected.toString(), actual.toString() ), 0,
-                layout.compare( expected, actual ) );
-    }
-
-    private void assertEqualsValue( VALUE expected, VALUE actual )
-    {
-        assertEquals( String.format( "expected equal, expected=%s, actual=%s", expected.toString(), actual.toString() ), 0,
-                layout.compareValue( expected, actual ) );
-    }
-
-    private long keySeed( KEY key )
-    {
-        return layout.keySeed( key );
-    }
-
-    private long valueSeed( VALUE value )
-    {
-        return layout.valueSeed( value );
     }
 }

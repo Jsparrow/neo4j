@@ -26,41 +26,9 @@ import org.neo4j.helpers.MathUtil;
  */
 public interface OperatorProfile
 {
-    /**
-     * Time spent executing this operator.
-     */
-    long time();
-
-    /**
-     * Database hits caused while executing this operator. This is an approximate measure
-     * of how many nodes, records and properties that have been read.
-     */
-    long dbHits();
-
-    /**
-     * Number of rows produced by this operator.
-     */
-    long rows();
-
-    /**
-     * Page cache hits while executing this operator.
-     */
-    long pageCacheHits();
-
-    /**
-     * Page cache misses while executing this operator.
-     */
-    long pageCacheMisses();
-
-    default double pageCacheHitRatio()
-    {
-        return ( pageCacheHits() == NO_DATA || pageCacheMisses() == NO_DATA ) ?
-               NO_DATA : MathUtil.portion( pageCacheHits(), pageCacheMisses() );
-    }
-
     long NO_DATA = -1L;
 
-    OperatorProfile NONE = new OperatorProfile()
+	OperatorProfile NONE = new OperatorProfile()
     {
         @Override
         public long time()
@@ -92,4 +60,36 @@ public interface OperatorProfile
             return -1;
         }
     };
+
+	/**
+     * Time spent executing this operator.
+     */
+    long time();
+
+	/**
+     * Database hits caused while executing this operator. This is an approximate measure
+     * of how many nodes, records and properties that have been read.
+     */
+    long dbHits();
+
+	/**
+     * Number of rows produced by this operator.
+     */
+    long rows();
+
+	/**
+     * Page cache hits while executing this operator.
+     */
+    long pageCacheHits();
+
+	/**
+     * Page cache misses while executing this operator.
+     */
+    long pageCacheMisses();
+
+	default double pageCacheHitRatio()
+    {
+        return ( pageCacheHits() == NO_DATA || pageCacheMisses() == NO_DATA ) ?
+               NO_DATA : MathUtil.portion( pageCacheHits(), pageCacheMisses() );
+    }
 }

@@ -62,15 +62,15 @@ public abstract class CharReadableChunker implements Chunker
 
     protected int fillFromBackBuffer( char[] into )
     {
-        if ( backBufferCursor > 0 )
-        {   // Read from and reset back buffer
-            assert backBufferCursor < chunkSize;
-            System.arraycopy( backBuffer, 0, into, 0, backBufferCursor );
-            int result = backBufferCursor;
-            backBufferCursor = 0;
-            return result;
-        }
-        return 0;
+        // Read from and reset back buffer
+		if (backBufferCursor <= 0) {
+			return 0;
+		}
+		assert backBufferCursor < chunkSize;
+		System.arraycopy( backBuffer, 0, into, 0, backBufferCursor );
+		int result = backBufferCursor;
+		backBufferCursor = 0;
+		return result;
     }
 
     protected int storeInBackBuffer( char[] data, int offset, int length )

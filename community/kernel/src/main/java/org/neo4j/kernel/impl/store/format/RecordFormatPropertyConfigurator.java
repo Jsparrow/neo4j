@@ -53,18 +53,18 @@ public class RecordFormatPropertyConfigurator
     {
         Integer defaultValue = Integer.parseInt( setting.getDefaultValue() );
         int propertyValue = config.get( setting );
-        if ( propertyValue == defaultValue )
-        {
-            int updatedBlockSize = fullBlockSize - headerSize;
-            if ( updatedBlockSize != propertyValue )
-            {
-                if ( updatedBlockSize < MINIMAL_BLOCK_SIZE )
-                {
-                    throw new IllegalArgumentException( "Block size should be bigger then " + MINIMAL_BLOCK_SIZE );
-                }
-                addFormatSetting( formatConfig, setting, updatedBlockSize );
-            }
-        }
+        if (propertyValue != defaultValue) {
+			return;
+		}
+		int updatedBlockSize = fullBlockSize - headerSize;
+		if ( updatedBlockSize != propertyValue )
+		{
+		    if ( updatedBlockSize < MINIMAL_BLOCK_SIZE )
+		    {
+		        throw new IllegalArgumentException( "Block size should be bigger then " + MINIMAL_BLOCK_SIZE );
+		    }
+		    addFormatSetting( formatConfig, setting, updatedBlockSize );
+		}
     }
 
     private static void addFormatSetting( Map<String,String> configMap, Setting setting, int value )

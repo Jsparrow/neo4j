@@ -89,25 +89,23 @@ import static org.mockito.Mockito.when;
 
 public class RecordStorageEngineTest
 {
-    private final RecordStorageEngineRule storageEngineRule = new RecordStorageEngineRule();
-    private final EphemeralFileSystemRule fsRule = new EphemeralFileSystemRule();
-    private final PageCacheRule pageCacheRule = new PageCacheRule();
-    private final TestDirectory testDirectory = TestDirectory.testDirectory( fsRule );
-    private final DatabaseHealth databaseHealth = mock( DatabaseHealth.class );
-
-    @Rule
-    public RuleChain ruleChain = RuleChain.outerRule( fsRule )
-            .around( pageCacheRule )
-            .around( testDirectory )
-            .around( storageEngineRule );
-
     private static final Function<Optional<StoreType>,StoreType> assertIsPresentAndGet = optional ->
     {
         assertTrue( "Expected optional to be present", optional.isPresent() );
         return optional.get();
     };
+	private final RecordStorageEngineRule storageEngineRule = new RecordStorageEngineRule();
+	private final EphemeralFileSystemRule fsRule = new EphemeralFileSystemRule();
+	private final PageCacheRule pageCacheRule = new PageCacheRule();
+	private final TestDirectory testDirectory = TestDirectory.testDirectory( fsRule );
+	private final DatabaseHealth databaseHealth = mock( DatabaseHealth.class );
+	@Rule
+    public RuleChain ruleChain = RuleChain.outerRule( fsRule )
+            .around( pageCacheRule )
+            .around( testDirectory )
+            .around( storageEngineRule );
 
-    @Test( timeout = 30_000 )
+	@Test( timeout = 30_000 )
     public void shutdownRecordStorageEngineAfterFailedTransaction() throws Throwable
     {
         RecordStorageEngine engine = buildRecordStorageEngine();
@@ -115,7 +113,7 @@ public class RecordStorageEngineTest
         assertNotNull( applicationError );
     }
 
-    @Test
+	@Test
     public void panicOnExceptionDuringCommandsApply()
     {
         IllegalStateException failure = new IllegalStateException( "Too many open files" );
@@ -138,13 +136,13 @@ public class RecordStorageEngineTest
         verify( databaseHealth ).panic( any( Throwable.class ) );
     }
 
-    private static BatchTransactionApplierFacade transactionApplierFacadeTransformer(
+	private static BatchTransactionApplierFacade transactionApplierFacadeTransformer(
             BatchTransactionApplierFacade facade, Exception failure )
     {
         return new FailingBatchTransactionApplierFacade( failure, facade );
     }
 
-    @Test
+	@Test
     public void databasePanicIsRaisedWhenTxApplicationFails() throws Throwable
     {
         RecordStorageEngine engine = buildRecordStorageEngine();
@@ -160,7 +158,7 @@ public class RecordStorageEngineTest
         assertThat( exception, is( applicationError ) );
     }
 
-    @Test( timeout = 30_000 )
+	@Test( timeout = 30_000 )
     public void obtainCountsStoreResetterAfterFailedTransaction() throws Throwable
     {
         RecordStorageEngine engine = buildRecordStorageEngine();
@@ -175,7 +173,7 @@ public class RecordStorageEngineTest
         }
     }
 
-    @Test
+	@Test
     public void mustFlushStoresWithGivenIOLimiter()
     {
         IOLimiter limiter = IOLimiter.UNLIMITED;
@@ -197,7 +195,7 @@ public class RecordStorageEngineTest
         assertThat( observedLimiter.get(), sameInstance( limiter ) );
     }
 
-    @Test
+	@Test
     public void shouldListAllStoreFiles()
     {
         RecordStorageEngine engine = buildRecordStorageEngine();
@@ -212,7 +210,7 @@ public class RecordStorageEngineTest
         assertEquals( currentFiles, allPossibleFiles );
     }
 
-    @Test
+	@Test
     public void shouldCloseLockGroupAfterAppliers() throws Exception
     {
         // given
@@ -248,19 +246,19 @@ public class RecordStorageEngineTest
         inOrder.verifyNoMoreInteractions();
     }
 
-    private RecordStorageEngine buildRecordStorageEngine()
+	private RecordStorageEngine buildRecordStorageEngine()
     {
         return recordStorageEngineBuilder().build();
     }
 
-    private RecordStorageEngineRule.Builder recordStorageEngineBuilder()
+	private RecordStorageEngineRule.Builder recordStorageEngineBuilder()
     {
         return storageEngineRule
                 .getWith( fsRule.get(), pageCacheRule.getPageCache( fsRule.get() ), testDirectory.databaseLayout() )
                 .databaseHealth( databaseHealth );
     }
 
-    private static Exception executeFailingTransaction( RecordStorageEngine engine ) throws IOException
+	private static Exception executeFailingTransaction( RecordStorageEngine engine ) throws IOException
     {
         Exception applicationError = new UnderlyingStorageException( "No space left on device" );
         TransactionToApply txToApply = newTransactionThatFailsWith( applicationError );
@@ -276,7 +274,7 @@ public class RecordStorageEngineTest
         return applicationError;
     }
 
-    private static TransactionToApply newTransactionThatFailsWith( Exception error ) throws IOException
+	private static TransactionToApply newTransactionThatFailsWith( Exception error ) throws IOException
     {
         TransactionRepresentation transaction = mock( TransactionRepresentation.class );
         when( transaction.additionalHeader() ).thenReturn( new byte[0] );
@@ -291,7 +289,7 @@ public class RecordStorageEngineTest
         return txToApply;
     }
 
-    private static class FailingBatchTransactionApplierFacade extends BatchTransactionApplierFacade
+	private static class FailingBatchTransactionApplierFacade extends BatchTransactionApplierFacade
     {
         private final Exception failure;
 

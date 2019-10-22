@@ -31,25 +31,23 @@ import org.neo4j.unsafe.impl.batchimport.cache.NumberArrayFactory;
  */
 public class RelationshipCountsProcessor implements RecordProcessor<RelationshipRecord>
 {
-    private final NodeLabelsCache nodeLabelCache;
-    private final LongArray labelsCounts;
-    private final LongArray wildcardCounts;
-
-    // and grows on demand
-    private int[] startScratch = new int[20];
-    private int[] endScratch = new int[20];
-    private final CountsAccessor.Updater countsUpdater;
-    private final long anyLabel;
-    private final long anyRelationshipType;
-    private final NodeLabelsCache.Client client;
-    private final long itemsPerLabel;
-    private final long itemsPerType;
-
     private static final int START = 0;
-    private static final int END = 1;
-    private static final int SIDES = 2;
+	private static final int END = 1;
+	private static final int SIDES = 2;
+	private final NodeLabelsCache nodeLabelCache;
+	private final LongArray labelsCounts;
+	private final LongArray wildcardCounts;
+	// and grows on demand
+    private int[] startScratch = new int[20];
+	private int[] endScratch = new int[20];
+	private final CountsAccessor.Updater countsUpdater;
+	private final long anyLabel;
+	private final long anyRelationshipType;
+	private final NodeLabelsCache.Client client;
+	private final long itemsPerLabel;
+	private final long itemsPerType;
 
-    public RelationshipCountsProcessor( NodeLabelsCache nodeLabelCache,
+	public RelationshipCountsProcessor( NodeLabelsCache nodeLabelCache,
             int highLabelId, int highRelationshipTypeId, CountsAccessor.Updater countsUpdater,
             NumberArrayFactory cacheFactory )
     {
@@ -66,7 +64,7 @@ public class RelationshipCountsProcessor implements RecordProcessor<Relationship
         this.wildcardCounts = cacheFactory.newLongArray( anyRelationshipType + 1, 0 );
     }
 
-    static long calculateMemoryUsage( int highLabelId, int highRelationshipTypeId )
+	static long calculateMemoryUsage( int highLabelId, int highRelationshipTypeId )
     {
         int labels = highLabelId + 1;
         int types = highRelationshipTypeId + 1;
@@ -75,7 +73,7 @@ public class RelationshipCountsProcessor implements RecordProcessor<Relationship
         return labelsCountsUsage + wildcardCountsUsage;
     }
 
-    @Override
+	@Override
     public boolean process( RelationshipRecord record )
     {
         // Below is logic duplication of CountsState#addRelationship
@@ -107,7 +105,7 @@ public class RelationshipCountsProcessor implements RecordProcessor<Relationship
         return false;
     }
 
-    @Override
+	@Override
     public void done()
     {
         for ( int wildcardType = 0; wildcardType <= anyRelationshipType; wildcardType++ )
@@ -133,20 +131,20 @@ public class RelationshipCountsProcessor implements RecordProcessor<Relationship
         }
     }
 
-    @Override
+	@Override
     public void close()
     {
         labelsCounts.close();
         wildcardCounts.close();
     }
 
-    public void addCountsFrom( RelationshipCountsProcessor from )
+	public void addCountsFrom( RelationshipCountsProcessor from )
     {
         mergeCounts( labelsCounts, from.labelsCounts );
         mergeCounts( wildcardCounts, from.wildcardCounts );
     }
 
-    private void mergeCounts( LongArray destination, LongArray part )
+	private void mergeCounts( LongArray destination, LongArray part )
     {
         long length = destination.length();
         for ( long i = 0; i < length; i++ )
@@ -155,23 +153,23 @@ public class RelationshipCountsProcessor implements RecordProcessor<Relationship
         }
     }
 
-    private long arrayIndex( long labelId, long relationshipTypeId, long side )
+	private long arrayIndex( long labelId, long relationshipTypeId, long side )
     {
         return (side * sideSize()) + (labelId * itemsPerLabel + relationshipTypeId);
     }
 
-    private long sideSize()
+	private long sideSize()
     {
         return itemsPerType * itemsPerLabel;
     }
 
-    private void increment( LongArray counts, long labelId, long relationshipTypeId, long side )
+	private void increment( LongArray counts, long labelId, long relationshipTypeId, long side )
     {
         long index = arrayIndex( labelId, relationshipTypeId, side );
         increment( counts, index );
     }
 
-    private void increment( LongArray counts, long index )
+	private void increment( LongArray counts, long index )
     {
         counts.set( index, counts.get( index ) + 1 );
     }

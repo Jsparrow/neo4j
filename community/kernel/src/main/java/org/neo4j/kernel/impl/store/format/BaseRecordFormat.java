@@ -41,65 +41,64 @@ public abstract class BaseRecordFormat<RECORD extends AbstractBaseRecord> implem
     public static final int IN_USE_BIT = 0b0000_0001;
     public static final Function<StoreHeader,Integer> INT_STORE_HEADER_READER =
             header -> ((IntStoreHeader) header).value();
+	private final Function<StoreHeader,Integer> recordSize;
+	private final int recordHeaderSize;
+	private final long maxId;
 
-    public static Function<StoreHeader,Integer> fixedRecordSize( int recordSize )
-    {
-        return header -> recordSize;
-    }
-
-    private final Function<StoreHeader,Integer> recordSize;
-    private final int recordHeaderSize;
-    private final long maxId;
-
-    protected BaseRecordFormat( Function<StoreHeader,Integer> recordSize, int recordHeaderSize, int idBits )
+	protected BaseRecordFormat( Function<StoreHeader,Integer> recordSize, int recordHeaderSize, int idBits )
     {
         this.recordSize = recordSize;
         this.recordHeaderSize = recordHeaderSize;
         this.maxId = (1L << idBits) - 1;
     }
 
-    @Override
+	public static Function<StoreHeader,Integer> fixedRecordSize( int recordSize )
+    {
+        return header -> recordSize;
+    }
+
+	@Override
     public int getRecordSize( StoreHeader header )
     {
         return recordSize.apply( header );
     }
 
-    @Override
+	@Override
     public int getRecordHeaderSize()
     {
         return recordHeaderSize;
     }
 
-    @Override
+	@Override
     public long getNextRecordReference( RECORD record )
     {
         return Record.NULL_REFERENCE.intValue();
     }
 
-    public static long longFromIntAndMod( long base, long modifier )
+	public static long longFromIntAndMod( long base, long modifier )
     {
         return modifier == 0 && IdValidator.isReservedId( base ) ? -1 : base | modifier;
     }
 
-    @Override
+	@Override
     public void prepare( RECORD record, int recordSize, IdSequence idSequence )
     {   // Do nothing by default
     }
 
-    @Override
+	@Override
     public boolean equals( Object obj )
     {
         return obj != null && getClass().equals( obj.getClass() );
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return getClass().hashCode();
 
     }
 
-    @Override
+	@Override
     public final long getMaxId()
     {
         return maxId;

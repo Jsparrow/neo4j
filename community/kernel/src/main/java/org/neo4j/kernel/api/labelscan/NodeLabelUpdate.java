@@ -63,8 +63,8 @@ public class NodeLabelUpdate
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[node:" + nodeId + ", labelsBefore:" + Arrays.toString( labelsBefore ) +
-                ", labelsAfter:" + Arrays.toString( labelsAfter ) + "]";
+        return new StringBuilder().append(getClass().getSimpleName()).append("[node:").append(nodeId).append(", labelsBefore:").append(Arrays.toString( labelsBefore )).append(", labelsAfter:")
+				.append(Arrays.toString( labelsAfter )).append("]").toString();
     }
 
     public static NodeLabelUpdate labelChanges( long nodeId, long[] labelsBeforeChange, long[] labelsAfterChange )

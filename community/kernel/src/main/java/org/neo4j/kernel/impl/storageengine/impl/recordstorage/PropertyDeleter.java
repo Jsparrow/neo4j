@@ -58,12 +58,11 @@ public class PropertyDeleter
     {
         for ( PropertyBlock block : record )
         {
-            for ( DynamicRecord valueRecord : block.getValueRecords() )
-            {
+            block.getValueRecords().forEach(valueRecord -> {
                 assert valueRecord.inUse();
                 valueRecord.setInUse( false );
                 record.addDeletedRecord( valueRecord );
-            }
+            });
         }
         record.clearPropertyBlocks();
         record.setInUse( false );
@@ -84,12 +83,11 @@ public class PropertyDeleter
         PrimitiveRecord primitive = primitiveProxy.forReadingData();
         long propertyId = // propertyData.getId();
                 traverser.findPropertyRecordContaining( primitive, propertyKey, propertyRecords, false );
-        if ( !Record.NO_NEXT_PROPERTY.is( propertyId ) )
-        {
-            removeProperty( primitiveProxy, propertyKey, propertyRecords, primitive, propertyId );
-            return true;
-        }
-        return false;
+        if (Record.NO_NEXT_PROPERTY.is( propertyId )) {
+			return false;
+		}
+		removeProperty( primitiveProxy, propertyKey, propertyRecords, primitive, propertyId );
+		return true;
     }
 
     /**
@@ -119,25 +117,20 @@ public class PropertyDeleter
         PropertyRecord propRecord = recordChange.forChangingData();
         if ( !propRecord.inUse() )
         {
-            throw new IllegalStateException( "Unable to delete property[" +
-                    propertyId + "] since it is already deleted." );
+            throw new IllegalStateException( new StringBuilder().append("Unable to delete property[").append(propertyId).append("] since it is already deleted.").toString() );
         }
 
         PropertyBlock block = propRecord.removePropertyBlock( propertyKey );
         if ( block == null )
         {
-            throw new IllegalStateException( "Property with index["
-                                             + propertyKey
-                                             + "] is not present in property["
-                                             + propertyId + "]" );
+            throw new IllegalStateException( new StringBuilder().append("Property with index[").append(propertyKey).append("] is not present in property[").append(propertyId).append("]").toString() );
         }
 
-        for ( DynamicRecord valueRecord : block.getValueRecords() )
-        {
+        block.getValueRecords().forEach(valueRecord -> {
             assert valueRecord.inUse();
             valueRecord.setInUse( false, block.getType().intValue() );
             propRecord.addDeletedRecord( valueRecord );
-        }
+        });
         if ( propRecord.size() > 0 )
         {
             /*
@@ -163,24 +156,20 @@ public class PropertyDeleter
         long nextProp = propRecord.getNextProp();
         if ( primitive.getNextProp() == propRecord.getId() )
         {
-            assert propRecord.getPrevProp() == Record.NO_PREVIOUS_PROPERTY.intValue() : propRecord
-                    + " for "
-                    + primitive;
+            assert propRecord.getPrevProp() == Record.NO_PREVIOUS_PROPERTY.intValue() : new StringBuilder().append(propRecord).append(" for ").append(primitive).toString();
             primitiveRecordChange.forChangingLinkage().setNextProp( nextProp );
         }
         if ( prevProp != Record.NO_PREVIOUS_PROPERTY.intValue() )
         {
             PropertyRecord prevPropRecord = propertyRecords.getOrLoad( prevProp, primitive ).forChangingLinkage();
-            assert prevPropRecord.inUse() : prevPropRecord + "->" + propRecord
-            + " for " + primitive;
+            assert prevPropRecord.inUse() : new StringBuilder().append(prevPropRecord).append("->").append(propRecord).append(" for ").append(primitive).toString();
             prevPropRecord.setNextProp( nextProp );
             prevPropRecord.setChanged( primitive );
         }
         if ( nextProp != Record.NO_NEXT_PROPERTY.intValue() )
         {
             PropertyRecord nextPropRecord = propertyRecords.getOrLoad( nextProp, primitive ).forChangingLinkage();
-            assert nextPropRecord.inUse() : propRecord + "->" + nextPropRecord
-            + " for " + primitive;
+            assert nextPropRecord.inUse() : new StringBuilder().append(propRecord).append("->").append(nextPropRecord).append(" for ").append(primitive).toString();
             nextPropRecord.setPrevProp( prevProp );
             nextPropRecord.setChanged( primitive );
         }

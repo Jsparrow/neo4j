@@ -35,17 +35,17 @@ import static org.neo4j.test.rule.SuppressOutput.suppressAll;
 
 public class SharedServerTestBase
 {
-    protected static NeoServer server()
+    private static NeoServer server;
+
+	@Rule
+    public SuppressOutput suppressOutput = suppressAll();
+
+	protected static NeoServer server()
     {
         return server;
     }
 
-    private static NeoServer server;
-
-    @Rule
-    public SuppressOutput suppressOutput = suppressAll();
-
-    @BeforeClass
+	@BeforeClass
     public static void allocateServer() throws Throwable
     {
         System.setProperty( "org.neo4j.useInsecureCertificateGeneration", "true" );
@@ -60,7 +60,7 @@ public class SharedServerTestBase
         } );
     }
 
-    @AfterClass
+	@AfterClass
     public static void releaseServer() throws Exception
     {
         try

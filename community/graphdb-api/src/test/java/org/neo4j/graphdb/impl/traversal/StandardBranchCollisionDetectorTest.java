@@ -24,7 +24,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 import org.neo4j.graphdb.Direction;
@@ -39,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import java.util.Collections;
 
 class StandardBranchCollisionDetectorTest
 {
@@ -82,7 +82,7 @@ class StandardBranchCollisionDetectorTest
         @Override
         public Object answer( InvocationOnMock invocation )
         {
-            return Arrays.asList( endNode ).iterator();
+            return Collections.singletonList( endNode ).iterator();
         }
     }
 }

@@ -52,7 +52,7 @@ public class IndividualSettingsValidator implements ConfigurationValidator
     }
 
     @Override
-    public Map<String,String> validate( @Nonnull Config config, @Nonnull Log log ) throws InvalidSettingException
+    public Map<String,String> validate( @Nonnull Config config, @Nonnull Log log )
     {
         Map<String,String> rawConfig = config.getRaw();
         Map<String,String> validConfig = stringMap();

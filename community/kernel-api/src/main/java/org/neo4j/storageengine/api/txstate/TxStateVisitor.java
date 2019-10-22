@@ -36,44 +36,47 @@ import org.neo4j.storageengine.api.schema.IndexDescriptor;
  */
 public interface TxStateVisitor extends AutoCloseable
 {
-    void visitCreatedNode( long id );
+    TxStateVisitor EMPTY = new Adapter();
+	Decorator NO_DECORATION = txStateVisitor -> txStateVisitor;
 
-    void visitDeletedNode( long id );
+	void visitCreatedNode( long id );
 
-    void visitCreatedRelationship( long id, int type, long startNode, long endNode ) throws
+	void visitDeletedNode( long id );
+
+	void visitCreatedRelationship( long id, int type, long startNode, long endNode ) throws
             ConstraintValidationException;
 
-    void visitDeletedRelationship( long id );
+	void visitDeletedRelationship( long id );
 
-    void visitNodePropertyChanges( long id, Iterator<StorageProperty> added, Iterator<StorageProperty> changed,
+	void visitNodePropertyChanges( long id, Iterator<StorageProperty> added, Iterator<StorageProperty> changed,
             IntIterable removed ) throws ConstraintValidationException;
 
-    void visitRelPropertyChanges( long id, Iterator<StorageProperty> added, Iterator<StorageProperty> changed,
+	void visitRelPropertyChanges( long id, Iterator<StorageProperty> added, Iterator<StorageProperty> changed,
             IntIterable removed ) throws ConstraintValidationException;
 
-    void visitGraphPropertyChanges( Iterator<StorageProperty> added, Iterator<StorageProperty> changed,
+	void visitGraphPropertyChanges( Iterator<StorageProperty> added, Iterator<StorageProperty> changed,
             IntIterable removed );
 
-    void visitNodeLabelChanges( long id, LongSet added, LongSet removed ) throws ConstraintValidationException;
+	void visitNodeLabelChanges( long id, LongSet added, LongSet removed ) throws ConstraintValidationException;
 
-    void visitAddedIndex( IndexDescriptor element );
+	void visitAddedIndex( IndexDescriptor element );
 
-    void visitRemovedIndex( IndexDescriptor element );
+	void visitRemovedIndex( IndexDescriptor element );
 
-    void visitAddedConstraint( ConstraintDescriptor element ) throws CreateConstraintFailureException;
+	void visitAddedConstraint( ConstraintDescriptor element ) throws CreateConstraintFailureException;
 
-    void visitRemovedConstraint( ConstraintDescriptor element );
+	void visitRemovedConstraint( ConstraintDescriptor element );
 
-    void visitCreatedLabelToken( long id, String name );
+	void visitCreatedLabelToken( long id, String name );
 
-    void visitCreatedPropertyKeyToken( long id, String name );
+	void visitCreatedPropertyKeyToken( long id, String name );
 
-    void visitCreatedRelationshipTypeToken( long id, String name );
+	void visitCreatedRelationshipTypeToken( long id, String name );
 
-    @Override
+	@Override
     void close();
 
-    class Adapter implements TxStateVisitor
+	class Adapter implements TxStateVisitor
     {
         @Override
         public void visitCreatedNode( long id )
@@ -158,8 +161,6 @@ public interface TxStateVisitor extends AutoCloseable
         {
         }
     }
-
-    TxStateVisitor EMPTY = new Adapter();
 
     class Delegator implements TxStateVisitor
     {
@@ -280,6 +281,4 @@ public interface TxStateVisitor extends AutoCloseable
     interface Decorator extends Function<TxStateVisitor,TxStateVisitor>
     {
     }
-
-    Decorator NO_DECORATION = txStateVisitor -> txStateVisitor;
 }

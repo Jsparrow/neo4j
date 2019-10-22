@@ -70,13 +70,12 @@ public class ParameterizedSuiteRunner extends Suite
             List<Throwable> errors = new ArrayList<>();
             if ( !ok )
             {
-                errors.add( new IllegalArgumentException( "Suite class (" + suiteClass.getName() +
-                        ") does not have a public zero-arg constructor." ) );
+                errors.add( new IllegalArgumentException( new StringBuilder().append("Suite class (").append(suiteClass.getName()).append(") does not have a public zero-arg constructor.").toString() ) );
             }
             if ( Modifier.isAbstract( suiteClass.getModifiers() ) )
             {
                 errors.add(
-                        new IllegalArgumentException( "Suite class (" + suiteClass.getName() + ") is abstract." ) );
+                        new IllegalArgumentException( new StringBuilder().append("Suite class (").append(suiteClass.getName()).append(") is abstract.").toString() ) );
             }
             buildParameterizations( parameterizations, suiteClass, errors );
             if ( !errors.isEmpty() )

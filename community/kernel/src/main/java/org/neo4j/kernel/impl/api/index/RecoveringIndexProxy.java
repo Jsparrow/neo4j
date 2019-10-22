@@ -84,7 +84,7 @@ public class RecoveringIndexProxy extends AbstractSwallowingIndexProxy
     }
 
     @Override
-    public IndexPopulationFailure getPopulationFailure() throws IllegalStateException
+    public IndexPopulationFailure getPopulationFailure()
     {
         throw new IllegalStateException( this + " is recovering" );
     }
@@ -97,6 +97,6 @@ public class RecoveringIndexProxy extends AbstractSwallowingIndexProxy
 
     private UnsupportedOperationException unsupportedOperation( String message )
     {
-        return new UnsupportedOperationException( message + " Recovering Index" + getDescriptor() );
+        return new UnsupportedOperationException( new StringBuilder().append(message).append(" Recovering Index").append(getDescriptor()).toString() );
     }
 }

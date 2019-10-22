@@ -158,7 +158,7 @@ public class PrettyPrinter implements AnyValueWriter<RuntimeException>
     }
 
     @Override
-    public void writePoint( CoordinateReferenceSystem crs, double[] coordinate ) throws RuntimeException
+    public void writePoint( CoordinateReferenceSystem crs, double[] coordinate )
     {
         append( "{geometry: {type: \"Point\", coordinates: " );
         append( Arrays.toString(coordinate) );
@@ -170,7 +170,7 @@ public class PrettyPrinter implements AnyValueWriter<RuntimeException>
     }
 
     @Override
-    public void writeDuration( long months, long days, long seconds, int nanos ) throws RuntimeException
+    public void writeDuration( long months, long days, long seconds, int nanos )
     {
         append( "{duration: {months: " );
         append( Long.toString( months ) );
@@ -184,7 +184,7 @@ public class PrettyPrinter implements AnyValueWriter<RuntimeException>
     }
 
     @Override
-    public void writeDate( LocalDate localDate ) throws RuntimeException
+    public void writeDate( LocalDate localDate )
     {
         append( "{date: " );
         append( quote( localDate.toString() ) );
@@ -192,7 +192,7 @@ public class PrettyPrinter implements AnyValueWriter<RuntimeException>
     }
 
     @Override
-    public void writeLocalTime( LocalTime localTime ) throws RuntimeException
+    public void writeLocalTime( LocalTime localTime )
     {
         append( "{localTime: " );
         append( quote( localTime.toString() ) );
@@ -200,7 +200,7 @@ public class PrettyPrinter implements AnyValueWriter<RuntimeException>
     }
 
     @Override
-    public void writeTime( OffsetTime offsetTime ) throws RuntimeException
+    public void writeTime( OffsetTime offsetTime )
     {
         append( "{time: " );
         append( quote( offsetTime.toString() ) );
@@ -208,7 +208,7 @@ public class PrettyPrinter implements AnyValueWriter<RuntimeException>
     }
 
     @Override
-    public void writeLocalDateTime( LocalDateTime localDateTime ) throws RuntimeException
+    public void writeLocalDateTime( LocalDateTime localDateTime )
     {
         append( "{localDateTime: " );
         append( quote( localDateTime.toString() ) );
@@ -216,7 +216,7 @@ public class PrettyPrinter implements AnyValueWriter<RuntimeException>
     }
 
     @Override
-    public void writeDateTime( ZonedDateTime zonedDateTime ) throws RuntimeException
+    public void writeDateTime( ZonedDateTime zonedDateTime )
     {
         append( "{datetime: " );
         append( quote( zonedDateTime.toString() ) );
@@ -352,7 +352,7 @@ public class PrettyPrinter implements AnyValueWriter<RuntimeException>
         @Override
         public String quote( String in )
         {
-            return quoteMark + in + quoteMark;
+            return new StringBuilder().append(quoteMark).append(in).append(quoteMark).toString();
         }
     }
 
@@ -372,7 +372,6 @@ public class PrettyPrinter implements AnyValueWriter<RuntimeException>
 
         MapWriter()
         {
-            super();
             builder.append( "{" );
         }
 
@@ -410,7 +409,6 @@ public class PrettyPrinter implements AnyValueWriter<RuntimeException>
 
         ListWriter()
         {
-            super();
             builder.append( "[" );
         }
 

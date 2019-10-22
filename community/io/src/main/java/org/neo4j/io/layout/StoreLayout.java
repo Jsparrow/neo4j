@@ -57,17 +57,17 @@ public class StoreLayout
 
     private final File storeDirectory;
 
-    public static StoreLayout of( File storeDirectory )
-    {
-        return new StoreLayout( getCanonicalFile( storeDirectory ) );
-    }
-
     private StoreLayout( File rootStoreDirectory )
     {
         this.storeDirectory = rootStoreDirectory;
     }
 
-    /**
+	public static StoreLayout of( File storeDirectory )
+    {
+        return new StoreLayout( getCanonicalFile( storeDirectory ) );
+    }
+
+	/**
      * Provide layout for a database with provided name.
      * No assumptions whatsoever should be taken in regards of database location.
      * Newly created layout should be used to any kind of file related requests in scope of a database.
@@ -79,7 +79,7 @@ public class StoreLayout
         return DatabaseLayout.of( storeDirectory, databaseName );
     }
 
-    /**
+	/**
      * Databases root directory where all databases are located.
      * @return all databases root directory
      */
@@ -88,12 +88,12 @@ public class StoreLayout
         return storeDirectory;
     }
 
-    public File storeLockFile()
+	public File storeLockFile()
     {
         return new File( storeDirectory, STORE_LOCK_FILENAME );
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -108,13 +108,13 @@ public class StoreLayout
         return Objects.equals( storeDirectory, that.storeDirectory );
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return Objects.hash( storeDirectory );
     }
 
-    @Override
+	@Override
     public String toString()
     {
         return String.valueOf( storeDirectory );

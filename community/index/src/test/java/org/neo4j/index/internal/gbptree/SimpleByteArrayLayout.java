@@ -245,13 +245,12 @@ public class SimpleByteArrayLayout extends TestLayout<RawBytes,RawBytes>
         // We risk reading crap data. This is not a problem because we will retry
         // but buffer will throw here if we don't take that into consideration.
         byte[] bytes = rawBytes.bytes;
-        if ( bytes.length >= Long.BYTES )
-        {
-            buffer.put( bytes, 0, Long.BYTES );
-            buffer.flip();
-            return buffer.getLong();
-        }
-        return 0;
+        if (bytes.length < Long.BYTES) {
+			return 0;
+		}
+		buffer.put( bytes, 0, Long.BYTES );
+		buffer.flip();
+		return buffer.getLong();
     }
 
     private byte[] fromSeed( long seed )

@@ -68,10 +68,7 @@ class PrimitiveLongMapTest
         expectedEntries.put( 1433091763L, 22 );
 
         PrimitiveLongObjectMap<Integer> map = Primitive.longObjectMap();
-        for ( Map.Entry<Long, Integer> entry: expectedEntries.entrySet() )
-        {
-            map.put( entry.getKey(), entry.getValue() );
-        }
+        expectedEntries.entrySet().forEach(entry -> map.put(entry.getKey(), entry.getValue()));
 
         // WHEN/THEN
         boolean existedBefore = map.containsKey( 1433091763 );
@@ -1358,16 +1355,12 @@ class PrimitiveLongMapTest
     {
         PrimitiveLongIntMap map = Primitive.longIntMap();
         Set<Long> set = new HashSet<>();
-        for ( Long value: lst )
-        {
+        lst.forEach(value -> {
             assertThat( map.put( value, 1 ), is( -1 ) );
             assertTrue( set.add( value ) );
-        }
+        });
 
         assertThat( map.size(), is( set.size() ) );
-        for ( Long aLong: set )
-        {
-            assertThat( map.get( aLong ), is( 1 ) );
-        }
+        set.forEach(aLong -> assertThat(map.get(aLong), is(1)));
     }
 }

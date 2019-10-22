@@ -38,27 +38,6 @@ import org.neo4j.values.storable.Value;
  */
 public interface AutoIndexOperations
 {
-    void propertyAdded( ExplicitIndexWrite write, long entityId, int propertyKeyId, Value value )
-            throws AutoIndexingKernelException;
-
-    void propertyChanged( ExplicitIndexWrite write, long entityId, int propertyKeyId, Value oldValue, Value newValue )
-            throws AutoIndexingKernelException;
-
-    void propertyRemoved( ExplicitIndexWrite write, long entityId, int propertyKey )
-            throws AutoIndexingKernelException;
-
-    void entityRemoved( ExplicitIndexWrite write, long entityId ) throws AutoIndexingKernelException;
-
-    boolean enabled();
-
-    void enabled( boolean enabled );
-
-    void startAutoIndexingProperty( String propName );
-
-    void stopAutoIndexingProperty( String propName );
-
-    Set<String> getAutoIndexedProperties();
-
     /**
      * Instance of {@link AutoIndexOperations} that throws {@link UnsupportedOperationException} when any of its methods is invoked
      */
@@ -120,4 +99,25 @@ public interface AutoIndexOperations
             throw new UnsupportedOperationException();
         }
     };
+
+	void propertyAdded( ExplicitIndexWrite write, long entityId, int propertyKeyId, Value value )
+            throws AutoIndexingKernelException;
+
+	void propertyChanged( ExplicitIndexWrite write, long entityId, int propertyKeyId, Value oldValue, Value newValue )
+            throws AutoIndexingKernelException;
+
+	void propertyRemoved( ExplicitIndexWrite write, long entityId, int propertyKey )
+            throws AutoIndexingKernelException;
+
+	void entityRemoved( ExplicitIndexWrite write, long entityId ) throws AutoIndexingKernelException;
+
+	boolean enabled();
+
+	void enabled( boolean enabled );
+
+	void startAutoIndexingProperty( String propName );
+
+	void stopAutoIndexingProperty( String propName );
+
+	Set<String> getAutoIndexedProperties();
 }

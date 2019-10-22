@@ -31,7 +31,17 @@ final class ServerHolder extends Thread
     private static NeoServer server;
     private static CommunityServerBuilder builder;
 
-    static synchronized NeoServer allocate() throws IOException
+    static
+    {
+        Runtime.getRuntime().addShutdownHook( new ServerHolder() );
+    }
+
+	private ServerHolder()
+    {
+        super( ServerHolder.class.getName() );
+    }
+
+	static synchronized NeoServer allocate() throws IOException
     {
         if ( allocation != null )
         {
@@ -45,7 +55,7 @@ final class ServerHolder extends Thread
         return server;
     }
 
-    static synchronized void release( NeoServer server )
+	static synchronized void release( NeoServer server )
     {
         if ( server == null )
         {
@@ -62,7 +72,7 @@ final class ServerHolder extends Thread
         allocation = null;
     }
 
-    static synchronized void ensureNotRunning()
+	static synchronized void ensureNotRunning()
     {
         if ( allocation != null )
         {
@@ -71,19 +81,19 @@ final class ServerHolder extends Thread
         shutdown();
     }
 
-    static synchronized void setServerBuilderProperty( String key, String value )
+	static synchronized void setServerBuilderProperty( String key, String value )
     {
         initBuilder();
         builder = builder.withProperty( key, value );
     }
 
-    private static NeoServer startServer() throws IOException
+	private static NeoServer startServer() throws IOException
     {
         initBuilder();
         return ServerHelper.createNonPersistentServer( builder );
     }
 
-    private static synchronized void shutdown()
+	private static synchronized void shutdown()
     {
         allocation = null;
         try
@@ -100,7 +110,7 @@ final class ServerHolder extends Thread
         }
     }
 
-    private static void initBuilder()
+	private static void initBuilder()
     {
         if ( builder == null )
         {
@@ -108,19 +118,9 @@ final class ServerHolder extends Thread
         }
     }
 
-    @Override
+	@Override
     public void run()
     {
         shutdown();
-    }
-
-    static
-    {
-        Runtime.getRuntime().addShutdownHook( new ServerHolder() );
-    }
-
-    private ServerHolder()
-    {
-        super( ServerHolder.class.getName() );
     }
 }

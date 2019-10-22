@@ -44,54 +44,54 @@ public class LegacyCredential implements Credential
     private final byte[] salt;
     private final byte[] passwordHash;
 
-    public static LegacyCredential forPassword( byte[] password )
-    {
-        byte[] salt = randomSalt();
-        return new LegacyCredential( salt, hash( salt, password ) );
-    }
-
-    // For testing purposes only!
-    public static LegacyCredential forPassword( String password )
-    {
-        return forPassword( UTF8.encode( password ) );
-    }
-
     public LegacyCredential( byte[] salt, byte[] passwordHash )
     {
         this.salt = salt;
         this.passwordHash = passwordHash;
     }
 
-    public byte[] salt()
+	public static LegacyCredential forPassword( byte[] password )
+    {
+        byte[] salt = randomSalt();
+        return new LegacyCredential( salt, hash( salt, password ) );
+    }
+
+	// For testing purposes only!
+    public static LegacyCredential forPassword( String password )
+    {
+        return forPassword( UTF8.encode( password ) );
+    }
+
+	public byte[] salt()
     {
         return salt;
     }
 
-    public byte[] passwordHash()
+	public byte[] passwordHash()
     {
         return passwordHash;
     }
 
-    @Override
+	@Override
     public boolean matchesPassword( byte[] password )
     {
         return byteEquals( passwordHash, hash( salt, password ) );
     }
 
-    // For testing purposes only!
+	// For testing purposes only!
     @Override
     public boolean matchesPassword( String password )
     {
         return byteEquals( passwordHash, hash( salt, UTF8.encode( password ) ) );
     }
 
-    @Override
+	@Override
     public String serialize()
     {
         return new UserSerialization().serialize( this );
     }
 
-    /**
+	/**
      * <p>Utility method that replaces Arrays.equals() to avoid timing attacks.
      * The length of the loop executed will always be the length of the given password.
      * Remember {@link #INACCESSIBLE} credentials should still execute loop for the length of given password.</p>
@@ -125,7 +125,7 @@ public class LegacyCredential implements Credential
         return result && actualLength == givenLength;
     }
 
-    /**
+	/**
      * <p>Equality to always check for both salt and password hash as a safeguard against timing attack.</p>
      */
     @Override
@@ -147,22 +147,19 @@ public class LegacyCredential implements Credential
         return saltEquals && passwordEquals;
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return 31 * Arrays.hashCode( salt ) + Arrays.hashCode( passwordHash );
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return "Credential{" +
-               "salt=0x" + HexString.encodeHexString( salt ) +
-               ", passwordHash=0x" + HexString.encodeHexString( passwordHash ) +
-               '}';
+        return new StringBuilder().append("Credential{").append("salt=0x").append(HexString.encodeHexString( salt )).append(", passwordHash=0x").append(HexString.encodeHexString( passwordHash )).append('}').toString();
     }
 
-    private static byte[] hash( byte[] salt, byte[] password )
+	private static byte[] hash( byte[] salt, byte[] password )
     {
         try
         {
@@ -177,7 +174,7 @@ public class LegacyCredential implements Credential
         }
     }
 
-    private static byte[] randomSalt()
+	private static byte[] randomSalt()
     {
         byte[] salt = new byte[32];
         random.nextBytes( salt );

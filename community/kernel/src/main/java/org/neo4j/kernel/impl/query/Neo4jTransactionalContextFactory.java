@@ -40,7 +40,16 @@ public class Neo4jTransactionalContextFactory implements TransactionalContextFac
     private final Supplier<Statement> statementSupplier;
     private final Neo4jTransactionalContext.Creator contextCreator;
 
-    public static TransactionalContextFactory create(
+    // Please use the factory methods above to actually construct an instance
+    private Neo4jTransactionalContextFactory(
+        Supplier<Statement> statementSupplier,
+        Neo4jTransactionalContext.Creator contextCreator )
+    {
+        this.statementSupplier = statementSupplier;
+        this.contextCreator = contextCreator;
+    }
+
+	public static TransactionalContextFactory create(
         GraphDatabaseFacade.SPI spi,
         ThreadToStatementContextBridge txBridge,
         PropertyContainerLocker locker )
@@ -53,7 +62,7 @@ public class Neo4jTransactionalContextFactory implements TransactionalContextFac
         return new Neo4jTransactionalContextFactory( txBridge, contextCreator );
     }
 
-    @Deprecated
+	@Deprecated
     public static TransactionalContextFactory create(
         GraphDatabaseQueryService queryService,
         PropertyContainerLocker locker )
@@ -76,16 +85,7 @@ public class Neo4jTransactionalContextFactory implements TransactionalContextFac
         return new Neo4jTransactionalContextFactory( txBridge, contextCreator );
     }
 
-    // Please use the factory methods above to actually construct an instance
-    private Neo4jTransactionalContextFactory(
-        Supplier<Statement> statementSupplier,
-        Neo4jTransactionalContext.Creator contextCreator )
-    {
-        this.statementSupplier = statementSupplier;
-        this.contextCreator = contextCreator;
-    }
-
-    @Override
+	@Override
     public final Neo4jTransactionalContext newContext(
         ClientConnectionInfo clientConnection,
         InternalTransaction tx,

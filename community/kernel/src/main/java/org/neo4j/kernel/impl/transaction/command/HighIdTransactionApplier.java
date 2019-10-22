@@ -167,10 +167,7 @@ public class HighIdTransactionApplier extends TransactionApplier.Adapter
 
     private void track( RecordStore<?> store, Collection<? extends AbstractBaseRecord> records )
     {
-        for ( AbstractBaseRecord record : records )
-        {
-            track( store, record );
-        }
+        records.forEach(record -> track(store, record));
     }
 
     private <RECORD extends TokenRecord> void trackToken( TokenStore<RECORD> tokenStore, TokenCommand<RECORD> tokenCommand )

@@ -103,11 +103,10 @@ public class SchemaCalculator
     private List<RelationshipPropertySchemaInfoResult> produceResultsForRelationships( RelationshipMappings relMappings )
     {
         List<RelationshipPropertySchemaInfoResult> results = new ArrayList<>();
-        for ( Integer typeId : relMappings.relationshipTypeIdToPropertyKeys.keySet() )
-        {
+        relMappings.relationshipTypeIdToPropertyKeys.keySet().forEach(typeId -> {
             // lookup typ name
             String name = relMappings.relationshipTypIdToRelationshipName.get( typeId );
-            name = ":`" + name + "`";  // escaping
+            name = new StringBuilder().append(":`").append(name).append("`").toString();  // escaping
 
             // lookup property value types
             MutableIntSet propertyIds = relMappings.relationshipTypeIdToPropertyKeys.get( typeId );
@@ -134,15 +133,14 @@ public class SchemaCalculator
                     }
                 } );
             }
-        }
+        });
         return results;
     }
 
     private List<NodePropertySchemaInfoResult> produceResultsForNodes( NodeMappings nodeMappings )
     {
         List<NodePropertySchemaInfoResult> results = new ArrayList<>();
-        for ( SortedLabels labelSet : nodeMappings.labelSetToPropertyKeys.keySet() )
-        {
+        nodeMappings.labelSetToPropertyKeys.keySet().forEach(labelSet -> {
             // lookup label names and produce list of names and produce String out of them
             List<String> labelNames = new ArrayList<>();
             for ( int i = 0; i < labelSet.numberOfLabels(); i++ )
@@ -152,10 +150,7 @@ public class SchemaCalculator
             }
             Collections.sort( labelNames );  // this is optional but waaaaay nicer
             StringBuilder labelsConcatenator = new StringBuilder();
-            for ( String item : labelNames )
-            {
-                labelsConcatenator.append( ":`" ).append( item ).append( "`" );
-            }
+            labelNames.forEach(item -> labelsConcatenator.append(":`").append(item).append("`"));
             String labels = labelsConcatenator.toString();
 
             // lookup property value types
@@ -181,7 +176,7 @@ public class SchemaCalculator
                     }
                 } );
             }
-        }
+        });
         return results;
     }
 

@@ -195,10 +195,7 @@ public class SchemaIndexAcceptanceTest
     private Node createNode( Label label, Object... properties )
     {
         Node node = db.createNode( label );
-        for ( Map.Entry<String, Object> property : map( properties ).entrySet() )
-        {
-            node.setProperty( property.getKey(), property.getValue() );
-        }
+        map( properties ).entrySet().forEach(property -> node.setProperty(property.getKey(), property.getValue()));
         return node;
     }
 

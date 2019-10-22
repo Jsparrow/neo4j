@@ -37,133 +37,133 @@ public class ByteArrayPageCursor extends PageCursor
     private final ByteBuffer buffer;
     private CursorException cursorException;
 
-    public static PageCursor wrap( byte[] array, int offset, int length )
-    {
-        return new ByteArrayPageCursor( array, offset, length );
-    }
-
-    public static PageCursor wrap( byte[] array )
-    {
-        return wrap( array, 0, array.length );
-    }
-
-    public static PageCursor wrap( int length )
-    {
-        return wrap( new byte[length] );
-    }
-
     public ByteArrayPageCursor( byte[] array )
     {
         this( array, 0, array.length );
     }
 
-    public ByteArrayPageCursor( byte[] array, int offset, int length )
+	public ByteArrayPageCursor( byte[] array, int offset, int length )
     {
         this( ByteBuffer.wrap( array, offset, length ) );
     }
 
-    public ByteArrayPageCursor( ByteBuffer buffer )
+	public ByteArrayPageCursor( ByteBuffer buffer )
     {
         this.buffer = buffer;
     }
 
-    @Override
+	public static PageCursor wrap( byte[] array, int offset, int length )
+    {
+        return new ByteArrayPageCursor( array, offset, length );
+    }
+
+	public static PageCursor wrap( byte[] array )
+    {
+        return wrap( array, 0, array.length );
+    }
+
+	public static PageCursor wrap( int length )
+    {
+        return wrap( new byte[length] );
+    }
+
+	@Override
     public byte getByte()
     {
         return buffer.get();
     }
 
-    @Override
+	@Override
     public byte getByte( int offset )
     {
         return buffer.get( offset );
     }
 
-    @Override
+	@Override
     public void putByte( byte value )
     {
         buffer.put( value );
     }
 
-    @Override
+	@Override
     public void putByte( int offset, byte value )
     {
         buffer.put( offset, value );
     }
 
-    @Override
+	@Override
     public long getLong()
     {
         return buffer.getLong();
     }
 
-    @Override
+	@Override
     public long getLong( int offset )
     {
         return buffer.getLong( offset );
     }
 
-    @Override
+	@Override
     public void putLong( long value )
     {
         buffer.putLong( value );
     }
 
-    @Override
+	@Override
     public void putLong( int offset, long value )
     {
         buffer.putLong( offset, value );
     }
 
-    @Override
+	@Override
     public int getInt()
     {
         return buffer.getInt();
     }
 
-    @Override
+	@Override
     public int getInt( int offset )
     {
         return buffer.getInt( offset );
     }
 
-    @Override
+	@Override
     public void putInt( int value )
     {
         buffer.putInt( value );
     }
 
-    @Override
+	@Override
     public void putInt( int offset, int value )
     {
         buffer.putInt( offset, value );
     }
 
-    @Override
+	@Override
     public void getBytes( byte[] data )
     {
         buffer.get( data );
     }
 
-    @Override
+	@Override
     public void getBytes( byte[] data, int arrayOffset, int length )
     {
         buffer.get( data, arrayOffset, length );
     }
 
-    @Override
+	@Override
     public void putBytes( byte[] data )
     {
         buffer.put( data );
     }
 
-    @Override
+	@Override
     public void putBytes( byte[] data, int arrayOffset, int length )
     {
         buffer.put( data, arrayOffset, length );
     }
 
-    @Override
+	@Override
     public void putBytes( int bytes, byte value )
     {
         byte[] byteArray = new byte[bytes];
@@ -171,114 +171,114 @@ public class ByteArrayPageCursor extends PageCursor
         buffer.put( byteArray );
     }
 
-    @Override
+	@Override
     public short getShort()
     {
         return buffer.getShort();
     }
 
-    @Override
+	@Override
     public short getShort( int offset )
     {
         return buffer.getShort( offset );
     }
 
-    @Override
+	@Override
     public void putShort( short value )
     {
         buffer.putShort( value );
     }
 
-    @Override
+	@Override
     public void putShort( int offset, short value )
     {
         buffer.putShort( offset, value );
     }
 
-    @Override
+	@Override
     public void setOffset( int offset )
     {
         buffer.position( offset );
     }
 
-    @Override
+	@Override
     public int getOffset()
     {
         return buffer.position();
     }
 
-    @Override
+	@Override
     public void mark()
     {
         buffer.mark();
     }
 
-    @Override
+	@Override
     public void setOffsetToMark()
     {
         buffer.reset();
     }
 
-    @Override
+	@Override
     public long getCurrentPageId()
     {
         throw new UnsupportedOperationException();
     }
 
-    @Override
+	@Override
     public int getCurrentPageSize()
     {
         return buffer.capacity();
     }
 
-    @Override
+	@Override
     public File getCurrentFile()
     {
         throw new UnsupportedOperationException();
     }
 
-    @Override
+	@Override
     public void rewind()
     {
         setOffset( 0 );
     }
 
-    @Override
+	@Override
     public boolean next()
     {
         throw new UnsupportedOperationException();
     }
 
-    @Override
+	@Override
     public boolean next( long pageId )
     {
         return pageId == 0;
     }
 
-    @Override
+	@Override
     public void close()
     {   // Nothing to close
     }
 
-    @Override
+	@Override
     public boolean shouldRetry()
     {
         return false;
     }
 
-    @Override
+	@Override
     public int copyTo( int sourceOffset, PageCursor targetCursor, int targetOffset, int lengthInBytes )
     {
         throw new UnsupportedOperationException();
     }
 
-    @Override
+	@Override
     public int copyTo( int sourceOffset, ByteBuffer targetBuffer )
     {
         throw new UnsupportedOperationException();
     }
 
-    @Override
+	@Override
     public void shiftBytes( int sourceOffset, int length, int shift )
     {
         int currentOffset = getOffset();
@@ -290,13 +290,13 @@ public class ByteArrayPageCursor extends PageCursor
         setOffset( currentOffset );
     }
 
-    @Override
+	@Override
     public boolean checkAndClearBoundsFlag()
     {
         return false;
     }
 
-    @Override
+	@Override
     public void checkAndClearCursorException() throws CursorException
     {
         if ( cursorException != null )
@@ -312,36 +312,36 @@ public class ByteArrayPageCursor extends PageCursor
         }
     }
 
-    @Override
+	@Override
     public void raiseOutOfBounds()
     {
         throw new UnsupportedOperationException();
     }
 
-    @Override
+	@Override
     public void setCursorException( String message )
     {
         cursorException = Exceptions.chain( cursorException, new CursorException( message ) );
     }
 
-    @Override
+	@Override
     public void clearCursorException()
     {   // Don't check
     }
 
-    @Override
+	@Override
     public PageCursor openLinkedCursor( long pageId )
     {
         throw new UnsupportedOperationException();
     }
 
-    @Override
+	@Override
     public void zapPage()
     {
         Arrays.fill( buffer.array(), (byte) 0 );
     }
 
-    @Override
+	@Override
     public boolean isWriteLocked()
     {
         // Because we allow writes; they can't possibly conflict because this class is meant to be used by only one

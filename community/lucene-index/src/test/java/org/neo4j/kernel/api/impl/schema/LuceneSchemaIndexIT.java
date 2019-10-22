@@ -104,11 +104,10 @@ class LuceneSchemaIndexIT
                 Map<String,Integer> templateMatches =
                         countTemplateMatches( singlePartitionFileTemplates, indexFileNames );
 
-                for ( String fileTemplate : singlePartitionFileTemplates )
-                {
+                singlePartitionFileTemplates.forEach(fileTemplate -> {
                     Integer matches = templateMatches.get( fileTemplate );
                     assertTrue( matches >= 4, "Expect to see at least 4 matches for template: " + fileTemplate );
-                }
+                });
             }
         }
     }
@@ -287,16 +286,8 @@ class LuceneSchemaIndexIT
     private static Map<String,Integer> countTemplateMatches( List<String> nameTemplates, List<String> fileNames )
     {
         Map<String,Integer> templateMatches = new HashMap<>();
-        for ( String indexFileName : fileNames )
-        {
-            for ( String template : nameTemplates )
-            {
-                if ( indexFileName.endsWith( template ) )
-                {
-                    templateMatches.put( template, templateMatches.getOrDefault( template, 0 ) + 1 );
-                }
-            }
-        }
+        fileNames.forEach(indexFileName -> nameTemplates.stream().filter(indexFileName::endsWith)
+				.forEach(template -> templateMatches.put(template, templateMatches.getOrDefault(template, 0) + 1)));
         return templateMatches;
     }
 

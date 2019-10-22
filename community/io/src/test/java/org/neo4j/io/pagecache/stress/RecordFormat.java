@@ -114,7 +114,7 @@ public class RecordFormat
                 expectedChecksum = cursor.getLong( recordOffset + checksumFieldOffset );
             }
             while ( cursor.shouldRetry() );
-            String msg = "Checksum for record " + i + " on page " + cursor.getCurrentPageId();
+            String msg = new StringBuilder().append("Checksum for record ").append(i).append(" on page ").append(cursor.getCurrentPageId()).toString();
             assertThat( msg, actualChecksum, is( expectedChecksum ) );
         }
     }

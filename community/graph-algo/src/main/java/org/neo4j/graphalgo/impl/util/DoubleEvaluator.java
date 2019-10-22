@@ -29,7 +29,6 @@ public class DoubleEvaluator implements CostEvaluator<Double>
 
     public DoubleEvaluator( String costPropertyName )
     {
-        super();
         this.costPropertyName = costPropertyName;
     }
 

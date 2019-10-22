@@ -55,21 +55,35 @@ class BlockStorage<KEY, VALUE> implements Closeable
     static final int BLOCK_HEADER_SIZE = Long.BYTES  // blockSize
                                        + Long.BYTES; // entryCount
 
-    private final Layout<KEY,VALUE> layout;
-    private final FileSystemAbstraction fs;
-    private final MutableList<BlockEntry<KEY,VALUE>> bufferedEntries;
-    private final Comparator<BlockEntry<KEY,VALUE>> comparator;
-    private final StoreChannel storeChannel;
-    private final Monitor monitor;
-    private final int blockSize;
-    private final ByteBufferFactory bufferFactory;
-    private final File blockFile;
-    private long numberOfBlocksInCurrentFile;
-    private int currentBufferSize;
-    private boolean doneAdding;
-    private long entryCount;
+	static final Cancellation NOT_CANCELLABLE = () -> false;
 
-    BlockStorage( Layout<KEY,VALUE> layout, ByteBufferFactory bufferFactory, FileSystemAbstraction fs, File blockFile, Monitor monitor )
+	private final Layout<KEY,VALUE> layout;
+
+	private final FileSystemAbstraction fs;
+
+	private final MutableList<BlockEntry<KEY,VALUE>> bufferedEntries;
+
+	private final Comparator<BlockEntry<KEY,VALUE>> comparator;
+
+	private final StoreChannel storeChannel;
+
+	private final Monitor monitor;
+
+	private final int blockSize;
+
+	private final ByteBufferFactory bufferFactory;
+
+	private final File blockFile;
+
+	private long numberOfBlocksInCurrentFile;
+
+	private int currentBufferSize;
+
+	private boolean doneAdding;
+
+	private long entryCount;
+
+	BlockStorage( Layout<KEY,VALUE> layout, ByteBufferFactory bufferFactory, FileSystemAbstraction fs, File blockFile, Monitor monitor )
             throws IOException
     {
         this.layout = layout;
@@ -84,7 +98,7 @@ class BlockStorage<KEY, VALUE> implements Closeable
         resetBufferedEntries();
     }
 
-    public void add( KEY key, VALUE value ) throws IOException
+	public void add( KEY key, VALUE value ) throws IOException
     {
         Preconditions.checkState( !doneAdding, "Cannot add more after done adding" );
 
@@ -102,7 +116,7 @@ class BlockStorage<KEY, VALUE> implements Closeable
         monitor.entryAdded( entrySize );
     }
 
-    void doneAdding() throws IOException
+	void doneAdding() throws IOException
     {
         if ( !bufferedEntries.isEmpty() )
         {
@@ -113,13 +127,13 @@ class BlockStorage<KEY, VALUE> implements Closeable
         storeChannel.close();
     }
 
-    private void resetBufferedEntries()
+	private void resetBufferedEntries()
     {
         bufferedEntries.clear();
         currentBufferSize = BLOCK_HEADER_SIZE;
     }
 
-    private void flushAndResetBuffer() throws IOException
+	private void flushAndResetBuffer() throws IOException
     {
         bufferedEntries.sortThis( comparator );
 
@@ -139,7 +153,7 @@ class BlockStorage<KEY, VALUE> implements Closeable
         resetBufferedEntries();
     }
 
-    /**
+	/**
      * There are two files: sourceFile and targetFile. Blocks are merged, mergeFactor at the time, from source to target. When all blocks from source have
      * been merged into a larger block one merge iteration is done and source and target are flipped. As long as source contain more than a single block more
      * merge iterations are needed and we start over again.
@@ -209,7 +223,7 @@ class BlockStorage<KEY, VALUE> implements Closeable
         }
     }
 
-    /**
+	/**
      * Calculates number of entries that will be written, given an entry count, number of blocks and a merge factor.
      * During merge entries are merged and written, potentially multiple times depending on number of blocks and merge factor.
      *
@@ -229,7 +243,7 @@ class BlockStorage<KEY, VALUE> implements Closeable
         return singleMerges * entryCount;
     }
 
-    /**
+	/**
      * Merge some number of blocks, how many is decided by mergeFactor, into a single sorted block. This is done by opening {@link BlockEntryReader} on each
      * block that we want to merge and give them to a {@link MergingBlockEntryReader}. The {@link BlockEntryReader}s are pulled from a {@link BlockReader}
      * that iterate over Blocks in file in sequential order.
@@ -282,7 +296,7 @@ class BlockStorage<KEY, VALUE> implements Closeable
         }
     }
 
-    private void writeBlock( StoreChannel targetChannel, BlockEntryCursor<KEY,VALUE> blockEntryCursor, long blockSize, long entryCount,
+	private void writeBlock( StoreChannel targetChannel, BlockEntryCursor<KEY,VALUE> blockEntryCursor, long blockSize, long entryCount,
             Cancellation cancellation, IntConsumer entryCountReporter, ByteBuffer byteBuffer ) throws IOException
     {
         writeHeader( byteBuffer, blockSize, entryCount );
@@ -290,13 +304,13 @@ class BlockStorage<KEY, VALUE> implements Closeable
         writeLastEntriesWithPadding( targetChannel, byteBuffer, blockSize - actualDataSize );
     }
 
-    private static void writeHeader( ByteBuffer byteBuffer, long blockSize, long entryCount )
+	private static void writeHeader( ByteBuffer byteBuffer, long blockSize, long entryCount )
     {
         byteBuffer.putLong( blockSize );
         byteBuffer.putLong( entryCount );
     }
 
-    private static <KEY, VALUE> long writeEntries( StoreChannel targetChannel, ByteBuffer byteBuffer, Layout<KEY,VALUE> layout,
+	private static <KEY, VALUE> long writeEntries( StoreChannel targetChannel, ByteBuffer byteBuffer, Layout<KEY,VALUE> layout,
             BlockEntryCursor<KEY,VALUE> blockEntryCursor, Cancellation cancellation, IntConsumer entryCountReporter ) throws IOException
     {
         // Loop over block entries
@@ -336,7 +350,7 @@ class BlockStorage<KEY, VALUE> implements Closeable
         return actualDataSize;
     }
 
-    private static void writeLastEntriesWithPadding( StoreChannel channel, ByteBuffer byteBuffer, long padding ) throws IOException
+	private static void writeLastEntriesWithPadding( StoreChannel channel, ByteBuffer byteBuffer, long padding ) throws IOException
     {
         boolean didWrite;
         do
@@ -356,47 +370,49 @@ class BlockStorage<KEY, VALUE> implements Closeable
         while ( didWrite );
     }
 
-    @Override
+	@Override
     public void close() throws IOException
     {
         IOUtils.closeAll( storeChannel );
         fs.deleteFile( blockFile );
     }
 
-    BlockReader<KEY,VALUE> reader() throws IOException
+	BlockReader<KEY,VALUE> reader() throws IOException
     {
         return reader( blockFile );
     }
 
-    private BlockReader<KEY,VALUE> reader( File file ) throws IOException
+	private BlockReader<KEY,VALUE> reader( File file ) throws IOException
     {
         return new BlockReader<>( fs, file, layout );
     }
 
     public interface Monitor
     {
-        void entryAdded( int entrySize );
+        Monitor NO_MONITOR = new Adapter();
 
-        void blockFlushed( long keyCount, int numberOfBytes, long positionAfterFlush );
+		void entryAdded( int entrySize );
 
-        /**
+		void blockFlushed( long keyCount, int numberOfBytes, long positionAfterFlush );
+
+		/**
          * @param entryCount number of entries there are in this block storage.
          * @param totalEntriesToWriteDuringMerge total entries that will be written, even accounting for that entries may need to be
          * written multiple times back and forth.
          */
         void mergeStarted( long entryCount, long totalEntriesToWriteDuringMerge );
 
-        /**
+		/**
          * @param entries number of entries merged since last call. The sum of this value from all calls to this method
          * will in the end match the value provided in {@link #mergeStarted(long, long)}.
          */
         void entriesMerged( int entries );
 
-        void mergeIterationFinished( long numberOfBlocksBefore, long numberOfBlocksAfter );
+		void mergeIterationFinished( long numberOfBlocksBefore, long numberOfBlocksAfter );
 
-        void mergedBlocks( long resultingBlockSize, long resultingEntryCount, long numberOfBlocks );
+		void mergedBlocks( long resultingBlockSize, long resultingEntryCount, long numberOfBlocks );
 
-        class Adapter implements Monitor
+		class Adapter implements Monitor
         {
             @Override
             public void entryAdded( int entrySize )
@@ -474,14 +490,10 @@ class BlockStorage<KEY, VALUE> implements Closeable
                 actual.mergedBlocks( resultingBlockSize, resultingEntryCount, numberOfBlocks );
             }
         }
-
-        Monitor NO_MONITOR = new Adapter();
     }
 
     public interface Cancellation
     {
         boolean cancelled();
     }
-
-    static final Cancellation NOT_CANCELLABLE = () -> false;
 }

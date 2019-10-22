@@ -29,29 +29,22 @@ import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
  */
 abstract class RelationshipDenseSelection
 {
-    private enum Dir
-    {
-        OUT,
-        IN,
-        LOOP
-    }
-
     private RelationshipGroupCursor groupCursor;
-    protected RelationshipTraversalCursor relationshipCursor;
-    private int[] types;
-    private Dir[] directions;
-    private int currentDirection;
-    private int nDirections;
-    private boolean onRelationship;
-    private boolean onGroup;
-    private int foundTypes;
+	protected RelationshipTraversalCursor relationshipCursor;
+	private int[] types;
+	private Dir[] directions;
+	private int currentDirection;
+	private int nDirections;
+	private boolean onRelationship;
+	private boolean onGroup;
+	private int foundTypes;
 
-    RelationshipDenseSelection()
+	RelationshipDenseSelection()
     {
         this.directions = new Dir[3];
     }
 
-    /**
+	/**
      * Traverse all outgoing relationships including loops of the provided relationship types.
      *
      * @param groupCursor Group cursor to use. Pre-initialized on node.
@@ -64,7 +57,7 @@ abstract class RelationshipDenseSelection
         outgoing( groupCursor, relationshipCursor, null );
     }
 
-    /**
+	/**
      * Traverse all outgoing relationships including loops of the provided relationship types.
      *
      * @param groupCursor Group cursor to use. Pre-initialized on node.
@@ -88,7 +81,7 @@ abstract class RelationshipDenseSelection
         this.foundTypes = 0;
     }
 
-    /**
+	/**
      * Traverse all incoming relationships including loops of the provided relationship types.
      *
      * @param groupCursor Group cursor to use. Pre-initialized on node.
@@ -101,7 +94,7 @@ abstract class RelationshipDenseSelection
         incoming( groupCursor, relationshipCursor, null );
     }
 
-    /**
+	/**
      * Traverse all incoming relationships including loops of the provided relationship types.
      *
      * @param groupCursor Group cursor to use. Pre-initialized on node.
@@ -125,7 +118,7 @@ abstract class RelationshipDenseSelection
         this.foundTypes = 0;
     }
 
-    /**
+	/**
      * Traverse all relationships of the provided relationship types.
      *
      * @param groupCursor Group cursor to use. Pre-initialized on node.
@@ -138,7 +131,7 @@ abstract class RelationshipDenseSelection
         all( groupCursor, relationshipCursor, null );
     }
 
-    /**
+	/**
      * Traverse all relationships of the provided relationship types.
      *
      * @param groupCursor Group cursor to use. Pre-initialized on node.
@@ -163,7 +156,7 @@ abstract class RelationshipDenseSelection
         this.foundTypes = 0;
     }
 
-    /**
+	/**
      * Fetch the next valid relationship.
      *
      * @return True is a valid relationship was found
@@ -200,21 +193,21 @@ abstract class RelationshipDenseSelection
         return true;
     }
 
-    private void loopOnRelationship()
+	private void loopOnRelationship()
     {
         do
         {
             onGroup = groupCursor.next();
         } while ( onGroup && !correctRelationshipType() );
 
-        if ( onGroup )
-        {
-            foundTypes++;
-            currentDirection = 0;
-        }
+        if (!onGroup) {
+			return;
+		}
+		foundTypes++;
+		currentDirection = 0;
     }
 
-    private void setupCursors()
+	private void setupCursors()
     {
         Dir d = directions[currentDirection];
 
@@ -236,16 +229,16 @@ abstract class RelationshipDenseSelection
             break;
 
         default:
-            throw new IllegalStateException( "Lorem ipsus, Brutus. (could not setup cursor for Dir='" + d + "')" );
+            throw new IllegalStateException( new StringBuilder().append("Lorem ipsus, Brutus. (could not setup cursor for Dir='").append(d).append("')").toString() );
         }
     }
 
-    private boolean correctRelationshipType()
+	private boolean correctRelationshipType()
     {
         return types == null || ArrayUtils.contains( types, groupCursor.type() );
     }
 
-    public void close()
+	public void close()
     {
         Throwable closeGroupError = null;
         try
@@ -280,5 +273,12 @@ abstract class RelationshipDenseSelection
             relationshipCursor = null;
             groupCursor = null;
         }
+    }
+
+	private enum Dir
+    {
+        OUT,
+        IN,
+        LOOP
     }
 }

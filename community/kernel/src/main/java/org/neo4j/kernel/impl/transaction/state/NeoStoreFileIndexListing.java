@@ -43,25 +43,24 @@ import static org.neo4j.helpers.collection.Iterators.resourceIterator;
 
 public class NeoStoreFileIndexListing
 {
-    private final LabelScanStore labelScanStore;
-    private final IndexingService indexingService;
-    private final ExplicitIndexProvider explicitIndexProviders;
-
     private static final Function<File,StoreFileMetadata> toStoreFileMetatadata = file -> new StoreFileMetadata( file, RecordFormat.NO_RECORD_SIZE );
+	private final LabelScanStore labelScanStore;
+	private final IndexingService indexingService;
+	private final ExplicitIndexProvider explicitIndexProviders;
 
-    NeoStoreFileIndexListing( LabelScanStore labelScanStore, IndexingService indexingService, ExplicitIndexProvider explicitIndexProviders )
+	NeoStoreFileIndexListing( LabelScanStore labelScanStore, IndexingService indexingService, ExplicitIndexProvider explicitIndexProviders )
     {
         this.labelScanStore = labelScanStore;
         this.indexingService = indexingService;
         this.explicitIndexProviders = explicitIndexProviders;
     }
 
-    public LongSet getIndexIds()
+	public LongSet getIndexIds()
     {
         return indexingService.getIndexIds();
     }
 
-    Resource gatherSchemaIndexFiles( Collection<StoreFileMetadata> targetFiles ) throws IOException
+	Resource gatherSchemaIndexFiles( Collection<StoreFileMetadata> targetFiles ) throws IOException
     {
         ResourceIterator<File> snapshot = indexingService.snapshotIndexFiles();
         getSnapshotFilesMetadata( snapshot, targetFiles );
@@ -70,7 +69,7 @@ public class NeoStoreFileIndexListing
         return snapshot;
     }
 
-    Resource gatherLabelScanStoreFiles( Collection<StoreFileMetadata> targetFiles )
+	Resource gatherLabelScanStoreFiles( Collection<StoreFileMetadata> targetFiles )
     {
         ResourceIterator<File> snapshot = labelScanStore.snapshotStoreFiles();
         getSnapshotFilesMetadata( snapshot, targetFiles );
@@ -79,7 +78,7 @@ public class NeoStoreFileIndexListing
         return snapshot;
     }
 
-    Resource gatherExplicitIndexFiles( Collection<StoreFileMetadata> files ) throws IOException
+	Resource gatherExplicitIndexFiles( Collection<StoreFileMetadata> files ) throws IOException
     {
         final Collection<ResourceIterator<File>> snapshots = new ArrayList<>();
         for ( IndexImplementation indexProvider : explicitIndexProviders.allIndexProviders() )
@@ -93,12 +92,12 @@ public class NeoStoreFileIndexListing
         return new MultiResource( snapshots );
     }
 
-    private void getSnapshotFilesMetadata( ResourceIterator<File> snapshot, Collection<StoreFileMetadata> targetFiles )
+	private void getSnapshotFilesMetadata( ResourceIterator<File> snapshot, Collection<StoreFileMetadata> targetFiles )
     {
         snapshot.stream().map( toStoreFileMetatadata ).forEach( targetFiles::add );
     }
 
-    public ResourceIterator<StoreFileMetadata> getSnapshot( long indexId ) throws IOException
+	public ResourceIterator<StoreFileMetadata> getSnapshot( long indexId ) throws IOException
     {
         try
         {

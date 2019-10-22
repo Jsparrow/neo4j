@@ -125,10 +125,7 @@ public class InstanceSelectorTest
 
         // then
         assertEquals( expected.size(), actual.size() );
-        for ( Integer i : expected )
-        {
-            assertTrue( actual.contains( i ) );
-        }
+        expected.forEach(i -> assertTrue(actual.contains(i)));
     }
 
     @Test

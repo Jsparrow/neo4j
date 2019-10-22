@@ -125,12 +125,12 @@ public class DijkstraIncreasingWeightTest extends Neo4jAlgoTestCase
 
         for ( int i = 1; i <= 3; i++ )
         {
-            assertTrue( "Expected at least " + i + " path(s)", paths.hasNext() );
+            assertTrue( new StringBuilder().append("Expected at least ").append(i).append(" path(s)").toString(), paths.hasNext() );
             assertTrue( "Expected 3 paths of cost 2", NoneStrictMath.equals( paths.next().weight(), 2 ) );
         }
         for ( int i = 1; i <= 3; i++ )
         {
-            assertTrue( "Expected at least " + i + " path(s)", paths.hasNext() );
+            assertTrue( new StringBuilder().append("Expected at least ").append(i).append(" path(s)").toString(), paths.hasNext() );
             assertTrue( "Expected 3 paths of cost 3", NoneStrictMath.equals( paths.next().weight(), 3 ) );
         }
         assertTrue( "Expected at least 7 paths", paths.hasNext() );
@@ -242,7 +242,7 @@ public class DijkstraIncreasingWeightTest extends Neo4jAlgoTestCase
             {
                 expectedWeight = 3.0;
             }
-            assertTrue( "Expected path number " + count + " to have weight of " + expectedWeight,
+            assertTrue( new StringBuilder().append("Expected path number ").append(count).append(" to have weight of ").append(expectedWeight).toString(),
                     NoneStrictMath.equals( path.weight(), expectedWeight ) );
         }
         assertEquals( "Expected exactly 6 returned paths", 6, count );
@@ -310,6 +310,6 @@ public class DijkstraIncreasingWeightTest extends Neo4jAlgoTestCase
                 }
             }
         }
-        throw new RuntimeException( "No relationship between nodes " + start + " and " + end );
+        throw new RuntimeException( new StringBuilder().append("No relationship between nodes ").append(start).append(" and ").append(end).toString() );
     }
 }

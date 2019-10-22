@@ -109,7 +109,7 @@ public class FileWatchIT
         deletionListener.awaitDeletionNotification();
 
         logProvider.rawMessageMatcher().assertContains(
-                "'" + fileName + "' which belongs to the store was deleted while database was running." );
+                new StringBuilder().append("'").append(fileName).append("' which belongs to the store was deleted while database was running.").toString() );
     }
 
     @Test( timeout = TEST_TIMEOUT )
@@ -156,7 +156,7 @@ public class FileWatchIT
         deletionListener.awaitDeletionNotification();
 
         logProvider.rawMessageMatcher().assertContains(
-                "'" + monitoredDirectory + "' which belongs to the store was deleted while database was running." );
+                new StringBuilder().append("'").append(monitoredDirectory).append("' which belongs to the store was deleted while database was running.").toString() );
     }
 
     @Test( timeout = TEST_TIMEOUT )
@@ -256,7 +256,7 @@ public class FileWatchIT
         eventListener.awaitDeletionNotification();
 
         logProvider.rawMessageMatcher().assertContains(
-                "'" + storeDirectoryName + "' which belongs to the store was deleted while database was running." );
+                new StringBuilder().append("'").append(storeDirectoryName).append("' which belongs to the store was deleted while database was running.").toString() );
     }
 
     @Test( timeout = TEST_TIMEOUT )

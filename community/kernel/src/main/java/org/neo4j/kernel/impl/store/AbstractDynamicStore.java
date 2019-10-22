@@ -136,10 +136,7 @@ public abstract class AbstractDynamicStore extends CommonAbstractStore<DynamicRe
         }
 
         ByteBuffer buffer = ByteBuffer.wrap( target, 0, totalLength );
-        for ( DynamicRecord record : records )
-        {
-            buffer.put( record.getData() );
-        }
+        records.forEach(record -> buffer.put(record.getData()));
         buffer.position( 0 );
         return buffer;
     }
@@ -195,8 +192,8 @@ public abstract class AbstractDynamicStore extends CommonAbstractStore<DynamicRe
     @Override
     public String toString()
     {
-        return super.toString() + "[fileName:" + storageFile.getName() +
-                ", blockSize:" + getRecordDataSize() + "]";
+        return new StringBuilder().append(super.toString()).append("[fileName:").append(storageFile.getName()).append(", blockSize:").append(getRecordDataSize()).append("]")
+				.toString();
     }
 
     Pair<byte[]/*header in the first record*/, byte[]/*all other bytes*/> readFullByteArray( Iterable<DynamicRecord> records, PropertyType propertyType )
@@ -222,7 +219,7 @@ public abstract class AbstractDynamicStore extends CommonAbstractStore<DynamicRe
             if ( header < 1 || header > 0xFFFF )
             {
                 throw new IllegalArgumentException(
-                        "Illegal block size[" + header + "], limit is 65535" );
+                        new StringBuilder().append("Illegal block size[").append(header).append("], limit is 65535").toString() );
             }
             super.writeHeader( cursor );
         }

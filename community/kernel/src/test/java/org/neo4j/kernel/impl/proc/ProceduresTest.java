@@ -105,9 +105,7 @@ public class ProceduresTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "There is no procedure with the name `org.myproc` registered for this " +
-                                 "database instance. Please ensure you've spelled the " +
-                                 "procedure name correctly and that the procedure is properly deployed." );
+        exception.expectMessage( new StringBuilder().append("There is no procedure with the name `org.myproc` registered for this ").append("database instance. Please ensure you've spelled the ").append("procedure name correctly and that the procedure is properly deployed.").toString() );
 
         // When
         procs.callProcedure( new BasicContext(), signature.name(), new Object[]{1337}, resourceTracker );
@@ -132,9 +130,7 @@ public class ProceduresTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Procedure `asd(a :: ANY?, a :: ANY?) :: ()` cannot be " +
-                                 "registered, because it contains a duplicated input field, 'a'. " +
-                                 "You need to rename or remove one of the duplicate fields." );
+        exception.expectMessage( new StringBuilder().append("Procedure `asd(a :: ANY?, a :: ANY?) :: ()` cannot be ").append("registered, because it contains a duplicated input field, 'a'. ").append("You need to rename or remove one of the duplicate fields.").toString() );
 
         // When
         procs.register( procedureWithSignature( procedureSignature( "asd" ).in( "a", NTAny ).in( "a", NTAny ).build() ) );
@@ -145,9 +141,7 @@ public class ProceduresTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Procedure `asd() :: (a :: ANY?, a :: ANY?)` cannot be registered, " +
-                                 "because it contains a duplicated output field, 'a'. " +
-                                 "You need to rename or remove one of the duplicate fields." );
+        exception.expectMessage( new StringBuilder().append("Procedure `asd() :: (a :: ANY?, a :: ANY?)` cannot be registered, ").append("because it contains a duplicated output field, 'a'. ").append("You need to rename or remove one of the duplicate fields.").toString() );
 
         // When
         procs.register( procedureWithSignature( procedureSignature( "asd" ).out( "a", NTAny ).out( "a", NTAny ).build() ) );
@@ -158,9 +152,7 @@ public class ProceduresTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "There is no procedure with the name `org.myproc` registered for this " +
-                                 "database instance. Please ensure you've spelled the " +
-                                 "procedure name correctly and that the procedure is properly deployed." );
+        exception.expectMessage( new StringBuilder().append("There is no procedure with the name `org.myproc` registered for this ").append("database instance. Please ensure you've spelled the ").append("procedure name correctly and that the procedure is properly deployed.").toString() );
 
         // When
         procs.procedure( signature.name() );
@@ -223,7 +215,32 @@ public class ProceduresTest
         procs.registerProcedure( ProcedureWithDBMSConflictAnnotation.class );
     }
 
-    public static class ProcedureWithReadConflictAnnotation
+    private CallableProcedure.BasicProcedure procedureWithSignature( final ProcedureSignature signature )
+    {
+        return new CallableProcedure.BasicProcedure( signature )
+        {
+            @Override
+            public RawIterator<Object[], ProcedureException> apply(
+                    Context ctx, Object[] input, ResourceTracker resourceTracker ) throws ProcedureException
+            {
+                return null;
+            }
+        };
+    }
+
+	private CallableProcedure procedure( ProcedureSignature signature )
+    {
+        return new CallableProcedure.BasicProcedure( signature )
+        {
+            @Override
+            public RawIterator<Object[], ProcedureException> apply( Context ctx, Object[] input, ResourceTracker resourceTracker )
+            {
+                return RawIterator.<Object[], ProcedureException>of( input );
+            }
+        };
+    }
+
+	public static class ProcedureWithReadConflictAnnotation
     {
         @PerformsWrites
         @Procedure( mode = Mode.READ )
@@ -257,30 +274,5 @@ public class ProceduresTest
         public void shouldNotCompile()
         {
         }
-    }
-
-    private CallableProcedure.BasicProcedure procedureWithSignature( final ProcedureSignature signature )
-    {
-        return new CallableProcedure.BasicProcedure( signature )
-        {
-            @Override
-            public RawIterator<Object[], ProcedureException> apply(
-                    Context ctx, Object[] input, ResourceTracker resourceTracker ) throws ProcedureException
-            {
-                return null;
-            }
-        };
-    }
-
-    private CallableProcedure procedure( ProcedureSignature signature )
-    {
-        return new CallableProcedure.BasicProcedure( signature )
-        {
-            @Override
-            public RawIterator<Object[], ProcedureException> apply( Context ctx, Object[] input, ResourceTracker resourceTracker )
-            {
-                return RawIterator.<Object[], ProcedureException>of( input );
-            }
-        };
     }
 }

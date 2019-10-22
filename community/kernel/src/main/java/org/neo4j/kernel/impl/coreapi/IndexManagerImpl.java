@@ -154,7 +154,7 @@ public class IndexManagerImpl implements IndexManager
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( "No node index '" + index.getName() + "' found" );
+            throw new NotFoundException( new StringBuilder().append("No node index '").append(index.getName()).append("' found").toString() );
         }
     }
 

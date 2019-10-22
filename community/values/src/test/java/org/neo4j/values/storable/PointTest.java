@@ -241,16 +241,24 @@ class PointTest
                                 Boolean xi = (invalidRange || undefinedMin || undefinedMax) ? null : x > minx && y > miny && x <= maxx && y <= maxy;
                                 Boolean xx = (invalidRange || undefinedMin || undefinedMax) ? null : x > minx && y > miny && x < maxx && y < maxy;
                                 // inclusive:inclusive
-                                assertThat( "{" + x + "," + y + "}.withinRange({" + minx + "," + miny + "}, true, {" + maxx + "," + maxy + "}, true",
+                                assertThat( new StringBuilder().append("{").append(x).append(",").append(y).append("}.withinRange({")
+										.append(minx).append(",").append(miny).append("}, true, {").append(maxx)
+										.append(",").append(maxy).append("}, true").toString(),
                                         point.withinRange( min, true, max, true ), equalTo( ii ) );
                                 // inclusive:exclusive
-                                assertThat( "{" + x + "," + y + "}.withinRange({" + minx + "," + miny + "}, true, {" + maxx + "," + maxy + "}, false",
+                                assertThat( new StringBuilder().append("{").append(x).append(",").append(y).append("}.withinRange({")
+										.append(minx).append(",").append(miny).append("}, true, {").append(maxx)
+										.append(",").append(maxy).append("}, false").toString(),
                                         point.withinRange( min, true, max, false ), equalTo( ix ) );
                                 // exclusive:inclusive
-                                assertThat( "{" + x + "," + y + "}.withinRange({" + minx + "," + miny + "}, false, {" + maxx + "," + maxy + "}, true",
+                                assertThat( new StringBuilder().append("{").append(x).append(",").append(y).append("}.withinRange({")
+										.append(minx).append(",").append(miny).append("}, false, {").append(maxx)
+										.append(",").append(maxy).append("}, true").toString(),
                                         point.withinRange( min, false, max, true ), equalTo( xi ) );
                                 // exclusive:exclusive
-                                assertThat( "{" + x + "," + y + "}.withinRange({" + minx + "," + miny + "}, false, {" + maxx + "," + maxy + "}, false",
+                                assertThat( new StringBuilder().append("{").append(x).append(",").append(y).append("}.withinRange({")
+										.append(minx).append(",").append(miny).append("}, false, {").append(maxx)
+										.append(",").append(maxy).append("}, false").toString(),
                                         point.withinRange( min, false, max, false ), equalTo( xx ) );
                             }
                         }

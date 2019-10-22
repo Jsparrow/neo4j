@@ -141,10 +141,8 @@ public class HttpHeadersIT extends ExclusiveServerTestBase
 
         assertNull( headers.get( SERVER.asString() ) ); // no 'Server' header
 
-        for ( List<String> values : headers.values() )
-        {
-            assertFalse( values.stream().anyMatch( value -> value.toLowerCase().contains( "jetty" ) ) ); // no 'jetty' in other header values
-        }
+        // no 'jetty' in other header values
+		headers.values().forEach(values -> assertFalse(values.stream().anyMatch(value -> value.toLowerCase().contains("jetty"))));
     }
 
     private static String runRequestAndGetHstsHeaderValue( URI baseUri ) throws Exception
@@ -165,7 +163,7 @@ public class HttpHeadersIT extends ExclusiveServerTestBase
         }
         else
         {
-            throw new IllegalStateException( "Unexpected number of " + STRICT_TRANSPORT_SECURITY.asString() + " header values: " + values );
+            throw new IllegalStateException( new StringBuilder().append("Unexpected number of ").append(STRICT_TRANSPORT_SECURITY.asString()).append(" header values: ").append(values).toString() );
         }
     }
 

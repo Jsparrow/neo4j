@@ -49,18 +49,32 @@ import org.neo4j.logging.NullLog;
 
 public class Runner implements Callable<Long>
 {
-    private final DatabaseLayout databaseLayout;
-    private final BooleanSupplier condition;
-    private final int threads;
+    private static final LogRotation.Monitor NOOP_LOGROTATION_MONITOR = new LogRotation.Monitor()
+    {
+        @Override
+        public void startedRotating( long currentVersion )
+        {
 
-    public Runner( DatabaseLayout databaseLayout, BooleanSupplier condition, int threads )
+        }
+
+        @Override
+        public void finishedRotating( long currentVersion )
+        {
+
+        }
+    };
+	private final DatabaseLayout databaseLayout;
+	private final BooleanSupplier condition;
+	private final int threads;
+
+	public Runner( DatabaseLayout databaseLayout, BooleanSupplier condition, int threads )
     {
         this.databaseLayout = databaseLayout;
         this.condition = condition;
         this.threads = threads;
     }
 
-    @Override
+	@Override
     public Long call() throws Exception
     {
         long lastCommittedTransactionId;
@@ -103,7 +117,7 @@ public class Runner implements Callable<Long>
         return lastCommittedTransactionId;
     }
 
-    private static BatchingTransactionAppender createBatchingTransactionAppender( TransactionIdStore transactionIdStore,
+	private static BatchingTransactionAppender createBatchingTransactionAppender( TransactionIdStore transactionIdStore,
             TransactionMetadataCache transactionMetadataCache, LogFiles logFiles )
     {
         Log log = NullLog.getInstance();
@@ -115,7 +129,7 @@ public class Runner implements Callable<Long>
                 transactionMetadataCache, transactionIdStore, IdOrderingQueue.BYPASS, databaseHealth );
     }
 
-    private LogFiles createLogFiles( TransactionIdStore transactionIdStore,
+	private LogFiles createLogFiles( TransactionIdStore transactionIdStore,
             FileSystemAbstraction fileSystemAbstraction ) throws IOException
     {
         SimpleLogVersionRepository logVersionRepository = new SimpleLogVersionRepository();
@@ -124,20 +138,5 @@ public class Runner implements Callable<Long>
                                                       .withLogVersionRepository( logVersionRepository )
                                                       .build();
     }
-
-    private static final LogRotation.Monitor NOOP_LOGROTATION_MONITOR = new LogRotation.Monitor()
-    {
-        @Override
-        public void startedRotating( long currentVersion )
-        {
-
-        }
-
-        @Override
-        public void finishedRotating( long currentVersion )
-        {
-
-        }
-    };
 
 }

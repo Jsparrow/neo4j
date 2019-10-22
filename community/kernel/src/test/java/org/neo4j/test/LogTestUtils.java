@@ -50,7 +50,39 @@ public class LogTestUtils
     {
     }
 
-    public interface LogHook<RECORD> extends Predicate<RECORD>
+    public static File[] filterNeostoreLogicalLog( LogFiles logFiles, FileSystemAbstraction fileSystem,
+            LogHook<LogEntry> filter ) throws IOException
+    {
+        File[] files = logFiles.logFiles();
+        for ( File file : files )
+        {
+            filterTransactionLogFile( fileSystem, file, filter );
+        }
+
+        return files;
+    }
+
+	static void filterTransactionLogFile( FileSystemAbstraction fileSystem, File file, final LogHook<LogEntry> filter )
+            throws IOException
+    {
+        filter.file( file );
+        try ( StoreChannel in = fileSystem.open( file, OpenMode.READ ) )
+        {
+            LogHeader logHeader = readLogHeader( ByteBuffer.allocate( LOG_HEADER_SIZE ), in, true, file );
+            PhysicalLogVersionedStoreChannel inChannel =
+                    new PhysicalLogVersionedStoreChannel( in, logHeader.logVersion, logHeader.logFormatVersion );
+            ReadableLogChannel inBuffer = new ReadAheadLogChannel( inChannel );
+            LogEntryReader<ReadableLogChannel> entryReader = new VersionAwareLogEntryReader<>();
+
+            LogEntry entry;
+            while ( (entry = entryReader.readLogEntry( inBuffer )) != null )
+            {
+                filter.test( entry );
+            }
+        }
+    }
+
+	public interface LogHook<RECORD> extends Predicate<RECORD>
     {
         void file( File file );
 
@@ -84,38 +116,6 @@ public class LogTestUtils
         public int getCount()
         {
             return count;
-        }
-    }
-
-    public static File[] filterNeostoreLogicalLog( LogFiles logFiles, FileSystemAbstraction fileSystem,
-            LogHook<LogEntry> filter ) throws IOException
-    {
-        File[] files = logFiles.logFiles();
-        for ( File file : files )
-        {
-            filterTransactionLogFile( fileSystem, file, filter );
-        }
-
-        return files;
-    }
-
-    static void filterTransactionLogFile( FileSystemAbstraction fileSystem, File file, final LogHook<LogEntry> filter )
-            throws IOException
-    {
-        filter.file( file );
-        try ( StoreChannel in = fileSystem.open( file, OpenMode.READ ) )
-        {
-            LogHeader logHeader = readLogHeader( ByteBuffer.allocate( LOG_HEADER_SIZE ), in, true, file );
-            PhysicalLogVersionedStoreChannel inChannel =
-                    new PhysicalLogVersionedStoreChannel( in, logHeader.logVersion, logHeader.logFormatVersion );
-            ReadableLogChannel inBuffer = new ReadAheadLogChannel( inChannel );
-            LogEntryReader<ReadableLogChannel> entryReader = new VersionAwareLogEntryReader<>();
-
-            LogEntry entry;
-            while ( (entry = entryReader.readLogEntry( inBuffer )) != null )
-            {
-                filter.test( entry );
-            }
         }
     }
 }

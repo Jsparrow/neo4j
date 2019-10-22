@@ -48,7 +48,6 @@ public class SimpleGraphBuilder
     public SimpleGraphBuilder( GraphDatabaseService graphDb,
         RelationshipType relationshipType )
     {
-        super();
         this.graphDb = graphDb;
         nodes = new HashMap<>();
         nodeNames = new HashMap<>();
@@ -58,14 +57,13 @@ public class SimpleGraphBuilder
 
     public void clear()
     {
-        for ( Node node : nodes.values() )
-        {
+        nodes.values().forEach(node -> {
             for ( Relationship relationship : node.getRelationships() )
             {
                 relationship.delete();
             }
             node.delete();
-        }
+        });
         nodes.clear();
         nodeNames.clear();
         edges.clear();
@@ -116,7 +114,7 @@ public class SimpleGraphBuilder
         {
             if ( property.getKey().equals( KEY_ID ) )
             {
-                throw new RuntimeException( "Can't use '" + property.getKey() + "'" );
+                throw new RuntimeException( new StringBuilder().append("Can't use '").append(property.getKey()).append("'").toString() );
             }
             node.setProperty( property.getKey(), property.getValue() );
         }
@@ -154,10 +152,7 @@ public class SimpleGraphBuilder
         Node n2 = getNode( node2, true );
         Relationship relationship = n1
             .createRelationshipTo( n2, currentRelType );
-        for ( Map.Entry<String, Object> property : edgeProperties.entrySet() )
-        {
-            relationship.setProperty( property.getKey(), property.getValue() );
-        }
+        edgeProperties.entrySet().forEach(property -> relationship.setProperty(property.getKey(), property.getValue()));
         edges.add( relationship );
         return relationship;
     }

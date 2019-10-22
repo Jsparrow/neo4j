@@ -105,12 +105,8 @@ public class Neo4jError
     @Override
     public String toString()
     {
-        return "Neo4jError{" +
-                "status=" + status +
-                ", message='" + message + '\'' +
-                ", cause=" + cause +
-                ", reference=" + reference +
-                '}';
+        return new StringBuilder().append("Neo4jError{").append("status=").append(status).append(", message='").append(message).append('\'').append(", cause=")
+				.append(cause).append(", reference=").append(reference).append('}').toString();
     }
 
     public static Status codeFromString( String codeStr )

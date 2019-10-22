@@ -101,18 +101,13 @@ public class ExactTxData extends TxData
         FullTxData data = new FullTxData( index );
         if ( this.data != null )
         {
-            for ( Map.Entry<String, Map<Object, Set<EntityId>>> entry : this.data.entrySet() )
-            {
+            this.data.entrySet().forEach(entry -> {
                 String key = entry.getKey();
-                for ( Map.Entry<Object, Set<EntityId>> valueEntry : entry.getValue().entrySet() )
-                {
+                entry.getValue().entrySet().forEach(valueEntry -> {
                     Object value = valueEntry.getKey();
-                    for ( EntityId id : valueEntry.getValue() )
-                    {
-                        data.add( null, id, key, value );
-                    }
-                }
-            }
+                    valueEntry.getValue().forEach(id -> data.add(null, id, key, value));
+                });
+            });
         }
         return data;
     }

@@ -100,7 +100,99 @@ class PrimitiveIntCollectionsTest
         assertItems( deduped, 1, 2, 3 );
     }
 
-    private static final class CountingPrimitiveIntIteratorResource implements PrimitiveIntIterator, AutoCloseable
+    @Test
+    void iteratorAsSet()
+    {
+        // GIVEN
+        PrimitiveIntIterator items = PrimitiveIntCollections.iterator( 1, 2, 3 );
+
+        // WHEN
+        PrimitiveIntSet set = PrimitiveIntCollections.asSet( items );
+
+        // THEN
+        assertTrue( set.contains( 1 ) );
+        assertTrue( set.contains( 2 ) );
+        assertTrue( set.contains( 3 ) );
+        assertFalse( set.contains( 4 ) );
+        assertThrows( IllegalStateException.class, () -> PrimitiveIntCollections.asSet( PrimitiveIntCollections.iterator( 1, 2, 1 ) ) );
+    }
+
+	@Test
+    void shouldNotContinueToCallNextOnHasNextFalse()
+    {
+        // GIVEN
+        AtomicInteger count = new AtomicInteger( 2 );
+        PrimitiveIntIterator iterator = new PrimitiveIntCollections.PrimitiveIntBaseIterator()
+        {
+            @Override
+            protected boolean fetchNext()
+            {
+                return count.decrementAndGet() >= 0 && next( count.get() );
+            }
+        };
+
+        // WHEN/THEN
+        assertTrue( iterator.hasNext() );
+        assertTrue( iterator.hasNext() );
+        assertEquals( 1L, iterator.next() );
+        assertTrue( iterator.hasNext() );
+        assertTrue( iterator.hasNext() );
+        assertEquals( 0L, iterator.next() );
+        assertFalse( iterator.hasNext() );
+        assertFalse( iterator.hasNext() );
+        assertEquals( -1L, count.get() );
+    }
+
+	@Test
+    void shouldDeduplicate()
+    {
+        // GIVEN
+        int[] array = new int[]{1, 6, 2, 5, 6, 1, 6};
+
+        // WHEN
+        int[] deduped = PrimitiveIntCollections.deduplicate( array );
+
+        // THEN
+        assertArrayEquals( new int[]{1, 6, 2, 5}, deduped );
+    }
+
+	@Test
+    void copyMap()
+    {
+        PrimitiveIntObjectMap<Object> originalMap = Primitive.intObjectMap();
+        originalMap.put( 1, "a" );
+        originalMap.put( 2, "b" );
+        originalMap.put( 3, "c" );
+        PrimitiveIntObjectMap<Object> copyMap = PrimitiveIntCollections.copy( originalMap );
+        assertNotSame( originalMap, copyMap );
+        assertEquals( 3, copyMap.size() );
+        assertEquals( "a", copyMap.get( 1 ) );
+        assertEquals( "b", copyMap.get( 2 ) );
+        assertEquals( "c", copyMap.get( 3 ) );
+    }
+
+	private static void assertNoMoreItems( PrimitiveIntIterator iterator )
+    {
+        assertFalse( iterator.hasNext(), iterator + " should have no more items" );
+        assertThrows( NoSuchElementException.class, iterator::next );
+    }
+
+	private static void assertNextEquals( long expected, PrimitiveIntIterator iterator )
+    {
+        assertTrue( iterator.hasNext(), iterator + " should have had more items" );
+        assertEquals( expected, iterator.next() );
+    }
+
+	private static void assertItems( PrimitiveIntIterator iterator, int... expectedItems )
+    {
+        for ( long expectedItem: expectedItems )
+        {
+            assertNextEquals( expectedItem, iterator );
+        }
+        assertNoMoreItems( iterator );
+    }
+
+	private static final class CountingPrimitiveIntIteratorResource implements PrimitiveIntIterator, AutoCloseable
     {
         private final PrimitiveIntIterator delegate;
         private final AtomicInteger closeCounter;
@@ -128,97 +220,5 @@ class PrimitiveIntCollectionsTest
         {
             return delegate.next();
         }
-    }
-
-    @Test
-    void iteratorAsSet()
-    {
-        // GIVEN
-        PrimitiveIntIterator items = PrimitiveIntCollections.iterator( 1, 2, 3 );
-
-        // WHEN
-        PrimitiveIntSet set = PrimitiveIntCollections.asSet( items );
-
-        // THEN
-        assertTrue( set.contains( 1 ) );
-        assertTrue( set.contains( 2 ) );
-        assertTrue( set.contains( 3 ) );
-        assertFalse( set.contains( 4 ) );
-        assertThrows( IllegalStateException.class, () -> PrimitiveIntCollections.asSet( PrimitiveIntCollections.iterator( 1, 2, 1 ) ) );
-    }
-
-    @Test
-    void shouldNotContinueToCallNextOnHasNextFalse()
-    {
-        // GIVEN
-        AtomicInteger count = new AtomicInteger( 2 );
-        PrimitiveIntIterator iterator = new PrimitiveIntCollections.PrimitiveIntBaseIterator()
-        {
-            @Override
-            protected boolean fetchNext()
-            {
-                return count.decrementAndGet() >= 0 && next( count.get() );
-            }
-        };
-
-        // WHEN/THEN
-        assertTrue( iterator.hasNext() );
-        assertTrue( iterator.hasNext() );
-        assertEquals( 1L, iterator.next() );
-        assertTrue( iterator.hasNext() );
-        assertTrue( iterator.hasNext() );
-        assertEquals( 0L, iterator.next() );
-        assertFalse( iterator.hasNext() );
-        assertFalse( iterator.hasNext() );
-        assertEquals( -1L, count.get() );
-    }
-
-    @Test
-    void shouldDeduplicate()
-    {
-        // GIVEN
-        int[] array = new int[]{1, 6, 2, 5, 6, 1, 6};
-
-        // WHEN
-        int[] deduped = PrimitiveIntCollections.deduplicate( array );
-
-        // THEN
-        assertArrayEquals( new int[]{1, 6, 2, 5}, deduped );
-    }
-
-    @Test
-    void copyMap()
-    {
-        PrimitiveIntObjectMap<Object> originalMap = Primitive.intObjectMap();
-        originalMap.put( 1, "a" );
-        originalMap.put( 2, "b" );
-        originalMap.put( 3, "c" );
-        PrimitiveIntObjectMap<Object> copyMap = PrimitiveIntCollections.copy( originalMap );
-        assertNotSame( originalMap, copyMap );
-        assertEquals( 3, copyMap.size() );
-        assertEquals( "a", copyMap.get( 1 ) );
-        assertEquals( "b", copyMap.get( 2 ) );
-        assertEquals( "c", copyMap.get( 3 ) );
-    }
-
-    private static void assertNoMoreItems( PrimitiveIntIterator iterator )
-    {
-        assertFalse( iterator.hasNext(), iterator + " should have no more items" );
-        assertThrows( NoSuchElementException.class, iterator::next );
-    }
-
-    private static void assertNextEquals( long expected, PrimitiveIntIterator iterator )
-    {
-        assertTrue( iterator.hasNext(), iterator + " should have had more items" );
-        assertEquals( expected, iterator.next() );
-    }
-
-    private static void assertItems( PrimitiveIntIterator iterator, int... expectedItems )
-    {
-        for ( long expectedItem: expectedItems )
-        {
-            assertNextEquals( expectedItem, iterator );
-        }
-        assertNoMoreItems( iterator );
     }
 }

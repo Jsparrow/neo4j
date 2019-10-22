@@ -153,13 +153,13 @@ public class EmbeddedJarLoader implements AutoCloseable
             JarEntry jarEntry = urlConnection.getJarEntry();
             if ( jarEntry == null )
             {
-                throw new EmbeddedJarNotFoundException( "Jar file '" + jar + "' not found." );
+                throw new EmbeddedJarNotFoundException( new StringBuilder().append("Jar file '").append(jar).append("' not found.").toString() );
             }
             return extract( jarFile, jarEntry );
         }
         else
         {
-            throw new EmbeddedJarNotFoundException( "Jar file '" + jar + "' not found." );
+            throw new EmbeddedJarNotFoundException( new StringBuilder().append("Jar file '").append(jar).append("' not found.").toString() );
         }
     }
 
@@ -178,13 +178,13 @@ public class EmbeddedJarLoader implements AutoCloseable
             File jarFile = new File( new File( uri ).getParent(), jar );
             if ( !jarFile.exists() )
             {
-                throw new EmbeddedJarNotFoundException( "Jar file '" + jar + "' not found." );
+                throw new EmbeddedJarNotFoundException( new StringBuilder().append("Jar file '").append(jar).append("' not found.").toString() );
             }
             return jarFile;
         }
         catch ( URISyntaxException e )
         {
-            throw new EmbeddedJarNotFoundException( "Jar file '" + jar + "' not found." );
+            throw new EmbeddedJarNotFoundException( new StringBuilder().append("Jar file '").append(jar).append("' not found.").toString() );
         }
     }
 
@@ -213,7 +213,7 @@ public class EmbeddedJarLoader implements AutoCloseable
         }
         catch ( MalformedURLException e )
         {
-            throw new RuntimeException( "Can't convert file " + file + " URI into URL.", e );
+            throw new RuntimeException( new StringBuilder().append("Can't convert file ").append(file).append(" URI into URL.").toString(), e );
         }
     }
 

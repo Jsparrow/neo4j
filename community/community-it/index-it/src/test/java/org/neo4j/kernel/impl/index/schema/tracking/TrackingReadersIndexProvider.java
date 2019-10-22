@@ -58,7 +58,7 @@ public class TrackingReadersIndexProvider extends IndexProvider
     }
 
     @Override
-    public String getPopulationFailure( StoreIndexDescriptor descriptor ) throws IllegalStateException
+    public String getPopulationFailure( StoreIndexDescriptor descriptor )
     {
         return indexProvider.getPopulationFailure( descriptor );
     }

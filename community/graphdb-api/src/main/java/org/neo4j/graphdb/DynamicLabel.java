@@ -34,7 +34,14 @@ package org.neo4j.graphdb;
 @Deprecated
 public class DynamicLabel implements Label
 {
-    /**
+    private final String name;
+
+	private DynamicLabel( String labelName )
+    {
+        this.name = labelName;
+    }
+
+	/**
      * @param labelName the name of the label.
      * @return a {@link Label} instance for the given {@code labelName}.
      * @deprecated use {@link Label#label(String)} instead
@@ -45,32 +52,25 @@ public class DynamicLabel implements Label
         return new DynamicLabel( labelName );
     }
 
-    private final String name;
-
-    private DynamicLabel( String labelName )
-    {
-        this.name = labelName;
-    }
-
-    @Override
+	@Override
     public String name()
     {
         return this.name;
     }
 
-    @Override
+	@Override
     public String toString()
     {
         return this.name;
     }
 
-    @Override
+	@Override
     public boolean equals( Object other )
     {
         return other instanceof Label && ((Label) other).name().equals( name );
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return 26578 ^ name.hashCode();

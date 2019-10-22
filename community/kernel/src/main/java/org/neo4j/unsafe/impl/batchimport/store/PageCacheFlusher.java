@@ -74,10 +74,10 @@ class PageCacheFlusher extends Thread
     {
         halted = true;
         halt.await();
-        if ( error != null )
-        {
-            throwIfUnchecked( error );
-            throw new RuntimeException(  error );
-        }
+        if (error == null) {
+			return;
+		}
+		throwIfUnchecked( error );
+		throw new RuntimeException(  error );
     }
 }

@@ -41,8 +41,16 @@ public class DumpProcessInformation
 {
     private static final String HEAP = "heap";
     private static final String DIR = "dir";
+	private final Log log;
+	private final File outputDirectory;
 
-    public static void main( String[] args ) throws Exception
+	public DumpProcessInformation( LogProvider logProvider, File outputDirectory )
+    {
+        this.log = logProvider.getLog( getClass() );
+        this.outputDirectory = outputDirectory;
+    }
+
+	public static void main( String[] args ) throws Exception
     {
         Args arg = Args.withFlags( HEAP ).parse( args == null ? new String[0] : args );
         boolean doHeapDump = arg.getBoolean( HEAP, false, true );
@@ -52,16 +60,7 @@ public class DumpProcessInformation
                 doHeapDump, containing );
     }
 
-    private final Log log;
-    private final File outputDirectory;
-
-    public DumpProcessInformation( LogProvider logProvider, File outputDirectory )
-    {
-        this.log = logProvider.getLog( getClass() );
-        this.outputDirectory = outputDirectory;
-    }
-
-    public void dumpRunningProcesses( boolean includeHeapDump, String... javaPidsContainingClassNames )
+	public void dumpRunningProcesses( boolean includeHeapDump, String... javaPidsContainingClassNames )
             throws Exception
     {
         outputDirectory.mkdirs();
@@ -75,25 +74,25 @@ public class DumpProcessInformation
         }
     }
 
-    public File doThreadDump( Pair<Long, String> pid ) throws Exception
+	public File doThreadDump( Pair<Long, String> pid ) throws Exception
     {
         File outputFile = new File( outputDirectory, fileName( "threaddump", pid ) );
-        log.info( "Creating thread dump of " + pid + " to " + outputFile.getAbsolutePath() );
-        String[] cmdarray = new String[] {"jstack", "" + pid.first()};
+        log.info( new StringBuilder().append("Creating thread dump of ").append(pid).append(" to ").append(outputFile.getAbsolutePath()).toString() );
+        String[] cmdarray = new String[] {"jstack", Long.toString(pid.first())};
         Process process = Runtime.getRuntime().exec( cmdarray );
         writeProcessOutputToFile( process, outputFile );
         return outputFile;
     }
 
-    public void doHeapDump( Pair<Long, String> pid ) throws Exception
+	public void doHeapDump( Pair<Long, String> pid ) throws Exception
     {
         File outputFile = new File( outputDirectory, fileName( "heapdump", pid ) );
-        log.info( "Creating heap dump of " + pid + " to " + outputFile.getAbsolutePath() );
-        String[] cmdarray = new String[] {"jmap", "-dump:file=" + outputFile.getAbsolutePath(), "" + pid.first() };
+        log.info( new StringBuilder().append("Creating heap dump of ").append(pid).append(" to ").append(outputFile.getAbsolutePath()).toString() );
+        String[] cmdarray = new String[] {"jmap", "-dump:file=" + outputFile.getAbsolutePath(), Long.toString(pid.first()) };
         Runtime.getRuntime().exec( cmdarray ).waitFor();
     }
 
-    public void doThreadDump( Matcher<String> processFilter ) throws Exception
+	public void doThreadDump( Matcher<String> processFilter ) throws Exception
     {
         for ( Pair<Long,String> pid : getJPids( processFilter ) )
         {
@@ -101,7 +100,7 @@ public class DumpProcessInformation
         }
     }
 
-    public Collection<Pair<Long, String>> getJPids( Matcher<String> filter ) throws Exception
+	public Collection<Pair<Long, String>> getJPids( Matcher<String> filter ) throws Exception
     {
         Process process = Runtime.getRuntime().exec( new String[] { "jps", "-l" } );
         BufferedReader reader = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
@@ -135,12 +134,12 @@ public class DumpProcessInformation
         }
         process.waitFor();
 
-        log.info( "Found jPids:" + jPids + ", excluded:" + excludedJPids );
+        log.info( new StringBuilder().append("Found jPids:").append(jPids).append(", excluded:").append(excludedJPids).toString() );
 
         return jPids;
     }
 
-    private void writeProcessOutputToFile( Process process, File outputFile ) throws Exception
+	private void writeProcessOutputToFile( Process process, File outputFile ) throws Exception
     {
         BufferedReader reader = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
         String line = null;
@@ -154,11 +153,9 @@ public class DumpProcessInformation
         process.waitFor();
     }
 
-    private static String fileName( String category, Pair<Long,String> pid )
+	private static String fileName( String category, Pair<Long,String> pid )
     {
-        return time().replace( ':', '_' ).replace( '.', '_' ) +
-                "-" + category +
-                "-" + pid.first() +
-                "-" + pid.other();
+        return new StringBuilder().append(time().replace( ':', '_' ).replace( '.', '_' )).append("-").append(category).append("-").append(pid.first()).append("-")
+				.append(pid.other()).toString();
     }
 }

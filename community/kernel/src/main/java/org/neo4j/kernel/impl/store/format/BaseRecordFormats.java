@@ -102,7 +102,7 @@ public abstract class BaseRecordFormats implements RecordFormats
     @Override
     public String toString()
     {
-        return "RecordFormat:" + getClass().getSimpleName() + "[" + storeVersion() + "]";
+        return new StringBuilder().append("RecordFormat:").append(getClass().getSimpleName()).append("[").append(storeVersion()).append("]").toString();
     }
 
     @Override

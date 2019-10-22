@@ -48,10 +48,18 @@ public class DataFactoriesTest
     private static final int BUFFER_SIZE = 10_000;
     private static final Configuration COMMAS = withBufferSize( Configuration.COMMAS, BUFFER_SIZE );
     private static final Configuration TABS = withBufferSize( Configuration.TABS, BUFFER_SIZE );
+	private static final org.neo4j.csv.reader.Configuration SEEKER_CONFIG =
+            new org.neo4j.csv.reader.Configuration.Overridden( new org.neo4j.csv.reader.Configuration.Default() )
+    {
+        @Override
+        public int bufferSize()
+        {
+            return 1_000;
+        }
+    };
+	private final Groups groups = new Groups();
 
-    private final Groups groups = new Groups();
-
-    @Test
+	@Test
     public void shouldParseDefaultNodeFileHeaderCorrectly() throws Exception
     {
         // GIVEN
@@ -72,7 +80,7 @@ public class DataFactoriesTest
         seeker.close();
     }
 
-    @Test
+	@Test
     public void shouldParseDefaultRelationshipFileHeaderCorrectly() throws Exception
     {
         // GIVEN
@@ -93,7 +101,7 @@ public class DataFactoriesTest
         seeker.close();
     }
 
-    @Test
+	@Test
     public void shouldHaveEmptyHeadersBeInterpretedAsIgnored() throws Exception
     {
         // GIVEN
@@ -113,7 +121,7 @@ public class DataFactoriesTest
         seeker.close();
     }
 
-    @Test
+	@Test
     public void shouldFailForDuplicatePropertyHeaderEntries() throws Exception
     {
         // GIVEN
@@ -135,7 +143,7 @@ public class DataFactoriesTest
         seeker.close();
     }
 
-    @Test
+	@Test
     public void shouldFailForDuplicateIdHeaderEntries() throws Exception
     {
         // GIVEN
@@ -157,7 +165,7 @@ public class DataFactoriesTest
         seeker.close();
     }
 
-    @Test
+	@Test
     public void shouldAllowMissingIdHeaderEntry() throws Exception
     {
         // GIVEN
@@ -174,7 +182,7 @@ public class DataFactoriesTest
         seeker.close();
     }
 
-    @Test
+	@Test
     public void shouldParseHeaderFromFirstLineOfFirstInputFile() throws Exception
     {
         // GIVEN
@@ -197,13 +205,13 @@ public class DataFactoriesTest
         seeker.close();
     }
 
-    @Test
+	@Test
     public void shouldParseGroupName() throws Exception
     {
         // GIVEN
         String groupOneName = "GroupOne";
         String groupTwoName = "GroupTwo";
-        CharSeeker seeker = seeker( ":START_ID(" + groupOneName + ")\t:END_ID(" + groupTwoName + ")\ttype:TYPE\tdate:long\tmore:long[]" );
+        CharSeeker seeker = seeker( new StringBuilder().append(":START_ID(").append(groupOneName).append(")\t:END_ID(").append(groupTwoName).append(")\ttype:TYPE\tdate:long\tmore:long[]").toString() );
         IdType idType = IdType.ACTUAL;
         Extractors extractors = new Extractors( '\t' );
         groups.getOrCreate( groupOneName );
@@ -222,7 +230,7 @@ public class DataFactoriesTest
         seeker.close();
     }
 
-    @Test
+	@Test
     public void shouldFailOnUnexpectedNodeHeaderType()
     {
         // GIVEN
@@ -242,7 +250,7 @@ public class DataFactoriesTest
         }
     }
 
-    @Test
+	@Test
     public void shouldFailOnUnexpectedRelationshipHeaderType()
     {
         // GIVEN
@@ -262,22 +270,12 @@ public class DataFactoriesTest
         }
     }
 
-    private static final org.neo4j.csv.reader.Configuration SEEKER_CONFIG =
-            new org.neo4j.csv.reader.Configuration.Overridden( new org.neo4j.csv.reader.Configuration.Default() )
-    {
-        @Override
-        public int bufferSize()
-        {
-            return 1_000;
-        }
-    };
-
-    private CharSeeker seeker( String data )
+	private CharSeeker seeker( String data )
     {
         return CharSeekers.charSeeker( wrap( data ), SEEKER_CONFIG, false );
     }
 
-    private static Configuration withBufferSize( Configuration config, final int bufferSize )
+	private static Configuration withBufferSize( Configuration config, final int bufferSize )
     {
         return new Configuration.Overridden( config )
         {
@@ -289,12 +287,12 @@ public class DataFactoriesTest
         };
     }
 
-    private Header.Entry entry( String name, Type type, Extractor<?> extractor )
+	private Header.Entry entry( String name, Type type, Extractor<?> extractor )
     {
         return entry( name, type, null, extractor );
     }
 
-    private Header.Entry entry( String name, Type type, String groupName, Extractor<?> extractor )
+	private Header.Entry entry( String name, Type type, String groupName, Extractor<?> extractor )
     {
         return new Header.Entry( name, type, groups.getOrCreate( groupName ), extractor );
     }

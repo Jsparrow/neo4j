@@ -55,6 +55,6 @@ public class Result<T, F>
     @Override
     public String toString()
     {
-        return isFailure() ? "Failure[" + index + ", " + failure + "]" : "Success";
+        return isFailure() ? new StringBuilder().append("Failure[").append(index).append(", ").append(failure).append("]").toString() : "Success";
     }
 }

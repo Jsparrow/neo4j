@@ -71,8 +71,7 @@ public class RelationshipGroupCache implements Iterable<RelationshipGroupRecord>
         if ( memoryLeftForGroupCache < 0 )
         {
             throw new IllegalArgumentException(
-                    "Too little memory to cache any groups, provided " + bytes( maxMemory ) + " where " +
-                            bytes( memoryDedicatedToCounting ) + " was dedicated to group counting" );
+                    new StringBuilder().append("Too little memory to cache any groups, provided ").append(bytes( maxMemory )).append(" where ").append(bytes( memoryDedicatedToCounting )).append(" was dedicated to group counting").toString() );
         }
         maxCacheLength = memoryLeftForGroupCache / GROUP_ENTRY_SIZE;
         this.cache = arrayFactory.newDynamicByteArray( max( 1_000, maxCacheLength / 100 ), new byte[GROUP_ENTRY_SIZE] );
@@ -91,7 +90,7 @@ public class RelationshipGroupCache implements Iterable<RelationshipGroupRecord>
         if ( (count & ~0xFFFF) != 0 )
         {
             throw new IllegalStateException(
-                    "Invalid number of relationship groups for node " + nodeId + " " + count );
+                    new StringBuilder().append("Invalid number of relationship groups for node ").append(nodeId).append(" ").append(count).toString() );
         }
         groupCountCache.setShort( nodeId, 0, (short) count );
     }
@@ -196,7 +195,7 @@ public class RelationshipGroupCache implements Iterable<RelationshipGroupRecord>
                 if ( existingType == type )
                 {
                     throw new IllegalStateException(
-                            "Tried to put multiple groups with same type " + type + " for node " + owningNodeId );
+                            new StringBuilder().append("Tried to put multiple groups with same type ").append(type).append(" for node ").append(owningNodeId).toString() );
                 }
 
                 if ( type < existingType )
@@ -210,25 +209,22 @@ public class RelationshipGroupCache implements Iterable<RelationshipGroupRecord>
 
         if ( freeIndex == -1 )
         {
-            throw new IllegalStateException( "There's no room for me for startIndex:" + startIndex +
-                    " with a group count of " + groupCount + ". This means that there's an asymmetry between calls " +
-                    "to incrementGroupCount and actual contents sent into put" );
+            throw new IllegalStateException( new StringBuilder().append("There's no room for me for startIndex:").append(startIndex).append(" with a group count of ").append(groupCount).append(". This means that there's an asymmetry between calls ").append("to incrementGroupCount and actual contents sent into put").toString() );
         }
 
         // For the future: Instead of doing the sorting here right away be doing the relatively expensive move
-        // of potentially multiple items one step to the right in the array, then an idea is to simply mark
-        // this group as in need of sorting and then there may be a step later which can use all CPUs
-        // on the machine, jumping from group to group and see if the "needs sorting" flag has been raised
-        // and if so sort that group. This is fine as it is right now because the groups put into this cache
-        // will be almost entirely sorted, since we come here straight after import. Although if this thing
-        // is to be used as a generic relationship group defragmenter this sorting will have to be fixed
-        // to something like what is described above in this comment.
-        if ( desiredIndex != -1 )
-        {
-            moveRight( desiredIndex, freeIndex );
-            return desiredIndex;
-        }
-        return freeIndex;
+		// of potentially multiple items one step to the right in the array, then an idea is to simply mark
+		// this group as in need of sorting and then there may be a step later which can use all CPUs
+		// on the machine, jumping from group to group and see if the "needs sorting" flag has been raised
+		// and if so sort that group. This is fine as it is right now because the groups put into this cache
+		// will be almost entirely sorted, since we come here straight after import. Although if this thing
+		// is to be used as a generic relationship group defragmenter this sorting will have to be fixed
+		// to something like what is described above in this comment.
+		if (!(desiredIndex != -1)) {
+			return freeIndex;
+		}
+		moveRight( desiredIndex, freeIndex );
+		return desiredIndex;
     }
 
     private void moveRight( long fromIndex, long toIndex )

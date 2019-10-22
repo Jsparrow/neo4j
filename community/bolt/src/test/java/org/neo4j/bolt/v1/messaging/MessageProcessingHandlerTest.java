@@ -106,9 +106,7 @@ public class MessageProcessingHandlerTest
 
         // Then
         logProvider.assertExactly( inLog( "Test" ).warn( equalTo(
-                "Client %s disconnected while query was running. Session has been cleaned up. " +
-                        "This can be caused by temporary network problems, but if you see this often, ensure your " +
-                        "applications are properly waiting for operations to complete before exiting." ),
+                new StringBuilder().append("Client %s disconnected while query was running. Session has been cleaned up. ").append("This can be caused by temporary network problems, but if you see this often, ensure your ").append("applications are properly waiting for operations to complete before exiting.").toString() ),
                 equalTo( "<client>" ) ) );
     }
 

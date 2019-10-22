@@ -73,35 +73,74 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
 {
     public static final DurationValue MIN_VALUE = duration( 0, 0, Long.MIN_VALUE, 0 );
     public static final DurationValue MAX_VALUE = duration( 0, 0, Long.MAX_VALUE, 999_999_999 );
+	public static final DurationValue ZERO = new DurationValue( 0, 0, 0, 0 );
+	private static final List<TemporalUnit> UNITS = unmodifiableList( asList( MONTHS, DAYS, SECONDS, NANOS ) );
+	// This comparator is safe until 292,271,023,045 years. After that, we have an overflow.
+    private static final Comparator<DurationValue> COMPARATOR =
+            Comparator.comparingLong( DurationValue::getAverageLengthInSeconds )
+                    // nanos are guaranteed to be smaller than NANOS_PER_SECOND
+                    .thenComparingLong( d -> d.nanos )
+                    // At this point, the durations have the same length and we compare by the individual fields.
+                    .thenComparingLong( d -> d.months )
+                    .thenComparingLong( d -> d.days )
+                    .thenComparingLong( d -> d.seconds );
+	private static final String UNIT_BASED_PATTERN = new StringBuilder().append("(?:(?<years>[-+]?[0-9]+(?:[.,][0-9]+)?)Y)?").append("(?:(?<months>[-+]?[0-9]+(?:[.,][0-9]+)?)M)?").append("(?:(?<weeks>[-+]?[0-9]+(?:[.,][0-9]+)?)W)?").append("(?:(?<days>[-+]?[0-9]+(?:[.,][0-9]+)?)D)?").append("(?<T>T").append("(?:(?<hours>[-+]?[0-9]+(?:[.,][0-9]+)?)H)?").append("(?:(?<minutes>[-+]?[0-9]+(?:[.,][0-9]+)?)M)?").append("(?:(?<seconds>[-+]?[0-9]+)(?:[.,](?<subseconds>[0-9]{1,9}))?S)?)?")
+			.toString();
+	private static final String DATE_BASED_PATTERN = new StringBuilder().append("(?:").append("(?<year>[0-9]{4})(?:").append("-(?<longMonth>[0-9]{2})-(?<longDay>[0-9]{2})|").append("(?<shortMonth>[0-9]{2})(?<shortDay>[0-9]{2}))").append(")?(?<time>T").append("(?:(?<shortHour>[0-9]{2})(?:(?<shortMinute>[0-9]{2})").append("(?:(?<shortSecond>[0-9]{2})(?:[.,](?<shortSub>[0-9]{1,9}))?)?)?|").append("(?<longHour>[0-9]{2}):(?<longMinute>[0-9]{2})")
+			.append("(?::(?<longSecond>[0-9]{2})(?:[.,](?<longSub>[0-9]{1,9}))?)?))?").toString();
+	private static final Pattern PATTERN = Pattern.compile(
+            new StringBuilder().append("(?<sign>[-+]?)P(?:").append(UNIT_BASED_PATTERN).append("|").append(DATE_BASED_PATTERN).append(")").toString(),
+            CASE_INSENSITIVE );
+	private final long months;
+	private final long days;
+	private final long seconds;
+	private final int nanos;
 
-    public static DurationValue duration( Duration value )
+	private DurationValue( long months, long days, long seconds, long nanos )
+    {
+        assertNoOverflow( months, days, seconds, nanos );
+        seconds = secondsWithNanos( seconds, nanos );
+        nanos %= NANOS_PER_SECOND;
+        // normalize nanos to be between 0 and NANOS_PER_SECOND-1
+        if ( nanos < 0 )
+        {
+            seconds -= 1;
+            nanos += NANOS_PER_SECOND;
+        }
+        this.months = months;
+        this.days = days;
+        this.seconds = seconds;
+        this.nanos = (int) nanos;
+    }
+
+	public static DurationValue duration( Duration value )
     {
         requireNonNull( value, "Duration" );
         return newDuration( 0, 0, value.getSeconds(), value.getNano() );
     }
 
-    public static DurationValue duration( Period value )
+	public static DurationValue duration( Period value )
     {
         requireNonNull( value, "Period" );
         return newDuration( value.toTotalMonths(), value.getDays(), 0, 0 );
     }
 
-    public static DurationValue duration( long months, long days, long seconds, long nanos )
+	public static DurationValue duration( long months, long days, long seconds, long nanos )
     {
         return newDuration( months, days, seconds, nanos );
     }
 
-    public static DurationValue parse( CharSequence text )
+	public static DurationValue parse( CharSequence text )
     {
         return TemporalValue.parse( DurationValue.class, PATTERN, DurationValue::parse, text );
     }
 
-    public static DurationValue parse( TextValue text )
+	public static DurationValue parse( TextValue text )
     {
         return TemporalValue.parse( DurationValue.class, PATTERN, DurationValue::parse, text );
     }
 
-    static DurationValue build( Map<String,? extends AnyValue> input )
+	static DurationValue build( Map<String,? extends AnyValue> input )
     {
         StructureBuilder<AnyValue,DurationValue> builder = builder();
         for ( Map.Entry<String,? extends AnyValue> entry : input.entrySet() )
@@ -111,12 +150,12 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return builder.build();
     }
 
-    public static DurationValue build( MapValue map )
+	public static DurationValue build( MapValue map )
     {
         return StructureBuilder.build( builder(), map );
     }
 
-    public static DurationValue between( TemporalUnit unit, Temporal from, Temporal to )
+	public static DurationValue between( TemporalUnit unit, Temporal from, Temporal to )
     {
         if ( unit == null )
         {
@@ -142,7 +181,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    static StructureBuilder<AnyValue,DurationValue> builder()
+	static StructureBuilder<AnyValue,DurationValue> builder()
     {
         return new DurationBuilder<AnyValue,DurationValue>()
         {
@@ -175,79 +214,42 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         };
     }
 
-    public abstract static class Compiler<Input> extends DurationBuilder<Input,MethodHandle>
-    {
-    }
-
-    public static final DurationValue ZERO = new DurationValue( 0, 0, 0, 0 );
-    private static final List<TemporalUnit> UNITS = unmodifiableList( asList( MONTHS, DAYS, SECONDS, NANOS ) );
-    // This comparator is safe until 292,271,023,045 years. After that, we have an overflow.
-    private static final Comparator<DurationValue> COMPARATOR =
-            Comparator.comparingLong( DurationValue::getAverageLengthInSeconds )
-                    // nanos are guaranteed to be smaller than NANOS_PER_SECOND
-                    .thenComparingLong( d -> d.nanos )
-                    // At this point, the durations have the same length and we compare by the individual fields.
-                    .thenComparingLong( d -> d.months )
-                    .thenComparingLong( d -> d.days )
-                    .thenComparingLong( d -> d.seconds );
-    private final long months;
-    private final long days;
-    private final long seconds;
-    private final int nanos;
-
-    private static DurationValue newDuration( long months, long days, long seconds, long nanos )
+	private static DurationValue newDuration( long months, long days, long seconds, long nanos )
     {
         return seconds == 0 && days == 0 && months == 0 && nanos == 0 // ordered by probability of non-zero
                 ? ZERO : new DurationValue( months, days, seconds, nanos );
     }
 
-    private DurationValue( long months, long days, long seconds, long nanos )
-    {
-        assertNoOverflow( months, days, seconds, nanos );
-        seconds = secondsWithNanos( seconds, nanos );
-        nanos %= NANOS_PER_SECOND;
-        // normalize nanos to be between 0 and NANOS_PER_SECOND-1
-        if ( nanos < 0 )
-        {
-            seconds -= 1;
-            nanos += NANOS_PER_SECOND;
-        }
-        this.months = months;
-        this.days = days;
-        this.seconds = seconds;
-        this.nanos = (int) nanos;
-    }
-
-    @Override
+	@Override
     public int compareTo( DurationValue other )
     {
         return COMPARATOR.compare( this, other );
     }
 
-    @Override
+	@Override
     int unsafeCompareTo( Value otherValue )
     {
         return compareTo( (DurationValue) otherValue );
     }
 
-    private long getAverageLengthInSeconds()
+	private long getAverageLengthInSeconds()
     {
         return calcAverageLengthInSeconds( this.months, this.days, this.seconds );
     }
 
-    private long calcAverageLengthInSeconds( long months, long days, long seconds )
+	private long calcAverageLengthInSeconds( long months, long days, long seconds )
     {
         long daysInSeconds = Math.multiplyExact( days, SECONDS_PER_DAY );
         long monthsInSeconds = Math.multiplyExact( months, AVG_SECONDS_PER_MONTH );
         return Math.addExact( seconds, Math.addExact( daysInSeconds, monthsInSeconds ) );
     }
 
-    private long secondsWithNanos( long seconds, long nanos )
+	private long secondsWithNanos( long seconds, long nanos )
     {
         return Math.addExact( seconds, nanos / NANOS_PER_SECOND );
     }
 
-    private void assertNoOverflow( long months, long days, long seconds, long nanos )
+	private void assertNoOverflow( long months, long days, long seconds, long nanos )
     {
         try
         {
@@ -260,17 +262,17 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    long nanosOfDay()
+	long nanosOfDay()
     {
         return (seconds % SECONDS_PER_DAY) * NANOS_PER_SECOND + nanos;
     }
 
-    long totalMonths()
+	long totalMonths()
     {
         return months;
     }
 
-    /**
+	/**
      * The number of days of this duration, as computed by the days and the whole days made up of seconds. This
      * excludes the days contributed by the months.
      *
@@ -281,28 +283,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return days + (seconds / SECONDS_PER_DAY);
     }
 
-    private static final String UNIT_BASED_PATTERN = "(?:(?<years>[-+]?[0-9]+(?:[.,][0-9]+)?)Y)?"
-            + "(?:(?<months>[-+]?[0-9]+(?:[.,][0-9]+)?)M)?"
-            + "(?:(?<weeks>[-+]?[0-9]+(?:[.,][0-9]+)?)W)?"
-            + "(?:(?<days>[-+]?[0-9]+(?:[.,][0-9]+)?)D)?"
-            + "(?<T>T"
-            + "(?:(?<hours>[-+]?[0-9]+(?:[.,][0-9]+)?)H)?"
-            + "(?:(?<minutes>[-+]?[0-9]+(?:[.,][0-9]+)?)M)?"
-            + "(?:(?<seconds>[-+]?[0-9]+)(?:[.,](?<subseconds>[0-9]{1,9}))?S)?)?";
-    private static final String DATE_BASED_PATTERN = "(?:"
-            + "(?<year>[0-9]{4})(?:"
-            + "-(?<longMonth>[0-9]{2})-(?<longDay>[0-9]{2})|"
-            + "(?<shortMonth>[0-9]{2})(?<shortDay>[0-9]{2}))"
-            + ")?(?<time>T"
-            + "(?:(?<shortHour>[0-9]{2})(?:(?<shortMinute>[0-9]{2})"
-            + "(?:(?<shortSecond>[0-9]{2})(?:[.,](?<shortSub>[0-9]{1,9}))?)?)?|"
-            + "(?<longHour>[0-9]{2}):(?<longMinute>[0-9]{2})"
-            + "(?::(?<longSecond>[0-9]{2})(?:[.,](?<longSub>[0-9]{1,9}))?)?))?";
-    private static final Pattern PATTERN = Pattern.compile(
-            "(?<sign>[-+]?)P(?:" + UNIT_BASED_PATTERN + "|" + DATE_BASED_PATTERN + ")",
-            CASE_INSENSITIVE );
-
-    private static DurationValue parse( Matcher matcher )
+	private static DurationValue parse( Matcher matcher )
     {
         String year = matcher.group( "year" );
         String time = matcher.group( "time" );
@@ -316,7 +297,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    private static DurationValue parseDuration( Matcher matcher )
+	private static DurationValue parseDuration( Matcher matcher )
     {
         int sign = "-".equals( matcher.group( "sign" ) ) ? -1 : 1;
         String y = matcher.group( "years" );
@@ -368,7 +349,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return parseDuration( sign, months, days, matcher, false, "hours", "minutes", "seconds", "subseconds" );
     }
 
-    private static DurationValue parseDateDuration( String year, Matcher matcher, boolean time )
+	private static DurationValue parseDateDuration( String year, Matcher matcher, boolean time )
     {
         int sign = "-".equals( matcher.group( "sign" ) ) ? -1 : 1;
         long months = 0;
@@ -417,7 +398,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    private static DurationValue parseDuration(
+	private static DurationValue parseDuration(
             int sign, long months, long days, Matcher matcher, boolean strict,
             String hour, String min, String sec, String sub )
     {
@@ -479,13 +460,13 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return duration( sign * months, sign * days, sign * seconds, sign * nanos );
     }
 
-    private static double parseFractional( String input, int pos )
+	private static double parseFractional( String input, int pos )
     {
         return parseDouble( input.charAt( pos ) == '.' ? input :
-                (input.substring( 0, pos ) + "." + input.substring( pos + 1 )) );
+                (new StringBuilder().append(input.substring( 0, pos )).append(".").append(input.substring( pos + 1 )).toString()) );
     }
 
-    private static int fractionPoint( String field )
+	private static int fractionPoint( String field )
     {
         if ( field == null )
         {
@@ -499,12 +480,12 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return fractionPoint;
     }
 
-    private static long optLong( String value )
+	private static long optLong( String value )
     {
         return value == null ? 0 : parseLong( value );
     }
 
-    static DurationValue durationBetween( Temporal from, Temporal to )
+	static DurationValue durationBetween( Temporal from, Temporal to )
     {
         long months = 0;
         long days = 0;
@@ -534,7 +515,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return newDuration( months, days, nanos / NANOS_PER_SECOND, nanos % NANOS_PER_SECOND );
     }
 
-    private static DurationValue durationInSecondsAndNanos( Temporal from, Temporal to )
+	private static DurationValue durationInSecondsAndNanos( Temporal from, Temporal to )
     {
         long seconds;
         long nanos;
@@ -558,11 +539,11 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
 
         if ( nanos < 0 && ( seconds > 0 || differenceIsLessThanOneSecond ) )
         {
-            nanos = NANOS_PER_SECOND + nanos;
+            nanos += NANOS_PER_SECOND;
         }
         else if ( nanos > 0 && ( seconds < 0 || differenceIsLessThanOneSecond ) )
         {
-            nanos = nanos - NANOS_PER_SECOND;
+            nanos -= NANOS_PER_SECOND;
         }
         if ( negate )
         {
@@ -572,7 +553,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return duration( 0, 0, seconds, nanos );
     }
 
-    @Override
+	@Override
     public boolean equals( Value other )
     {
         if ( other instanceof DurationValue )
@@ -589,31 +570,31 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    @Override
+	@Override
     public <E extends Exception> void writeTo( ValueWriter<E> writer ) throws E
     {
         writer.writeDuration( months, days, seconds, nanos );
     }
 
-    @Override
+	@Override
     public TemporalAmount asObjectCopy()
     {
         return this;
     }
 
-    @Override
+	@Override
     public String toString()
     {
         return prettyPrint();
     }
 
-    @Override
+	@Override
     public String getTypeName()
     {
         return "Duration";
     }
 
-    @Override
+	@Override
     public String prettyPrint()
     {
         if ( this == ZERO )
@@ -670,7 +651,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return str.toString();
     }
 
-    private void nanos( StringBuilder str, int nanos )
+	private void nanos( StringBuilder str, int nanos )
     {
         str.append( '.' );
         int n = nanos < 0 ? -nanos : nanos;
@@ -680,7 +661,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    private static void append( StringBuilder str, long quantity, char unit )
+	private static void append( StringBuilder str, long quantity, char unit )
     {
         if ( quantity != 0 )
         {
@@ -688,19 +669,19 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    @Override
+	@Override
     public ValueGroup valueGroup()
     {
         return ValueGroup.DURATION;
     }
 
-    @Override
+	@Override
     public NumberType numberType()
     {
         return NO_NUMBER;
     }
 
-    @Override
+	@Override
     protected int computeHash()
     {
         int result = (int) (months ^ (months >>> 32));
@@ -710,7 +691,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return result;
     }
 
-    @Override
+	@Override
     public long updateHash( HashFunction hashFunction, long hash )
     {
         hash = hashFunction.update( hash, months );
@@ -720,13 +701,13 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return hash;
     }
 
-    @Override
+	@Override
     public <T> T map( ValueMapper<T> mapper )
     {
         return mapper.mapDuration( this );
     }
 
-    @Override
+	@Override
     public long get( TemporalUnit unit )
     {
         if ( unit instanceof ChronoUnit )
@@ -748,7 +729,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         throw new UnsupportedTemporalUnitException( "Unsupported unit: " + unit );
     }
 
-    /**
+	/**
      * In contrast to {@link #get(TemporalUnit)}, this method supports more units, namely:
      *
      * years, hours, minutes, milliseconds, microseconds,
@@ -760,13 +741,13 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return Values.longValue( val );
     }
 
-    @Override
+	@Override
     public List<TemporalUnit> getUnits()
     {
         return UNITS;
     }
 
-    public DurationValue plus( long amount, TemporalUnit unit )
+	public DurationValue plus( long amount, TemporalUnit unit )
     {
         if ( unit instanceof ChronoUnit )
         {
@@ -807,7 +788,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         throw new UnsupportedOperationException( "Unsupported unit: " + unit );
     }
 
-    @Override
+	@Override
     public Temporal addTo( Temporal temporal )
     {
         if ( months != 0 && temporal.isSupported( MONTHS ) )
@@ -840,7 +821,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return temporal;
     }
 
-    @Override
+	@Override
     public Temporal subtractFrom( Temporal temporal )
     {
         if ( months != 0 && temporal.isSupported( MONTHS ) )
@@ -873,7 +854,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return temporal;
     }
 
-    public DurationValue add( DurationValue that )
+	public DurationValue add( DurationValue that )
     {
         try
         {
@@ -889,7 +870,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    public DurationValue sub( DurationValue that )
+	public DurationValue sub( DurationValue that )
     {
         try
         {
@@ -905,7 +886,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    public DurationValue mul( NumberValue number )
+	public DurationValue mul( NumberValue number )
     {
         try
         {
@@ -931,7 +912,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         throw new InvalidValuesArgumentException( "Factor must be either integer of floating point number." );
     }
 
-    public DurationValue div( NumberValue number )
+	public DurationValue div( NumberValue number )
     {
         double divisor = number.doubleValue();
         try
@@ -944,7 +925,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    /**
+	/**
      * Returns an approximation of the provided values by rounding to whole units and recalculating
      * the remainder into the smaller units.
      */
@@ -967,7 +948,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return duration( monthsAsLong, daysAsLong, secondsAsLong, nanosAsLong );
     }
 
-    /**
+	/**
      * Will cast a double to a long, but only if it is inside the limits of [Long.MIN_VALUE, LONG.MAX_VALUE]
      * We need this to detect overflow errors, whereas normal truncation is OK while approximating.
      */
@@ -980,7 +961,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         return (long) d;
     }
 
-    private static Temporal assertValidPlus( Temporal temporal, long amountToAdd, TemporalUnit unit )
+	private static Temporal assertValidPlus( Temporal temporal, long amountToAdd, TemporalUnit unit )
     {
         try
         {
@@ -992,7 +973,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    private static Temporal assertValidMinus( Temporal temporal, long amountToAdd, TemporalUnit unit )
+	private static Temporal assertValidMinus( Temporal temporal, long amountToAdd, TemporalUnit unit )
     {
         try
         {
@@ -1004,7 +985,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    private static long assertValidUntil( Temporal from, Temporal to, TemporalUnit unit )
+	private static long assertValidUntil( Temporal from, Temporal to, TemporalUnit unit )
     {
         try
         {
@@ -1020,34 +1001,38 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
     }
 
-    private InvalidValuesArgumentException invalidDuration( long months, long days, long seconds, long nanos, ArithmeticException e )
+	private InvalidValuesArgumentException invalidDuration( long months, long days, long seconds, long nanos, ArithmeticException e )
     {
         return new InvalidValuesArgumentException(
                 String.format( "Invalid value for duration, will cause overflow. Value was months=%d, days=%d, seconds=%d, nanos=%d",
                         months, days, seconds, nanos ), e );
     }
 
-    private InvalidValuesArgumentException invalidDurationAdd( DurationValue o1, DurationValue o2, ArithmeticException e )
+	private InvalidValuesArgumentException invalidDurationAdd( DurationValue o1, DurationValue o2, ArithmeticException e )
     {
         return new InvalidValuesArgumentException(
                 String.format( "Can not add duration %s and %s without causing overflow.", o1.toString(), o2.toString() ), e );
     }
 
-    private InvalidValuesArgumentException invalidDurationSubtract( DurationValue o1, DurationValue o2, ArithmeticException e )
+	private InvalidValuesArgumentException invalidDurationSubtract( DurationValue o1, DurationValue o2, ArithmeticException e )
     {
         return new InvalidValuesArgumentException(
                 String.format( "Can not subtract duration %s and %s without causing overflow.", o1.toString(), o2.toString() ), e );
     }
 
-    private InvalidValuesArgumentException invalidDurationMultiply( DurationValue o1, NumberValue numberValue, ArithmeticException e )
+	private InvalidValuesArgumentException invalidDurationMultiply( DurationValue o1, NumberValue numberValue, ArithmeticException e )
     {
         return new InvalidValuesArgumentException(
                 String.format( "Can not multiply duration %s with %s without causing overflow.", o1.toString(), numberValue.toString() ), e );
     }
 
-    private InvalidValuesArgumentException invalidDurationDivision( DurationValue o1, NumberValue numberValue, ArithmeticException e )
+	private InvalidValuesArgumentException invalidDurationDivision( DurationValue o1, NumberValue numberValue, ArithmeticException e )
     {
         return new InvalidValuesArgumentException(
                 String.format( "Can not divide duration %s with %s without causing overflow.", o1.toString(), numberValue.toString() ), e );
+    }
+
+    public abstract static class Compiler<Input> extends DurationBuilder<Input,MethodHandle>
+    {
     }
 }

@@ -277,15 +277,15 @@ public class KernelStatement extends CloseableResourceManager implements TxState
 
     private void recordOpenCloseMethods()
     {
-        if ( RECORD_STATEMENTS_TRACES )
-        {
-            if ( statementOpenCloseCalls.size() > STATEMENT_TRACK_HISTORY_MAX_SIZE )
-            {
-                statementOpenCloseCalls.pop();
-            }
-            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-            statementOpenCloseCalls.add( Arrays.copyOfRange(stackTrace, 2, stackTrace.length) );
-        }
+        if (!RECORD_STATEMENTS_TRACES) {
+			return;
+		}
+		if ( statementOpenCloseCalls.size() > STATEMENT_TRACK_HISTORY_MAX_SIZE )
+		{
+		    statementOpenCloseCalls.pop();
+		}
+		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+		statementOpenCloseCalls.add( Arrays.copyOfRange(stackTrace, 2, stackTrace.length) );
     }
 
     public ClockContext clocks()
@@ -314,11 +314,11 @@ public class KernelStatement extends CloseableResourceManager implements TxState
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             PrintStream printStream = new PrintStream( out );
             printStream.println();
-            printStream.println( "Last " + STATEMENT_TRACK_HISTORY_MAX_SIZE + " statements open/close stack traces are:" );
+            printStream.println( new StringBuilder().append("Last ").append(STATEMENT_TRACK_HISTORY_MAX_SIZE).append(" statements open/close stack traces are:").toString() );
             int element = 0;
             for ( StackTraceElement[] traceElements : openCloseTraces )
             {
-                printStream.println( StringUtils.center( "*StackTrace " + element + "*", separatorLength, paddingString ) );
+                printStream.println( StringUtils.center( new StringBuilder().append("*StackTrace ").append(element).append("*").toString(), separatorLength, paddingString ) );
                 for ( StackTraceElement traceElement : traceElements )
                 {
                     printStream.println( "\tat " + traceElement );

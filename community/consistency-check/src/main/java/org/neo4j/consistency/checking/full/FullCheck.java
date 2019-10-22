@@ -238,10 +238,7 @@ public class FullCheck
             handler.updateSummary();
             listener.add( 1 );
         }
-        for ( StoreIndexDescriptor toRemove : rulesToRemove )
-        {
-            indexes.remove( toRemove );
-        }
+        rulesToRemove.forEach(indexes::remove);
     }
 
     private static <T extends AbstractBaseRecord> T[] readAllRecords( Class<T> type, RecordStore<T> store )

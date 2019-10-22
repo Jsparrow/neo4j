@@ -51,16 +51,16 @@ public class DebugUtil
 
     public static void logTrace( int skip, int limit, String fmt, Object... args )
     {
-        if ( enabledAssertions() )
-        {
-            Thread thread = Thread.currentThread();
-            String threadName = thread.getName();
-            ThreadGroup group = thread.getThreadGroup();
-            String groupPart = group != null ? " in group " + group.getName() : "";
-            String message = "[" + threadName + groupPart + "] " + String.format( fmt, args );
-            TraceLog traceLog = new TraceLog( message );
-            printLimitedStackTrace( System.err, traceLog, skip, limit );
-        }
+        if (!enabledAssertions()) {
+			return;
+		}
+		Thread thread = Thread.currentThread();
+		String threadName = thread.getName();
+		ThreadGroup group = thread.getThreadGroup();
+		String groupPart = group != null ? " in group " + group.getName() : "";
+		String message = new StringBuilder().append("[").append(threadName).append(groupPart).append("] ").append(String.format( fmt, args )).toString();
+		TraceLog traceLog = new TraceLog( message );
+		printLimitedStackTrace( System.err, traceLog, skip, limit );
     }
 
     private static void printLimitedStackTrace( PrintStream out, Throwable cause, int skip, int limit )
@@ -172,7 +172,22 @@ public class DebugUtil
         return item -> item.getMethodName().equals( methodName );
     }
 
-    public static class StackTracer
+    private static boolean enabledAssertions()
+    {
+        boolean enabled = false;
+        //noinspection AssertWithSideEffects,ConstantConditions
+        assert enabled = true : "A trick to set this variable to true if assertions are enabled";
+        //noinspection ConstantConditions
+        return enabled;
+    }
+
+	public static long time( long startTime, String message )
+    {
+        System.out.println( new StringBuilder().append(duration( currentTimeMillis() - startTime )).append(": ").append(message).toString() );
+        return currentTimeMillis();
+    }
+
+	public static class StackTracer
     {
         private final Map<CallStack, AtomicInteger> uniqueStackTraces = new HashMap<>();
         private boolean considerMessages = true;
@@ -304,15 +319,6 @@ public class DebugUtil
         }
     }
 
-    private static boolean enabledAssertions()
-    {
-        boolean enabled = false;
-        //noinspection AssertWithSideEffects,ConstantConditions
-        assert enabled = true : "A trick to set this variable to true if assertions are enabled";
-        //noinspection ConstantConditions
-        return enabled;
-    }
-
     /**
      * Super simple utility for determining where most time is spent when you don't know where to even start.
      * It could be used to home in on right place in a test or in a sequence of operations or similar.
@@ -338,7 +344,7 @@ public class DebugUtil
         public void at( String point )
         {
             long duration = currentTime() - startTime;
-            System.out.println( duration( unit.toMillis( duration ) ) + " @ " + point );
+            System.out.println( new StringBuilder().append(duration( unit.toMillis( duration ) )).append(" @ ").append(point).toString() );
             startTime = currentTime();
         }
 
@@ -347,7 +353,12 @@ public class DebugUtil
             return new Millis();
         }
 
-        private static class Millis extends Timer
+        public static Timer nanos()
+        {
+            return new Nanos();
+        }
+
+		private static class Millis extends Timer
         {
             Millis()
             {
@@ -359,11 +370,6 @@ public class DebugUtil
             {
                 return currentTimeMillis();
             }
-        }
-
-        public static Timer nanos()
-        {
-            return new Nanos();
         }
 
         private static class Nanos extends Timer
@@ -379,11 +385,5 @@ public class DebugUtil
                 return nanoTime();
             }
         }
-    }
-
-    public static long time( long startTime, String message )
-    {
-        System.out.println( duration( currentTimeMillis() - startTime ) + ": " + message );
-        return currentTimeMillis();
     }
 }

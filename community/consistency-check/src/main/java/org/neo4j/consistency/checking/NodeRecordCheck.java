@@ -39,7 +39,18 @@ import static org.neo4j.helpers.ArrayUtil.union;
 
 public class NodeRecordCheck extends PrimitiveRecordCheck<NodeRecord, ConsistencyReport.NodeConsistencyReport>
 {
-    @SafeVarargs
+    public NodeRecordCheck()
+    {
+        this( RelationshipField.NEXT_REL, LabelsField.LABELS );
+    }
+
+	@SafeVarargs
+    NodeRecordCheck( RecordField<NodeRecord, ConsistencyReport.NodeConsistencyReport>... fields )
+    {
+        super( fields );
+    }
+
+	@SafeVarargs
     static NodeRecordCheck forSparseNodes( RecordField<NodeRecord,ConsistencyReport.NodeConsistencyReport>... additional )
     {
         RecordField<NodeRecord,ConsistencyReport.NodeConsistencyReport>[] basic =
@@ -47,7 +58,7 @@ public class NodeRecordCheck extends PrimitiveRecordCheck<NodeRecord, Consistenc
         return new NodeRecordCheck( union( basic, additional ) );
     }
 
-    @SafeVarargs
+	@SafeVarargs
     static NodeRecordCheck forDenseNodes( RecordField<NodeRecord,ConsistencyReport.NodeConsistencyReport>... additional )
     {
         RecordField<NodeRecord,ConsistencyReport.NodeConsistencyReport>[] basic =
@@ -56,28 +67,17 @@ public class NodeRecordCheck extends PrimitiveRecordCheck<NodeRecord, Consistenc
         return new NodeRecordCheck( union( basic, additional ) );
     }
 
-    public static NodeRecordCheck toCheckNextRel()
+	public static NodeRecordCheck toCheckNextRel()
     {
         return new NodeRecordCheck( RelationshipField.NEXT_REL );
     }
 
-    public static NodeRecordCheck toCheckNextRelationshipGroup()
+	public static NodeRecordCheck toCheckNextRelationshipGroup()
     {
         return new NodeRecordCheck( RelationshipGroupField.NEXT_GROUP );
     }
 
-    @SafeVarargs
-    NodeRecordCheck( RecordField<NodeRecord, ConsistencyReport.NodeConsistencyReport>... fields )
-    {
-        super( fields );
-    }
-
-    public NodeRecordCheck()
-    {
-        this( RelationshipField.NEXT_REL, LabelsField.LABELS );
-    }
-
-    enum RelationshipGroupField implements RecordField<NodeRecord, ConsistencyReport.NodeConsistencyReport>,
+	enum RelationshipGroupField implements RecordField<NodeRecord, ConsistencyReport.NodeConsistencyReport>,
             ComparativeRecordChecker<NodeRecord, RelationshipGroupRecord, ConsistencyReport.NodeConsistencyReport>
     {
         NEXT_GROUP
@@ -117,7 +117,7 @@ public class NodeRecordCheck extends PrimitiveRecordCheck<NodeRecord, Consistenc
         }
     }
 
-    enum RelationshipField implements RecordField<NodeRecord, ConsistencyReport.NodeConsistencyReport>,
+	enum RelationshipField implements RecordField<NodeRecord, ConsistencyReport.NodeConsistencyReport>,
             ComparativeRecordChecker<NodeRecord, RelationshipRecord, ConsistencyReport.NodeConsistencyReport>
     {
         NEXT_REL
@@ -181,7 +181,7 @@ public class NodeRecordCheck extends PrimitiveRecordCheck<NodeRecord, Consistenc
         }
     }
 
-    enum LabelsField implements RecordField<NodeRecord, ConsistencyReport.NodeConsistencyReport>,
+	enum LabelsField implements RecordField<NodeRecord, ConsistencyReport.NodeConsistencyReport>,
             ComparativeRecordChecker<NodeRecord, LabelTokenRecord, ConsistencyReport.NodeConsistencyReport>
     {
         LABELS

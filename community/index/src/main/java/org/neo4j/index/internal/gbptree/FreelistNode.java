@@ -61,7 +61,7 @@ class FreelistNode
     {
         if ( pageId == NO_PAGE_ID )
         {
-            throw new IllegalArgumentException( "Tried to write pageId " + pageId + " which means null" );
+            throw new IllegalArgumentException( new StringBuilder().append("Tried to write pageId ").append(pageId).append(" which means null").toString() );
         }
         assertPos( pos );
         GenerationSafePointer.assertGenerationOnWrite( unstableGeneration );
@@ -74,7 +74,7 @@ class FreelistNode
     {
         if ( pos >= maxEntries )
         {
-            throw new IllegalArgumentException( "Pos " + pos + " too big, max entries " + maxEntries );
+            throw new IllegalArgumentException( new StringBuilder().append("Pos ").append(pos).append(" too big, max entries ").append(maxEntries).toString() );
         }
         if ( pos < 0 )
         {

@@ -166,8 +166,7 @@ public class LogTruncationTest
                 }
                 else if ( !isAbstract( cmd.getModifiers() ) )
                 {
-                    throw new AssertionError( "Unknown command type: " + cmd + ", please add missing instantiation to "
-                            + "test serialization of this command." );
+                    throw new AssertionError( new StringBuilder().append("Unknown command type: ").append(cmd).append(", please add missing instantiation to ").append("test serialization of this command.").toString() );
                 }
             }
         }
@@ -181,8 +180,7 @@ public class LogTruncationTest
                 }
                 else if ( !isAbstract( cmd.getModifiers() ) )
                 {
-                    throw new AssertionError( "Unknown command type: " + cmd + ", please add missing instantiation to "
-                            + "test serialization of this command." );
+                    throw new AssertionError( new StringBuilder().append("Unknown command type: ").append(cmd).append(", please add missing instantiation to ").append("test serialization of this command.").toString() );
                 }
             }
         }
@@ -202,7 +200,7 @@ public class LogTruncationTest
         }
         catch ( Exception e )
         {
-            throw new AssertionError( "Failed to deserialize " + cmd.toString() + ", because: ", e );
+            throw new AssertionError( new StringBuilder().append("Failed to deserialize ").append(cmd.toString()).append(", because: ").toString(), e );
         }
         bytesSuccessfullyWritten--;
         while ( bytesSuccessfullyWritten-- > 0 )
@@ -211,8 +209,7 @@ public class LogTruncationTest
             writer.serialize( new PhysicalTransactionRepresentation( singletonList( cmd ) ) );
             inMemoryChannel.truncateTo( bytesSuccessfullyWritten );
             LogEntry deserialized = logEntryReader.readLogEntry( inMemoryChannel );
-            assertNull( "Deserialization did not detect log truncation!" +
-                    "Record: " + cmd + ", deserialized: " + deserialized, deserialized );
+            assertNull( new StringBuilder().append("Deserialization did not detect log truncation!").append("Record: ").append(cmd).append(", deserialized: ").append(deserialized).toString(), deserialized );
         }
     }
 

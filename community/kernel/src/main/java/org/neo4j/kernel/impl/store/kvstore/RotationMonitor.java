@@ -23,14 +23,6 @@ import java.io.File;
 
 public interface RotationMonitor
 {
-    void failedToOpenStoreFile( File path, Exception failure );
-
-    void beforeRotation( File from, File next, Headers headers );
-
-    void rotationFailed( File from, File next, Headers headers, Exception failure );
-
-    void rotationSucceeded( File from, File next, Headers headers );
-
     RotationMonitor NONE = new RotationMonitor()
     {
         @Override
@@ -53,4 +45,12 @@ public interface RotationMonitor
         {
         }
     };
+
+	void failedToOpenStoreFile( File path, Exception failure );
+
+	void beforeRotation( File from, File next, Headers headers );
+
+	void rotationFailed( File from, File next, Headers headers, Exception failure );
+
+	void rotationSucceeded( File from, File next, Headers headers );
 }

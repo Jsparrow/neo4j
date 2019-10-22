@@ -59,7 +59,6 @@ import org.neo4j.test.rule.PageCacheRule;
 import org.neo4j.test.rule.TestDirectory;
 import org.neo4j.test.rule.fs.EphemeralFileSystemRule;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -194,7 +193,7 @@ public class NodeStoreTest
 
         // WHEN
         DynamicRecord dynamicRecord = new DynamicRecord( 1 );
-        record.setLabelField( 0x8000000001L, asList( dynamicRecord ) );
+        record.setLabelField( 0x8000000001L, Collections.singletonList( dynamicRecord ) );
 
         // THEN
         assertFalse( record.isLight() );

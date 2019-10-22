@@ -92,7 +92,8 @@ public class LuceneRecoveryIT
                         }
                         if ( !found )
                         {
-                            throw new IllegalStateException( node + " has property '" + key + "'='" + value + "', but not in index" );
+                            throw new IllegalStateException( new StringBuilder().append(node).append(" has property '").append(key).append("'='").append(value)
+									.append("', but not in index").toString() );
                         }
                     }
                 }
@@ -106,9 +107,7 @@ public class LuceneRecoveryIT
                     // is about an explicit (a.k.a. legacy/manual) index the db cannot just re-populate the
                     // index automatically. We have to consider this an OK scenario and we cannot
                     // verify the index any further if it happens.
-                    System.err.println( "Lucene exception happened during recovery after a real crash. " +
-                            "It may be that the index is corrupt somehow and this is out of control and not " +
-                            "something this test can really improve on right now. Printing the exception for reference" );
+                    System.err.println( new StringBuilder().append("Lucene exception happened during recovery after a real crash. ").append("It may be that the index is corrupt somehow and this is out of control and not ").append("something this test can really improve on right now. Printing the exception for reference").toString() );
                     e.printStackTrace();
                     return;
                 }

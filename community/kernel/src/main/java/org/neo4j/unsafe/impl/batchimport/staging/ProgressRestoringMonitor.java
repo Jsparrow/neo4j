@@ -41,11 +41,10 @@ public class ProgressRestoringMonitor implements ExternalMonitor, Monitor
     @Override
     public boolean somethingElseBrokeMyNiceOutput()
     {
-        if ( detailsPrinted )
-        {
-            detailsPrinted = false;
-            return true;
-        }
-        return false;
+        if (!detailsPrinted) {
+			return false;
+		}
+		detailsPrinted = false;
+		return true;
     }
 }

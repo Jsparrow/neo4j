@@ -142,12 +142,12 @@ public class BoltStateMachineV1 implements BoltStateMachine
     {
         BoltStateMachineState preState = state;
         state = state.process( message, context );
-        if ( state == null )
-        {
-            String msg = "Message '" + message + "' cannot be handled by a session in the " + preState.name() + " state.";
-            fail( Neo4jError.fatalFrom( Status.Request.Invalid, msg ) );
-            throw new BoltProtocolBreachFatality( msg );
-        }
+        if (state != null) {
+			return;
+		}
+		String msg = new StringBuilder().append("Message '").append(message).append("' cannot be handled by a session in the ").append(preState.name()).append(" state.").toString();
+		fail( Neo4jError.fatalFrom( Status.Request.Invalid, msg ) );
+		throw new BoltProtocolBreachFatality( msg );
     }
 
     @Override
@@ -287,19 +287,18 @@ public class BoltStateMachineV1 implements BoltStateMachine
         Neo4jError error = fatal ? Neo4jError.fatalFrom( cause ) : Neo4jError.from( cause );
         fail( error );
 
-        if ( error.isFatal() )
-        {
-            if ( ExceptionUtils.indexOfType( cause, AuthorizationExpiredException.class ) != -1 )
-            {
-                throw new BoltConnectionAuthFatality( "Failed to process a bolt message", cause );
-            }
-            if ( cause instanceof AuthenticationException )
-            {
-                throw new BoltConnectionAuthFatality( (AuthenticationException) cause );
-            }
-
-            throw new BoltConnectionFatality( "Failed to process a bolt message", cause );
-        }
+        if (!error.isFatal()) {
+			return;
+		}
+		if ( ExceptionUtils.indexOfType( cause, AuthorizationExpiredException.class ) != -1 )
+		{
+		    throw new BoltConnectionAuthFatality( "Failed to process a bolt message", cause );
+		}
+		if ( cause instanceof AuthenticationException )
+		{
+		    throw new BoltConnectionAuthFatality( (AuthenticationException) cause );
+		}
+		throw new BoltConnectionFatality( "Failed to process a bolt message", cause );
     }
 
     public BoltStateMachineState state()

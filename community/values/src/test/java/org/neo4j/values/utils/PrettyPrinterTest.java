@@ -307,10 +307,7 @@ class PrettyPrinterTest
         pointValue.writeTo( printer );
 
         // Then
-        assertThat( printer.value(), equalTo( "{geometry: {type: \"Point\", coordinates: [11.0, 12.0], " +
-                                              "crs: {type: link, properties: " +
-                                              "{href: \"http://spatialreference.org/ref/sr-org/7203/\", code: " +
-                                              "7203}}}}" ) );
+        assertThat( printer.value(), equalTo( new StringBuilder().append("{geometry: {type: \"Point\", coordinates: [11.0, 12.0], ").append("crs: {type: link, properties: ").append("{href: \"http://spatialreference.org/ref/sr-org/7203/\", code: ").append("7203}}}}").toString() ) );
     }
 
     @Test

@@ -74,27 +74,22 @@ import static org.neo4j.kernel.api.index.IndexQueryHelper.remove;
 
 public class UniqueDatabaseIndexPopulatorTest
 {
-    private final CleanupRule cleanup = new CleanupRule();
-    private final TestDirectory testDir = TestDirectory.testDirectory();
-    private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
-
-    @Rule
-    public final RuleChain ruleChain = RuleChain.outerRule( testDir ).around( cleanup ).around( fileSystemRule );
-
     private static final int LABEL_ID = 1;
-    private static final int PROPERTY_KEY_ID = 2;
+	private static final int PROPERTY_KEY_ID = 2;
+	private static final IndexDescriptor descriptor = TestIndexDescriptorFactory.forLabel( LABEL_ID, PROPERTY_KEY_ID );
+	private final CleanupRule cleanup = new CleanupRule();
+	private final TestDirectory testDir = TestDirectory.testDirectory();
+	private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	@Rule
+    public final RuleChain ruleChain = RuleChain.outerRule( testDir ).around( cleanup ).around( fileSystemRule );
+	private final DirectoryFactory directoryFactory = new DirectoryFactory.InMemoryDirectoryFactory();
+	private final NodePropertyAccessor nodePropertyAccessor = mock( NodePropertyAccessor.class );
+	private PartitionedIndexStorage indexStorage;
+	private SchemaIndex index;
+	private UniqueLuceneIndexPopulator populator;
+	private SchemaDescriptor schemaDescriptor;
 
-    private final DirectoryFactory directoryFactory = new DirectoryFactory.InMemoryDirectoryFactory();
-    private static final IndexDescriptor descriptor = TestIndexDescriptorFactory.forLabel( LABEL_ID, PROPERTY_KEY_ID );
-
-    private final NodePropertyAccessor nodePropertyAccessor = mock( NodePropertyAccessor.class );
-
-    private PartitionedIndexStorage indexStorage;
-    private SchemaIndex index;
-    private UniqueLuceneIndexPopulator populator;
-    private SchemaDescriptor schemaDescriptor;
-
-    @Before
+	@Before
     public void setUp()
     {
         File folder = testDir.directory( "folder" );
@@ -105,7 +100,7 @@ public class UniqueDatabaseIndexPopulatorTest
         schemaDescriptor = descriptor.schema();
     }
 
-    @After
+	@After
     public void tearDown() throws Exception
     {
         if ( populator != null )
@@ -115,7 +110,7 @@ public class UniqueDatabaseIndexPopulatorTest
         IOUtils.closeAll( index, directoryFactory );
     }
 
-    @Test
+	@Test
     public void shouldVerifyThatThereAreNoDuplicates() throws Exception
     {
         // given
@@ -130,18 +125,18 @@ public class UniqueDatabaseIndexPopulatorTest
         populator.close( true );
 
         // then
-        assertEquals( asList( 1L ), getAllNodes( getDirectory(), "value1" ) );
-        assertEquals( asList( 2L ), getAllNodes( getDirectory(), "value2" ) );
-        assertEquals( asList( 3L ), getAllNodes( getDirectory(), "value3" ) );
+        assertEquals( Collections.singletonList( 1L ), getAllNodes( getDirectory(), "value1" ) );
+        assertEquals( Collections.singletonList( 2L ), getAllNodes( getDirectory(), "value2" ) );
+        assertEquals( Collections.singletonList( 3L ), getAllNodes( getDirectory(), "value3" ) );
     }
 
-    private Directory getDirectory() throws IOException
+	private Directory getDirectory() throws IOException
     {
         File partitionFolder = indexStorage.getPartitionFolder( 1 );
         return indexStorage.openDirectory( partitionFolder );
     }
 
-    @Test
+	@Test
     public void shouldUpdateEntryForNodeThatHasAlreadyBeenIndexed() throws Exception
     {
         // given
@@ -158,10 +153,10 @@ public class UniqueDatabaseIndexPopulatorTest
 
         // then
         assertEquals( Collections.EMPTY_LIST, getAllNodes( getDirectory(), "value1" ) );
-        assertEquals( asList( 1L ), getAllNodes( getDirectory(), "value2" ) );
+        assertEquals( Collections.singletonList( 1L ), getAllNodes( getDirectory(), "value2" ) );
     }
 
-    @Test
+	@Test
     public void shouldUpdateEntryForNodeThatHasPropertyRemovedAndThenAddedAgain() throws Exception
     {
         // given
@@ -178,10 +173,10 @@ public class UniqueDatabaseIndexPopulatorTest
         populator.close( true );
 
         // then
-        assertEquals( asList(1L), getAllNodes( getDirectory(), "value1" ) );
+        assertEquals( Collections.singletonList(1L), getAllNodes( getDirectory(), "value1" ) );
     }
 
-    @Test
+	@Test
     public void shouldRemoveEntryForNodeThatHasAlreadyBeenIndexed() throws Exception
     {
         // given
@@ -200,7 +195,7 @@ public class UniqueDatabaseIndexPopulatorTest
         assertEquals( Collections.EMPTY_LIST, getAllNodes( getDirectory(), "value1" ) );
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToHandleSwappingOfIndexValues() throws Exception
     {
         // given
@@ -218,11 +213,11 @@ public class UniqueDatabaseIndexPopulatorTest
         populator.close( true );
 
         // then
-        assertEquals( asList( 2L ), getAllNodes( getDirectory(), "value1" ) );
-        assertEquals( asList( 1L ), getAllNodes( getDirectory(), "value2" ) );
+        assertEquals( Collections.singletonList( 2L ), getAllNodes( getDirectory(), "value1" ) );
+        assertEquals( Collections.singletonList( 1L ), getAllNodes( getDirectory(), "value2" ) );
     }
 
-    @Test
+	@Test
     public void shouldFailAtVerificationStageWithAlreadyIndexedStringValue() throws Exception
     {
         // given
@@ -252,7 +247,7 @@ public class UniqueDatabaseIndexPopulatorTest
         }
     }
 
-    @Test
+	@Test
     public void shouldFailAtVerificationStageWithAlreadyIndexedNumberValue() throws Exception
     {
         // given
@@ -281,7 +276,7 @@ public class UniqueDatabaseIndexPopulatorTest
         }
     }
 
-    @Test
+	@Test
     public void shouldRejectDuplicateEntryWhenUsingPopulatingUpdater() throws Exception
     {
         // given
@@ -295,12 +290,9 @@ public class UniqueDatabaseIndexPopulatorTest
         when( nodePropertyAccessor.getNodePropertyValue( 3, PROPERTY_KEY_ID ) ).thenReturn( value );
 
         // when
-        try
+        try (IndexUpdater updater = populator.newPopulatingUpdater(nodePropertyAccessor))
         {
-            IndexUpdater updater = populator.newPopulatingUpdater( nodePropertyAccessor );
             updater.process( add( 3, schemaDescriptor, "value1" ) );
-            updater.close();
-
             fail( "should have thrown exception" );
         }
         // then
@@ -312,7 +304,7 @@ public class UniqueDatabaseIndexPopulatorTest
         }
     }
 
-    @Test
+	@Test
     public void shouldRejectDuplicateEntryAfterUsingPopulatingUpdater() throws Exception
     {
         // given
@@ -343,7 +335,7 @@ public class UniqueDatabaseIndexPopulatorTest
         }
     }
 
-    @Test
+	@Test
     public void shouldNotRejectDuplicateEntryOnSameNodeIdAfterUsingPopulatingUpdater() throws Exception
     {
         // given
@@ -364,12 +356,12 @@ public class UniqueDatabaseIndexPopulatorTest
         populator.close( true );
 
         // then
-        assertEquals( asList( 1L ), getAllNodes( getDirectory(), "value1" ) );
-        assertEquals( asList( 2L ), getAllNodes( getDirectory(), "value2" ) );
-        assertEquals( asList( 3L ), getAllNodes( getDirectory(), "value3" ) );
+        assertEquals( Collections.singletonList( 1L ), getAllNodes( getDirectory(), "value1" ) );
+        assertEquals( Collections.singletonList( 2L ), getAllNodes( getDirectory(), "value2" ) );
+        assertEquals( Collections.singletonList( 3L ), getAllNodes( getDirectory(), "value3" ) );
     }
 
-    @Test
+	@Test
     public void shouldNotRejectIndexCollisionsCausedByPrecisionLossAsDuplicates() throws Exception
     {
         // given
@@ -388,7 +380,7 @@ public class UniqueDatabaseIndexPopulatorTest
         populator.verifyDeferredConstraints( nodePropertyAccessor );
     }
 
-    @Test
+	@Test
     public void shouldCheckAllCollisionsFromPopulatorAdd() throws Exception
     {
         // given
@@ -424,7 +416,7 @@ public class UniqueDatabaseIndexPopulatorTest
         }
     }
 
-    @Test
+	@Test
     public void shouldCheckAllCollisionsFromUpdaterClose() throws Exception
     {
         // given
@@ -459,7 +451,7 @@ public class UniqueDatabaseIndexPopulatorTest
         }
     }
 
-    @Test
+	@Test
     public void shouldReleaseSearcherProperlyAfterVerifyingDeferredConstraints() throws Exception
     {
         // given
@@ -497,7 +489,7 @@ public class UniqueDatabaseIndexPopulatorTest
         }, 5, SECONDS );
     }
 
-    @Test
+	@Test
     public void sampleEmptyIndex() throws Exception
     {
         populator = newPopulator();
@@ -507,7 +499,7 @@ public class UniqueDatabaseIndexPopulatorTest
         assertEquals( new IndexSample(), sample );
     }
 
-    @Test
+	@Test
     public void sampleIncludedUpdates() throws Exception
     {
         LabelSchemaDescriptor schemaDescriptor = SchemaDescriptorFactory.forLabel( 1, 1 );
@@ -525,7 +517,7 @@ public class UniqueDatabaseIndexPopulatorTest
         assertEquals( new IndexSample( 4, 4, 4 ), sample );
     }
 
-    @Test
+	@Test
     public void addUpdates() throws Exception
     {
         populator = newPopulator();
@@ -545,21 +537,21 @@ public class UniqueDatabaseIndexPopulatorTest
         }
     }
 
-    private UniqueLuceneIndexPopulator newPopulator() throws IOException
+	private UniqueLuceneIndexPopulator newPopulator() throws IOException
     {
         UniqueLuceneIndexPopulator populator = new UniqueLuceneIndexPopulator( index, descriptor );
         populator.create();
         return populator;
     }
 
-    private static void addUpdate( UniqueLuceneIndexPopulator populator, long nodeId, Object value )
+	private static void addUpdate( UniqueLuceneIndexPopulator populator, long nodeId, Object value )
             throws IOException
     {
         IndexEntryUpdate<?> update = add( nodeId, descriptor.schema(), value );
-        populator.add( asList( update ) );
+        populator.add( Collections.singletonList( update ) );
     }
 
-    private List<Long> getAllNodes( Directory directory, Object value ) throws IOException
+	private List<Long> getAllNodes( Directory directory, Object value ) throws IOException
     {
         return AllNodesCollector.getAllNodes( directory, Values.of( value ) );
     }

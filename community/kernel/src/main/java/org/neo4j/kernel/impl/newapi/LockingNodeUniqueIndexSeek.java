@@ -47,7 +47,7 @@ public class LockingNodeUniqueIndexSeek
         int[] entityTokenIds = index.schema().getEntityTokenIds();
         if ( entityTokenIds.length != 1 )
         {
-            throw new IndexNotApplicableKernelException( "Multi-token index " + index + " does not support uniqueness." );
+            throw new IndexNotApplicableKernelException( new StringBuilder().append("Multi-token index ").append(index).append(" does not support uniqueness.").toString() );
         }
         long indexEntryId = indexEntryResourceId( entityTokenIds[0], predicates );
 

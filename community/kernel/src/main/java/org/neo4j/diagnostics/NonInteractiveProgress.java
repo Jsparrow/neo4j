@@ -52,7 +52,7 @@ public class NonInteractiveProgress implements DiagnosticsReporterProgress
     @Override
     public void started( long currentStepIndex, String target )
     {
-        out.println( currentStepIndex + "/" + totalSteps + " " + target );
+        out.println( new StringBuilder().append(currentStepIndex).append("/").append(totalSteps).append(" ").append(target).toString() );
         lastPercentage = 0;
     }
 

@@ -43,7 +43,7 @@ import static org.neo4j.kernel.impl.store.record.AbstractBaseRecord.NO_ID;
 public class ReferencesTest
 {
     // This value the largest possible high limit id +1 (see HighLimitV3_1_0)
-    private static long MAX_ID_LIMIT = 1L << 50;
+    private static long maxIdLimit = 1L << 50;
 
     @Test
     public void shouldPreserveNoId()
@@ -64,7 +64,7 @@ public class ReferencesTest
         ThreadLocalRandom random = ThreadLocalRandom.current();
         for ( int i = 0; i < 1000; i++ )
         {
-            long reference = random.nextLong( MAX_ID_LIMIT );
+            long reference = random.nextLong( maxIdLimit );
             int token = random.nextInt(Integer.MAX_VALUE);
 
             assertThat( clearEncoding( RelationshipReferenceEncoding.encodeGroup( reference ) ), equalTo( reference ) );
@@ -84,7 +84,7 @@ public class ReferencesTest
         ThreadLocalRandom random = ThreadLocalRandom.current();
         for ( int i = 0; i < 1000; i++ )
         {
-            long reference = random.nextLong( MAX_ID_LIMIT );
+            long reference = random.nextLong( maxIdLimit );
             assertNotEquals( FILTER, parseEncoding( reference ) );
             assertEquals( FILTER, parseEncoding( RelationshipReferenceEncoding.encodeForFiltering( reference ) ) );
             assertTrue( "encoded reference is negative", RelationshipReferenceEncoding.encodeForFiltering( reference ) < 0 );
@@ -97,7 +97,7 @@ public class ReferencesTest
         ThreadLocalRandom random = ThreadLocalRandom.current();
         for ( int i = 0; i < 1000; i++ )
         {
-            long reference = random.nextLong( MAX_ID_LIMIT );
+            long reference = random.nextLong( maxIdLimit );
             assertNotEquals( FILTER_TX_STATE, parseEncoding( reference ) );
             assertEquals( FILTER_TX_STATE, parseEncoding( RelationshipReferenceEncoding.encodeForTxStateFiltering( reference ) ) );
             assertTrue( "encoded reference is negative", RelationshipReferenceEncoding.encodeForTxStateFiltering( reference ) < 0 );
@@ -110,7 +110,7 @@ public class ReferencesTest
         ThreadLocalRandom random = ThreadLocalRandom.current();
         for ( int i = 0; i < 1000; i++ )
         {
-            long reference = random.nextLong( MAX_ID_LIMIT );
+            long reference = random.nextLong( maxIdLimit );
             assertNotEquals( GROUP, parseEncoding( reference ) );
             assertEquals( GROUP, parseEncoding( RelationshipReferenceEncoding.encodeGroup( reference ) ) );
             assertTrue( "encoded reference is negative", RelationshipReferenceEncoding.encodeGroup( reference ) < 0 );

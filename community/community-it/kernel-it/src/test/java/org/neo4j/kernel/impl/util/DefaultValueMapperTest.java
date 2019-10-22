@@ -95,7 +95,8 @@ public class DefaultValueMapperTest
     public void shouldHandleSingleRelationshipPath()
     {
         // Given
-        Node start, end;
+        Node start;
+		Node end;
         Relationship relationship;
         try ( Transaction tx = db.beginTx() )
         {
@@ -127,8 +128,15 @@ public class DefaultValueMapperTest
     public void shouldHandleLongPath()
     {
         // Given
-        Node a, b, c, d, e;
-        Relationship r1, r2, r3, r4;
+        Node a;
+		Node b;
+		Node c;
+		Node d;
+		Node e;
+        Relationship r1;
+		Relationship r2;
+		Relationship r3;
+		Relationship r4;
         try ( Transaction tx = db.beginTx() )
         {
             a = db.createNode();
@@ -166,7 +174,8 @@ public class DefaultValueMapperTest
     public void shouldMapDirectRelationship()
     {
         // Given
-        Node start, end;
+        Node start;
+		Node end;
         Relationship relationship;
         try ( Transaction tx = db.beginTx() )
         {

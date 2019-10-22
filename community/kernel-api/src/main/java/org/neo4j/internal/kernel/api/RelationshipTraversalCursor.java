@@ -25,10 +25,6 @@ package org.neo4j.internal.kernel.api;
 public interface RelationshipTraversalCursor
         extends RelationshipDataAccessor, SuspendableCursor<RelationshipTraversalCursor.Position>
 {
-    abstract class Position extends CursorPosition<Position>
-    {
-    }
-
     /**
      * Get the other node, the one that this cursor was not initialized from.
      * <p>
@@ -39,7 +35,11 @@ public interface RelationshipTraversalCursor
      */
     void neighbour( NodeCursor cursor );
 
-    long neighbourNodeReference();
+	long neighbourNodeReference();
 
-    long originNodeReference();
+	long originNodeReference();
+
+	abstract class Position extends CursorPosition<Position>
+    {
+    }
 }

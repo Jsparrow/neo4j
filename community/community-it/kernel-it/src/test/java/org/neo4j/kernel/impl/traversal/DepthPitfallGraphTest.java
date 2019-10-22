@@ -163,17 +163,16 @@ public class DepthPitfallGraphTest extends TraversalTestBase
     @Test
     public void testAllRelationshipsAreReturnedOnceDepthFirst()
     {
-        testAllRelationshipsAreReturnedOnce( getGraphDb().traversalDescription().depthFirst() );
+        testAllRelationshipsAreReturnedOnce( );
     }
 
     @Test
     public void testAllRelationshipsAreReturnedOnceBreadthFirst()
     {
-        testAllRelationshipsAreReturnedOnce( getGraphDb().traversalDescription().breadthFirst() );
+        testAllRelationshipsAreReturnedOnce( );
     }
 
-    private void testAllRelationshipsAreReturnedOnce(
-            TraversalDescription description )
+    private void testAllRelationshipsAreReturnedOnce( )
     {
         Traverser traverser = getGraphDb().traversalDescription().uniqueness(
                 Uniqueness.RELATIONSHIP_GLOBAL ).traverse( node( "1" ) );

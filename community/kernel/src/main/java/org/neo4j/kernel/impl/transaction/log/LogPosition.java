@@ -43,41 +43,37 @@ public class LogPosition implements Comparable<LogPosition>
             return "UNSPECIFIED";
         }
     };
+	private final long logVersion;
+	private final long byteOffset;
 
-    public static LogPosition start( long logVersion )
-    {
-        return new LogPosition( logVersion, LOG_HEADER_SIZE );
-    }
-
-    private final long logVersion;
-    private final long byteOffset;
-
-    public LogPosition( long logVersion, long byteOffset )
+	public LogPosition( long logVersion, long byteOffset )
     {
         this.logVersion = logVersion;
         this.byteOffset = byteOffset;
     }
 
-    public long getLogVersion()
+	public static LogPosition start( long logVersion )
+    {
+        return new LogPosition( logVersion, LOG_HEADER_SIZE );
+    }
+
+	public long getLogVersion()
     {
         return logVersion;
     }
 
-    public long getByteOffset()
+	public long getByteOffset()
     {
         return byteOffset;
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return "LogPosition{" +
-                "logVersion=" + logVersion +
-                ", byteOffset=" + byteOffset +
-                '}';
+        return new StringBuilder().append("LogPosition{").append("logVersion=").append(logVersion).append(", byteOffset=").append(byteOffset).append('}').toString();
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -93,7 +89,7 @@ public class LogPosition implements Comparable<LogPosition>
         return byteOffset == that.byteOffset && logVersion == that.logVersion;
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         int result = (int) (logVersion ^ (logVersion >>> 32));
@@ -101,7 +97,7 @@ public class LogPosition implements Comparable<LogPosition>
         return result;
     }
 
-    @Override
+	@Override
     public int compareTo( LogPosition o )
     {
         if ( logVersion != o.logVersion )

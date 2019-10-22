@@ -59,19 +59,17 @@ class ErrorReporter
      */
     public void report( Neo4jError error )
     {
-        if ( error.status().code().classification() == DatabaseError )
-        {
-            String message = format( "Client triggered an unexpected error [%s]: %s, reference %s.",
-                    error.status().code().serialize(), error.message(), error.reference() );
-
-            // Writing to user log gets duplicated to the internal log
-            userLog.error( message );
-
-            // If cause/stacktrace is available write it to the internal log
-            if ( error.cause() != null )
-            {
-                debugLog.error( message, error.cause() );
-            }
-        }
+        if (error.status().code().classification() != DatabaseError) {
+			return;
+		}
+		String message = format( "Client triggered an unexpected error [%s]: %s, reference %s.",
+		        error.status().code().serialize(), error.message(), error.reference() );
+		// Writing to user log gets duplicated to the internal log
+		userLog.error( message );
+		// If cause/stacktrace is available write it to the internal log
+		if ( error.cause() != null )
+		{
+		    debugLog.error( message, error.cause() );
+		}
     }
 }

@@ -24,7 +24,6 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.server.rest.repr.RepresentationTestAccess.serialize;
@@ -32,6 +31,7 @@ import static org.neo4j.server.rest.repr.RepresentationTestBase.assertUriMatches
 import static org.neo4j.server.rest.repr.RepresentationTestBase.uriPattern;
 import static org.neo4j.test.mockito.mock.GraphMock.node;
 import static org.neo4j.test.mockito.mock.Properties.properties;
+import java.util.Collections;
 
 public class NodeRepresentationTest
 {
@@ -149,7 +149,7 @@ public class NodeRepresentationTest
         assertNotNull( noderep.get( "data" ) );
         Map metadata = (Map) noderep.get( "metadata" );
         List labels = (List) metadata.get( "labels" );
-        assertTrue( labels.isEmpty() || labels.equals( asList( "Label" ) ) );
+        assertTrue( labels.isEmpty() || labels.equals( Collections.singletonList( "Label" ) ) );
         assertTrue( ( (Number) metadata.get("id") ).longValue() >= 0 );
     }
 }

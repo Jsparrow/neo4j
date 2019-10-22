@@ -30,33 +30,37 @@ public interface Configuration
      * to do this when changing major version of the product.
      */
     boolean DEFAULT_LEGACY_STYLE_QUOTING = true;
+	int KB = 1024;
+	int MB = KB * KB;
+	int DEFAULT_BUFFER_SIZE_4MB = 4 * MB;
+	Configuration DEFAULT = new Default();
 
-    /**
+	/**
      * Character to regard as quotes. Quoted values can contain newline characters and even delimiters.
      */
     char quotationCharacter();
 
-    /**
+	/**
      * Data buffer size.
      */
     int bufferSize();
 
-    /**
+	/**
      * Whether or not fields are allowed to have newline characters in them, i.e. span multiple lines.
      */
     boolean multilineFields();
 
-    /**
+	/**
      * Whether or not strings should be trimmed for whitespaces.
      */
     boolean trimStrings();
 
-    /**
+	/**
      * @return {@code true} for treating empty strings, i.e. {@code ""} as null, instead of an empty string.
      */
     boolean emptyQuotedStringsAsNull();
 
-    /**
+	/**
      * Adds a default implementation returning {@link #DEFAULT_LEGACY_STYLE_QUOTING}, this to not requiring
      * any change to other classes using this interface.
      *
@@ -69,9 +73,6 @@ public interface Configuration
     {
         return DEFAULT_LEGACY_STYLE_QUOTING;
     }
-    int KB = 1024;
-    int MB = KB * KB;
-    int DEFAULT_BUFFER_SIZE_4MB = 4 * MB;
 
     class Default implements Configuration
     {
@@ -105,8 +106,6 @@ public interface Configuration
             return false;
         }
     }
-
-    Configuration DEFAULT = new Default();
 
     class Overridden implements Configuration
     {

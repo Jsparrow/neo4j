@@ -29,14 +29,14 @@ public class Assertion
         assert assertionEnabled = true;
     }
 
-    @Deprecated
-    public static boolean assertionsEnabled()
-    {
-        return assertionEnabled;
-    }
-
     private Assertion()
     {
         throw new AssertionError( "No instances" );
+    }
+
+	@Deprecated
+    public static boolean assertionsEnabled()
+    {
+        return assertionEnabled;
     }
 }

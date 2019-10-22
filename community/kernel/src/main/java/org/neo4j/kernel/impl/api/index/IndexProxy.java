@@ -83,7 +83,7 @@ public interface IndexProxy extends IndexConfigProvider
     /**
      * @return failure message. Expect a call to it if {@link #getState()} returns {@link InternalIndexState#FAILED}.
      */
-    IndexPopulationFailure getPopulationFailure() throws IllegalStateException;
+    IndexPopulationFailure getPopulationFailure();
 
     PopulationProgress getIndexPopulationProgress();
 

@@ -73,11 +73,9 @@ class TransitionalTxManagementKernelTransaction
 
     public void rollback()
     {
-        try
+        try (KernelTransaction kernelTransactionBoundToThisThread = bridge.getKernelTransactionBoundToThisThread(false))
         {
-            KernelTransaction kernelTransactionBoundToThisThread = bridge.getKernelTransactionBoundToThisThread( false );
             kernelTransactionBoundToThisThread.failure();
-            kernelTransactionBoundToThisThread.close();
         }
         catch ( TransactionFailureException e )
         {
@@ -91,11 +89,9 @@ class TransitionalTxManagementKernelTransaction
 
     public void commit()
     {
-        try
+        try (KernelTransaction kernelTransactionBoundToThisThread = bridge.getKernelTransactionBoundToThisThread(true))
         {
-            KernelTransaction kernelTransactionBoundToThisThread = bridge.getKernelTransactionBoundToThisThread( true );
             kernelTransactionBoundToThisThread.success();
-            kernelTransactionBoundToThisThread.close();
         }
         catch ( NotInTransactionException e )
         {

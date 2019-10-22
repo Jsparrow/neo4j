@@ -116,7 +116,27 @@ public class DirectRecordAccess<RECORD extends AbstractBaseRecord,ADDITIONAL>
         return new DirectRecordProxy( key, record, additionalData, created );
     }
 
-    private class DirectRecordProxy implements RecordProxy<RECORD,ADDITIONAL>
+    @Override
+    public void close()
+    {
+        commit();
+    }
+
+	public void commit()
+    {
+        if ( changeCounter.value() == 0 )
+        {
+            return;
+        }
+
+        List<DirectRecordProxy> directRecordProxies = new ArrayList<>( batch.values() );
+        directRecordProxies.sort( ( o1, o2 ) -> Long.compare( -o1.getKey(), o2.getKey() ) );
+        directRecordProxies.forEach(DirectRecordProxy::store);
+        changeCounter.clear();
+        batch.clear();
+    }
+
+	private class DirectRecordProxy implements RecordProxy<RECORD,ADDITIONAL>
     {
         private final long key;
         private final RECORD record;
@@ -151,12 +171,12 @@ public class DirectRecordAccess<RECORD extends AbstractBaseRecord,ADDITIONAL>
 
         private void prepareChange()
         {
-            if ( !changed )
-            {
-                changed = true;
-                putInBatch( key, this );
-                changeCounter.increment();
-            }
+            if (changed) {
+				return;
+			}
+			changed = true;
+			putInBatch( key, this );
+			changeCounter.increment();
         }
 
         @Override
@@ -217,28 +237,5 @@ public class DirectRecordAccess<RECORD extends AbstractBaseRecord,ADDITIONAL>
         {
             return created;
         }
-    }
-
-    @Override
-    public void close()
-    {
-        commit();
-    }
-
-    public void commit()
-    {
-        if ( changeCounter.value() == 0 )
-        {
-            return;
-        }
-
-        List<DirectRecordProxy> directRecordProxies = new ArrayList<>( batch.values() );
-        directRecordProxies.sort( ( o1, o2 ) -> Long.compare( -o1.getKey(), o2.getKey() ) );
-        for ( DirectRecordProxy proxy : directRecordProxies )
-        {
-            proxy.store();
-        }
-        changeCounter.clear();
-        batch.clear();
     }
 }

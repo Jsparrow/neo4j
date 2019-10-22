@@ -122,10 +122,7 @@ public abstract class TokenStore<RECORD extends TokenRecord>
         super.updateRecord( record );
         if ( !record.isLight() )
         {
-            for ( DynamicRecord keyRecord : record.getNameRecords() )
-            {
-                nameStore.updateRecord( keyRecord );
-            }
+            record.getNameRecords().forEach(nameStore::updateRecord);
         }
     }
 

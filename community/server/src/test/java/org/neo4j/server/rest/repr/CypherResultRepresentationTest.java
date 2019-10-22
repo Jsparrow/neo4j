@@ -36,7 +36,6 @@ import org.neo4j.server.rest.repr.formats.JsonFormat;
 import org.neo4j.test.rule.DatabaseRule;
 import org.neo4j.test.rule.ImpermanentDatabaseRule;
 
-import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertFalse;
@@ -44,6 +43,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.neo4j.server.rest.domain.JsonHelper.jsonToMap;
+import java.util.Collections;
 
 public class CypherResultRepresentationTest
 {
@@ -59,7 +59,7 @@ public class CypherResultRepresentationTest
 
         ExecutionPlanDescription plan = getMockDescription( name );
         ExecutionPlanDescription childPlan = getMockDescription( "child" );
-        when( plan.getChildren() ).thenReturn( asList( childPlan ) );
+        when( plan.getChildren() ).thenReturn( Collections.singletonList( childPlan ) );
         when( plan.hasProfilerStatistics() ).thenReturn( true );
 
         ExecutionPlanDescription.ProfilerStatistics stats = mock( ExecutionPlanDescription.ProfilerStatistics.class );

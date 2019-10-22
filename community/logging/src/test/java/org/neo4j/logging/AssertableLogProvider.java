@@ -53,20 +53,30 @@ import static org.junit.Assert.fail;
 
 public class AssertableLogProvider extends AbstractLogProvider<Log> implements TestRule
 {
-    private final boolean debugEnabled;
-    private final List<LogCall> logCalls = new CopyOnWriteArrayList<>();
+    private static final Matcher<Level> DEBUG_LEVEL_MATCHER = equalTo( Level.DEBUG );
+	private static final Matcher<Level> INFO_LEVEL_MATCHER = equalTo( Level.INFO );
+	private static final Matcher<Level> WARN_LEVEL_MATCHER = equalTo( Level.WARN );
+	private static final Matcher<Level> ERROR_LEVEL_MATCHER = equalTo( Level.ERROR );
+	private static final Matcher<Level> ANY_LEVEL_MATCHER = any( Level.class );
+	private static final Matcher<String> ANY_MESSAGE_MATCHER = anyOf( any( String.class ), nullValue() );
+	private static final Matcher<Object[]> NULL_ARGUMENTS_MATCHER = nullValue( Object[].class );
+	private static final Matcher<Object[]> ANY_ARGUMENTS_MATCHER = anyOf( any( Object[].class ), nullValue() );
+	private static final Matcher<Throwable> NULL_THROWABLE_MATCHER = nullValue( Throwable.class );
+	private static final Matcher<Throwable> ANY_THROWABLE_MATCHER = anyOf( any( Throwable.class ), nullValue() );
+	private final boolean debugEnabled;
+	private final List<LogCall> logCalls = new CopyOnWriteArrayList<>();
 
-    public AssertableLogProvider()
+	public AssertableLogProvider()
     {
         this( false );
     }
 
-    public AssertableLogProvider( boolean debugEnabled )
+	public AssertableLogProvider( boolean debugEnabled )
     {
         this.debugEnabled = debugEnabled;
     }
 
-    @Override
+	@Override
     public Statement apply( final Statement base, org.junit.runner.Description description )
     {
         return new Statement()
@@ -87,19 +97,332 @@ public class AssertableLogProvider extends AbstractLogProvider<Log> implements T
         };
     }
 
-    public void print( PrintStream out )
+	public void print( PrintStream out )
     {
-        for ( LogCall call : logCalls )
-        {
+        logCalls.forEach(call -> {
             out.println( call.toLogLikeString() );
             if ( call.throwable != null )
             {
                 call.throwable.printStackTrace( out );
             }
+        });
+    }
+
+	@Override
+    protected Log buildLog( Class loggingClass )
+    {
+        return new AssertableLog( loggingClass.getName() );
+    }
+
+	@Override
+    protected Log buildLog( String context )
+    {
+        return new AssertableLog( context );
+    }
+
+	public static LogMatcherBuilder inLog( Class logClass )
+    {
+        return inLog( equalTo( logClass.getName() ) );
+    }
+
+	public static LogMatcherBuilder inLog( String context )
+    {
+        return inLog( equalTo( context ) );
+    }
+
+	public static LogMatcherBuilder inLog( Matcher<String> contextMatcher )
+    {
+        return new LogMatcherBuilder( contextMatcher );
+    }
+
+	public void assertExactly( LogMatcher... expected )
+    {
+        Iterator<LogMatcher> expectedIterator = asList( expected ).iterator();
+
+        synchronized ( logCalls )
+        {
+            Iterator<LogCall> callsIterator = logCalls.iterator();
+
+            while ( expectedIterator.hasNext() )
+            {
+                if ( callsIterator.hasNext() )
+                {
+                    LogMatcher logMatcher = expectedIterator.next();
+                    LogCall logCall = callsIterator.next();
+                    if ( !logMatcher.matches( logCall ) )
+                    {
+                        fail( format( "Log call did not match expectation\n  Expected: %s\n  Call was: %s", logMatcher, logCall ) );
+                    }
+                }
+                else
+                {
+                    fail( format( "Got fewer log calls than expected. The missing log calls were:\n%s", describe( expectedIterator ) ) );
+                }
+            }
+
+            if ( callsIterator.hasNext() )
+            {
+                fail( format( "Got more log calls than expected. The remaining log calls were:\n%s", serialize( callsIterator ) ) );
+            }
         }
     }
 
-    public enum Level
+	/**
+     * @return a {@link MessageMatcher} which compares the raw messages, i.e. even for format strings that gets an array of arguments
+     * passed along with it the comparison will be on the message string with the formatting indicators intact and no arguments formatted in.
+     */
+    public MessageMatcher rawMessageMatcher()
+    {
+        return new MessageMatcher( logCall -> logCall.message );
+    }
+
+	/**
+     * @return a {@link MessageMatcher} which compares the formatted messages, i.e. after the message and its arguments have
+     * been formatted by {@link String#format(String, Object...)} - the resulting log messages.
+     */
+    public MessageMatcher formattedMessageMatcher()
+    {
+        return new MessageMatcher( LogCall::toLogLikeString );
+    }
+
+	/**
+     * @return a {@link MessageMatcher} which compares strings from {@link LogCall#toString()}.
+     */
+    public MessageMatcher internalToStringMessageMatcher()
+    {
+        return new MessageMatcher( LogCall::toString );
+    }
+
+	@SafeVarargs
+    private final void assertContains( int logSkipCount, Function<LogCall,String> stringifyer, Matcher<String>... matchers )
+    {
+        synchronized ( logCalls )
+        {
+            assertEquals( logCalls.size(), logSkipCount + matchers.length );
+            for ( int i = 0; i < matchers.length; i++ )
+            {
+                LogCall logCall = logCalls.get( logSkipCount + i );
+                Matcher<String> matcher = matchers[i];
+
+                if ( !matcher.matches( stringifyer.apply( logCall ) ) )
+                {
+                    StringDescription description = new StringDescription();
+                    description.appendDescriptionOf( matcher );
+                    fail( format( "Expected log statement with message as %s, but none found. Actual log call was:\n%s",
+                            description.toString(), logCall.toString() ) );
+                }
+            }
+        }
+    }
+
+	public void assertContainsThrowablesMatching( int logSkipCount,  Throwable... throwables )
+    {
+        synchronized ( logCalls )
+        {
+            assertEquals( logCalls.size(), logSkipCount + throwables.length );
+            for ( int i = 0; i < throwables.length; i++ )
+            {
+                LogCall logCall = logCalls.get( logSkipCount + i );
+                Throwable throwable = throwables[i];
+
+                if ( logCall.throwable == null && throwable != null ||
+                        logCall.throwable != null && logCall.throwable.getClass() != throwable.getClass() )
+                {
+                    fail( format( "Expected %s, but was:\n%s",
+                            throwable, logCall.throwable ) );
+                }
+            }
+        }
+    }
+
+	/**
+     * Note: Does not care about ordering.
+     */
+    public void assertAtLeastOnce( LogMatcher... expected )
+    {
+        Set<LogMatcher> expectedMatchers = Iterators.asSet( expected );
+        synchronized ( logCalls )
+        {
+            expectedMatchers.removeIf( this::containsMatchingLogCall );
+
+            if ( expectedMatchers.size() > 0 )
+            {
+                fail( format(
+                        "These log calls were expected, but never occurred:\n%s\nActual log calls were:\n%s",
+                        describe( expectedMatchers.iterator() ),
+                        serialize( logCalls.iterator() )
+                ) );
+            }
+        }
+    }
+
+	public void assertNone( LogMatcher notExpected )
+    {
+        LogCall logCall = firstMatchingLogCall( notExpected );
+        if ( logCall != null )
+        {
+            fail( format(
+                    "Log call was not expected, but occurred:\n%s\n", logCall.toString()
+            ) );
+        }
+    }
+
+	private void assertNotContains( String partOfMessage, Function<LogCall,String> stringifyer )
+    {
+        if ( containsLogCallContaining( partOfMessage, stringifyer ) )
+        {
+            fail( format(
+                    "Expected no log statement containing '%s', but at least one found. Actual log calls were:\n%s",
+                    partOfMessage, serialize( logCalls.iterator() ) ) );
+        }
+    }
+
+	private void assertContains( String partOfMessage, Function<LogCall,String> stringifyer )
+    {
+        if ( !containsLogCallContaining( partOfMessage, stringifyer ) )
+        {
+            fail( format(
+                    "Expected at least one log statement containing '%s', but none found. Actual log calls were:\n%s",
+                    partOfMessage, serialize( logCalls.iterator() ) ) );
+        }
+    }
+
+	private boolean containsLogCallContaining( String partOfMessage, Function<LogCall,String> stringifyer )
+    {
+        synchronized ( logCalls )
+        {
+            for ( LogCall logCall : logCalls )
+            {
+                if ( stringifyer.apply( logCall ).contains( partOfMessage ) )
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+	public boolean containsMatchingLogCall( LogMatcher logMatcher )
+    {
+        return firstMatchingLogCall( logMatcher ) != null;
+    }
+
+	private LogCall firstMatchingLogCall( LogMatcher logMatcher )
+    {
+        synchronized ( logCalls )
+        {
+            for ( LogCall logCall : logCalls )
+            {
+                if ( logMatcher.matches( logCall ) )
+                {
+                    return logCall;
+                }
+            }
+        }
+        return null;
+    }
+
+	private void assertContains( Matcher<String> messageMatcher, Function<LogCall,String> stringifyer )
+    {
+        synchronized ( logCalls )
+        {
+            for ( LogCall logCall : logCalls )
+            {
+                if ( messageMatcher.matches( stringifyer.apply( logCall ) ) )
+                {
+                    return;
+                }
+            }
+            StringDescription description = new StringDescription();
+            description.appendDescriptionOf( messageMatcher );
+            fail( format(
+                    "Expected at least one log statement with message as %s, but none found. Actual log calls were:\n%s",
+                    description.toString(), serialize( logCalls.iterator() ) ) );
+        }
+    }
+
+	private void assertContainsSingle( Matcher<String> messageMatcher, Function<LogCall,String> stringifyer )
+    {
+        boolean found = false;
+        synchronized ( logCalls )
+        {
+            for ( LogCall logCall : logCalls )
+            {
+                if ( messageMatcher.matches( stringifyer.apply( logCall ) ) )
+                {
+                    if ( !found )
+                    {
+                        found = true;
+                    }
+                    else
+                    {
+                        StringDescription description = new StringDescription();
+                        description.appendDescriptionOf( messageMatcher );
+                        fail( format( "Expected exactly one log statement with message as %s, but multiple found. Actual log calls were:%n%s",
+                                description.toString(), serialize( logCalls.iterator() ) ) );
+                    }
+                }
+            }
+            if ( !found )
+            {
+                StringDescription description = new StringDescription();
+                description.appendDescriptionOf( messageMatcher );
+                fail( format(
+                        "Expected at least one log statement with message as %s, but none found. Actual log calls were:\n%s",
+                        description.toString(), serialize( logCalls.iterator() ) ) );
+            }
+        }
+    }
+
+	public void assertNoLoggingOccurred()
+    {
+        if ( logCalls.size() != 0 )
+        {
+            fail( format( "Expected no log messages at all, but got:\n%s", serialize( logCalls.iterator() ) ) );
+        }
+    }
+
+	/**
+     * Clear this logger for re-use.
+     */
+    public void clear()
+    {
+        logCalls.clear();
+    }
+
+	public String serialize()
+    {
+        return serialize( logCalls.iterator(), LogCall::toLogLikeString );
+    }
+
+	private String describe( Iterator<LogMatcher> matchers )
+    {
+        StringBuilder sb = new StringBuilder();
+        while ( matchers.hasNext() )
+        {
+            sb.append( matchers.next().toString() );
+            sb.append( "\n" );
+        }
+        return sb.toString();
+    }
+
+	private String serialize( Iterator<LogCall> events )
+    {
+        return serialize( events, LogCall::toString );
+    }
+
+	private String serialize( Iterator<LogCall> events, Function<LogCall,String> serializer )
+    {
+        StringBuilder sb = new StringBuilder();
+        while ( events.hasNext() )
+        {
+            sb.append( serializer.apply( events.next() ) );
+            sb.append( "\n" );
+        }
+        return sb.toString();
+    }
+
+	public enum Level
     {
         DEBUG,
         INFO,
@@ -107,7 +430,7 @@ public class AssertableLogProvider extends AbstractLogProvider<Log> implements T
         ERROR
     }
 
-    private static final class LogCall
+	private static final class LogCall
     {
         private final String context;
         private final Level level;
@@ -288,32 +611,11 @@ public class AssertableLogProvider extends AbstractLogProvider<Log> implements T
         }
     }
 
-    @Override
-    protected Log buildLog( Class loggingClass )
-    {
-        return new AssertableLog( loggingClass.getName() );
-    }
-
-    @Override
-    protected Log buildLog( String context )
-    {
-        return new AssertableLog( context );
-    }
+    
 
     //
     // TEST TOOLS
     //
-
-    private static final Matcher<Level> DEBUG_LEVEL_MATCHER = equalTo( Level.DEBUG );
-    private static final Matcher<Level> INFO_LEVEL_MATCHER = equalTo( Level.INFO );
-    private static final Matcher<Level> WARN_LEVEL_MATCHER = equalTo( Level.WARN );
-    private static final Matcher<Level> ERROR_LEVEL_MATCHER = equalTo( Level.ERROR );
-    private static final Matcher<Level> ANY_LEVEL_MATCHER = any( Level.class );
-    private static final Matcher<String> ANY_MESSAGE_MATCHER = anyOf( any( String.class ), nullValue() );
-    private static final Matcher<Object[]> NULL_ARGUMENTS_MATCHER = nullValue( Object[].class );
-    private static final Matcher<Object[]> ANY_ARGUMENTS_MATCHER = anyOf( any( Object[].class ), nullValue() );
-    private static final Matcher<Throwable> NULL_THROWABLE_MATCHER = nullValue( Throwable.class );
-    private static final Matcher<Throwable> ANY_THROWABLE_MATCHER = anyOf( any( Throwable.class ), nullValue() );
 
     public static final class LogMatcher
     {
@@ -512,308 +814,6 @@ public class AssertableLogProvider extends AbstractLogProvider<Log> implements T
             }
             return matchers.toArray( new Matcher[arguments.length] );
         }
-    }
-
-    public static LogMatcherBuilder inLog( Class logClass )
-    {
-        return inLog( equalTo( logClass.getName() ) );
-    }
-
-    public static LogMatcherBuilder inLog( String context )
-    {
-        return inLog( equalTo( context ) );
-    }
-
-    public static LogMatcherBuilder inLog( Matcher<String> contextMatcher )
-    {
-        return new LogMatcherBuilder( contextMatcher );
-    }
-
-    public void assertExactly( LogMatcher... expected )
-    {
-        Iterator<LogMatcher> expectedIterator = asList( expected ).iterator();
-
-        synchronized ( logCalls )
-        {
-            Iterator<LogCall> callsIterator = logCalls.iterator();
-
-            while ( expectedIterator.hasNext() )
-            {
-                if ( callsIterator.hasNext() )
-                {
-                    LogMatcher logMatcher = expectedIterator.next();
-                    LogCall logCall = callsIterator.next();
-                    if ( !logMatcher.matches( logCall ) )
-                    {
-                        fail( format( "Log call did not match expectation\n  Expected: %s\n  Call was: %s", logMatcher, logCall ) );
-                    }
-                }
-                else
-                {
-                    fail( format( "Got fewer log calls than expected. The missing log calls were:\n%s", describe( expectedIterator ) ) );
-                }
-            }
-
-            if ( callsIterator.hasNext() )
-            {
-                fail( format( "Got more log calls than expected. The remaining log calls were:\n%s", serialize( callsIterator ) ) );
-            }
-        }
-    }
-
-    /**
-     * @return a {@link MessageMatcher} which compares the raw messages, i.e. even for format strings that gets an array of arguments
-     * passed along with it the comparison will be on the message string with the formatting indicators intact and no arguments formatted in.
-     */
-    public MessageMatcher rawMessageMatcher()
-    {
-        return new MessageMatcher( logCall -> logCall.message );
-    }
-
-    /**
-     * @return a {@link MessageMatcher} which compares the formatted messages, i.e. after the message and its arguments have
-     * been formatted by {@link String#format(String, Object...)} - the resulting log messages.
-     */
-    public MessageMatcher formattedMessageMatcher()
-    {
-        return new MessageMatcher( LogCall::toLogLikeString );
-    }
-
-    /**
-     * @return a {@link MessageMatcher} which compares strings from {@link LogCall#toString()}.
-     */
-    public MessageMatcher internalToStringMessageMatcher()
-    {
-        return new MessageMatcher( LogCall::toString );
-    }
-
-    @SafeVarargs
-    private final void assertContains( int logSkipCount, Function<LogCall,String> stringifyer, Matcher<String>... matchers )
-    {
-        synchronized ( logCalls )
-        {
-            assertEquals( logCalls.size(), logSkipCount + matchers.length );
-            for ( int i = 0; i < matchers.length; i++ )
-            {
-                LogCall logCall = logCalls.get( logSkipCount + i );
-                Matcher<String> matcher = matchers[i];
-
-                if ( !matcher.matches( stringifyer.apply( logCall ) ) )
-                {
-                    StringDescription description = new StringDescription();
-                    description.appendDescriptionOf( matcher );
-                    fail( format( "Expected log statement with message as %s, but none found. Actual log call was:\n%s",
-                            description.toString(), logCall.toString() ) );
-                }
-            }
-        }
-    }
-
-    public void assertContainsThrowablesMatching( int logSkipCount,  Throwable... throwables )
-    {
-        synchronized ( logCalls )
-        {
-            assertEquals( logCalls.size(), logSkipCount + throwables.length );
-            for ( int i = 0; i < throwables.length; i++ )
-            {
-                LogCall logCall = logCalls.get( logSkipCount + i );
-                Throwable throwable = throwables[i];
-
-                if ( logCall.throwable == null && throwable != null ||
-                        logCall.throwable != null && logCall.throwable.getClass() != throwable.getClass() )
-                {
-                    fail( format( "Expected %s, but was:\n%s",
-                            throwable, logCall.throwable ) );
-                }
-            }
-        }
-    }
-
-    /**
-     * Note: Does not care about ordering.
-     */
-    public void assertAtLeastOnce( LogMatcher... expected )
-    {
-        Set<LogMatcher> expectedMatchers = Iterators.asSet( expected );
-        synchronized ( logCalls )
-        {
-            expectedMatchers.removeIf( this::containsMatchingLogCall );
-
-            if ( expectedMatchers.size() > 0 )
-            {
-                fail( format(
-                        "These log calls were expected, but never occurred:\n%s\nActual log calls were:\n%s",
-                        describe( expectedMatchers.iterator() ),
-                        serialize( logCalls.iterator() )
-                ) );
-            }
-        }
-    }
-
-    public void assertNone( LogMatcher notExpected )
-    {
-        LogCall logCall = firstMatchingLogCall( notExpected );
-        if ( logCall != null )
-        {
-            fail( format(
-                    "Log call was not expected, but occurred:\n%s\n", logCall.toString()
-            ) );
-        }
-    }
-
-    private void assertNotContains( String partOfMessage, Function<LogCall,String> stringifyer )
-    {
-        if ( containsLogCallContaining( partOfMessage, stringifyer ) )
-        {
-            fail( format(
-                    "Expected no log statement containing '%s', but at least one found. Actual log calls were:\n%s",
-                    partOfMessage, serialize( logCalls.iterator() ) ) );
-        }
-    }
-
-    private void assertContains( String partOfMessage, Function<LogCall,String> stringifyer )
-    {
-        if ( !containsLogCallContaining( partOfMessage, stringifyer ) )
-        {
-            fail( format(
-                    "Expected at least one log statement containing '%s', but none found. Actual log calls were:\n%s",
-                    partOfMessage, serialize( logCalls.iterator() ) ) );
-        }
-    }
-
-    private boolean containsLogCallContaining( String partOfMessage, Function<LogCall,String> stringifyer )
-    {
-        synchronized ( logCalls )
-        {
-            for ( LogCall logCall : logCalls )
-            {
-                if ( stringifyer.apply( logCall ).contains( partOfMessage ) )
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public boolean containsMatchingLogCall( LogMatcher logMatcher )
-    {
-        return firstMatchingLogCall( logMatcher ) != null;
-    }
-
-    private LogCall firstMatchingLogCall( LogMatcher logMatcher )
-    {
-        synchronized ( logCalls )
-        {
-            for ( LogCall logCall : logCalls )
-            {
-                if ( logMatcher.matches( logCall ) )
-                {
-                    return logCall;
-                }
-            }
-        }
-        return null;
-    }
-
-    private void assertContains( Matcher<String> messageMatcher, Function<LogCall,String> stringifyer )
-    {
-        synchronized ( logCalls )
-        {
-            for ( LogCall logCall : logCalls )
-            {
-                if ( messageMatcher.matches( stringifyer.apply( logCall ) ) )
-                {
-                    return;
-                }
-            }
-            StringDescription description = new StringDescription();
-            description.appendDescriptionOf( messageMatcher );
-            fail( format(
-                    "Expected at least one log statement with message as %s, but none found. Actual log calls were:\n%s",
-                    description.toString(), serialize( logCalls.iterator() ) ) );
-        }
-    }
-
-    private void assertContainsSingle( Matcher<String> messageMatcher, Function<LogCall,String> stringifyer )
-    {
-        boolean found = false;
-        synchronized ( logCalls )
-        {
-            for ( LogCall logCall : logCalls )
-            {
-                if ( messageMatcher.matches( stringifyer.apply( logCall ) ) )
-                {
-                    if ( !found )
-                    {
-                        found = true;
-                    }
-                    else
-                    {
-                        StringDescription description = new StringDescription();
-                        description.appendDescriptionOf( messageMatcher );
-                        fail( format( "Expected exactly one log statement with message as %s, but multiple found. Actual log calls were:%n%s",
-                                description.toString(), serialize( logCalls.iterator() ) ) );
-                    }
-                }
-            }
-            if ( !found )
-            {
-                StringDescription description = new StringDescription();
-                description.appendDescriptionOf( messageMatcher );
-                fail( format(
-                        "Expected at least one log statement with message as %s, but none found. Actual log calls were:\n%s",
-                        description.toString(), serialize( logCalls.iterator() ) ) );
-            }
-        }
-    }
-
-    public void assertNoLoggingOccurred()
-    {
-        if ( logCalls.size() != 0 )
-        {
-            fail( format( "Expected no log messages at all, but got:\n%s", serialize( logCalls.iterator() ) ) );
-        }
-    }
-
-    /**
-     * Clear this logger for re-use.
-     */
-    public void clear()
-    {
-        logCalls.clear();
-    }
-
-    public String serialize()
-    {
-        return serialize( logCalls.iterator(), LogCall::toLogLikeString );
-    }
-
-    private String describe( Iterator<LogMatcher> matchers )
-    {
-        StringBuilder sb = new StringBuilder();
-        while ( matchers.hasNext() )
-        {
-            sb.append( matchers.next().toString() );
-            sb.append( "\n" );
-        }
-        return sb.toString();
-    }
-
-    private String serialize( Iterator<LogCall> events )
-    {
-        return serialize( events, LogCall::toString );
-    }
-
-    private String serialize( Iterator<LogCall> events, Function<LogCall,String> serializer )
-    {
-        StringBuilder sb = new StringBuilder();
-        while ( events.hasNext() )
-        {
-            sb.append( serializer.apply( events.next() ) );
-            sb.append( "\n" );
-        }
-        return sb.toString();
     }
 
     public class MessageMatcher

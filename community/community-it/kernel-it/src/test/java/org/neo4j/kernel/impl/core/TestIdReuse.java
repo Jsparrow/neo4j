@@ -34,13 +34,16 @@ import static org.junit.Assert.assertEquals;
 
 public class TestIdReuse
 {
-    @Test
+    @Rule
+    public EphemeralFileSystemRule fs = new EphemeralFileSystemRule();
+
+	@Test
     public void makeSureIdsGetsReusedForPropertyStore()
     {
         makeSureIdsGetsReused( "neostore.propertystore.db", 10, 200 );
     }
 
-    @Test
+	@Test
     public void makeSureIdsGetsReusedForArrayStore()
     {
         long[] array = new long[500];
@@ -51,7 +54,7 @@ public class TestIdReuse
         makeSureIdsGetsReused( "neostore.propertystore.db.arrays", array, 20 );
     }
 
-    @Test
+	@Test
     public void makeSureIdsGetsReusedForStringStore()
     {
         String string = "something";
@@ -62,10 +65,7 @@ public class TestIdReuse
         makeSureIdsGetsReused( "neostore.propertystore.db.strings", string, 20 );
     }
 
-    @Rule
-    public EphemeralFileSystemRule fs = new EphemeralFileSystemRule();
-
-    private void makeSureIdsGetsReused( String fileName, Object value, int iterations )
+	private void makeSureIdsGetsReused( String fileName, Object value, int iterations )
     {
         File storeDir = new File( "target/var/idreuse" );
         File file = new File( storeDir, fileName );
@@ -87,7 +87,7 @@ public class TestIdReuse
         assertEquals( sizeBefore, file.length() );
     }
 
-    private void setAndRemoveSomeProperties( GraphDatabaseService graphDatabaseService, Object value )
+	private void setAndRemoveSomeProperties( GraphDatabaseService graphDatabaseService, Object value )
     {
         Node commonNode;
         try ( Transaction transaction = graphDatabaseService.beginTx() )

@@ -74,7 +74,7 @@ public class MultiTokenSchemaDescriptor implements SchemaDescriptor
     @Override
     public String toString()
     {
-        return "MultiTokenSchemaDescriptor[" + userDescription( SchemaUtil.idTokenNameLookup ) + "]";
+        return new StringBuilder().append("MultiTokenSchemaDescriptor[").append(userDescription( SchemaUtil.idTokenNameLookup )).append("]").toString();
     }
 
     @Override

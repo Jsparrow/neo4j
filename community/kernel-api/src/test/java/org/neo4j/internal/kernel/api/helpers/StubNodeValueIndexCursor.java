@@ -51,12 +51,11 @@ public class StubNodeValueIndexCursor implements NodeValueIndexCursor
     @Override
     public boolean next()
     {
-        if ( things.hasNext() )
-        {
-            current = things.next();
-            return true;
-        }
-        return false;
+        if (!things.hasNext()) {
+			return false;
+		}
+		current = things.next();
+		return true;
     }
 
     @Override

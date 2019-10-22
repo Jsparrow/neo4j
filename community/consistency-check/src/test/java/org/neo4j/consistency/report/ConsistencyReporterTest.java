@@ -94,7 +94,30 @@ import static org.neo4j.kernel.impl.store.counts.keys.CountsKeyFactory.nodeKey;
                       ConsistencyReporterTest.TestReportLifecycle.class} )
 public class ConsistencyReporterTest
 {
-    public static class TestReportLifecycle
+    private static <T> T[] nullSafeAny()
+    {
+        return ArgumentMatchers.argThat( argument -> true );
+    }
+
+	private static Matcher<String> hasExpectedFormat()
+    {
+        return new TypeSafeMatcher<String>()
+        {
+            @Override
+            public boolean matchesSafely( String item )
+            {
+                return item.trim().split( " " ).length > 1;
+            }
+
+            @Override
+            public void describeTo( Description description )
+            {
+                description.appendText( "message of valid format" );
+            }
+        };
+    }
+
+	public static class TestReportLifecycle
     {
         @Rule
         public final TestName testName = new TestName();
@@ -221,7 +244,33 @@ public class ConsistencyReporterTest
     @RunWith( Parameterized.class )
     public static class TestAllReportMessages implements Answer
     {
-        @Test
+        private final Method reportMethod;
+		private final Method method;
+		@Rule
+        public final TestRule logFailure = ( base, description ) -> new Statement()
+        {
+            @Override
+            public void evaluate() throws Throwable
+            {
+                try
+                {
+                    base.evaluate();
+                }
+                catch ( Throwable failure )
+                {
+                    System.err.println( new StringBuilder().append("Failure in ").append(TestAllReportMessages.this).append(": ").append(failure).toString() );
+                    throw failure;
+                }
+            }
+        };
+
+		public TestAllReportMessages( Method reportMethod, Method method )
+        {
+            this.reportMethod = reportMethod;
+            this.method = method;
+        }
+
+		@Test
         @SuppressWarnings( "unchecked" )
         public void shouldLogInconsistency() throws Exception
         {
@@ -265,16 +314,7 @@ public class ConsistencyReporterTest
             }
         }
 
-        private final Method reportMethod;
-        private final Method method;
-
-        public TestAllReportMessages( Method reportMethod, Method method )
-        {
-            this.reportMethod = reportMethod;
-            this.method = method;
-        }
-
-        @Parameterized.Parameters( name = "{1}" )
+		@Parameterized.Parameters( name = "{1}" )
         public static List<Object[]> methods()
         {
             ArrayList<Object[]> methods = new ArrayList<>();
@@ -291,32 +331,14 @@ public class ConsistencyReporterTest
             return methods;
         }
 
-        @Rule
-        public final TestRule logFailure = ( base, description ) -> new Statement()
-        {
-            @Override
-            public void evaluate() throws Throwable
-            {
-                try
-                {
-                    base.evaluate();
-                }
-                catch ( Throwable failure )
-                {
-                    System.err.println( "Failure in " + TestAllReportMessages.this + ": " + failure );
-                    throw failure;
-                }
-            }
-        };
-
-        @Override
+		@Override
         public String toString()
         {
             return format( "report.%s( %s{ reporter.%s(); } )",
                            reportMethod.getName(), signatureOf( reportMethod ), method.getName() );
         }
 
-        private static String signatureOf( Method reportMethod )
+		private static String signatureOf( Method reportMethod )
         {
             if ( reportMethod.getParameterTypes().length == 2 )
             {
@@ -328,7 +350,7 @@ public class ConsistencyReporterTest
             }
         }
 
-        private Object[] parameters( Method method )
+		private Object[] parameters( Method method )
         {
             Class<?>[] parameterTypes = method.getParameterTypes();
             Object[] parameters = new Object[parameterTypes.length];
@@ -339,7 +361,7 @@ public class ConsistencyReporterTest
             return parameters;
         }
 
-        private Object parameter( Class<?> type )
+		private Object parameter( Class<?> type )
         {
             if ( type == RecordType.class )
             {
@@ -424,7 +446,7 @@ public class ConsistencyReporterTest
             throw new IllegalArgumentException( format( "Don't know how to provide parameter of type %s", type.getName() ) );
         }
 
-        private static SchemaRule simpleSchemaRule()
+		private static SchemaRule simpleSchemaRule()
         {
             return new SchemaRule()
             {
@@ -448,7 +470,7 @@ public class ConsistencyReporterTest
             };
         }
 
-        @SuppressWarnings( "unchecked" )
+		@SuppressWarnings( "unchecked" )
         private RecordCheck mockChecker()
         {
             RecordCheck checker = mock( RecordCheck.class );
@@ -458,7 +480,7 @@ public class ConsistencyReporterTest
             return checker;
         }
 
-        @Override
+		@Override
         public Object answer( InvocationOnMock invocation ) throws Throwable
         {
             Object[] arguments = invocation.getArguments();
@@ -474,28 +496,5 @@ public class ConsistencyReporterTest
                         ex );
             }
         }
-    }
-
-    private static <T> T[] nullSafeAny()
-    {
-        return ArgumentMatchers.argThat( argument -> true );
-    }
-
-    private static Matcher<String> hasExpectedFormat()
-    {
-        return new TypeSafeMatcher<String>()
-        {
-            @Override
-            public boolean matchesSafely( String item )
-            {
-                return item.trim().split( " " ).length > 1;
-            }
-
-            @Override
-            public void describeTo( Description description )
-            {
-                description.appendText( "message of valid format" );
-            }
-        };
     }
 }

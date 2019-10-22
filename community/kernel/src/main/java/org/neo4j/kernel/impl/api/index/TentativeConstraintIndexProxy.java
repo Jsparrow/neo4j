@@ -124,7 +124,7 @@ public class TentativeConstraintIndexProxy extends AbstractDelegatingIndexProxy
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[target:" + target + "]";
+        return new StringBuilder().append(getClass().getSimpleName()).append("[target:").append(target).append("]").toString();
     }
 
     @Override
@@ -158,15 +158,15 @@ public class TentativeConstraintIndexProxy extends AbstractDelegatingIndexProxy
     @Override
     public void validate() throws UniquePropertyValueValidationException
     {
-        if ( !failures.isEmpty() )
-        {
-            SchemaDescriptor descriptor = getDescriptor().schema();
-            throw new UniquePropertyValueValidationException(
-                    ConstraintDescriptorFactory.uniqueForSchema( descriptor ),
-                    ConstraintValidationException.Phase.VERIFICATION,
-                    new HashSet<>( failures )
-                );
-        }
+        if (failures.isEmpty()) {
+			return;
+		}
+		SchemaDescriptor descriptor = getDescriptor().schema();
+		throw new UniquePropertyValueValidationException(
+		        ConstraintDescriptorFactory.uniqueForSchema( descriptor ),
+		        ConstraintValidationException.Phase.VERIFICATION,
+		        new HashSet<>( failures )
+		    );
     }
 
     @Override

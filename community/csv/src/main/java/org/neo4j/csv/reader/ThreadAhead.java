@@ -44,7 +44,7 @@ public abstract class ThreadAhead extends Thread implements Closeable
     protected ThreadAhead( Closeable actual )
     {
         this.actual = actual;
-        setName( getClass().getSimpleName() + " for " + actual );
+        setName( new StringBuilder().append(getClass().getSimpleName()).append(" for ").append(actual).toString() );
         this.owner = Thread.currentThread();
         setDaemon( true );
     }

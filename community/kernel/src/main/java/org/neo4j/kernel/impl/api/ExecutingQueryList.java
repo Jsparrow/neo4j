@@ -26,21 +26,6 @@ import org.neo4j.kernel.api.query.ExecutingQuery;
 
 abstract class ExecutingQueryList
 {
-    abstract Stream<ExecutingQuery> queries();
-
-    abstract ExecutingQueryList push( ExecutingQuery newExecutingQuery );
-
-    final ExecutingQueryList remove( ExecutingQuery executingQuery )
-    {
-        return remove( null, executingQuery );
-    }
-
-    abstract ExecutingQueryList remove( ExecutingQuery parent, ExecutingQuery target );
-
-    abstract <T> T top( Function<ExecutingQuery,T> accessor );
-
-    abstract void waitsFor( ExecutingQuery query );
-
     static final ExecutingQueryList EMPTY = new ExecutingQueryList()
     {
         @Override
@@ -73,7 +58,22 @@ abstract class ExecutingQueryList
         }
     };
 
-    private static class Entry extends ExecutingQueryList
+	abstract Stream<ExecutingQuery> queries();
+
+	abstract ExecutingQueryList push( ExecutingQuery newExecutingQuery );
+
+	final ExecutingQueryList remove( ExecutingQuery executingQuery )
+    {
+        return remove( null, executingQuery );
+    }
+
+	abstract ExecutingQueryList remove( ExecutingQuery parent, ExecutingQuery target );
+
+	abstract <T> T top( Function<ExecutingQuery,T> accessor );
+
+	abstract void waitsFor( ExecutingQuery query );
+
+	private static class Entry extends ExecutingQueryList
     {
         private final ExecutingQuery query;
         private final ExecutingQueryList next;

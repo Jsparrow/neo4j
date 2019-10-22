@@ -78,7 +78,7 @@ public class ServerSettings implements LoadableConfig
             "Your OS might enforce a lower limit than the maximum value specified here." )
     @DocumentedDefaultValue( "Number of available processors, or 500 for machines which have more than 500 processors." )
     public static final Setting<Integer> webserver_max_threads = buildSetting( "dbms.threads.worker_count", INTEGER,
-            "" + Math.min( Runtime.getRuntime().availableProcessors(), 500 ) ).constraint(
+            Integer.toString(Math.min( Runtime.getRuntime().availableProcessors(), 500 )) ).constraint(
             range( 1, JettyThreadCalculator.MAX_THREADS ) ).build();
 
     @Description( "If execution time limiting is enabled in the database, this configures the maximum request execution time. " +
@@ -104,7 +104,7 @@ public class ServerSettings implements LoadableConfig
                     for ( String item : list )
                     {
                         item = item.trim();
-                        if ( !item.equals( "" ) )
+                        if ( !"".equals( item ) )
                         {
                             result.add( createThirdPartyJaxRsPackage( item ) );
                         }
@@ -123,8 +123,7 @@ public class ServerSettings implements LoadableConfig
                     String[] parts = packageAndMountpoint.split( "=" );
                     if ( parts.length != 2 )
                     {
-                        throw new IllegalArgumentException( "config for " + ServerSettings.third_party_packages.name()
-                                + " is wrong: " + packageAndMountpoint );
+                        throw new IllegalArgumentException( new StringBuilder().append("config for ").append(ServerSettings.third_party_packages.name()).append(" is wrong: ").append(packageAndMountpoint).toString() );
                     }
                     String pkg = parts[0];
                     String mountPoint = parts[1];
@@ -161,9 +160,7 @@ public class ServerSettings implements LoadableConfig
 
     @SuppressWarnings( "unused" ) // used only in the startup scripts
     @Description( "GC Logging Options" )
-    public static final Setting<String> gc_logging_options = setting( "dbms.logs.gc.options", STRING, "" +
-            "-XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime " +
-            "-XX:+PrintPromotionFailure -XX:+PrintTenuringDistribution" );
+    public static final Setting<String> gc_logging_options = setting( "dbms.logs.gc.options", STRING, new StringBuilder().append("").append("-XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime ").append("-XX:+PrintPromotionFailure -XX:+PrintTenuringDistribution").toString() );
 
     @SuppressWarnings( "unused" ) // used only in the startup scripts
     @Description( "Number of GC logs to keep." )

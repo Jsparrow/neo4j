@@ -54,13 +54,32 @@ public class CompositeUniquenessConstraintValidationIT
     @ClassRule
     public static ImpermanentDatabaseRule dbRule = new ImpermanentDatabaseRule();
 
-    @Rule
-    public final TestName testName = new TestName();
-    private final int numberOfProps;
-    private final Object[] aValues;
-    private final Object[] bValues;
+	private static final int label = 1;
 
-    @Parameterized.Parameters( name = "{index}: {0}" )
+	@Rule
+    public final TestName testName = new TestName();
+
+	private final int numberOfProps;
+
+	private final Object[] aValues;
+
+	private final Object[] bValues;
+
+	private Transaction transaction;
+
+	private GraphDatabaseAPI graphDatabaseAPI;
+
+	protected Kernel kernel;
+
+	public CompositeUniquenessConstraintValidationIT( TestParams params )
+    {
+        assert params.lhs.length == params.rhs.length;
+        aValues = params.lhs;
+        bValues = params.rhs;
+        numberOfProps = aValues.length;
+    }
+
+	@Parameterized.Parameters( name = "{index}: {0}" )
     public static Iterable<TestParams> parameterValues()
     {
         return Arrays.asList(
@@ -77,31 +96,17 @@ public class CompositeUniquenessConstraintValidationIT
         );
     }
 
-    private static TestParams param( Object[] l, Object[] r )
+	private static TestParams param( Object[] l, Object[] r )
     {
         return new TestParams( l, r );
     }
 
-    private static Object[] values( Object... values )
+	private static Object[] values( Object... values )
     {
         return values;
     }
 
-    private static final int label = 1;
-
-    public CompositeUniquenessConstraintValidationIT( TestParams params )
-    {
-        assert params.lhs.length == params.rhs.length;
-        aValues = params.lhs;
-        bValues = params.rhs;
-        numberOfProps = aValues.length;
-    }
-
-    private Transaction transaction;
-    private GraphDatabaseAPI graphDatabaseAPI;
-    protected Kernel kernel;
-
-    @Before
+	@Before
     public void setup() throws Exception
     {
         graphDatabaseAPI = dbRule.getGraphDatabaseAPI();
@@ -112,7 +117,7 @@ public class CompositeUniquenessConstraintValidationIT
         commit();
     }
 
-    @After
+	@After
     public void clean() throws Exception
     {
         if ( transaction != null )
@@ -137,7 +142,7 @@ public class CompositeUniquenessConstraintValidationIT
         }
     }
 
-    @Test
+	@Test
     public void shouldAllowRemoveAndAddConflictingDataInOneTransaction_DeleteNode() throws Exception
     {
         // given
@@ -153,7 +158,7 @@ public class CompositeUniquenessConstraintValidationIT
         commit();
     }
 
-    @Test
+	@Test
     public void shouldAllowRemoveAndAddConflictingDataInOneTransaction_RemoveLabel() throws Exception
     {
         // given
@@ -169,7 +174,7 @@ public class CompositeUniquenessConstraintValidationIT
         commit();
     }
 
-    @Test
+	@Test
     public void shouldAllowRemoveAndAddConflictingDataInOneTransaction_RemoveProperty() throws Exception
     {
         // given
@@ -185,7 +190,7 @@ public class CompositeUniquenessConstraintValidationIT
         commit();
     }
 
-    @Test
+	@Test
     public void shouldAllowRemoveAndAddConflictingDataInOneTransaction_ChangeProperty() throws Exception
     {
         // given
@@ -201,7 +206,7 @@ public class CompositeUniquenessConstraintValidationIT
         commit();
     }
 
-    @Test
+	@Test
     public void shouldPreventConflictingDataInTx() throws Throwable
     {
         // Given
@@ -217,17 +222,15 @@ public class CompositeUniquenessConstraintValidationIT
             setProperty( n2, prop, aValues[prop] ); // still ok
         }
 
-        assertException( () ->
-        {
-            setProperty( n2, lastPropertyOffset, aValues[lastPropertyOffset] ); // boom!
-
-        }, UniquePropertyValueValidationException.class );
+        // boom!
+		assertException( () ->
+        setProperty(n2, lastPropertyOffset, aValues[lastPropertyOffset]), UniquePropertyValueValidationException.class );
 
         // Then should fail
         commit();
     }
 
-    @Test
+	@Test
     public void shouldEnforceOnSetProperty() throws Exception
     {
         // given
@@ -243,15 +246,13 @@ public class CompositeUniquenessConstraintValidationIT
             setProperty( node, prop, aValues[prop] ); // still ok
         }
 
-        assertException( () ->
-        {
-            setProperty( node, lastPropertyOffset, aValues[lastPropertyOffset] ); // boom!
-
-        }, UniquePropertyValueValidationException.class );
+        // boom!
+		assertException( () ->
+        setProperty(node, lastPropertyOffset, aValues[lastPropertyOffset]), UniquePropertyValueValidationException.class );
         commit();
     }
 
-    @Test
+	@Test
     public void shouldEnforceOnSetLabel() throws Exception
     {
         // given
@@ -262,15 +263,13 @@ public class CompositeUniquenessConstraintValidationIT
         long node = createNode();
         setProperties( node, bValues ); // ok because no label is set
 
-        assertException( () ->
-        {
-            addLabel( node, label ); // boom!
-
-        }, UniquePropertyValueValidationException.class );
+        // boom!
+		assertException( () ->
+        addLabel(node, label), UniquePropertyValueValidationException.class );
         commit();
     }
 
-    @Test
+	@Test
     public void shouldEnforceOnSetPropertyInTx() throws Exception
     {
         // when
@@ -285,14 +284,13 @@ public class CompositeUniquenessConstraintValidationIT
             setProperty( nodeB, prop, bValues[prop] ); // still ok
         }
 
-        assertException( () ->
-        {
-            setProperty( nodeB, lastPropertyOffset, bValues[lastPropertyOffset] ); // boom!
-        }, UniquePropertyValueValidationException.class );
+        // boom!
+		assertException( () ->
+        setProperty(nodeB, lastPropertyOffset, bValues[lastPropertyOffset]), UniquePropertyValueValidationException.class );
         commit();
     }
 
-    @Test
+	@Test
     public void shouldEnforceOnSetLabelInTx() throws Exception
     {
         // given
@@ -303,15 +301,13 @@ public class CompositeUniquenessConstraintValidationIT
         long nodeB = createNode();
         setProperties( nodeB, bValues );
 
-        assertException( () ->
-        {
-            addLabel( nodeB, label ); // boom!
-
-        }, UniquePropertyValueValidationException.class );
+        // boom!
+		assertException( () ->
+        addLabel(nodeB, label), UniquePropertyValueValidationException.class );
         commit();
     }
 
-    private void newTransaction() throws KernelException
+	private void newTransaction() throws KernelException
     {
         if ( transaction != null )
         {
@@ -320,7 +316,7 @@ public class CompositeUniquenessConstraintValidationIT
         transaction = kernel.beginTransaction( KernelTransaction.Type.implicit, LoginContext.AUTH_DISABLED );
     }
 
-    protected void commit() throws TransactionFailureException
+	protected void commit() throws TransactionFailureException
     {
         transaction.success();
         try
@@ -333,29 +329,29 @@ public class CompositeUniquenessConstraintValidationIT
         }
     }
 
-    private long createLabeledNode( int labelId ) throws KernelException
+	private long createLabeledNode( int labelId ) throws KernelException
     {
         long node = transaction.dataWrite().nodeCreate();
         transaction.dataWrite().nodeAddLabel( node, labelId );
         return node;
     }
 
-    private void addLabel( long nodeId, int labelId ) throws KernelException
+	private void addLabel( long nodeId, int labelId ) throws KernelException
     {
         transaction.dataWrite().nodeAddLabel( nodeId, labelId );
     }
 
-    private void setProperty( long nodeId, int propertyId, Object value ) throws KernelException
+	private void setProperty( long nodeId, int propertyId, Object value ) throws KernelException
     {
         transaction.dataWrite().nodeSetProperty( nodeId, propertyId, Values.of( value ) );
     }
 
-    private long createNode() throws KernelException
+	private long createNode() throws KernelException
     {
         return transaction.dataWrite().nodeCreate();
     }
 
-    private long createNodeWithLabelAndProps( int labelId, Object[] propertyValues )
+	private long createNodeWithLabelAndProps( int labelId, Object[] propertyValues )
             throws KernelException
     {
         newTransaction();
@@ -369,7 +365,7 @@ public class CompositeUniquenessConstraintValidationIT
         return nodeId;
     }
 
-    private void setProperties( long nodeId, Object[] propertyValues )
+	private void setProperties( long nodeId, Object[] propertyValues )
             throws KernelException
     {
         for ( int prop = 0; prop < propertyValues.length; prop++ )
@@ -378,7 +374,7 @@ public class CompositeUniquenessConstraintValidationIT
         }
     }
 
-    private int[] propertyIds()
+	private int[] propertyIds()
     {
         int[] props = new int[numberOfProps];
         for ( int i = 0; i < numberOfProps; i++ )

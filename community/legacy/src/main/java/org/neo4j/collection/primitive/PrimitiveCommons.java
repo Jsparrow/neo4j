@@ -46,22 +46,22 @@ class PrimitiveCommons
      */
     static void closeSafely( Object obj, Throwable suppressedException )
     {
-        if ( obj instanceof AutoCloseable )
-        {
-            AutoCloseable closeable = (AutoCloseable) obj;
-            try
-            {
-                closeable.close();
-            }
-            catch ( Exception cause )
-            {
-                RuntimeException exception = new RuntimeException( cause );
-                if ( suppressedException != null )
-                {
-                    exception.addSuppressed( suppressedException );
-                }
-                throw exception;
-            }
-        }
+        if (!(obj instanceof AutoCloseable)) {
+			return;
+		}
+		AutoCloseable closeable = (AutoCloseable) obj;
+		try
+		{
+		    closeable.close();
+		}
+		catch ( Exception cause )
+		{
+		    RuntimeException exception = new RuntimeException( cause );
+		    if ( suppressedException != null )
+		    {
+		        exception.addSuppressed( suppressedException );
+		    }
+		    throw exception;
+		}
     }
 }

@@ -46,27 +46,26 @@ import static org.neo4j.kernel.api.impl.schema.verification.DuplicateCheckStrate
 public class DuplicateCheckStrategyTest
 {
 
-    @Parameterized.Parameters
+    @Parameterized.Parameter
+    public Factory<DuplicateCheckStrategy> duplicateCheckStrategyFactory;
+	private DuplicateCheckStrategy checkStrategy;
+	@Rule
+    public ExpectedException expectedException = ExpectedException.none();
+
+	@Parameterized.Parameters
     public static List<Factory<? extends DuplicateCheckStrategy>> duplicateCheckStrategies()
     {
         return Arrays.asList( () -> new MapDuplicateCheckStrategy( 1000 ),
                 () -> new BucketsDuplicateCheckStrategy( randomNumberOfEntries() ) );
     }
 
-    @Parameterized.Parameter
-    public Factory<DuplicateCheckStrategy> duplicateCheckStrategyFactory;
-    private DuplicateCheckStrategy checkStrategy;
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    @Before
+	@Before
     public void setUp()
     {
         checkStrategy = duplicateCheckStrategyFactory.newInstance();
     }
 
-    @Test
+	@Test
     public void checkStringSinglePropertyDuplicates() throws Exception
     {
         String duplicatedString = "duplicate";
@@ -81,7 +80,7 @@ public class DuplicateCheckStrategyTest
         checkStrategy.checkForDuplicate( propertyValue, 2 );
     }
 
-    @Test
+	@Test
     public void checkNumericSinglePropertyDuplicates() throws Exception
     {
         double duplicatedNumber = 0.33d;
@@ -95,7 +94,7 @@ public class DuplicateCheckStrategyTest
         checkStrategy.checkForDuplicate( property, 4 );
     }
 
-    @Test
+	@Test
     public void duplicateFoundAmongUniqueStringSingleProperty() throws IndexEntryConflictException
     {
         for ( int i = 0; i < randomNumberOfEntries(); i++ )
@@ -114,7 +113,7 @@ public class DuplicateCheckStrategyTest
         checkStrategy.checkForDuplicate( duplicatedValue, 3 );
     }
 
-    @Test
+	@Test
     public void duplicateFoundAmongUniqueNumberSingleProperty() throws IndexEntryConflictException
     {
         double propertyValue = 0;
@@ -134,7 +133,7 @@ public class DuplicateCheckStrategyTest
         checkStrategy.checkForDuplicate( duplicate, 3 );
     }
 
-    @Test
+	@Test
     public void noDuplicatesDetectedForUniqueStringSingleProperty() throws IndexEntryConflictException
     {
         for ( int i = 0; i < randomNumberOfEntries(); i++ )
@@ -145,7 +144,7 @@ public class DuplicateCheckStrategyTest
         }
     }
 
-    @Test
+	@Test
     public void noDuplicatesDetectedForUniqueNumberSingleProperty() throws IndexEntryConflictException
     {
         double propertyValue = 0;
@@ -158,9 +157,7 @@ public class DuplicateCheckStrategyTest
         }
     }
 
-    // multiple
-
-    @Test
+	@Test
     public void checkStringMultiplePropertiesDuplicates() throws Exception
     {
         String duplicateA = "duplicateA";
@@ -176,7 +173,7 @@ public class DuplicateCheckStrategyTest
         checkStrategy.checkForDuplicate( new Value[]{propertyA, propertyB}, 2 );
     }
 
-    @Test
+	@Test
     public void checkNumericMultiplePropertiesDuplicates() throws Exception
     {
         Number duplicatedNumberA = 0.33d;
@@ -192,7 +189,7 @@ public class DuplicateCheckStrategyTest
         checkStrategy.checkForDuplicate( new Value[]{propertyA, propertyB}, 4 );
     }
 
-    @Test
+	@Test
     public void duplicateFoundAmongUniqueStringMultipleProperties() throws IndexEntryConflictException
     {
         for ( int i = 0; i < randomNumberOfEntries(); i++ )
@@ -215,7 +212,7 @@ public class DuplicateCheckStrategyTest
         checkStrategy.checkForDuplicate( new Value[]{propertyA, propertyB}, 3 );
     }
 
-    @Test
+	@Test
     public void duplicateFoundAmongUniqueNumberMultipleProperties() throws IndexEntryConflictException
     {
         double propertyValue = 0;
@@ -240,7 +237,7 @@ public class DuplicateCheckStrategyTest
         checkStrategy.checkForDuplicate( new Value[]{propertyA, propertyB}, 3 );
     }
 
-    @Test
+	@Test
     public void noDuplicatesDetectedForUniqueStringMultipleProperties() throws IndexEntryConflictException
     {
         for ( int i = 0; i < randomNumberOfEntries(); i++ )
@@ -253,7 +250,7 @@ public class DuplicateCheckStrategyTest
         }
     }
 
-    @Test
+	@Test
     public void noDuplicatesDetectedForUniqueNumberMultipleProperties() throws IndexEntryConflictException
     {
         double propertyValueA = 0;
@@ -269,9 +266,13 @@ public class DuplicateCheckStrategyTest
         }
     }
 
-    private static int randomNumberOfEntries()
+	private static int randomNumberOfEntries()
     {
         return ThreadLocalRandom.current().nextInt( BUCKET_STRATEGY_ENTRIES_THRESHOLD, BUCKET_STRATEGY_ENTRIES_THRESHOLD << 1 );
     }
+
+    // multiple
+
+    
 
 }

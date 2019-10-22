@@ -38,6 +38,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.neo4j.helpers.collection.MapUtil.map;
+import java.util.Collections;
 
 public class MapRepresentationTest
 {
@@ -121,7 +122,7 @@ public class MapRepresentationTest
         MapRepresentation rep = new MapRepresentation(
                 map(
                         "a map with a list in it", map( "a list", asList( 42, 87 ) ),
-                        "a list with a map in it", asList( map( "foo", "bar", "baz", false ) )
+                        "a list with a map in it", Collections.singletonList( map( "foo", "bar", "baz", false ) )
                 )
         );
         OutputFormat format = new OutputFormat( new JsonFormat(), new URI( "http://localhost/" ), null );
@@ -149,7 +150,7 @@ public class MapRepresentationTest
                 asList( true, false, true ),
                 map( "numbers", 42, null, "something" ),
                 map( "a list", asList( 42, 87 ), null, asList( "a", "b" ) ),
-                asList( map( "foo", "bar", null, false ) )};
+                Collections.singletonList( map( "foo", "bar", null, false ) )};
 
         for ( Object value : values )
         {

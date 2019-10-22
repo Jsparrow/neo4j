@@ -54,7 +54,351 @@ public abstract class ListValue extends VirtualValue implements SequenceValue, I
         return "List";
     }
 
-    static final class ArrayValueListValue extends ListValue
+    public boolean isEmpty()
+    {
+        return size() == 0;
+    }
+
+	public boolean nonEmpty()
+    {
+        return size() != 0;
+    }
+
+	public boolean storable()
+    {
+        return false;
+    }
+
+	@Override
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder( getTypeName() + "{" );
+        int i = 0;
+        for ( ; i < size() - 1; i++ )
+        {
+            sb.append( value( i ) );
+            sb.append( ", " );
+        }
+        if ( size() > 0 )
+        {
+            sb.append( value( i ) );
+        }
+        sb.append( '}' );
+        return sb.toString();
+    }
+
+	public ArrayValue toStorableArray()
+    {
+        throw new UnsupportedOperationException( "List cannot be turned into a storable array" );
+    }
+
+	@Override
+    public boolean isSequenceValue()
+    {
+        return true;
+    }
+
+	@Override
+    public <T> T map( ValueMapper<T> mapper )
+    {
+        return mapper.mapSequence( this );
+    }
+
+	@Override
+    public boolean equals( VirtualValue other )
+    {
+        return other != null && other.isSequenceValue() && equals( (SequenceValue) other );
+    }
+
+	public AnyValue head()
+    {
+        int size = size();
+        if ( size == 0 )
+        {
+            throw new NoSuchElementException( "head of empty list" );
+        }
+        return value( 0 );
+    }
+
+	public AnyValue last()
+    {
+        int size = size();
+        if ( size == 0 )
+        {
+            throw new NoSuchElementException( "last of empty list" );
+        }
+        return value( size - 1 );
+    }
+
+	@Override
+    public Iterator<AnyValue> iterator()
+    {
+        return new Iterator<AnyValue>()
+        {
+            private int count;
+
+            @Override
+            public boolean hasNext()
+            {
+                return count < size();
+            }
+
+            @Override
+            public AnyValue next()
+            {
+                if ( !hasNext() )
+                {
+                    throw new NoSuchElementException();
+                }
+                return value( count++ );
+            }
+        };
+    }
+
+	@Override
+    public VirtualValueGroup valueGroup()
+    {
+        return VirtualValueGroup.LIST;
+    }
+
+	@Override
+    public int length()
+    {
+        return size();
+    }
+
+	@Override
+    public int compareTo( VirtualValue other, Comparator<AnyValue> comparator )
+    {
+        if ( !(other instanceof ListValue) )
+        {
+            throw new IllegalArgumentException( "Cannot compare different virtual values" );
+        }
+
+        ListValue otherList = (ListValue) other;
+        if ( iterationPreference() == RANDOM_ACCESS && otherList.iterationPreference() == RANDOM_ACCESS )
+        {
+            return randomAccessCompareTo( comparator, otherList );
+        }
+        else
+        {
+            return iteratorCompareTo( comparator, otherList );
+        }
+    }
+
+	public AnyValue[] asArray()
+    {
+        switch ( iterationPreference() )
+        {
+        case RANDOM_ACCESS:
+            return randomAccessAsArray();
+        case ITERATION:
+            return iterationAsArray();
+        default:
+            throw new IllegalStateException( "not a valid iteration preference" );
+        }
+    }
+
+	@Override
+    public int computeHash()
+    {
+        switch ( iterationPreference() )
+        {
+        case RANDOM_ACCESS:
+            return randomAccessComputeHash();
+        case ITERATION:
+            return iterationComputeHash();
+        default:
+            throw new IllegalStateException( "not a valid iteration preference" );
+        }
+    }
+
+	@Override
+    public <E extends Exception> void writeTo( AnyValueWriter<E> writer ) throws E
+    {
+        switch ( iterationPreference() )
+        {
+        case RANDOM_ACCESS:
+            randomAccessWriteTo( writer );
+            break;
+        case ITERATION:
+            iterationWriteTo( writer );
+            break;
+        default:
+            throw new IllegalStateException( "not a valid iteration preference" );
+        }
+    }
+
+	public ListValue dropNoValues()
+    {
+        return new DropNoValuesListValue( this );
+    }
+
+	public ListValue slice( int from, int to )
+    {
+        int f = Math.max( from, 0 );
+        int t = Math.min( to, size() );
+        if ( f > t )
+        {
+            return EMPTY_LIST;
+        }
+        else
+        {
+            return new ListSlice( this, f, t );
+        }
+    }
+
+	public ListValue tail()
+    {
+        return slice( 1, size() );
+    }
+
+	public ListValue drop( int n )
+    {
+        int size = size();
+        int start = Math.max( 0, Math.min( n, size ) );
+        return new ListSlice( this, start, size );
+    }
+
+	public ListValue take( int n )
+    {
+        int end = Math.max( 0, Math.min( n, size() ) );
+        return new ListSlice( this, 0, end );
+    }
+
+	public ListValue reverse()
+    {
+        return new ReversedList( this );
+    }
+
+	public ListValue append( AnyValue...values )
+    {
+        if ( values.length == 0 )
+        {
+            return this;
+        }
+        return new AppendList( this, values );
+    }
+
+	public ListValue prepend( AnyValue...values )
+    {
+        if ( values.length == 0 )
+        {
+            return this;
+        }
+        return new PrependList( this, values );
+    }
+
+	private AnyValue[] iterationAsArray()
+    {
+        ArrayList<AnyValue> values = new ArrayList<>();
+        int size = 0;
+        for ( AnyValue value : this )
+        {
+            values.add( value );
+            size++;
+        }
+        return values.toArray( new AnyValue[size] );
+    }
+
+	private AnyValue[] randomAccessAsArray()
+    {
+        int size = size();
+        AnyValue[] values = new AnyValue[size];
+        for ( int i = 0; i < values.length; i++ )
+        {
+            values[i] = value( i );
+        }
+        return values;
+    }
+
+	private int randomAccessComputeHash()
+    {
+        int hashCode = 1;
+        int size = size();
+        for ( int i = 0; i < size; i++ )
+        {
+            hashCode = 31 * hashCode + value( i ).hashCode();
+        }
+        return hashCode;
+    }
+
+	private int iterationComputeHash()
+    {
+        int hashCode = 1;
+        for ( AnyValue value : this )
+        {
+            hashCode = 31 * hashCode + value.hashCode();
+        }
+        return hashCode;
+    }
+
+	private <E extends Exception> void randomAccessWriteTo( AnyValueWriter<E> writer ) throws E
+    {
+        writer.beginList( size() );
+        for ( int i = 0; i < size(); i++ )
+        {
+            value( i ).writeTo( writer );
+        }
+        writer.endList();
+    }
+
+	private <E extends Exception> void iterationWriteTo( AnyValueWriter<E> writer ) throws E
+    {
+        writer.beginList( size() );
+        for ( AnyValue value : this )
+        {
+            value.writeTo( writer );
+        }
+        writer.endList();
+    }
+
+	private int randomAccessCompareTo( Comparator<AnyValue> comparator, ListValue otherList )
+    {
+        int x = Integer.compare( this.length(), otherList.length() );
+
+        if ( x == 0 )
+        {
+            for ( int i = 0; i < length(); i++ )
+            {
+                x = comparator.compare( this.value( i ), otherList.value( i ) );
+                if ( x != 0 )
+                {
+                    return x;
+                }
+            }
+        }
+
+        return x;
+    }
+
+	private int iteratorCompareTo( Comparator<AnyValue> comparator, ListValue otherList )
+    {
+        Iterator<AnyValue> thisIterator = iterator();
+        Iterator<AnyValue> thatIterator = otherList.iterator();
+        while ( thisIterator.hasNext() )
+        {
+            if ( !thatIterator.hasNext() )
+            {
+                return 1;
+            }
+            int compare = comparator.compare( thisIterator.next(), thatIterator.next() );
+            if ( compare != 0 )
+            {
+                return compare;
+            }
+        }
+        if ( thatIterator.hasNext() )
+        {
+            return -1;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+	static final class ArrayValueListValue extends ListValue
     {
         private final ArrayValue array;
 
@@ -434,7 +778,8 @@ public abstract class ListValue extends VirtualValue implements SequenceValue, I
         @Override
         public String toString()
         {
-            return "Range(" + start + "..." + end + ", step = " + step + ")";
+            return new StringBuilder().append("Range(").append(start).append("...").append(end).append(", step = ").append(step)
+					.append(")").toString();
         }
 
         @Override
@@ -568,7 +913,7 @@ public abstract class ListValue extends VirtualValue implements SequenceValue, I
             }
             else
             {
-                throw new IndexOutOfBoundsException( offset + " is outside range " + size );
+                throw new IndexOutOfBoundsException( new StringBuilder().append(offset).append(" is outside range ").append(size).toString() );
             }
         }
 
@@ -624,7 +969,7 @@ public abstract class ListValue extends VirtualValue implements SequenceValue, I
             }
             else
             {
-                throw new IndexOutOfBoundsException( offset + " is outside range " + size );
+                throw new IndexOutOfBoundsException( new StringBuilder().append(offset).append(" is outside range ").append(size).toString() );
             }
         }
 
@@ -640,350 +985,6 @@ public abstract class ListValue extends VirtualValue implements SequenceValue, I
             default:
                 throw new IllegalStateException( "unknown iteration preference" );
             }
-        }
-    }
-
-    public boolean isEmpty()
-    {
-        return size() == 0;
-    }
-
-    public boolean nonEmpty()
-    {
-        return size() != 0;
-    }
-
-    public boolean storable()
-    {
-        return false;
-    }
-
-    @Override
-    public String toString()
-    {
-        StringBuilder sb = new StringBuilder( getTypeName() + "{" );
-        int i = 0;
-        for ( ; i < size() - 1; i++ )
-        {
-            sb.append( value( i ) );
-            sb.append( ", " );
-        }
-        if ( size() > 0 )
-        {
-            sb.append( value( i ) );
-        }
-        sb.append( '}' );
-        return sb.toString();
-    }
-
-    public ArrayValue toStorableArray()
-    {
-        throw new UnsupportedOperationException( "List cannot be turned into a storable array" );
-    }
-
-    @Override
-    public boolean isSequenceValue()
-    {
-        return true;
-    }
-
-    @Override
-    public <T> T map( ValueMapper<T> mapper )
-    {
-        return mapper.mapSequence( this );
-    }
-
-    @Override
-    public boolean equals( VirtualValue other )
-    {
-        return other != null && other.isSequenceValue() && equals( (SequenceValue) other );
-    }
-
-    public AnyValue head()
-    {
-        int size = size();
-        if ( size == 0 )
-        {
-            throw new NoSuchElementException( "head of empty list" );
-        }
-        return value( 0 );
-    }
-
-    public AnyValue last()
-    {
-        int size = size();
-        if ( size == 0 )
-        {
-            throw new NoSuchElementException( "last of empty list" );
-        }
-        return value( size - 1 );
-    }
-
-    @Override
-    public Iterator<AnyValue> iterator()
-    {
-        return new Iterator<AnyValue>()
-        {
-            private int count;
-
-            @Override
-            public boolean hasNext()
-            {
-                return count < size();
-            }
-
-            @Override
-            public AnyValue next()
-            {
-                if ( !hasNext() )
-                {
-                    throw new NoSuchElementException();
-                }
-                return value( count++ );
-            }
-        };
-    }
-
-    @Override
-    public VirtualValueGroup valueGroup()
-    {
-        return VirtualValueGroup.LIST;
-    }
-
-    @Override
-    public int length()
-    {
-        return size();
-    }
-
-    @Override
-    public int compareTo( VirtualValue other, Comparator<AnyValue> comparator )
-    {
-        if ( !(other instanceof ListValue) )
-        {
-            throw new IllegalArgumentException( "Cannot compare different virtual values" );
-        }
-
-        ListValue otherList = (ListValue) other;
-        if ( iterationPreference() == RANDOM_ACCESS && otherList.iterationPreference() == RANDOM_ACCESS )
-        {
-            return randomAccessCompareTo( comparator, otherList );
-        }
-        else
-        {
-            return iteratorCompareTo( comparator, otherList );
-        }
-    }
-
-    public AnyValue[] asArray()
-    {
-        switch ( iterationPreference() )
-        {
-        case RANDOM_ACCESS:
-            return randomAccessAsArray();
-        case ITERATION:
-            return iterationAsArray();
-        default:
-            throw new IllegalStateException( "not a valid iteration preference" );
-        }
-    }
-
-    @Override
-    public int computeHash()
-    {
-        switch ( iterationPreference() )
-        {
-        case RANDOM_ACCESS:
-            return randomAccessComputeHash();
-        case ITERATION:
-            return iterationComputeHash();
-        default:
-            throw new IllegalStateException( "not a valid iteration preference" );
-        }
-    }
-
-    @Override
-    public <E extends Exception> void writeTo( AnyValueWriter<E> writer ) throws E
-    {
-        switch ( iterationPreference() )
-        {
-        case RANDOM_ACCESS:
-            randomAccessWriteTo( writer );
-            break;
-        case ITERATION:
-            iterationWriteTo( writer );
-            break;
-        default:
-            throw new IllegalStateException( "not a valid iteration preference" );
-        }
-    }
-
-    public ListValue dropNoValues()
-    {
-        return new DropNoValuesListValue( this );
-    }
-
-    public ListValue slice( int from, int to )
-    {
-        int f = Math.max( from, 0 );
-        int t = Math.min( to, size() );
-        if ( f > t )
-        {
-            return EMPTY_LIST;
-        }
-        else
-        {
-            return new ListSlice( this, f, t );
-        }
-    }
-
-    public ListValue tail()
-    {
-        return slice( 1, size() );
-    }
-
-    public ListValue drop( int n )
-    {
-        int size = size();
-        int start = Math.max( 0, Math.min( n, size ) );
-        return new ListSlice( this, start, size );
-    }
-
-    public ListValue take( int n )
-    {
-        int end = Math.max( 0, Math.min( n, size() ) );
-        return new ListSlice( this, 0, end );
-    }
-
-    public ListValue reverse()
-    {
-        return new ReversedList( this );
-    }
-
-    public ListValue append( AnyValue...values )
-    {
-        if ( values.length == 0 )
-        {
-            return this;
-        }
-        return new AppendList( this, values );
-    }
-
-    public ListValue prepend( AnyValue...values )
-    {
-        if ( values.length == 0 )
-        {
-            return this;
-        }
-        return new PrependList( this, values );
-    }
-
-    private AnyValue[] iterationAsArray()
-    {
-        ArrayList<AnyValue> values = new ArrayList<>();
-        int size = 0;
-        for ( AnyValue value : this )
-        {
-            values.add( value );
-            size++;
-        }
-        return values.toArray( new AnyValue[size] );
-    }
-
-    private AnyValue[] randomAccessAsArray()
-    {
-        int size = size();
-        AnyValue[] values = new AnyValue[size];
-        for ( int i = 0; i < values.length; i++ )
-        {
-            values[i] = value( i );
-        }
-        return values;
-    }
-
-    private int randomAccessComputeHash()
-    {
-        int hashCode = 1;
-        int size = size();
-        for ( int i = 0; i < size; i++ )
-        {
-            hashCode = 31 * hashCode + value( i ).hashCode();
-        }
-        return hashCode;
-    }
-
-    private int iterationComputeHash()
-    {
-        int hashCode = 1;
-        for ( AnyValue value : this )
-        {
-            hashCode = 31 * hashCode + value.hashCode();
-        }
-        return hashCode;
-    }
-
-    private <E extends Exception> void randomAccessWriteTo( AnyValueWriter<E> writer ) throws E
-    {
-        writer.beginList( size() );
-        for ( int i = 0; i < size(); i++ )
-        {
-            value( i ).writeTo( writer );
-        }
-        writer.endList();
-    }
-
-    private <E extends Exception> void iterationWriteTo( AnyValueWriter<E> writer ) throws E
-    {
-        writer.beginList( size() );
-        for ( AnyValue value : this )
-        {
-            value.writeTo( writer );
-        }
-        writer.endList();
-    }
-
-    private int randomAccessCompareTo( Comparator<AnyValue> comparator, ListValue otherList )
-    {
-        int x = Integer.compare( this.length(), otherList.length() );
-
-        if ( x == 0 )
-        {
-            for ( int i = 0; i < length(); i++ )
-            {
-                x = comparator.compare( this.value( i ), otherList.value( i ) );
-                if ( x != 0 )
-                {
-                    return x;
-                }
-            }
-        }
-
-        return x;
-    }
-
-    private int iteratorCompareTo( Comparator<AnyValue> comparator, ListValue otherList )
-    {
-        Iterator<AnyValue> thisIterator = iterator();
-        Iterator<AnyValue> thatIterator = otherList.iterator();
-        while ( thisIterator.hasNext() )
-        {
-            if ( !thatIterator.hasNext() )
-            {
-                return 1;
-            }
-            int compare = comparator.compare( thisIterator.next(), thatIterator.next() );
-            if ( compare != 0 )
-            {
-                return compare;
-            }
-        }
-        if ( thatIterator.hasNext() )
-        {
-            return -1;
-        }
-        else
-        {
-            return 0;
         }
     }
 }

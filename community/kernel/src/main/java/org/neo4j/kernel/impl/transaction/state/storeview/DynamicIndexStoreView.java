@@ -47,7 +47,7 @@ import org.neo4j.values.storable.Value;
  */
 public class DynamicIndexStoreView implements IndexStoreView
 {
-    private static boolean USE_LABEL_INDEX_FOR_SCHEMA_INDEX_POPULATION = FeatureToggles.flag(
+    private static boolean useLabelIndexForSchemaIndexPopulation = FeatureToggles.flag(
             DynamicIndexStoreView.class, "use.label.index", true );
 
     private final NeoStoreIndexStoreView neoStoreIndexStoreView;
@@ -72,7 +72,7 @@ public class DynamicIndexStoreView implements IndexStoreView
             Visitor<NodeLabelUpdate,FAILURE> labelUpdateVisitor,
             boolean forceStoreScan )
     {
-        if ( forceStoreScan || !USE_LABEL_INDEX_FOR_SCHEMA_INDEX_POPULATION || useAllNodeStoreScan( labelIds ) )
+        if ( forceStoreScan || !useLabelIndexForSchemaIndexPopulation || useAllNodeStoreScan( labelIds ) )
         {
             return neoStoreIndexStoreView.visitNodes( labelIds, propertyKeyIdFilter, propertyUpdatesVisitor, labelUpdateVisitor,
                     forceStoreScan );

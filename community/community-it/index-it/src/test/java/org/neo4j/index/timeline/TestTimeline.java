@@ -47,33 +47,9 @@ public class TestTimeline
 {
     private GraphDatabaseService db;
 
-    @Before
-    public void before()
-    {
-        db = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder().newGraphDatabase();
-    }
+	private EntityCreator<PropertyContainer> nodeCreator = db::createNode;
 
-    @After
-    public void after()
-    {
-        db.shutdown();
-    }
-
-    private interface EntityCreator<T extends PropertyContainer>
-    {
-        T create();
-    }
-
-    private EntityCreator<PropertyContainer> nodeCreator = new EntityCreator<PropertyContainer>()
-    {
-        @Override
-        public Node create()
-        {
-            return db.createNode();
-        }
-    };
-
-    private EntityCreator<PropertyContainer> relationshipCreator = new EntityCreator<PropertyContainer>()
+	private EntityCreator<PropertyContainer> relationshipCreator = new EntityCreator<PropertyContainer>()
     {
         private final RelationshipType type = RelationshipType.withName( "whatever" );
 
@@ -84,7 +60,19 @@ public class TestTimeline
         }
     };
 
-    private TimelineIndex<PropertyContainer> nodeTimeline()
+	@Before
+    public void before()
+    {
+        db = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder().newGraphDatabase();
+    }
+
+	@After
+    public void after()
+    {
+        db.shutdown();
+    }
+
+	private TimelineIndex<PropertyContainer> nodeTimeline()
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -94,7 +82,7 @@ public class TestTimeline
         }
     }
 
-    private TimelineIndex<PropertyContainer> relationshipTimeline()
+	private TimelineIndex<PropertyContainer> relationshipTimeline()
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -104,7 +92,7 @@ public class TestTimeline
         }
     }
 
-    private LinkedList<Pair<PropertyContainer, Long>> createTimestamps( EntityCreator<PropertyContainer> creator,
+	private LinkedList<Pair<PropertyContainer, Long>> createTimestamps( EntityCreator<PropertyContainer> creator,
             TimelineIndex<PropertyContainer> timeline, long... timestamps )
     {
         try ( Transaction tx = db.beginTx() )
@@ -119,7 +107,7 @@ public class TestTimeline
         }
     }
 
-    private Pair<PropertyContainer, Long> createTimestampedEntity( EntityCreator<PropertyContainer> creator,
+	private Pair<PropertyContainer, Long> createTimestampedEntity( EntityCreator<PropertyContainer> creator,
             TimelineIndex<PropertyContainer> timeline, long timestamp )
     {
         PropertyContainer entity = creator.create();
@@ -127,20 +115,17 @@ public class TestTimeline
         return Pair.of( entity, timestamp );
     }
 
-    private List<PropertyContainer> sortedEntities( LinkedList<Pair<PropertyContainer, Long>> timestamps, final boolean reversed )
+	private List<PropertyContainer> sortedEntities( LinkedList<Pair<PropertyContainer, Long>> timestamps, final boolean reversed )
     {
         List<Pair<PropertyContainer, Long>> sorted = new ArrayList<>( timestamps );
         sorted.sort( ( o1, o2 ) -> !reversed ? o1.other().compareTo( o2.other() ) : o2.other().compareTo( o1.other() ) );
 
         List<PropertyContainer> result = new ArrayList<>();
-        for ( Pair<PropertyContainer, Long> timestamp : sorted )
-        {
-            result.add( timestamp.first() );
-        }
+        sorted.forEach(timestamp -> result.add(timestamp.first()));
         return result;
     }
 
-    // ======== Tests, although private so that we can create two versions of each,
+	// ======== Tests, although private so that we can create two versions of each,
     // ======== one for nodes and one for relationships
 
     private void makeSureFirstAndLastAreReturnedCorrectly( EntityCreator<PropertyContainer> creator,
@@ -155,7 +140,7 @@ public class TestTimeline
         }
     }
 
-    private void makeSureRangesAreReturnedInCorrectOrder( EntityCreator<PropertyContainer> creator,
+	private void makeSureRangesAreReturnedInCorrectOrder( EntityCreator<PropertyContainer> creator,
             TimelineIndex<PropertyContainer> timeline )
     {
         LinkedList<Pair<PropertyContainer, Long>> timestamps = createTimestamps( creator, timeline,
@@ -168,7 +153,7 @@ public class TestTimeline
         }
     }
 
-    private void makeSureRangesAreReturnedInCorrectReversedOrder( EntityCreator<PropertyContainer> creator,
+	private void makeSureRangesAreReturnedInCorrectReversedOrder( EntityCreator<PropertyContainer> creator,
             TimelineIndex<PropertyContainer> timeline )
     {
         LinkedList<Pair<PropertyContainer, Long>> timestamps = createTimestamps( creator, timeline,
@@ -181,7 +166,7 @@ public class TestTimeline
         }
     }
 
-    private void makeSureWeCanQueryLowerDefaultThan1970( EntityCreator<PropertyContainer> creator,
+	private void makeSureWeCanQueryLowerDefaultThan1970( EntityCreator<PropertyContainer> creator,
             TimelineIndex<PropertyContainer> timeline )
     {
         LinkedList<Pair<PropertyContainer,Long>> timestamps = createTimestamps( creator, timeline, -10000, 0, 10000 );
@@ -193,7 +178,7 @@ public class TestTimeline
         }
     }
 
-    private void makeSureUncommittedChangesAreSortedCorrectly( EntityCreator<PropertyContainer> creator,
+	private void makeSureUncommittedChangesAreSortedCorrectly( EntityCreator<PropertyContainer> creator,
             TimelineIndex<PropertyContainer> timeline )
     {
         LinkedList<Pair<PropertyContainer, Long>> timestamps = createTimestamps( creator, timeline,
@@ -214,7 +199,7 @@ public class TestTimeline
         }
     }
 
-    // ======== The tests
+	// ======== The tests
 
     @Test
     public void makeSureFirstAndLastAreReturnedCorrectlyNode()
@@ -222,56 +207,62 @@ public class TestTimeline
         makeSureFirstAndLastAreReturnedCorrectly( nodeCreator, nodeTimeline() );
     }
 
-    @Test
+	@Test
     public void makeSureFirstAndLastAreReturnedCorrectlyRelationship()
     {
         makeSureFirstAndLastAreReturnedCorrectly( relationshipCreator, relationshipTimeline() );
     }
 
-    @Test
+	@Test
     public void makeSureRangesAreReturnedInCorrectOrderNode()
     {
         makeSureRangesAreReturnedInCorrectOrder( nodeCreator, nodeTimeline() );
     }
 
-    @Test
+	@Test
     public void makeSureRangesAreReturnedInCorrectOrderRelationship()
     {
         makeSureRangesAreReturnedInCorrectOrder( relationshipCreator, relationshipTimeline() );
     }
 
-    @Test
+	@Test
     public void makeSureRangesAreReturnedInCorrectReversedOrderNode()
     {
         makeSureRangesAreReturnedInCorrectReversedOrder( nodeCreator, nodeTimeline() );
     }
 
-    @Test
+	@Test
     public void makeSureRangesAreReturnedInCorrectReversedOrderRelationship()
     {
         makeSureRangesAreReturnedInCorrectReversedOrder( relationshipCreator, relationshipTimeline() );
     }
 
-    @Test
+	@Test
     public void makeSureUncommittedChangesAreSortedCorrectlyNode()
     {
         makeSureUncommittedChangesAreSortedCorrectly( nodeCreator, nodeTimeline() );
     }
 
-    @Test
+	@Test
     public void makeSureUncommittedChangesAreSortedCorrectlyRelationship()
     {
         makeSureUncommittedChangesAreSortedCorrectly( relationshipCreator, relationshipTimeline() );
     }
 
-    @Test
+	@Test
     public void makeSureWeCanQueryLowerDefaultThan1970Node()
     {
         makeSureWeCanQueryLowerDefaultThan1970( nodeCreator, nodeTimeline() );
     }
-    @Test
+
+	@Test
     public void makeSureWeCanQueryLowerDefaultThan1970Relationship()
     {
         makeSureWeCanQueryLowerDefaultThan1970( relationshipCreator, relationshipTimeline() );
+    }
+
+    private interface EntityCreator<T extends PropertyContainer>
+    {
+        T create();
     }
 }

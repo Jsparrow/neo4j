@@ -104,10 +104,7 @@ public abstract class GBPTreeITBase<KEY,VALUE>
             // WHEN
             try ( Writer<KEY,VALUE> writer = createWriter( index ) )
             {
-                for ( Map.Entry<KEY,VALUE> entry : data.entrySet() )
-                {
-                    writer.put( entry.getKey(), entry.getValue() );
-                }
+                data.entrySet().forEach(entry -> writer.put(entry.getKey(), entry.getValue()));
             }
 
             for ( int round = 0; round < totalNumberOfRounds; round++ )
@@ -137,7 +134,8 @@ public abstract class GBPTreeITBase<KEY,VALUE>
                             KEY key = result.get().key();
                             if ( expectedHits.remove( key ) == null )
                             {
-                                fail( "Unexpected hit " + key + " when searching for " + from + " - " + to );
+                                fail( new StringBuilder().append("Unexpected hit ").append(key).append(" when searching for ").append(from).append(" - ")
+										.append(to).toString() );
                             }
 
                             assertTrue( keyComparator.compare( key, from ) >= 0 );
@@ -148,8 +146,8 @@ public abstract class GBPTreeITBase<KEY,VALUE>
                         }
                         if ( !expectedHits.isEmpty() )
                         {
-                            fail( "There were results which were expected to be returned, but weren't:" + expectedHits +
-                                    " when searching range " + from + " - " + to );
+                            fail( new StringBuilder().append("There were results which were expected to be returned, but weren't:").append(expectedHits).append(" when searching range ").append(from).append(" - ")
+									.append(to).toString() );
                         }
                     }
                 }
@@ -275,8 +273,7 @@ public abstract class GBPTreeITBase<KEY,VALUE>
     private Map<KEY,VALUE> expectedHits( Map<KEY,VALUE> data, KEY from, KEY to, Comparator<KEY> comparator )
     {
         Map<KEY,VALUE> hits = new TreeMap<>( comparator );
-        for ( Map.Entry<KEY,VALUE> candidate : data.entrySet() )
-        {
+        data.entrySet().forEach(candidate -> {
             if ( comparator.compare( from, to ) == 0 && comparator.compare( candidate.getKey(), from ) == 0 )
             {
                 hits.put( candidate.getKey(), candidate.getValue() );
@@ -286,7 +283,7 @@ public abstract class GBPTreeITBase<KEY,VALUE>
             {
                 hits.put( candidate.getKey(), candidate.getValue() );
             }
-        }
+        });
         return hits;
     }
 

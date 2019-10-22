@@ -49,24 +49,23 @@ import static org.mockito.Mockito.when;
 
 public class PhysicalTransactionCursorTest
 {
-    private final ReadableLogChannel channel = mock( ReadableLogChannel.class, RETURNS_MOCKS );
-    private final LogEntryReader<ReadableLogChannel> entryReader = mock( LogEntryReader.class );
-
     private static final LogEntry NULL_ENTRY = null;
-    private static final CheckPoint A_CHECK_POINT_ENTRY = new CheckPoint( LogPosition.UNSPECIFIED );
-    private static final LogEntryStart A_START_ENTRY = new LogEntryStart( 0, 0, 0L, 0L, null, LogPosition.UNSPECIFIED );
-    private static final LogEntryCommit A_COMMIT_ENTRY = new LogEntryCommit( 42, 0 );
-    private static final LogEntryCommand A_COMMAND_ENTRY = new LogEntryCommand(
+	private static final CheckPoint A_CHECK_POINT_ENTRY = new CheckPoint( LogPosition.UNSPECIFIED );
+	private static final LogEntryStart A_START_ENTRY = new LogEntryStart( 0, 0, 0L, 0L, null, LogPosition.UNSPECIFIED );
+	private static final LogEntryCommit A_COMMIT_ENTRY = new LogEntryCommit( 42, 0 );
+	private static final LogEntryCommand A_COMMAND_ENTRY = new LogEntryCommand(
             new Command.NodeCommand( new NodeRecord( 42 ), new NodeRecord( 42 ) ) );
-    private PhysicalTransactionCursor<ReadableLogChannel> cursor;
+	private final ReadableLogChannel channel = mock( ReadableLogChannel.class, RETURNS_MOCKS );
+	private final LogEntryReader<ReadableLogChannel> entryReader = mock( LogEntryReader.class );
+	private PhysicalTransactionCursor<ReadableLogChannel> cursor;
 
-    @Before
+	@Before
     public void setup() throws IOException
     {
         cursor = new PhysicalTransactionCursor<>( channel, entryReader );
     }
 
-    @Test
+	@Test
     public void shouldCloseTheUnderlyingChannel() throws IOException
     {
         // when
@@ -76,7 +75,7 @@ public class PhysicalTransactionCursorTest
         verify( channel, times( 1 ) ).close();
     }
 
-    @Test
+	@Test
     public void shouldReturnFalseWhenThereAreNoEntries() throws IOException
     {
         // given
@@ -90,7 +89,7 @@ public class PhysicalTransactionCursorTest
         assertNull( cursor.get() );
     }
 
-    @Test
+	@Test
     public void shouldReturnFalseWhenThereIsAStartEntryButNoCommitEntries() throws IOException
     {
         // given
@@ -104,7 +103,7 @@ public class PhysicalTransactionCursorTest
         assertNull( cursor.get() );
     }
 
-    @Test
+	@Test
     public void shouldCallTheVisitorWithTheFoundTransaction() throws IOException
     {
         // given
@@ -122,7 +121,7 @@ public class PhysicalTransactionCursorTest
         );
     }
 
-    @Test
+	@Test
     public void shouldSkipCheckPoints() throws IOException
     {
         // given

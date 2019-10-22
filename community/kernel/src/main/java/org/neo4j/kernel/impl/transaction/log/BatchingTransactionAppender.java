@@ -146,18 +146,14 @@ public class BatchingTransactionAppender extends LifecycleAdapter implements Tra
     private void matchAgainstExpectedTransactionIdIfAny( long transactionId, TransactionToApply tx )
     {
         long expectedTransactionId = tx.transactionId();
-        if ( expectedTransactionId != TRANSACTION_ID_NOT_SPECIFIED )
-        {
-            if ( transactionId != expectedTransactionId )
-            {
-                IllegalStateException ex = new IllegalStateException(
-                        "Received " + tx.transactionRepresentation() + " with txId:" + expectedTransactionId +
-                                " to be applied, but appending it ended up generating an unexpected txId:" +
-                                transactionId );
-                databaseHealth.panic( ex );
-                throw ex;
-            }
-        }
+        boolean condition = expectedTransactionId != TRANSACTION_ID_NOT_SPECIFIED && transactionId != expectedTransactionId;
+		if ( condition ) {
+		    IllegalStateException ex = new IllegalStateException(
+		            new StringBuilder().append("Received ").append(tx.transactionRepresentation()).append(" with txId:").append(expectedTransactionId).append(" to be applied, but appending it ended up generating an unexpected txId:")
+							.append(transactionId).toString() );
+		    databaseHealth.panic( ex );
+		    throw ex;
+		}
     }
 
     private void publishAsCommitted( TransactionToApply batch )

@@ -76,11 +76,35 @@ public class BoltConnectionIT
     private static final MapValue EMPTY_PARAMS = VirtualValues.EMPTY_MAP;
     private static final String USER_AGENT = "BoltConnectionIT/0.0";
     private static final BoltChannel BOLT_CHANNEL = BoltTestUtil.newTestBoltChannel();
-
-    @Rule
+	private static String[] irisClassNames =
+            new String[] {
+                    "Iris-setosa",
+                    "Iris-versicolor",
+                    "Iris-virginica"
+            };
+	private static String irisData =
+            new StringBuilder().append("sepal_length,sepal_width,petal_length,petal_width,class_name\n").append("5.1,3.5,1.4,0.2,Iris-setosa\n").append("4.9,3.0,1.4,0.2,Iris-setosa\n").append("4.7,3.2,1.3,0.2,Iris-setosa\n").append("4.6,3.1,1.5,0.2,Iris-setosa\n").append("5.0,3.6,1.4,0.2,Iris-setosa\n").append("5.4,3.9,1.7,0.4,Iris-setosa\n").append("4.6,3.4,1.4,0.3,Iris-setosa\n")
+			.append("5.0,3.4,1.5,0.2,Iris-setosa\n").append("4.4,2.9,1.4,0.2,Iris-setosa\n").append("4.9,3.1,1.5,0.1,Iris-setosa\n").append("5.4,3.7,1.5,0.2,Iris-setosa\n").append("4.8,3.4,1.6,0.2,Iris-setosa\n").append("4.8,3.0,1.4,0.1,Iris-setosa\n").append("4.3,3.0,1.1,0.1,Iris-setosa\n").append("5.8,4.0,1.2,0.2,Iris-setosa\n").append("5.7,4.4,1.5,0.4,Iris-setosa\n")
+			.append("5.4,3.9,1.3,0.4,Iris-setosa\n").append("5.1,3.5,1.4,0.3,Iris-setosa\n").append("5.7,3.8,1.7,0.3,Iris-setosa\n").append("5.1,3.8,1.5,0.3,Iris-setosa\n").append("5.4,3.4,1.7,0.2,Iris-setosa\n").append("5.1,3.7,1.5,0.4,Iris-setosa\n").append("4.6,3.6,1.0,0.2,Iris-setosa\n").append("5.1,3.3,1.7,0.5,Iris-setosa\n").append("4.8,3.4,1.9,0.2,Iris-setosa\n")
+			.append("5.0,3.0,1.6,0.2,Iris-setosa\n").append("5.0,3.4,1.6,0.4,Iris-setosa\n").append("5.2,3.5,1.5,0.2,Iris-setosa\n").append("5.2,3.4,1.4,0.2,Iris-setosa\n").append("4.7,3.2,1.6,0.2,Iris-setosa\n").append("4.8,3.1,1.6,0.2,Iris-setosa\n").append("5.4,3.4,1.5,0.4,Iris-setosa\n").append("5.2,4.1,1.5,0.1,Iris-setosa\n").append("5.5,4.2,1.4,0.2,Iris-setosa\n")
+			.append("4.9,3.1,1.5,0.2,Iris-setosa\n").append("5.0,3.2,1.2,0.2,Iris-setosa\n").append("5.5,3.5,1.3,0.2,Iris-setosa\n").append("4.9,3.6,1.4,0.1,Iris-setosa\n").append("4.4,3.0,1.3,0.2,Iris-setosa\n").append("5.1,3.4,1.5,0.2,Iris-setosa\n").append("5.0,3.5,1.3,0.3,Iris-setosa\n").append("4.5,2.3,1.3,0.3,Iris-setosa\n").append("4.4,3.2,1.3,0.2,Iris-setosa\n")
+			.append("5.0,3.5,1.6,0.6,Iris-setosa\n").append("5.1,3.8,1.9,0.4,Iris-setosa\n").append("4.8,3.0,1.4,0.3,Iris-setosa\n").append("5.1,3.8,1.6,0.2,Iris-setosa\n").append("4.6,3.2,1.4,0.2,Iris-setosa\n").append("5.3,3.7,1.5,0.2,Iris-setosa\n").append("5.0,3.3,1.4,0.2,Iris-setosa\n").append("7.0,3.2,4.7,1.4,Iris-versicolor\n").append("6.4,3.2,4.5,1.5,Iris-versicolor\n")
+			.append("6.9,3.1,4.9,1.5,Iris-versicolor\n").append("5.5,2.3,4.0,1.3,Iris-versicolor\n").append("6.5,2.8,4.6,1.5,Iris-versicolor\n").append("5.7,2.8,4.5,1.3,Iris-versicolor\n").append("6.3,3.3,4.7,1.6,Iris-versicolor\n").append("4.9,2.4,3.3,1.0,Iris-versicolor\n").append("6.6,2.9,4.6,1.3,Iris-versicolor\n").append("5.2,2.7,3.9,1.4,Iris-versicolor\n").append("5.0,2.0,3.5,1.0,Iris-versicolor\n")
+			.append("5.9,3.0,4.2,1.5,Iris-versicolor\n").append("6.0,2.2,4.0,1.0,Iris-versicolor\n").append("6.1,2.9,4.7,1.4,Iris-versicolor\n").append("5.6,2.9,3.6,1.3,Iris-versicolor\n").append("6.7,3.1,4.4,1.4,Iris-versicolor\n").append("5.6,3.0,4.5,1.5,Iris-versicolor\n").append("5.8,2.7,4.1,1.0,Iris-versicolor\n").append("6.2,2.2,4.5,1.5,Iris-versicolor\n").append("5.6,2.5,3.9,1.1,Iris-versicolor\n")
+			.append("5.9,3.2,4.8,1.8,Iris-versicolor\n").append("6.1,2.8,4.0,1.3,Iris-versicolor\n").append("6.3,2.5,4.9,1.5,Iris-versicolor\n").append("6.1,2.8,4.7,1.2,Iris-versicolor\n").append("6.4,2.9,4.3,1.3,Iris-versicolor\n").append("6.6,3.0,4.4,1.4,Iris-versicolor\n").append("6.8,2.8,4.8,1.4,Iris-versicolor\n").append("6.7,3.0,5.0,1.7,Iris-versicolor\n").append("6.0,2.9,4.5,1.5,Iris-versicolor\n")
+			.append("5.7,2.6,3.5,1.0,Iris-versicolor\n").append("5.5,2.4,3.8,1.1,Iris-versicolor\n").append("5.5,2.4,3.7,1.0,Iris-versicolor\n").append("5.8,2.7,3.9,1.2,Iris-versicolor\n").append("6.0,2.7,5.1,1.6,Iris-versicolor\n").append("5.4,3.0,4.5,1.5,Iris-versicolor\n").append("6.0,3.4,4.5,1.6,Iris-versicolor\n").append("6.7,3.1,4.7,1.5,Iris-versicolor\n").append("6.3,2.3,4.4,1.3,Iris-versicolor\n")
+			.append("5.6,3.0,4.1,1.3,Iris-versicolor\n").append("5.5,2.5,4.0,1.3,Iris-versicolor\n").append("5.5,2.6,4.4,1.2,Iris-versicolor\n").append("6.1,3.0,4.6,1.4,Iris-versicolor\n").append("5.8,2.6,4.0,1.2,Iris-versicolor\n").append("5.0,2.3,3.3,1.0,Iris-versicolor\n").append("5.6,2.7,4.2,1.3,Iris-versicolor\n").append("5.7,3.0,4.2,1.2,Iris-versicolor\n").append("5.7,2.9,4.2,1.3,Iris-versicolor\n")
+			.append("6.2,2.9,4.3,1.3,Iris-versicolor\n").append("5.1,2.5,3.0,1.1,Iris-versicolor\n").append("5.7,2.8,4.1,1.3,Iris-versicolor\n").append("6.3,3.3,6.0,2.5,Iris-virginica\n").append("5.8,2.7,5.1,1.9,Iris-virginica\n").append("7.1,3.0,5.9,2.1,Iris-virginica\n").append("6.3,2.9,5.6,1.8,Iris-virginica\n").append("6.5,3.0,5.8,2.2,Iris-virginica\n").append("7.6,3.0,6.6,2.1,Iris-virginica\n")
+			.append("4.9,2.5,4.5,1.7,Iris-virginica\n").append("7.3,2.9,6.3,1.8,Iris-virginica\n").append("6.7,2.5,5.8,1.8,Iris-virginica\n").append("7.2,3.6,6.1,2.5,Iris-virginica\n").append("6.5,3.2,5.1,2.0,Iris-virginica\n").append("6.4,2.7,5.3,1.9,Iris-virginica\n").append("6.8,3.0,5.5,2.1,Iris-virginica\n").append("5.7,2.5,5.0,2.0,Iris-virginica\n").append("5.8,2.8,5.1,2.4,Iris-virginica\n")
+			.append("6.4,3.2,5.3,2.3,Iris-virginica\n").append("6.5,3.0,5.5,1.8,Iris-virginica\n").append("7.7,3.8,6.7,2.2,Iris-virginica\n").append("7.7,2.6,6.9,2.3,Iris-virginica\n").append("6.0,2.2,5.0,1.5,Iris-virginica\n").append("6.9,3.2,5.7,2.3,Iris-virginica\n").append("5.6,2.8,4.9,2.0,Iris-virginica\n").append("7.7,2.8,6.7,2.0,Iris-virginica\n").append("6.3,2.7,4.9,1.8,Iris-virginica\n")
+			.append("6.7,3.3,5.7,2.1,Iris-virginica\n").append("7.2,3.2,6.0,1.8,Iris-virginica\n").append("6.2,2.8,4.8,1.8,Iris-virginica\n").append("6.1,3.0,4.9,1.8,Iris-virginica\n").append("6.4,2.8,5.6,2.1,Iris-virginica\n").append("7.2,3.0,5.8,1.6,Iris-virginica\n").append("7.4,2.8,6.1,1.9,Iris-virginica\n").append("7.9,3.8,6.4,2.0,Iris-virginica\n").append("6.4,2.8,5.6,2.2,Iris-virginica\n")
+			.append("6.3,2.8,5.1,1.5,Iris-virginica\n").append("6.1,2.6,5.6,1.4,Iris-virginica\n").append("7.7,3.0,6.1,2.3,Iris-virginica\n").append("6.3,3.4,5.6,2.4,Iris-virginica\n").append("6.4,3.1,5.5,1.8,Iris-virginica\n").append("6.0,3.0,4.8,1.8,Iris-virginica\n").append("6.9,3.1,5.4,2.1,Iris-virginica\n").append("6.7,3.1,5.6,2.4,Iris-virginica\n").append("6.9,3.1,5.1,2.3,Iris-virginica\n")
+			.append("5.8,2.7,5.1,1.9,Iris-virginica\n").append("6.8,3.2,5.9,2.3,Iris-virginica\n").append("6.7,3.3,5.7,2.5,Iris-virginica\n").append("6.7,3.0,5.2,2.3,Iris-virginica\n").append("6.3,2.5,5.0,1.9,Iris-virginica\n").append("6.5,3.0,5.2,2.0,Iris-virginica\n").append("6.2,3.4,5.4,2.3,Iris-virginica\n").append("5.9,3.0,5.1,1.8,Iris-virginica\n").append("\n")
+			.toString();
+	@Rule
     public SessionRule env = new SessionRule();
 
-    @Test
+	@Test
     public void shouldCloseConnectionAckFailureBeforeInit() throws Throwable
     {
         // Given
@@ -94,7 +118,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), failedWithStatus( Status.Request.Invalid ) );
     }
 
-    @Test
+	@Test
     public void shouldCloseConnectionResetBeforeInit() throws Throwable
     {
         // Given
@@ -108,7 +132,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), failedWithStatus( Status.Request.Invalid ) );
     }
 
-    @Test
+	@Test
     public void shouldCloseConnectionOnRunBeforeInit() throws Throwable
     {
         // Given
@@ -122,7 +146,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), failedWithStatus( Status.Request.Invalid ) );
     }
 
-    @Test
+	@Test
     public void shouldCloseConnectionOnDiscardAllBeforeInit() throws Throwable
     {
         // Given
@@ -136,7 +160,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), failedWithStatus( Status.Request.Invalid ) );
     }
 
-    @Test
+	@Test
     public void shouldCloseConnectionOnPullAllBeforeInit() throws Throwable
     {
         // Given
@@ -150,7 +174,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), failedWithStatus( Status.Request.Invalid ) );
     }
 
-    @Test
+	@Test
     public void shouldExecuteStatement() throws Throwable
     {
         // Given
@@ -173,7 +197,7 @@ public class BoltConnectionIT
         //assertThat( pulling.next(), streamContaining( StreamMatchers.eqRecord( equalTo( "k" ) ) ) );
     }
 
-    @Test
+	@Test
     public void shouldSucceedOn__run__pullAll__run() throws Throwable
     {
         // Given
@@ -192,7 +216,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), succeeded() );
     }
 
-    @Test
+	@Test
     public void shouldSucceedOn__run__discardAll__run() throws Throwable
     {
         // Given
@@ -211,7 +235,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), succeeded() );
     }
 
-    @Test
+	@Test
     public void shouldSucceedOn__run_BEGIN__pullAll__run_COMMIT__pullALL__run_COMMIT() throws Throwable
     {
         // Given
@@ -237,7 +261,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), succeeded() );
     }
 
-    @Test
+	@Test
     public void shouldNotSendBookmarkInPullAllResponse() throws Throwable
     {
         // Given
@@ -267,7 +291,7 @@ public class BoltConnectionIT
         assertThat( response.hasMetadata( "bookmark" ), is( false ) );
     }
 
-    @Test
+	@Test
     public void shouldFailOn__run__run() throws Throwable
     {
         // Given
@@ -285,7 +309,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), failedWithStatus( Status.Request.Invalid ) );
     }
 
-    @Test
+	@Test
     public void shouldFailOn__pullAll__pullAll() throws Throwable
     {
         // Given
@@ -304,7 +328,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), failedWithStatus( Status.Request.Invalid ) );
     }
 
-    @Test
+	@Test
     public void shouldFailOn__pullAll__discardAll() throws Throwable
     {
         // Given
@@ -323,7 +347,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), failedWithStatus( Status.Request.Invalid ) );
     }
 
-    @Test
+	@Test
     public void shouldFailOn__discardAll__discardAll() throws Throwable
     {
         // Given
@@ -342,7 +366,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), failedWithStatus( Status.Request.Invalid ) );
     }
 
-    @Test
+	@Test
     public void shouldFailOn__discardAll__pullAll() throws Throwable
     {
         // Given
@@ -361,7 +385,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), failedWithStatus( Status.Request.Invalid ) );
     }
 
-    @Test
+	@Test
     public void shouldHandleImplicitCommitFailure() throws Throwable
     {
         // Given
@@ -384,7 +408,7 @@ public class BoltConnectionIT
         //assertThat( discarding.next(), failedWith( Status.Schema.ConstraintValidationFailed ) );
     }
 
-    @Test
+	@Test
     public void shouldAllowUserControlledRollbackOnExplicitTxFailure() throws Throwable
     {
         // Given whenever en explicit transaction has a failure,
@@ -417,7 +441,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), succeeded() );
     }
 
-    @Test
+	@Test
     public void shouldHandleFailureDuringResultPublishing() throws Throwable
     {
         // Given
@@ -467,7 +491,7 @@ public class BoltConnectionIT
         assertThat( err.message(), CoreMatchers.containsString( "Ooopsies!" ) );
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToCleanlyRunMultipleSessionsInSingleThread() throws Throwable
     {
         // Given
@@ -487,11 +511,11 @@ public class BoltConnectionIT
         runAndPull( firstMachine, "ROLLBACK" );
 
         // Then the two should not have interfered with each other
-        stream = runAndPull( secondMachine, "MATCH (a:Person) WHERE id(a) = " + id + " RETURN COUNT(*)" );
+        stream = runAndPull( secondMachine, new StringBuilder().append("MATCH (a:Person) WHERE id(a) = ").append(id).append(" RETURN COUNT(*)").toString() );
         assertThat( ((Record) stream[0]).fields()[0], equalTo( longValue( 1L ) ) );
     }
 
-    @Test
+	@Test
     public void shouldSupportUsingPeriodicCommitInSession() throws Exception
     {
         // Given
@@ -504,13 +528,8 @@ public class BoltConnectionIT
         // When
         Object[] result = runAndPull(
                 machine,
-                "USING PERIODIC COMMIT " + batch + "\n" +
-                        "LOAD CSV WITH HEADERS FROM {csvFileUrl} AS l\n" +
-                        "MATCH (c:Class {name: l.class_name})\n" +
-                        "CREATE (s:Sample {sepal_length: l.sepal_length, sepal_width: l.sepal_width, " +
-                        "petal_length: l.petal_length, petal_width: l.petal_width})\n" +
-                        "CREATE (c)<-[:HAS_CLASS]-(s)\n" +
-                        "RETURN count(*) AS c",
+                new StringBuilder().append("USING PERIODIC COMMIT ").append(batch).append("\n").append("LOAD CSV WITH HEADERS FROM {csvFileUrl} AS l\n").append("MATCH (c:Class {name: l.class_name})\n").append("CREATE (s:Sample {sepal_length: l.sepal_length, sepal_width: l.sepal_width, ").append("petal_length: l.petal_length, petal_width: l.petal_width})\n")
+						.append("CREATE (c)<-[:HAS_CLASS]-(s)\n").append("RETURN count(*) AS c").toString(),
                 params
         );
 
@@ -532,12 +551,12 @@ public class BoltConnectionIT
          * be counted again here
          */
         long tokensCommits = 7;
-        long commits = (IRIS_DATA.split( "\n" ).length - 1 /* header */) / batch;
+        long commits = (irisData.split( "\n" ).length - 1 /* header */) / batch;
         long txId = env.lastClosedTxId();
         assertEquals( tokensCommits + commits + txIdBeforeQuery, txId );
     }
 
-    @Test
+	@Test
     public void shouldNotSupportUsingPeriodicCommitInTransaction() throws Exception
     {
         // Given
@@ -549,13 +568,8 @@ public class BoltConnectionIT
         // When
         BoltResponseRecorder recorder = new BoltResponseRecorder();
         machine.process( new RunMessage(
-                                 "USING PERIODIC COMMIT 40\n" +
-                                 "LOAD CSV WITH HEADERS FROM {csvFileUrl} AS l\n" +
-                                 "MATCH (c:Class {name: l.class_name})\n" +
-                                 "CREATE (s:Sample {sepal_length: l.sepal_length, sepal_width: l.sepal_width, petal_length: l" +
-                                 ".petal_length, petal_width: l.petal_width})\n" +
-                                 "CREATE (c)<-[:HAS_CLASS]-(s)\n" +
-                                 "RETURN count(*) AS c",
+                                 new StringBuilder().append("USING PERIODIC COMMIT 40\n").append("LOAD CSV WITH HEADERS FROM {csvFileUrl} AS l\n").append("MATCH (c:Class {name: l.class_name})\n").append("CREATE (s:Sample {sepal_length: l.sepal_length, sepal_width: l.sepal_width, petal_length: l").append(".petal_length, petal_width: l.petal_width})\n").append("CREATE (c)<-[:HAS_CLASS]-(s)\n")
+										.append("RETURN count(*) AS c").toString(),
                                  params ),
                          recorder
         );
@@ -565,7 +579,7 @@ public class BoltConnectionIT
         // "Executing queries that use periodic commit in an open transaction is not possible."
     }
 
-    @Test
+	@Test
     public void shouldSupportUsingExplainPeriodicCommitInTransaction() throws Exception
     {
         // Given
@@ -577,13 +591,8 @@ public class BoltConnectionIT
         // When
         BoltResponseRecorder recorder = new BoltResponseRecorder();
         machine.process( new RunMessage(
-                "EXPLAIN USING PERIODIC COMMIT 40\n" +
-                        "LOAD CSV WITH HEADERS FROM {csvFileUrl} AS l\n" +
-                        "MATCH (c:Class {name: l.class_name})\n" +
-                        "CREATE (s:Sample {sepal_length: l.sepal_length, sepal_width: l.sepal_width, petal_length: l" +
-                        ".petal_length, petal_width: l.petal_width})\n" +
-                        "CREATE (c)<-[:HAS_CLASS]-(s)\n" +
-                        "RETURN count(*) AS c",
+                new StringBuilder().append("EXPLAIN USING PERIODIC COMMIT 40\n").append("LOAD CSV WITH HEADERS FROM {csvFileUrl} AS l\n").append("MATCH (c:Class {name: l.class_name})\n").append("CREATE (s:Sample {sepal_length: l.sepal_length, sepal_width: l.sepal_width, petal_length: l").append(".petal_length, petal_width: l.petal_width})\n").append("CREATE (c)<-[:HAS_CLASS]-(s)\n").append("RETURN count(*) AS c")
+						.toString(),
                 params ),
                 recorder
         );
@@ -592,7 +601,7 @@ public class BoltConnectionIT
         assertThat( recorder.nextResponse(), succeeded() );
     }
 
-    @Test
+	@Test
     public void shouldCloseTransactionOnCommit() throws Exception
     {
         // Given
@@ -606,7 +615,7 @@ public class BoltConnectionIT
         assertFalse( hasTransaction( machine ) );
     }
 
-    @Test
+	@Test
     public void shouldCloseTransactionEvenIfCommitFails() throws Exception
     {
         // Given
@@ -622,7 +631,7 @@ public class BoltConnectionIT
         assertFalse( hasTransaction( machine ) );
     }
 
-    @Test
+	@Test
     public void shouldCloseTransactionOnRollback() throws Exception
     {
         // Given
@@ -636,7 +645,7 @@ public class BoltConnectionIT
         assertFalse( hasTransaction( machine ) );
     }
 
-    @Test
+	@Test
     public void shouldCloseTransactionOnRollbackAfterFailure() throws Exception
     {
         // Given
@@ -651,7 +660,7 @@ public class BoltConnectionIT
         assertFalse( hasTransaction( machine ) );
     }
 
-    @Test
+	@Test
     public void shouldAllowNewTransactionAfterFailure() throws Throwable
     {
         // Given
@@ -671,33 +680,33 @@ public class BoltConnectionIT
         assertThat( ((Record) stream[0]).fields()[0], equalTo( longValue( 1L )) );
     }
 
-    private static boolean hasTransaction( BoltStateMachine machine )
+	private static boolean hasTransaction( BoltStateMachine machine )
     {
         return ((BoltStateMachineV1) machine).statementProcessor().hasTransaction();
     }
 
-    private String createLocalIrisData( BoltStateMachine machine ) throws Exception
+	private String createLocalIrisData( BoltStateMachine machine ) throws Exception
     {
-        for ( String className : IRIS_CLASS_NAMES )
+        for ( String className : irisClassNames )
         {
             MapValue params = map( "className", className );
             runAndPull( machine, "CREATE (c:Class {name: {className}}) RETURN c", params );
         }
 
-        return env.putTmpFile( "iris", ".csv", IRIS_DATA ).toExternalForm();
+        return env.putTmpFile( "iris", ".csv", irisData ).toExternalForm();
     }
 
-    private Object[] runAndPull( BoltStateMachine machine, String statement ) throws Exception
+	private Object[] runAndPull( BoltStateMachine machine, String statement ) throws Exception
     {
         return runAndPull( machine, statement, EMPTY_PARAMS, SUCCESS );
     }
 
-    private Record[] runAndPull( BoltStateMachine machine, String statement, MapValue params ) throws Exception
+	private Record[] runAndPull( BoltStateMachine machine, String statement, MapValue params ) throws Exception
     {
         return runAndPull( machine, statement, params, SUCCESS );
     }
 
-    private Record[] runAndPull( BoltStateMachine machine, String statement, MapValue params,
+	private Record[] runAndPull( BoltStateMachine machine, String statement, MapValue params,
             BoltResponseMessage expectedResponse ) throws Exception
     {
         BoltResponseRecorder recorder = new BoltResponseRecorder();
@@ -708,169 +717,8 @@ public class BoltConnectionIT
         return response.records();
     }
 
-    private MapValue map( Object... keyValues )
+	private MapValue map( Object... keyValues )
     {
         return ValueUtils.asMapValue( MapUtil.map( keyValues ) );
     }
-
-    private static String[] IRIS_CLASS_NAMES =
-            new String[] {
-                    "Iris-setosa",
-                    "Iris-versicolor",
-                    "Iris-virginica"
-            };
-
-    private static String IRIS_DATA =
-            "sepal_length,sepal_width,petal_length,petal_width,class_name\n" +
-                    "5.1,3.5,1.4,0.2,Iris-setosa\n" +
-                    "4.9,3.0,1.4,0.2,Iris-setosa\n" +
-                    "4.7,3.2,1.3,0.2,Iris-setosa\n" +
-                    "4.6,3.1,1.5,0.2,Iris-setosa\n" +
-                    "5.0,3.6,1.4,0.2,Iris-setosa\n" +
-                    "5.4,3.9,1.7,0.4,Iris-setosa\n" +
-                    "4.6,3.4,1.4,0.3,Iris-setosa\n" +
-                    "5.0,3.4,1.5,0.2,Iris-setosa\n" +
-                    "4.4,2.9,1.4,0.2,Iris-setosa\n" +
-                    "4.9,3.1,1.5,0.1,Iris-setosa\n" +
-                    "5.4,3.7,1.5,0.2,Iris-setosa\n" +
-                    "4.8,3.4,1.6,0.2,Iris-setosa\n" +
-                    "4.8,3.0,1.4,0.1,Iris-setosa\n" +
-                    "4.3,3.0,1.1,0.1,Iris-setosa\n" +
-                    "5.8,4.0,1.2,0.2,Iris-setosa\n" +
-                    "5.7,4.4,1.5,0.4,Iris-setosa\n" +
-                    "5.4,3.9,1.3,0.4,Iris-setosa\n" +
-                    "5.1,3.5,1.4,0.3,Iris-setosa\n" +
-                    "5.7,3.8,1.7,0.3,Iris-setosa\n" +
-                    "5.1,3.8,1.5,0.3,Iris-setosa\n" +
-                    "5.4,3.4,1.7,0.2,Iris-setosa\n" +
-                    "5.1,3.7,1.5,0.4,Iris-setosa\n" +
-                    "4.6,3.6,1.0,0.2,Iris-setosa\n" +
-                    "5.1,3.3,1.7,0.5,Iris-setosa\n" +
-                    "4.8,3.4,1.9,0.2,Iris-setosa\n" +
-                    "5.0,3.0,1.6,0.2,Iris-setosa\n" +
-                    "5.0,3.4,1.6,0.4,Iris-setosa\n" +
-                    "5.2,3.5,1.5,0.2,Iris-setosa\n" +
-                    "5.2,3.4,1.4,0.2,Iris-setosa\n" +
-                    "4.7,3.2,1.6,0.2,Iris-setosa\n" +
-                    "4.8,3.1,1.6,0.2,Iris-setosa\n" +
-                    "5.4,3.4,1.5,0.4,Iris-setosa\n" +
-                    "5.2,4.1,1.5,0.1,Iris-setosa\n" +
-                    "5.5,4.2,1.4,0.2,Iris-setosa\n" +
-                    "4.9,3.1,1.5,0.2,Iris-setosa\n" +
-                    "5.0,3.2,1.2,0.2,Iris-setosa\n" +
-                    "5.5,3.5,1.3,0.2,Iris-setosa\n" +
-                    "4.9,3.6,1.4,0.1,Iris-setosa\n" +
-                    "4.4,3.0,1.3,0.2,Iris-setosa\n" +
-                    "5.1,3.4,1.5,0.2,Iris-setosa\n" +
-                    "5.0,3.5,1.3,0.3,Iris-setosa\n" +
-                    "4.5,2.3,1.3,0.3,Iris-setosa\n" +
-                    "4.4,3.2,1.3,0.2,Iris-setosa\n" +
-                    "5.0,3.5,1.6,0.6,Iris-setosa\n" +
-                    "5.1,3.8,1.9,0.4,Iris-setosa\n" +
-                    "4.8,3.0,1.4,0.3,Iris-setosa\n" +
-                    "5.1,3.8,1.6,0.2,Iris-setosa\n" +
-                    "4.6,3.2,1.4,0.2,Iris-setosa\n" +
-                    "5.3,3.7,1.5,0.2,Iris-setosa\n" +
-                    "5.0,3.3,1.4,0.2,Iris-setosa\n" +
-                    "7.0,3.2,4.7,1.4,Iris-versicolor\n" +
-                    "6.4,3.2,4.5,1.5,Iris-versicolor\n" +
-                    "6.9,3.1,4.9,1.5,Iris-versicolor\n" +
-                    "5.5,2.3,4.0,1.3,Iris-versicolor\n" +
-                    "6.5,2.8,4.6,1.5,Iris-versicolor\n" +
-                    "5.7,2.8,4.5,1.3,Iris-versicolor\n" +
-                    "6.3,3.3,4.7,1.6,Iris-versicolor\n" +
-                    "4.9,2.4,3.3,1.0,Iris-versicolor\n" +
-                    "6.6,2.9,4.6,1.3,Iris-versicolor\n" +
-                    "5.2,2.7,3.9,1.4,Iris-versicolor\n" +
-                    "5.0,2.0,3.5,1.0,Iris-versicolor\n" +
-                    "5.9,3.0,4.2,1.5,Iris-versicolor\n" +
-                    "6.0,2.2,4.0,1.0,Iris-versicolor\n" +
-                    "6.1,2.9,4.7,1.4,Iris-versicolor\n" +
-                    "5.6,2.9,3.6,1.3,Iris-versicolor\n" +
-                    "6.7,3.1,4.4,1.4,Iris-versicolor\n" +
-                    "5.6,3.0,4.5,1.5,Iris-versicolor\n" +
-                    "5.8,2.7,4.1,1.0,Iris-versicolor\n" +
-                    "6.2,2.2,4.5,1.5,Iris-versicolor\n" +
-                    "5.6,2.5,3.9,1.1,Iris-versicolor\n" +
-                    "5.9,3.2,4.8,1.8,Iris-versicolor\n" +
-                    "6.1,2.8,4.0,1.3,Iris-versicolor\n" +
-                    "6.3,2.5,4.9,1.5,Iris-versicolor\n" +
-                    "6.1,2.8,4.7,1.2,Iris-versicolor\n" +
-                    "6.4,2.9,4.3,1.3,Iris-versicolor\n" +
-                    "6.6,3.0,4.4,1.4,Iris-versicolor\n" +
-                    "6.8,2.8,4.8,1.4,Iris-versicolor\n" +
-                    "6.7,3.0,5.0,1.7,Iris-versicolor\n" +
-                    "6.0,2.9,4.5,1.5,Iris-versicolor\n" +
-                    "5.7,2.6,3.5,1.0,Iris-versicolor\n" +
-                    "5.5,2.4,3.8,1.1,Iris-versicolor\n" +
-                    "5.5,2.4,3.7,1.0,Iris-versicolor\n" +
-                    "5.8,2.7,3.9,1.2,Iris-versicolor\n" +
-                    "6.0,2.7,5.1,1.6,Iris-versicolor\n" +
-                    "5.4,3.0,4.5,1.5,Iris-versicolor\n" +
-                    "6.0,3.4,4.5,1.6,Iris-versicolor\n" +
-                    "6.7,3.1,4.7,1.5,Iris-versicolor\n" +
-                    "6.3,2.3,4.4,1.3,Iris-versicolor\n" +
-                    "5.6,3.0,4.1,1.3,Iris-versicolor\n" +
-                    "5.5,2.5,4.0,1.3,Iris-versicolor\n" +
-                    "5.5,2.6,4.4,1.2,Iris-versicolor\n" +
-                    "6.1,3.0,4.6,1.4,Iris-versicolor\n" +
-                    "5.8,2.6,4.0,1.2,Iris-versicolor\n" +
-                    "5.0,2.3,3.3,1.0,Iris-versicolor\n" +
-                    "5.6,2.7,4.2,1.3,Iris-versicolor\n" +
-                    "5.7,3.0,4.2,1.2,Iris-versicolor\n" +
-                    "5.7,2.9,4.2,1.3,Iris-versicolor\n" +
-                    "6.2,2.9,4.3,1.3,Iris-versicolor\n" +
-                    "5.1,2.5,3.0,1.1,Iris-versicolor\n" +
-                    "5.7,2.8,4.1,1.3,Iris-versicolor\n" +
-                    "6.3,3.3,6.0,2.5,Iris-virginica\n" +
-                    "5.8,2.7,5.1,1.9,Iris-virginica\n" +
-                    "7.1,3.0,5.9,2.1,Iris-virginica\n" +
-                    "6.3,2.9,5.6,1.8,Iris-virginica\n" +
-                    "6.5,3.0,5.8,2.2,Iris-virginica\n" +
-                    "7.6,3.0,6.6,2.1,Iris-virginica\n" +
-                    "4.9,2.5,4.5,1.7,Iris-virginica\n" +
-                    "7.3,2.9,6.3,1.8,Iris-virginica\n" +
-                    "6.7,2.5,5.8,1.8,Iris-virginica\n" +
-                    "7.2,3.6,6.1,2.5,Iris-virginica\n" +
-                    "6.5,3.2,5.1,2.0,Iris-virginica\n" +
-                    "6.4,2.7,5.3,1.9,Iris-virginica\n" +
-                    "6.8,3.0,5.5,2.1,Iris-virginica\n" +
-                    "5.7,2.5,5.0,2.0,Iris-virginica\n" +
-                    "5.8,2.8,5.1,2.4,Iris-virginica\n" +
-                    "6.4,3.2,5.3,2.3,Iris-virginica\n" +
-                    "6.5,3.0,5.5,1.8,Iris-virginica\n" +
-                    "7.7,3.8,6.7,2.2,Iris-virginica\n" +
-                    "7.7,2.6,6.9,2.3,Iris-virginica\n" +
-                    "6.0,2.2,5.0,1.5,Iris-virginica\n" +
-                    "6.9,3.2,5.7,2.3,Iris-virginica\n" +
-                    "5.6,2.8,4.9,2.0,Iris-virginica\n" +
-                    "7.7,2.8,6.7,2.0,Iris-virginica\n" +
-                    "6.3,2.7,4.9,1.8,Iris-virginica\n" +
-                    "6.7,3.3,5.7,2.1,Iris-virginica\n" +
-                    "7.2,3.2,6.0,1.8,Iris-virginica\n" +
-                    "6.2,2.8,4.8,1.8,Iris-virginica\n" +
-                    "6.1,3.0,4.9,1.8,Iris-virginica\n" +
-                    "6.4,2.8,5.6,2.1,Iris-virginica\n" +
-                    "7.2,3.0,5.8,1.6,Iris-virginica\n" +
-                    "7.4,2.8,6.1,1.9,Iris-virginica\n" +
-                    "7.9,3.8,6.4,2.0,Iris-virginica\n" +
-                    "6.4,2.8,5.6,2.2,Iris-virginica\n" +
-                    "6.3,2.8,5.1,1.5,Iris-virginica\n" +
-                    "6.1,2.6,5.6,1.4,Iris-virginica\n" +
-                    "7.7,3.0,6.1,2.3,Iris-virginica\n" +
-                    "6.3,3.4,5.6,2.4,Iris-virginica\n" +
-                    "6.4,3.1,5.5,1.8,Iris-virginica\n" +
-                    "6.0,3.0,4.8,1.8,Iris-virginica\n" +
-                    "6.9,3.1,5.4,2.1,Iris-virginica\n" +
-                    "6.7,3.1,5.6,2.4,Iris-virginica\n" +
-                    "6.9,3.1,5.1,2.3,Iris-virginica\n" +
-                    "5.8,2.7,5.1,1.9,Iris-virginica\n" +
-                    "6.8,3.2,5.9,2.3,Iris-virginica\n" +
-                    "6.7,3.3,5.7,2.5,Iris-virginica\n" +
-                    "6.7,3.0,5.2,2.3,Iris-virginica\n" +
-                    "6.3,2.5,5.0,1.9,Iris-virginica\n" +
-                    "6.5,3.0,5.2,2.0,Iris-virginica\n" +
-                    "6.2,3.4,5.4,2.3,Iris-virginica\n" +
-                    "5.9,3.0,5.1,1.8,Iris-virginica\n" +
-                    "\n";
 }

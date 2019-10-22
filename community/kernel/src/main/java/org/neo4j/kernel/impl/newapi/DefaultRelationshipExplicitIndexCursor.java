@@ -129,16 +129,15 @@ class DefaultRelationshipExplicitIndexCursor extends IndexCursor<IndexProgressor
     @Override
     public void close()
     {
-        if ( !isClosed() )
-        {
-            super.close();
-            relationship = NO_ID;
-            score = 0;
-            expectedSize = 0;
-            read = null;
-
-            pool.accept( this );
-        }
+        if (isClosed()) {
+			return;
+		}
+		super.close();
+		relationship = NO_ID;
+		score = 0;
+		expectedSize = 0;
+		read = null;
+		pool.accept( this );
     }
 
     @Override
@@ -156,8 +155,8 @@ class DefaultRelationshipExplicitIndexCursor extends IndexCursor<IndexProgressor
         }
         else
         {
-            return "RelationshipExplicitIndexCursor[relationship=" + relationship + ", expectedSize=" + expectedSize + ", score=" + score +
-                    " ,underlying record=" + super.toString() + "]";
+            return new StringBuilder().append("RelationshipExplicitIndexCursor[relationship=").append(relationship).append(", expectedSize=").append(expectedSize).append(", score=").append(score)
+					.append(" ,underlying record=").append(super.toString()).append("]").toString();
         }
     }
 

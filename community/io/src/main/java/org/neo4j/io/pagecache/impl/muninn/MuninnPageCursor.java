@@ -449,16 +449,13 @@ abstract class MuninnPageCursor extends PageCursor
     {
         long p = pointer;
         long can = p + offset;
-        if ( boundsCheck )
-        {
-            if ( can + size > p + pageSize || can < p )
-            {
-                outOfBounds = true;
-                // Return the victim page when we are out of bounds, since at this point we can't tell if the pointer
-                // will be used for reading or writing.
-                return victimPage;
-            }
-        }
+        boolean condition = boundsCheck && (can + size > p + pageSize || can < p);
+		if ( condition ) {
+		    outOfBounds = true;
+		    // Return the victim page when we are out of bounds, since at this point we can't tell if the pointer
+		    // will be used for reading or writing.
+		    return victimPage;
+		}
         return can;
     }
 
@@ -472,16 +469,13 @@ abstract class MuninnPageCursor extends PageCursor
     {
         int offset = this.offset;
         long can = pointer + offset;
-        if ( boundsCheck )
-        {
-            if ( offset + size > pageSize )
-            {
-                outOfBounds = true;
-                // Return the victim page when we are out of bounds, since at this point we can't tell if the pointer
-                // will be used for reading or writing.
-                return victimPage;
-            }
-        }
+        boolean condition = boundsCheck && offset + size > pageSize;
+		if ( condition ) {
+		    outOfBounds = true;
+		    // Return the victim page when we are out of bounds, since at this point we can't tell if the pointer
+		    // will be used for reading or writing.
+		    return victimPage;
+		}
         return can;
     }
 
@@ -620,12 +614,11 @@ abstract class MuninnPageCursor extends PageCursor
 
     private int getIntAt( long p )
     {
-        if ( UnsafeUtil.allowUnalignedMemoryAccess )
-        {
-            int x = UnsafeUtil.getInt( p );
-            return UnsafeUtil.storeByteOrderIsNative ? x : Integer.reverseBytes( x );
-        }
-        return getIntBigEndian( p );
+        if (!(UnsafeUtil.allowUnalignedMemoryAccess)) {
+			return getIntBigEndian( p );
+		}
+		int x = UnsafeUtil.getInt( p );
+		return UnsafeUtil.storeByteOrderIsNative ? x : Integer.reverseBytes( x );
     }
 
     private int getIntBigEndian( long p )
@@ -742,12 +735,11 @@ abstract class MuninnPageCursor extends PageCursor
 
     private short getShortAt( long p )
     {
-        if ( UnsafeUtil.allowUnalignedMemoryAccess )
-        {
-            short x = UnsafeUtil.getShort( p );
-            return UnsafeUtil.storeByteOrderIsNative ? x : Short.reverseBytes( x );
-        }
-        return getShortBigEndian( p );
+        if (!(UnsafeUtil.allowUnalignedMemoryAccess)) {
+			return getShortBigEndian( p );
+		}
+		short x = UnsafeUtil.getShort( p );
+		return UnsafeUtil.storeByteOrderIsNative ? x : Short.reverseBytes( x );
     }
 
     private short getShortBigEndian( long p )
@@ -933,11 +925,11 @@ abstract class MuninnPageCursor extends PageCursor
     public void setOffset( int offset )
     {
         this.offset = offset;
-        if ( offset < 0 | offset > filePageSize )
-        {
-            this.offset = 0;
-            outOfBounds = true;
-        }
+        if (!(offset < 0 | offset > filePageSize)) {
+			return;
+		}
+		this.offset = 0;
+		outOfBounds = true;
     }
 
     @Override

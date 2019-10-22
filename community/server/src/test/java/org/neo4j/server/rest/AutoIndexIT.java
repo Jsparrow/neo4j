@@ -132,7 +132,8 @@ public class AutoIndexIT extends AbstractRestFunctionalTestBase
 
     private String createJsonStringFor( final String targetUri, final String key, final String value )
     {
-        return "{\"key\": \"" + key + "\", \"value\": \"" + value + "\", \"uri\": \"" + targetUri + "\"}";
+        return new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"uri\": \"").append(targetUri).append("\"}")
+				.toString();
     }
 
     /**
@@ -181,15 +182,15 @@ public class AutoIndexIT extends AbstractRestFunctionalTestBase
         }
         gen.get()
                 .expectedStatus( 405 )
-                .delete( getDataUri() + "index/node/" + indexName + "/name/I/" + id )
+                .delete( new StringBuilder().append(getDataUri()).append("index/node/").append(indexName).append("/name/I/").append(id).toString() )
                 .entity();
         gen.get()
                 .expectedStatus( 405 )
-                .delete( getDataUri() + "index/node/" + indexName + "/name/" + id )
+                .delete( new StringBuilder().append(getDataUri()).append("index/node/").append(indexName).append("/name/").append(id).toString() )
                 .entity();
         gen.get()
                 .expectedStatus( 405 )
-                .delete( getDataUri() + "index/node/" + indexName + "/" + id )
+                .delete( new StringBuilder().append(getDataUri()).append("index/node/").append(indexName).append("/").append(id).toString() )
                 .entity();
     }
 
@@ -222,15 +223,18 @@ public class AutoIndexIT extends AbstractRestFunctionalTestBase
                     .getName();
             gen.get()
                     .expectedStatus( 405 )
-                    .delete( getDataUri() + "index/relationship/" + indexName + "/since/today/" + id )
+                    .delete( new StringBuilder().append(getDataUri()).append("index/relationship/").append(indexName).append("/since/today/").append(id)
+							.toString() )
                     .entity();
             gen.get()
                     .expectedStatus( 405 )
-                    .delete( getDataUri() + "index/relationship/" + indexName + "/since/" + id )
+                    .delete( new StringBuilder().append(getDataUri()).append("index/relationship/").append(indexName).append("/since/").append(id)
+							.toString() )
                     .entity();
             gen.get()
                     .expectedStatus( 405 )
-                    .delete( getDataUri() + "index/relationship/" + indexName + "/" + id )
+                    .delete( new StringBuilder().append(getDataUri()).append("index/relationship/").append(indexName).append("/").append(id)
+							.toString() )
                     .entity();
         }
     }
@@ -364,8 +368,8 @@ public class AutoIndexIT extends AbstractRestFunctionalTestBase
         int initialPropertiesSize = getAutoIndexedPropertiesForType( uriPartForType ).size();
 
         long millis = System.currentTimeMillis();
-        String myProperty1 = uriPartForType + "-myProperty1-" + millis;
-        String myProperty2 = uriPartForType + "-myProperty2-" + millis;
+        String myProperty1 = new StringBuilder().append(uriPartForType).append("-myProperty1-").append(millis).toString();
+        String myProperty2 = new StringBuilder().append(uriPartForType).append("-myProperty2-").append(millis).toString();
 
         gen.get()
                 .expectedStatus( 204 )
@@ -384,8 +388,7 @@ public class AutoIndexIT extends AbstractRestFunctionalTestBase
         gen.get()
                 .expectedStatus( 204 )
                 .payload( null )
-                .delete( autoIndexURI( uriPartForType )
-                         + "/properties/" + myProperty2 );
+                .delete( new StringBuilder().append(autoIndexURI( uriPartForType )).append("/properties/").append(myProperty2).toString() );
 
         properties = getAutoIndexedPropertiesForType( uriPartForType );
         assertEquals( initialPropertiesSize + 1, properties.size() );

@@ -97,7 +97,7 @@ public class IndexConfigStore extends LifecycleAdapter
             else if ( version < VERSION )
             {
                 // ...add version upgrade code here
-                throw new UnsupportedOperationException( "" + version );
+                throw new UnsupportedOperationException( Integer.toString(version) );
             }
             else
             {
@@ -233,7 +233,7 @@ public class IndexConfigStore extends LifecycleAdapter
     {
         if ( map( cls ).remove( indexName ) == null )
         {
-            throw new RuntimeException( "Index config for '" + indexName + "' not found" );
+            throw new RuntimeException( new StringBuilder().append("Index config for '").append(indexName).append("' not found").toString() );
         }
         write();
     }
@@ -277,7 +277,7 @@ public class IndexConfigStore extends LifecycleAdapter
         }
         catch ( IOException e )
         {
-            throw new RuntimeException( "Couldn't rename " + file + " -> " + oldFile, e );
+            throw new RuntimeException( new StringBuilder().append("Couldn't rename ").append(file).append(" -> ").append(oldFile).toString(), e );
         }
 
         // Rename the .tmp file to the current name
@@ -287,7 +287,7 @@ public class IndexConfigStore extends LifecycleAdapter
         }
         catch ( IOException e )
         {
-            throw new RuntimeException( "Couldn't rename " + tmpFile + " -> " + file, e );
+            throw new RuntimeException( new StringBuilder().append("Couldn't rename ").append(tmpFile).append(" -> ").append(file).toString(), e );
         }
         fileSystem.deleteFile( oldFile );
     }

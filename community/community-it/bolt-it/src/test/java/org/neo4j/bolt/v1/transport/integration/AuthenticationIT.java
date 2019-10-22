@@ -84,27 +84,26 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
 
     @Rule
     public RuleChain ruleChain = RuleChain.outerRule( fsRule ).around( server );
+	private HostnamePort address;
+	private final String version = "Neo4j/" + Version.getNeo4jVersion();
 
-    protected TestGraphDatabaseFactory getTestGraphDatabaseFactory()
+	protected TestGraphDatabaseFactory getTestGraphDatabaseFactory()
     {
         return new TestGraphDatabaseFactory( logProvider );
     }
 
-    protected Consumer<Map<String,String>> getSettingsFunction()
+	protected Consumer<Map<String,String>> getSettingsFunction()
     {
         return settings -> settings.put( GraphDatabaseSettings.auth_enabled.name(), "true" );
     }
 
-    private HostnamePort address;
-    private final String version = "Neo4j/" + Version.getNeo4jVersion();
-
-    @Before
+	@Before
     public void setup()
     {
         address = server.lookupDefaultConnector();
     }
 
-    @Test
+	@Test
     public void shouldRespondWithCredentialsExpiredOnFirstUse() throws Throwable
     {
         // When
@@ -121,13 +120,13 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         verifyConnectionOpen();
     }
 
-    private void verifyConnectionOpen() throws IOException
+	private void verifyConnectionOpen() throws IOException
     {
         connection.send( util.chunk( ResetMessage.INSTANCE ) );
         assertThat( connection, util.eventuallyReceives( msgSuccess() ) );
     }
 
-    @Test
+	@Test
     public void shouldFailIfWrongCredentials() throws Throwable
     {
         // When
@@ -147,14 +146,14 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
                 this::authFailureLoggedToUserLog, is( true ), 30, SECONDS );
     }
 
-    private boolean authFailureLoggedToUserLog()
+	private boolean authFailureLoggedToUserLog()
     {
         String boltPackageName = BoltServer.class.getPackage().getName();
         return logProvider.containsMatchingLogCall( inLog( containsString( boltPackageName ) )
                 .warn( containsString( "The client is unauthorized due to authentication failure." ) ) );
     }
 
-    @Test
+	@Test
     public void shouldFailIfWrongCredentialsFollowingSuccessfulLogin() throws Throwable
     {
         // When change password
@@ -195,7 +194,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, eventuallyDisconnects() );
     }
 
-    @Test
+	@Test
     public void shouldFailIfMalformedAuthTokenWrongType() throws Throwable
     {
         // When
@@ -215,7 +214,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, eventuallyDisconnects() );
     }
 
-    @Test
+	@Test
     public void shouldFailIfMalformedAuthTokenMissingKey() throws Throwable
     {
         // When
@@ -234,7 +233,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, eventuallyDisconnects() );
     }
 
-    @Test
+	@Test
     public void shouldFailIfMalformedAuthTokenMissingScheme() throws Throwable
     {
         // When
@@ -252,7 +251,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, eventuallyDisconnects() );
     }
 
-    @Test
+	@Test
     public void shouldFailIfMalformedAuthTokenUnknownScheme() throws Throwable
     {
         // When
@@ -271,7 +270,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, eventuallyDisconnects() );
     }
 
-    @Test
+	@Test
     public void shouldFailDifferentlyIfTooManyFailedAuthAttempts() throws Exception
     {
         // Given
@@ -301,9 +300,8 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
                 CompletableFuture.allOf( futures.toArray( new CompletableFuture[0] ) ).get( 30, SECONDS );
 
                 // We want at least one of the futures to fail with our expected code
-                for ( int i = 0; i < futures.size(); i++ )
-                {
-                    FailureMessage recordedMessage = futures.get( i ).get();
+				for (CompletableFuture<FailureMessage> future : futures) {
+                    FailureMessage recordedMessage = future.get();
 
                     if ( recordedMessage != null )
                     {
@@ -329,7 +327,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
                 containsString( "The client has provided incorrect authentication details too many times in a row." ) );
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToUpdateCredentials() throws Throwable
     {
         // When
@@ -365,7 +363,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, util.eventuallyReceives( msgSuccess() ) );
     }
 
-    @Test
+	@Test
     public void shouldBeAuthenticatedAfterUpdatingCredentials() throws Throwable
     {
         // When
@@ -388,7 +386,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, util.eventuallyReceives( msgSuccess(), msgSuccess() ) );
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToChangePasswordUsingBuiltInProcedure() throws Throwable
     {
         // When
@@ -432,7 +430,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, util.eventuallyReceives( msgSuccess() ) );
     }
 
-    @Test
+	@Test
     public void shouldBeAuthenticatedAfterChangePasswordUsingBuiltInProcedure() throws Throwable
     {
         // When
@@ -463,7 +461,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, util.eventuallyReceives( msgSuccess(), msgSuccess() ) );
     }
 
-    @Test
+	@Test
     public void shouldFailWhenReusingTheSamePassword() throws Throwable
     {
         // When
@@ -494,7 +492,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, util.eventuallyReceives( msgIgnored(), msgSuccess(), msgSuccess(), msgSuccess() ) );
     }
 
-    @Test
+	@Test
     public void shouldFailWhenSubmittingEmptyPassword() throws Throwable
     {
         // When
@@ -525,7 +523,7 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, util.eventuallyReceives( msgIgnored(), msgSuccess(), msgSuccess(), msgSuccess() ) );
     }
 
-    @Test
+	@Test
     public void shouldNotBeAbleToReadWhenPasswordChangeRequired() throws Throwable
     {
         // When
@@ -551,41 +549,12 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         assertThat( connection, eventuallyDisconnects() );
     }
 
-    class FailureMsgMatcher extends TypeSafeMatcher<ResponseMessage>
-    {
-        FailureMessage specialMessage;
-
-        @Override
-        public void describeTo( Description description )
-        {
-            description.appendText( "FAILURE" );
-        }
-
-        @Override
-        protected boolean matchesSafely( ResponseMessage t )
-        {
-            assertThat( t, instanceOf( FailureMessage.class ) );
-            FailureMessage msg = (FailureMessage) t;
-            if ( !msg.status().equals( Status.Security.Unauthorized ) ||
-                 !msg.message().contains( "The client is unauthorized due to authentication failure." ) )
-            {
-                specialMessage = msg;
-            }
-            return true;
-        }
-
-        public boolean gotSpecialMessage()
-        {
-            return specialMessage != null;
-        }
-    }
-
-    private MapValue singletonMap( String key, Object value )
+	private MapValue singletonMap( String key, Object value )
     {
         return VirtualValues.map( new String[]{key}, new AnyValue[]{ValueUtils.of( value )}  );
     }
 
-    private FailureMessage collectAuthFailureOnFailedAuth()
+	private FailureMessage collectAuthFailureOnFailedAuth()
     {
         FailureMsgMatcher failureRecorder = new FailureMsgMatcher();
 
@@ -622,5 +591,34 @@ public class AuthenticationIT extends AbstractBoltTransportsTest
         }
 
         return failureRecorder.specialMessage;
+    }
+
+    class FailureMsgMatcher extends TypeSafeMatcher<ResponseMessage>
+    {
+        FailureMessage specialMessage;
+
+        @Override
+        public void describeTo( Description description )
+        {
+            description.appendText( "FAILURE" );
+        }
+
+        @Override
+        protected boolean matchesSafely( ResponseMessage t )
+        {
+            assertThat( t, instanceOf( FailureMessage.class ) );
+            FailureMessage msg = (FailureMessage) t;
+            if ( !msg.status().equals( Status.Security.Unauthorized ) ||
+                 !msg.message().contains( "The client is unauthorized due to authentication failure." ) )
+            {
+                specialMessage = msg;
+            }
+            return true;
+        }
+
+        public boolean gotSpecialMessage()
+        {
+            return specialMessage != null;
+        }
     }
 }

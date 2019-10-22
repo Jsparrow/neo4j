@@ -30,7 +30,8 @@ import org.neo4j.values.virtual.MapValue;
  */
 public interface Neo4jPack extends PackProvider, UnpackerProvider
 {
-    interface Packer
+    long version();
+	interface Packer
     {
         void pack( String value ) throws IOException;
 
@@ -59,5 +60,4 @@ public interface Neo4jPack extends PackProvider, UnpackerProvider
 
         long unpackListHeader() throws IOException;
     }
-    long version();
 }

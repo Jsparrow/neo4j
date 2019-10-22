@@ -118,7 +118,7 @@ public class RowFormatMetaFieldTestIT extends AbstractRestFunctionalTestBase
 
     private HTTP.RawPayload queryAsJsonRow( String query )
     {
-        return quotedJson( "{ 'statements': [ { 'statement': '" + query + "', 'resultDataContents': [ 'row' ] } ] }" );
+        return quotedJson( new StringBuilder().append("{ 'statements': [ { 'statement': '").append(query).append("', 'resultDataContents': [ 'row' ] } ] }").toString() );
     }
 
     private void assertHasTxLocation( Response begin )

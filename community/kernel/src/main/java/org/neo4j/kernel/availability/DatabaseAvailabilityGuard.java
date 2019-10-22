@@ -95,7 +95,8 @@ public class DatabaseAvailabilityGuard implements AvailabilityGuard
     /**
      * Shutdown the guard. After this method is invoked, the database will always be considered unavailable.
      */
-    public void shutdown()
+    @Override
+	public void shutdown()
     {
         synchronized ( requirementCount )
         {
@@ -145,8 +146,7 @@ public class DatabaseAvailabilityGuard implements AvailabilityGuard
         }
 
         String description = (availability == Availability.UNAVAILABLE)
-                ? "Timeout waiting for database to become available and allow new transactions. Waited " +
-                Format.duration( millis ) + ". " + describeWhoIsBlocking()
+                ? new StringBuilder().append("Timeout waiting for database to become available and allow new transactions. Waited ").append(Format.duration( millis )).append(". ").append(describeWhoIsBlocking()).toString()
                 : "Database not available because it's shutting down";
         throw new UnavailableException( description );
     }
@@ -212,12 +212,11 @@ public class DatabaseAvailabilityGuard implements AvailabilityGuard
      */
     public String describeWhoIsBlocking()
     {
-        if ( blockingRequirements.size() > 0 || requirementCount.get() > 0 )
-        {
-            String causes = Iterables.join( ", ", Iterables.map( AvailabilityRequirement::description, blockingRequirements ) );
-            return requirementCount.get() + " reasons for blocking: " + causes + ".";
-        }
-        return "No blocking components";
+        if (!(blockingRequirements.size() > 0 || requirementCount.get() > 0)) {
+			return "No blocking components";
+		}
+		String causes = Iterables.join( ", ", Iterables.map( AvailabilityRequirement::description, blockingRequirements ) );
+		return new StringBuilder().append(requirementCount.get()).append(" reasons for blocking: ").append(causes).append(".").toString();
     }
 
     private enum Availability

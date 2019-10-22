@@ -34,12 +34,28 @@ import static org.neo4j.codegen.TypeReference.typeReference;
 
 public abstract class MethodDeclaration
 {
-    public static Builder method( Class<?> returnType, String name, Parameter... parameters )
+    private final TypeReference owner;
+	private final Parameter[] parameters;
+	private final TypeReference[] exceptions;
+	private final TypeParameter[] typeParameters;
+	private final int modifiers;
+
+	MethodDeclaration( TypeReference owner, Parameter[] parameters, TypeReference[] exceptions,
+            int modifiers, TypeParameter[] typeParameters )
+    {
+        this.owner = owner;
+        this.parameters = parameters;
+        this.exceptions = exceptions;
+        this.modifiers = modifiers;
+        this.typeParameters = typeParameters;
+    }
+
+	public static Builder method( Class<?> returnType, String name, Parameter... parameters )
     {
         return method( typeReference( returnType ), name, parameters );
     }
 
-    public static Builder method( final TypeReference returnType, final String name, Parameter... parameters )
+	public static Builder method( final TypeReference returnType, final String name, Parameter... parameters )
     {
         return new Builder( parameters )
         {
@@ -51,7 +67,7 @@ public abstract class MethodDeclaration
         };
     }
 
-    static Builder constructor( Parameter... parameters )
+	static Builder constructor( Parameter... parameters )
     {
         return new Builder( parameters )
         {
@@ -63,119 +79,24 @@ public abstract class MethodDeclaration
         };
     }
 
-    public List<TypeParameter> typeParameters()
+	public List<TypeParameter> typeParameters()
     {
         return unmodifiableList( asList( typeParameters ) );
     }
 
-    public List<TypeReference> throwsList()
+	public List<TypeReference> throwsList()
     {
         return unmodifiableList( asList( exceptions ) );
     }
 
-    public abstract static class Builder
-    {
-        private LinkedHashMap<String,TypeReference.Bound> typeParameters;
+	public abstract boolean isConstructor();
 
-        public Builder parameterizedWith( String name, TypeReference.Bound bound )
-        {
-            if ( typeParameters == null )
-            {
-                typeParameters = new LinkedHashMap<>();
-            }
-            else if ( typeParameters.containsKey( name ) )
-            {
-                throw new IllegalArgumentException( name + " defined twice" );
-            }
-            typeParameters.put( name, bound );
-            return this;
-        }
-
-        public Builder throwsException( Class<?> type )
-        {
-            return throwsException( TypeReference.typeReference( type ) );
-        }
-
-        public Builder throwsException( TypeReference type )
-        {
-            if ( exceptions == null )
-            {
-                exceptions = new ArrayList<>();
-            }
-            exceptions.add( type );
-            return this;
-        }
-
-        public Builder modifiers( int modifiers )
-        {
-            this.modifiers = modifiers;
-            return this;
-        }
-
-        public int modifiers()
-        {
-            return modifiers;
-        }
-
-        abstract MethodDeclaration build( TypeReference owner );
-
-        final Parameter[] parameters;
-        private List<TypeReference> exceptions;
-        private int modifiers = Modifier.PUBLIC;
-
-        private Builder( Parameter[] parameters )
-        {
-            this.parameters = parameters;
-        }
-
-        TypeReference[] exceptions()
-        {
-            return exceptions == null ? NO_TYPES : exceptions.toArray( new TypeReference[exceptions.size()] );
-        }
-
-        TypeParameter[] typeParameters()
-        {
-            if ( typeParameters == null )
-            {
-                return TypeParameter.NO_PARAMETERS;
-            }
-            else
-            {
-                TypeParameter[] result = new TypeParameter[typeParameters.size()];
-                int i = 0;
-                for ( Map.Entry<String,TypeReference.Bound> entry : typeParameters.entrySet() )
-                {
-                    result[i++] = new TypeParameter( entry.getKey(), entry.getValue() );
-                }
-                return result;
-            }
-        }
-    }
-
-    private final TypeReference owner;
-    private final Parameter[] parameters;
-    private final TypeReference[] exceptions;
-    private final TypeParameter[] typeParameters;
-    private final int modifiers;
-
-    MethodDeclaration( TypeReference owner, Parameter[] parameters, TypeReference[] exceptions,
-            int modifiers, TypeParameter[] typeParameters )
-    {
-        this.owner = owner;
-        this.parameters = parameters;
-        this.exceptions = exceptions;
-        this.modifiers = modifiers;
-        this.typeParameters = typeParameters;
-    }
-
-    public abstract boolean isConstructor();
-
-    public boolean isStatic()
+	public boolean isStatic()
     {
         return Modifier.isStatic( modifiers );
     }
 
-    public boolean isGeneric()
+	public boolean isGeneric()
     {
         if ( returnType().isGeneric() || typeParameters.length != 0 )
         {
@@ -192,26 +113,26 @@ public abstract class MethodDeclaration
         return false;
     }
 
-    public TypeReference declaringClass()
+	public TypeReference declaringClass()
     {
         return owner;
     }
 
-    public int modifiers()
+	public int modifiers()
     {
         return modifiers;
     }
 
-    public abstract TypeReference returnType();
+	public abstract TypeReference returnType();
 
-    public abstract String name();
+	public abstract String name();
 
-    public Parameter[] parameters()
+	public Parameter[] parameters()
     {
         return parameters;
     }
 
-    public MethodDeclaration erased()
+	public MethodDeclaration erased()
     {
         Map<String,TypeReference> table = new HashMap<>();
         for ( TypeParameter parameter : typeParameters )
@@ -239,24 +160,128 @@ public abstract class MethodDeclaration
                 modifiers, typeParameters );
     }
 
-    private TypeReference erase( TypeReference reference, Map<String,TypeReference> table )
+	private TypeReference erase( TypeReference reference, Map<String,TypeReference> table )
     {
         TypeReference erasedReference = table.get( reference.fullName() );
 
         return erasedReference != null ? erasedReference : reference;
     }
 
-    static MethodDeclaration method( TypeReference owner, final TypeReference returnType, final String name,
+	static MethodDeclaration method( TypeReference owner, final TypeReference returnType, final String name,
             Parameter[] parameters, TypeReference[] exceptions, int modifiers, TypeParameter[] typeParameters )
     {
         return methodDeclaration( owner, returnType, parameters, exceptions, name, false, modifiers, typeParameters );
     }
 
-    static MethodDeclaration constructor( TypeReference owner, Parameter[] parameters, TypeReference[] exceptions,
+	static MethodDeclaration constructor( TypeReference owner, Parameter[] parameters, TypeReference[] exceptions,
             int modifiers, TypeParameter[] typeParameters )
     {
         return methodDeclaration( owner, TypeReference.VOID, parameters, exceptions, "<init>", true, modifiers,
                 typeParameters );
+    }
+
+	private static MethodDeclaration methodDeclaration( TypeReference owner, final TypeReference returnType,
+            final Parameter[] parameters, final TypeReference[] exceptions, final String name,
+            final boolean isConstructor, int modifiers, TypeParameter[] typeParameters )
+    {
+        return new MethodDeclaration( owner, parameters, exceptions, modifiers, typeParameters )
+        {
+            @Override
+            public boolean isConstructor()
+            {
+                return isConstructor;
+            }
+
+            @Override
+            public TypeReference returnType()
+            {
+                return returnType;
+            }
+
+            @Override
+            public String name()
+            {
+                return name;
+            }
+        };
+    }
+
+	public abstract static class Builder
+    {
+        private LinkedHashMap<String,TypeReference.Bound> typeParameters;
+		final Parameter[] parameters;
+		private List<TypeReference> exceptions;
+		private int modifiers = Modifier.PUBLIC;
+
+		private Builder( Parameter[] parameters )
+        {
+            this.parameters = parameters;
+        }
+
+		public Builder parameterizedWith( String name, TypeReference.Bound bound )
+        {
+            if ( typeParameters == null )
+            {
+                typeParameters = new LinkedHashMap<>();
+            }
+            else if ( typeParameters.containsKey( name ) )
+            {
+                throw new IllegalArgumentException( name + " defined twice" );
+            }
+            typeParameters.put( name, bound );
+            return this;
+        }
+
+		public Builder throwsException( Class<?> type )
+        {
+            return throwsException( TypeReference.typeReference( type ) );
+        }
+
+		public Builder throwsException( TypeReference type )
+        {
+            if ( exceptions == null )
+            {
+                exceptions = new ArrayList<>();
+            }
+            exceptions.add( type );
+            return this;
+        }
+
+		public Builder modifiers( int modifiers )
+        {
+            this.modifiers = modifiers;
+            return this;
+        }
+
+		public int modifiers()
+        {
+            return modifiers;
+        }
+
+		abstract MethodDeclaration build( TypeReference owner );
+
+		TypeReference[] exceptions()
+        {
+            return exceptions == null ? NO_TYPES : exceptions.toArray( new TypeReference[exceptions.size()] );
+        }
+
+		TypeParameter[] typeParameters()
+        {
+            if ( typeParameters == null )
+            {
+                return TypeParameter.NO_PARAMETERS;
+            }
+            else
+            {
+                TypeParameter[] result = new TypeParameter[typeParameters.size()];
+                int i = 0;
+                for ( Map.Entry<String,TypeReference.Bound> entry : typeParameters.entrySet() )
+                {
+                    result[i++] = new TypeParameter( entry.getKey(), entry.getValue() );
+                }
+                return result;
+            }
+        }
     }
 
     public static class TypeParameter
@@ -286,31 +311,5 @@ public abstract class MethodDeclaration
         {
             return bound.superBound();
         }
-    }
-
-    private static MethodDeclaration methodDeclaration( TypeReference owner, final TypeReference returnType,
-            final Parameter[] parameters, final TypeReference[] exceptions, final String name,
-            final boolean isConstructor, int modifiers, TypeParameter[] typeParameters )
-    {
-        return new MethodDeclaration( owner, parameters, exceptions, modifiers, typeParameters )
-        {
-            @Override
-            public boolean isConstructor()
-            {
-                return isConstructor;
-            }
-
-            @Override
-            public TypeReference returnType()
-            {
-                return returnType;
-            }
-
-            @Override
-            public String name()
-            {
-                return name;
-            }
-        };
     }
 }

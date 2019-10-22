@@ -60,19 +60,13 @@ public class SchemaAcceptanceTest
     private String propertyKey = "my_property_key";
     private String secondPropertyKey = "my_second_property_key";
 
-    private enum Labels implements Label
-    {
-        MY_LABEL,
-        MY_OTHER_LABEL
-    }
-
     @Before
     public void init()
     {
         db = dbRule.getGraphDatabaseAPI();
     }
 
-    @Test
+	@Test
     public void addingAnIndexingRuleShouldSucceed()
     {
         // WHEN
@@ -82,7 +76,7 @@ public class SchemaAcceptanceTest
         assertThat( getIndexes( db, label ), containsOnly( index ) );
     }
 
-    @Test
+	@Test
     public void addingACompositeIndexingRuleShouldSucceed()
     {
         // WHEN
@@ -92,7 +86,7 @@ public class SchemaAcceptanceTest
         assertThat( getIndexes( db, label ), containsOnly( index ) );
     }
 
-    @Test
+	@Test
     public void addingAnIndexingRuleInNestedTxShouldSucceed()
     {
         IndexDefinition index;
@@ -116,7 +110,7 @@ public class SchemaAcceptanceTest
         assertThat( getIndexes( db, label ), containsOnly( index ) );
     }
 
-    @Test
+	@Test
     public void shouldThrowConstraintViolationIfAskedToIndexSamePropertyAndLabelTwiceInSameTx()
     {
         // WHEN
@@ -137,7 +131,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void shouldThrowConstraintViolationIfAskedToIndexPropertyThatIsAlreadyIndexed()
     {
         // GIVEN
@@ -165,7 +159,7 @@ public class SchemaAcceptanceTest
         assertThat( caught, not( nullValue() ) );
     }
 
-    @Test
+	@Test
     public void shouldThrowConstraintViolationIfAskedToCreateCompoundConstraint()
     {
         // WHEN
@@ -184,7 +178,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void droppingExistingIndexRuleShouldSucceed()
     {
         // GIVEN
@@ -197,7 +191,7 @@ public class SchemaAcceptanceTest
         assertThat( getIndexes( db, label ), isEmpty() );
     }
 
-    @Test
+	@Test
     public void droppingAnUnexistingIndexShouldGiveHelpfulExceptionInSameTransaction()
     {
         // GIVEN
@@ -223,7 +217,7 @@ public class SchemaAcceptanceTest
         assertThat( "Index should have been deleted", getIndexes( db, label ), not( contains( index ) ) );
     }
 
-    @Test
+	@Test
     public void droppingAnUnexistingIndexShouldGiveHelpfulExceptionInSeparateTransactions()
     {
         // GIVEN
@@ -245,7 +239,7 @@ public class SchemaAcceptanceTest
         assertThat( "Index should have been deleted", getIndexes( db, label ), not( contains( index ) ) );
     }
 
-    @Test
+	@Test
     public void awaitingIndexComingOnlineWorks()
     {
         // GIVEN
@@ -263,7 +257,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void awaitingAllIndexesComingOnlineWorks()
     {
         // GIVEN
@@ -283,7 +277,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void shouldPopulateIndex()
     {
         // GIVEN
@@ -297,7 +291,7 @@ public class SchemaAcceptanceTest
         assertThat( findNodesByLabelAndProperty( label, propertyKey, "Neo", db ), containsOnly( node ) );
     }
 
-    @Test
+	@Test
     public void shouldRecreateDroppedIndex()
     {
         // GIVEN
@@ -319,7 +313,7 @@ public class SchemaAcceptanceTest
         assertThat( findNodesByLabelAndProperty( label, propertyKey, "Neo", db ), containsOnly( node ) );
     }
 
-    @Test
+	@Test
     public void shouldCreateUniquenessConstraint()
     {
         // WHEN
@@ -336,7 +330,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void shouldListAddedConstraintsByLabel()
     {
         // GIVEN
@@ -347,7 +341,7 @@ public class SchemaAcceptanceTest
         assertThat( getConstraints( db, label ), containsOnly( constraint1 ) );
     }
 
-    @Test
+	@Test
     public void shouldListAddedConstraints()
     {
         // GIVEN
@@ -358,7 +352,7 @@ public class SchemaAcceptanceTest
         assertThat( getConstraints( db ), containsOnly( constraint1, constraint2 ) );
     }
 
-    @Test
+	@Test
     public void shouldDropUniquenessConstraint()
     {
         // GIVEN
@@ -371,7 +365,7 @@ public class SchemaAcceptanceTest
         assertThat( getConstraints( db, label ), isEmpty() );
     }
 
-    @Test
+	@Test
     public void addingConstraintWhenIndexAlreadyExistsGivesNiceError()
     {
         // GIVEN
@@ -390,7 +384,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void addingUniquenessConstraintWhenDuplicateDataExistsGivesNiceError()
     {
         // GIVEN
@@ -414,7 +408,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void addingConstraintWhenAlreadyConstrainedGivesNiceError()
     {
         // GIVEN
@@ -435,7 +429,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void addingIndexWhenAlreadyConstrained()
     {
         // GIVEN
@@ -454,7 +448,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void addingIndexWhenAlreadyIndexed()
     {
         // GIVEN
@@ -472,7 +466,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void addedUncommittedIndexesShouldBeVisibleWithinTheTransaction()
     {
         // GIVEN
@@ -491,7 +485,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    private void dropConstraint( GraphDatabaseService db, ConstraintDefinition constraint )
+	private void dropConstraint( GraphDatabaseService db, ConstraintDefinition constraint )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -500,7 +494,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    private ConstraintDefinition createUniquenessConstraint( Label label, String prop )
+	private ConstraintDefinition createUniquenessConstraint( Label label, String prop )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -511,7 +505,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    private void dropIndex( IndexDefinition index )
+	private void dropIndex( IndexDefinition index )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -520,7 +514,7 @@ public class SchemaAcceptanceTest
         }
     }
 
-    private Node createNode( GraphDatabaseService db, String key, Object value, Label label )
+	private Node createNode( GraphDatabaseService db, String key, Object value, Label label )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -529,5 +523,11 @@ public class SchemaAcceptanceTest
             tx.success();
             return node;
         }
+    }
+
+	private enum Labels implements Label
+    {
+        MY_LABEL,
+        MY_OTHER_LABEL
     }
 }

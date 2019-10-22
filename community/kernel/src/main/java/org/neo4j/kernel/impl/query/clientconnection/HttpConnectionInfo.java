@@ -78,7 +78,7 @@ public class HttpConnectionInfo extends ClientConnectionInfo
     {
         return serverAddress == null
                ? requestPath
-               : protocol + "://" + format( serverAddress ) + requestPath;
+               : new StringBuilder().append(protocol).append("://").append(format( serverAddress )).append(requestPath).toString();
     }
 
     private static String getHostString( SocketAddress address )

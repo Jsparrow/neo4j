@@ -92,7 +92,16 @@ public class RecordStorageReader implements StorageReader
     private boolean acquired;
     private boolean closed;
 
-    RecordStorageReader( TokenHolders tokenHolders,
+    /**
+     * All the nulls in this method is a testament to the fact that we probably need to break apart this reader,
+     * separating index stuff out from store stuff.
+     */
+    public RecordStorageReader( NeoStores stores )
+    {
+        this( null, null, stores, null, null, null, null, null );
+    }
+
+	RecordStorageReader( TokenHolders tokenHolders,
             SchemaStorage schemaStorage, NeoStores neoStores,
             IndexingService indexService, SchemaCache schemaCache,
             Supplier<IndexReaderFactory> indexReaderFactory,
@@ -114,140 +123,130 @@ public class RecordStorageReader implements StorageReader
         this.commandCreationContext = commandCreationContext;
     }
 
-    /**
-     * All the nulls in this method is a testament to the fact that we probably need to break apart this reader,
-     * separating index stuff out from store stuff.
-     */
-    public RecordStorageReader( NeoStores stores )
-    {
-        this( null, null, stores, null, null, null, null, null );
-    }
-
-    @Override
+	@Override
     public PrimitiveLongResourceIterator nodesGetForLabel( int labelId )
     {
         return getLabelScanReader().nodesWithLabel( labelId );
     }
 
-    @Override
+	@Override
     public CapableIndexDescriptor indexGetForSchema( SchemaDescriptor descriptor )
     {
         return schemaCache.indexDescriptor( descriptor );
     }
 
-    @Override
+	@Override
     public Iterator<CapableIndexDescriptor> indexesGetForLabel( int labelId )
     {
         return schemaCache.indexDescriptorsForLabel( labelId );
     }
 
-    @Override
+	@Override
     public Iterator<CapableIndexDescriptor> indexesGetForRelationshipType( int relationshipType )
     {
         return schemaCache.indexDescriptorsForRelationshipType( relationshipType );
     }
 
-    @Override
+	@Override
     public CapableIndexDescriptor indexGetForName( String name )
     {
         return schemaCache.indexDescriptorForName( name );
     }
 
-    @Override
+	@Override
     public Iterator<CapableIndexDescriptor> indexesGetAll()
     {
         return schemaCache.indexDescriptors().iterator();
     }
 
-    @Override
+	@Override
     public Iterator<CapableIndexDescriptor> indexesGetRelatedToProperty( int propertyId )
     {
         return schemaCache.indexesByProperty( propertyId );
     }
 
-    @Override
+	@Override
     public Long indexGetOwningUniquenessConstraintId( IndexDescriptor index )
     {
         StoreIndexDescriptor storeIndexDescriptor = getStoreIndexDescriptor( index );
-        if ( storeIndexDescriptor != null )
-        {
-            // Think of the index as being orphaned if the owning constraint is missing or broken.
-            Long owningConstraint = storeIndexDescriptor.getOwningConstraint();
-            return schemaCache.hasConstraintRule( owningConstraint ) ? owningConstraint : null;
-        }
-        return null;
+        if (storeIndexDescriptor == null) {
+			return null;
+		}
+		// Think of the index as being orphaned if the owning constraint is missing or broken.
+		Long owningConstraint = storeIndexDescriptor.getOwningConstraint();
+		return schemaCache.hasConstraintRule( owningConstraint ) ? owningConstraint : null;
     }
 
-    @Override
+	@Override
     public InternalIndexState indexGetState( IndexDescriptor descriptor ) throws IndexNotFoundKernelException
     {
         return indexService.getIndexProxy( descriptor.schema() ).getState();
     }
 
-    @Override
+	@Override
     public IndexReference indexReference( IndexDescriptor descriptor ) throws IndexNotFoundKernelException
     {
         IndexProxy indexProxy = indexService.getIndexProxy( descriptor.schema() );
         return indexProxy.getDescriptor();
     }
 
-    @Override
+	@Override
     public PopulationProgress indexGetPopulationProgress( SchemaDescriptor descriptor )
             throws IndexNotFoundKernelException
     {
         return indexService.getIndexProxy( descriptor ).getIndexPopulationProgress();
     }
 
-    @Override
+	@Override
     public long indexSize( SchemaDescriptor descriptor ) throws IndexNotFoundKernelException
     {
         Register.DoubleLongRegister result = indexService.indexUpdatesAndSize( descriptor );
         return result.readSecond();
     }
 
-    @Override
+	@Override
     public double indexUniqueValuesPercentage( SchemaDescriptor descriptor ) throws IndexNotFoundKernelException
     {
         return indexService.indexUniqueValuesPercentage( descriptor );
     }
 
-    @Override
+	@Override
     public String indexGetFailure( SchemaDescriptor descriptor ) throws IndexNotFoundKernelException
     {
         return indexService.getIndexProxy( descriptor ).getPopulationFailure().asString();
     }
 
-    @Override
+	@Override
     public Iterator<ConstraintDescriptor> constraintsGetForSchema( SchemaDescriptor descriptor )
     {
         return schemaCache.constraintsForSchema( descriptor );
     }
 
-    @Override
+	@Override
     public boolean constraintExists( ConstraintDescriptor descriptor )
     {
         return schemaCache.hasConstraintRule( descriptor );
     }
 
-    @Override
+	@Override
     public Iterator<ConstraintDescriptor> constraintsGetForLabel( int labelId )
     {
         return schemaCache.constraintsForLabel( labelId );
     }
 
-    @Override
+	@Override
     public Iterator<ConstraintDescriptor> constraintsGetForRelationshipType( int typeId )
     {
         return schemaCache.constraintsForRelationshipType( typeId );
     }
 
-    @Override
+	@Override
     public Iterator<ConstraintDescriptor> constraintsGetAll()
     {
         return schemaCache.constraints();
     }
 
-    @Override
+	@Override
     public <EXCEPTION extends Exception> void relationshipVisit( long relationshipId,
             RelationshipVisitor<EXCEPTION> relationshipVisitor ) throws EntityNotFoundException, EXCEPTION
     {
@@ -260,25 +259,25 @@ public class RecordStorageReader implements StorageReader
         relationshipVisitor.visit( relationshipId, record.getType(), record.getFirstNode(), record.getSecondNode() );
     }
 
-    @Override
+	@Override
     public void releaseNode( long id )
     {
         nodeStore.freeId( id );
     }
 
-    @Override
+	@Override
     public void releaseRelationship( long id )
     {
         relationshipStore.freeId( id );
     }
 
-    @Override
+	@Override
     public long countsForNode( int labelId )
     {
         return counts.nodeCount( labelId, newDoubleLongRegister() ).readSecond();
     }
 
-    @Override
+	@Override
     public long countsForRelationship( int startLabelId, int typeId, int endLabelId )
     {
         if ( !(startLabelId == StatementConstants.ANY_LABEL || endLabelId == StatementConstants.ANY_LABEL) )
@@ -288,68 +287,68 @@ public class RecordStorageReader implements StorageReader
         return counts.relationshipCount( startLabelId, typeId, endLabelId, newDoubleLongRegister() ).readSecond();
     }
 
-    @Override
+	@Override
     public long nodesGetCount()
     {
         return nodeStore.getNumberOfIdsInUse();
     }
 
-    @Override
+	@Override
     public long relationshipsGetCount()
     {
         return relationshipStore.getNumberOfIdsInUse();
     }
 
-    @Override
+	@Override
     public int labelCount()
     {
         return tokenHolders.labelTokens().size();
     }
 
-    @Override
+	@Override
     public int propertyKeyCount()
     {
         return tokenHolders.propertyKeyTokens().size();
     }
 
-    @Override
+	@Override
     public int relationshipTypeCount()
     {
         return tokenHolders.relationshipTypeTokens().size();
     }
 
-    @Override
+	@Override
     public DoubleLongRegister indexUpdatesAndSize( SchemaDescriptor descriptor, DoubleLongRegister target )
             throws IndexNotFoundKernelException
     {
         return counts.indexUpdatesAndSize( tryGetIndexId( descriptor ), target );
     }
 
-    @Override
+	@Override
     public DoubleLongRegister indexSample( SchemaDescriptor descriptor, DoubleLongRegister target )
             throws IndexNotFoundKernelException
     {
         return counts.indexSample( tryGetIndexId( descriptor ), target );
     }
 
-    private long tryGetIndexId( SchemaDescriptor descriptor ) throws IndexNotFoundKernelException
+	private long tryGetIndexId( SchemaDescriptor descriptor ) throws IndexNotFoundKernelException
     {
         return indexService.getIndexId( descriptor );
     }
 
-    @Override
+	@Override
     public boolean nodeExists( long id )
     {
         return nodeStore.isInUse( id );
     }
 
-    @Override
+	@Override
     public boolean relationshipExists( long id )
     {
         return relationshipStore.isInUse( id );
     }
 
-    private StoreIndexDescriptor getStoreIndexDescriptor( IndexDescriptor index )
+	private StoreIndexDescriptor getStoreIndexDescriptor( IndexDescriptor index )
     {
         for ( StoreIndexDescriptor descriptor : schemaCache.indexDescriptors() )
         {
@@ -362,13 +361,13 @@ public class RecordStorageReader implements StorageReader
         return schemaStorage.indexGetForSchema( index );
     }
 
-    @Override
+	@Override
     public <T> T getOrCreateSchemaDependantState( Class<T> type, Function<StorageReader,T> factory )
     {
         return schemaCache.getOrCreateDependantState( type, factory, this );
     }
 
-    @Override
+	@Override
     public void acquire()
     {
         assert !closed;
@@ -376,7 +375,7 @@ public class RecordStorageReader implements StorageReader
         this.acquired = true;
     }
 
-    @Override
+	@Override
     public void release()
     {
         assert !closed;
@@ -385,7 +384,7 @@ public class RecordStorageReader implements StorageReader
         acquired = false;
     }
 
-    @Override
+	@Override
     public void close()
     {
         assert !closed;
@@ -397,117 +396,117 @@ public class RecordStorageReader implements StorageReader
         closed = true;
     }
 
-    private void closeSchemaResources()
+	private void closeSchemaResources()
     {
         if ( indexReaderFactory != null )
         {
             indexReaderFactory.close();
             // we can actually keep this object around
         }
-        if ( labelScanReader != null )
-        {
-            labelScanReader.close();
-            labelScanReader = null;
-        }
+        if (labelScanReader == null) {
+			return;
+		}
+		labelScanReader.close();
+		labelScanReader = null;
     }
 
-    @Override
+	@Override
     public LabelScanReader getLabelScanReader()
     {
         return labelScanReader != null ?
                labelScanReader : (labelScanReader = labelScanReaderSupplier.get());
     }
 
-    private IndexReaderFactory indexReaderFactory()
+	private IndexReaderFactory indexReaderFactory()
     {
         return indexReaderFactory != null ?
                indexReaderFactory : (indexReaderFactory = indexReaderFactorySupplier.get());
     }
 
-    @Override
+	@Override
     public IndexReader getIndexReader( IndexDescriptor descriptor ) throws IndexNotFoundKernelException
     {
         return indexReaderFactory().newReader( descriptor );
     }
 
-    @Override
+	@Override
     public IndexReader getFreshIndexReader( IndexDescriptor descriptor ) throws IndexNotFoundKernelException
     {
         return indexReaderFactory().newUnCachedReader( descriptor );
     }
 
-    RecordStorageCommandCreationContext getCommandCreationContext()
+	RecordStorageCommandCreationContext getCommandCreationContext()
     {
         return commandCreationContext;
     }
 
-    @Override
+	@Override
     public long reserveNode()
     {
         return commandCreationContext.nextId( StoreType.NODE );
     }
 
-    @Override
+	@Override
     public long reserveRelationship()
     {
         return commandCreationContext.nextId( StoreType.RELATIONSHIP );
     }
 
-    @Override
+	@Override
     public int reserveRelationshipTypeTokenId()
     {
         return toIntExact( neoStores.getRelationshipTypeTokenStore().nextId() );
     }
 
-    @Override
+	@Override
     public int reservePropertyKeyTokenId()
     {
         return toIntExact( neoStores.getPropertyKeyTokenStore().nextId() );
     }
 
-    @Override
+	@Override
     public int reserveLabelTokenId()
     {
         return toIntExact( neoStores.getLabelTokenStore().nextId() );
     }
 
-    @Override
+	@Override
     public long getGraphPropertyReference()
     {
         return neoStores.getMetaDataStore().getGraphNextProp();
     }
 
-    @Override
+	@Override
     public RecordNodeCursor allocateNodeCursor()
     {
         return new RecordNodeCursor( nodeStore );
     }
 
-    @Override
+	@Override
     public StorageRelationshipGroupCursor allocateRelationshipGroupCursor()
     {
         return new RecordRelationshipGroupCursor( relationshipStore, relationshipGroupStore );
     }
 
-    @Override
+	@Override
     public StorageRelationshipTraversalCursor allocateRelationshipTraversalCursor()
     {
         return new RecordRelationshipTraversalCursor( relationshipStore, relationshipGroupStore );
     }
 
-    @Override
+	@Override
     public RecordRelationshipScanCursor allocateRelationshipScanCursor()
     {
         return new RecordRelationshipScanCursor( relationshipStore );
     }
 
-    @Override
+	@Override
     public StorageSchemaReader schemaSnapshot()
     {
         return new StorageSchemaReaderSnapshot( schemaCache.snapshot(), this );
     }
 
-    @Override
+	@Override
     public StoragePropertyCursor allocatePropertyCursor()
     {
         return new RecordPropertyCursor( propertyStore );

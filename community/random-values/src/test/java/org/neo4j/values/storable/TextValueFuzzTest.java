@@ -33,12 +33,12 @@ import static org.neo4j.values.storable.StringHelpers.assertConsistent;
 @ExtendWith( RandomExtension.class )
 class TextValueFuzzTest
 {
-    @Inject
-    private RandomRule random;
-
     private static final int ITERATIONS = 1000;
 
-    @Disabled(
+	@Inject
+    private RandomRule random;
+
+	@Disabled(
             "we have decided to stick with String::compareTo under the hood which doesn't respect code point order " +
             "whenever the code point doesn't fit 16bits" )
     @Test
@@ -51,7 +51,7 @@ class TextValueFuzzTest
         }
     }
 
-    @Test
+	@Test
     void shouldCompareToForAllStringsInBasicMultilingualPlane()
     {
         for ( int i = 0; i < ITERATIONS; i++ )
@@ -61,7 +61,7 @@ class TextValueFuzzTest
         }
     }
 
-    @Test
+	@Test
     void shouldAdd()
     {
         for ( int i = 0; i < ITERATIONS; i++ )
@@ -70,7 +70,7 @@ class TextValueFuzzTest
         }
     }
 
-    @Test
+	@Test
     void shouldComputeLength()
     {
         for ( int i = 0; i < ITERATIONS; i++ )
@@ -79,7 +79,7 @@ class TextValueFuzzTest
         }
     }
 
-    @Test
+	@Test
     void shouldReverse()
     {
         for ( int i = 0; i < ITERATIONS; i++ )
@@ -88,7 +88,7 @@ class TextValueFuzzTest
         }
     }
 
-    @Test
+	@Test
     void shouldTrim()
     {
         for ( int i = 0; i < ITERATIONS; i++ )
@@ -97,7 +97,7 @@ class TextValueFuzzTest
         }
     }
 
-    @Test
+	@Test
     void shouldHandleStringPredicates()
     {
         for ( int i = 0; i < ITERATIONS; i++ )

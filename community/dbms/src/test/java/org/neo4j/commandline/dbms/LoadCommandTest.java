@@ -280,26 +280,9 @@ class LoadCommandTest
             Usage usage = new Usage( "neo4j-admin", mock( CommandLocator.class ) );
             usage.printUsageForCommand( new LoadCommandProvider(), ps::println );
 
-            assertEquals( String.format( "usage: neo4j-admin load --from=<archive-path> [--database=<name>]%n" +
-                            "                        [--force[=<true|false>]]%n" +
-                            "%n" +
-                            "environment variables:%n" +
-                            "    NEO4J_CONF    Path to directory which contains neo4j.conf.%n" +
-                            "    NEO4J_DEBUG   Set to anything to enable debug output.%n" +
-                            "    NEO4J_HOME    Neo4j home directory.%n" +
-                            "    HEAP_SIZE     Set JVM maximum heap size during command execution.%n" +
-                            "                  Takes a number and a unit, for example 512m.%n" +
-                            "%n" +
-                            "Load a database from an archive. <archive-path> must be an archive created with%n" +
-                            "the dump command. <database> is the name of the database to create. Existing%n" +
-                            "databases can be replaced by specifying --force. It is not possible to replace a%n" +
-                            "database that is mounted in a running Neo4j server.%n" +
-                            "%n" +
-                            "options:%n" +
-                            "  --from=<archive-path>   Path to archive created with the dump command.%n" +
-                            "  --database=<name>       Name of database. [default:" + GraphDatabaseSettings.DEFAULT_DATABASE_NAME + "]%n" +
-                            "  --force=<true|false>    If an existing database should be replaced.%n" +
-                            "                          [default:false]%n" ),
+            assertEquals( String.format( new StringBuilder().append("usage: neo4j-admin load --from=<archive-path> [--database=<name>]%n").append("                        [--force[=<true|false>]]%n").append("%n").append("environment variables:%n").append("    NEO4J_CONF    Path to directory which contains neo4j.conf.%n").append("    NEO4J_DEBUG   Set to anything to enable debug output.%n").append("    NEO4J_HOME    Neo4j home directory.%n").append("    HEAP_SIZE     Set JVM maximum heap size during command execution.%n")
+					.append("                  Takes a number and a unit, for example 512m.%n").append("%n").append("Load a database from an archive. <archive-path> must be an archive created with%n").append("the dump command. <database> is the name of the database to create. Existing%n").append("databases can be replaced by specifying --force. It is not possible to replace a%n").append("database that is mounted in a running Neo4j server.%n").append("%n").append("options:%n").append("  --from=<archive-path>   Path to archive created with the dump command.%n")
+					.append("  --database=<name>       Name of database. [default:").append(GraphDatabaseSettings.DEFAULT_DATABASE_NAME).append("]%n").append("  --force=<true|false>    If an existing database should be replaced.%n").append("                          [default:false]%n").toString() ),
                     baos.toString() );
         }
     }

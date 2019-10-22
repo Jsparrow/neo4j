@@ -85,19 +85,26 @@ public class MemoryRecommendationsCommand implements AdminCommand
     private final OutsideWorld outsideWorld;
     private final Path configDir;
 
-    static long recommendOsMemory( long totalMemoryBytes )
+    MemoryRecommendationsCommand( Path homeDir, Path configDir, OutsideWorld outsideWorld )
+    {
+        this.homeDir = homeDir;
+        this.outsideWorld = outsideWorld;
+        this.configDir = configDir;
+    }
+
+	static long recommendOsMemory( long totalMemoryBytes )
     {
         Brackets brackets = findMemoryBrackets( totalMemoryBytes );
         return brackets.recommend( Bracket::osMemory );
     }
 
-    static long recommendHeapMemory( long totalMemoryBytes )
+	static long recommendHeapMemory( long totalMemoryBytes )
     {
         Brackets brackets = findMemoryBrackets( totalMemoryBytes );
         return brackets.recommend( Bracket::heapMemory );
     }
 
-    static long recommendPageCacheMemory( long totalMemoryBytes )
+	static long recommendPageCacheMemory( long totalMemoryBytes )
     {
         long osMemory = recommendOsMemory( totalMemoryBytes );
         long heapMemory = recommendHeapMemory( totalMemoryBytes );
@@ -107,7 +114,7 @@ public class MemoryRecommendationsCommand implements AdminCommand
         return recommendation;
     }
 
-    private static Brackets findMemoryBrackets( long totalMemoryBytes )
+	private static Brackets findMemoryBrackets( long totalMemoryBytes )
     {
         double totalMemoryGB = ((double) totalMemoryBytes) / ((double) gibiBytes( 1 ));
         Bracket lower = null;
@@ -129,7 +136,7 @@ public class MemoryRecommendationsCommand implements AdminCommand
         return new Brackets( totalMemoryGB, lower, upper );
     }
 
-    public static Arguments buildArgs()
+	public static Arguments buildArgs()
     {
         String memory = bytesToString( OsBeanUtil.getTotalPhysicalMemory() );
         return new Arguments()
@@ -137,13 +144,10 @@ public class MemoryRecommendationsCommand implements AdminCommand
                         "Recommend memory settings with respect to the given amount of memory, " +
                         "instead of the total memory of the system running the command." ) )
                 .withDatabase(
-                        "Name of specific database to calculate page cache memory requirement for. " +
-                        "The generic calculation is still a good generic recommendation for this machine, " +
-                        "but there will be an additional calculation for minimal required page cache memory " +
-                        "for mapping all store and index files that are managed by the page cache." );
+                        new StringBuilder().append("Name of specific database to calculate page cache memory requirement for. ").append("The generic calculation is still a good generic recommendation for this machine, ").append("but there will be an additional calculation for minimal required page cache memory ").append("for mapping all store and index files that are managed by the page cache.").toString() );
     }
 
-    static String bytesToString( double bytes )
+	static String bytesToString( double bytes )
     {
         double gibi1 = ONE_GIBI_BYTE;
         double mebi1 = ONE_MEBI_BYTE;
@@ -184,14 +188,7 @@ public class MemoryRecommendationsCommand implements AdminCommand
         }
     }
 
-    MemoryRecommendationsCommand( Path homeDir, Path configDir, OutsideWorld outsideWorld )
-    {
-        this.homeDir = homeDir;
-        this.outsideWorld = outsideWorld;
-        this.configDir = configDir;
-    }
-
-    @Override
+	@Override
     public void execute( String[] args ) throws IncorrectUsage, CommandFailed
     {
         Arguments arguments = buildArgs().parse( args );
@@ -205,9 +202,9 @@ public class MemoryRecommendationsCommand implements AdminCommand
 
         print( "# Memory settings recommendation from neo4j-admin memrec:" );
         print( "#" );
-        print( "# Assuming the system is dedicated to running Neo4j and has " + mem + " of memory," );
-        print( "# we recommend a heap size of around " + heap + ", and a page cache of around " + pagecache + "," );
-        print( "# and that about " + os + " is left for the operating system, and the native memory" );
+        print( new StringBuilder().append("# Assuming the system is dedicated to running Neo4j and has ").append(mem).append(" of memory,").toString() );
+        print( new StringBuilder().append("# we recommend a heap size of around ").append(heap).append(", and a page cache of around ").append(pagecache).append(",").toString() );
+        print( new StringBuilder().append("# and that about ").append(os).append(" is left for the operating system, and the native memory").toString() );
         print( "# needed by Lucene and Netty." );
         print( "#" );
         print( "# Tip: If the indexing storage use is high, e.g. there are many indexes or most" );
@@ -224,9 +221,9 @@ public class MemoryRecommendationsCommand implements AdminCommand
         print( "# involves a full GC, which is desirable to avoid." );
         print( "#" );
         print( "# Based on the above, the following memory settings are recommended:" );
-        print( initialHeapSize.name() + "=" + heap );
-        print( maxHeapSize.name() + "=" + heap );
-        print( pagecache_memory.name() + "=" + pagecache );
+        print( new StringBuilder().append(initialHeapSize.name()).append("=").append(heap).toString() );
+        print( new StringBuilder().append(maxHeapSize.name()).append("=").append(heap).toString() );
+        print( new StringBuilder().append(pagecache_memory.name()).append("=").append(pagecache).toString() );
 
         if ( !specificDb )
         {
@@ -240,25 +237,24 @@ public class MemoryRecommendationsCommand implements AdminCommand
         long luceneSize = dbSpecificLuceneSize( databaseDirectory );
 
         print( "#" );
-        print( "# The numbers below have been derived based on your current data volume in database and index configuration of database '" + databaseName +
-                "'." );
+        print( new StringBuilder().append("# The numbers below have been derived based on your current data volume in database and index configuration of database '").append(databaseName).append("'.").toString() );
         print( "# They can be used as an input into more detailed memory analysis." );
         print( "# Lucene indexes: " + bytesToString( luceneSize ) );
         print( "# Data volume and native indexes: " + bytesToString( pageCacheSize ) );
     }
 
-    private long dbSpecificPageCacheSize( DatabaseLayout databaseLayout )
+	private long dbSpecificPageCacheSize( DatabaseLayout databaseLayout )
     {
         return sumStoreFiles( databaseLayout ) + sumIndexFiles( baseSchemaIndexFolder( databaseLayout.databaseDirectory() ),
                 getNativeIndexFileFilter( databaseLayout.databaseDirectory(), false ) );
     }
 
-    private long dbSpecificLuceneSize( File databaseDirectory )
+	private long dbSpecificLuceneSize( File databaseDirectory )
     {
         return sumIndexFiles( baseSchemaIndexFolder( databaseDirectory ), getNativeIndexFileFilter( databaseDirectory, true ) );
     }
 
-    private FilenameFilter getNativeIndexFileFilter( File storeDir, boolean inverse )
+	private FilenameFilter getNativeIndexFileFilter( File storeDir, boolean inverse )
     {
         FileFilter nativeIndexFilter = new NativeIndexFileFilter( storeDir );
         return ( dir, name ) ->
@@ -279,7 +275,7 @@ public class MemoryRecommendationsCommand implements AdminCommand
         };
     }
 
-    private long sumStoreFiles( DatabaseLayout databaseLayout )
+	private long sumStoreFiles( DatabaseLayout databaseLayout )
     {
         long total = 0;
         // Include store files
@@ -296,13 +292,13 @@ public class MemoryRecommendationsCommand implements AdminCommand
         return total;
     }
 
-    private long sizeOfFileIfExists( File file )
+	private long sizeOfFileIfExists( File file )
     {
         FileSystemAbstraction fileSystem = outsideWorld.fileSystem();
         return fileSystem.fileExists( file ) ? fileSystem.getFileSize( file ) : 0;
     }
 
-    private long sumIndexFiles( File file, FilenameFilter filter )
+	private long sumIndexFiles( File file, FilenameFilter filter )
     {
         long total = 0;
         if ( outsideWorld.fileSystem().isDirectory( file ) )
@@ -323,7 +319,7 @@ public class MemoryRecommendationsCommand implements AdminCommand
         return total;
     }
 
-    private Config getConfig( File configFile, String databaseName ) throws CommandFailed
+	private Config getConfig( File configFile, String databaseName ) throws CommandFailed
     {
         if ( !outsideWorld.fileSystem().fileExists( configFile ) )
         {
@@ -339,12 +335,12 @@ public class MemoryRecommendationsCommand implements AdminCommand
         }
     }
 
-    private void print( String text )
+	private void print( String text )
     {
         outsideWorld.stdOutLine( text );
     }
 
-    private static final class Bracket
+	private static final class Bracket
     {
         private final double totalMemory;
         private final double osMemory;

@@ -103,7 +103,7 @@ import static org.neo4j.consistency.internal.SchemaIndexExtensionLoader.instanti
 import static org.neo4j.kernel.configuration.Settings.FALSE;
 import static org.neo4j.kernel.configuration.Settings.TRUE;
 
-public abstract class GraphStoreFixture extends ConfigurablePageCacheRule implements TestRule
+public abstract class GraphStoreFixture extends ConfigurablePageCacheRule
 {
     private DirectStoreAccess directStoreAccess;
     private Statistics statistics;
@@ -129,18 +129,18 @@ public abstract class GraphStoreFixture extends ConfigurablePageCacheRule implem
      */
     private String formatName;
 
-    private GraphStoreFixture( boolean keepStatistics, String formatName )
-    {
-        this.keepStatistics = keepStatistics;
-        this.formatName = formatName;
-    }
-
     protected GraphStoreFixture( String formatName )
     {
         this( false, formatName );
     }
 
-    @Override
+	private GraphStoreFixture( boolean keepStatistics, String formatName )
+    {
+        this.keepStatistics = keepStatistics;
+        this.formatName = formatName;
+    }
+
+	@Override
     protected void after( boolean success )
     {
         super.after( success );
@@ -158,22 +158,22 @@ public abstract class GraphStoreFixture extends ConfigurablePageCacheRule implem
         }
     }
 
-    public void apply( Transaction transaction ) throws TransactionFailureException
+	public void apply( Transaction transaction ) throws TransactionFailureException
     {
         applyTransaction( transaction );
     }
 
-    public DirectStoreAccess directStoreAccess()
+	public DirectStoreAccess directStoreAccess()
     {
         return directStoreAccess( false );
     }
 
-    public DirectStoreAccess readOnlyDirectStoreAccess()
+	public DirectStoreAccess readOnlyDirectStoreAccess()
     {
         return directStoreAccess( true );
     }
 
-    private DirectStoreAccess directStoreAccess( boolean readOnly )
+	private DirectStoreAccess directStoreAccess( boolean readOnly )
     {
         if ( directStoreAccess == null )
         {
@@ -220,7 +220,7 @@ public abstract class GraphStoreFixture extends ConfigurablePageCacheRule implem
         return directStoreAccess;
     }
 
-    private LabelScanStore startLabelScanStore( PageCache pageCache, IndexStoreView indexStoreView, Monitors monitors, boolean readOnly )
+	private LabelScanStore startLabelScanStore( PageCache pageCache, IndexStoreView indexStoreView, Monitors monitors, boolean readOnly )
     {
         NativeLabelScanStore labelScanStore =
                 new NativeLabelScanStore( pageCache, directory.databaseLayout(), fileSystem, new FullLabelStream( indexStoreView ), readOnly, monitors,
@@ -237,7 +237,7 @@ public abstract class GraphStoreFixture extends ConfigurablePageCacheRule implem
         return labelScanStore;
     }
 
-    private IndexProviderMap createIndexes( PageCache pageCache, FileSystemAbstraction fileSystem, File storeDir,
+	private IndexProviderMap createIndexes( PageCache pageCache, FileSystemAbstraction fileSystem, File storeDir,
                                             Config config, JobScheduler scheduler, LogProvider logProvider, Monitors monitors )
     {
         LogService logService = new SimpleLogService( logProvider, logProvider );
@@ -250,17 +250,131 @@ public abstract class GraphStoreFixture extends ConfigurablePageCacheRule implem
         return life.add( new DefaultIndexProviderMap( extensions, config ) );
     }
 
-    public DatabaseLayout databaseLayout()
+	public DatabaseLayout databaseLayout()
     {
         return directory.databaseLayout();
     }
 
-    public Statistics getAccessStatistics()
+	public Statistics getAccessStatistics()
     {
         return statistics;
     }
 
-    public abstract static class Transaction
+	public IdGenerator idGenerator()
+    {
+        return new IdGenerator();
+    }
+
+	protected abstract void generateInitialData( GraphDatabaseService graphDb );
+
+	protected void start( @SuppressWarnings( "UnusedParameters" ) File storeDir )
+    {
+        // allow for override
+    }
+
+	protected void stop() throws Throwable
+    {
+        if (directStoreAccess == null) {
+			return;
+		}
+		neoStore.close();
+		directStoreAccess.close();
+		directStoreAccess = null;
+    }
+
+	private int myId()
+    {
+        return 1;
+    }
+
+	private int masterId()
+    {
+        return -1;
+    }
+
+	public Applier createApplier()
+    {
+        return new Applier();
+    }
+
+	private void applyTransaction( Transaction transaction ) throws TransactionFailureException
+    {
+        // TODO you know... we could have just appended the transaction representation to the log
+        // and the next startup of the store would do recovery where the transaction would have been
+        // applied and all would have been well.
+
+        try ( Applier applier = createApplier() )
+        {
+            applier.apply( transaction );
+        }
+    }
+
+	private void generateInitialData()
+    {
+        GraphDatabaseBuilder builder = new TestGraphDatabaseFactory().newEmbeddedDatabaseBuilder( directory.databaseDir() );
+        GraphDatabaseAPI graphDb = (GraphDatabaseAPI) builder
+                .setConfig( GraphDatabaseSettings.record_format, formatName )
+                // Some tests using this fixture were written when the label_block_size was 60 and so hardcoded
+                // tests and records around that. Those tests could change, but the simpler option is to just
+                // keep the block size to 60 and let them be.
+                .setConfig( GraphDatabaseSettings.label_block_size, "60" )
+                .setConfig( "dbms.backup.enabled", "false" )
+                .newGraphDatabase();
+        try
+        {
+            generateInitialData( graphDb );
+            StoreAccess stores = new StoreAccess( graphDb.getDependencyResolver()
+                    .resolveDependency( RecordStorageEngine.class ).testAccessNeoStores() ).initialize();
+            schemaId = stores.getSchemaStore().getHighId();
+            nodeId = stores.getNodeStore().getHighId();
+            labelId = (int) stores.getLabelTokenStore().getHighId();
+            nodeLabelsId = stores.getNodeDynamicLabelStore().getHighId();
+            relId = stores.getRelationshipStore().getHighId();
+            relGroupId = stores.getRelationshipGroupStore().getHighId();
+            propId = (int) stores.getPropertyStore().getHighId();
+            stringPropId = stores.getStringStore().getHighId();
+            arrayPropId = stores.getArrayStore().getHighId();
+            relTypeId = (int) stores.getRelationshipTypeTokenStore().getHighId();
+            propKeyId = (int) stores.getPropertyKeyNameStore().getHighId();
+        }
+        finally
+        {
+            graphDb.shutdown();
+        }
+    }
+
+	@Override
+    public Statement apply( final Statement base, Description description )
+    {
+        final TestDirectory directory = TestDirectory.testDirectory( description.getTestClass() );
+        return super.apply( directory.apply( new Statement()
+        {
+            @Override
+            public void evaluate() throws Throwable
+            {
+                GraphStoreFixture.this.directory = directory;
+                try
+                {
+                    generateInitialData();
+                    start( GraphStoreFixture.this.directory.databaseDir() );
+                    try
+                    {
+                        base.evaluate();
+                    }
+                    finally
+                    {
+                        stop();
+                    }
+                }
+                finally
+                {
+                    GraphStoreFixture.this.directory = null;
+                }
+            }
+        }, description ), description );
+    }
+
+	public abstract static class Transaction
     {
         final long startTimestamp = currentTimeMillis();
 
@@ -275,11 +389,6 @@ public abstract class GraphStoreFixture extends ConfigurablePageCacheRule implem
             return writer.representation( new byte[0], masterId, authorId, startTimestamp, lastCommittedTx,
                    currentTimeMillis() );
         }
-    }
-
-    public IdGenerator idGenerator()
-    {
-        return new IdGenerator();
     }
 
     public class IdGenerator
@@ -471,33 +580,6 @@ public abstract class GraphStoreFixture extends ConfigurablePageCacheRule implem
         }
     }
 
-    protected abstract void generateInitialData( GraphDatabaseService graphDb );
-
-    protected void start( @SuppressWarnings( "UnusedParameters" ) File storeDir )
-    {
-        // allow for override
-    }
-
-    protected void stop() throws Throwable
-    {
-        if ( directStoreAccess != null )
-        {
-            neoStore.close();
-            directStoreAccess.close();
-            directStoreAccess = null;
-        }
-    }
-
-    private int myId()
-    {
-        return 1;
-    }
-
-    private int masterId()
-    {
-        return -1;
-    }
-
     public class Applier implements AutoCloseable
     {
         private final GraphDatabaseAPI database;
@@ -536,87 +618,5 @@ public abstract class GraphStoreFixture extends ConfigurablePageCacheRule implem
         {
             database.shutdown();
         }
-    }
-
-    public Applier createApplier()
-    {
-        return new Applier();
-    }
-
-    private void applyTransaction( Transaction transaction ) throws TransactionFailureException
-    {
-        // TODO you know... we could have just appended the transaction representation to the log
-        // and the next startup of the store would do recovery where the transaction would have been
-        // applied and all would have been well.
-
-        try ( Applier applier = createApplier() )
-        {
-            applier.apply( transaction );
-        }
-    }
-
-    private void generateInitialData()
-    {
-        GraphDatabaseBuilder builder = new TestGraphDatabaseFactory().newEmbeddedDatabaseBuilder( directory.databaseDir() );
-        GraphDatabaseAPI graphDb = (GraphDatabaseAPI) builder
-                .setConfig( GraphDatabaseSettings.record_format, formatName )
-                // Some tests using this fixture were written when the label_block_size was 60 and so hardcoded
-                // tests and records around that. Those tests could change, but the simpler option is to just
-                // keep the block size to 60 and let them be.
-                .setConfig( GraphDatabaseSettings.label_block_size, "60" )
-                .setConfig( "dbms.backup.enabled", "false" )
-                .newGraphDatabase();
-        try
-        {
-            generateInitialData( graphDb );
-            StoreAccess stores = new StoreAccess( graphDb.getDependencyResolver()
-                    .resolveDependency( RecordStorageEngine.class ).testAccessNeoStores() ).initialize();
-            schemaId = stores.getSchemaStore().getHighId();
-            nodeId = stores.getNodeStore().getHighId();
-            labelId = (int) stores.getLabelTokenStore().getHighId();
-            nodeLabelsId = stores.getNodeDynamicLabelStore().getHighId();
-            relId = stores.getRelationshipStore().getHighId();
-            relGroupId = stores.getRelationshipGroupStore().getHighId();
-            propId = (int) stores.getPropertyStore().getHighId();
-            stringPropId = stores.getStringStore().getHighId();
-            arrayPropId = stores.getArrayStore().getHighId();
-            relTypeId = (int) stores.getRelationshipTypeTokenStore().getHighId();
-            propKeyId = (int) stores.getPropertyKeyNameStore().getHighId();
-        }
-        finally
-        {
-            graphDb.shutdown();
-        }
-    }
-
-    @Override
-    public Statement apply( final Statement base, Description description )
-    {
-        final TestDirectory directory = TestDirectory.testDirectory( description.getTestClass() );
-        return super.apply( directory.apply( new Statement()
-        {
-            @Override
-            public void evaluate() throws Throwable
-            {
-                GraphStoreFixture.this.directory = directory;
-                try
-                {
-                    generateInitialData();
-                    start( GraphStoreFixture.this.directory.databaseDir() );
-                    try
-                    {
-                        base.evaluate();
-                    }
-                    finally
-                    {
-                        stop();
-                    }
-                }
-                finally
-                {
-                    GraphStoreFixture.this.directory = null;
-                }
-            }
-        }, description ), description );
     }
 }

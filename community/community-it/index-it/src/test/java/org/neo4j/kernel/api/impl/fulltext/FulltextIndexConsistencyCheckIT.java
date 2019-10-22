@@ -651,11 +651,11 @@ public class FulltextIndexConsistencyCheckIT
 
     private static void assertIsConsistent( ConsistencyCheckService.Result result ) throws IOException
     {
-        if ( !result.isSuccessful() )
-        {
-            printReport( result );
-            fail( "Expected consistency check to be successful." );
-        }
+        if (result.isSuccessful()) {
+			return;
+		}
+		printReport( result );
+		fail( "Expected consistency check to be successful." );
     }
 
     private static void printReport( ConsistencyCheckService.Result result ) throws IOException

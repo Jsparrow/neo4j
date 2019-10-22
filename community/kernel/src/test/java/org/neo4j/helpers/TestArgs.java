@@ -152,11 +152,10 @@ class TestArgs
         Collection<Integer> expectedValues = Arrays.asList( 12, 34, 56 );
         List<String> argList = new ArrayList<>();
         String key = "number";
-        for ( int value : expectedValues )
-        {
+        expectedValues.stream().mapToInt(Integer::valueOf).forEach(value -> {
             argList.add( "--" + key );
             argList.add( String.valueOf( value ) );
-        }
+        });
         Args args = Args.parse( argList.toArray( new String[argList.size()] ) );
 
         // WHEN
@@ -229,7 +228,7 @@ class TestArgs
         List<String> orphans = args.orphans();
 
         // Then
-        assertEquals( Arrays.asList( "/tmp/graph.db" ), orphans );
+        assertEquals( Collections.singletonList( "/tmp/graph.db" ), orphans );
     }
 
     @Test
@@ -257,7 +256,7 @@ class TestArgs
         List<String> orphans = args.orphans();
 
         // Then
-        assertEquals( Arrays.<String>asList() , orphans );
+        assertEquals( Collections.<String>emptyList() , orphans );
         assertFalse( args.getBoolean( "foo", false, false ) );
         assertTrue( args.getBoolean( "bar", false, true ) );
     }

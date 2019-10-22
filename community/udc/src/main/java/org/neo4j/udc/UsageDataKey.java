@@ -34,38 +34,38 @@ public class UsageDataKey<Type>
     /** When key is requested and no value exists, a default value is generated and inserted using this */
     private final Supplier<Type> defaultVal;
 
-    public static <T> UsageDataKey<T> key( String name )
-    {
-        return key( name, null );
-    }
-
-    public static <T> UsageDataKey<T> key( String name, T defaultVal )
-    {
-        return new UsageDataKey<>( name, singleton( defaultVal ) );
-    }
-
-    public static <T> UsageDataKey<T> key( String name, Supplier<T> defaultVal )
-    {
-        return new UsageDataKey<>( name, defaultVal );
-    }
-
     public UsageDataKey( String name, Supplier<Type> defaultValue )
     {
         this.name = name;
         this.defaultVal = defaultValue;
     }
 
-    String name()
+	public static <T> UsageDataKey<T> key( String name )
+    {
+        return key( name, null );
+    }
+
+	public static <T> UsageDataKey<T> key( String name, T defaultVal )
+    {
+        return new UsageDataKey<>( name, singleton( defaultVal ) );
+    }
+
+	public static <T> UsageDataKey<T> key( String name, Supplier<T> defaultVal )
+    {
+        return new UsageDataKey<>( name, defaultVal );
+    }
+
+	String name()
     {
         return name;
     }
 
-    Type generateDefaultValue()
+	Type generateDefaultValue()
     {
         return defaultVal == null ? null : defaultVal.get();
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -83,7 +83,7 @@ public class UsageDataKey<Type>
 
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return name.hashCode();

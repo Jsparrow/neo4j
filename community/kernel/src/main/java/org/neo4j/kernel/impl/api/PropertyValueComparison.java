@@ -29,11 +29,6 @@ import org.neo4j.values.storable.Values;
 @Deprecated
 public class PropertyValueComparison
 {
-    private PropertyValueComparison()
-    {
-        throw new AssertionError( "no instance" );
-    }
-
     public static final PropertyValueComparator<Object> COMPARE_VALUES = new PropertyValueComparator<Object>()
     {
         @Override
@@ -43,7 +38,7 @@ public class PropertyValueComparison
         }
     };
 
-    public static final PropertyValueComparator<Number> COMPARE_NUMBERS = new PropertyValueComparator<Number>()
+	public static final PropertyValueComparator<Number> COMPARE_NUMBERS = new PropertyValueComparator<Number>()
     {
         @Override
         public int compare( Number n1, Number n2 )
@@ -52,7 +47,7 @@ public class PropertyValueComparison
         }
     };
 
-    public static final PropertyValueComparator<Object> COMPARE_STRINGS = new PropertyValueComparator<Object>()
+	public static final PropertyValueComparator<Object> COMPARE_STRINGS = new PropertyValueComparator<Object>()
     {
         @Override
         public int compare( Object o1, Object o2 )
@@ -60,4 +55,9 @@ public class PropertyValueComparison
             return Values.COMPARATOR.compare( Values.of(o1), Values.of(o2) );
         }
     };
+
+	private PropertyValueComparison()
+    {
+        throw new AssertionError( "no instance" );
+    }
 }

@@ -95,47 +95,58 @@ public class BatchingTransactionAppenderConcurrencyTest
 
     private static ExecutorService executor;
 
-    @BeforeClass
+	private final LifeRule life = new LifeRule();
+
+	private final EphemeralFileSystemRule fileSystemRule = new EphemeralFileSystemRule();
+
+	private final TestDirectory testDirectory = TestDirectory.testDirectory( fileSystemRule );
+
+	@Rule
+    public final RuleChain ruleChain = RuleChain.outerRule( fileSystemRule ).around( testDirectory ).around( life );
+
+	private final LogAppendEvent logAppendEvent = LogAppendEvent.NULL;
+
+	private final LogFiles logFiles = mock( TransactionLogFiles.class );
+
+	private final LogFile logFile = mock( LogFile.class );
+
+	private final LogRotation logRotation = LogRotation.NO_ROTATION;
+
+	private final TransactionMetadataCache transactionMetadataCache = new TransactionMetadataCache();
+
+	private final TransactionIdStore transactionIdStore = new SimpleTransactionIdStore();
+
+	private final SimpleLogVersionRepository logVersionRepository = new SimpleLogVersionRepository();
+
+	private final IdOrderingQueue explicitIndexTransactionOrdering = IdOrderingQueue.BYPASS;
+
+	private final DatabaseHealth databaseHealth = mock( DatabaseHealth.class );
+
+	private final Semaphore forceSemaphore = new Semaphore( 0 );
+
+	private final BlockingQueue<ChannelCommand> channelCommandQueue = new LinkedBlockingQueue<>( 2 );
+
+	@BeforeClass
     public static void setUpExecutor()
     {
         executor = Executors.newCachedThreadPool();
     }
 
-    @AfterClass
+	@AfterClass
     public static void tearDownExecutor()
     {
         executor.shutdown();
         executor = null;
     }
 
-    private final LifeRule life = new LifeRule();
-    private final EphemeralFileSystemRule fileSystemRule = new EphemeralFileSystemRule();
-    private final TestDirectory testDirectory = TestDirectory.testDirectory( fileSystemRule );
-
-    @Rule
-    public final RuleChain ruleChain = RuleChain.outerRule( fileSystemRule ).around( testDirectory ).around( life );
-
-    private final LogAppendEvent logAppendEvent = LogAppendEvent.NULL;
-    private final LogFiles logFiles = mock( TransactionLogFiles.class );
-    private final LogFile logFile = mock( LogFile.class );
-    private final LogRotation logRotation = LogRotation.NO_ROTATION;
-    private final TransactionMetadataCache transactionMetadataCache = new TransactionMetadataCache();
-    private final TransactionIdStore transactionIdStore = new SimpleTransactionIdStore();
-    private final SimpleLogVersionRepository logVersionRepository = new SimpleLogVersionRepository();
-    private final IdOrderingQueue explicitIndexTransactionOrdering = IdOrderingQueue.BYPASS;
-    private final DatabaseHealth databaseHealth = mock( DatabaseHealth.class );
-    private final Semaphore forceSemaphore = new Semaphore( 0 );
-
-    private final BlockingQueue<ChannelCommand> channelCommandQueue = new LinkedBlockingQueue<>( 2 );
-
-    @Before
+	@Before
     public void setUp()
     {
         when( logFiles.getLogFile() ).thenReturn( logFile );
         when( logFile.getWriter() ).thenReturn( new CommandQueueChannel() );
     }
 
-    @Test
+	@Test
     public void shouldForceLogChannel() throws Throwable
     {
         BatchingTransactionAppender appender = life.add( createTransactionAppender() );
@@ -148,7 +159,7 @@ public class BatchingTransactionAppenderConcurrencyTest
         assertTrue( channelCommandQueue.isEmpty() );
     }
 
-    @Test
+	@Test
     public void shouldWaitForOngoingForceToCompleteBeforeForcingAgain() throws Throwable
     {
         channelCommandQueue.put( ChannelCommand.dummy );
@@ -177,7 +188,7 @@ public class BatchingTransactionAppenderConcurrencyTest
         assertTrue( channelCommandQueue.isEmpty() );
     }
 
-    @Test
+	@Test
     public void shouldBatchUpMultipleWaitingForceRequests() throws Throwable
     {
         channelCommandQueue.put( ChannelCommand.dummy );
@@ -216,7 +227,7 @@ public class BatchingTransactionAppenderConcurrencyTest
         assertTrue( channelCommandQueue.isEmpty() );
     }
 
-    /*
+	/*
      * There was an issue where if multiple concurrent appending threads did append and they moved on
      * to await a force, where the force would fail and the one doing the force would raise a panic...
      * the other threads may not notice the panic and move on to mark those transactions as committed
@@ -282,7 +293,7 @@ public class BatchingTransactionAppenderConcurrencyTest
         race.go();
     }
 
-    @Test
+	@Test
     public void databasePanicShouldHandleOutOfMemoryErrors() throws IOException, InterruptedException
     {
         final CountDownLatch panicLatch = new CountDownLatch( 1 );
@@ -364,6 +375,51 @@ public class BatchingTransactionAppenderConcurrencyTest
         }
     }
 
+	protected TransactionToApply tx()
+    {
+        NodeRecord before = new NodeRecord( 0 );
+        NodeRecord after = new NodeRecord( 0 );
+        after.setInUse( true );
+        Command.NodeCommand nodeCommand = new Command.NodeCommand( before, after );
+        PhysicalTransactionRepresentation tx = new PhysicalTransactionRepresentation( singletonList( nodeCommand ) );
+        tx.setHeader( new byte[0], 0, 0, 0, 0, 0, 0 );
+        return new TransactionToApply( tx );
+    }
+
+	private Runnable createForceAfterAppendRunnable( final BatchingTransactionAppender appender )
+    {
+        return () ->
+        {
+            try
+            {
+                appender.forceAfterAppend( logAppendEvent );
+            }
+            catch ( IOException e )
+            {
+                throw new RuntimeException( e );
+            }
+        };
+    }
+
+	private Predicate<StackTraceElement> failMethod( final Class<?> klass, final String methodName )
+    {
+        return element -> element.getClassName().equals( klass.getName() ) &&
+                          element.getMethodName().equals( methodName );
+    }
+
+	private BatchingTransactionAppender createTransactionAppender()
+    {
+        return new BatchingTransactionAppender( logFiles, logRotation,
+                transactionMetadataCache, transactionIdStore, explicitIndexTransactionOrdering, databaseHealth );
+    }
+
+	private enum ChannelCommand
+    {
+        emptyBufferIntoChannelAndClearIt,
+        force,
+        dummy
+    }
+
     private static class OutOfMemoryAwareFileSystem extends EphemeralFileSystemAbstraction
     {
         private volatile boolean shouldOOM;
@@ -415,51 +471,6 @@ public class BatchingTransactionAppenderConcurrencyTest
             super.panic( cause );
         }
     };
-
-    protected TransactionToApply tx()
-    {
-        NodeRecord before = new NodeRecord( 0 );
-        NodeRecord after = new NodeRecord( 0 );
-        after.setInUse( true );
-        Command.NodeCommand nodeCommand = new Command.NodeCommand( before, after );
-        PhysicalTransactionRepresentation tx = new PhysicalTransactionRepresentation( singletonList( nodeCommand ) );
-        tx.setHeader( new byte[0], 0, 0, 0, 0, 0, 0 );
-        return new TransactionToApply( tx );
-    }
-
-    private Runnable createForceAfterAppendRunnable( final BatchingTransactionAppender appender )
-    {
-        return () ->
-        {
-            try
-            {
-                appender.forceAfterAppend( logAppendEvent );
-            }
-            catch ( IOException e )
-            {
-                throw new RuntimeException( e );
-            }
-        };
-    }
-
-    private Predicate<StackTraceElement> failMethod( final Class<?> klass, final String methodName )
-    {
-        return element -> element.getClassName().equals( klass.getName() ) &&
-                          element.getMethodName().equals( methodName );
-    }
-
-    private BatchingTransactionAppender createTransactionAppender()
-    {
-        return new BatchingTransactionAppender( logFiles, logRotation,
-                transactionMetadataCache, transactionIdStore, explicitIndexTransactionOrdering, databaseHealth );
-    }
-
-    private enum ChannelCommand
-    {
-        emptyBufferIntoChannelAndClearIt,
-        force,
-        dummy
-    }
 
     class CommandQueueChannel extends InMemoryClosableChannel implements Flushable
     {

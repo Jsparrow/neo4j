@@ -38,12 +38,6 @@ public class CommandHandlerContract
     {
     }
 
-    @FunctionalInterface
-    public interface ApplyFunction
-    {
-        boolean apply( TransactionApplier applier ) throws Exception;
-    }
-
     /**
      * Simply calls through to the {@link TransactionRepresentation#accept(Visitor)} method for each {@link
      * TransactionToApply} given. This assumes that the {@link BatchTransactionApplier} will return {@link
@@ -64,7 +58,7 @@ public class CommandHandlerContract
         applier.close();
     }
 
-    /**
+	/**
      * In case the transactions do not have the commands to apply, use this method to apply any commands you want with a
      * given {@link ApplyFunction} instead.
      *
@@ -87,5 +81,11 @@ public class CommandHandlerContract
         }
         applier.close();
         return result;
+    }
+
+	@FunctionalInterface
+    public interface ApplyFunction
+    {
+        boolean apply( TransactionApplier applier ) throws Exception;
     }
 }

@@ -43,19 +43,19 @@ import static org.neo4j.test.server.HTTP.RawPayload.quotedJson;
 @RunWith( Theories.class )
 public class ExplicitIndexIT extends ExclusiveServerTestBase
 {
-    private CommunityNeoServer server;
-
     @DataPoints
     @SuppressWarnings( "unused" ) // accessed by reflection
     public static String[] candidates = {"", "get_or_create", "create_or_fail"};
 
-    @After
+	private CommunityNeoServer server;
+
+	@After
     public void stopTheServer()
     {
         server.stop();
     }
 
-    @Before
+	@Before
     public void startServer() throws IOException
     {
         server = serverOnRandomPorts().withHttpsEnabled()
@@ -66,7 +66,7 @@ public class ExplicitIndexIT extends ExclusiveServerTestBase
                 .build();
     }
 
-    @Theory
+	@Theory
     public void shouldRejectIndexValueLargerThanConfiguredSize( String uniqueness )
     {
         //Given
@@ -82,14 +82,14 @@ public class ExplicitIndexIT extends ExclusiveServerTestBase
             value += (char) (r.nextInt( 26 ) + 'a');
         }
         HTTP.Response response =
-                HTTP.POST( server.baseUri().toString() + "db/data/index/node/favorites?uniqueness=" + uniqueness,
-                        quotedJson( "{ 'value': '" + value + " ', 'uri':'" + nodeURI + "', 'key': 'some-key' }" ) );
+                HTTP.POST( new StringBuilder().append(server.baseUri().toString()).append("db/data/index/node/favorites?uniqueness=").append(uniqueness).toString(),
+                        quotedJson( new StringBuilder().append("{ 'value': '").append(value).append(" ', 'uri':'").append(nodeURI).append("', 'key': 'some-key' }").toString() ) );
 
         // Then
         assertThat( response.status(), is( 413 ) );
     }
 
-    @Theory
+	@Theory
     public void shouldNotRejectIndexValueThatIsJustSmallerThanConfiguredSize( String uniqueness )
     {
         //Given
@@ -105,8 +105,8 @@ public class ExplicitIndexIT extends ExclusiveServerTestBase
             value += (char) (r.nextInt( 26 ) + 'a');
         }
         HTTP.Response response =
-                HTTP.POST( server.baseUri().toString() + "db/data/index/node/favorites?uniqueness=" + uniqueness,
-                        quotedJson( "{ 'value': '" + value + " ', 'uri':'" + nodeURI + "', 'key': 'some-key' }" ) );
+                HTTP.POST( new StringBuilder().append(server.baseUri().toString()).append("db/data/index/node/favorites?uniqueness=").append(uniqueness).toString(),
+                        quotedJson( new StringBuilder().append("{ 'value': '").append(value).append(" ', 'uri':'").append(nodeURI).append("', 'key': 'some-key' }").toString() ) );
 
         // Then
         assertThat( response.status(), is( 201 ) );

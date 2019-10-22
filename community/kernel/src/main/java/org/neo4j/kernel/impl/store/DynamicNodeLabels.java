@@ -150,13 +150,7 @@ public class DynamicNodeLabels implements NodeLabels
             node.setLabelField( dynamicPointer( newRecords ), existingRecords );
             if ( !newRecords.equals( existingRecords ) )
             {   // One less dynamic record, mark that one as not in use
-                for ( DynamicRecord record : existingRecords )
-                {
-                    if ( !newRecords.contains( record ) )
-                    {
-                        record.setInUse( false );
-                    }
-                }
+                existingRecords.stream().filter(record -> !newRecords.contains( record )).forEach(record -> record.setInUse(false));
             }
         }
         return existingRecords;
@@ -174,10 +168,7 @@ public class DynamicNodeLabels implements NodeLabels
 
     private static void setNotInUse( Collection<DynamicRecord> changedDynamicRecords )
     {
-        for ( DynamicRecord record : changedDynamicRecords )
-        {
-            record.setInUse( false );
-        }
+        changedDynamicRecords.forEach(record -> record.setInUse(false));
     }
 
     @Override

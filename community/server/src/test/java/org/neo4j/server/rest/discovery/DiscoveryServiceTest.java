@@ -59,7 +59,32 @@ import static org.neo4j.server.rest.discovery.CommunityDiscoverableURIs.communit
 @RunWith( Parameterized.class )
 public class DiscoveryServiceTest
 {
-    @Parameterized.Parameters( name = "{0}" )
+    private final NeoServer neoServer = mock( NeoServer.class, Answers.RETURNS_DEEP_STUBS );
+	private final ConnectorPortRegister portRegistry = mock( ConnectorPortRegister.class );
+	private URI baseUri;
+	private URI dataUri;
+	private URI managementUri;
+	private Consumer<ConnectorPortRegister> portRegistryOverrider;
+	private Consumer<Config> configOverrider;
+	private String expectedDataUri;
+	private String expectedManagementUri;
+	private String expectedBoltUri;
+
+	public DiscoveryServiceTest( String description, String baseUri, Consumer<ConnectorPortRegister> portRegistryOverrider, Consumer<Config> configOverrider,
+            String expectedBoltUri ) throws Throwable
+    {
+        this.baseUri = new URI( baseUri );
+        this.dataUri = new URI( "/data" );
+        this.managementUri = new URI( "/management" );
+        this.portRegistryOverrider = portRegistryOverrider;
+        this.configOverrider = configOverrider;
+
+        this.expectedDataUri = this.baseUri.resolve( this.dataUri ).toString();
+        this.expectedManagementUri = this.baseUri.resolve( this.managementUri ).toString();
+        this.expectedBoltUri = expectedBoltUri;
+    }
+
+	@Parameterized.Parameters( name = "{0}" )
     public static Iterable<Object[]> data()
     {
         List<Object[]> cases = new ArrayList<>();
@@ -122,34 +147,7 @@ public class DiscoveryServiceTest
         return cases;
     }
 
-    private final NeoServer neoServer = mock( NeoServer.class, Answers.RETURNS_DEEP_STUBS );
-    private final ConnectorPortRegister portRegistry = mock( ConnectorPortRegister.class );
-
-    private URI baseUri;
-    private URI dataUri;
-    private URI managementUri;
-    private Consumer<ConnectorPortRegister> portRegistryOverrider;
-    private Consumer<Config> configOverrider;
-
-    private String expectedDataUri;
-    private String expectedManagementUri;
-    private String expectedBoltUri;
-
-    public DiscoveryServiceTest( String description, String baseUri, Consumer<ConnectorPortRegister> portRegistryOverrider, Consumer<Config> configOverrider,
-            String expectedBoltUri ) throws Throwable
-    {
-        this.baseUri = new URI( baseUri );
-        this.dataUri = new URI( "/data" );
-        this.managementUri = new URI( "/management" );
-        this.portRegistryOverrider = portRegistryOverrider;
-        this.configOverrider = configOverrider;
-
-        this.expectedDataUri = this.baseUri.resolve( this.dataUri ).toString();
-        this.expectedManagementUri = this.baseUri.resolve( this.managementUri ).toString();
-        this.expectedBoltUri = expectedBoltUri;
-    }
-
-    @Before
+	@Before
     public void setUp() throws URISyntaxException
     {
         if ( portRegistryOverrider != null )
@@ -166,7 +164,7 @@ public class DiscoveryServiceTest
         when( neoServer.getDatabase().getGraph().getDependencyResolver() ).thenReturn( dependencyResolver );
     }
 
-    private Config mockConfig()
+	private Config mockConfig()
     {
         HashMap<String,String> settings = new HashMap<>();
         settings.put( GraphDatabaseSettings.auth_enabled.name(), "false" );
@@ -185,13 +183,13 @@ public class DiscoveryServiceTest
         return config;
     }
 
-    private DiscoveryService testDiscoveryService() throws URISyntaxException
+	private DiscoveryService testDiscoveryService() throws URISyntaxException
     {
         Config config = mockConfig();
         return new DiscoveryService( config, new EntityOutputFormat( new JsonFormat(), baseUri, null ), communityDiscoverableURIs( config, portRegistry ) );
     }
 
-    @Test
+	@Test
     public void shouldReturnValidJSON() throws Exception
     {
         Response response = testDiscoveryService().getDiscoveryDocument( uriInfo( baseUri ) );
@@ -203,14 +201,14 @@ public class DiscoveryServiceTest
         assertThat( json, is( not( "null" ) ) );
     }
 
-    private UriInfo uriInfo( URI baseUri )
+	private UriInfo uriInfo( URI baseUri )
     {
         UriInfo uriInfo = mock( UriInfo.class );
         when( uriInfo.getBaseUri() ).thenReturn( baseUri );
         return uriInfo;
     }
 
-    @Test
+	@Test
     public void shouldReturnBoltURI() throws Exception
     {
         Response response = testDiscoveryService().getDiscoveryDocument( uriInfo( baseUri ) );
@@ -218,23 +216,23 @@ public class DiscoveryServiceTest
         assertThat( json, containsString( "\"bolt\" : \"" + expectedBoltUri ) );
     }
 
-    @Test
+	@Test
     public void shouldReturnDataURI() throws Exception
     {
         Response response = testDiscoveryService().getDiscoveryDocument( uriInfo( baseUri ) );
         String json = new String( (byte[]) response.getEntity() );
-        assertThat( json, containsString( "\"data\" : \"" + expectedDataUri + "/\"" ) );
+        assertThat( json, containsString( new StringBuilder().append("\"data\" : \"").append(expectedDataUri).append("/\"").toString() ) );
     }
 
-    @Test
+	@Test
     public void shouldReturnManagementURI() throws Exception
     {
         Response response = testDiscoveryService().getDiscoveryDocument( uriInfo( baseUri ) );
         String json = new String( (byte[]) response.getEntity() );
-        assertThat( json, containsString( "\"management\" : \"" + expectedManagementUri + "/\"" ) );
+        assertThat( json, containsString( new StringBuilder().append("\"management\" : \"").append(expectedManagementUri).append("/\"").toString() ) );
     }
 
-    @Test
+	@Test
     public void shouldReturnRedirectToAbsoluteAPIUsingOutputFormat() throws Exception
     {
         Config config = Config.defaults( ServerSettings.browser_path, "/browser/" );
@@ -248,12 +246,12 @@ public class DiscoveryServiceTest
         assertThat( response.getMetadata().getFirst( "Location" ), is( new URI( "http://www.example" + ".com:5435/browser/" ) ) );
     }
 
-    private static Consumer<ConnectorPortRegister> register( String connector, String host, int port )
+	private static Consumer<ConnectorPortRegister> register( String connector, String host, int port )
     {
         return register -> when( register.getLocalAddress( connector ) ).thenReturn( new HostnamePort( host, port ) );
     }
 
-    private static Consumer<ConnectorPortRegister> combineRegisterers( Consumer<ConnectorPortRegister>... overriders )
+	private static Consumer<ConnectorPortRegister> combineRegisterers( Consumer<ConnectorPortRegister>... overriders )
     {
         return config ->
         {
@@ -264,27 +262,27 @@ public class DiscoveryServiceTest
         };
     }
 
-    private static Consumer<Config> overrideWithAdvertisedAddress( String host, int port )
+	private static Consumer<Config> overrideWithAdvertisedAddress( String host, int port )
     {
         return config -> config.augment( new BoltConnector( "bolt" ).advertised_address.name(), AdvertisedSocketAddress.advertisedAddress( host, port ) );
     }
 
-    private static Consumer<Config> overrideWithListenAddress( String host, int port )
+	private static Consumer<Config> overrideWithListenAddress( String host, int port )
     {
         return config -> config.augment( new BoltConnector( "bolt" ).listen_address.name(), AdvertisedSocketAddress.advertisedAddress( host, port ) );
     }
 
-    private static Consumer<Config> overrideWithDefaultListenAddress( String host )
+	private static Consumer<Config> overrideWithDefaultListenAddress( String host )
     {
         return config -> config.augment( GraphDatabaseSettings.default_listen_address, host );
     }
 
-    private static Consumer<Config> overrideWithDiscoverable( String uri )
+	private static Consumer<Config> overrideWithDiscoverable( String uri )
     {
         return config -> config.augment( ServerSettings.bolt_discoverable_address, uri );
     }
 
-    @SafeVarargs
+	@SafeVarargs
     private static Consumer<Config> combineConfigOverriders( Consumer<Config>... overriders )
     {
         return config ->

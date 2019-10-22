@@ -417,14 +417,14 @@ public class IndexStatisticsTest
                         {
                             if ( found )
                             {
-                                mismatches.add( "Index has multiple entries for " + name + " and " + indexedNode );
+                                mismatches.add( new StringBuilder().append("Index has multiple entries for ").append(name).append(" and ").append(indexedNode).toString() );
                             }
                             found = true;
                         }
                     }
                     if ( !found )
                     {
-                        mismatches.add( "Index is missing entry for " + name + " " + node );
+                        mismatches.add( new StringBuilder().append("Index is missing entry for ").append(name).append(" ").append(node).toString() );
                     }
                 }
                 if ( !mismatches.isEmpty() )

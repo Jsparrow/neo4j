@@ -318,8 +318,7 @@ public class SslPolicyLoader
         }
         catch ( Exception e )
         {
-            throw new RuntimeException( "Failed to load private key: " + privateKeyFile +
-                                        (privateKeyPassword == null ? "" : " (using configured password)"), e );
+            throw new RuntimeException( new StringBuilder().append("Failed to load private key: ").append(privateKeyFile).append(privateKeyPassword == null ? "" : " (using configured password)").toString(), e );
         }
     }
 

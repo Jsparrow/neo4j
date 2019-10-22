@@ -32,7 +32,7 @@ public class PropertyNotFoundException extends KernelException
 
     public PropertyNotFoundException( int propertyKeyId, EntityType entityType, long entityId )
     {
-        this( entityType == EntityType.GRAPH ? "GraphProperties" : entityType.name() + "[" + entityId + "]",
+        this( entityType == EntityType.GRAPH ? "GraphProperties" : new StringBuilder().append(entityType.name()).append("[").append(entityId).append("]").toString(),
               propertyKeyId );
     }
 

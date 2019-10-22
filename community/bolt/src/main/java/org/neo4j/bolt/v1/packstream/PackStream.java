@@ -395,7 +395,7 @@ public class PackStream
             }
             else
             {
-                throw new Overflow( "Structures cannot have more than " + Short.MAX_VALUE + " fields" );
+                throw new Overflow( new StringBuilder().append("Structures cannot have more than ").append(Short.MAX_VALUE).append(" fields").toString() );
             }
         }
 
@@ -545,7 +545,7 @@ public class PackStream
             case INT_32:
                 return in.readInt();
             case INT_64:
-                throw new Overflow( "Unexpectedly large Integer value unpacked (" + in.readLong() + ")" );
+                throw new Overflow( new StringBuilder().append("Unexpectedly large Integer value unpacked (").append(in.readLong()).append(")").toString() );
             default:
                 throw new Unexpected( PackType.INTEGER, markerByte );
             }
@@ -779,8 +779,8 @@ public class PackStream
     {
         public Unexpected( PackType expectedType, byte unexpectedMarkerByte )
         {
-            super( "Wrong type received. Expected " + expectedType + ", received: " + type( unexpectedMarkerByte ) +
-                   " (0x" + Integer.toHexString( unexpectedMarkerByte ) + ")." );
+            super( new StringBuilder().append("Wrong type received. Expected ").append(expectedType).append(", received: ").append(type( unexpectedMarkerByte )).append(" (0x").append(Integer.toHexString( unexpectedMarkerByte ))
+					.append(").").toString() );
         }
     }
 }

@@ -160,7 +160,7 @@ public class Envelope
     {
         if ( getDimension() != other.getDimension() )
         {
-            throw new IllegalArgumentException( "Cannot join Envelopes with different dimensions: " + this.getDimension() + " != " + other.getDimension() );
+            throw new IllegalArgumentException( new StringBuilder().append("Cannot join Envelopes with different dimensions: ").append(this.getDimension()).append(" != ").append(other.getDimension()).toString() );
         }
         else
         {
@@ -181,26 +181,22 @@ public class Envelope
     @Override
     public boolean equals( Object obj )
     {
-        if ( obj instanceof Envelope )
-        {
-            Envelope other = (Envelope) obj;
-            if ( this.getDimension() != other.getDimension() )
-            {
-                return false;
-            }
-            for ( int i = 0; i < getDimension(); i++ )
-            {
-                if ( this.min[i] != other.getMin( i ) || this.max[i] != other.getMax( i ) )
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        if (!(obj instanceof Envelope)) {
+			return false;
+		}
+		Envelope other = (Envelope) obj;
+		if ( this.getDimension() != other.getDimension() )
+		{
+		    return false;
+		}
+		for ( int i = 0; i < getDimension(); i++ )
+		{
+		    if ( this.min[i] != other.getMin( i ) || this.max[i] != other.getMax( i ) )
+		    {
+		        return false;
+		    }
+		}
+		return true;
     }
 
     @Override
@@ -332,7 +328,7 @@ public class Envelope
     @Override
     public String toString()
     {
-        return "Envelope: min=" + makeString(min) + ", max=" + makeString(max);
+        return new StringBuilder().append("Envelope: min=").append(makeString(min)).append(", max=").append(makeString(max)).toString();
     }
 
     private static String makeString( double[] vals )
@@ -390,7 +386,7 @@ public class Envelope
         else
         {
             throw new IllegalArgumentException(
-                    "Cannot calculate intersection of Envelopes with different dimensions: " + this.getDimension() + " != " + other.getDimension() );
+                    new StringBuilder().append("Cannot calculate intersection of Envelopes with different dimensions: ").append(this.getDimension()).append(" != ").append(other.getDimension()).toString() );
         }
     }
 }

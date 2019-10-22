@@ -30,16 +30,15 @@ import org.neo4j.kernel.api.exceptions.InvalidArgumentsException;
 class RetrieveConfig
 {
     private static final IntOption MAX_INVOCATIONS = new IntOption( "maxInvocations", 100 );
+	final int maxInvocations;
 
-    static RetrieveConfig of( Map<String, Object> userMap ) throws InvalidArgumentsException
-    {
-        return new RetrieveConfig( MAX_INVOCATIONS.parseOrDefault( userMap ) );
-    }
-
-    final int maxInvocations;
-
-    private RetrieveConfig( int maxInvocations )
+	private RetrieveConfig( int maxInvocations )
     {
         this.maxInvocations = maxInvocations;
+    }
+
+	static RetrieveConfig of( Map<String, Object> userMap ) throws InvalidArgumentsException
+    {
+        return new RetrieveConfig( MAX_INVOCATIONS.parseOrDefault( userMap ) );
     }
 }

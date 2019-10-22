@@ -31,26 +31,26 @@ import org.neo4j.kernel.api.proc.Context;
  */
 public class ComponentRegistry
 {
-    /** Given the context of a procedure call, provide some component. */
-    public interface Provider<T> extends ThrowingFunction<Context,T,ProcedureException>
-    {
-        // This interface intentionally empty, alias for the Function generic above
-    }
-
     private final Map<Class<?>, Provider<?>> suppliers = new HashMap<>();
 
-    public ComponentRegistry()
+	public ComponentRegistry()
     {
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     <T> Provider<T> providerFor( Class<T> type )
     {
         return (Provider<T>) suppliers.get( type );
     }
 
-    public <T> void register( Class<T> cls, Provider<T> supplier )
+	public <T> void register( Class<T> cls, Provider<T> supplier )
     {
         suppliers.put( cls, supplier );
+    }
+
+	/** Given the context of a procedure call, provide some component. */
+    public interface Provider<T> extends ThrowingFunction<Context,T,ProcedureException>
+    {
+        // This interface intentionally empty, alias for the Function generic above
     }
 }

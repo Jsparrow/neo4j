@@ -49,14 +49,14 @@ public class BigPropertyIndexValidationIT
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();
 
-    private Label LABEL;
+    private Label label;
     private String longString;
     private String propertyKey;
 
     @Before
     public void setup()
     {
-        LABEL = Label.label( "LABEL" );
+        label = Label.label( "LABEL" );
         char[] chars = new char[1 << 15];
         Arrays.fill( chars, 'c' );
         longString = new String( chars );
@@ -68,7 +68,7 @@ public class BigPropertyIndexValidationIT
     {
         // GIVEN
         GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-        IndexDefinition index = Neo4jMatchers.createIndex( db, LABEL, propertyKey );
+        IndexDefinition index = Neo4jMatchers.createIndex( db, label, propertyKey );
 
         //We expect this transaction to fail due to the huge property
         expectedException.expect( TransactionFailureException.class );
@@ -76,7 +76,7 @@ public class BigPropertyIndexValidationIT
         {
             try
             {
-                db.execute( "CREATE (n:" + LABEL + " {name: \"" + longString + "\"})" );
+                db.execute( new StringBuilder().append("CREATE (n:").append(label).append(" {name: \"").append(longString).append("\"})").toString() );
                 fail( "Argument was illegal" );
             }
             catch ( IllegalArgumentException e )
@@ -99,16 +99,16 @@ public class BigPropertyIndexValidationIT
     {
         // GIVEN
         GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-        IndexDefinition index = Neo4jMatchers.createIndex( db, LABEL, propertyKey );
+        IndexDefinition index = Neo4jMatchers.createIndex( db, label, propertyKey );
 
         //We expect this transaction to fail due to the huge property
         expectedException.expect( TransactionFailureException.class );
         try ( Transaction tx = db.beginTx() )
         {
-            db.execute( "CREATE (n:" + LABEL + ")" );
+            db.execute( new StringBuilder().append("CREATE (n:").append(label).append(")").toString() );
             try
             {
-                db.execute( "match (n:" + LABEL + ")set n.name= \"" + longString + "\"" );
+                db.execute( new StringBuilder().append("match (n:").append(label).append(")set n.name= \"").append(longString).append("\"").toString() );
                 fail( "Argument was illegal" );
             }
             catch ( IllegalArgumentException e )
@@ -131,17 +131,17 @@ public class BigPropertyIndexValidationIT
     {
         // GIVEN
         GraphDatabaseService db = dbRule.getGraphDatabaseAPI();
-        IndexDefinition index = Neo4jMatchers.createIndex( db, LABEL, propertyKey );
+        IndexDefinition index = Neo4jMatchers.createIndex( db, label, propertyKey );
 
         //We expect this transaction to fail due to the huge property
         expectedException.expect( TransactionFailureException.class );
         try ( Transaction tx = db.beginTx() )
         {
             String otherLabel = "SomethingElse";
-            db.execute( "CREATE (n:" + otherLabel + " {name: \"" + longString + "\"})" );
+            db.execute( new StringBuilder().append("CREATE (n:").append(otherLabel).append(" {name: \"").append(longString).append("\"})").toString() );
             try
             {
-                db.execute( "match (n:" + otherLabel + ")set n:" + LABEL );
+                db.execute( new StringBuilder().append("match (n:").append(otherLabel).append(")set n:").append(label).toString() );
                 fail( "Argument was illegal" );
             }
             catch ( IllegalArgumentException e )

@@ -81,7 +81,7 @@ public class LuceneFulltextDocumentStructure
 
     static Term newTermForChangeOrRemove( long id )
     {
-        return new Term( FIELD_ENTITY_ID, "" + id );
+        return new Term( FIELD_ENTITY_ID, Long.toString(id) );
     }
 
     static Query newCountNodeEntriesQuery( long nodeId, String[] propertyKeys, Value... propertyValues )

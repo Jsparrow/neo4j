@@ -104,7 +104,7 @@ public abstract class FileSystemAbstractionTest
     @Test
     void shouldCreateDeepPath() throws Exception
     {
-        path = new File( path, UUID.randomUUID() + "/" + UUID.randomUUID() );
+        path = new File( path, new StringBuilder().append(UUID.randomUUID()).append("/").append(UUID.randomUUID()).toString() );
 
         fsa.mkdirs( path );
 
@@ -350,7 +350,7 @@ public abstract class FileSystemAbstractionTest
         File base = a.getParentFile();
         Set<File> set = fsa.streamFilesRecursive( base ).map( FileHandle::getRelativeFile ).collect( toSet() );
         assertThat( "Files relative to base directory " + base, set,
-                containsInAnyOrder( new File( "a" ), new File( "sub" + File.separator + "b" ) ) );
+                containsInAnyOrder( new File( "a" ), new File( new StringBuilder().append("sub").append(File.separator).append("b").toString() ) ) );
     }
 
     @Test
@@ -753,8 +753,8 @@ public abstract class FileSystemAbstractionTest
         byte[] actualBytes = actualPageContents.array();
         byte[] expectedBytes = expectedPageContents.array();
         int estimatedPageId = estimateId( actualBytes );
-        assertThat( "Page id: " + pageId + " " + "(based on record data, it should have been " + estimatedPageId +
-                    ", a difference of " + Math.abs( pageId - estimatedPageId ) + ")", actualBytes,
+        assertThat( new StringBuilder().append("Page id: ").append(pageId).append(" ").append("(based on record data, it should have been ").append(estimatedPageId).append(", a difference of ")
+				.append(Math.abs( pageId - estimatedPageId )).append(")").toString(), actualBytes,
                 byteArray( expectedBytes ) );
     }
 

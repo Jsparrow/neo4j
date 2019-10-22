@@ -186,9 +186,7 @@ public class BoltV3TransportIT extends BoltV3TransportBase
 
         assertThat( connection, util.eventuallyReceives(
                 msgFailure( Status.Statement.SyntaxError,
-                        String.format( "Invalid input 'Q': expected <init> (line 1, column 1 (offset: 0))%n" +
-                                "\"QINVALID\"%n" +
-                                " ^" ) ),
+                        String.format( new StringBuilder().append("Invalid input 'Q': expected <init> (line 1, column 1 (offset: 0))%n").append("\"QINVALID\"%n").append(" ^").toString() ) ),
                 msgIgnored() ) );
 
         // When
@@ -396,10 +394,7 @@ public class BoltV3TransportIT extends BoltV3TransportBase
         GraphDatabaseAPI gdb = (GraphDatabaseAPI) server.graphDatabaseService();
         Set<KernelTransactionHandle> txHandles = gdb.getDependencyResolver().resolveDependency( KernelTransactions.class ).activeTransactions();
         assertThat( txHandles.size(), equalTo( 1 ) );
-        for ( KernelTransactionHandle txHandle: txHandles )
-        {
-            assertThat( txHandle.getMetaData(), equalTo( txMetadata ) );
-        }
+        txHandles.forEach(txHandle -> assertThat(txHandle.getMetaData(), equalTo(txMetadata)));
         connection.send( util.chunk( ROLLBACK_MESSAGE ) );
     }
 

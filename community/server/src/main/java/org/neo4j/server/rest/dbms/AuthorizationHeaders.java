@@ -35,7 +35,7 @@ public class AuthorizationHeaders
         String[] parts = authorizationHeader.trim().split( " " );
         String tokenSegment = parts[parts.length - 1];
 
-        if ( tokenSegment.trim().length() == 0 )
+        if ( tokenSegment.trim().isEmpty() )
         {
             return null;
         }

@@ -183,26 +183,26 @@ public class ScoreEntityIterator implements Iterator<ScoreEntityIterator.ScoreEn
         private final long entityId;
         private final float score;
 
-        long entityId()
-        {
-            return entityId;
-        }
-
-        float score()
-        {
-            return score;
-        }
-
         ScoreEntry( long entityId, float score )
         {
             this.entityId = entityId;
             this.score = score;
         }
 
-        @Override
+		long entityId()
+        {
+            return entityId;
+        }
+
+		float score()
+        {
+            return score;
+        }
+
+		@Override
         public String toString()
         {
-            return "ScoreEntry[entityId=" + entityId + ", score=" + score + "]";
+            return new StringBuilder().append("ScoreEntry[entityId=").append(entityId).append(", score=").append(score).append("]").toString();
         }
     }
 }

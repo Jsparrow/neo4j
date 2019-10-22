@@ -99,26 +99,32 @@ import static org.junit.Assert.assertThat;
 @RunWith( Parameterized.class )
 public class MultipleOpenCursorsTest
 {
-    private interface IndexCoordinatorFactory
-    {
-        IndexCoordinator create( Label indexLabel, String numberProp1,
-                String numberProp2, String stringProp1, String stringProp2 );
-    }
-
-    private final DatabaseRule db = new EmbeddedDatabaseRule();
-
     private static final RandomRule rnd = new RandomRule();
-    @Rule
+
+	private static final Label indexLabel = Label.label( "IndexLabel" );
+
+	private static final String numberProp1 = "numberProp1";
+
+	private static final String numberProp2 = "numberProp2";
+
+	private static final String stringProp1 = "stringProp1";
+
+	private static final String stringProp2 = "stringProp2";
+
+	private final DatabaseRule db = new EmbeddedDatabaseRule();
+
+	@Rule
     public RuleChain ruleChain = RuleChain.outerRule( rnd ).around( db );
 
-    private static final Label indexLabel = Label.label( "IndexLabel" );
+	@Parameterized.Parameter( 0 )
+    public String name;
 
-    private static final String numberProp1 = "numberProp1";
-    private static final String numberProp2 = "numberProp2";
-    private static final String stringProp1 = "stringProp1";
-    private static final String stringProp2 = "stringProp2";
+	@Parameterized.Parameter( 1 )
+    public IndexCoordinatorFactory indexCoordinatorFactory;
 
-    @Parameterized.Parameters( name = "{0}" )
+	private IndexCoordinator indexCoordinator;
+
+	@Parameterized.Parameters( name = "{0}" )
     public static Collection<Object[]> params()
     {
         return Arrays.asList(
@@ -131,15 +137,7 @@ public class MultipleOpenCursorsTest
         );
     }
 
-    @Parameterized.Parameter( 0 )
-    public String name;
-
-    @Parameterized.Parameter( 1 )
-    public IndexCoordinatorFactory indexCoordinatorFactory;
-
-    private IndexCoordinator indexCoordinator;
-
-    @Before
+	@Before
     public void setupDb()
     {
         indexCoordinator =
@@ -148,7 +146,7 @@ public class MultipleOpenCursorsTest
         indexCoordinator.createIndex( db );
     }
 
-    @Test
+	@Test
     public void multipleCursorsNotNestedExists() throws Exception
     {
 
@@ -171,7 +169,7 @@ public class MultipleOpenCursorsTest
         }
     }
 
-    private List<Long> asList( NodeValueIndexCursor cursor )
+	private List<Long> asList( NodeValueIndexCursor cursor )
     {
         List<Long> list = new ArrayList<>();
         while ( cursor.next() )
@@ -181,7 +179,7 @@ public class MultipleOpenCursorsTest
         return list;
     }
 
-    @Test
+	@Test
     public void multipleCursorsNotNestedExact() throws Exception
     {
         try ( Transaction tx = db.beginTx() )
@@ -202,7 +200,7 @@ public class MultipleOpenCursorsTest
         }
     }
 
-    @Test
+	@Test
     public void multipleIteratorsNotNestedRange() throws KernelException
     {
         Assume.assumeTrue( indexCoordinator.supportRangeQuery() );
@@ -224,7 +222,7 @@ public class MultipleOpenCursorsTest
         }
     }
 
-    @Test
+	@Test
     public void multipleIteratorsNestedInnerNewExists() throws Exception
     {
         try ( Transaction tx = db.beginTx() )
@@ -251,7 +249,7 @@ public class MultipleOpenCursorsTest
         }
     }
 
-    @Test
+	@Test
     public void multipleIteratorsNestedInnerNewExact() throws Exception
     {
         try ( Transaction tx = db.beginTx() )
@@ -277,7 +275,7 @@ public class MultipleOpenCursorsTest
         }
     }
 
-    @Test
+	@Test
     public void multipleIteratorsNestedInnerNewRange() throws Exception
     {
         Assume.assumeTrue( indexCoordinator.supportRangeQuery() );
@@ -304,7 +302,7 @@ public class MultipleOpenCursorsTest
         }
     }
 
-    @Test
+	@Test
     public void multipleIteratorsNestedInterleavedExists() throws Exception
     {
         try ( Transaction tx = db.beginTx() )
@@ -330,7 +328,7 @@ public class MultipleOpenCursorsTest
         }
     }
 
-    @Test
+	@Test
     public void multipleIteratorsNestedInterleavedExact() throws Exception
     {
         try ( Transaction tx = db.beginTx() )
@@ -356,7 +354,7 @@ public class MultipleOpenCursorsTest
         }
     }
 
-    @Test
+	@Test
     public void multipleIteratorsNestedInterleavedRange() throws Exception
     {
         Assume.assumeTrue( indexCoordinator.supportRangeQuery() );
@@ -382,7 +380,7 @@ public class MultipleOpenCursorsTest
         }
     }
 
-    private void exhaustInterleaved( NodeValueIndexCursor source1, List<Long> target1, NodeValueIndexCursor source2,
+	private void exhaustInterleaved( NodeValueIndexCursor source1, List<Long> target1, NodeValueIndexCursor source2,
             List<Long> target2 )
     {
         boolean source1HasNext = true;
@@ -416,6 +414,12 @@ public class MultipleOpenCursorsTest
         {
             target2.add( source2.nodeReference() );
         }
+    }
+
+	private interface IndexCoordinatorFactory
+    {
+        IndexCoordinator create( Label indexLabel, String numberProp1,
+                String numberProp2, String stringProp1, String stringProp2 );
     }
 
     private static class StringCompositeIndexCoordinator extends IndexCoordinator

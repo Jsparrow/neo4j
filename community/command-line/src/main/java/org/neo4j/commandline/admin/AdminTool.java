@@ -38,8 +38,24 @@ public class AdminTool
     public static final String NEO4J_HOME = System.getenv().getOrDefault( "NEO4J_HOME", "" );
     public static final String NEO4J_CONF = System.getenv().getOrDefault( "NEO4J_CONF", "" );
     public static final String NEO4J_DEBUG = System.getenv().getOrDefault( "NEO4J_DEBUG", null );
+	public static final String scriptName = "neo4j-admin";
+	private final CommandLocator commandLocator;
+	private final BlockerLocator blockerLocator;
+	private final OutsideWorld outsideWorld;
+	private final boolean debug;
+	private final Usage usage;
 
-    public static void main( String[] args ) throws IOException
+	public AdminTool( CommandLocator commandLocator, BlockerLocator blockerLocator, OutsideWorld outsideWorld,
+            boolean debug )
+    {
+        this.commandLocator = CommandLocator.withAdditionalCommand( help(), commandLocator );
+        this.blockerLocator = blockerLocator;
+        this.outsideWorld = outsideWorld;
+        this.debug = debug;
+        this.usage = new Usage( scriptName, this.commandLocator );
+    }
+
+	public static void main( String[] args ) throws IOException
     {
         Path homeDir = Paths.get( NEO4J_HOME );
         Path configDir = Paths.get( NEO4J_CONF );
@@ -52,24 +68,7 @@ public class AdminTool
         }
     }
 
-    public static final String scriptName = "neo4j-admin";
-    private final CommandLocator commandLocator;
-    private final BlockerLocator blockerLocator;
-    private final OutsideWorld outsideWorld;
-    private final boolean debug;
-    private final Usage usage;
-
-    public AdminTool( CommandLocator commandLocator, BlockerLocator blockerLocator, OutsideWorld outsideWorld,
-            boolean debug )
-    {
-        this.commandLocator = CommandLocator.withAdditionalCommand( help(), commandLocator );
-        this.blockerLocator = blockerLocator;
-        this.outsideWorld = outsideWorld;
-        this.debug = debug;
-        this.usage = new Usage( scriptName, this.commandLocator );
-    }
-
-    public void execute( Path homeDir, Path configDir, String... args )
+	public void execute( Path homeDir, Path configDir, String... args )
     {
         try
         {
@@ -143,12 +142,12 @@ public class AdminTool
         }
     }
 
-    private Supplier<AdminCommand.Provider> help()
+	private Supplier<AdminCommand.Provider> help()
     {
         return () -> new HelpCommandProvider( usage );
     }
 
-    private void badUsage( AdminCommand.Provider command, IncorrectUsage e )
+	private void badUsage( AdminCommand.Provider command, IncorrectUsage e )
     {
         outsideWorld.stdErrLine( e.getMessage() );
         outsideWorld.stdErrLine( "" );
@@ -156,34 +155,34 @@ public class AdminTool
         failure();
     }
 
-    private void badUsage( String message )
+	private void badUsage( String message )
     {
         outsideWorld.stdErrLine( message );
         usage.print( outsideWorld::stdErrLine );
         failure();
     }
 
-    private void unexpected( RuntimeException e )
+	private void unexpected( RuntimeException e )
     {
         failure( "unexpected error", e );
     }
 
-    private void commandFailed( CommandFailed e )
+	private void commandFailed( CommandFailed e )
     {
         failure( "command failed", e, e.code() );
     }
 
-    private void failure()
+	private void failure()
     {
         outsideWorld.exit( 1 );
     }
 
-    private void failure( String message, Exception e )
+	private void failure( String message, Exception e )
     {
         failure( message, e, STATUS_ERROR );
     }
 
-    private void failure( String message, Exception e, int code )
+	private void failure( String message, Exception e, int code )
     {
         if ( debug )
         {
@@ -192,13 +191,13 @@ public class AdminTool
         failure( format( "%s: %s", message, e.getMessage() ), code );
     }
 
-    private void failure( String message, int code )
+	private void failure( String message, int code )
     {
         outsideWorld.stdErrLine( message );
         outsideWorld.exit( code );
     }
 
-    private void success()
+	private void success()
     {
         outsideWorld.exit( STATUS_SUCCESS );
     }

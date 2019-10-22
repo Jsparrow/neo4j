@@ -62,13 +62,8 @@ public class MemoryRecommendationsCommandProvider extends AdminCommand.Provider
     public String description()
     {
         return format(
-                "Print heuristic memory setting recommendations for the Neo4j JVM heap and pagecache. The " +
-                "heuristic is based on the total memory of the system the command is running on, or on the amount of " +
-                "memory specified with the --memory argument. The heuristic assumes that the system is dedicated to " +
-                "running Neo4j. If this is not the case, then use the --memory argument to specify how much memory " +
-                "can be expected to be dedicated to Neo4j.%n" +
-                "%n" +
-                "The output is formatted such that it can be copy-posted into the neo4j.conf file." );
+                new StringBuilder().append("Print heuristic memory setting recommendations for the Neo4j JVM heap and pagecache. The ").append("heuristic is based on the total memory of the system the command is running on, or on the amount of ").append("memory specified with the --memory argument. The heuristic assumes that the system is dedicated to ").append("running Neo4j. If this is not the case, then use the --memory argument to specify how much memory ").append("can be expected to be dedicated to Neo4j.%n").append("%n").append("The output is formatted such that it can be copy-posted into the neo4j.conf file.")
+						.toString() );
     }
 
     @Nonnull

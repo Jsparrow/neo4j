@@ -99,7 +99,7 @@ public class ResourceTypesIT
         String[] values = new String[objectCount];
         for ( int i = 0; i < objectCount; i++ )
         {
-            values[i] = "" + i;
+            values[i] = Integer.toString(i);
         }
         return values;
     }

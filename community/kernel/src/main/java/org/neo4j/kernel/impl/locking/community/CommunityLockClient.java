@@ -310,12 +310,12 @@ public class CommunityLockClient implements Locks.Client
     public void stop()
     {
         // closing client to prevent any new client to come
-        if ( stateHolder.stopClient() )
-        {
-            // wake up and terminate waiters
-            terminateAllWaitersAndWaitForClientsToLeave();
-            releaseLocks();
-        }
+		if (!stateHolder.stopClient()) {
+			return;
+		}
+		// wake up and terminate waiters
+		terminateAllWaitersAndWaitForClientsToLeave();
+		releaseLocks();
     }
 
     private void terminateAllWaitersAndWaitForClientsToLeave()
@@ -379,7 +379,34 @@ public class CommunityLockClient implements Locks.Client
         return counter.locks;
     }
 
-    private static class LockCounter implements IntObjectProcedure<LongObjectMap<LockResource>>
+    private static IntObjectProcedure<LongObjectMap<LockResource>> collectActiveLocks(
+            List<ActiveLock> locks, ActiveLock.Factory activeLock )
+    {
+        return ( typeId, exclusive ) ->
+        {
+            ResourceType resourceType = ResourceTypes.fromId( typeId );
+            exclusive.forEachKeyValue( ( resourceId, lock ) ->
+            locks.add(activeLock.create(resourceType, resourceId)) );
+        };
+    }
+
+	private MutableLongObjectMap<LockResource> localShared( ResourceType resourceType )
+    {
+        return sharedLocks.getIfAbsentPut( resourceType.typeId(), LongObjectHashMap::new );
+    }
+
+	private MutableLongObjectMap<LockResource> localExclusive( ResourceType resourceType )
+    {
+        return exclusiveLocks.getIfAbsentPut( resourceType.typeId(), LongObjectHashMap::new );
+    }
+
+	@Override
+    public String toString()
+    {
+        return format( "%s[%d]", getClass().getSimpleName(), getLockSessionId() );
+    }
+
+	private static class LockCounter implements IntObjectProcedure<LongObjectMap<LockResource>>
     {
         long locks;
 
@@ -388,34 +415,5 @@ public class CommunityLockClient implements Locks.Client
         {
             locks += value.size();
         }
-    }
-
-    private static IntObjectProcedure<LongObjectMap<LockResource>> collectActiveLocks(
-            List<ActiveLock> locks, ActiveLock.Factory activeLock )
-    {
-        return ( typeId, exclusive ) ->
-        {
-            ResourceType resourceType = ResourceTypes.fromId( typeId );
-            exclusive.forEachKeyValue( ( resourceId, lock ) ->
-            {
-                locks.add( activeLock.create( resourceType, resourceId ) );
-            } );
-        };
-    }
-
-    private MutableLongObjectMap<LockResource> localShared( ResourceType resourceType )
-    {
-        return sharedLocks.getIfAbsentPut( resourceType.typeId(), LongObjectHashMap::new );
-    }
-
-    private MutableLongObjectMap<LockResource> localExclusive( ResourceType resourceType )
-    {
-        return exclusiveLocks.getIfAbsentPut( resourceType.typeId(), LongObjectHashMap::new );
-    }
-
-    @Override
-    public String toString()
-    {
-        return format( "%s[%d]", getClass().getSimpleName(), getLockSessionId() );
     }
 }

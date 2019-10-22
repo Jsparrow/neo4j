@@ -61,13 +61,13 @@ public class Connector
         type = group.scope( setting( "type", optionsObeyCase( ConnectorType.class ), NO_DEFAULT ) );
     }
 
-    public enum ConnectorType
-    {
-        BOLT, HTTP
-    }
-
     public String key()
     {
         return group.groupKey;
+    }
+
+	public enum ConnectorType
+    {
+        BOLT, HTTP
     }
 }

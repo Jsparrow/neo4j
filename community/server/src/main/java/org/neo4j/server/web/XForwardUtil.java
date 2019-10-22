@@ -141,7 +141,7 @@ public class XForwardUtil
 
         boolean isValid()
         {
-            return headerValue.toLowerCase().equals( "http" ) || headerValue.toLowerCase().equals( "https" );
+            return "http".equals( headerValue.toLowerCase() ) || "https".equals( headerValue.toLowerCase() );
         }
 
         String getScheme()

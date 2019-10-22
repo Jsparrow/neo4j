@@ -325,7 +325,8 @@ public class OffHeapByteArray extends OffHeapNumberArray<ByteArray> implements B
         long rebased = rebase( index );
         if ( rebased < 0 || rebased >= length )
         {
-            throw new IndexOutOfBoundsException( "Wanted to access " + rebased + " but range is " + base + "-" + length );
+            throw new IndexOutOfBoundsException( new StringBuilder().append("Wanted to access ").append(rebased).append(" but range is ").append(base).append("-").append(length)
+					.toString() );
         }
     }
 }

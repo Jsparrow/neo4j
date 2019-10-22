@@ -65,17 +65,17 @@ public class DynamicProcessorAssigner extends ExecutionMonitor.Adapter
     @Override
     public void check( StageExecution execution )
     {
-        if ( execution.stillExecuting() )
-        {
-            int permits = availableProcessors - countActiveProcessors( execution );
-            if ( permits > 0 )
-            {
-                // Be swift at assigning processors to slow steps, i.e. potentially multiple per round
-                assignProcessorsToPotentialBottleNeck( execution, permits );
-            }
-            // Be a little more conservative removing processors from too fast steps
-            removeProcessorFromPotentialIdleStep( execution );
-        }
+        if (!execution.stillExecuting()) {
+			return;
+		}
+		int permits = availableProcessors - countActiveProcessors( execution );
+		if ( permits > 0 )
+		{
+		    // Be swift at assigning processors to slow steps, i.e. potentially multiple per round
+		    assignProcessorsToPotentialBottleNeck( execution, permits );
+		}
+		// Be a little more conservative removing processors from too fast steps
+		removeProcessorFromPotentialIdleStep( execution );
     }
 
     private void assignProcessorsToPotentialBottleNeck( StageExecution execution, int permits )
@@ -83,19 +83,19 @@ public class DynamicProcessorAssigner extends ExecutionMonitor.Adapter
         Pair<Step<?>,Float> bottleNeck = execution.stepsOrderedBy( Keys.avg_processing_time, false ).iterator().next();
         Step<?> bottleNeckStep = bottleNeck.first();
         long doneBatches = batches( bottleNeckStep );
-        if ( bottleNeck.other() > 1.0f &&
-             batchesPassedSinceLastChange( bottleNeckStep, doneBatches ) >= config.movingAverageSize() )
-        {
-            // Assign 1/10th of the remaining permits. This will have processors being assigned more
-            // aggressively in the beginning of the run
-            int optimalProcessorIncrement = min( max( 1, (int) bottleNeck.other().floatValue() - 1 ), permits );
-            int before = bottleNeckStep.processors( 0 );
-            int after = bottleNeckStep.processors( max( optimalProcessorIncrement, permits / 10 ) );
-            if ( after > before )
-            {
-                lastChangedProcessors.put( bottleNeckStep, doneBatches );
-            }
-        }
+        if (!(bottleNeck.other() > 1.0f &&
+             batchesPassedSinceLastChange( bottleNeckStep, doneBatches ) >= config.movingAverageSize())) {
+			return;
+		}
+		// Assign 1/10th of the remaining permits. This will have processors being assigned more
+		// aggressively in the beginning of the run
+		int optimalProcessorIncrement = min( max( 1, (int) bottleNeck.other().floatValue() - 1 ), permits );
+		int before = bottleNeckStep.processors( 0 );
+		int after = bottleNeckStep.processors( max( optimalProcessorIncrement, permits / 10 ) );
+		if ( after > before )
+		{
+		    lastChangedProcessors.put( bottleNeckStep, doneBatches );
+		}
     }
 
     private void removeProcessorFromPotentialIdleStep( StageExecution execution )

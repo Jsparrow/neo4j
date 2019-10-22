@@ -71,8 +71,10 @@ public class GenericBlockBasedIndexPopulatorTest
     private File indexFile;
     private FileSystemAbstraction fs;
     private IndexDropAction dropAction;
+	@Rule
+    public final PageCacheAndDependenciesRule storage = new PageCacheAndDependenciesRule();
 
-    @Before
+	@Before
     public void setup()
     {
         IndexProviderDescriptor providerDescriptor = new IndexProviderDescriptor( "test", "v1" );
@@ -83,10 +85,7 @@ public class GenericBlockBasedIndexPopulatorTest
         dropAction = new FileSystemIndexDropAction( fs, directoryStructure );
     }
 
-    @Rule
-    public final PageCacheAndDependenciesRule storage = new PageCacheAndDependenciesRule();
-
-    @Test
+	@Test
     public void shouldSeeExternalUpdateBothBeforeAndAfterScanCompleted() throws IndexEntryConflictException
     {
         // given
@@ -112,7 +111,7 @@ public class GenericBlockBasedIndexPopulatorTest
         }
     }
 
-    @Test
+	@Test
     public void shouldThrowOnDuplicatedValuesFromScan()
     {
         // given
@@ -146,7 +145,7 @@ public class GenericBlockBasedIndexPopulatorTest
         }
     }
 
-    @Test
+	@Test
     public void shouldThrowOnDuplicatedValuesFromExternalUpdates()
     {
         // given
@@ -183,7 +182,7 @@ public class GenericBlockBasedIndexPopulatorTest
         }
     }
 
-    @Test
+	@Test
     public void shouldThrowOnDuplicatedValuesFromScanAndExternalUpdates()
     {
         // given
@@ -220,7 +219,7 @@ public class GenericBlockBasedIndexPopulatorTest
         }
     }
 
-    @Test
+	@Test
     public void shouldNotThrowOnDuplicationsLaterFixedByExternalUpdates() throws IndexEntryConflictException
     {
         // given
@@ -255,7 +254,7 @@ public class GenericBlockBasedIndexPopulatorTest
         }
     }
 
-    private void assertHasEntry( BlockBasedIndexPopulator<GenericKey,NativeIndexValue> populator, Value duplicate, int expectedId )
+	private void assertHasEntry( BlockBasedIndexPopulator<GenericKey,NativeIndexValue> populator, Value duplicate, int expectedId )
     {
         try ( NativeIndexReader<GenericKey,NativeIndexValue> reader = populator.newReader() )
         {
@@ -266,7 +265,7 @@ public class GenericBlockBasedIndexPopulatorTest
         }
     }
 
-    private void externalUpdate( BlockBasedIndexPopulator<GenericKey,NativeIndexValue> populator, TextValue matata, int matataId )
+	private void externalUpdate( BlockBasedIndexPopulator<GenericKey,NativeIndexValue> populator, TextValue matata, int matataId )
             throws IndexEntryConflictException
     {
         try ( IndexUpdater indexUpdater = populator.newPopulatingUpdater() )
@@ -276,7 +275,7 @@ public class GenericBlockBasedIndexPopulatorTest
         }
     }
 
-    private void assertMatch( BlockBasedIndexPopulator<GenericKey,NativeIndexValue> populator, Value value, long id )
+	private void assertMatch( BlockBasedIndexPopulator<GenericKey,NativeIndexValue> populator, Value value, long id )
     {
         try ( NativeIndexReader<GenericKey,NativeIndexValue> reader = populator.newReader() )
         {
@@ -289,7 +288,7 @@ public class GenericBlockBasedIndexPopulatorTest
         }
     }
 
-    private GenericBlockBasedIndexPopulator instantiatePopulator( StoreIndexDescriptor indexDescriptor )
+	private GenericBlockBasedIndexPopulator instantiatePopulator( StoreIndexDescriptor indexDescriptor )
     {
         Config config = Config.defaults();
         ConfiguredSpaceFillingCurveSettingsCache settingsCache = new ConfiguredSpaceFillingCurveSettingsCache( config );

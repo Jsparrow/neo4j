@@ -47,6 +47,6 @@ class MutableHit<KEY,VALUE> implements Hit<KEY,VALUE>
     @Override
     public String toString()
     {
-        return "MutableHit [key=" + key + ", value=" + value + "]";
+        return new StringBuilder().append("MutableHit [key=").append(key).append(", value=").append(value).append("]").toString();
     }
 }

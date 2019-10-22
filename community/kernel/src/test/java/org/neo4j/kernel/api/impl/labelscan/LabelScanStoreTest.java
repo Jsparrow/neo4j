@@ -82,22 +82,19 @@ import static org.neo4j.kernel.impl.api.scan.FullStoreChangeStream.asStream;
 
 public abstract class LabelScanStoreTest
 {
-    protected final TestDirectory testDirectory = TestDirectory.testDirectory();
-    private final ExpectedException expectedException = ExpectedException.none();
-    protected final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
-    final RandomRule random = new RandomRule();
-
-    @Rule
+    private static final long[] NO_LABELS = new long[0];
+	protected final TestDirectory testDirectory = TestDirectory.testDirectory();
+	private final ExpectedException expectedException = ExpectedException.none();
+	protected final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	final RandomRule random = new RandomRule();
+	@Rule
     public final RuleChain ruleChain = RuleChain.outerRule( random ).around( testDirectory ).around( expectedException )
             .around( fileSystemRule );
+	private LifeSupport life;
+	private TrackingMonitor monitor;
+	private LabelScanStore store;
 
-    private static final long[] NO_LABELS = new long[0];
-
-    private LifeSupport life;
-    private TrackingMonitor monitor;
-    private LabelScanStore store;
-
-    @After
+	@After
     public void shutdown()
     {
         if ( life != null )
@@ -106,11 +103,11 @@ public abstract class LabelScanStoreTest
         }
     }
 
-    protected abstract LabelScanStore createLabelScanStore( FileSystemAbstraction fileSystemAbstraction,
+	protected abstract LabelScanStore createLabelScanStore( FileSystemAbstraction fileSystemAbstraction,
             DatabaseLayout databaseLayout, FullStoreChangeStream fullStoreChangeStream, boolean usePersistentStore, boolean readOnly,
             LabelScanStore.Monitor monitor );
 
-    @Test
+	@Test
     public void failToRetrieveWriterOnReadOnlyScanStore()
     {
         createAndStartReadOnly();
@@ -118,7 +115,7 @@ public abstract class LabelScanStoreTest
         store.newWriter();
     }
 
-    @Test
+	@Test
     public void forceShouldNotCheckpointTreeOnReadOnlyScanStore()
     {
         MutableBoolean ioLimiterCalled = new MutableBoolean();
@@ -130,7 +127,7 @@ public abstract class LabelScanStoreTest
         assertFalse( ioLimiterCalled.getValue() );
     }
 
-    @Test
+	@Test
     public void shouldNotStartIfLabelScanStoreIndexDoesNotExistInReadOnlyMode()
     {
         try
@@ -148,7 +145,7 @@ public abstract class LabelScanStoreTest
         }
     }
 
-    @Test
+	@Test
     public void snapshotReadOnlyLabelScanStore() throws IOException
     {
         prepareIndex();
@@ -160,9 +157,9 @@ public abstract class LabelScanStoreTest
         }
     }
 
-    protected abstract Matcher<Iterable<? super File>> hasLabelScanStore();
+	protected abstract Matcher<Iterable<? super File>> hasLabelScanStore();
 
-    @Test
+	@Test
     public void shouldUpdateIndexOnLabelChange() throws Exception
     {
         // GIVEN
@@ -177,7 +174,7 @@ public abstract class LabelScanStoreTest
         assertNodesForLabel( labelId, nodeId );
     }
 
-    @Test
+	@Test
     public void shouldUpdateIndexOnAddedLabels() throws Exception
     {
         // GIVEN
@@ -196,7 +193,7 @@ public abstract class LabelScanStoreTest
         assertNodesForLabel( labelId2, nodeId );
     }
 
-    @Test
+	@Test
     public void shouldUpdateIndexOnRemovedLabels() throws Exception
     {
         // GIVEN
@@ -216,7 +213,7 @@ public abstract class LabelScanStoreTest
         assertNodesForLabel( labelId2, nodeId );
     }
 
-    @Test
+	@Test
     public void shouldDeleteFromIndexWhenDeletedNode() throws Exception
     {
         // GIVEN
@@ -232,7 +229,7 @@ public abstract class LabelScanStoreTest
         assertNodesForLabel( labelId );
     }
 
-    @Test
+	@Test
     public void shouldScanSingleRange()
     {
         // GIVEN
@@ -256,7 +253,7 @@ public abstract class LabelScanStoreTest
         assertArrayEquals( new long[]{labelId1, labelId2}, sorted( range.labels( nodeId2 ) ) );
     }
 
-    @Test
+	@Test
     public void shouldScanMultipleRanges()
     {
         // GIVEN
@@ -285,7 +282,7 @@ public abstract class LabelScanStoreTest
         assertArrayEquals( new long[]{labelId1, labelId2}, sorted( range2.labels( nodeId2 ) ) );
     }
 
-    @Test
+	@Test
     public void shouldWorkWithAFullRange()
     {
         // given
@@ -308,7 +305,7 @@ public abstract class LabelScanStoreTest
         assertEquals( nodes, nodesWithLabel );
     }
 
-    @Test
+	@Test
     public void shouldUpdateAFullRange() throws Exception
     {
         // given
@@ -332,7 +329,7 @@ public abstract class LabelScanStoreTest
         assertEquals( nodes, nodesWithLabel0 );
     }
 
-    @Test
+	@Test
     public void shouldSeeEntriesWhenOnlyLowestIsPresent()
     {
         // given
@@ -355,7 +352,7 @@ public abstract class LabelScanStoreTest
         assertThat( count.intValue(), is( 1 ) );
     }
 
-    private void write( Iterator<NodeLabelUpdate> iterator ) throws IOException
+	private void write( Iterator<NodeLabelUpdate> iterator ) throws IOException
     {
         try ( LabelScanWriter writer = store.newWriter() )
         {
@@ -366,13 +363,13 @@ public abstract class LabelScanStoreTest
         }
     }
 
-    private long[] sorted( long[] input )
+	private long[] sorted( long[] input )
     {
         Arrays.sort( input );
         return input;
     }
 
-    private long[] reducedNodes( NodeLabelRange range )
+	private long[] reducedNodes( NodeLabelRange range )
     {
         long[] nodes = range.nodes();
         long[] result = new long[nodes.length];
@@ -387,7 +384,7 @@ public abstract class LabelScanStoreTest
         return Arrays.copyOf( result, cursor );
     }
 
-    @Test
+	@Test
     public void shouldRebuildFromScratchIfIndexMissing()
     {
         // GIVEN a start of the store with existing data in it
@@ -403,7 +400,7 @@ public abstract class LabelScanStoreTest
         assertNodesForLabel( 2, 2 );
     }
 
-    @Test
+	@Test
     public void rebuildCorruptedIndexIndexOnStartup() throws Exception
     {
         // GIVEN a start of the store with existing data in it
@@ -419,7 +416,7 @@ public abstract class LabelScanStoreTest
         assertTrue( "Index should be rebuild", monitor.rebuildingCalled );
     }
 
-    @Test
+	@Test
     public void shouldFindDecentAmountOfNodesForALabel() throws Exception
     {
         // GIVEN
@@ -453,7 +450,7 @@ public abstract class LabelScanStoreTest
         assertEquals( "Found gaps in node id range: " + gaps( nodeSet, nodeCount ), nodeCount, nodeSet.size() );
     }
 
-    @Test
+	@Test
     public void shouldFindNodesWithAnyOfGivenLabels() throws Exception
     {
         // GIVEN
@@ -489,7 +486,7 @@ public abstract class LabelScanStoreTest
         }
     }
 
-    @Test
+	@Test
     public void shouldFindNodesWithAllGivenLabels() throws Exception
     {
         // GIVEN
@@ -525,7 +522,7 @@ public abstract class LabelScanStoreTest
         }
     }
 
-    private void prepareIndex() throws IOException
+	private void prepareIndex() throws IOException
     {
         start();
         try ( LabelScanWriter labelScanWriter = store.newWriter() )
@@ -535,7 +532,7 @@ public abstract class LabelScanStoreTest
         store.shutdown();
     }
 
-    private Set<Long> gaps( Set<Long> ids, int expectedCount )
+	private Set<Long> gaps( Set<Long> ids, int expectedCount )
     {
         Set<Long> gaps = new HashSet<>();
         for ( long i = 0; i < expectedCount; i++ )
@@ -548,7 +545,7 @@ public abstract class LabelScanStoreTest
         return gaps;
     }
 
-    private void assertNodesForLabel( int labelId, long... expectedNodeIds )
+	private void assertNodesForLabel( int labelId, long... expectedNodeIds )
     {
         Set<Long> nodeSet = new HashSet<>();
         LongIterator nodes = store.newReader().nodesWithLabel( labelId );
@@ -559,13 +556,13 @@ public abstract class LabelScanStoreTest
 
         for ( long expectedNodeId : expectedNodeIds )
         {
-            assertTrue( "Expected node " + expectedNodeId + " not found in scan store",
+            assertTrue( new StringBuilder().append("Expected node ").append(expectedNodeId).append(" not found in scan store").toString(),
                     nodeSet.remove( expectedNodeId ) );
         }
         assertTrue( "Unexpected nodes in scan store " + nodeSet, nodeSet.isEmpty() );
     }
 
-    private void createAndStartReadOnly()
+	private void createAndStartReadOnly()
     {
         // create label scan store and shutdown it
         start();
@@ -574,22 +571,22 @@ public abstract class LabelScanStoreTest
         start( false, true );
     }
 
-    private void start()
+	private void start()
     {
         start( false, false );
     }
 
-    private void start( boolean usePersistentStore, boolean readOnly )
+	private void start( boolean usePersistentStore, boolean readOnly )
     {
         start( Collections.emptyList(), usePersistentStore, readOnly );
     }
 
-    private void start( List<NodeLabelUpdate> existingData )
+	private void start( List<NodeLabelUpdate> existingData )
     {
         start( existingData, false, false );
     }
 
-    private void start( List<NodeLabelUpdate> existingData, boolean usePersistentStore,
+	private void start( List<NodeLabelUpdate> existingData, boolean usePersistentStore,
             boolean readOnly )
     {
         life = new LifeSupport();
@@ -603,21 +600,21 @@ public abstract class LabelScanStoreTest
         assertTrue( monitor.initCalled );
     }
 
-    private void scrambleIndexFilesAndRestart( List<NodeLabelUpdate> data, boolean usePersistentStore, boolean readOnly ) throws IOException
+	private void scrambleIndexFilesAndRestart( List<NodeLabelUpdate> data, boolean usePersistentStore, boolean readOnly ) throws IOException
     {
         shutdown();
         corruptIndex( fileSystemRule.get(), testDirectory.databaseLayout() );
         start( data, usePersistentStore, readOnly );
     }
 
-    protected abstract void corruptIndex( FileSystemAbstraction fileSystem, DatabaseLayout databaseLayout ) throws IOException;
+	protected abstract void corruptIndex( FileSystemAbstraction fileSystem, DatabaseLayout databaseLayout ) throws IOException;
 
-    protected void scrambleFile( File file ) throws IOException
+	protected void scrambleFile( File file ) throws IOException
     {
         scrambleFile( this.random.random(), file );
     }
 
-    public static void scrambleFile( Random random, File file ) throws IOException
+	public static void scrambleFile( Random random, File file ) throws IOException
     {
         try ( RandomAccessFile fileAccess = new RandomAccessFile( file, "rw" );
               FileChannel channel = fileAccess.getChannel() )
@@ -631,7 +628,7 @@ public abstract class LabelScanStoreTest
         }
     }
 
-    private static void putRandomBytes( Random random, byte[] bytes )
+	private static void putRandomBytes( Random random, byte[] bytes )
     {
         for ( int i = 0; i < bytes.length; i++ )
         {
@@ -639,7 +636,7 @@ public abstract class LabelScanStoreTest
         }
     }
 
-    public static class TrackingMonitor extends LabelScanStore.Monitor.Adaptor
+	public static class TrackingMonitor extends LabelScanStore.Monitor.Adaptor
     {
         boolean initCalled;
         public boolean rebuildingCalled;

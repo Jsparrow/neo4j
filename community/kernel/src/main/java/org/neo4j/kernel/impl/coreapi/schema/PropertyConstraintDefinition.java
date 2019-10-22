@@ -40,7 +40,7 @@ abstract class PropertyConstraintDefinition implements ConstraintDefinition
     public boolean isConstraintType( ConstraintType type )
     {
         assertInUnterminatedTransaction();
-        return getConstraintType().equals( type );
+        return getConstraintType() == type;
     }
 
     @Override

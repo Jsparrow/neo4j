@@ -142,7 +142,7 @@ public final class ArrayEncoder
         }
 
         @Override
-        public void writePoint( CoordinateReferenceSystem crs, double[] coordinate ) throws RuntimeException
+        public void writePoint( CoordinateReferenceSystem crs, double[] coordinate )
         {
             builder.append( crs.getTable().getTableId() );
             builder.append( ':' );
@@ -162,42 +162,42 @@ public final class ArrayEncoder
         }
 
         @Override
-        public void writeDuration( long months, long days, long seconds, int nanos ) throws RuntimeException
+        public void writeDuration( long months, long days, long seconds, int nanos )
         {
             builder.append( DurationValue.duration( months, days, seconds, nanos ).prettyPrint() );
             builder.append( '|' );
         }
 
         @Override
-        public void writeDate( LocalDate localDate ) throws RuntimeException
+        public void writeDate( LocalDate localDate )
         {
             builder.append( DateValue.date( localDate ).prettyPrint() );
             builder.append( '|' );
         }
 
         @Override
-        public void writeLocalTime( LocalTime localTime ) throws RuntimeException
+        public void writeLocalTime( LocalTime localTime )
         {
             builder.append( LocalTimeValue.localTime( localTime ).prettyPrint() );
             builder.append( '|' );
         }
 
         @Override
-        public void writeTime( OffsetTime offsetTime ) throws RuntimeException
+        public void writeTime( OffsetTime offsetTime )
         {
             builder.append( TimeValue.time( offsetTime ).prettyPrint() );
             builder.append( '|' );
         }
 
         @Override
-        public void writeLocalDateTime( LocalDateTime localDateTime ) throws RuntimeException
+        public void writeLocalDateTime( LocalDateTime localDateTime )
         {
             builder.append( LocalDateTimeValue.localDateTime( localDateTime ).prettyPrint() );
             builder.append( '|' );
         }
 
         @Override
-        public void writeDateTime( ZonedDateTime zonedDateTime ) throws RuntimeException
+        public void writeDateTime( ZonedDateTime zonedDateTime )
         {
             builder.append( DateTimeValue.datetime( zonedDateTime ).prettyPrint() );
             builder.append( '|' );

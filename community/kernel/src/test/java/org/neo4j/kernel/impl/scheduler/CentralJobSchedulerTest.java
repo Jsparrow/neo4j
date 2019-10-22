@@ -184,16 +184,12 @@ public class CentralJobSchedulerTest
             {
                 // All jobs got started. We're good!
                 blockLatch.release();
-                for ( JobHandle handle : handles )
-                {
-                    handle.cancel( false );
-                }
+                handles.forEach(handle -> handle.cancel(false));
                 return;
             }
         }
         while ( System.nanoTime() < deadline );
-        fail( "Only managed to start " + startedCounter.get() + " tasks in 10 seconds, when " +
-              handles.size() + " was expected." );
+        fail( new StringBuilder().append("Only managed to start ").append(startedCounter.get()).append(" tasks in 10 seconds, when ").append(handles.size()).append(" was expected.").toString() );
     }
 
     @Test

@@ -108,10 +108,7 @@ public class ConcurrentLuceneFulltextUpdaterTest extends LuceneFulltextTestSuppo
             catch ( Throwable e )
             {
                 StringBuilder sb = new StringBuilder( e.getMessage() ).append( System.lineSeparator() ).append( "Nodes found in query for bob:" );
-                for ( ScoreEntityIterator.ScoreEntry entry : list )
-                {
-                    sb.append( System.lineSeparator() ).append( "\t" ).append( db.getNodeById( entry.entityId() ) );
-                }
+                list.forEach(entry -> sb.append(System.lineSeparator()).append("\t").append(db.getNodeById(entry.entityId())));
                 throw e;
             }
             ScoreEntityIterator alice = fulltextAdapter.query( ktx, "nodes", "alice" );
@@ -192,7 +189,7 @@ public class ConcurrentLuceneFulltextUpdaterTest extends LuceneFulltextTestSuppo
 
         Runnable aliceWork = work( nodesCreatedPerThread, () ->
         {
-            db.execute( "create (:LABEL {" + PROP + ": \"alice\"})" ).close();
+            db.execute( new StringBuilder().append("create (:LABEL {").append(PROP).append(": \"alice\"})").toString() ).close();
             aliceLatch.countDown();
         } );
         Runnable bobWork = work( nodesCreatedPerThread, () ->
@@ -214,7 +211,7 @@ public class ConcurrentLuceneFulltextUpdaterTest extends LuceneFulltextTestSuppo
 
         Runnable aliceWork = work( nodesCreatedPerThread, () ->
         {
-            db.execute( "CYPHER 3.1 create (:LABEL {" + PROP + ": \"alice\"})" ).close();
+            db.execute( new StringBuilder().append("CYPHER 3.1 create (:LABEL {").append(PROP).append(": \"alice\"})").toString() ).close();
             aliceLatch.countDown();
         } );
         Runnable bobWork = work( nodesCreatedPerThread, () ->
@@ -236,7 +233,7 @@ public class ConcurrentLuceneFulltextUpdaterTest extends LuceneFulltextTestSuppo
 
         Runnable aliceWork = work( nodesCreatedPerThread, () ->
         {
-            db.execute( "CYPHER 2.3 create (:LABEL {" + PROP + ": \"alice\"})" ).close();
+            db.execute( new StringBuilder().append("CYPHER 2.3 create (:LABEL {").append(PROP).append(": \"alice\"})").toString() ).close();
             aliceLatch.countDown();
         } );
         Runnable bobWork = work( nodesCreatedPerThread, () ->
@@ -258,7 +255,7 @@ public class ConcurrentLuceneFulltextUpdaterTest extends LuceneFulltextTestSuppo
 
         Runnable aliceWork = work( nodesCreatedPerThread, () ->
         {
-            db.execute( "CYPHER planner=rule create (:LABEL {" + PROP + ": \"alice\"})" ).close();
+            db.execute( new StringBuilder().append("CYPHER planner=rule create (:LABEL {").append(PROP).append(": \"alice\"})").toString() ).close();
             aliceLatch.countDown();
         } );
         Runnable bobWork = work( nodesCreatedPerThread, () ->

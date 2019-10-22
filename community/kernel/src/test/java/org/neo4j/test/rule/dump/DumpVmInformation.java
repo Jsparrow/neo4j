@@ -77,11 +77,8 @@ public class DumpVmInformation
     {
         String parentName = tg.getParent() == null ? null : tg.getParent().getName();
         // Dump thread group info.
-        out.println( "---- GROUP:" + tg.getName() +
-                (parentName != null ? " parent:" + parentName : "" ) +
-                (tg.isDaemon() ? " daemon" : "" ) +
-                (tg.isDestroyed() ? " destroyed" : "" ) +
-                " ----" );
+        out.println( new StringBuilder().append("---- GROUP:").append(tg.getName()).append(parentName != null ? " parent:" + parentName : "")
+				.append(tg.isDaemon() ? " daemon" : "").append(tg.isDestroyed() ? " destroyed" : "").append(" ----").toString() );
         // Dump info for each thread.
         Thread[] allThreads = new Thread[1000];
         tg.enumerate( allThreads, false );
@@ -92,12 +89,10 @@ public class DumpVmInformation
                 break;
             }
             out.println(
-                    "\"" + thread.getName() + "\"" +
-                    (thread.isDaemon() ? " daemon" : "") +
-                    " prio=" + thread.getPriority() +
-                    " tid=" + thread.getId() +
-                    " " + thread.getState().name().toLowerCase() );
-            out.println( "  " + State.class.getName() + ": " + thread.getState().name() );
+                    new StringBuilder().append("\"").append(thread.getName()).append("\"").append(thread.isDaemon() ? " daemon" : "")
+							.append(" prio=").append(thread.getPriority()).append(" tid=").append(thread.getId()).append(" ").append(thread.getState().name().toLowerCase())
+							.toString() );
+            out.println( new StringBuilder().append("  ").append(State.class.getName()).append(": ").append(thread.getState().name()).toString() );
             for ( StackTraceElement element : thread.getStackTrace() )
             {
                 out.println( "\tat " + element );

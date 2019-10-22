@@ -116,8 +116,7 @@ public class IndexProviderStore
                 String expected = versionLongToString( expectedVersion );
                 String readVersion = versionLongToString( readIndexVersion );
                 throw new NotCurrentStoreVersionException( expected, readVersion,
-                        "Your index has been upgraded to " + readVersion +
-                        " and cannot run with an older version " + expected, false );
+                        new StringBuilder().append("Your index has been upgraded to ").append(readVersion).append(" and cannot run with an older version ").append(expected).toString(), false );
             }
             else if ( !allowUpgrade )
             {
@@ -135,7 +134,7 @@ public class IndexProviderStore
         int wholeRecordsRead = bytesRead / RECORD_SIZE;
         if ( wholeRecordsRead < RECORD_COUNT && !allowUpgrade )
         {
-            throw new UpgradeNotAllowedByConfigurationException( "Index version (managed by " + file + ") has changed and needs to be upgraded" );
+            throw new UpgradeNotAllowedByConfigurationException( new StringBuilder().append("Index version (managed by ").append(file).append(") has changed and needs to be upgraded").toString() );
         }
 
         buf.flip();

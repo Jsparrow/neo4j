@@ -399,7 +399,7 @@ class AdminToolTest
     private static class NullBlockerLocator implements BlockerLocator
     {
         @Override
-        public Iterable<AdminCommand.Blocker> findBlockers( String name ) throws NoSuchElementException
+        public Iterable<AdminCommand.Blocker> findBlockers( String name )
         {
             return Collections.emptyList();
         }

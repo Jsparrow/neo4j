@@ -114,7 +114,7 @@ public class RecoveryStartInformationProviderTest
         {
             // then
             final String expectedMessage =
-                    "No check point found in any log file from version " + oldestLogVersionFound + " to " + logVersion;
+                    new StringBuilder().append("No check point found in any log file from version ").append(oldestLogVersionFound).append(" to ").append(logVersion).toString();
             assertEquals( expectedMessage, ex.getMessage() );
         }
     }

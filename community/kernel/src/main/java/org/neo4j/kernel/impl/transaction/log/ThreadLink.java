@@ -23,24 +23,24 @@ import java.util.concurrent.locks.LockSupport;
 
 class ThreadLink
 {
-    final Thread thread;
-    volatile ThreadLink next;
-    volatile boolean done;
+    static final ThreadLink END = new ThreadLink( null );
 
-    ThreadLink( Thread thread )
+	static
+    {
+        END.next = END;
+    }
+
+	final Thread thread;
+	volatile ThreadLink next;
+	volatile boolean done;
+
+	ThreadLink( Thread thread )
     {
         this.thread = thread;
     }
 
-    public void unpark()
+	public void unpark()
     {
         LockSupport.unpark( thread );
-    }
-
-    static final ThreadLink END = new ThreadLink( null );
-
-    static
-    {
-        END.next = END;
     }
 }

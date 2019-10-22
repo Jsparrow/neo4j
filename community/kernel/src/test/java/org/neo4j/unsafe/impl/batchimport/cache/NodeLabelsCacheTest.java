@@ -32,7 +32,9 @@ import static org.junit.Assert.assertSame;
 
 public class NodeLabelsCacheTest
 {
-    @Test
+    private static final int CHUNK_SIZE = 100;
+	private final Random random = new Random( 1234 );
+	@Test
     public void shouldCacheSmallSetOfLabelsPerNode()
     {
         // GIVEN
@@ -49,7 +51,7 @@ public class NodeLabelsCacheTest
         assertArrayEquals( new int[] {1,2,3}, readLabels );
     }
 
-    @Test
+	@Test
     public void shouldHandleLargeAmountOfLabelsPerNode()
     {
         // GIVEN
@@ -68,7 +70,7 @@ public class NodeLabelsCacheTest
         assertArrayEquals( labels, readLabels );
     }
 
-    @Test
+	@Test
     public void shouldHandleLabelsForManyNodes()
     {
         // GIVEN a really weird scenario where we have 5000 different labels
@@ -93,7 +95,7 @@ public class NodeLabelsCacheTest
         }
     }
 
-    @Test
+	@Test
     public void shouldEndTargetArrayWithMinusOne()
     {
         // GIVEN
@@ -113,7 +115,7 @@ public class NodeLabelsCacheTest
         assertEquals( -1, target[4] );
     }
 
-    @Test
+	@Test
     public void shouldReturnEmptyArrayForNodeWithNoLabelsAndNoLabelsWhatsoever()
     {
         // GIVEN
@@ -128,7 +130,7 @@ public class NodeLabelsCacheTest
         assertEquals( -1, target[0] );
     }
 
-    @Test
+	@Test
     public void shouldSupportConcurrentGet() throws Throwable
     {
         // GIVEN
@@ -152,7 +154,27 @@ public class NodeLabelsCacheTest
         getRace.go();
     }
 
-    private static class LabelGetter implements Runnable
+	private long[] asLongArray( int[] labels )
+    {
+        long[] result = new long[labels.length];
+        for ( int i = 0; i < labels.length; i++ )
+        {
+            result[i] = labels[i];
+        }
+        return result;
+    }
+
+	private int[] randomLabels( int count, int highId )
+    {
+        int[] result = new int[count];
+        for ( int i = 0; i < count; i++ )
+        {
+            result[i] = random.nextInt( highId );
+        }
+        return result;
+    }
+
+	private static class LabelGetter implements Runnable
     {
         private final NodeLabelsCache cache;
         private final int[][] expectedLabels;
@@ -194,27 +216,4 @@ public class NodeLabelsCacheTest
             }
         }
     }
-
-    private long[] asLongArray( int[] labels )
-    {
-        long[] result = new long[labels.length];
-        for ( int i = 0; i < labels.length; i++ )
-        {
-            result[i] = labels[i];
-        }
-        return result;
-    }
-
-    private int[] randomLabels( int count, int highId )
-    {
-        int[] result = new int[count];
-        for ( int i = 0; i < count; i++ )
-        {
-            result[i] = random.nextInt( highId );
-        }
-        return result;
-    }
-
-    private static final int CHUNK_SIZE = 100;
-    private final Random random = new Random( 1234 );
 }

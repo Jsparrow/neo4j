@@ -48,178 +48,6 @@ import org.neo4j.storageengine.api.txstate.ReadableTransactionState;
 public class TransactionEventHandlers
         implements Lifecycle, TransactionHook<TransactionEventHandlers.TransactionHandlerState>
 {
-    private final CopyOnWriteArraySet<TransactionEventHandler> transactionEventHandlers = new CopyOnWriteArraySet<>();
-
-    private final EmbeddedProxySPI proxySpi;
-
-    public TransactionEventHandlers( EmbeddedProxySPI spi )
-    {
-        this.proxySpi = spi;
-    }
-
-    @Override
-    public void init()
-    {
-    }
-
-    @Override
-    public void start()
-    {
-    }
-
-    @Override
-    public void stop()
-    {
-    }
-
-    @Override
-    public void shutdown()
-    {
-    }
-
-    public <T> TransactionEventHandler<T> registerTransactionEventHandler(
-            TransactionEventHandler<T> handler )
-    {
-        this.transactionEventHandlers.add( handler );
-        return handler;
-    }
-
-    public <T> TransactionEventHandler<T> unregisterTransactionEventHandler(
-            TransactionEventHandler<T> handler )
-    {
-        return unregisterHandler( this.transactionEventHandlers, handler );
-    }
-
-    private <T> T unregisterHandler( Collection<?> setOfHandlers, T handler )
-    {
-        if ( !setOfHandlers.remove( handler ) )
-        {
-            throw new IllegalStateException( handler + " isn't registered" );
-        }
-        return handler;
-    }
-
-    @Override
-    public TransactionHandlerState beforeCommit( ReadableTransactionState state, KernelTransaction transaction,
-            StorageReader storageReader )
-    {
-        // The iterator grabs a snapshot of our list of handlers
-        Iterator<TransactionEventHandler> handlers = transactionEventHandlers.iterator();
-        if ( !handlers.hasNext() )
-        {
-            // Use 'null' as a signal that no event handlers were registered at beforeCommit time
-            return null;
-        }
-
-        TransactionData txData = state == null ? EMPTY_DATA :
-                new TxStateTransactionDataSnapshot( state, proxySpi, storageReader, transaction );
-
-        TransactionHandlerState handlerStates = new TransactionHandlerState( txData );
-        while ( handlers.hasNext() )
-        {
-            TransactionEventHandler<?> handler = handlers.next();
-            try
-            {
-                handlerStates.add( handler ).setState( handler.beforeCommit( txData ) );
-            }
-            catch ( Throwable t )
-            {
-                handlerStates.failed( t );
-            }
-        }
-
-        return handlerStates;
-    }
-
-    @Override
-    @SuppressWarnings( "unchecked" )
-    public void afterCommit( ReadableTransactionState state,
-            KernelTransaction transaction,
-            TransactionHandlerState handlerState )
-    {
-        if ( handlerState == null )
-        {
-            // As per beforeCommit, 'null' means no handlers were registered in time for this transaction to
-            // observe them.
-            return;
-        }
-
-        for ( HandlerAndState handlerAndState : handlerState.states )
-        {
-            handlerAndState.handler.afterCommit( handlerState.txData, handlerAndState.state );
-        }
-    }
-
-    @Override
-    @SuppressWarnings( "unchecked" )
-    public void afterRollback( ReadableTransactionState state,
-            KernelTransaction transaction,
-            TransactionHandlerState handlerState )
-    {
-        if ( handlerState == null )
-        {
-            // For legacy reasons, we don't call transaction handlers on implicit rollback.
-            return;
-        }
-
-        for ( HandlerAndState handlerAndState : handlerState.states )
-        {
-            handlerAndState.handler.afterRollback( handlerState.txData, handlerAndState.state );
-        }
-    }
-
-    public static class HandlerAndState
-    {
-        private final TransactionEventHandler handler;
-        private Object state;
-
-        public HandlerAndState( TransactionEventHandler<?> handler )
-        {
-            this.handler = handler;
-        }
-
-        void setState( Object state )
-        {
-            this.state = state;
-        }
-    }
-
-    public static class TransactionHandlerState implements TransactionHook.Outcome
-    {
-        private final TransactionData txData;
-        private final List<HandlerAndState> states = new LinkedList<>();
-        private Throwable error;
-
-        public TransactionHandlerState( TransactionData txData )
-        {
-            this.txData = txData;
-        }
-
-        public void failed( Throwable error )
-        {
-            this.error = error;
-        }
-
-        @Override
-        public boolean isSuccessful()
-        {
-            return error == null;
-        }
-
-        @Override
-        public Throwable failure()
-        {
-            return error;
-        }
-
-        public HandlerAndState add( TransactionEventHandler<?> handler )
-        {
-            HandlerAndState result = new HandlerAndState( handler );
-            states.add( result );
-            return result;
-        }
-    }
-
     private static final TransactionData EMPTY_DATA = new TransactionData()
     {
 
@@ -307,4 +135,170 @@ public class TransactionEventHandlers
             return Iterables.empty();
         }
     };
+
+	private final CopyOnWriteArraySet<TransactionEventHandler> transactionEventHandlers = new CopyOnWriteArraySet<>();
+
+	private final EmbeddedProxySPI proxySpi;
+
+	public TransactionEventHandlers( EmbeddedProxySPI spi )
+    {
+        this.proxySpi = spi;
+    }
+
+	@Override
+    public void init()
+    {
+    }
+
+	@Override
+    public void start()
+    {
+    }
+
+	@Override
+    public void stop()
+    {
+    }
+
+	@Override
+    public void shutdown()
+    {
+    }
+
+	public <T> TransactionEventHandler<T> registerTransactionEventHandler(
+            TransactionEventHandler<T> handler )
+    {
+        this.transactionEventHandlers.add( handler );
+        return handler;
+    }
+
+	public <T> TransactionEventHandler<T> unregisterTransactionEventHandler(
+            TransactionEventHandler<T> handler )
+    {
+        return unregisterHandler( this.transactionEventHandlers, handler );
+    }
+
+	private <T> T unregisterHandler( Collection<?> setOfHandlers, T handler )
+    {
+        if ( !setOfHandlers.remove( handler ) )
+        {
+            throw new IllegalStateException( handler + " isn't registered" );
+        }
+        return handler;
+    }
+
+	@Override
+    public TransactionHandlerState beforeCommit( ReadableTransactionState state, KernelTransaction transaction,
+            StorageReader storageReader )
+    {
+        // The iterator grabs a snapshot of our list of handlers
+        Iterator<TransactionEventHandler> handlers = transactionEventHandlers.iterator();
+        if ( !handlers.hasNext() )
+        {
+            // Use 'null' as a signal that no event handlers were registered at beforeCommit time
+            return null;
+        }
+
+        TransactionData txData = state == null ? EMPTY_DATA :
+                new TxStateTransactionDataSnapshot( state, proxySpi, storageReader, transaction );
+
+        TransactionHandlerState handlerStates = new TransactionHandlerState( txData );
+        while ( handlers.hasNext() )
+        {
+            TransactionEventHandler<?> handler = handlers.next();
+            try
+            {
+                handlerStates.add( handler ).setState( handler.beforeCommit( txData ) );
+            }
+            catch ( Throwable t )
+            {
+                handlerStates.failed( t );
+            }
+        }
+
+        return handlerStates;
+    }
+
+	@Override
+    @SuppressWarnings( "unchecked" )
+    public void afterCommit( ReadableTransactionState state,
+            KernelTransaction transaction,
+            TransactionHandlerState handlerState )
+    {
+        if ( handlerState == null )
+        {
+            // As per beforeCommit, 'null' means no handlers were registered in time for this transaction to
+            // observe them.
+            return;
+        }
+
+        handlerState.states.forEach(handlerAndState -> handlerAndState.handler.afterCommit(handlerState.txData, handlerAndState.state));
+    }
+
+	@Override
+    @SuppressWarnings( "unchecked" )
+    public void afterRollback( ReadableTransactionState state,
+            KernelTransaction transaction,
+            TransactionHandlerState handlerState )
+    {
+        if ( handlerState == null )
+        {
+            // For legacy reasons, we don't call transaction handlers on implicit rollback.
+            return;
+        }
+
+        handlerState.states.forEach(handlerAndState -> handlerAndState.handler.afterRollback(handlerState.txData, handlerAndState.state));
+    }
+
+	public static class HandlerAndState
+    {
+        private final TransactionEventHandler handler;
+        private Object state;
+
+        public HandlerAndState( TransactionEventHandler<?> handler )
+        {
+            this.handler = handler;
+        }
+
+        void setState( Object state )
+        {
+            this.state = state;
+        }
+    }
+
+    public static class TransactionHandlerState implements TransactionHook.Outcome
+    {
+        private final TransactionData txData;
+        private final List<HandlerAndState> states = new LinkedList<>();
+        private Throwable error;
+
+        public TransactionHandlerState( TransactionData txData )
+        {
+            this.txData = txData;
+        }
+
+        public void failed( Throwable error )
+        {
+            this.error = error;
+        }
+
+        @Override
+        public boolean isSuccessful()
+        {
+            return error == null;
+        }
+
+        @Override
+        public Throwable failure()
+        {
+            return error;
+        }
+
+        public HandlerAndState add( TransactionEventHandler<?> handler )
+        {
+            HandlerAndState result = new HandlerAndState( handler );
+            states.add( result );
+            return result;
+        }
+    }
 }

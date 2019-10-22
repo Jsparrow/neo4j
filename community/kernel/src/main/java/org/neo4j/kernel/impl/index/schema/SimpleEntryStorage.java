@@ -163,12 +163,12 @@ public abstract class SimpleEntryStorage<ENTRY, CURSOR> implements Closeable
 
     private void allocateResources() throws IOException
     {
-        if ( !allocated )
-        {
-            this.buffer = byteBufferFactory.allocate( blockSize );
-            this.pageCursor = new ByteArrayPageCursor( buffer );
-            this.storeChannel = fs.create( file );
-            this.allocated = true;
-        }
+        if (allocated) {
+			return;
+		}
+		this.buffer = byteBufferFactory.allocate( blockSize );
+		this.pageCursor = new ByteArrayPageCursor( buffer );
+		this.storeChannel = fs.create( file );
+		this.allocated = true;
     }
 }

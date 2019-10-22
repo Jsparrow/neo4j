@@ -175,7 +175,7 @@ public interface Layout<KEY, VALUE> extends Comparator<KEY>
         char[] chars = name.toCharArray();
         if ( chars.length > 4 )
         {
-            throw new IllegalArgumentException( "Maximum 4 character name, was '" + name + "'" );
+            throw new IllegalArgumentException( new StringBuilder().append("Maximum 4 character name, was '").append(name).append("'").toString() );
         }
         long upperInt = 0;
         for ( char aChar : chars )

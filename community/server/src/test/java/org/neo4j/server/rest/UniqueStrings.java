@@ -36,7 +36,7 @@ public class UniqueStrings
             @Override
             public String newInstance()
             {
-                return prefix + "_" + System.currentTimeMillis() + "_" + ++next;
+                return new StringBuilder().append(prefix).append("_").append(System.currentTimeMillis()).append("_").append(++next).toString();
             }
         };
     }

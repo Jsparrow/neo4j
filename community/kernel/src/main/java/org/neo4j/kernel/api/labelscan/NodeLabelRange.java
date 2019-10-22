@@ -88,7 +88,7 @@ public class NodeLabelRange
     {
         long firstNodeId = idRange * labels.length;
         int index = toIntExact( nodeId - firstNodeId );
-        assert index >= 0 && index < labels.length : "nodeId:" + nodeId + ", idRange:" + idRange;
+        assert index >= 0 && index < labels.length : new StringBuilder().append("nodeId:").append(nodeId).append(", idRange:").append(idRange).toString();
         return labels[index] != null ? labels[index] : EMPTY_LONG_ARRAY;
     }
 
@@ -124,7 +124,7 @@ public class NodeLabelRange
     @Override
     public String toString()
     {
-        String rangeString = idRange * labels.length + "-" + (idRange + 1) * labels.length;
+        String rangeString = new StringBuilder().append(idRange * labels.length).append("-").append((idRange + 1) * labels.length).toString();
         String prefix = "NodeLabelRange[idRange=" + rangeString;
         return toString( prefix, nodes, labels );
     }

@@ -420,7 +420,17 @@ class MutableLinearProbeLongHashSetTest
         assertEquals( count - toRemove.length, set.size() );
     }
 
-    @Nested
+    private static LongSet drain( LongIterator iter )
+    {
+        final MutableLongSet result = new LongHashSet();
+        while ( iter.hasNext() )
+        {
+            result.add( iter.next() );
+        }
+        return result;
+    }
+
+	@Nested
     class Collisions
     {
         private final ImmutableLongList collisions = generateCollisions( 5 );
@@ -646,15 +656,5 @@ class MutableLinearProbeLongHashSetTest
             assertThrows( ConcurrentModificationException.class, iterator::hasNext );
             assertThrows( ConcurrentModificationException.class, iterator::next );
         }
-    }
-
-    private static LongSet drain( LongIterator iter )
-    {
-        final MutableLongSet result = new LongHashSet();
-        while ( iter.hasNext() )
-        {
-            result.add( iter.next() );
-        }
-        return result;
     }
 }

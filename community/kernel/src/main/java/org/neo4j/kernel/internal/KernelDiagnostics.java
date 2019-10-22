@@ -41,7 +41,29 @@ import static java.util.stream.Collectors.toList;
 
 public abstract class KernelDiagnostics implements DiagnosticsProvider
 {
-    public static class Versions extends KernelDiagnostics
+    @Override
+    public String getDiagnosticsIdentifier()
+    {
+        return new StringBuilder().append(getClass().getDeclaringClass().getSimpleName()).append(":").append(getClass().getSimpleName()).toString();
+    }
+
+	@Override
+    public void acceptDiagnosticsVisitor( Object visitor )
+    {
+        // nothing visits ConfigurationLogging
+    }
+
+	@Override
+    public void dump( DiagnosticsPhase phase, Logger log )
+    {
+        if ( phase.isInitialization() || phase.isExplicitlyRequested() )
+        {
+            dump( log );
+        }
+    }
+
+	abstract void dump( Logger logger );
+	public static class Versions extends KernelDiagnostics
     {
         private final DatabaseInfo databaseInfo;
         private final StoreId storeId;
@@ -55,26 +77,26 @@ public abstract class KernelDiagnostics implements DiagnosticsProvider
         @Override
         void dump( Logger logger )
         {
-            logger.log( "Graph Database: " + databaseInfo + " " + storeId );
+            logger.log( new StringBuilder().append("Graph Database: ").append(databaseInfo).append(" ").append(storeId).toString() );
             logger.log( "Kernel version: " + Version.getKernelVersion() );
         }
     }
 
     public static class StoreFiles extends KernelDiagnostics
     {
-        private final DatabaseLayout databaseLayout;
-        private static String FORMAT_DATE_ISO = "yyyy-MM-dd'T'HH:mm:ssZ";
-        private final SimpleDateFormat dateFormat;
+        private static String formatDateIso = "yyyy-MM-dd'T'HH:mm:ssZ";
+		private final DatabaseLayout databaseLayout;
+		private final SimpleDateFormat dateFormat;
 
-        public StoreFiles( DatabaseLayout databaseLayout )
+		public StoreFiles( DatabaseLayout databaseLayout )
         {
             this.databaseLayout = databaseLayout;
             TimeZone tz = TimeZone.getDefault();
-            dateFormat = new SimpleDateFormat( FORMAT_DATE_ISO );
+            dateFormat = new SimpleDateFormat( formatDateIso );
             dateFormat.setTimeZone( tz );
         }
 
-        @Override
+		@Override
         void dump( Logger logger )
         {
             logger.log( getDiskSpace( databaseLayout ) );
@@ -86,7 +108,7 @@ public abstract class KernelDiagnostics implements DiagnosticsProvider
             logger.log( "  Total size of mapped files: " + Format.bytes( mappedCounter.getSize() ) );
         }
 
-        private long logStoreFiles( Logger logger, String prefix, File dir, MappedFileCounter mappedCounter )
+		private long logStoreFiles( Logger logger, String prefix, File dir, MappedFileCounter mappedCounter )
         {
             if ( !dir.isDirectory() )
             {
@@ -110,7 +132,7 @@ public abstract class KernelDiagnostics implements DiagnosticsProvider
                 String filename = file.getName();
                 if ( file.isDirectory() )
                 {
-                    logger.log( prefix + filename + ":" );
+                    logger.log( new StringBuilder().append(prefix).append(filename).append(":").toString() );
                     size = logStoreFiles( logger, prefix + "  ", file, mappedCounter );
                     filename = "- Total";
                 }
@@ -130,13 +152,13 @@ public abstract class KernelDiagnostics implements DiagnosticsProvider
             return total;
         }
 
-        private String getFileModificationDate( File file )
+		private String getFileModificationDate( File file )
         {
             Date modifiedDate = new Date( file.lastModified() );
             return dateFormat.format( modifiedDate );
         }
 
-        private static String getDiskSpace( DatabaseLayout databaseLayout )
+		private static String getDiskSpace( DatabaseLayout databaseLayout )
         {
             File directory = databaseLayout.databaseDirectory();
             long free = directory.getFreeSpace();
@@ -145,7 +167,7 @@ public abstract class KernelDiagnostics implements DiagnosticsProvider
             return String.format( "Disk space on partition (Total / Free / Free %%): %s / %s / %s", total, free, percentage );
         }
 
-        private static class MappedFileCounter
+		private static class MappedFileCounter
         {
             private final DatabaseLayout layout;
             private final FileFilter mappedIndexFilter;
@@ -189,26 +211,4 @@ public abstract class KernelDiagnostics implements DiagnosticsProvider
             }
         }
     }
-
-    @Override
-    public String getDiagnosticsIdentifier()
-    {
-        return getClass().getDeclaringClass().getSimpleName() + ":" + getClass().getSimpleName();
-    }
-
-    @Override
-    public void acceptDiagnosticsVisitor( Object visitor )
-    {
-        // nothing visits ConfigurationLogging
-    }
-
-    @Override
-    public void dump( DiagnosticsPhase phase, Logger log )
-    {
-        if ( phase.isInitialization() || phase.isExplicitlyRequested() )
-        {
-            dump( log );
-        }
-    }
-    abstract void dump( Logger logger );
 }

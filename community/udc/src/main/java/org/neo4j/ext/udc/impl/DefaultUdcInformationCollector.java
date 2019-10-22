@@ -181,7 +181,7 @@ public class DefaultUdcInformationCollector implements UdcInformationCollector
 
     private static String determineOsDistribution()
     {
-        if ( System.getProperties().getProperty( "os.name", "" ).equals( "Linux" ) )
+        if ( "Linux".equals( System.getProperties().getProperty( "os.name", "" ) ) )
         {
             return searchForPackageSystems();
         }
@@ -229,14 +229,13 @@ public class DefaultUdcInformationCollector implements UdcInformationCollector
     private static String determineTags( Map<String,String> jarNamesForTags, String classPath )
     {
         StringBuilder result = new StringBuilder();
-        for ( Map.Entry<String,String> entry : jarNamesForTags.entrySet() )
-        {
+        jarNamesForTags.entrySet().forEach(entry -> {
             final Pattern pattern = Pattern.compile( entry.getKey() );
             if ( pattern.matcher( classPath ).find() )
             {
                 result.append( "," ).append( entry.getValue() );
             }
-        }
+        });
         if ( result.length() == 0 )
         {
             return null;

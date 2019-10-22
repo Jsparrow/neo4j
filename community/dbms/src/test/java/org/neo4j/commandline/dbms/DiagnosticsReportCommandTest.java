@@ -74,26 +74,6 @@ public class DiagnosticsReportCommandTest
     private Path configFile;
     private String originalUserDir;
 
-    public static class MyDiagnosticsOfflineReportProvider extends DiagnosticsOfflineReportProvider
-    {
-        public MyDiagnosticsOfflineReportProvider()
-        {
-            super( "my-provider", "logs", "tx" );
-        }
-
-        @Override
-        public void init( FileSystemAbstraction fs, Config config, File storeDirectory )
-        {
-        }
-
-        @Nonnull
-        @Override
-        protected List<DiagnosticsReportSource> provideSources( Set<String> classifiers )
-        {
-            return Collections.emptyList();
-        }
-    }
-
     @BeforeEach
     void setUp() throws Exception
     {
@@ -108,14 +88,14 @@ public class DiagnosticsReportCommandTest
         originalUserDir = System.setProperty( "user.dir", testDirectory.absolutePath().getAbsolutePath() );
     }
 
-    @AfterEach
+	@AfterEach
     void tearDown()
     {
         // Restore directory
         System.setProperty( "user.dir", originalUserDir );
     }
 
-    @Test
+	@Test
     void exitIfConfigFileIsMissing() throws IOException
     {
         Files.delete( configFile );
@@ -129,7 +109,7 @@ public class DiagnosticsReportCommandTest
         }
     }
 
-    @Test
+	@Test
     void allHasToBeOnlyClassifier() throws Exception
     {
         String[] args = {"all", "logs", "tx"};
@@ -142,7 +122,7 @@ public class DiagnosticsReportCommandTest
         }
     }
 
-    @Test
+	@Test
     void printUnrecognizedClassifiers() throws Exception
     {
         String[] args = {"logs", "tx", "invalid"};
@@ -156,7 +136,7 @@ public class DiagnosticsReportCommandTest
         }
     }
 
-    @SuppressWarnings( "ResultOfMethodCallIgnored" )
+	@SuppressWarnings( "ResultOfMethodCallIgnored" )
     @Test
     void defaultValuesShouldBeValidClassifiers()
     {
@@ -170,7 +150,7 @@ public class DiagnosticsReportCommandTest
         assertEquals( "Unknown classifier: invalid", exception.getMessage() );
     }
 
-    @Test
+	@Test
     void listShouldDisplayAllClassifiers() throws Exception
     {
         try ( ByteArrayOutputStream baos = new ByteArrayOutputStream() )
@@ -186,24 +166,16 @@ public class DiagnosticsReportCommandTest
             diagnosticsReportCommand.execute( args );
 
             assertThat( baos.toString(), is(String.format(
-                    "Finding running instance of neo4j%n" +
-                            "No running instance of neo4j was found. Online reports will be omitted.%n" +
-                            "If neo4j is running but not detected, you can supply the process id of the running instance with --pid%n" +
-                            "All available classifiers:%n" +
-                            "  config     include configuration file%n" +
-                            "  logs       include log files%n" +
-                            "  plugins    include a view of the plugin directory%n" +
-                            "  ps         include a list of running processes%n" +
-                            "  tree       include a view of the tree structure of the data directory%n" +
-                            "  tx         include transaction logs%n" ) ) );
+                    new StringBuilder().append("Finding running instance of neo4j%n").append("No running instance of neo4j was found. Online reports will be omitted.%n").append("If neo4j is running but not detected, you can supply the process id of the running instance with --pid%n").append("All available classifiers:%n").append("  config     include configuration file%n").append("  logs       include log files%n").append("  plugins    include a view of the plugin directory%n")
+							.append("  ps         include a list of running processes%n").append("  tree       include a view of the tree structure of the data directory%n").append("  tx         include transaction logs%n").toString() ) ) );
         }
     }
 
-    @Test
+	@Test
     void overrideDestination() throws Exception
     {
         // because of https://bugs.openjdk.java.net/browse/JDK-8202127 and current surefire behaviour we need to have custom value for JRE >= 11
-        String toArgument = JRE.JAVA_11.isCurrentVersion() ? "--to=" + System.getProperty( "user.dir" ) + "/other/" : "--to=other/";
+        String toArgument = JRE.JAVA_11.isCurrentVersion() ? new StringBuilder().append("--to=").append(System.getProperty( "user.dir" )).append("/other/").toString() : "--to=other/";
         String[] args = {toArgument, "all"};
         try ( RealOutsideWorld outsideWorld = new RealOutsideWorld() )
         {
@@ -222,7 +194,7 @@ public class DiagnosticsReportCommandTest
         }
     }
 
-    @Test
+	@Test
     void errorOnInvalidPid() throws Exception
     {
         String[] args = {"--pid=a", "all"};
@@ -232,6 +204,26 @@ public class DiagnosticsReportCommandTest
                     diagnosticsReportCommand = new DiagnosticsReportCommand( homeDir, configDir, outsideWorld );
             CommandFailed commandFailed = assertThrows( CommandFailed.class, () -> diagnosticsReportCommand.execute( args ) );
             assertEquals( "Unable to parse --pid", commandFailed.getMessage() );
+        }
+    }
+
+	public static class MyDiagnosticsOfflineReportProvider extends DiagnosticsOfflineReportProvider
+    {
+        public MyDiagnosticsOfflineReportProvider()
+        {
+            super( "my-provider", "logs", "tx" );
+        }
+
+        @Override
+        public void init( FileSystemAbstraction fs, Config config, File storeDirectory )
+        {
+        }
+
+        @Nonnull
+        @Override
+        protected List<DiagnosticsReportSource> provideSources( Set<String> classifiers )
+        {
+            return Collections.emptyList();
         }
     }
 }

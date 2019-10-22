@@ -47,12 +47,11 @@ public final class RelationshipDenseSelectionIterator<R> extends RelationshipDen
             next = relationshipCursor.relationshipReference();
         }
 
-        if ( next == RelationshipSelections.NO_ID )
-        {
-            close();
-            return false;
-        }
-        return true;
+        if (next != RelationshipSelections.NO_ID) {
+			return true;
+		}
+		close();
+		return false;
     }
 
     @Override

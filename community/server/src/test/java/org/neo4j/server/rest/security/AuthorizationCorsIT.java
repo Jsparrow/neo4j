@@ -151,7 +151,7 @@ public class AuthorizationCorsIT extends CommunityServerTestBase
 
     private HTTP.Response changePassword( String username, String oldPassword, String newPassword )
     {
-        HTTP.RawPayload passwordChange = quotedJson( "{'password': '" + newPassword + "'}" );
+        HTTP.RawPayload passwordChange = quotedJson( new StringBuilder().append("{'password': '").append(newPassword).append("'}").toString() );
         return requestWithHeaders( username, oldPassword ).POST( passwordURL( username ), passwordChange );
     }
 

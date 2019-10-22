@@ -291,7 +291,63 @@ class TxStateIndexChangesTest
         } );
     }
 
-    @Nested
+    private void assertContains( IndexOrder indexOrder,
+                                 AddedAndRemoved changes,
+                                 AddedWithValuesAndRemoved changesWithValues,
+                                 NodeWithPropertyValues[] expected )
+    {
+        if ( indexOrder == IndexOrder.DESCENDING )
+        {
+            ArrayUtils.reverse( expected );
+        }
+
+        long[] expectedNodeIds = Arrays.stream( expected ).mapToLong( NodeWithPropertyValues::getNodeId ).toArray();
+
+        if ( indexOrder == IndexOrder.NONE )
+        {
+            assertContains( changes.getAdded(), expectedNodeIds );
+            assertContains( changesWithValues.getAdded(), expected );
+        }
+        else
+        {
+            assertContainsInOrder( changes.getAdded(), expectedNodeIds );
+            assertContainsInOrder( changesWithValues.getAdded(), expected );
+        }
+    }
+
+	private static NodeWithPropertyValues nodeWithPropertyValues( long nodeId, Object... values )
+    {
+        return new NodeWithPropertyValues( nodeId, Arrays.stream( values ).map( ValueUtils::of ).toArray( Value[]::new ) );
+    }
+
+	private void assertContains( LongIterable iterable, long... nodeIds )
+    {
+        assertEquals( newSetWith( nodeIds ), LongSets.immutable.ofAll( iterable ) );
+    }
+
+	private void assertContains( Iterable<NodeWithPropertyValues> iterable, NodeWithPropertyValues... expected )
+    {
+        assertEquals( UnifiedSet.newSetWith( expected ), UnifiedSet.newSet( iterable ) );
+    }
+
+	private void assertContainsInOrder( LongIterable iterable, long... nodeIds )
+    {
+        assertThat( Arrays.asList( iterable.toArray() ), contains( nodeIds ) );
+    }
+
+	private void assertContainsInOrder( Iterable<NodeWithPropertyValues> iterable, NodeWithPropertyValues... expected )
+    {
+        if ( expected.length == 0 )
+        {
+            assertThat( iterable, emptyIterable() );
+        }
+        else
+        {
+            assertThat( iterable, contains( expected ) );
+        }
+    }
+
+	@Nested
     class SuffixOrContains
     {
 
@@ -667,62 +723,6 @@ class TxStateIndexChangesTest
             assertContains( indexUpdatesForSeek( state, compositeIndex, ValueTuple.of( 40.1, 40.2 ) ).getAdded(), 14L );
         }
 
-    }
-
-    private void assertContains( IndexOrder indexOrder,
-                                 AddedAndRemoved changes,
-                                 AddedWithValuesAndRemoved changesWithValues,
-                                 NodeWithPropertyValues[] expected )
-    {
-        if ( indexOrder == IndexOrder.DESCENDING )
-        {
-            ArrayUtils.reverse( expected );
-        }
-
-        long[] expectedNodeIds = Arrays.stream( expected ).mapToLong( NodeWithPropertyValues::getNodeId ).toArray();
-
-        if ( indexOrder == IndexOrder.NONE )
-        {
-            assertContains( changes.getAdded(), expectedNodeIds );
-            assertContains( changesWithValues.getAdded(), expected );
-        }
-        else
-        {
-            assertContainsInOrder( changes.getAdded(), expectedNodeIds );
-            assertContainsInOrder( changesWithValues.getAdded(), expected );
-        }
-    }
-
-    private static NodeWithPropertyValues nodeWithPropertyValues( long nodeId, Object... values )
-    {
-        return new NodeWithPropertyValues( nodeId, Arrays.stream( values ).map( ValueUtils::of ).toArray( Value[]::new ) );
-    }
-
-    private void assertContains( LongIterable iterable, long... nodeIds )
-    {
-        assertEquals( newSetWith( nodeIds ), LongSets.immutable.ofAll( iterable ) );
-    }
-
-    private void assertContains( Iterable<NodeWithPropertyValues> iterable, NodeWithPropertyValues... expected )
-    {
-        assertEquals( UnifiedSet.newSetWith( expected ), UnifiedSet.newSet( iterable ) );
-    }
-
-    private void assertContainsInOrder( LongIterable iterable, long... nodeIds )
-    {
-        assertThat( Arrays.asList( iterable.toArray() ), contains( nodeIds ) );
-    }
-
-    private void assertContainsInOrder( Iterable<NodeWithPropertyValues> iterable, NodeWithPropertyValues... expected )
-    {
-        if ( expected.length == 0 )
-        {
-            assertThat( iterable, emptyIterable() );
-        }
-        else
-        {
-            assertThat( iterable, contains( expected ) );
-        }
     }
 
     private static class TxStateBuilder

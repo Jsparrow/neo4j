@@ -37,40 +37,17 @@ import org.neo4j.kernel.impl.api.index.updater.DelegatingIndexUpdater;
  */
 public class ContractCheckingIndexProxy extends DelegatingIndexProxy
 {
-    /**
-     * State machine for {@link IndexProxy proxies}
-     *
-     * The logic of {@link ContractCheckingIndexProxy} hinges on the fact that all states
-     * are always entered and checked in this order (States may be skipped though):
-     *
-     * INIT > STARTING > STARTED > CLOSED
-     *
-     * Valid state transitions are:
-     *
-     * INIT -[:start]-> STARTING -[:implicit]-> STARTED -[:close|:drop]-> CLOSED
-     * INIT -[:close] -> CLOSED
-     *
-     * Additionally, {@link ContractCheckingIndexProxy} keeps track of the number of open
-     * calls that started in STARTED state and are still running.  This allows us
-     * to prevent calls to close() or drop() to go through while there are pending
-     * commits.
-     **/
-    private enum State
-    {
-        INIT, STARTING, STARTED, CLOSED
-    }
-
     private final AtomicReference<State> state;
-    private final AtomicInteger openCalls;
+	private final AtomicInteger openCalls;
 
-    public ContractCheckingIndexProxy( IndexProxy delegate, boolean started )
+	public ContractCheckingIndexProxy( IndexProxy delegate, boolean started )
     {
         super( delegate );
         this.state = new AtomicReference<>( started ? State.STARTED : State.INIT );
         this.openCalls = new AtomicInteger( 0 );
     }
 
-    @Override
+	@Override
     public void start()
     {
         if ( state.compareAndSet( State.INIT, State.STARTING ) )
@@ -90,7 +67,7 @@ public class ContractCheckingIndexProxy extends DelegatingIndexProxy
         }
     }
 
-    @Override
+	@Override
     public IndexUpdater newUpdater( IndexUpdateMode mode )
     {
         if ( IndexUpdateMode.ONLINE == mode )
@@ -118,7 +95,7 @@ public class ContractCheckingIndexProxy extends DelegatingIndexProxy
         }
     }
 
-    @Override
+	@Override
     public void force( IOLimiter ioLimiter ) throws IOException
     {
         openCall( "force" );
@@ -132,7 +109,7 @@ public class ContractCheckingIndexProxy extends DelegatingIndexProxy
         }
     }
 
-    @Override
+	@Override
     public void drop()
     {
         if ( state.compareAndSet( State.INIT, State.CLOSED ) )
@@ -156,7 +133,7 @@ public class ContractCheckingIndexProxy extends DelegatingIndexProxy
         throw new IllegalStateException( "IndexProxy already closed" );
     }
 
-    @Override
+	@Override
     public void close() throws IOException
     {
         if ( state.compareAndSet( State.INIT, State.CLOSED ) )
@@ -180,7 +157,7 @@ public class ContractCheckingIndexProxy extends DelegatingIndexProxy
         throw new IllegalStateException( "IndexProxy already closed" );
     }
 
-    private void waitOpenCallsToClose()
+	private void waitOpenCallsToClose()
     {
         while ( openCalls.intValue() > 0 )
         {
@@ -188,7 +165,7 @@ public class ContractCheckingIndexProxy extends DelegatingIndexProxy
         }
     }
 
-    private void openCall( String name )
+	private void openCall( String name )
     {
         // do not open call unless we are in STARTED
         if ( State.STARTED == state.get() )
@@ -198,18 +175,41 @@ public class ContractCheckingIndexProxy extends DelegatingIndexProxy
             // ensure that the previous increment actually gets seen by closers
             if ( State.CLOSED == state.get() )
             {
-                throw new IllegalStateException( "Cannot call " + name + "() after index has been closed" );
+                throw new IllegalStateException( new StringBuilder().append("Cannot call ").append(name).append("() after index has been closed").toString() );
             }
         }
         else
         {
-            throw new IllegalStateException( "Cannot call " + name + "() when index state is " + state.get() );
+            throw new IllegalStateException( new StringBuilder().append("Cannot call ").append(name).append("() when index state is ").append(state.get()).toString() );
         }
     }
 
-    private void closeCall()
+	private void closeCall()
     {
         // rollback once the call finished or failed
         openCalls.decrementAndGet();
+    }
+
+	/**
+     * State machine for {@link IndexProxy proxies}
+     *
+     * The logic of {@link ContractCheckingIndexProxy} hinges on the fact that all states
+     * are always entered and checked in this order (States may be skipped though):
+     *
+     * INIT > STARTING > STARTED > CLOSED
+     *
+     * Valid state transitions are:
+     *
+     * INIT -[:start]-> STARTING -[:implicit]-> STARTED -[:close|:drop]-> CLOSED
+     * INIT -[:close] -> CLOSED
+     *
+     * Additionally, {@link ContractCheckingIndexProxy} keeps track of the number of open
+     * calls that started in STARTED state and are still running.  This allows us
+     * to prevent calls to close() or drop() to go through while there are pending
+     * commits.
+     **/
+    private enum State
+    {
+        INIT, STARTING, STARTED, CLOSED
     }
 }

@@ -112,50 +112,6 @@ class InternalTreeLogic<KEY,VALUE>
     private int currentLevel = -1;
     private double ratioToKeepInLeftOnSplit;
 
-    /**
-     * Keeps information about one level in a path down the tree where the {@link PageCursor} is currently at.
-     *
-     * @param <KEY> type of keys in the tree.
-     */
-    private static class Level<KEY>
-    {
-        // For comparing keys
-        private final Comparator<KEY> layout;
-        // Id of the tree node id this level of the path
-        private long treeNodeId;
-
-        // Child position which was selected from parent to get to this level
-        private int childPos;
-        // Lower bound of key range this level covers
-        private final KEY lower;
-        // Whether or not the lower bound is fixed or open-ended (far left in the tree)
-        private boolean lowerIsOpenEnded;
-        // Upper bound of key range this level covers
-        private final KEY upper;
-        // Whether or not the upper bound is fixed or open-ended (far right in the tree)
-        private boolean upperIsOpenEnded;
-
-        Level( Layout<KEY,?> layout )
-        {
-            this.layout = layout;
-            this.lower = layout.newKey();
-            this.upper = layout.newKey();
-        }
-
-        /**
-         * Returns whether or not the key range of this level of the path covers the given {@code key}.
-         *
-         * @param key KEY to check.
-         * @return {@code true} if key is within the key range if this level, otherwise {@code false}.
-         */
-        boolean covers( KEY key )
-        {
-            boolean insideLower = lowerIsOpenEnded || layout.compare( key, lower ) >= 0;
-            boolean insideHigher = upperIsOpenEnded || layout.compare( key, upper ) < 0;
-            return insideLower && insideHigher;
-        }
-    }
-
     InternalTreeLogic( IdProvider idProvider, TreeNode<KEY,VALUE> bTreeNode, Layout<KEY,VALUE> layout, GBPTree.Monitor monitor )
     {
         this.idProvider = idProvider;
@@ -170,25 +126,25 @@ class InternalTreeLogic<KEY,VALUE>
         ensureStackCapacity( 10 );
     }
 
-    private void ensureStackCapacity( int depth )
+	private void ensureStackCapacity( int depth )
     {
-        if ( depth > levels.length )
-        {
-            int oldStackLength = levels.length;
-            levels = Arrays.copyOf( levels, depth );
-            for ( int i = oldStackLength; i < depth; i++ )
-            {
-                levels[i] = new Level<>( layout );
-            }
-        }
+        if (depth <= levels.length) {
+			return;
+		}
+		int oldStackLength = levels.length;
+		levels = Arrays.copyOf( levels, depth );
+		for ( int i = oldStackLength; i < depth; i++ )
+		{
+		    levels[i] = new Level<>( layout );
+		}
     }
 
-    protected void initialize( PageCursor cursorAtRoot )
+	protected void initialize( PageCursor cursorAtRoot )
     {
         initialize( cursorAtRoot, DEFAULT_SPLIT_RATIO );
     }
 
-    /**
+	/**
      * Prepare for starting over with new updates.
      * @param cursorAtRoot {@link PageCursor} pointing at root of tree.
      * @param ratioToKeepInLeftOnSplit Decide how much to keep in left node on split, 0=keep nothing, 0.5=split 50-50, 1=keep everything.
@@ -203,19 +159,18 @@ class InternalTreeLogic<KEY,VALUE>
         this.ratioToKeepInLeftOnSplit = ratioToKeepInLeftOnSplit;
     }
 
-    private boolean popLevel( PageCursor cursor ) throws IOException
+	private boolean popLevel( PageCursor cursor ) throws IOException
     {
         currentLevel--;
-        if ( currentLevel >= 0 )
-        {
-            Level<KEY> level = levels[currentLevel];
-            TreeNode.goTo( cursor, "parent", level.treeNodeId );
-            return true;
-        }
-        return false;
+        if (currentLevel < 0) {
+			return false;
+		}
+		Level<KEY> level = levels[currentLevel];
+		TreeNode.goTo( cursor, "parent", level.treeNodeId );
+		return true;
     }
 
-    /**
+	/**
      * Moves the cursor to the correct leaf for {@code key}, taking the current path into consideration
      * and moving the cursor as few hops as possible to get from the current position to the target position,
      * e.g given tree:
@@ -328,11 +283,10 @@ class InternalTreeLogic<KEY,VALUE>
             assert assertNoSuccessor( cursor, stableGeneration, unstableGeneration );
         }
 
-        assert TreeNode.isLeaf( cursor ) : "Ended up on a tree node which isn't a leaf after moving cursor towards " +
-                key + ", cursor is at " + cursor.getCurrentPageId();
+        assert TreeNode.isLeaf( cursor ) : new StringBuilder().append("Ended up on a tree node which isn't a leaf after moving cursor towards ").append(key).append(", cursor is at ").append(cursor.getCurrentPageId()).toString();
     }
 
-    /**
+	/**
      * Insert {@code key} and associate it with {@code value} if {@code key} does not already exist in
      * tree.
      * <p>
@@ -374,14 +328,14 @@ class InternalTreeLogic<KEY,VALUE>
         handleStructureChanges( cursor, structurePropagation, stableGeneration, unstableGeneration );
     }
 
-    private int search( PageCursor cursor, TreeNode.Type type, KEY key, KEY readKey, int keyCount )
+	private int search( PageCursor cursor, TreeNode.Type type, KEY key, KEY readKey, int keyCount )
     {
         int searchResult = KeySearch.search( cursor, bTreeNode, type, key, readKey, keyCount );
         KeySearch.assertSuccess( searchResult );
         return searchResult;
     }
 
-    /**
+	/**
      * Asserts that cursor is where it's expected to be at, compared to current level.
      *
      * @param cursor {@link PageCursor} to check.
@@ -392,13 +346,11 @@ class InternalTreeLogic<KEY,VALUE>
         assert currentLevel >= 0 : "Uninitialized tree logic, currentLevel:" + currentLevel;
         long currentPageId = cursor.getCurrentPageId();
         long expectedPageId = levels[currentLevel].treeNodeId;
-        assert currentPageId == expectedPageId : "Expected cursor to be at page:" +
-                expectedPageId + " at level:" + currentLevel + ", but was at page:" +
-                currentPageId;
+        assert currentPageId == expectedPageId : new StringBuilder().append("Expected cursor to be at page:").append(expectedPageId).append(" at level:").append(currentLevel).append(", but was at page:").append(currentPageId).toString();
         return true;
     }
 
-    /**
+	/**
      * Leaves cursor at same page as when called. No guarantees on offset.
      * <p>
      * Insertion in internal is always triggered by a split in child.
@@ -421,7 +373,7 @@ class InternalTreeLogic<KEY,VALUE>
         doInsertInInternal( cursor, structurePropagation, keyCount, primKey, rightChild, stableGeneration, unstableGeneration );
     }
 
-    private void doInsertInInternal( PageCursor cursor, StructurePropagation<KEY> structurePropagation, int keyCount, KEY primKey,
+	private void doInsertInInternal( PageCursor cursor, StructurePropagation<KEY> structurePropagation, int keyCount, KEY primKey,
             long rightChild, long stableGeneration, long unstableGeneration ) throws IOException
     {
         Overflow overflow = bTreeNode.internalOverflow( cursor, keyCount, primKey );
@@ -447,7 +399,7 @@ class InternalTreeLogic<KEY,VALUE>
         TreeNode.setKeyCount( cursor, keyCount + 1 );
     }
 
-    /**
+	/**
      * Leaves cursor at same page as when called. No guarantees on offset.
      * <p>
      * Split in internal node caused by an insertion of rightKey and newRightChild
@@ -502,7 +454,7 @@ class InternalTreeLogic<KEY,VALUE>
         TreeNode.setRightSibling( cursor, newRight, stableGeneration, unstableGeneration );
     }
 
-    /**
+	/**
      * Leaves cursor at same page as when called. No guarantees on offset.
      * <p>
      * Split in leaf node caused by an insertion of key and value
@@ -531,35 +483,35 @@ class InternalTreeLogic<KEY,VALUE>
         doInsertInLeaf( cursor, structurePropagation, key, value, pos, keyCount, stableGeneration, unstableGeneration );
     }
 
-    private void overwriteValue( PageCursor cursor, StructurePropagation<KEY> structurePropagation, KEY key, VALUE value,
+	private void overwriteValue( PageCursor cursor, StructurePropagation<KEY> structurePropagation, KEY key, VALUE value,
             ValueMerger<KEY,VALUE> valueMerger, int pos, int keyCount, long stableGeneration, long unstableGeneration ) throws IOException
     {
         // this key already exists, what shall we do? ask the valueMerger
         bTreeNode.valueAt( cursor, readValue, pos );
         VALUE mergedValue = valueMerger.merge( readKey, key, readValue, value );
-        if ( mergedValue != null )
-        {
-            createSuccessorIfNeeded( cursor, structurePropagation, UPDATE_MID_CHILD, stableGeneration, unstableGeneration );
-            // simple, just write the merged value right in there
-            boolean couldOverwrite = bTreeNode.setValueAt( cursor, mergedValue, pos );
-            //noinspection StatementWithEmptyBody
-            if ( !couldOverwrite )
-            {
-                // Value could not be overwritten in a simple way because they differ in size.
-                // Delete old value
-                bTreeNode.removeKeyValueAt( cursor, pos, keyCount );
-                TreeNode.setKeyCount( cursor, keyCount - 1 );
-                boolean didSplit =
-                        doInsertInLeaf( cursor, structurePropagation, key, mergedValue, pos, keyCount - 1, stableGeneration, unstableGeneration );
-                if ( !didSplit && bTreeNode.leafUnderflow( cursor, keyCount ) )
-                {
-                    underflowInLeaf( cursor, structurePropagation, keyCount, stableGeneration, unstableGeneration );
-                }
-            }
-        }
+        if (mergedValue == null) {
+			return;
+		}
+		createSuccessorIfNeeded( cursor, structurePropagation, UPDATE_MID_CHILD, stableGeneration, unstableGeneration );
+		// simple, just write the merged value right in there
+		boolean couldOverwrite = bTreeNode.setValueAt( cursor, mergedValue, pos );
+		//noinspection StatementWithEmptyBody
+		if ( !couldOverwrite )
+		{
+		    // Value could not be overwritten in a simple way because they differ in size.
+		    // Delete old value
+		    bTreeNode.removeKeyValueAt( cursor, pos, keyCount );
+		    TreeNode.setKeyCount( cursor, keyCount - 1 );
+		    boolean didSplit =
+		            doInsertInLeaf( cursor, structurePropagation, key, mergedValue, pos, keyCount - 1, stableGeneration, unstableGeneration );
+		    if ( !didSplit && bTreeNode.leafUnderflow( cursor, keyCount ) )
+		    {
+		        underflowInLeaf( cursor, structurePropagation, keyCount, stableGeneration, unstableGeneration );
+		    }
+		}
     }
 
-    private boolean doInsertInLeaf( PageCursor cursor, StructurePropagation<KEY> structurePropagation, KEY key, VALUE value, int pos,
+	private boolean doInsertInLeaf( PageCursor cursor, StructurePropagation<KEY> structurePropagation, KEY key, VALUE value, int pos,
             int keyCount, long stableGeneration, long unstableGeneration ) throws IOException
     {
         Overflow overflow = bTreeNode.leafOverflow( cursor, keyCount, key, value );
@@ -581,7 +533,7 @@ class InternalTreeLogic<KEY,VALUE>
         return false;
     }
 
-    /**
+	/**
      * Leaves cursor at same page as when called. No guarantees on offset.
      * Cursor is expected to be pointing to full leaf.
      *
@@ -687,7 +639,7 @@ class InternalTreeLogic<KEY,VALUE>
         TreeNode.setRightSibling( cursor, newRight, stableGeneration, unstableGeneration );
     }
 
-    /**
+	/**
      * Remove given {@code key} and associated value from tree if it exists. The removed value will be stored in
      * provided {@code into} which will be returned for convenience.
      * <p>
@@ -732,7 +684,7 @@ class InternalTreeLogic<KEY,VALUE>
         return into;
     }
 
-    private void handleStructureChanges( PageCursor cursor, StructurePropagation<KEY> structurePropagation,
+	private void handleStructureChanges( PageCursor cursor, StructurePropagation<KEY> structurePropagation,
             long stableGeneration, long unstableGeneration ) throws IOException
     {
         while ( structurePropagation.hasLeftChildUpdate  ||
@@ -838,25 +790,24 @@ class InternalTreeLogic<KEY,VALUE>
         }
     }
 
-    private void overwriteKeyInternal( PageCursor cursor, StructurePropagation<KEY> structurePropagation, KEY newKey, int pos,
+	private void overwriteKeyInternal( PageCursor cursor, StructurePropagation<KEY> structurePropagation, KEY newKey, int pos,
             long stableGeneration, long unstableGeneration ) throws IOException
     {
         createSuccessorIfNeeded( cursor, structurePropagation, UPDATE_MID_CHILD,
                 stableGeneration, unstableGeneration );
         int keyCount = TreeNode.keyCount( cursor );
         boolean couldOverwrite = bTreeNode.setKeyAtInternal( cursor, newKey, pos );
-        if ( !couldOverwrite )
-        {
-            // Remove key and right child
-            long rightChild = bTreeNode.childAt( cursor, pos + 1, stableGeneration, unstableGeneration );
-            bTreeNode.removeKeyAndRightChildAt( cursor, pos, keyCount );
-            TreeNode.setKeyCount( cursor, keyCount - 1 );
-
-            doInsertInInternal( cursor, structurePropagation, keyCount - 1, newKey, rightChild, stableGeneration, unstableGeneration );
-        }
+        if (couldOverwrite) {
+			return;
+		}
+		// Remove key and right child
+		long rightChild = bTreeNode.childAt( cursor, pos + 1, stableGeneration, unstableGeneration );
+		bTreeNode.removeKeyAndRightChildAt( cursor, pos, keyCount );
+		TreeNode.setKeyCount( cursor, keyCount - 1 );
+		doInsertInInternal( cursor, structurePropagation, keyCount - 1, newKey, rightChild, stableGeneration, unstableGeneration );
     }
 
-    private void tryShrinkTree( PageCursor cursor, StructurePropagation<KEY> structurePropagation,
+	private void tryShrinkTree( PageCursor cursor, StructurePropagation<KEY> structurePropagation,
             long stableGeneration, long unstableGeneration ) throws IOException
     {
         // New root will be propagated out. If rootKeyCount is 0 we can shrink the tree.
@@ -879,7 +830,7 @@ class InternalTreeLogic<KEY,VALUE>
         }
     }
 
-    private void updateMidChild( PageCursor cursor, StructurePropagation<KEY> structurePropagation, int childPos,
+	private void updateMidChild( PageCursor cursor, StructurePropagation<KEY> structurePropagation, int childPos,
             long stableGeneration, long unstableGeneration )
     {
         structurePropagation.hasMidChildUpdate = false;
@@ -887,7 +838,7 @@ class InternalTreeLogic<KEY,VALUE>
                 stableGeneration, unstableGeneration );
     }
 
-    private void replaceKeyByBubbleRightmostFromSubtree( PageCursor cursor,
+	private void replaceKeyByBubbleRightmostFromSubtree( PageCursor cursor,
             StructurePropagation<KEY> structurePropagation, int subtreePosition,
             long stableGeneration, long unstableGeneration ) throws IOException
     {
@@ -924,7 +875,7 @@ class InternalTreeLogic<KEY,VALUE>
         }
     }
 
-    private boolean bubbleRightmostKeyRecursive( PageCursor cursor, StructurePropagation<KEY> structurePropagation,
+	private boolean bubbleRightmostKeyRecursive( PageCursor cursor, StructurePropagation<KEY> structurePropagation,
             long previousNode, long stableGeneration, long unstableGeneration ) throws IOException
     {
         try
@@ -978,7 +929,7 @@ class InternalTreeLogic<KEY,VALUE>
         }
     }
 
-    private int simplyRemoveFromInternal( PageCursor cursor, int keyCount, int keyPos, boolean leftChild )
+	private int simplyRemoveFromInternal( PageCursor cursor, int keyCount, int keyPos, boolean leftChild )
     {
         // Remove key and child
         if ( leftChild )
@@ -996,7 +947,7 @@ class InternalTreeLogic<KEY,VALUE>
         return newKeyCount;
     }
 
-    private void updateRightmostChildInLeftSibling( PageCursor cursor, long childPointer, long stableGeneration,
+	private void updateRightmostChildInLeftSibling( PageCursor cursor, long childPointer, long stableGeneration,
             long unstableGeneration ) throws IOException
     {
         long leftSibling = TreeNode.leftSibling( cursor, stableGeneration, unstableGeneration );
@@ -1011,7 +962,7 @@ class InternalTreeLogic<KEY,VALUE>
         }
     }
 
-    private void updateLeftmostChildInRightSibling( PageCursor cursor, long childPointer, long stableGeneration,
+	private void updateLeftmostChildInRightSibling( PageCursor cursor, long childPointer, long stableGeneration,
             long unstableGeneration ) throws IOException
     {
         long rightSibling = TreeNode.rightSibling( cursor, stableGeneration, unstableGeneration );
@@ -1025,7 +976,7 @@ class InternalTreeLogic<KEY,VALUE>
         }
     }
 
-    /**
+	/**
      * Remove given {@code key} and associated value from tree if it exists. The removed value will be stored in
      * provided {@code into} which will be returned for convenience.
      * <p>
@@ -1068,7 +1019,7 @@ class InternalTreeLogic<KEY,VALUE>
         return true;
     }
 
-    private void underflowInLeaf( PageCursor cursor, StructurePropagation<KEY> structurePropagation, int keyCount,
+	private void underflowInLeaf( PageCursor cursor, StructurePropagation<KEY> structurePropagation, int keyCount,
             long stableGeneration, long unstableGeneration ) throws IOException
     {
         long leftSibling = TreeNode.leftSibling( cursor, stableGeneration, unstableGeneration );
@@ -1119,7 +1070,7 @@ class InternalTreeLogic<KEY,VALUE>
         }
     }
 
-    private void connectLeftAndRightSibling( PageCursor cursor, long stableGeneration, long unstableGeneration )
+	private void connectLeftAndRightSibling( PageCursor cursor, long stableGeneration, long unstableGeneration )
             throws IOException
     {
         long currentId = cursor.getCurrentPageId();
@@ -1141,7 +1092,7 @@ class InternalTreeLogic<KEY,VALUE>
         TreeNode.goTo( cursor, "back to origin after repointing siblings", currentId );
     }
 
-    private void mergeToRightSiblingLeaf( PageCursor cursor, PageCursor rightSiblingCursor,
+	private void mergeToRightSiblingLeaf( PageCursor cursor, PageCursor rightSiblingCursor,
             StructurePropagation<KEY> structurePropagation, int keyCount, int rightSiblingKeyCount,
             long stableGeneration, long unstableGeneration ) throws IOException
     {
@@ -1159,7 +1110,7 @@ class InternalTreeLogic<KEY,VALUE>
         structurePropagation.keyReplaceStrategy = BUBBLE;
     }
 
-    private void mergeFromLeftSiblingLeaf( PageCursor cursor, PageCursor leftSiblingCursor,
+	private void mergeFromLeftSiblingLeaf( PageCursor cursor, PageCursor leftSiblingCursor,
             StructurePropagation<KEY> structurePropagation, int keyCount, int leftSiblingKeyCount,
             long stableGeneration, long unstableGeneration ) throws IOException
     {
@@ -1177,7 +1128,7 @@ class InternalTreeLogic<KEY,VALUE>
         structurePropagation.keyReplaceStrategy = BUBBLE;
     }
 
-    private void merge( PageCursor leftSiblingCursor, int leftSiblingKeyCount, PageCursor rightSiblingCursor,
+	private void merge( PageCursor leftSiblingCursor, int leftSiblingKeyCount, PageCursor rightSiblingCursor,
             int rightSiblingKeyCount, long stableGeneration, long unstableGeneration ) throws IOException
     {
         bTreeNode.copyKeyValuesFromLeftToRight( leftSiblingCursor, leftSiblingKeyCount, rightSiblingCursor, rightSiblingKeyCount );
@@ -1191,7 +1142,7 @@ class InternalTreeLogic<KEY,VALUE>
         idProvider.releaseId( stableGeneration, unstableGeneration, leftSiblingCursor.getCurrentPageId() );
     }
 
-    private void rebalanceLeaf( PageCursor leftCursor, int leftKeyCount, PageCursor rightCursor, int rightKeyCount,
+	private void rebalanceLeaf( PageCursor leftCursor, int leftKeyCount, PageCursor rightCursor, int rightKeyCount,
             int numberOfKeysToMove, StructurePropagation<KEY> structurePropagation )
     {
         bTreeNode.moveKeyValuesFromLeftToRight( leftCursor, leftKeyCount, rightCursor, rightKeyCount, leftKeyCount - numberOfKeysToMove );
@@ -1202,7 +1153,7 @@ class InternalTreeLogic<KEY,VALUE>
         bTreeNode.keyAt( rightCursor, structurePropagation.leftKey, 0, LEAF );
     }
 
-    /**
+	/**
      * Remove key and value on given position and decrement key count. Deleted value is stored in {@code into}.
      * Key count after remove is returned.
      *
@@ -1225,7 +1176,7 @@ class InternalTreeLogic<KEY,VALUE>
         return newKeyCount;
     }
 
-    /**
+	/**
      * Create a new node and copy content from current node (where {@code cursor} sits) if current node is not already
      * of {@code unstableGeneration}.
      * <p>
@@ -1304,5 +1255,49 @@ class InternalTreeLogic<KEY,VALUE>
         structureUpdate.update( structurePropagation, successorId );
 
         idProvider.releaseId( stableGeneration, unstableGeneration, oldId );
+    }
+
+	/**
+     * Keeps information about one level in a path down the tree where the {@link PageCursor} is currently at.
+     *
+     * @param <KEY> type of keys in the tree.
+     */
+    private static class Level<KEY>
+    {
+        // For comparing keys
+        private final Comparator<KEY> layout;
+        // Id of the tree node id this level of the path
+        private long treeNodeId;
+
+        // Child position which was selected from parent to get to this level
+        private int childPos;
+        // Lower bound of key range this level covers
+        private final KEY lower;
+        // Whether or not the lower bound is fixed or open-ended (far left in the tree)
+        private boolean lowerIsOpenEnded;
+        // Upper bound of key range this level covers
+        private final KEY upper;
+        // Whether or not the upper bound is fixed or open-ended (far right in the tree)
+        private boolean upperIsOpenEnded;
+
+        Level( Layout<KEY,?> layout )
+        {
+            this.layout = layout;
+            this.lower = layout.newKey();
+            this.upper = layout.newKey();
+        }
+
+        /**
+         * Returns whether or not the key range of this level of the path covers the given {@code key}.
+         *
+         * @param key KEY to check.
+         * @return {@code true} if key is within the key range if this level, otherwise {@code false}.
+         */
+        boolean covers( KEY key )
+        {
+            boolean insideLower = lowerIsOpenEnded || layout.compare( key, lower ) >= 0;
+            boolean insideHigher = upperIsOpenEnded || layout.compare( key, upper ) < 0;
+            return insideLower && insideHigher;
+        }
     }
 }

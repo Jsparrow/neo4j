@@ -43,8 +43,11 @@ import static org.neo4j.internal.kernel.api.RelationshipTestSupport.count;
 public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPIReadTestSupport>
         extends KernelAPIReadTestBase<G>
 {
-    private static long bare, start, end;
-    private static RelationshipTestSupport.StartNode sparse, dense;
+    private static long bare;
+	private static long start;
+	private static long end;
+    private static RelationshipTestSupport.StartNode sparse;
+	private static RelationshipTestSupport.StartNode dense;
 
     protected boolean supportsDirectTraversal()
     {
@@ -62,7 +65,8 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPIRea
         {
             bare = graphDb.createNode().getId();
 
-            Node x = graphDb.createNode(), y = graphDb.createNode();
+            Node x = graphDb.createNode();
+			Node y = graphDb.createNode();
             start = x.getId();
             end = y.getId();
             x.createRelationshipTo( y, withName( "GEN" ) );
@@ -120,24 +124,21 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPIRea
                     group.outgoing( relationship );
                     while ( relationship.next() )
                     {
-                        assertEquals( "node #" + node.nodeReference() +
-                                        " relationship should have same label as group", group.type(),
+                        assertEquals( new StringBuilder().append("node #").append(node.nodeReference()).append(" relationship should have same label as group").toString(), group.type(),
                                 relationship.type() );
                         degree.outgoing++;
                     }
                     group.incoming( relationship );
                     while ( relationship.next() )
                     {
-                        assertEquals( "node #" + node.nodeReference() +
-                                        "relationship should have same label as group", group.type(),
+                        assertEquals( new StringBuilder().append("node #").append(node.nodeReference()).append("relationship should have same label as group").toString(), group.type(),
                                 relationship.type() );
                         degree.incoming++;
                     }
                     group.loops( relationship );
                     while ( relationship.next() )
                     {
-                        assertEquals( "node #" + node.nodeReference() +
-                                        "relationship should have same label as group", group.type(),
+                        assertEquals( new StringBuilder().append("node #").append(node.nodeReference()).append("relationship should have same label as group").toString(), group.type(),
                                 relationship.type() );
                         degree.loop++;
                     }
@@ -145,15 +146,15 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPIRea
                     // then
                     assertNotEquals( "all", 0, degree.incoming + degree.outgoing + degree.loop );
                     assertEquals(
-                            "node #" + node.nodeReference() + " outgoing",
+                            new StringBuilder().append("node #").append(node.nodeReference()).append(" outgoing").toString(),
                             group.outgoingCount(),
                             degree.outgoing );
                     assertEquals(
-                            "node #" + node.nodeReference() + " incoming",
+                            new StringBuilder().append("node #").append(node.nodeReference()).append(" incoming").toString(),
                             group.incomingCount(),
                             degree.incoming );
-                    assertEquals( "node #" + node.nodeReference() + " loop", group.loopCount(), degree.loop );
-                    assertEquals( "node #" + node.nodeReference() + " all = incoming + outgoing - loop",
+                    assertEquals( new StringBuilder().append("node #").append(node.nodeReference()).append(" loop").toString(), group.loopCount(), degree.loop );
+                    assertEquals( new StringBuilder().append("node #").append(node.nodeReference()).append(" all = incoming + outgoing - loop").toString(),
                             group.totalCount(), degree.incoming + degree.outgoing + degree.loop );
                 }
                 if ( none )
@@ -390,6 +391,8 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPIRea
 
     private static class Sizes
     {
-        int incoming, outgoing, loop;
+        int incoming;
+		int outgoing;
+		int loop;
     }
 }

@@ -21,7 +21,17 @@ package org.neo4j.kernel.impl.store.kvstore;
 
 interface KeyFormat<Key>
 {
-    class Searcher<Key> implements SearchKey
+    void writeKey( Key key, WritableBuffer buffer );
+
+	int keySize();
+
+	int valueSize();
+
+	long version( Headers headers );
+
+	DataProvider filter( DataProvider provider );
+
+	class Searcher<Key> implements SearchKey
     {
         private final KeyFormat<Key> keys;
         private final Key key;
@@ -38,14 +48,4 @@ interface KeyFormat<Key>
             keys.writeKey( this.key, key );
         }
     }
-
-    void writeKey( Key key, WritableBuffer buffer );
-
-    int keySize();
-
-    int valueSize();
-
-    long version( Headers headers );
-
-    DataProvider filter( DataProvider provider );
 }

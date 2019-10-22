@@ -61,13 +61,14 @@ import static org.neo4j.kernel.impl.index.schema.fusion.IndexSlot.TEMPORAL;
 @RunWith( Parameterized.class )
 public class FusionIndexUpdaterTest
 {
-    private IndexUpdater[] aliveUpdaters;
-    private EnumMap<IndexSlot,IndexUpdater> updaters;
-    private FusionIndexUpdater fusionIndexUpdater;
-
-    @Rule
+    @Parameterized.Parameter
+    public static FusionVersion fusionVersion;
+	private IndexUpdater[] aliveUpdaters;
+	private EnumMap<IndexSlot,IndexUpdater> updaters;
+	private FusionIndexUpdater fusionIndexUpdater;
+	@Rule
     public RandomRule random = new RandomRule();
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static FusionVersion[] versions()
     {
         return new FusionVersion[]
@@ -76,16 +77,13 @@ public class FusionIndexUpdaterTest
                 };
     }
 
-    @Parameterized.Parameter
-    public static FusionVersion fusionVersion;
-
-    @Before
+	@Before
     public void setup()
     {
         initiateMocks();
     }
 
-    private void initiateMocks()
+	private void initiateMocks()
     {
         IndexSlot[] activeSlots = fusionVersion.aliveSlots();
         updaters = new EnumMap<>( IndexSlot.class );
@@ -119,7 +117,7 @@ public class FusionIndexUpdaterTest
         fusionIndexUpdater = new FusionIndexUpdater( fusionVersion.slotSelector(), new LazyInstanceSelector<>( updaters, throwingFactory() ) );
     }
 
-    private Function<IndexSlot,IndexUpdater> throwingFactory()
+	private Function<IndexSlot,IndexUpdater> throwingFactory()
     {
         return i ->
         {
@@ -127,7 +125,7 @@ public class FusionIndexUpdaterTest
         };
     }
 
-    private void resetMocks()
+	private void resetMocks()
     {
         for ( IndexUpdater updater : aliveUpdaters )
         {
@@ -135,9 +133,7 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    /* process */
-
-    @Test
+	@Test
     public void processMustSelectCorrectForAdd() throws Exception
     {
         // given
@@ -163,7 +159,7 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    @Test
+	@Test
     public void processMustSelectCorrectForRemove() throws Exception
     {
         // given
@@ -189,7 +185,7 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    @Test
+	@Test
     public void processMustSelectCorrectForChange() throws Exception
     {
         // given
@@ -208,7 +204,7 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    @Test
+	@Test
     public void processMustSelectCorrectForChangeFromOneGroupToAnother() throws Exception
     {
         EnumMap<IndexSlot,Value[]> values = FusionIndexTestHelp.valuesByGroup();
@@ -232,12 +228,12 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    private IndexUpdater orLucene( IndexUpdater updater )
+	private IndexUpdater orLucene( IndexUpdater updater )
     {
         return updater != SwallowingIndexUpdater.INSTANCE ? updater : updaters.get( LUCENE );
     }
 
-    private void verifyAddWithCorrectUpdater( IndexUpdater correctPopulator, Value... numberValues )
+	private void verifyAddWithCorrectUpdater( IndexUpdater correctPopulator, Value... numberValues )
             throws IndexEntryConflictException, IOException
     {
         IndexEntryUpdate<LabelSchemaDescriptor> update = add( numberValues );
@@ -252,7 +248,7 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    private void verifyRemoveWithCorrectUpdater( IndexUpdater correctPopulator, Value... numberValues )
+	private void verifyRemoveWithCorrectUpdater( IndexUpdater correctPopulator, Value... numberValues )
             throws IndexEntryConflictException, IOException
     {
         IndexEntryUpdate<LabelSchemaDescriptor> update = FusionIndexTestHelp.remove( numberValues );
@@ -267,7 +263,7 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    private void verifyChangeWithCorrectUpdaterNotMixed( IndexUpdater correctPopulator, Value before,
+	private void verifyChangeWithCorrectUpdaterNotMixed( IndexUpdater correctPopulator, Value before,
             Value after ) throws IndexEntryConflictException, IOException
     {
         IndexEntryUpdate<LabelSchemaDescriptor> update = FusionIndexTestHelp.change( before, after );
@@ -282,7 +278,7 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    private void verifyChangeWithCorrectUpdaterNotMixed( IndexUpdater updater, Value[] supportedValues ) throws IndexEntryConflictException, IOException
+	private void verifyChangeWithCorrectUpdaterNotMixed( IndexUpdater updater, Value[] supportedValues ) throws IndexEntryConflictException, IOException
     {
         for ( Value before : supportedValues )
         {
@@ -293,7 +289,7 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    private void verifyChangeWithCorrectUpdaterMixed( IndexUpdater expectRemoveFrom, IndexUpdater expectAddTo, Value[] beforeValues,
+	private void verifyChangeWithCorrectUpdaterMixed( IndexUpdater expectRemoveFrom, IndexUpdater expectAddTo, Value[] beforeValues,
             Value[] afterValues ) throws IOException, IndexEntryConflictException
     {
         for ( int beforeIndex = 0; beforeIndex < beforeValues.length; beforeIndex++ )
@@ -319,9 +315,7 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    /* close */
-
-    @Test
+	@Test
     public void closeMustCloseAll() throws Exception
     {
         // when
@@ -334,7 +328,7 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    @Test
+	@Test
     public void closeMustThrowIfAnyThrow() throws Exception
     {
         for ( IndexSlot indexSlot : fusionVersion.aliveSlots() )
@@ -344,7 +338,7 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    @Test
+	@Test
     public void closeMustCloseOthersIfAnyThrow() throws Exception
     {
         for ( IndexSlot indexSlot : fusionVersion.aliveSlots() )
@@ -355,13 +349,13 @@ public class FusionIndexUpdaterTest
         }
     }
 
-    @Test
+	@Test
     public void closeMustThrowIfAllThrow() throws Exception
     {
         FusionIndexTestHelp.verifyFusionCloseThrowIfAllThrow( fusionIndexUpdater, aliveUpdaters );
     }
 
-    @Test
+	@Test
     public void shouldInstantiatePartLazilyForSpecificValueGroupUpdates() throws IOException, IndexEntryConflictException
     {
         // given
@@ -393,4 +387,12 @@ public class FusionIndexUpdaterTest
             initiateMocks();
         }
     }
+
+    /* process */
+
+    
+
+    /* close */
+
+    
 }

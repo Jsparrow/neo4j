@@ -19,7 +19,6 @@
  */
 package org.neo4j.unsafe.impl.batchimport.staging;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -34,52 +33,50 @@ import org.neo4j.unsafe.impl.batchimport.stats.StepStats;
 
 import static java.lang.Integer.max;
 import static java.lang.Integer.min;
+import java.util.Collections;
 
 /**
  * A bit like a mocked {@link Step}, but easier to work with.
  */
 public class ControlledStep<T> implements Step<T>, StatsProvider
 {
-    public static ControlledStep<?> stepWithAverageOf( String name, int maxProcessors, long avg )
-    {
-        return stepWithStats( name, maxProcessors, Keys.avg_processing_time, avg );
-    }
-
-    public static ControlledStep<?> stepWithStats( String name, int maxProcessors,
-            Map<Key,Long> statistics )
-    {
-        ControlledStep<?> step = new ControlledStep<>( name, maxProcessors );
-        for ( Map.Entry<Key,Long> statistic : statistics.entrySet() )
-        {
-            step.setStat( statistic.getKey(), statistic.getValue().longValue() );
-        }
-        return step;
-    }
-
-    public static ControlledStep<?> stepWithStats( String name, int maxProcessors, Object... statisticsAltKeyAndValue )
-    {
-        return stepWithStats( name, maxProcessors, MapUtil.genericMap( statisticsAltKeyAndValue ) );
-    }
-
     private final String name;
-    private final Map<Key,ControlledStat> stats = new HashMap<>();
-    private final int maxProcessors;
-    private volatile int numberOfProcessors = 1;
-    private final CountDownLatch completed = new CountDownLatch( 1 );
+	private final Map<Key,ControlledStat> stats = new HashMap<>();
+	private final int maxProcessors;
+	private volatile int numberOfProcessors = 1;
+	private final CountDownLatch completed = new CountDownLatch( 1 );
 
-    public ControlledStep( String name, int maxProcessors )
+	public ControlledStep( String name, int maxProcessors )
     {
         this( name, maxProcessors, 1 );
     }
 
-    public ControlledStep( String name, int maxProcessors, int initialProcessorCount )
+	public ControlledStep( String name, int maxProcessors, int initialProcessorCount )
     {
         this.maxProcessors = maxProcessors == 0 ? Integer.MAX_VALUE : maxProcessors;
         this.name = name;
         processors( initialProcessorCount - 1 );
     }
 
-    public ControlledStep<T> setProcessors( int numberOfProcessors )
+	public static ControlledStep<?> stepWithAverageOf( String name, int maxProcessors, long avg )
+    {
+        return stepWithStats( name, maxProcessors, Keys.avg_processing_time, avg );
+    }
+
+	public static ControlledStep<?> stepWithStats( String name, int maxProcessors,
+            Map<Key,Long> statistics )
+    {
+        ControlledStep<?> step = new ControlledStep<>( name, maxProcessors );
+        statistics.entrySet().forEach(statistic -> step.setStat(statistic.getKey(), statistic.getValue().longValue()));
+        return step;
+    }
+
+	public static ControlledStep<?> stepWithStats( String name, int maxProcessors, Object... statisticsAltKeyAndValue )
+    {
+        return stepWithStats( name, maxProcessors, MapUtil.genericMap( statisticsAltKeyAndValue ) );
+    }
+
+	public ControlledStep<T> setProcessors( int numberOfProcessors )
     {
         // We don't have to assert max processors here since importer will not count every processor
         // equally. A step being very idle (due to being very very fast) counts as almost nothing.
@@ -87,7 +84,7 @@ public class ControlledStep<T> implements Step<T>, StatsProvider
         return this;
     }
 
-    @Override
+	@Override
     public int processors( int delta )
     {
         if ( delta > 0 )
@@ -101,84 +98,91 @@ public class ControlledStep<T> implements Step<T>, StatsProvider
         return numberOfProcessors;
     }
 
-    @Override
+	@Override
     public String name()
     {
         return name;
     }
 
-    @Override
+	@Override
     public long receive( long ticket, T batch )
     {
         throw new UnsupportedOperationException( "Cannot participate in actual processing yet" );
     }
 
-    public void setStat( Key key, long value )
+	public void setStat( Key key, long value )
     {
         stats.put( key, new ControlledStat( value ) );
     }
 
-    @Override
+	@Override
     public StepStats stats()
     {
-        return new StepStats( name, !isCompleted(), Arrays.asList( this ) );
+        return new StepStats( name, !isCompleted(), Collections.singletonList( this ) );
     }
 
-    @Override
+	@Override
     public void endOfUpstream()
     {
     }
 
-    @Override
+	@Override
     public boolean isCompleted()
     {
         return completed.getCount() == 0;
     }
 
-    @Override
+	@Override
     public void awaitCompleted() throws InterruptedException
     {
         completed.await();
     }
 
-    @Override
+	@Override
     public void setDownstream( Step<?> downstreamStep )
     {
     }
 
-    @Override
+	@Override
     public void receivePanic( Throwable cause )
     {
     }
 
-    @Override
+	@Override
     public void close()
     {
     }
 
-    @Override
+	@Override
     public Stat stat( Key key )
     {
         return stats.get( key );
     }
 
-    @Override
+	@Override
     public void start( int orderingGuarantees )
     {
     }
 
-    @Override
+	@Override
     public Key[] keys()
     {
         return stats.keySet().toArray( new Key[stats.size()] );
     }
 
-    public void complete()
+	public void complete()
     {
         completed.countDown();
     }
 
-    private static class ControlledStat implements Stat
+	@Override
+    public String toString()
+    {
+        return new StringBuilder().append(getClass().getSimpleName()).append("[").append(name()).append(", ").append(stats).append("]")
+				.toString();
+    }
+
+	private static class ControlledStat implements Stat
     {
         private final long value;
 
@@ -202,13 +206,7 @@ public class ControlledStep<T> implements Step<T>, StatsProvider
         @Override
         public String toString()
         {
-            return "" + value;
+            return Long.toString(value);
         }
-    }
-
-    @Override
-    public String toString()
-    {
-        return getClass().getSimpleName() + "[" + name() + ", " + stats + "]";
     }
 }

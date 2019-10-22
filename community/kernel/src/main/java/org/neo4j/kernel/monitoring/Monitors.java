@@ -89,12 +89,8 @@ public class Monitors
         MonitorListenerInvocationHandler monitorListenerInvocationHandler = createInvocationHandler( monitorListener, tags );
 
         List<Class<?>> listenerInterfaces = getAllInterfaces( monitorListener );
-        methodsStream( listenerInterfaces ).forEach( method ->
-        {
-            Set<MonitorListenerInvocationHandler> methodHandlers =
-                    methodMonitorListeners.computeIfAbsent( method, f -> Collections.newSetFromMap( new ConcurrentHashMap<>() ) );
-            methodHandlers.add( monitorListenerInvocationHandler );
-        } );
+        methodsStream( listenerInterfaces ).map(method -> methodMonitorListeners.computeIfAbsent( method, f -> Collections.newSetFromMap( new ConcurrentHashMap<>() ) )).forEach( methodHandlers ->
+        methodHandlers.add( monitorListenerInvocationHandler ) );
         monitoredInterfaces.addAll( listenerInterfaces );
     }
 
@@ -224,8 +220,7 @@ public class Monitors
             {
                 return;
             }
-            for ( MonitorListenerInvocationHandler monitorListenerInvocationHandler : handlers )
-            {
+            handlers.forEach(monitorListenerInvocationHandler -> {
                 try
                 {
                     monitorListenerInvocationHandler.invoke( proxy, method, args, tags );
@@ -233,7 +228,7 @@ public class Monitors
                 catch ( Throwable ignored )
                 {
                 }
-            }
+            });
         }
     }
 }

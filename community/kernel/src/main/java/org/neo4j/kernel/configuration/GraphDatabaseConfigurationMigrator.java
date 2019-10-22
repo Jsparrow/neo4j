@@ -44,13 +44,13 @@ public class GraphDatabaseConfigurationMigrator extends BaseConfigurationMigrato
             @Override
             public void setValueWithOldSetting( String value, Map<String,String> rawConfiguration )
             {
-                if ( StringUtils.isNotEmpty( value ) )
-                {
-                    String oldSettingDefaultValue = GraphDatabaseSettings.index_sampling_buffer_size.getDefaultValue();
-                    Long newValue = oldSettingDefaultValue.equals( value ) ? ByteUnit.mebiBytes( 8 )
-                                                                           : Settings.BYTES.apply( value );
-                    rawConfiguration.put( "dbms.index_sampling.sample_size_limit", String.valueOf( newValue ) );
-                }
+                if (!StringUtils.isNotEmpty( value )) {
+					return;
+				}
+				String oldSettingDefaultValue = GraphDatabaseSettings.index_sampling_buffer_size.getDefaultValue();
+				Long newValue = oldSettingDefaultValue.equals( value ) ? ByteUnit.mebiBytes( 8 )
+				                                                       : Settings.BYTES.apply( value );
+				rawConfiguration.put( "dbms.index_sampling.sample_size_limit", String.valueOf( newValue ) );
             }
         } );
 
@@ -65,9 +65,7 @@ public class GraphDatabaseConfigurationMigrator extends BaseConfigurationMigrato
         } );
 
         add( new SpecificPropertyMigration( "unsupported.dbms.executiontime_limit.enabled",
-                "unsupported.dbms.executiontime_limit.enabled is not supported anymore. " +
-                "Set dbms.transaction.timeout settings to some positive value to enable execution guard and set " +
-                "transaction timeout." )
+                new StringBuilder().append("unsupported.dbms.executiontime_limit.enabled is not supported anymore. ").append("Set dbms.transaction.timeout settings to some positive value to enable execution guard and set ").append("transaction timeout.").toString() )
         {
             @Override
             public void setValueWithOldSetting( String value, Map<String,String> rawConfiguration )

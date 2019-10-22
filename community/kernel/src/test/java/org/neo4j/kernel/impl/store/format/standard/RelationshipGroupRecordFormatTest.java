@@ -40,22 +40,22 @@ import static org.neo4j.kernel.impl.store.record.RecordLoad.NORMAL;
 @RunWith( Parameterized.class )
 public class RelationshipGroupRecordFormatTest
 {
-    @Parameters
-    public static Collection<RecordFormats> formats()
-    {
-        return asList( StandardV2_3.RECORD_FORMATS, StandardV3_0.RECORD_FORMATS );
-    }
-
     private final RecordFormat<RelationshipGroupRecord> format;
-    private final int recordSize;
+	private final int recordSize;
 
-    public RelationshipGroupRecordFormatTest( RecordFormats formats )
+	public RelationshipGroupRecordFormatTest( RecordFormats formats )
     {
         this.format = formats.relationshipGroup();
         this.recordSize = format.getRecordSize( NO_STORE_HEADER );
     }
 
-    @Test
+	@Parameters
+    public static Collection<RecordFormats> formats()
+    {
+        return asList( StandardV2_3.RECORD_FORMATS, StandardV3_0.RECORD_FORMATS );
+    }
+
+	@Test
     public void shouldReadUnsignedRelationshipTypeId() throws Exception
     {
         // GIVEN

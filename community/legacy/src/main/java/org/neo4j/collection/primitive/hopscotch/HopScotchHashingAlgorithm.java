@@ -64,11 +64,24 @@ public class HopScotchHashingAlgorithm
      */
     public static final int DEFAULT_H = 32;
 
-    private HopScotchHashingAlgorithm()
+	public static final Monitor NO_MONITOR = new Monitor.Adapter()
+    {
+        /*No additional logic*/
+    };
+
+	/**
+     * The default hash function for primitive collections. This hash function is quite fast but has mediocre
+     * statistics.
+     *
+     * @see HashFunction#xorShift32()
+     */
+    static final HashFunction DEFAULT_HASHING = HashFunction.xorShift32();
+
+	private HopScotchHashingAlgorithm()
     {
     }
 
-    public static <VALUE> VALUE get( Table<VALUE> table, Monitor monitor, HashFunction hashFunction, long key )
+	public static <VALUE> VALUE get( Table<VALUE> table, Monitor monitor, HashFunction hashFunction, long key )
     {
         int tableMask = table.mask();
         int index = indexOf( hashFunction, key, tableMask );
@@ -93,7 +106,7 @@ public class HopScotchHashingAlgorithm
         return null;
     }
 
-    public static <VALUE> VALUE remove( Table<VALUE> table, Monitor monitor, HashFunction hashFunction, long key )
+	public static <VALUE> VALUE remove( Table<VALUE> table, Monitor monitor, HashFunction hashFunction, long key )
     {
         int tableMask = table.mask();
         int index = indexOf( hashFunction, key, tableMask );
@@ -146,7 +159,7 @@ public class HopScotchHashingAlgorithm
         return result;
     }
 
-    public static <VALUE> VALUE put( Table<VALUE> table, Monitor monitor, HashFunction hashFunction,
+	public static <VALUE> VALUE put( Table<VALUE> table, Monitor monitor, HashFunction hashFunction,
             long key, VALUE value, ResizeMonitor<VALUE> resizeMonitor )
     {
         long nullKey = table.nullKey();
@@ -179,7 +192,7 @@ public class HopScotchHashingAlgorithm
         }
 
         // this key does not exist in this set. put it there using hop-scotching
-        if ( hopScotchPut( table, monitor, hashFunction, key, value, index, tableMask, nullKey ) )
+        if ( hopScotchPut( table, monitor, key, value, index, tableMask, nullKey ) )
         {   // we managed to wiggle our way to a free spot and put it there
             return null;
         }
@@ -192,8 +205,7 @@ public class HopScotchHashingAlgorithm
         return put( resizedTable, monitor, hashFunction, key, value, resizeMonitor );
     }
 
-    private static <VALUE> boolean hopScotchPut( Table<VALUE> table, Monitor monitor, HashFunction hashFunction,
-            long key, VALUE value, int index, int tableMask, long nullKey )
+	private static <VALUE> boolean hopScotchPut( Table<VALUE> table, Monitor monitor, long key, VALUE value, int index, int tableMask, long nullKey )
     {
         int freeIndex = nextIndex( index, 1, tableMask );
         int h = table.h();
@@ -273,17 +285,17 @@ public class HopScotchHashingAlgorithm
         return true;
     }
 
-    private static int nextIndex( int index, int delta, int mask )
+	private static int nextIndex( int index, int delta, int mask )
     {
         return (index + delta) & mask;
     }
 
-    private static int indexOf( HashFunction hashFunction, long key, int tableMask )
+	private static int indexOf( HashFunction hashFunction, long key, int tableMask )
     {
         return hashFunction.hashSingleValueToInt( key ) & tableMask;
     }
 
-    private static <VALUE> void growTable( Table<VALUE> oldTable, Monitor monitor,
+	private static <VALUE> void growTable( Table<VALUE> oldTable, Monitor monitor,
             HashFunction hashFunction, ResizeMonitor<VALUE> resizeMonitor )
     {
         assert monitor.tableGrowing( oldTable.capacity(), oldTable.size() );
@@ -308,7 +320,7 @@ public class HopScotchHashingAlgorithm
                     // If we somehow fail to populate the new table, reinstall the old one.
                     resizeMonitor.tableGrew( oldTable );
                     newTable.close();
-                    throw new IllegalStateException( "Couldn't add " + key + " when growing table" );
+                    throw new IllegalStateException( new StringBuilder().append("Couldn't add ").append(key).append(" when growing table").toString() );
                 }
             }
         }
@@ -375,19 +387,6 @@ public class HopScotchHashingAlgorithm
             }
         }
     }
-
-    public static final Monitor NO_MONITOR = new Monitor.Adapter()
-    {
-        /*No additional logic*/
-    };
-
-    /**
-     * The default hash function for primitive collections. This hash function is quite fast but has mediocre
-     * statistics.
-     *
-     * @see HashFunction#xorShift32()
-     */
-    static final HashFunction DEFAULT_HASHING = HashFunction.xorShift32();
 
     public interface ResizeMonitor<VALUE>
     {

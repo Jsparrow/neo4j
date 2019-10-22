@@ -56,10 +56,7 @@ public class ServerRootRepresentation extends MappingRepresentation
             @Override
             protected void serialize( MappingSerializer serializer )
             {
-                for ( Map.Entry<String, String> entry : services.entrySet() )
-                {
-                    serializer.putString( entry.getKey(), entry.getValue() );
-                }
+                services.entrySet().forEach(entry -> serializer.putString(entry.getKey(), entry.getValue()));
             }
         };
 

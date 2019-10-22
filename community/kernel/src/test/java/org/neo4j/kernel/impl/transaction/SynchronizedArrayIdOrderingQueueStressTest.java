@@ -75,7 +75,35 @@ public class SynchronizedArrayIdOrderingQueueStressTest
                 queue.getNumberOfOrderlyRemovedIds(), queue.getNumberOfOrderlyRemovedIds() >= THRESHOLD );
     }
 
-    private static class VerifyingIdOrderingQueue implements IdOrderingQueue
+    private LongIterator neverEndingIdStream()
+    {
+        return new LongIterator()
+        {
+            private final Stride stride = new Stride();
+            private long next;
+
+            @Override
+            public boolean hasNext()
+            {
+                return true;
+            }
+
+            @Override
+            public long next()
+            {
+                try
+                {
+                    return next;
+                }
+                finally
+                {
+                    next += stride.next();
+                }
+            }
+        };
+    }
+
+	private static class VerifyingIdOrderingQueue implements IdOrderingQueue
     {
         private final IdOrderingQueue delegate;
         private final AtomicInteger removedCount = new AtomicInteger();
@@ -91,8 +119,7 @@ public class SynchronizedArrayIdOrderingQueueStressTest
         {
             if ( expectedValue < previousId )
             {   // Just to bypass the string creation every check
-                assertTrue( "Expected to remove head " + expectedValue +
-                        ", which should have been greater than previously seen id " + previousId, expectedValue > previousId );
+                assertTrue( new StringBuilder().append("Expected to remove head ").append(expectedValue).append(", which should have been greater than previously seen id ").append(previousId).toString(), expectedValue > previousId );
             }
             previousId = expectedValue;
             delegate.removeChecked( expectedValue );
@@ -121,34 +148,6 @@ public class SynchronizedArrayIdOrderingQueueStressTest
         {
             return removedCount.get();
         }
-    }
-
-    private LongIterator neverEndingIdStream()
-    {
-        return new LongIterator()
-        {
-            private final Stride stride = new Stride();
-            private long next;
-
-            @Override
-            public boolean hasNext()
-            {
-                return true;
-            }
-
-            @Override
-            public long next()
-            {
-                try
-                {
-                    return next;
-                }
-                finally
-                {
-                    next += stride.next();
-                }
-            }
-        };
     }
 
     private static class Committer extends Thread

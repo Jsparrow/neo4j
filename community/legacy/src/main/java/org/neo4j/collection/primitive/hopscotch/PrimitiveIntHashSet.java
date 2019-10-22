@@ -86,17 +86,46 @@ public class PrimitiveIntHashSet extends AbstractIntHopScotchCollection<Object> 
     @Override
     public boolean equals( Object other )
     {
-        if ( typeAndSizeEqual( other ) )
-        {
-            PrimitiveIntHashSet that = (PrimitiveIntHashSet) other;
-            IntKeyEquality equality = new IntKeyEquality( that );
-            visitKeys( equality );
-            return equality.isEqual();
-        }
-        return false;
+        if (!typeAndSizeEqual( other )) {
+			return false;
+		}
+		PrimitiveIntHashSet that = (PrimitiveIntHashSet) other;
+		IntKeyEquality equality = new IntKeyEquality( that );
+		visitKeys( equality );
+		return equality.isEqual();
     }
 
-    private static class IntKeyEquality implements PrimitiveIntVisitor<RuntimeException>
+    @Override
+    public int hashCode()
+    {
+        HashCodeComputer hash = new HashCodeComputer();
+        visitKeys( hash );
+        return hash.hashCode();
+    }
+
+	@Override
+    public String toString()
+    {
+        final StringBuilder builder = new StringBuilder( "{" );
+        visitKeys( new PrimitiveIntVisitor<RuntimeException>()
+        {
+            private int count;
+
+            @Override
+            public boolean visited( int value )
+            {
+                if ( count++ > 0 )
+                {
+                    builder.append( "," );
+                }
+                builder.append( value );
+                return false;
+            }
+        } );
+        return builder.append( "}" ).toString();
+    }
+
+	private static class IntKeyEquality implements PrimitiveIntVisitor<RuntimeException>
     {
         private final PrimitiveIntHashSet other;
         private boolean equal = true;
@@ -119,20 +148,12 @@ public class PrimitiveIntHashSet extends AbstractIntHopScotchCollection<Object> 
         }
     }
 
-    @Override
-    public int hashCode()
-    {
-        HashCodeComputer hash = new HashCodeComputer();
-        visitKeys( hash );
-        return hash.hashCode();
-    }
-
     private static class HashCodeComputer implements PrimitiveIntVisitor<RuntimeException>
     {
         private int hash = 1337;
 
         @Override
-        public boolean visited( int value ) throws RuntimeException
+        public boolean visited( int value )
         {
             hash += DEFAULT_HASHING.hashSingleValueToInt( value );
             return false;
@@ -158,27 +179,5 @@ public class PrimitiveIntHashSet extends AbstractIntHopScotchCollection<Object> 
             HashCodeComputer that = (HashCodeComputer) o;
             return hash == that.hash;
         }
-    }
-
-    @Override
-    public String toString()
-    {
-        final StringBuilder builder = new StringBuilder( "{" );
-        visitKeys( new PrimitiveIntVisitor<RuntimeException>()
-        {
-            private int count;
-
-            @Override
-            public boolean visited( int value ) throws RuntimeException
-            {
-                if ( count++ > 0 )
-                {
-                    builder.append( "," );
-                }
-                builder.append( value );
-                return false;
-            }
-        } );
-        return builder.append( "}" ).toString();
     }
 }

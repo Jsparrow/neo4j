@@ -246,8 +246,8 @@ public class IndexIT extends KernelIntegrationTest
         // then
         catch ( SchemaKernelException e )
         {
-            assertEquals( "Unable to drop index on :label[" + labelId + "](property[" + propertyKeyId + "]): " +
-                          "No such INDEX ON :label[" + labelId + "](property[" + propertyKeyId + "]).", e.getMessage() );
+            assertEquals( new StringBuilder().append("Unable to drop index on :label[").append(labelId).append("](property[").append(propertyKeyId).append("]): ").append("No such INDEX ON :label[")
+					.append(labelId).append("](property[").append(propertyKeyId).append("]).").toString(), e.getMessage() );
         }
         commit();
     }
@@ -274,8 +274,7 @@ public class IndexIT extends KernelIntegrationTest
         // then
         catch ( SchemaKernelException e )
         {
-            assertEquals( "There is a uniqueness constraint on :" + LABEL + "(" + PROPERTY_KEY + "), so an index is " +
-                          "already created that matches this.", e.getMessage() );
+            assertEquals( new StringBuilder().append("There is a uniqueness constraint on :").append(LABEL).append("(").append(PROPERTY_KEY).append("), so an index is ").append("already created that matches this.").toString(), e.getMessage() );
         }
         commit();
     }

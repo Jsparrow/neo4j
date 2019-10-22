@@ -41,21 +41,16 @@ class IterablesTest
         // given
         List<String> seenSubjects = new ArrayList<>();
         List<String> failedSubjects = new ArrayList<>();
-        ThrowingConsumer<String,RuntimeException> consumer = new ThrowingConsumer<String,RuntimeException>()
-        {
-            @Override
-            public void accept( String s )
-            {
-                seenSubjects.add( s );
+        ThrowingConsumer<String,RuntimeException> consumer = (String s) -> {
+		    seenSubjects.add( s );
 
-                // Fail every other
-                if ( seenSubjects.size() % 2 == 1 )
-                {
-                    failedSubjects.add( s );
-                    throw new RuntimeException( s );
-                }
-            }
-        };
+		    // Fail every other
+		    if ( seenSubjects.size() % 2 == 1 )
+		    {
+		        failedSubjects.add( s );
+		        throw new RuntimeException( s );
+		    }
+		};
         Iterable<String> subjects = asList( "1", "2", "3", "4", "5" );
 
         // when

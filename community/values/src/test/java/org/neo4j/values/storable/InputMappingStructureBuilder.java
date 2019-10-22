@@ -25,33 +25,33 @@ import org.neo4j.values.StructureBuilder;
 
 public final class InputMappingStructureBuilder<Input, Internal, Result> implements StructureBuilder<Input,Result>
 {
-    public static <R> StructureBuilder<Object,R> fromValues( StructureBuilder<? super Value,R> builder )
-    {
-        return mapping( Values::of, builder );
-    }
-
-    public static <I, N, O> StructureBuilder<I,O> mapping( Function<I,N> mapping, StructureBuilder<N,O> builder )
-    {
-        return new InputMappingStructureBuilder<>( mapping, builder );
-    }
-
     private final Function<Input,Internal> mapping;
-    private final StructureBuilder<Internal,Result> builder;
+	private final StructureBuilder<Internal,Result> builder;
 
-    private InputMappingStructureBuilder( Function<Input,Internal> mapping, StructureBuilder<Internal,Result> builder )
+	private InputMappingStructureBuilder( Function<Input,Internal> mapping, StructureBuilder<Internal,Result> builder )
     {
         this.mapping = mapping;
         this.builder = builder;
     }
 
-    @Override
+	public static <R> StructureBuilder<Object,R> fromValues( StructureBuilder<? super Value,R> builder )
+    {
+        return mapping( Values::of, builder );
+    }
+
+	public static <I, N, O> StructureBuilder<I,O> mapping( Function<I,N> mapping, StructureBuilder<N,O> builder )
+    {
+        return new InputMappingStructureBuilder<>( mapping, builder );
+    }
+
+	@Override
     public StructureBuilder<Input,Result> add( String field, Input value )
     {
         builder.add( field, mapping.apply( value ) );
         return this;
     }
 
-    @Override
+	@Override
     public Result build()
     {
         return builder.build();

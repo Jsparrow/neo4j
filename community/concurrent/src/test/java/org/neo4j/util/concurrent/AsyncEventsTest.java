@@ -57,28 +57,6 @@ class AsyncEventsTest
         executor.shutdown();
     }
 
-    static class Event extends AsyncEvent
-    {
-        Thread processedBy;
-    }
-
-    static class EventConsumer implements Consumer<Event>
-    {
-        final BlockingQueue<Event> eventsProcessed = new LinkedBlockingQueue<>();
-
-        @Override
-        public void accept( Event event )
-        {
-            event.processedBy = Thread.currentThread();
-            eventsProcessed.offer( event );
-        }
-
-        public Event poll( long timeout, TimeUnit unit ) throws InterruptedException
-        {
-            return eventsProcessed.poll( timeout, unit );
-        }
-    }
-
     @Test
     void eventsMustBeProcessedByBackgroundThread() throws Exception
     {
@@ -101,7 +79,7 @@ class AsyncEventsTest
         assertThat( secondProcessedEvent, is( secondSentEvent ) );
     }
 
-    @Test
+	@Test
     void mustNotProcessEventInSameThreadWhenNotShutDown() throws Exception
     {
         EventConsumer consumer = new EventConsumer();
@@ -117,7 +95,7 @@ class AsyncEventsTest
         assertThat( processingThread, is( not( Thread.currentThread() ) ) );
     }
 
-    @Test
+	@Test
     void mustProcessEventsDirectlyWhenShutDown()
     {
         assertTimeout( ofSeconds( 10 ), () ->
@@ -143,7 +121,7 @@ class AsyncEventsTest
         } );
     }
 
-    @Test
+	@Test
     void concurrentlyPublishedEventsMustAllBeProcessed()
     {
         assertTimeout( ofSeconds( 10 ), () ->
@@ -203,7 +181,7 @@ class AsyncEventsTest
         } );
     }
 
-    @Test
+	@Test
     void awaitingShutdownMustBlockUntilAllMessagesHaveBeenProcessed() throws Exception
     {
         final Event specialShutdownObservedEvent = new Event();
@@ -252,5 +230,27 @@ class AsyncEventsTest
 
         // Observe termination
         assertThat( consumer.eventsProcessed.take(), sameInstance( specialShutdownObservedEvent ) );
+    }
+
+	static class Event extends AsyncEvent
+    {
+        Thread processedBy;
+    }
+
+    static class EventConsumer implements Consumer<Event>
+    {
+        final BlockingQueue<Event> eventsProcessed = new LinkedBlockingQueue<>();
+
+        @Override
+        public void accept( Event event )
+        {
+            event.processedBy = Thread.currentThread();
+            eventsProcessed.offer( event );
+        }
+
+        public Event poll( long timeout, TimeUnit unit ) throws InterruptedException
+        {
+            return eventsProcessed.poll( timeout, unit );
+        }
     }
 }

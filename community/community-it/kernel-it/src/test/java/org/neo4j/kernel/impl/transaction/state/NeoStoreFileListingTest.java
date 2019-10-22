@@ -62,12 +62,6 @@ import static org.neo4j.kernel.impl.index.IndexConfigStore.INDEX_DB_FILE_NAME;
 
 public class NeoStoreFileListingTest
 {
-    @Rule
-    public final EmbeddedDatabaseRule db = new EmbeddedDatabaseRule();
-    @Rule
-    public final TestDirectory testDirectory = TestDirectory.testDirectory();
-
-    private NeoStoreDataSource neoStoreDataSource;
     private static final String[] STANDARD_STORE_DIR_FILES = new String[]{
             "index",
             "lock",
@@ -109,17 +103,21 @@ public class NeoStoreFileListingTest
             "neostore.transaction.db.1",
             "neostore.transaction.db.2",
             "store_lock"};
+	private static final String[] STANDARD_STORE_DIR_DIRECTORIES = new String[]{"schema", "index", "branched"};
+	@Rule
+    public final EmbeddedDatabaseRule db = new EmbeddedDatabaseRule();
+	@Rule
+    public final TestDirectory testDirectory = TestDirectory.testDirectory();
+	private NeoStoreDataSource neoStoreDataSource;
 
-    private static final String[] STANDARD_STORE_DIR_DIRECTORIES = new String[]{"schema", "index", "branched"};
-
-    @Before
+	@Before
     public void setUp() throws IOException
     {
         createIndexDbFile();
         neoStoreDataSource = db.getDependencyResolver().resolveDependency( NeoStoreDataSource.class );
     }
 
-    @Test
+	@Test
     public void shouldCloseIndexAndLabelScanSnapshots() throws Exception
     {
         // Given
@@ -149,35 +147,35 @@ public class NeoStoreFileListingTest
         verify( indexSnapshot ).close();
     }
 
-    @Test
+	@Test
     public void shouldListMetaDataStoreLast() throws Exception
     {
         StoreFileMetadata fileMetadata = Iterators.last( neoStoreDataSource.listStoreFiles( false ) );
         assertEquals( fileMetadata.file(), neoStoreDataSource.getDatabaseLayout().metadataStore() );
     }
 
-    @Test
+	@Test
     public void shouldListMetaDataStoreLastWithTxLogs() throws Exception
     {
         StoreFileMetadata fileMetadata = Iterators.last( neoStoreDataSource.listStoreFiles( true ) );
         assertEquals( fileMetadata.file(), neoStoreDataSource.getDatabaseLayout().metadataStore() );
     }
 
-    @Test
+	@Test
     public void shouldListTransactionLogsFromCustomLocationWhenConfigured() throws IOException
     {
         String logFilesPath = "customTxFolder";
         verifyLogFilesWithCustomPathListing( logFilesPath );
     }
 
-    @Test
+	@Test
     public void shouldListTransactionLogsFromCustomAbsoluteLocationWhenConfigured() throws IOException
     {
         File customLogLocation = testDirectory.directory( "customLogLocation" );
         verifyLogFilesWithCustomPathListing( customLogLocation.getAbsolutePath() );
     }
 
-    @Test
+	@Test
     public void shouldListTxLogFiles() throws Exception
     {
         assertTrue( neoStoreDataSource.listStoreFiles( true ).stream()
@@ -185,7 +183,7 @@ public class NeoStoreFileListingTest
                 .anyMatch( fileName -> TransactionLogFiles.DEFAULT_FILENAME_FILTER.accept( null, fileName ) ) );
     }
 
-    @Test
+	@Test
     public void shouldNotListTxLogFiles() throws Exception
     {
         assertTrue( neoStoreDataSource.listStoreFiles( false ).stream()
@@ -193,7 +191,7 @@ public class NeoStoreFileListingTest
                 .noneMatch( fileName -> TransactionLogFiles.DEFAULT_FILENAME_FILTER.accept( null, fileName ) ) );
     }
 
-    @Test
+	@Test
     public void shouldListNeostoreFiles() throws Exception
     {
         DatabaseLayout layout = neoStoreDataSource.getDatabaseLayout();
@@ -208,7 +206,7 @@ public class NeoStoreFileListingTest
         assertEquals( expectedFiles, listedStoreFiles );
     }
 
-    @Test
+	@Test
     public void doNotListFilesFromAdditionalProviderThatRegisterTwice() throws IOException
     {
         NeoStoreFileListing neoStoreFileListing = neoStoreDataSource.getNeoStoreFileListing();
@@ -219,7 +217,7 @@ public class NeoStoreFileListingTest
         assertEquals( 1, metadataResourceIterator.stream().filter( metadata -> "marker".equals( metadata.file().getName() ) ).count() );
     }
 
-    private void verifyLogFilesWithCustomPathListing( String path ) throws IOException
+	private void verifyLogFilesWithCustomPathListing( String path ) throws IOException
     {
         GraphDatabaseAPI graphDatabase = (GraphDatabaseAPI) new TestGraphDatabaseFactory()
                 .newEmbeddedDatabaseBuilder( testDirectory.databaseDir( "customDb" ) )
@@ -233,7 +231,7 @@ public class NeoStoreFileListingTest
         graphDatabase.shutdown();
     }
 
-    private static void filesInStoreDirAre( DatabaseLayout databaseLayout, String[] filenames, String[] dirs )
+	private static void filesInStoreDirAre( DatabaseLayout databaseLayout, String[] filenames, String[] dirs )
     {
         ArrayList<File> files = new ArrayList<>();
         mockFiles( filenames, files, false );
@@ -241,7 +239,7 @@ public class NeoStoreFileListingTest
         when( databaseLayout.listDatabaseFiles(any()) ).thenReturn( files.toArray( new File[files.size()] ) );
     }
 
-    private static ResourceIterator<File> scanStoreFilesAre( LabelScanStore labelScanStore, String[] fileNames )
+	private static ResourceIterator<File> scanStoreFilesAre( LabelScanStore labelScanStore, String[] fileNames )
     {
         ArrayList<File> files = new ArrayList<>();
         mockFiles( fileNames, files, false );
@@ -250,7 +248,7 @@ public class NeoStoreFileListingTest
         return snapshot;
     }
 
-    private static ResourceIterator<File> indexFilesAre( IndexingService indexingService, String[] fileNames )
+	private static ResourceIterator<File> indexFilesAre( IndexingService indexingService, String[] fileNames )
             throws IOException
     {
         ArrayList<File> files = new ArrayList<>();
@@ -260,7 +258,7 @@ public class NeoStoreFileListingTest
         return snapshot;
     }
 
-    private void createIndexDbFile() throws IOException
+	private void createIndexDbFile() throws IOException
     {
         DatabaseLayout databaseLayout = db.databaseLayout();
         final File indexFile = databaseLayout.file( "index.db" );
@@ -270,7 +268,7 @@ public class NeoStoreFileListingTest
         }
     }
 
-    private static void mockFiles( String[] filenames, ArrayList<File> files, boolean isDirectories )
+	private static void mockFiles( String[] filenames, ArrayList<File> files, boolean isDirectories )
     {
         for ( String filename : filenames )
         {
@@ -287,7 +285,7 @@ public class NeoStoreFileListingTest
         }
     }
 
-    private static class MarkerFileProvider implements NeoStoreFileListing.StoreFileProvider
+	private static class MarkerFileProvider implements NeoStoreFileListing.StoreFileProvider
     {
         @Override
         public Resource addFilesTo( Collection<StoreFileMetadata> fileMetadataCollection )

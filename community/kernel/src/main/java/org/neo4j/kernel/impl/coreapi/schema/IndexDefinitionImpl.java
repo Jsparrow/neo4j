@@ -305,8 +305,8 @@ public class IndexDefinitionImpl implements IndexDefinition
             entityTokenType = relTypes.length > 1 ? "relationship types" : "relationship type";
             entityTokens = Arrays.stream( relTypes ).map( RelationshipType::name ).collect( joining( "," ) );
         }
-        return "IndexDefinition[" + entityTokenType + ":" + entityTokens + " on:" + String.join( ",", propertyKeys ) + "]" +
-                (indexReference == null ? "" : " (" + indexReference + ")");
+        return new StringBuilder().append("IndexDefinition[").append(entityTokenType).append(":").append(entityTokens).append(" on:").append(String.join( ",", propertyKeys ))
+				.append("]").append(indexReference == null ? "" : " (" + indexReference + ")").toString();
     }
 
     public static String labelNameList( Iterable<Label> labels, String prefix, String postfix )

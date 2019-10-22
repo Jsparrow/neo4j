@@ -45,46 +45,51 @@ import static org.junit.Assert.assertTrue;
 public abstract class PropertyCursorTestBase<G extends KernelAPIReadTestSupport> extends KernelAPIReadTestBase<G>
 {
     @SuppressWarnings( "SpellCheckingInspection" )
-    private static final String LONG_STRING = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque "
-            + "eget nibh cursus, efficitur risus non, ultrices justo. Nulla laoreet eros mi, non molestie magna "
-            + "luctus in. Fusce nibh neque, tristique ultrices laoreet et, aliquet non dolor. Donec ultrices nisi "
-            + "eget urna luctus volutpat. Vivamus hendrerit eget justo vel scelerisque. Morbi interdum volutpat diam,"
-            + " et cursus arcu efficitur consectetur. Cras vitae facilisis ipsum, vitae ullamcorper orci. Nullam "
-            + "tristique ante sed nibh consequat posuere. Curabitur mauris nisl, condimentum ac varius vel, imperdiet"
-            + " a neque. Sed euismod condimentum nisl, vel efficitur turpis tempus id.\n"
-            + "\n"
-            + "Sed in tempor arcu. Suspendisse molestie rutrum risus a dignissim. Donec et orci non diam tincidunt "
-            + "sollicitudin non id nisi. Aliquam vehicula imperdiet viverra. Cras et lacinia eros. Etiam imperdiet ac"
-            + " dolor ut tristique. Phasellus ut lacinia ex. Pellentesque habitant morbi tristique senectus et netus "
-            + "et malesuada fames ac turpis egestas. Integer libero justo, tincidunt ut felis non, interdum "
-            + "consectetur mauris. Cras eu felis ante. Sed dapibus nulla urna, at elementum tortor ultricies pretium."
-            + " Maecenas sed augue non urna consectetur fringilla vitae eu libero. Vivamus interdum bibendum risus, "
-            + "quis luctus eros.\n"
-            + "\n"
-            + "Sed neque augue, fermentum sit amet iaculis ut, porttitor ac odio. Phasellus et sapien non sapien "
-            + "consequat fermentum accumsan non dolor. Integer eget pellentesque lectus, vitae lobortis ante. Nam "
-            + "elementum, dui ut finibus rutrum, purus mauris efficitur purus, efficitur tempus ante metus bibendum "
-            + "velit. Curabitur commodo, risus et eleifend facilisis, eros augue posuere tortor, eu dictum erat "
-            + "tortor consectetur orci. Fusce a velit dignissim, tempus libero nec, faucibus risus. Nullam pharetra "
-            + "mauris sit amet volutpat facilisis. Pellentesque habitant morbi tristique senectus et netus et "
-            + "malesuada fames ac turpis egestas. Praesent lacinia non felis ut lobortis.\n"
-            + "\n"
-            + "Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Sed eu nisi dui"
-            + ". Suspendisse imperdiet lorem vel eleifend faucibus. Mauris non venenatis metus. Aenean neque magna, "
-            + "rhoncus vel velit in, dictum convallis leo. Phasellus pulvinar eu sapien ac vehicula. Praesent "
-            + "placerat augue quam, egestas vehicula velit porttitor in. Vivamus velit metus, pellentesque quis "
-            + "fermentum et, porta quis velit. Curabitur sed lacus quis nibh convallis tincidunt.\n"
-            + "\n"
-            + "Etiam eu elit eget dolor dignissim lacinia. Vivamus tortor ex, dapibus id elementum non, suscipit ac "
-            + "nisl. Aenean vel tempor libero, eu venenatis elit. Nunc nec velit eu odio interdum pellentesque sed et"
-            + " eros. Nam quis mi in metus tristique aliquam. Nullam facilisis dapibus lacus, nec lacinia velit. "
-            + "Proin massa enim, accumsan ac libero at, iaculis sodales tellus. Vivamus fringilla justo sed luctus "
-            + "tincidunt. Sed placerat fringilla ex, vel placerat sem faucibus eget. Vestibulum semper dui sit amet "
-            + "efficitur blandit. Donec eu tellus velit. Etiam a mi nec massa euismod posuere. Cras eget lacus leo.";
+    private static final String LONG_STRING = new StringBuilder().append("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ").append("eget nibh cursus, efficitur risus non, ultrices justo. Nulla laoreet eros mi, non molestie magna ").append("luctus in. Fusce nibh neque, tristique ultrices laoreet et, aliquet non dolor. Donec ultrices nisi ").append("eget urna luctus volutpat. Vivamus hendrerit eget justo vel scelerisque. Morbi interdum volutpat diam,").append(" et cursus arcu efficitur consectetur. Cras vitae facilisis ipsum, vitae ullamcorper orci. Nullam ").append("tristique ante sed nibh consequat posuere. Curabitur mauris nisl, condimentum ac varius vel, imperdiet").append(" a neque. Sed euismod condimentum nisl, vel efficitur turpis tempus id.\n").append("\n")
+			.append("Sed in tempor arcu. Suspendisse molestie rutrum risus a dignissim. Donec et orci non diam tincidunt ").append("sollicitudin non id nisi. Aliquam vehicula imperdiet viverra. Cras et lacinia eros. Etiam imperdiet ac").append(" dolor ut tristique. Phasellus ut lacinia ex. Pellentesque habitant morbi tristique senectus et netus ").append("et malesuada fames ac turpis egestas. Integer libero justo, tincidunt ut felis non, interdum ").append("consectetur mauris. Cras eu felis ante. Sed dapibus nulla urna, at elementum tortor ultricies pretium.").append(" Maecenas sed augue non urna consectetur fringilla vitae eu libero. Vivamus interdum bibendum risus, ").append("quis luctus eros.\n").append("\n").append("Sed neque augue, fermentum sit amet iaculis ut, porttitor ac odio. Phasellus et sapien non sapien ")
+			.append("consequat fermentum accumsan non dolor. Integer eget pellentesque lectus, vitae lobortis ante. Nam ").append("elementum, dui ut finibus rutrum, purus mauris efficitur purus, efficitur tempus ante metus bibendum ").append("velit. Curabitur commodo, risus et eleifend facilisis, eros augue posuere tortor, eu dictum erat ").append("tortor consectetur orci. Fusce a velit dignissim, tempus libero nec, faucibus risus. Nullam pharetra ").append("mauris sit amet volutpat facilisis. Pellentesque habitant morbi tristique senectus et netus et ").append("malesuada fames ac turpis egestas. Praesent lacinia non felis ut lobortis.\n").append("\n").append("Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Sed eu nisi dui").append(". Suspendisse imperdiet lorem vel eleifend faucibus. Mauris non venenatis metus. Aenean neque magna, ")
+			.append("rhoncus vel velit in, dictum convallis leo. Phasellus pulvinar eu sapien ac vehicula. Praesent ").append("placerat augue quam, egestas vehicula velit porttitor in. Vivamus velit metus, pellentesque quis ").append("fermentum et, porta quis velit. Curabitur sed lacus quis nibh convallis tincidunt.\n").append("\n").append("Etiam eu elit eget dolor dignissim lacinia. Vivamus tortor ex, dapibus id elementum non, suscipit ac ").append("nisl. Aenean vel tempor libero, eu venenatis elit. Nunc nec velit eu odio interdum pellentesque sed et").append(" eros. Nam quis mi in metus tristique aliquam. Nullam facilisis dapibus lacus, nec lacinia velit. ").append("Proin massa enim, accumsan ac libero at, iaculis sodales tellus. Vivamus fringilla justo sed luctus ").append("tincidunt. Sed placerat fringilla ex, vel placerat sem faucibus eget. Vestibulum semper dui sit amet ")
+			.append("efficitur blandit. Donec eu tellus velit. Etiam a mi nec massa euismod posuere. Cras eget lacus leo.").toString();
 
-    private static long bare, byteProp, shortProp, intProp, inlineLongProp, longProp,
-            floatProp, doubleProp, trueProp, falseProp, charProp, emptyStringProp, shortStringProp, longStringProp,
-            utf8Prop, smallArray, bigArray, pointProp, dateProp, allProps;
+    private static long bare;
+
+	private static long byteProp;
+
+	private static long shortProp;
+
+	private static long intProp;
+
+	private static long inlineLongProp;
+
+	private static long longProp;
+
+	private static long floatProp;
+
+	private static long doubleProp;
+
+	private static long trueProp;
+
+	private static long falseProp;
+
+	private static long charProp;
+
+	private static long emptyStringProp;
+
+	private static long shortStringProp;
+
+	private static long longStringProp;
+
+	private static long utf8Prop;
+
+	private static long smallArray;
+
+	private static long bigArray;
+
+	private static long pointProp;
+
+	private static long dateProp;
+
+	private static long allProps;
 
     private static String chinese = "造Unicode之";
     private static Value pointValue = Values.pointValue( CoordinateReferenceSystem.Cartesian, 10, 20 );

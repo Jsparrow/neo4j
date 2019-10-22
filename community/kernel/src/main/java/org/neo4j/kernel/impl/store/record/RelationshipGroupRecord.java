@@ -175,16 +175,10 @@ public class RelationshipGroupRecord extends AbstractBaseRecord
     @Override
     public String toString()
     {
-        return "RelationshipGroup[" + getId() +
-               ",type=" + type +
-               ",out=" + firstOut +
-               ",in=" + firstIn +
-               ",loop=" + firstLoop +
-               ",prev=" + prev +
-               ",next=" + next +
-               ",used=" + inUse() +
-               ",owner=" + getOwningNode() +
-               ",secondaryUnitId=" + getSecondaryUnitId() + "]";
+        return new StringBuilder().append("RelationshipGroup[").append(getId()).append(",type=").append(type).append(",out=").append(firstOut)
+				.append(",in=").append(firstIn).append(",loop=").append(firstLoop).append(",prev=").append(prev).append(",next=")
+				.append(next).append(",used=").append(inUse()).append(",owner=").append(getOwningNode()).append(",secondaryUnitId=").append(getSecondaryUnitId())
+				.append("]").toString();
     }
 
     @Override

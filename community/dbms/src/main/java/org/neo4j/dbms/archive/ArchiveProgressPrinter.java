@@ -88,11 +88,11 @@ class ArchiveProgressPrinter
     void addBytes( long n )
     {
         currentBytes += n;
-        if ( printUpdate.get() )
-        {
-            printProgress();
-            printUpdate.set( false );
-        }
+        if (!printUpdate.get()) {
+			return;
+		}
+		printProgress();
+		printUpdate.set( false );
     }
 
     void endFile()
@@ -107,22 +107,24 @@ class ArchiveProgressPrinter
 
     void printProgress()
     {
-        if ( output != null )
-        {
-            char lineSep = interactive ? '\r' : '\n';
-            if ( done )
-            {
-                output.println( lineSep + "Done: " + currentFiles + " files, " + ByteUnit.bytesToString( currentBytes ) + " processed." );
-            }
-            else if ( maxFiles > 0 && maxBytes > 0 )
-            {
-                double progress = (currentBytes / (double) maxBytes) * 100;
-                output.print( lineSep + "Files: " + currentFiles + '/' + maxFiles + ", data: " + String.format( "%4.1f%%", progress ) );
-            }
-            else
-            {
-                output.print( lineSep + "Files: " + currentFiles + "/?" + ", data: ??.?%" );
-            }
-        }
+        if (output == null) {
+			return;
+		}
+		char lineSep = interactive ? '\r' : '\n';
+		if ( done )
+		{
+		    output.println( new StringBuilder().append(lineSep).append("Done: ").append(currentFiles).append(" files, ").append(ByteUnit.bytesToString( currentBytes )).append(" processed.")
+					.toString() );
+		}
+		else if ( maxFiles > 0 && maxBytes > 0 )
+		{
+		    double progress = (currentBytes / (double) maxBytes) * 100;
+		    output.print( new StringBuilder().append(lineSep).append("Files: ").append(currentFiles).append('/').append(maxFiles).append(", data: ")
+					.append(String.format( "%4.1f%%", progress )).toString() );
+		}
+		else
+		{
+		    output.print( new StringBuilder().append(lineSep).append("Files: ").append(currentFiles).append("/?").append(", data: ??.?%").toString() );
+		}
     }
 }

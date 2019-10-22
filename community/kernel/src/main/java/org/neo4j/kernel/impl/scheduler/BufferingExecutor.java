@@ -42,7 +42,8 @@ public class BufferingExecutor implements DeferredExecutor
 
     private volatile Executor realExecutor;
 
-    public void satisfyWith( Executor executor )
+    @Override
+	public void satisfyWith( Executor executor )
     {
         synchronized ( this )
         {

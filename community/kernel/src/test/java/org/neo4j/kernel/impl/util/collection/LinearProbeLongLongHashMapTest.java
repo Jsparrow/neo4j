@@ -571,7 +571,22 @@ class LinearProbeLongLongHashMapTest
         assertEquals( count - toRemove.size(), map.size() );
     }
 
-    @Nested
+    private static void fill( MutableLongLongMap m, long... keys )
+    {
+        for ( long key : keys )
+        {
+            m.put( key, System.nanoTime() );
+        }
+    }
+
+	private static LongLongMap toMap( long... keys )
+    {
+        final MutableLongLongMap m = new LongLongHashMap();
+        fill( m, keys );
+        return m;
+    }
+
+	@Nested
     class Collisions
     {
         private final ImmutableLongList collisions = generateKeyCollisions( 5 );
@@ -833,20 +848,5 @@ class LinearProbeLongLongHashMapTest
             assertThrows( ConcurrentModificationException.class, keyValueIterator::hasNext );
             assertThrows( ConcurrentModificationException.class, keyValueIterator::next );
         }
-    }
-
-    private static void fill( MutableLongLongMap m, long... keys )
-    {
-        for ( long key : keys )
-        {
-            m.put( key, System.nanoTime() );
-        }
-    }
-
-    private static LongLongMap toMap( long... keys )
-    {
-        final MutableLongLongMap m = new LongLongHashMap();
-        fill( m, keys );
-        return m;
     }
 }

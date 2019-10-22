@@ -34,26 +34,16 @@ import static org.neo4j.values.SequenceValue.IterationPreference.RANDOM_ACCESS;
  */
 public interface SequenceValue extends Iterable<AnyValue>
 {
-    /**
-     * The preferred way to iterate this sequence. Preferred in this case means the method which is expected to be
-     * the most performant.
-     */
-    enum IterationPreference
-    {
-        RANDOM_ACCESS,
-        ITERATION
-    }
-
     int length();
 
-    AnyValue value( int offset );
+	AnyValue value( int offset );
 
-    @Override
+	@Override
     Iterator<AnyValue> iterator();
 
-    IterationPreference iterationPreference();
+	IterationPreference iterationPreference();
 
-    default boolean equals( SequenceValue other )
+	default boolean equals( SequenceValue other )
     {
         if ( other == null )
         {
@@ -72,7 +62,7 @@ public interface SequenceValue extends Iterable<AnyValue>
         }
     }
 
-    static boolean equalsUsingRandomAccess( SequenceValue a, SequenceValue b )
+	static boolean equalsUsingRandomAccess( SequenceValue a, SequenceValue b )
     {
         int i = 0;
         boolean areEqual = a.length() == b.length();
@@ -85,7 +75,7 @@ public interface SequenceValue extends Iterable<AnyValue>
         return areEqual;
     }
 
-    static Boolean ternaryEqualsUsingRandomAccess( SequenceValue a, SequenceValue b )
+	static Boolean ternaryEqualsUsingRandomAccess( SequenceValue a, SequenceValue b )
     {
         if ( a.length() != b.length() )
         {
@@ -112,7 +102,7 @@ public interface SequenceValue extends Iterable<AnyValue>
         return equivalenceResult;
     }
 
-    static boolean equalsUsingIterators( SequenceValue a, SequenceValue b )
+	static boolean equalsUsingIterators( SequenceValue a, SequenceValue b )
     {
         boolean areEqual = true;
         Iterator<AnyValue> aIterator = a.iterator();
@@ -126,7 +116,7 @@ public interface SequenceValue extends Iterable<AnyValue>
         return areEqual && aIterator.hasNext() == bIterator.hasNext();
     }
 
-    static Boolean ternaryEqualsUsingIterators( SequenceValue a, SequenceValue b )
+	static Boolean ternaryEqualsUsingIterators( SequenceValue a, SequenceValue b )
     {
         Boolean equivalenceResult = Boolean.TRUE;
         Iterator<AnyValue> aIterator = a.iterator();
@@ -148,7 +138,7 @@ public interface SequenceValue extends Iterable<AnyValue>
         return aIterator.hasNext() == bIterator.hasNext() ? equivalenceResult : Boolean.FALSE;
     }
 
-    default int compareToSequence( SequenceValue other, Comparator<AnyValue> comparator )
+	default int compareToSequence( SequenceValue other, Comparator<AnyValue> comparator )
     {
         IterationPreference pref = iterationPreference();
         IterationPreference otherPref = other.iterationPreference();
@@ -162,7 +152,7 @@ public interface SequenceValue extends Iterable<AnyValue>
         }
     }
 
-    static int compareUsingRandomAccess( SequenceValue a, SequenceValue b, Comparator<AnyValue> comparator )
+	static int compareUsingRandomAccess( SequenceValue a, SequenceValue b, Comparator<AnyValue> comparator )
     {
         int i = 0;
         int x = 0;
@@ -182,7 +172,7 @@ public interface SequenceValue extends Iterable<AnyValue>
         return x;
     }
 
-    static int compareUsingIterators( SequenceValue a, SequenceValue b, Comparator<AnyValue> comparator )
+	static int compareUsingIterators( SequenceValue a, SequenceValue b, Comparator<AnyValue> comparator )
     {
         int x = 0;
         Iterator<AnyValue> aIterator = a.iterator();
@@ -201,7 +191,7 @@ public interface SequenceValue extends Iterable<AnyValue>
         return x;
     }
 
-    default Boolean ternaryEquality( SequenceValue other )
+	default Boolean ternaryEquality( SequenceValue other )
     {
         IterationPreference pref = iterationPreference();
         IterationPreference otherPref = other.iterationPreference();
@@ -213,5 +203,15 @@ public interface SequenceValue extends Iterable<AnyValue>
         {
             return ternaryEqualsUsingIterators( this, other );
         }
+    }
+
+	/**
+     * The preferred way to iterate this sequence. Preferred in this case means the method which is expected to be
+     * the most performant.
+     */
+    enum IterationPreference
+    {
+        RANDOM_ACCESS,
+        ITERATION
     }
 }

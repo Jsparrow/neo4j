@@ -38,12 +38,18 @@ import static org.neo4j.collection.primitive.Primitive.VALUE_MARKER;
 @RunWith( Parameterized.class )
 public class BasicTableTest
 {
-    private final TableFactory factory;
-
     private static final long seed = currentTimeMillis();
-    private static final Random random = new Random( seed );
 
-    @Parameterized.Parameters
+	private static final Random random = new Random( seed );
+
+	private final TableFactory factory;
+
+	public BasicTableTest( TableFactory factory )
+    {
+        this.factory = factory;
+    }
+
+	@Parameterized.Parameters
     public static Collection<Object[]> data()
     {
         Collection<Object[]> result = new ArrayList<>();
@@ -210,12 +216,7 @@ public class BasicTableTest
         return result;
     }
 
-    public BasicTableTest( TableFactory factory )
-    {
-        this.factory = factory;
-    }
-
-    @Test
+	@Test
     public void shouldSetAndGetSmallKey()
     {
         try ( Table table = factory.newTable( Primitive.DEFAULT_HEAP_CAPACITY ) )
@@ -238,7 +239,7 @@ public class BasicTableTest
         }
     }
 
-    @Test
+	@Test
     public void shouldSetAndGetBigKey()
     {
         assumeTrue( factory.supportsLongs() );
@@ -258,7 +259,7 @@ public class BasicTableTest
         }
     }
 
-    @Test
+	@Test
     public void shouldRemoveBigKey()
     {
         assumeTrue( factory.supportsLongs() );
@@ -279,7 +280,7 @@ public class BasicTableTest
         }
     }
 
-    @Test
+	@Test
     public void shouldSetHopBits()
     {
         try ( Table<?> table = factory.newTable( Primitive.DEFAULT_HEAP_CAPACITY ) )
@@ -298,7 +299,7 @@ public class BasicTableTest
         }
     }
 
-    @Test
+	@Test
     public void shouldMoveHopBit()
     {
         try ( Table<?> table = factory.newTable( Primitive.DEFAULT_HEAP_CAPACITY ) )
@@ -316,7 +317,7 @@ public class BasicTableTest
         }
     }
 
-    @Test
+	@Test
     public void shouldClearTable()
     {
         try ( Table table = factory.newTable( Primitive.DEFAULT_HEAP_CAPACITY ) )
@@ -336,7 +337,7 @@ public class BasicTableTest
         }
     }
 
-    private interface TableFactory
+	private interface TableFactory
     {
         Table newTable( int capacity );
 

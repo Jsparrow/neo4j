@@ -27,21 +27,21 @@ import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 
 public class StatementOperationParts
 {
-    private final QueryRegistrationOperations queryRegistrationOperations;
     private static final String ERROR_MSG =
-            "No part of type " + QueryRegistrationOperations.class.getSimpleName() + " assigned";
+            new StringBuilder().append("No part of type ").append(QueryRegistrationOperations.class.getSimpleName()).append(" assigned").toString();
+	private final QueryRegistrationOperations queryRegistrationOperations;
 
-    public StatementOperationParts( QueryRegistrationOperations queryRegistrationOperations )
+	public StatementOperationParts( QueryRegistrationOperations queryRegistrationOperations )
     {
         this.queryRegistrationOperations = queryRegistrationOperations;
     }
 
-    QueryRegistrationOperations queryRegistrationOperations()
+	QueryRegistrationOperations queryRegistrationOperations()
     {
         return Objects.requireNonNull( queryRegistrationOperations, ERROR_MSG );
     }
 
-    public StatementOperationParts override( QueryRegistrationOperations queryRegistrationOperations )
+	public StatementOperationParts override( QueryRegistrationOperations queryRegistrationOperations )
     {
         return new StatementOperationParts( firstNonNull( queryRegistrationOperations, this.queryRegistrationOperations ) );
     }

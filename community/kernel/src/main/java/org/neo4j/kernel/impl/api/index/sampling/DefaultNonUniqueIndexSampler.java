@@ -74,11 +74,11 @@ public class DefaultNonUniqueIndexSampler implements NonUniqueIndexSampler
     public void exclude( String value, long decrement )
     {
         assert decrement > 0;
-        if ( values.addToValue( value, -decrement ) <= 0 )
-        {
-            values.remove( value );
-            sampleSize -= value.length();
-        }
+        if (!(values.addToValue( value, -decrement ) <= 0)) {
+			return;
+		}
+		values.remove( value );
+		sampleSize -= value.length();
     }
 
     @Override

@@ -32,30 +32,30 @@ import org.neo4j.storageengine.api.schema.StoreIndexDescriptor;
 public class NativeNonUniqueIndexPopulatorTest<KEY extends NativeIndexKey<KEY>, VALUE extends NativeIndexValue>
         extends NativeIndexPopulatorTests.NonUnique<KEY,VALUE>
 {
-    @Parameterized.Parameters( name = "{index} {0}" )
+    private static final StoreIndexDescriptor nonUniqueDescriptor = TestIndexDescriptorFactory.forLabel( 42, 666 ).withId( 0 );
+
+	@Parameterized.Parameter()
+    public NativeIndexPopulatorTestCases.TestCase<KEY,VALUE> testCase;
+
+	@Parameterized.Parameters( name = "{index} {0}" )
     public static Collection<Object[]> data()
     {
         return NativeIndexPopulatorTestCases.allCases();
     }
 
-    @Parameterized.Parameter()
-    public NativeIndexPopulatorTestCases.TestCase<KEY,VALUE> testCase;
-
-    private static final StoreIndexDescriptor nonUniqueDescriptor = TestIndexDescriptorFactory.forLabel( 42, 666 ).withId( 0 );
-
-    @Override
+	@Override
     NativeIndexPopulator<KEY,VALUE> createPopulator() throws IOException
     {
         return testCase.populatorFactory.create( pageCache, fs, getIndexFile(), layout, monitor, indexDescriptor );
     }
 
-    @Override
+	@Override
     ValueCreatorUtil<KEY,VALUE> createValueCreatorUtil()
     {
         return new ValueCreatorUtil<>( nonUniqueDescriptor, testCase.typesOfGroup, ValueCreatorUtil.FRACTION_DUPLICATE_NON_UNIQUE );
     }
 
-    @Override
+	@Override
     IndexLayout<KEY,VALUE> createLayout()
     {
         return testCase.indexLayoutFactory.create();

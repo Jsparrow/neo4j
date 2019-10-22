@@ -60,6 +60,6 @@ class LabelScanKey
     @Override
     public String toString()
     {
-        return "[label:" + labelId + ",range:" + idRange + "]";
+        return new StringBuilder().append("[label:").append(labelId).append(",range:").append(idRange).append("]").toString();
     }
 }

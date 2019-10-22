@@ -127,8 +127,7 @@ class NumberArrayTest extends NumberArrayPageCacheTestSupport
         factories.put( "CHUNKED_FIXED_SIZE", CHUNKED_FIXED_SIZE );
         factories.put( "autoWithPageCacheFallback", auto( pageCache, dir, true, NO_MONITOR ) );
         factories.put( "PageCachedNumberArrayFactory", new PageCachedNumberArrayFactory( pageCache, dir ) );
-        for ( Map.Entry<String,NumberArrayFactory> entry : factories.entrySet() )
-        {
+        factories.entrySet().forEach(entry -> {
             String name = entry.getKey() + " => ";
             NumberArrayFactory factory = entry.getValue();
             list.add( arrayData( name + "IntArray", factory.newIntArray( INDEXES, -1 ), random -> random.nextInt( 1_000_000_000 ),
@@ -162,11 +161,41 @@ class NumberArrayTest extends NumberArrayPageCacheTestSupport
             list.add( arrayData( name + "ByteArray15", factory.newByteArray( INDEXES, defaultByteArray( 15 ) ), valueGenerator, writer, reader ) );
             list.add( arrayData( name + "DynamicByteArray15", factory.newDynamicByteArray( CHUNK_SIZE, defaultByteArray( 15 ) ), valueGenerator, writer,
                     reader ) );
-        }
+        });
         return list;
     }
 
-    @FunctionalInterface
+    private static byte[] defaultByteArray( int length )
+    {
+        byte[] result = new byte[length];
+        Arrays.fill( result, (byte) -1 );
+        return result;
+    }
+
+	private static <N extends NumberArray<N>> NumberArrayTestData arrayData( String name, N array, Function<RandomRule,Object> valueGenerator, Writer<N> writer,
+            Reader<N> reader )
+    {
+        return new NumberArrayTestData( name, array, valueGenerator, writer, reader );
+    }
+
+	private static void assertAllValues( Map<Integer,Object> key, Object defaultValue, Reader reader, NumberArray array )
+    {
+        for ( int index = 0; index < INDEXES; index++ )
+        {
+            Object value = reader.read( index % 2 == 0 ? array : array.at( index ), index );
+            Object expectedValue = key.getOrDefault( index, defaultValue );
+            if ( value instanceof long[] )
+            {
+                assertArrayEquals( (long[]) expectedValue, (long[]) value, "index " + index );
+            }
+            else
+            {
+                assertEquals( expectedValue, value, "index " + index );
+            }
+        }
+    }
+
+	@FunctionalInterface
     interface Writer<N extends NumberArray<N>>
     {
         void write( N array, int index, Object value );
@@ -193,36 +222,6 @@ class NumberArrayTest extends NumberArrayPageCacheTestSupport
             this.valueGenerator = valueGenerator;
             this.writer = writer;
             this.reader = reader;
-        }
-    }
-
-    private static byte[] defaultByteArray( int length )
-    {
-        byte[] result = new byte[length];
-        Arrays.fill( result, (byte) -1 );
-        return result;
-    }
-
-    private static <N extends NumberArray<N>> NumberArrayTestData arrayData( String name, N array, Function<RandomRule,Object> valueGenerator, Writer<N> writer,
-            Reader<N> reader )
-    {
-        return new NumberArrayTestData( name, array, valueGenerator, writer, reader );
-    }
-
-    private static void assertAllValues( Map<Integer,Object> key, Object defaultValue, Reader reader, NumberArray array )
-    {
-        for ( int index = 0; index < INDEXES; index++ )
-        {
-            Object value = reader.read( index % 2 == 0 ? array : array.at( index ), index );
-            Object expectedValue = key.getOrDefault( index, defaultValue );
-            if ( value instanceof long[] )
-            {
-                assertArrayEquals( (long[]) expectedValue, (long[]) value, "index " + index );
-            }
-            else
-            {
-                assertEquals( expectedValue, value, "index " + index );
-            }
         }
     }
 }

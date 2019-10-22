@@ -35,7 +35,90 @@ import static org.junit.Assert.assertArrayEquals;
 
 public class ThreadRepository implements TestRule
 {
-    public interface Task
+    private Repository repository;
+	private final long timeout;
+	private final TimeUnit unit;
+
+	public ThreadRepository( long timeout, TimeUnit unit )
+    {
+        this.timeout = timeout;
+        this.unit = unit;
+    }
+
+	public ThreadInfo execute( Task... tasks )
+    {
+        return repository.createThread( null, tasks );
+    }
+
+	public ThreadInfo execute( String name, Task... tasks )
+    {
+        return repository.createThread( name, tasks );
+    }
+
+	public Signal signal()
+    {
+        return new Signal( new CountDownLatch( 1 ) );
+    }
+
+	public Await await()
+    {
+        return await( 1 );
+    }
+
+	public Await await( int events )
+    {
+        return new Await( new CountDownLatch( events ) );
+    }
+
+	public Events events()
+    {
+        return new Events();
+    }
+
+	@Override
+    public Statement apply( final Statement base, final Description description )
+    {
+        return new Statement()
+        {
+            @Override
+            public void evaluate() throws Throwable
+            {
+                repository = new Repository( description );
+                List<Throwable> failures = new ArrayList<>();
+                try
+                {
+                    base.evaluate();
+                }
+                catch ( Throwable failure )
+                {
+                    failures.add( failure );
+                }
+                finally
+                {
+                    completeThreads( failures );
+                }
+                MultipleFailureException.assertEmpty( failures );
+            }
+        };
+    }
+
+	private void completeThreads() throws Throwable
+    {
+        List<Throwable> failures = new ArrayList<>();
+        completeThreads( failures );
+        MultipleFailureException.assertEmpty( failures );
+    }
+
+	private void completeThreads( List<Throwable> failures )
+    {
+        if ( repository != null )
+        {
+            repository.completeAll( failures );
+        }
+        repository = null;
+    }
+
+	public interface Task
     {
         void perform() throws Exception;
     }
@@ -47,46 +130,6 @@ public class ThreadRepository implements TestRule
         Object blocker();
 
         Thread.State getState();
-    }
-
-    private Repository repository;
-    private final long timeout;
-    private final TimeUnit unit;
-
-    public ThreadRepository( long timeout, TimeUnit unit )
-    {
-        this.timeout = timeout;
-        this.unit = unit;
-    }
-
-    public ThreadInfo execute( Task... tasks )
-    {
-        return repository.createThread( null, tasks );
-    }
-
-    public ThreadInfo execute( String name, Task... tasks )
-    {
-        return repository.createThread( name, tasks );
-    }
-
-    public Signal signal()
-    {
-        return new Signal( new CountDownLatch( 1 ) );
-    }
-
-    public Await await()
-    {
-        return await( 1 );
-    }
-
-    public Await await( int events )
-    {
-        return new Await( new CountDownLatch( events ) );
-    }
-
-    public Events events()
-    {
-        return new Events();
     }
 
     public static class Signal implements Task
@@ -179,49 +222,6 @@ public class ThreadRepository implements TestRule
         }
     }
 
-    @Override
-    public Statement apply( final Statement base, final Description description )
-    {
-        return new Statement()
-        {
-            @Override
-            public void evaluate() throws Throwable
-            {
-                repository = new Repository( description );
-                List<Throwable> failures = new ArrayList<>();
-                try
-                {
-                    base.evaluate();
-                }
-                catch ( Throwable failure )
-                {
-                    failures.add( failure );
-                }
-                finally
-                {
-                    completeThreads( failures );
-                }
-                MultipleFailureException.assertEmpty( failures );
-            }
-        };
-    }
-
-    private void completeThreads() throws Throwable
-    {
-        List<Throwable> failures = new ArrayList<>();
-        completeThreads( failures );
-        MultipleFailureException.assertEmpty( failures );
-    }
-
-    private void completeThreads( List<Throwable> failures )
-    {
-        if ( repository != null )
-        {
-            repository.completeAll( failures );
-        }
-        repository = null;
-    }
-
     private class Repository
     {
         private final Description description;
@@ -243,13 +243,13 @@ public class ThreadRepository implements TestRule
 
         private String nextName( String name )
         {
-            return description.getMethodName() + "-" + (++i) + (name == null ? "" : (":" + name));
+            return new StringBuilder().append(description.getMethodName()).append("-").append(++i).append(name == null ? "" : (":" + name))
+					.toString();
         }
 
         void completeAll( List<Throwable> failures )
         {
-            for ( TaskThread thread : threads )
-            {
+            threads.forEach(thread -> {
                 try
                 {
                     thread.complete( failures, timeout, unit );
@@ -258,7 +258,7 @@ public class ThreadRepository implements TestRule
                 {
                     failures.add( interrupted );
                 }
-            }
+            });
         }
     }
 
@@ -313,7 +313,8 @@ public class ThreadRepository implements TestRule
     {
         ThreadStillRunningException( TaskThread thread )
         {
-            super( '"' + thread.getName() + "\"; state=" + thread.getState() + "; blockedOn=" + thread.blocker() );
+            super( new StringBuilder().append('"').append(thread.getName()).append("\"; state=").append(thread.getState()).append("; blockedOn=").append(thread.blocker())
+					.toString() );
             setStackTrace( thread.getStackTrace() );
         }
 

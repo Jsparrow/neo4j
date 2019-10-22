@@ -76,11 +76,10 @@ class PrimitiveLongIntMapIT
 
     private static void fullVerification( Maps target, Random random )
     {
-        for ( Map.Entry<Long, Integer> entry: target.normalMap.entrySet() )
-        {
+        target.normalMap.entrySet().forEach(entry -> {
             assertTrue( target.map.containsKey( entry.getKey() ) );
             assertEquals( entry.getValue().intValue(), target.map.get( entry.getKey() ) );
-        }
+        });
 
         for ( int i = 0; i < target.normalMap.size(); i++ )
         {
@@ -90,8 +89,7 @@ class PrimitiveLongIntMapIT
 
     private static Printable given()
     {
-        return out -> out.println( PrimitiveLongIntMap.class.getSimpleName() + " map = " +
-                Primitive.class.getSimpleName() + ".longIntMap();" );
+        return out -> out.println( new StringBuilder().append(PrimitiveLongIntMap.class.getSimpleName()).append(" map = ").append(Primitive.class.getSimpleName()).append(".longIntMap();").toString() );
     }
 
     private static ActionFactory<Maps, String> actionFactory( final Random random )
@@ -146,7 +144,13 @@ class PrimitiveLongIntMapIT
         return value;
     }
 
-    private static class AddAction implements Action<Maps, String>
+    private static String capitilize( boolean bool )
+    {
+        String string = Boolean.valueOf( bool ).toString();
+        return string.substring( 0, 1 ).toUpperCase() + string.substring( 1 ).toLowerCase();
+    }
+
+	private static class AddAction implements Action<Maps, String>
     {
         private final long key;
         private final int value;
@@ -182,14 +186,14 @@ class PrimitiveLongIntMapIT
                             (valueAfter == value) &
                             existsAfter &
                             (sizeAfter == actualSizeAfter);
-            return ok ? null : "" + key + ":" + value + "," + existingValue + "," + existedBefore +
-                    "," + previous + "," + existsAfter;
+            return ok ? null : new StringBuilder().append(Long.toString(key)).append(":").append(value).append(",").append(existingValue).append(",")
+					.append(existedBefore).append(",").append(previous).append(",").append(existsAfter).toString();
         }
 
         @Override
         public void printAsCode( Maps source, LinePrinter out, boolean includeChecks )
         {
-            String addition = "map.put( " + key + ", " + value + " );";
+            String addition = new StringBuilder().append("map.put( ").append(key).append(", ").append(value).append(" );").toString();
             if ( includeChecks )
             {
                 boolean existing = source.normalMap.containsKey( key );
@@ -206,7 +210,8 @@ class PrimitiveLongIntMapIT
                 out.println( format( "assertEquals( \"%s\", %d, sizeBefore );",
                         "Size before put should have been " + actualSizeBefore, actualSizeBefore ) );
                 out.println( format( "assert%s( \"%s\", existedBefore );", capitilize( existing ),
-                        key + " should " + (existing ? "" : "not ") + "exist before putting here" ) );
+                        new StringBuilder().append(key).append(" should ").append(existing ? "" : "not ").append("exist before putting here")
+								.toString() ) );
                 out.println( format( "assertEquals( \"%s\", %d, valueBefore );",
                         "value before should be " + existingValue, existingValue ) );
                 out.println( format( "assertEquals( \"%s\", %d, previous );",
@@ -254,14 +259,14 @@ class PrimitiveLongIntMapIT
                             (existingValue == removed) &
                             (valueAfter == -1) &
                             !existsAfter;
-            return ok ? null : "" + key + "," + existingValue + "," + existedBefore +
-                    "," + removed + "," + existsAfter;
+            return ok ? null : new StringBuilder().append(Long.toString(key)).append(",").append(existingValue).append(",").append(existedBefore).append(",")
+					.append(removed).append(",").append(existsAfter).toString();
         }
 
         @Override
         public void printAsCode( Maps source, LinePrinter out, boolean includeChecks )
         {
-            String removal = "map.remove( " + key + " );";
+            String removal = new StringBuilder().append("map.remove( ").append(key).append(" );").toString();
             if ( includeChecks )
             {
                 boolean existing = source.normalMap.containsKey( key );
@@ -273,7 +278,8 @@ class PrimitiveLongIntMapIT
                 out.println( format( "int valueAfter = map.get( %d );", key ) );
 
                 out.println( format( "assert%s( \"%s\", existedBefore );", capitilize( existing ),
-                        key + " should " + (existing ? "" : "not ") + "exist before removing here" ) );
+                        new StringBuilder().append(key).append(" should ").append(existing ? "" : "not ").append("exist before removing here")
+								.toString() ) );
                 out.println( format( "assertEquals( \"%s\", %d, valueBefore );",
                         "value before should be " + existingValue, existingValue ) );
                 out.println( format( "assertEquals( \"%s\", %d, removed );",
@@ -288,12 +294,6 @@ class PrimitiveLongIntMapIT
                 out.println( removal );
             }
         }
-    }
-
-    private static String capitilize( boolean bool )
-    {
-        String string = Boolean.valueOf( bool ).toString();
-        return string.substring( 0, 1 ).toUpperCase() + string.substring( 1 ).toLowerCase();
     }
 
     private static class Maps implements TestResource

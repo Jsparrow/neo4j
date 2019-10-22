@@ -35,13 +35,6 @@ import org.neo4j.util.FeatureToggles;
 
 public interface DirectoryFactory extends AutoCloseable
 {
-    static DirectoryFactory directoryFactory( boolean ephemeral )
-    {
-        return ephemeral ? new DirectoryFactory.InMemoryDirectoryFactory() : DirectoryFactory.PERSISTENT;
-    }
-
-    Directory open( File dir ) throws IOException;
-
     DirectoryFactory PERSISTENT = new DirectoryFactory()
     {
         private final int MAX_MERGE_SIZE_MB =
@@ -68,27 +61,28 @@ public interface DirectoryFactory extends AutoCloseable
 
     };
 
-    final class InMemoryDirectoryFactory implements DirectoryFactory
+	static DirectoryFactory directoryFactory( boolean ephemeral )
+    {
+        return ephemeral ? new DirectoryFactory.InMemoryDirectoryFactory() : DirectoryFactory.PERSISTENT;
+    }
+
+	Directory open( File dir ) throws IOException;
+
+	final class InMemoryDirectoryFactory implements DirectoryFactory
     {
         private final Map<File, RAMDirectory> directories = new HashMap<>();
 
         @Override
         public synchronized Directory open( File dir )
         {
-            if ( !directories.containsKey( dir ) )
-            {
-                directories.put( dir, new RAMDirectory() );
-            }
+            directories.putIfAbsent(dir, new RAMDirectory());
             return new UncloseableDirectory( directories.get( dir ) );
         }
 
         @Override
         public synchronized void close()
         {
-            for ( RAMDirectory ramDirectory : directories.values() )
-            {
-                ramDirectory.close();
-            }
+            directories.values().forEach(RAMDirectory::close);
             directories.clear();
         }
     }

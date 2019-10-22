@@ -28,35 +28,34 @@ import org.neo4j.io.pagecache.impl.SingleFilePageSwapperFactory;
 
 public class PageSwapperFactoryForTesting
         extends SingleFilePageSwapperFactory
-        implements PageSwapperFactory
 {
     public static final String TEST_PAGESWAPPER_NAME = "pageSwapperForTesting";
 
     public static final AtomicInteger createdCounter = new AtomicInteger();
     public static final AtomicInteger configuredCounter = new AtomicInteger();
 
-    public static int countCreatedPageSwapperFactories()
-    {
-        return createdCounter.get();
-    }
-
-    public static int countConfiguredPageSwapperFactories()
-    {
-        return configuredCounter.get();
-    }
-
     public PageSwapperFactoryForTesting()
     {
         createdCounter.getAndIncrement();
     }
 
-    @Override
+	public static int countCreatedPageSwapperFactories()
+    {
+        return createdCounter.get();
+    }
+
+	public static int countConfiguredPageSwapperFactories()
+    {
+        return configuredCounter.get();
+    }
+
+	@Override
     public String implementationName()
     {
         return TEST_PAGESWAPPER_NAME;
     }
 
-    @Override
+	@Override
     public void open( FileSystemAbstraction fs, Configuration configuration )
     {
         super.open( fs, configuration );

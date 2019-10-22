@@ -27,7 +27,28 @@ import org.neo4j.cypher.internal.v3_5.frontend.phases.CompilationPhaseTracer;
 
 public class TimingCompilationTracer implements CompilationTracer
 {
-    public interface EventListener
+    private final Clock clock;
+	private final EventListener listener;
+
+	public TimingCompilationTracer( EventListener listener )
+    {
+        this( Clock.SYSTEM, listener );
+    }
+
+	TimingCompilationTracer( Clock clock, EventListener listener )
+    {
+        this.clock = clock;
+        this.listener = listener;
+    }
+
+	@Override
+    public QueryCompilationEvent compileQuery( String query )
+    {
+        listener.startQueryCompilation( query );
+        return new Query( clock, query, listener );
+    }
+
+	public interface EventListener
     {
         void startQueryCompilation( String query );
         void queryCompiled( QueryEvent event );
@@ -51,30 +72,9 @@ public class TimingCompilationTracer implements CompilationTracer
 
     interface Clock
     {
-        long nanoTime();
-
         Clock SYSTEM = System::nanoTime;
-    }
 
-    private final Clock clock;
-    private final EventListener listener;
-
-    public TimingCompilationTracer( EventListener listener )
-    {
-        this( Clock.SYSTEM, listener );
-    }
-
-    TimingCompilationTracer( Clock clock, EventListener listener )
-    {
-        this.clock = clock;
-        this.listener = listener;
-    }
-
-    @Override
-    public QueryCompilationEvent compileQuery( String query )
-    {
-        listener.startQueryCompilation( query );
-        return new Query( clock, query, listener );
+		long nanoTime();
     }
 
     private abstract static class Event implements AutoCloseable
@@ -91,12 +91,12 @@ public class TimingCompilationTracer implements CompilationTracer
         @Override
         public final void close()
         {
-            if ( clock != null )
-            {
-                time = clock.nanoTime() - time;
-                clock = null;
-                done();
-            }
+            if (clock == null) {
+				return;
+			}
+			time = clock.nanoTime() - time;
+			clock = null;
+			done();
         }
 
         @SuppressWarnings( "UnusedDeclaration"/*used through inheritance*/ )
@@ -133,7 +133,7 @@ public class TimingCompilationTracer implements CompilationTracer
         @Override
         public String toString()
         {
-            return getClass().getSimpleName() + "[" + queryString + "]";
+            return new StringBuilder().append(getClass().getSimpleName()).append("[").append(queryString).append("]").toString();
         }
 
         @Override
@@ -176,7 +176,7 @@ public class TimingCompilationTracer implements CompilationTracer
         @Override
         public String toString()
         {
-            return getClass().getSimpleName() + "[" + compilationPhase + "]";
+            return new StringBuilder().append(getClass().getSimpleName()).append("[").append(compilationPhase).append("]").toString();
         }
 
         @Override

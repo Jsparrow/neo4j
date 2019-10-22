@@ -169,9 +169,9 @@ public class CorruptedLogsTruncatorTest
             int lastFileIndex = TOTAL_NUMBER_OF_LOG_FILES - 1;
             for ( long index = nextLogFileIndex; index < lastFileIndex; index++ )
             {
-                checkEntryNameAndSize( zipFile, TransactionLogFiles.DEFAULT_NAME + "." + index, SINGLE_LOG_FILE_SIZE );
+                checkEntryNameAndSize( zipFile, new StringBuilder().append(TransactionLogFiles.DEFAULT_NAME).append(".").append(index).toString(), SINGLE_LOG_FILE_SIZE );
             }
-            checkEntryNameAndSize( zipFile, TransactionLogFiles.DEFAULT_NAME + "." + lastFileIndex,
+            checkEntryNameAndSize( zipFile, new StringBuilder().append(TransactionLogFiles.DEFAULT_NAME).append(".").append(lastFileIndex).toString(),
                     SINGLE_LOG_FILE_SIZE - 1 );
         }
     }
@@ -191,7 +191,7 @@ public class CorruptedLogsTruncatorTest
     private void checkArchiveName( long highestLogVersion, long byteOffset, File corruptedLogsArchive )
     {
         String name = corruptedLogsArchive.getName();
-        assertTrue( name.startsWith( "corrupted-neostore.transaction.db-" + highestLogVersion + "-" + byteOffset ) );
+        assertTrue( name.startsWith( new StringBuilder().append("corrupted-neostore.transaction.db-").append(highestLogVersion).append("-").append(byteOffset).toString() ) );
         assertTrue( FilenameUtils.isExtension( name, "zip" ) );
     }
 

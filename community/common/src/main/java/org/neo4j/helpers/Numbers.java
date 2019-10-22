@@ -119,6 +119,6 @@ public class Numbers
 
     private static String getOverflowMessage( long value, String numericType )
     {
-        return "Value " + value + " is too big to be represented as " + numericType;
+        return new StringBuilder().append("Value ").append(value).append(" is too big to be represented as ").append(numericType).toString();
     }
 }

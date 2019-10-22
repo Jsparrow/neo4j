@@ -47,12 +47,11 @@ class DataCollectorOptions
 
         T parseOrDefault( Map<String,Object> valueMap ) throws InvalidArgumentsException
         {
-            if ( valueMap.containsKey( name ) )
-            {
-                Object o = valueMap.get( name );
-                return parse( o );
-            }
-            return defaultValue;
+            if (!valueMap.containsKey( name )) {
+				return defaultValue;
+			}
+			Object o = valueMap.get( name );
+			return parse( o );
         }
     }
 

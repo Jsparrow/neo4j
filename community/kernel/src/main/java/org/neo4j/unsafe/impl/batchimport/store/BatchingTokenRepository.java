@@ -103,8 +103,7 @@ public abstract class BatchingTokenRepository<RECORD extends TokenRecord>
             // A raw token id was supplied, just use it
             return (Integer) key;
         }
-        throw new IllegalArgumentException( "Expected either a String or Integer for property key, but was '" +
-                key + "'" + ", " + key.getClass() );
+        throw new IllegalArgumentException( new StringBuilder().append("Expected either a String or Integer for property key, but was '").append(key).append("'").append(", ").append(key.getClass()).toString() );
     }
 
     @Override
@@ -198,10 +197,7 @@ public abstract class BatchingTokenRepository<RECORD extends TokenRecord>
     private Iterable<Map.Entry<Integer,String>> sortCreatedTokensById()
     {
         Map<Integer,String> sorted = new TreeMap<>();
-        for ( Map.Entry<String,Integer> entry : tokens.entrySet() )
-        {
-            sorted.put( entry.getValue(), entry.getKey() );
-        }
+        tokens.entrySet().forEach(entry -> sorted.put(entry.getValue(), entry.getKey()));
         return sorted.entrySet();
     }
 

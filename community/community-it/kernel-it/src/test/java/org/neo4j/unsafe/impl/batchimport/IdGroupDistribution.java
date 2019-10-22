@@ -72,7 +72,6 @@ public class IdGroupDistribution
                 return groups.get( 1 + i );
             }
         }
-        throw new IllegalArgumentException( "Strange, couldn't find group for node (import order) " + nodeInOrder +
-                ", counted to " + at + " as total number of " + at );
+        throw new IllegalArgumentException( new StringBuilder().append("Strange, couldn't find group for node (import order) ").append(nodeInOrder).append(", counted to ").append(at).append(" as total number of ").append(at).toString() );
     }
 }

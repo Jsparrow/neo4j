@@ -52,11 +52,11 @@ public class TrackingRecordProxy<RECORD, ADDITIONAL> implements RecordProxy<RECO
 
     private void trackChange()
     {
-        if ( !created && !changed )
-        {
-            tracker.changingRelationship( getKey() );
-            changed = true;
-        }
+        if (!(!created && !changed)) {
+			return;
+		}
+		tracker.changingRelationship( getKey() );
+		changed = true;
     }
 
     @Override

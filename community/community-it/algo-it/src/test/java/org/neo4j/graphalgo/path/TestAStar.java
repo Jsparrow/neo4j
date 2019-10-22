@@ -56,7 +56,22 @@ import static org.neo4j.graphdb.Direction.OUTGOING;
 public class TestAStar extends Neo4jAlgoTestCase
 {
 
-    @Test
+    static EstimateEvaluator<Double> ESTIMATE_EVALUATOR = ( node, goal ) ->
+    {
+        double dx = (Double) node.getProperty( "x" )
+                    - (Double) goal.getProperty( "x" );
+        double dy = (Double) node.getProperty( "y" )
+                    - (Double) goal.getProperty( "y" );
+        return Math.sqrt( Math.pow( dx, 2 ) + Math.pow( dy, 2 ) );
+    };
+	private final PathFinder<WeightedPath> finder;
+
+	public TestAStar( PathFinder<WeightedPath> finder )
+    {
+        this.finder = finder;
+    }
+
+	@Test
     public void pathToSelfReturnsZero()
     {
         // GIVEN
@@ -71,7 +86,7 @@ public class TestAStar extends Neo4jAlgoTestCase
         assertEquals( 0, path.length() );
     }
 
-    @Test
+	@Test
     public void allPathsToSelfReturnsZero()
     {
         // GIVEN
@@ -90,7 +105,7 @@ public class TestAStar extends Neo4jAlgoTestCase
         }
     }
 
-    @Test
+	@Test
     public void wikipediaExample()
     {
         /* GIVEN
@@ -129,7 +144,7 @@ public class TestAStar extends Neo4jAlgoTestCase
         assertPathDef( path, "start", "d", "e", "end" );
     }
 
-    /**
+	/**
      * <pre>
      *   01234567
      *  +-------->x  A - C: 10
@@ -161,7 +176,7 @@ public class TestAStar extends Neo4jAlgoTestCase
         assertEquals( 1, counter );
     }
 
-    @SuppressWarnings( { "rawtypes", "unchecked" } )
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
     @Test
     public void canUseBranchState()
     {
@@ -226,7 +241,7 @@ public class TestAStar extends Neo4jAlgoTestCase
         assertEquals( MapUtil.<Node,Double>genericMap( nodeA, 0D, nodeB, 2D ), seenBranchStates );
     }
 
-    @Test
+	@Test
     public void betterTentativePath()
     {
         // GIVEN
@@ -252,16 +267,7 @@ public class TestAStar extends Neo4jAlgoTestCase
         assertPath( best14, node1, node2, node3, node4 );
     }
 
-    static EstimateEvaluator<Double> ESTIMATE_EVALUATOR = ( node, goal ) ->
-    {
-        double dx = (Double) node.getProperty( "x" )
-                    - (Double) goal.getProperty( "x" );
-        double dy = (Double) node.getProperty( "y" )
-                    - (Double) goal.getProperty( "y" );
-        return Math.sqrt( Math.pow( dx, 2 ) + Math.pow( dy, 2 ) );
-    };
-
-    @Parameters
+	@Parameters
     public static Collection<Object[]> data()
     {
         return Arrays.asList( new Object[][]
@@ -273,12 +279,5 @@ public class TestAStar extends Neo4jAlgoTestCase
                 new TraversalAStar( PathExpanders.allTypesAndDirections(), doubleCostEvaluator( "length" ), ESTIMATE_EVALUATOR )
             }
         } );
-    }
-
-    private final PathFinder<WeightedPath> finder;
-
-    public TestAStar( PathFinder<WeightedPath> finder )
-    {
-        this.finder = finder;
     }
 }

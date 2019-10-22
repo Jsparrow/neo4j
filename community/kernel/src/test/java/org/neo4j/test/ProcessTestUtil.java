@@ -47,9 +47,8 @@ public class ProcessTestUtil
         int result = future.get( timeout, unit );
         if ( result != 0 )
         {
-            throw new RuntimeException( "Process for " + mainClass +
-                    " with arguments " + Arrays.toString( arguments ) +
-                    " failed, returned exit value " + result );
+            throw new RuntimeException( new StringBuilder().append("Process for ").append(mainClass).append(" with arguments ").append(Arrays.toString( arguments )).append(" failed, returned exit value ").append(result)
+					.toString() );
         }
     }
 

@@ -34,7 +34,12 @@ public class DynamicRecord extends AbstractBaseRecord
     private int type;
     private boolean startRecord;
 
-    /**
+    public DynamicRecord( long id )
+    {
+        super( id );
+    }
+
+	/**
      * @deprecated use {@link #initialize(boolean, boolean, long, int, int)} instead.
      */
     @Deprecated
@@ -45,7 +50,7 @@ public class DynamicRecord extends AbstractBaseRecord
         return record;
     }
 
-    /**
+	/**
      * @deprecated use {@link #initialize(boolean, boolean, long, int, int)} instead.
      */
     @Deprecated
@@ -61,12 +66,7 @@ public class DynamicRecord extends AbstractBaseRecord
         return record;
     }
 
-    public DynamicRecord( long id )
-    {
-        super( id );
-    }
-
-    public DynamicRecord initialize( boolean inUse, boolean isStartRecord, long nextBlock,
+	public DynamicRecord initialize( boolean inUse, boolean isStartRecord, long nextBlock,
             int type, int length )
     {
         super.initialize( inUse );
@@ -78,23 +78,23 @@ public class DynamicRecord extends AbstractBaseRecord
         return this;
     }
 
-    @Override
+	@Override
     public void clear()
     {
         initialize( false, true, Record.NO_NEXT_BLOCK.intValue(), -1, 0 );
     }
 
-    public void setStartRecord( boolean startRecord )
+	public void setStartRecord( boolean startRecord )
     {
         this.startRecord = startRecord;
     }
 
-    public boolean isStartRecord()
+	public boolean isStartRecord()
     {
         return startRecord;
     }
 
-    /**
+	/**
      * @return The {@link PropertyType} of this record or null if unset or non valid
      */
     public PropertyType getType()
@@ -102,7 +102,7 @@ public class DynamicRecord extends AbstractBaseRecord
         return PropertyType.getPropertyTypeOrNull( (long) (this.type << 24) );
     }
 
-    /**
+	/**
      * @return The {@link #type} field of this record, as set by previous invocations to {@link #setType(int)} or
      * {@link #initialize(boolean, boolean, long, int, int)}
      */
@@ -111,49 +111,49 @@ public class DynamicRecord extends AbstractBaseRecord
         return type;
     }
 
-    public void setType( int type )
+	public void setType( int type )
     {
         this.type = type;
     }
 
-    public void setLength( int length )
+	public void setLength( int length )
     {
         this.length = length;
     }
 
-    public void setInUse( boolean inUse, int type )
+	public void setInUse( boolean inUse, int type )
     {
         this.type = type;
         this.setInUse( inUse );
     }
 
-    public void setData( byte[] data )
+	public void setData( byte[] data )
     {
         this.length = data.length;
         this.data = data;
     }
 
-    public int getLength()
+	public int getLength()
     {
         return length;
     }
 
-    public byte[] getData()
+	public byte[] getData()
     {
         return data;
     }
 
-    public long getNextBlock()
+	public long getNextBlock()
     {
         return nextBlock;
     }
 
-    public void setNextBlock( long nextBlock )
+	public void setNextBlock( long nextBlock )
     {
         this.nextBlock = nextBlock;
     }
 
-    @Override
+	@Override
     public String toString()
     {
         StringBuilder buf = new StringBuilder();
@@ -202,7 +202,7 @@ public class DynamicRecord extends AbstractBaseRecord
         return buf.toString();
     }
 
-    @Override
+	@Override
     public DynamicRecord clone()
     {
         DynamicRecord clone = new DynamicRecord( getId() ).initialize( inUse(),

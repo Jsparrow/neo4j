@@ -47,14 +47,11 @@ public class RecordProcessorStep<T extends AbstractBaseRecord> extends Processor
     {
         for ( T item : batch )
         {
-            if ( item != null && item.inUse() )
-            {
-                if ( !processor.process( item ) )
-                {
-                    // No change for this record
-                    item.setInUse( false );
-                }
-            }
+            boolean condition = item != null && item.inUse() && !processor.process( item );
+			if ( condition ) {
+			    // No change for this record
+			    item.setInUse( false );
+			}
         }
 
         // This step can be used in different stage settings, possible as the last step,

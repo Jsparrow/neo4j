@@ -71,5 +71,5 @@ public interface AuxiliaryTransactionStateHolder extends AutoCloseable
      * @throws AuxiliaryTransactionStateCloseException if something went wrong when closing the internal auxiliary transaction states.
      */
     @Override
-    void close() throws AuxiliaryTransactionStateCloseException;
+    void close();
 }

@@ -45,9 +45,7 @@ abstract class NodeConstraintDefinition extends MultiPropertyConstraintDefinitio
         super( actions, indexDefinition );
         if ( indexDefinition.isMultiTokenIndex() )
         {
-            throw new IllegalArgumentException( "Node constraints do not support multi-token definitions. That is, they cannot apply to more than one label, " +
-                    "but an attempt was made to create a node constraint on the following labels: " +
-                    labelNameList( indexDefinition.getLabels(), "", "." ) );
+            throw new IllegalArgumentException( new StringBuilder().append("Node constraints do not support multi-token definitions. That is, they cannot apply to more than one label, ").append("but an attempt was made to create a node constraint on the following labels: ").append(labelNameList( indexDefinition.getLabels(), "", "." )).toString() );
         }
         this.label = single( indexDefinition.getLabels() );
     }
@@ -86,12 +84,12 @@ abstract class NodeConstraintDefinition extends MultiPropertyConstraintDefinitio
         String nodeVariable = label.name().toLowerCase();
         if ( propertyKeys.length == 1 )
         {
-            return nodeVariable + "." + propertyKeys[0];
+            return new StringBuilder().append(nodeVariable).append(".").append(propertyKeys[0]).toString();
         }
         else
         {
-            return "(" + Arrays.stream( propertyKeys ).map( p -> nodeVariable + "." + p )
-                    .collect( Collectors.joining( "," ) ) + ")";
+            return new StringBuilder().append("(").append(Arrays.stream( propertyKeys ).map( p -> nodeVariable + "." + p )
+                    .collect( Collectors.joining( "," ) )).append(")").toString();
         }
     }
 

@@ -33,16 +33,19 @@ import static java.lang.Math.toIntExact;
  */
 public class InMemoryClosableChannel implements ReadableClosablePositionAwareChannel, FlushablePositionAwareChannel
 {
-    private final byte[] bytes;
-    private final Reader reader;
-    private final Writer writer;
+    private static final Flushable NO_OP_FLUSHABLE = () ->
+    {
+    };
+	private final byte[] bytes;
+	private final Reader reader;
+	private final Writer writer;
 
-    public InMemoryClosableChannel()
+	public InMemoryClosableChannel()
     {
         this( 1000 );
     }
 
-    public InMemoryClosableChannel( byte[] bytes, boolean append )
+	public InMemoryClosableChannel( byte[] bytes, boolean append )
     {
         this.bytes = bytes;
         ByteBuffer writeBuffer = ByteBuffer.wrap( this.bytes );
@@ -55,193 +58,189 @@ public class InMemoryClosableChannel implements ReadableClosablePositionAwareCha
         this.reader = new Reader( readBuffer );
     }
 
-    public InMemoryClosableChannel( int bufferSize )
+	public InMemoryClosableChannel( int bufferSize )
     {
         this( new byte[bufferSize], false );
     }
 
-    public void reset()
+	public void reset()
     {
         writer.clear();
         reader.clear();
         Arrays.fill( bytes, (byte) 0 );
     }
 
-    public Reader reader()
+	public Reader reader()
     {
         return reader;
     }
 
-    public Writer writer()
+	public Writer writer()
     {
         return writer;
     }
 
-    @Override
+	@Override
     public InMemoryClosableChannel put( byte b )
     {
         writer.put( b );
         return this;
     }
 
-    @Override
+	@Override
     public InMemoryClosableChannel putShort( short s )
     {
         writer.putShort( s );
         return this;
     }
 
-    @Override
+	@Override
     public InMemoryClosableChannel putInt( int i )
     {
         writer.putInt( i );
         return this;
     }
 
-    @Override
+	@Override
     public InMemoryClosableChannel putLong( long l )
     {
         writer.putLong( l );
         return this;
     }
 
-    @Override
+	@Override
     public InMemoryClosableChannel putFloat( float f )
     {
         writer.putFloat( f );
         return this;
     }
 
-    @Override
+	@Override
     public InMemoryClosableChannel putDouble( double d )
     {
         writer.putDouble( d );
         return this;
     }
 
-    @Override
+	@Override
     public InMemoryClosableChannel put( byte[] bytes, int length )
     {
         writer.put( bytes, length );
         return this;
     }
 
-    public boolean isOpen()
+	public boolean isOpen()
     {
         return true;
     }
 
-    @Override
+	@Override
     public void close()
     {
         reader.close();
         writer.close();
     }
 
-    @Override
+	@Override
     public Flushable prepareForFlush()
     {
         return NO_OP_FLUSHABLE;
     }
 
-    @Override
+	@Override
     public byte get() throws ReadPastEndException
     {
         return reader.get();
     }
 
-    @Override
+	@Override
     public short getShort() throws ReadPastEndException
     {
         return reader.getShort();
     }
 
-    @Override
+	@Override
     public int getInt() throws ReadPastEndException
     {
         return reader.getInt();
     }
 
-    @Override
+	@Override
     public long getLong() throws ReadPastEndException
     {
         return reader.getLong();
     }
 
-    @Override
+	@Override
     public float getFloat() throws ReadPastEndException
     {
         return reader.getFloat();
     }
 
-    @Override
+	@Override
     public double getDouble() throws ReadPastEndException
     {
         return reader.getDouble();
     }
 
-    @Override
+	@Override
     public void get( byte[] bytes, int length ) throws ReadPastEndException
     {
         reader.get( bytes, length );
     }
 
-    @Override
+	@Override
     public LogPositionMarker getCurrentPosition( LogPositionMarker positionMarker )
     {
         // Hmm, this would be for the writer.
         return writer.getCurrentPosition( positionMarker );
     }
 
-    public int positionWriter( int position )
+	public int positionWriter( int position )
     {
         int previous = writer.position();
         writer.position( position );
         return previous;
     }
 
-    public int positionReader( int position )
+	public int positionReader( int position )
     {
         int previous = reader.position();
         reader.position( position );
         return previous;
     }
 
-    public int readerPosition()
+	public int readerPosition()
     {
         return reader.position();
     }
 
-    public int writerPosition()
+	public int writerPosition()
     {
         return writer.position();
     }
 
-    public void truncateTo( int offset )
+	public void truncateTo( int offset )
     {
         reader.limit( offset );
     }
 
-    public int capacity()
+	public int capacity()
     {
         return bytes.length;
     }
 
-    public int availableBytesToRead()
+	public int availableBytesToRead()
     {
         return reader.remaining();
     }
 
-    public int availableBytesToWrite()
+	public int availableBytesToWrite()
     {
         return writer.remaining();
     }
 
-    private static final Flushable NO_OP_FLUSHABLE = () ->
-    {
-    };
-
-    class ByteBufferBase implements PositionAwareChannel, Closeable
+	class ByteBufferBase implements PositionAwareChannel, Closeable
     {
         protected final ByteBuffer buffer;
 

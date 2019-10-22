@@ -113,29 +113,27 @@ public class MultiIndexPopulationConcurrentUpdatesIT
     @Rule
     public EmbeddedDatabaseRule embeddedDatabase = new EmbeddedDatabaseRule();
     private StoreIndexDescriptor[] rules;
+	@Parameterized.Parameter
+    public GraphDatabaseSettings.SchemaIndex schemaIndex;
+	private IndexingService indexService;
+	private int propertyId;
+	private Map<String,Integer> labelsNameIdMap;
+	private Map<Integer,String> labelsIdNameMap;
+	private Node country1;
+	private Node country2;
+	private Node color1;
+	private Node color2;
+	private Node car1;
+	private Node car2;
+	private Node[] otherNodes;
 
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static GraphDatabaseSettings.SchemaIndex[] parameters()
     {
         return GraphDatabaseSettings.SchemaIndex.values();
     }
 
-    @Parameterized.Parameter
-    public GraphDatabaseSettings.SchemaIndex schemaIndex;
-
-    private IndexingService indexService;
-    private int propertyId;
-    private Map<String,Integer> labelsNameIdMap;
-    private Map<Integer,String> labelsIdNameMap;
-    private Node country1;
-    private Node country2;
-    private Node color1;
-    private Node color2;
-    private Node car1;
-    private Node car2;
-    private Node[] otherNodes;
-
-    @After
+	@After
     public void tearDown() throws Throwable
     {
         if ( indexService != null )
@@ -144,7 +142,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         }
     }
 
-    @Before
+	@Before
     public void setUp()
     {
         prepareDb();
@@ -156,7 +154,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         propertyId = getPropertyId();
     }
 
-    @Test
+	@Test
     public void applyConcurrentDeletesToPopulatedIndex() throws Throwable
     {
         List<EntityUpdates> updates = new ArrayList<>( 2 );
@@ -186,7 +184,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         }
     }
 
-    @Test
+	@Test
     public void applyConcurrentAddsToPopulatedIndex() throws Throwable
     {
         List<EntityUpdates> updates = new ArrayList<>( 2 );
@@ -216,7 +214,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         }
     }
 
-    @Test
+	@Test
     public void applyConcurrentChangesToPopulatedIndex() throws Exception
     {
         List<EntityUpdates> updates = new ArrayList<>( 2 );
@@ -251,7 +249,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         }
     }
 
-    @Test
+	@Test
     public void dropOneOfTheIndexesWhilePopulationIsOngoingDoesInfluenceOtherPopulators() throws Exception
     {
         launchCustomIndexPopulation( labelsNameIdMap, propertyId,
@@ -263,7 +261,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         checkIndexIsOnline( labelsNameIdMap.get( COUNTRY_LABEL ));
     }
 
-    @Test
+	@Test
     public void indexDroppedDuringPopulationDoesNotExist() throws Exception
     {
         Integer labelToDropId = labelsNameIdMap.get( COLOR_LABEL );
@@ -282,24 +280,24 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         }
     }
 
-    private void checkIndexIsOnline( int labelId ) throws IndexNotFoundKernelException
+	private void checkIndexIsOnline( int labelId ) throws IndexNotFoundKernelException
     {
         IndexProxy indexProxy = indexService.getIndexProxy( SchemaDescriptorFactory.forLabel( labelId, propertyId ) );
         assertSame( indexProxy.getState(), InternalIndexState.ONLINE );
     }
 
-    private long[] id( String label )
+	private long[] id( String label )
     {
         return new long[]{labelsNameIdMap.get( label )};
     }
 
-    private IndexReader getIndexReader( int propertyId, Integer countryLabelId ) throws IndexNotFoundKernelException
+	private IndexReader getIndexReader( int propertyId, Integer countryLabelId ) throws IndexNotFoundKernelException
     {
         return indexService.getIndexProxy( SchemaDescriptorFactory.forLabel( countryLabelId, propertyId ) )
                 .newReader();
     }
 
-    private void launchCustomIndexPopulation( Map<String,Integer> labelNameIdMap, int propertyId,
+	private void launchCustomIndexPopulation( Map<String,Integer> labelNameIdMap, int propertyId,
             Runnable customAction ) throws Exception
     {
         NeoStores neoStores = getNeoStores();
@@ -328,7 +326,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         }
     }
 
-    private DynamicIndexStoreView dynamicIndexStoreViewWrapper( Runnable customAction, NeoStores neoStores,
+	private DynamicIndexStoreView dynamicIndexStoreViewWrapper( Runnable customAction, NeoStores neoStores,
             LabelScanStore labelScanStore )
     {
         LockService locks = LockService.NO_LOCK_SERVICE;
@@ -336,7 +334,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         return new DynamicIndexStoreViewWrapper( neoStoreIndexStoreView, labelScanStore, locks, neoStores, customAction );
     }
 
-    private void waitAndActivateIndexes( Map<String,Integer> labelsIds, int propertyId )
+	private void waitAndActivateIndexes( Map<String,Integer> labelsIds, int propertyId )
             throws IndexNotFoundKernelException, IndexPopulationFailedKernelException, InterruptedException,
             IndexActivationFailedKernelException
     {
@@ -349,7 +347,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         }
     }
 
-    private int getPropertyId()
+	private int getPropertyId()
     {
         try ( Transaction ignored = embeddedDatabase.beginTx() )
         {
@@ -357,7 +355,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         }
     }
 
-    private Map<String,Integer> getLabelsNameIdMap()
+	private Map<String,Integer> getLabelsNameIdMap()
     {
         try ( Transaction ignored = embeddedDatabase.beginTx() )
         {
@@ -365,7 +363,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         }
     }
 
-    private void waitIndexOnline( IndexingService indexService, int propertyId, int labelId )
+	private void waitIndexOnline( IndexingService indexService, int propertyId, int labelId )
             throws IndexNotFoundKernelException, IndexPopulationFailedKernelException, InterruptedException,
             IndexActivationFailedKernelException
     {
@@ -378,7 +376,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         indexProxy.activate();
     }
 
-    private StoreIndexDescriptor[] createIndexRules( Map<String,Integer> labelNameIdMap, int propertyId )
+	private StoreIndexDescriptor[] createIndexRules( Map<String,Integer> labelNameIdMap, int propertyId )
     {
         IndexProvider lookup = getIndexProviderMap().lookup( schemaIndex.providerName() );
         IndexProviderDescriptor providerDescriptor = lookup.getProviderDescriptor();
@@ -387,12 +385,12 @@ public class MultiIndexPopulationConcurrentUpdatesIT
                 .toArray( StoreIndexDescriptor[]::new );
     }
 
-    private List<SchemaRule> getIndexRules( NeoStores neoStores )
+	private List<SchemaRule> getIndexRules( NeoStores neoStores )
     {
         return Iterators.asList( new SchemaStorage( neoStores.getSchemaStore() ).loadAllSchemaRules() );
     }
 
-    private Map<String, Integer> getLabelIdsByName( String... names )
+	private Map<String, Integer> getLabelIdsByName( String... names )
     {
         ThreadToStatementContextBridge transactionStatementContextBridge = getTransactionStatementContextBridge();
         Map<String,Integer> labelNameIdMap = new HashMap<>();
@@ -409,7 +407,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         return labelNameIdMap;
     }
 
-    private int getPropertyIdByName( String name )
+	private int getPropertyIdByName( String name )
     {
         ThreadToStatementContextBridge transactionStatementContextBridge = getTransactionStatementContextBridge();
         KernelTransaction ktx =
@@ -420,7 +418,7 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         }
     }
 
-    private void prepareDb()
+	private void prepareDb()
     {
         Label countryLabel = Label.label( COUNTRY_LABEL );
         Label color = Label.label( COLOR_LABEL );
@@ -446,40 +444,40 @@ public class MultiIndexPopulationConcurrentUpdatesIT
         }
     }
 
-    private Node createNamedLabeledNode( Label label, String name )
+	private Node createNamedLabeledNode( Label label, String name )
     {
         Node node = embeddedDatabase.createNode( label );
         node.setProperty( NAME_PROPERTY, name );
         return node;
     }
 
-    private LabelScanStore getLabelScanStore()
+	private LabelScanStore getLabelScanStore()
     {
         return embeddedDatabase.resolveDependency( LabelScanStore.class );
     }
 
-    private NeoStores getNeoStores()
+	private NeoStores getNeoStores()
     {
         RecordStorageEngine recordStorageEngine = embeddedDatabase.resolveDependency( RecordStorageEngine.class );
         return recordStorageEngine.testAccessNeoStores();
     }
 
-    private SchemaState getSchemaState()
+	private SchemaState getSchemaState()
     {
         return embeddedDatabase.resolveDependency( SchemaState.class );
     }
 
-    private ThreadToStatementContextBridge getTransactionStatementContextBridge()
+	private ThreadToStatementContextBridge getTransactionStatementContextBridge()
     {
         return embeddedDatabase.resolveDependency( ThreadToStatementContextBridge.class );
     }
 
-    private IndexProviderMap getIndexProviderMap()
+	private IndexProviderMap getIndexProviderMap()
     {
         return embeddedDatabase.resolveDependency( IndexProviderMap.class );
     }
 
-    private JobScheduler getJobScheduler()
+	private JobScheduler getJobScheduler()
     {
         return embeddedDatabase.resolveDependency( JobScheduler.class );
     }

@@ -33,7 +33,67 @@ import org.neo4j.graphdb.Node;
 public class DijkstraPriorityQueueImpl<CostType> implements
     DijkstraPriorityQueue<CostType>
 {
-    /**
+    Comparator<CostType> costComparator;
+	PriorityQueue<pathObject> queue;
+
+	public DijkstraPriorityQueueImpl( final Comparator<CostType> costComparator )
+    {
+        this.costComparator = costComparator;
+        queue = new PriorityQueue<>( 11, ( o1, o2 ) -> costComparator.compare( o1.getCost(), o2.getCost() ) );
+    }
+
+	@Override
+    public void insertValue( Node node, CostType value )
+    {
+        queue.add( new pathObject( node, value ) );
+    }
+
+	@Override
+    public void decreaseValue( Node node, CostType newValue )
+    {
+        pathObject po = new pathObject( node, newValue );
+        // Shake the queue
+        // remove() will remove the old pathObject
+        // BUT IT TAKES A LOT OF TIME FOR SOME REASON
+        // queue.remove( po );
+        queue.add( po );
+    }
+
+	/**
+     * Retrieve and remove
+     */
+    @Override
+    public Node extractMin()
+    {
+        pathObject po = queue.poll();
+        if ( po == null )
+        {
+            return null;
+        }
+        return po.getNode();
+    }
+
+	/**
+     * Retrieve without removing
+     */
+    @Override
+    public Node peek()
+    {
+        pathObject po = queue.peek();
+        if ( po == null )
+        {
+            return null;
+        }
+        return po.getNode();
+    }
+
+	@Override
+    public boolean isEmpty()
+    {
+        return queue.isEmpty();
+    }
+
+	/**
      * Data structure used for the internal priority queue
      */
     protected class pathObject
@@ -98,66 +158,5 @@ public class DijkstraPriorityQueueImpl<CostType> implements
             result = 31 * result + (cost != null ? cost.hashCode() : 0);
             return result;
         }
-    }
-
-    Comparator<CostType> costComparator;
-    PriorityQueue<pathObject> queue;
-
-    public DijkstraPriorityQueueImpl( final Comparator<CostType> costComparator )
-    {
-        super();
-        this.costComparator = costComparator;
-        queue = new PriorityQueue<>( 11, ( o1, o2 ) -> costComparator.compare( o1.getCost(), o2.getCost() ) );
-    }
-
-    @Override
-    public void insertValue( Node node, CostType value )
-    {
-        queue.add( new pathObject( node, value ) );
-    }
-
-    @Override
-    public void decreaseValue( Node node, CostType newValue )
-    {
-        pathObject po = new pathObject( node, newValue );
-        // Shake the queue
-        // remove() will remove the old pathObject
-        // BUT IT TAKES A LOT OF TIME FOR SOME REASON
-        // queue.remove( po );
-        queue.add( po );
-    }
-
-    /**
-     * Retrieve and remove
-     */
-    @Override
-    public Node extractMin()
-    {
-        pathObject po = queue.poll();
-        if ( po == null )
-        {
-            return null;
-        }
-        return po.getNode();
-    }
-
-    /**
-     * Retrieve without removing
-     */
-    @Override
-    public Node peek()
-    {
-        pathObject po = queue.peek();
-        if ( po == null )
-        {
-            return null;
-        }
-        return po.getNode();
-    }
-
-    @Override
-    public boolean isEmpty()
-    {
-        return queue.isEmpty();
     }
 }

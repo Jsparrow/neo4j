@@ -52,9 +52,6 @@ import static org.junit.Assert.assertTrue;
 
 public class ArrayEncoderTest
 {
-    @Rule
-    public final ThreadingRule threads = new ThreadingRule();
-
     private static final Character[] base64chars = new Character[]{
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
             'V', 'W', 'X', 'Y', 'Z',
@@ -62,10 +59,15 @@ public class ArrayEncoderTest
             'v', 'w', 'x', 'y', 'z',
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             '+', '/'};
-    private static final char ARRAY_ENTRY_SEPARATOR = '|';
-    private static final char PADDING = '=';
 
-    @Test
+	private static final char ARRAY_ENTRY_SEPARATOR = '|';
+
+	private static final char PADDING = '=';
+
+	@Rule
+    public final ThreadingRule threads = new ThreadingRule();
+
+	@Test
     public void encodingShouldContainOnlyBase64EncodingChars()
     {
         String[] array = {
@@ -94,14 +96,14 @@ public class ArrayEncoderTest
             }
             else
             {
-                assertTrue( "Char " + character + " at position " + i + " is not a valid Base64 encoded char",
+                assertTrue( new StringBuilder().append("Char ").append(character).append(" at position ").append(i).append(" is not a valid Base64 encoded char").toString(),
                         ArrayUtil.contains( base64chars, character ) );
             }
         }
         assertEquals( array.length, separators );
     }
 
-    @Test
+	@Test
     public void shouldEncodeArrays()
     {
         assertEncoding( "D1.0|2.0|3.0|", new int[]{1, 2, 3} );
@@ -130,7 +132,7 @@ public class ArrayEncoderTest
                 new TemporalAmount[]{DurationValue.duration( 1991, 3, 5, 12 ).asObjectCopy(), DurationValue.duration( 1992, 4, 6, 5 ).asObjectCopy()} );
     }
 
-    @Test
+	@Test
     public void shouldEncodeProperlyWithMultipleThreadsRacing() throws Throwable
     {
         // given
@@ -150,7 +152,7 @@ public class ArrayEncoderTest
         raceEncode( INPUT, ArrayEncoder::encode );
     }
 
-    private void raceEncode( String[] INPUT, Function<Value, String> encodeFunction ) throws Throwable
+	private void raceEncode( String[] INPUT, Function<Value, String> encodeFunction ) throws Throwable
     {
         Race race = new Race();
         for ( String input : INPUT )
@@ -162,15 +164,14 @@ public class ArrayEncoderTest
                 for ( int i = 0; i < 1000; i++ )
                 {
                     String encoded = encodeFunction.apply( inputValue );
-                    assertEquals( "Each attempt at encoding should yield the same result. Turns out that first one was '"
-                            + first + "', yet another one was '" + encoded + "'", first, encoded );
+                    assertEquals( new StringBuilder().append("Each attempt at encoding should yield the same result. Turns out that first one was '").append(first).append("', yet another one was '").append(encoded).append("'").toString(), first, encoded );
                 }
             } );
         }
         race.go();
     }
 
-    private void assertEncoding( String expected, Object toEncode )
+	private void assertEncoding( String expected, Object toEncode )
     {
         assertEquals( expected, ArrayEncoder.encode( Values.of( toEncode ) ) );
     }

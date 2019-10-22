@@ -29,24 +29,27 @@ package org.neo4j.helpers.progress;
 public interface ProgressListener
 {
     @Deprecated
+    ProgressListener NONE = new Adapter();
+
+	@Deprecated
     void started( String task );
 
-    @Deprecated
+	@Deprecated
     void started();
 
-    @Deprecated
+	@Deprecated
     void set( long progress );
 
-    @Deprecated
+	@Deprecated
     void add( long progress );
 
-    @Deprecated
+	@Deprecated
     void done();
 
-    @Deprecated
+	@Deprecated
     void failed( Throwable e );
 
-    @Deprecated
+	@Deprecated
     class Adapter implements ProgressListener
     {
         @Override
@@ -82,9 +85,6 @@ public interface ProgressListener
     }
 
     @Deprecated
-    ProgressListener NONE = new Adapter();
-
-    @Deprecated
     class SinglePartProgressListener extends Adapter
     {
         private final Indicator indicator;
@@ -102,11 +102,11 @@ public interface ProgressListener
         @Override
         public void started( String task )
         {
-            if ( !stared )
-            {
-                stared = true;
-                indicator.startProcess( totalCount );
-            }
+            if (stared) {
+				return;
+			}
+			stared = true;
+			indicator.startProcess( totalCount );
         }
 
         @Override
@@ -138,11 +138,11 @@ public interface ProgressListener
         {
             started();
             int current = totalCount == 0 ? 0 : (int) ((progress * indicator.reportResolution()) / totalCount);
-            if ( current > lastReported )
-            {
-                indicator.progress( lastReported, current );
-                lastReported = current;
-            }
+            if (current <= lastReported) {
+				return;
+			}
+			indicator.progress( lastReported, current );
+			lastReported = current;
         }
     }
 
@@ -167,11 +167,11 @@ public interface ProgressListener
         @Override
         public void started( String task )
         {
-            if ( !started )
-            {
-                aggregator.start( this );
-                started = true;
-            }
+            if (started) {
+				return;
+			}
+			aggregator.start( this );
+			started = true;
         }
 
         @Override
@@ -202,11 +202,11 @@ public interface ProgressListener
         private void update( long progress )
         {
             started();
-            if ( progress > lastReported )
-            {
-                aggregator.update( progress - lastReported );
-                lastReported = progress;
-            }
+            if (progress <= lastReported) {
+				return;
+			}
+			aggregator.update( progress - lastReported );
+			lastReported = progress;
         }
 
         enum State

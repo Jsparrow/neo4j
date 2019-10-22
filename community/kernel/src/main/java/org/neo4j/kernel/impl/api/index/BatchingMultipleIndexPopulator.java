@@ -68,11 +68,11 @@ public class BatchingMultipleIndexPopulator extends MultipleIndexPopulator
 
     // Maximum number of workers processing batches of updates from the scan. It is capped because there's only a single
     // thread generating updates and it generally cannot saturate all the workers anyway.
-    private final int MAXIMUM_NUMBER_OF_WORKERS = FeatureToggles.getInteger( getClass(), MAXIMUM_NUMBER_OF_WORKERS_NAME,
+    private final int maximumNumberOfWorkers = FeatureToggles.getInteger( getClass(), MAXIMUM_NUMBER_OF_WORKERS_NAME,
             min( 8, Runtime.getRuntime().availableProcessors() - 1 ) );
-    private final int TASK_QUEUE_SIZE = FeatureToggles.getInteger( getClass(), TASK_QUEUE_SIZE_NAME,
+    private final int taskQueueSize = FeatureToggles.getInteger( getClass(), TASK_QUEUE_SIZE_NAME,
             getNumberOfPopulationWorkers() * 2 );
-    private final int AWAIT_TIMEOUT_MINUTES = FeatureToggles.getInteger( getClass(), AWAIT_TIMEOUT_MINUTES_NAME, 30 );
+    private final int awaitTimeoutMinutes = FeatureToggles.getInteger( getClass(), AWAIT_TIMEOUT_MINUTES_NAME, 30 );
 
     private final AtomicLong activeTasks = new AtomicLong();
     private final ExecutorService executor;
@@ -130,8 +130,8 @@ public class BatchingMultipleIndexPopulator extends MultipleIndexPopulator
                 .map( population -> population.batchedUpdates.size() + " updates" )
                 .collect( joining( ", ", "[", "]" ) );
 
-        return "BatchingMultipleIndexPopulator{activeTasks=" + activeTasks + ", executor=" + executor + ", " +
-               "batchedUpdates = " + updatesString + ", queuedUpdates = " + updatesQueue.size() + "}";
+        return new StringBuilder().append("BatchingMultipleIndexPopulator{activeTasks=").append(activeTasks).append(", executor=").append(executor).append(", ").append("batchedUpdates = ").append(updatesString)
+				.append(", queuedUpdates = ").append(updatesQueue.size()).append("}").toString();
     }
 
     /**
@@ -144,11 +144,10 @@ public class BatchingMultipleIndexPopulator extends MultipleIndexPopulator
     {
         try
         {
-            log.debug( "Waiting " + AWAIT_TIMEOUT_MINUTES + " minutes for all submitted and active " +
-                       "flush tasks to complete." + EOL + this );
+            log.debug( new StringBuilder().append("Waiting ").append(awaitTimeoutMinutes).append(" minutes for all submitted and active ").append("flush tasks to complete.").append(EOL).append(this).toString() );
 
             BooleanSupplier allSubmittedTasksCompleted = () -> activeTasks.get() == 0;
-            Predicates.await( allSubmittedTasksCompleted, AWAIT_TIMEOUT_MINUTES, TimeUnit.MINUTES );
+            Predicates.await( allSubmittedTasksCompleted, awaitTimeoutMinutes, TimeUnit.MINUTES );
         }
         catch ( TimeoutException e )
         {
@@ -208,7 +207,7 @@ public class BatchingMultipleIndexPopulator extends MultipleIndexPopulator
      */
     private void shutdownExecutor( boolean now )
     {
-        log.info( (now ? "Forcefully shutting" : "Shutting") + " down executor." + EOL + this );
+        log.info( new StringBuilder().append(now ? "Forcefully shutting" : "Shutting").append(" down executor.").append(EOL).append(this).toString() );
         if ( now )
         {
             executor.shutdownNow();
@@ -220,7 +219,7 @@ public class BatchingMultipleIndexPopulator extends MultipleIndexPopulator
 
         try
         {
-            boolean tasksCompleted = executor.awaitTermination( AWAIT_TIMEOUT_MINUTES, TimeUnit.MINUTES );
+            boolean tasksCompleted = executor.awaitTermination( awaitTimeoutMinutes, TimeUnit.MINUTES );
             if ( !tasksCompleted )
             {
                 handleTimeout();
@@ -234,20 +233,20 @@ public class BatchingMultipleIndexPopulator extends MultipleIndexPopulator
 
     private void handleTimeout()
     {
-        throw new IllegalStateException( "Index population tasks were not able to complete in " +
-                                         AWAIT_TIMEOUT_MINUTES + " minutes." + EOL + this + EOL + allStackTraces() );
+        throw new IllegalStateException( new StringBuilder().append("Index population tasks were not able to complete in ").append(awaitTimeoutMinutes).append(" minutes.").append(EOL).append(this).append(EOL)
+				.append(allStackTraces()).toString() );
     }
 
     private void handleInterrupt()
     {
         Thread.currentThread().interrupt();
-        log.warn( "Interrupted while waiting for index population tasks to complete." + EOL + this );
+        log.warn( new StringBuilder().append("Interrupted while waiting for index population tasks to complete.").append(EOL).append(this).toString() );
     }
 
     private ExecutorService createThreadPool()
     {
         int threads = getNumberOfPopulationWorkers();
-        BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<>( TASK_QUEUE_SIZE );
+        BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<>( taskQueueSize );
         ThreadFactory threadFactory = daemon( FLUSH_THREAD_NAME_PREFIX );
         RejectedExecutionHandler rejectedExecutionHandler = new ThreadPoolExecutor.CallerRunsPolicy();
         return new ThreadPoolExecutor( threads, threads, 0L, TimeUnit.MILLISECONDS, workQueue, threadFactory,
@@ -276,7 +275,7 @@ public class BatchingMultipleIndexPopulator extends MultipleIndexPopulator
      */
     private int getNumberOfPopulationWorkers()
     {
-        return Math.max( 2, MAXIMUM_NUMBER_OF_WORKERS );
+        return Math.max( 2, maximumNumberOfWorkers );
     }
 
     @Override
@@ -303,8 +302,7 @@ public class BatchingMultipleIndexPopulator extends MultipleIndexPopulator
         public void run() throws E
         {
             super.run();
-            log.info( "Completed node store scan. " +
-                      "Flushing all pending updates." + EOL + BatchingMultipleIndexPopulator.this );
+            log.info( new StringBuilder().append("Completed node store scan. ").append("Flushing all pending updates.").append(EOL).append(BatchingMultipleIndexPopulator.this).toString() );
             flushAll();
         }
     }

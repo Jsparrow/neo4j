@@ -215,12 +215,12 @@ public class GenericKey extends NativeIndexKey<GenericKey>
         this.type = key.type;
         this.inclusion = key.inclusion;
         this.isArray = key.isArray;
-        if ( key.isArray )
-        {
-            this.arrayLength = key.arrayLength;
-            this.currentArrayOffset = key.currentArrayOffset;
-            this.isHighestArray = key.isHighestArray;
-        }
+        if (!(key.isArray)) {
+			return;
+		}
+		this.arrayLength = key.arrayLength;
+		this.currentArrayOffset = key.currentArrayOffset;
+		this.isHighestArray = key.isHighestArray;
     }
 
     void writeValue( Value value, NativeIndexKey.Inclusion inclusion )
@@ -360,18 +360,16 @@ public class GenericKey extends NativeIndexKey<GenericKey>
         if ( size < ENTITY_ID_SIZE )
         {
             initializeToDummyValue();
-            cursor.setCursorException( format( "Failed to read " + getClass().getSimpleName() +
-                    " due to keySize < ENTITY_ID_SIZE, more precisely %d", size ) );
+            cursor.setCursorException( format( new StringBuilder().append("Failed to read ").append(getClass().getSimpleName()).append(" due to keySize < ENTITY_ID_SIZE, more precisely %d").toString(), size ) );
             return false;
         }
 
         initialize( cursor.getLong() );
-        if ( !getInternal( cursor, size ) )
-        {
-            initializeToDummyValue();
-            return false;
-        }
-        return true;
+        if (getInternal( cursor, size )) {
+			return true;
+		}
+		initializeToDummyValue();
+		return false;
     }
 
     boolean getInternal( PageCursor cursor, int size )
@@ -533,7 +531,7 @@ public class GenericKey extends NativeIndexKey<GenericKey>
     {
         if ( (value & ~0x7FFF) != 0 )
         {
-            throw new IllegalArgumentException( value + " is bigger than maximum for a signed short (2B) " + 0x7FFF );
+            throw new IllegalArgumentException( new StringBuilder().append(value).append(" is bigger than maximum for a signed short (2B) ").append(0x7FFF).toString() );
         }
         return (short) value;
     }
@@ -626,9 +624,7 @@ public class GenericKey extends NativeIndexKey<GenericKey>
     {
         if ( isArray )
         {
-            throw new IllegalStateException( "This method is intended to be called when querying, where one or more sub-ranges are derived " +
-                    "from a queried range and each sub-range written to separate keys. " +
-                    "As such it's unexpected that this key state thinks that it's holds state for an array" );
+            throw new IllegalStateException( new StringBuilder().append("This method is intended to be called when querying, where one or more sub-ranges are derived ").append("from a queried range and each sub-range written to separate keys. ").append("As such it's unexpected that this key state thinks that it's holds state for an array").toString() );
         }
         updateCurve( crs.getTable().getTableId(), crs.getCode() );
         setType( Types.GEOMETRY ).write( this, derivedValue, NO_COORDINATES );
@@ -637,12 +633,12 @@ public class GenericKey extends NativeIndexKey<GenericKey>
 
     private void updateCurve( int tableId, int code )
     {
-        if ( this.long1 != tableId || this.long2 != code )
-        {
-            long1 = tableId;
-            long2 = code;
-            spaceFillingCurve = settings.forCrs( tableId, code, true );
-        }
+        if (!(this.long1 != tableId || this.long2 != code)) {
+			return;
+		}
+		long1 = tableId;
+		long2 = code;
+		spaceFillingCurve = settings.forCrs( tableId, code, true );
     }
 
     void writeDurationWithTotalAvgSeconds( long months, long days, long totalAvgSeconds, int nanos )
@@ -694,7 +690,7 @@ public class GenericKey extends NativeIndexKey<GenericKey>
     @Override
     public String toString()
     {
-        return "[" + toStringInternal() + "],entityId=" + getEntityId();
+        return new StringBuilder().append("[").append(toStringInternal()).append("],entityId=").append(getEntityId()).toString();
     }
 
     String toStringInternal()
@@ -704,7 +700,7 @@ public class GenericKey extends NativeIndexKey<GenericKey>
 
     String toDetailedString()
     {
-        return "[" + toDetailedStringInternal() + "],entityId=" + getEntityId();
+        return new StringBuilder().append("[").append(toDetailedStringInternal()).append("],entityId=").append(getEntityId()).toString();
     }
 
     String toDetailedStringInternal()

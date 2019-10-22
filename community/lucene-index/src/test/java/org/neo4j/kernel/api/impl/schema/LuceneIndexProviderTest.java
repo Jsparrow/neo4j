@@ -54,21 +54,20 @@ import static org.neo4j.storageengine.api.schema.IndexDescriptorFactory.forSchem
 @ExtendWith( {DefaultFileSystemExtension.class, TestDirectoryExtension.class} )
 class LuceneIndexProviderTest
 {
-    @Inject
-    private DefaultFileSystemAbstraction fileSystem;
-    @Inject
-    private TestDirectory testDir;
-
-    private File graphDbDir;
     private static final StoreIndexDescriptor descriptor = forSchema( forLabel( 1, 1 ), PROVIDER_DESCRIPTOR ).withId( 1 );
+	@Inject
+    private DefaultFileSystemAbstraction fileSystem;
+	@Inject
+    private TestDirectory testDir;
+	private File graphDbDir;
 
-    @BeforeEach
+	@BeforeEach
     void setup()
     {
         graphDbDir = testDir.databaseDir();
     }
 
-    @Test
+	@Test
     void shouldFailToInvokePopulatorInReadOnlyMode()
     {
         Config readOnlyConfig = Config.defaults( GraphDatabaseSettings.read_only, Settings.TRUE );
@@ -78,7 +77,7 @@ class LuceneIndexProviderTest
                 () -> readOnlyIndexProvider.getPopulator( descriptor, new IndexSamplingConfig( readOnlyConfig ), heapBufferFactory( 1024 ) ) );
     }
 
-    @Test
+	@Test
     void shouldCreateReadOnlyAccessorInReadOnlyMode() throws Exception
     {
         DirectoryFactory directoryFactory = DirectoryFactory.PERSISTENT;
@@ -92,7 +91,7 @@ class LuceneIndexProviderTest
         assertThrows( UnsupportedOperationException.class, onlineAccessor::drop );
     }
 
-    @Test
+	@Test
     void indexUpdateNotAllowedInReadOnlyMode() throws Exception
     {
         Config readOnlyConfig = Config.defaults( GraphDatabaseSettings.read_only, Settings.TRUE );
@@ -103,7 +102,7 @@ class LuceneIndexProviderTest
                 () -> getIndexAccessor( readOnlyConfig, readOnlyIndexProvider ).newUpdater( IndexUpdateMode.ONLINE ) );
     }
 
-    @Test
+	@Test
     void indexForceMustBeAllowedInReadOnlyMode() throws Exception
     {
         // IndexAccessor.force is used in check-pointing, and must be allowed in read-only mode as it would otherwise
@@ -116,7 +115,7 @@ class LuceneIndexProviderTest
         getIndexAccessor( readOnlyConfig, readOnlyIndexProvider ).force( IOLimiter.UNLIMITED );
     }
 
-    private void createEmptySchemaIndex( DirectoryFactory directoryFactory ) throws IOException
+	private void createEmptySchemaIndex( DirectoryFactory directoryFactory ) throws IOException
     {
         Config config = Config.defaults();
         LuceneIndexProvider indexProvider = getLuceneIndexProvider( config, directoryFactory, fileSystem,
@@ -125,13 +124,13 @@ class LuceneIndexProviderTest
         onlineAccessor.close();
     }
 
-    private IndexAccessor getIndexAccessor( Config readOnlyConfig, LuceneIndexProvider indexProvider )
+	private IndexAccessor getIndexAccessor( Config readOnlyConfig, LuceneIndexProvider indexProvider )
             throws IOException
     {
         return indexProvider.getOnlineAccessor( descriptor, new IndexSamplingConfig( readOnlyConfig ) );
     }
 
-    private LuceneIndexProvider getLuceneIndexProvider( Config config, DirectoryFactory directoryFactory,
+	private LuceneIndexProvider getLuceneIndexProvider( Config config, DirectoryFactory directoryFactory,
                                                         FileSystemAbstraction fs, File graphDbDir )
     {
         return new LuceneIndexProvider( fs, directoryFactory, defaultDirectoryStructure( graphDbDir ),

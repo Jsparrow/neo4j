@@ -75,7 +75,7 @@ public class DeleteDuplicateNodesStep extends LonelyProcessingStep
                 while ( !Record.NULL_REFERENCE.is( nextProp ) )
                 {
                     propertyStore.getRecordByCursor( nextProp, propertyRecord, NORMAL, propertyCursor );
-                    assert propertyRecord.inUse() : propertyRecord + " for " + nodeRecord;
+                    assert propertyRecord.inUse() : new StringBuilder().append(propertyRecord).append(" for ").append(nodeRecord).toString();
                     propertyStore.ensureHeavy( propertyRecord );
                     propertiesRemoved += propertyRecord.numberOfProperties();
                     nextProp = propertyRecord.getNextProp();
@@ -85,10 +85,7 @@ public class DeleteDuplicateNodesStep extends LonelyProcessingStep
 
                 // Delete node (and dynamic label records, if any)
                 nodeRecord.setInUse( false );
-                for ( DynamicRecord labelRecord : nodeRecord.getDynamicLabelRecords() )
-                {
-                    labelRecord.setInUse( false );
-                }
+                nodeRecord.getDynamicLabelRecords().forEach(labelRecord -> labelRecord.setInUse(false));
                 nodeStore.updateRecord( nodeRecord );
                 nodesRemoved++;
             }

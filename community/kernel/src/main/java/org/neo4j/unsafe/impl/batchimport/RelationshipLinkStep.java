@@ -59,14 +59,8 @@ public abstract class RelationshipLinkStep extends ForkedProcessorStep<Relations
      */
     private RelationshipLinkingProgress findLinkingProgressStatsProvider()
     {
-        for ( StatsProvider provider : additionalStatsProvider )
-        {
-            if ( provider instanceof RelationshipLinkingProgress )
-            {
-                return (RelationshipLinkingProgress) provider;
-            }
-        }
-        return new RelationshipLinkingProgress();
+        return additionalStatsProvider.stream().filter(provider -> provider instanceof RelationshipLinkingProgress).findFirst().map(provider -> (RelationshipLinkingProgress) provider)
+				.orElse(new RelationshipLinkingProgress());
     }
 
     @Override

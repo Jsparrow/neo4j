@@ -39,7 +39,7 @@ import static org.neo4j.kernel.impl.util.Converters.withDefault;
  *
  * This is only used for validation, not to actually read the metadata. See ImportCommand.java.
  */
-public class OptionalNamedArgWithMetadata extends OptionalNamedArg implements NamedArgument
+public class OptionalNamedArgWithMetadata extends OptionalNamedArg
 {
     protected final String exampleMetaData;
 

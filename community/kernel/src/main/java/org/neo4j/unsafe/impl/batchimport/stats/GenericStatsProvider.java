@@ -41,14 +41,7 @@ public class GenericStatsProvider implements StatsProvider
     @Override
     public Stat stat( Key key )
     {
-        for ( Pair<Key,Stat> stat1 : stats )
-        {
-            if ( stat1.first().name().equals( key.name() ) )
-            {
-                return stat1.other();
-            }
-        }
-        return null;
+        return stats.stream().filter(stat1 -> stat1.first().name().equals( key.name() )).findFirst().map(Pair::other).orElse(null);
     }
 
     @Override
@@ -67,11 +60,8 @@ public class GenericStatsProvider implements StatsProvider
     public String toString()
     {
         StringBuilder builder = new StringBuilder();
-        for ( Pair<Key,Stat> stat : stats )
-        {
-            builder.append( builder.length() > 0 ? ", " : "" )
-                    .append( format( "%s: %s", stat.first().shortName(), stat.other() ) );
-        }
+        stats.forEach(stat -> builder.append(builder.length() > 0 ? ", " : "")
+				.append(format("%s: %s", stat.first().shortName(), stat.other())));
         return builder.toString();
     }
 }

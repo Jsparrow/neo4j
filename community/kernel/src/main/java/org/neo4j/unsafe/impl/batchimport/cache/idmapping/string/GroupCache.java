@@ -33,13 +33,6 @@ import static org.neo4j.helpers.Numbers.unsignedShortToInt;
  */
 public interface GroupCache extends AutoCloseable
 {
-    void set( long nodeId, int groupId );
-
-    int get( long nodeId );
-
-    @Override
-    void close();
-
     GroupCache GLOBAL = new GroupCache()
     {
         @Override
@@ -60,7 +53,31 @@ public interface GroupCache extends AutoCloseable
         }
     };
 
-    class ByteGroupCache implements GroupCache
+	void set( long nodeId, int groupId );
+
+	int get( long nodeId );
+
+	@Override
+    void close();
+
+	static GroupCache select( NumberArrayFactory factory, int chunkSize, int numberOfGroups )
+    {
+        if ( numberOfGroups == 0 )
+        {
+            return GLOBAL;
+        }
+        if ( numberOfGroups <= 0x100 )
+        {
+            return new ByteGroupCache( factory, chunkSize );
+        }
+        if ( numberOfGroups <= 0x10000 )
+        {
+            return new ShortGroupCache( factory, chunkSize );
+        }
+        throw new IllegalArgumentException( new StringBuilder().append("Max allowed groups is ").append(0xFFFF).append(", but wanted ").append(numberOfGroups).toString() );
+    }
+
+	class ByteGroupCache implements GroupCache
     {
         private final ByteArray array;
 
@@ -114,22 +131,5 @@ public interface GroupCache extends AutoCloseable
         {
             array.close();
         }
-    }
-
-    static GroupCache select( NumberArrayFactory factory, int chunkSize, int numberOfGroups )
-    {
-        if ( numberOfGroups == 0 )
-        {
-            return GLOBAL;
-        }
-        if ( numberOfGroups <= 0x100 )
-        {
-            return new ByteGroupCache( factory, chunkSize );
-        }
-        if ( numberOfGroups <= 0x10000 )
-        {
-            return new ShortGroupCache( factory, chunkSize );
-        }
-        throw new IllegalArgumentException( "Max allowed groups is " + 0xFFFF + ", but wanted " + numberOfGroups );
     }
 }

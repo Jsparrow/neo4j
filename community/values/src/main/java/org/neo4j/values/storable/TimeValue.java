@@ -54,40 +54,52 @@ public final class TimeValue extends TemporalValue<OffsetTime,TimeValue>
 {
     public static final TimeValue MIN_VALUE = new TimeValue( OffsetTime.MIN );
     public static final TimeValue MAX_VALUE = new TimeValue( OffsetTime.MAX );
+	private static final String OFFSET_PATTERN = "(?<zone>Z|[+-](?<zoneHour>[0-9]{2})(?::?(?<zoneMinute>[0-9]{2}))?)";
+	static final String TIME_PATTERN = new StringBuilder().append(LocalTimeValue.TIME_PATTERN).append("(?:").append(OFFSET_PATTERN).append(")?").toString();
+	private static final Pattern PATTERN = Pattern.compile( "(?:T)?" + TIME_PATTERN );
+	static final Pattern OFFSET = Pattern.compile( OFFSET_PATTERN );
+	private final OffsetTime value;
+	private final long nanosOfDayUTC;
 
-    public static TimeValue time( OffsetTime time )
+	private TimeValue( OffsetTime value )
+    {
+        this.value = value;
+        this.nanosOfDayUTC = TemporalUtil.getNanosOfDayUTC( this.value );
+    }
+
+	public static TimeValue time( OffsetTime time )
     {
         return new TimeValue( requireNonNull( time, "OffsetTime" ) );
     }
 
-    public static TimeValue time( int hour, int minute, int second, int nanosOfSecond, String offset )
+	public static TimeValue time( int hour, int minute, int second, int nanosOfSecond, String offset )
     {
         return time( hour, minute, second, nanosOfSecond, parseOffset( offset ) );
     }
 
-    public static TimeValue time( int hour, int minute, int second, int nanosOfSecond, ZoneOffset offset )
+	public static TimeValue time( int hour, int minute, int second, int nanosOfSecond, ZoneOffset offset )
     {
         return new TimeValue(
                 OffsetTime.of( assertValidArgument( () -> LocalTime.of( hour, minute, second, nanosOfSecond ) ), offset ) );
     }
 
-    public static TimeValue time( long nanosOfDayUTC, ZoneOffset offset )
+	public static TimeValue time( long nanosOfDayUTC, ZoneOffset offset )
     {
         return new TimeValue( timeRaw( nanosOfDayUTC, offset ) );
     }
 
-    public static OffsetTime timeRaw( long nanosOfDayUTC, ZoneOffset offset )
+	public static OffsetTime timeRaw( long nanosOfDayUTC, ZoneOffset offset )
     {
         return OffsetTime.ofInstant( assertValidArgument( () -> Instant.ofEpochSecond( 0, nanosOfDayUTC ) ), offset );
     }
 
-    @Override
+	@Override
     public String getTypeName()
     {
         return "Time";
     }
 
-    public static TimeValue parse( CharSequence text, Supplier<ZoneId> defaultZone, CSVHeaderInformation fieldsFromHeader )
+	public static TimeValue parse( CharSequence text, Supplier<ZoneId> defaultZone, CSVHeaderInformation fieldsFromHeader )
     {
         if ( fieldsFromHeader != null )
         {
@@ -101,48 +113,48 @@ public final class TimeValue extends TemporalValue<OffsetTime,TimeValue>
         return parse( TimeValue.class, PATTERN, TimeValue::parse, text, defaultZone );
     }
 
-    public static TimeValue parse( CharSequence text, Supplier<ZoneId> defaultZone )
+	public static TimeValue parse( CharSequence text, Supplier<ZoneId> defaultZone )
     {
         return parse( TimeValue.class, PATTERN, TimeValue::parse, text, defaultZone );
     }
 
-    public static TimeValue parse( TextValue text, Supplier<ZoneId> defaultZone )
+	public static TimeValue parse( TextValue text, Supplier<ZoneId> defaultZone )
     {
         return parse( TimeValue.class, PATTERN, TimeValue::parse, text, defaultZone );
     }
 
-    public static TimeValue now( Clock clock )
+	public static TimeValue now( Clock clock )
     {
         return new TimeValue( OffsetTime.now( clock ) );
     }
 
-    public static TimeValue now( Clock clock, String timezone )
+	public static TimeValue now( Clock clock, String timezone )
     {
         return now( clock.withZone( parseZoneName( timezone ) ) );
     }
 
-    public static TimeValue now( Clock clock, Supplier<ZoneId> defaultZone )
+	public static TimeValue now( Clock clock, Supplier<ZoneId> defaultZone )
     {
         return now( clock.withZone( defaultZone.get() ) );
     }
 
-    public static TimeValue build( MapValue map, Supplier<ZoneId> defaultZone )
+	public static TimeValue build( MapValue map, Supplier<ZoneId> defaultZone )
     {
         return StructureBuilder.build( builder( defaultZone ), map );
     }
 
-    public static TimeValue select( AnyValue from, Supplier<ZoneId> defaultZone )
+	public static TimeValue select( AnyValue from, Supplier<ZoneId> defaultZone )
     {
         return builder( defaultZone ).selectTime( from );
     }
 
-    @Override
+	@Override
     boolean hasTime()
     {
         return true;
     }
 
-    public static TimeValue truncate(
+	public static TimeValue truncate(
             TemporalUnit unit,
             TemporalValue input,
             MapValue fields,
@@ -182,14 +194,14 @@ public final class TimeValue extends TemporalValue<OffsetTime,TimeValue>
         }
     }
 
-    static OffsetTime defaultTime( ZoneId zoneId )
+	static OffsetTime defaultTime( ZoneId zoneId )
     {
         return OffsetTime.of( TemporalFields.hour.defaultValue, TemporalFields.minute.defaultValue,
                 TemporalFields.second.defaultValue, TemporalFields.nanosecond.defaultValue,
                 assertValidZone( () -> ZoneOffset.of( zoneId.toString() ) ) );
     }
 
-    static TimeBuilder<TimeValue> builder( Supplier<ZoneId> defaultZone )
+	static TimeBuilder<TimeValue> builder( Supplier<ZoneId> defaultZone )
     {
         return new TimeBuilder<TimeValue>( defaultZone )
         {
@@ -269,16 +281,7 @@ public final class TimeValue extends TemporalValue<OffsetTime,TimeValue>
         };
     }
 
-    private final OffsetTime value;
-    private final long nanosOfDayUTC;
-
-    private TimeValue( OffsetTime value )
-    {
-        this.value = value;
-        this.nanosOfDayUTC = TemporalUtil.getNanosOfDayUTC( this.value );
-    }
-
-    @Override
+	@Override
     int unsafeCompareTo( Value otherValue )
     {
         TimeValue other = (TimeValue) otherValue;
@@ -290,114 +293,109 @@ public final class TimeValue extends TemporalValue<OffsetTime,TimeValue>
         return compare;
     }
 
-    @Override
+	@Override
     OffsetTime temporal()
     {
         return value;
     }
 
-    @Override
+	@Override
     LocalDate getDatePart()
     {
         throw new UnsupportedTemporalUnitException( String.format( "Cannot get the date of: %s", this ) );
     }
 
-    @Override
+	@Override
     LocalTime getLocalTimePart()
     {
         return value.toLocalTime();
     }
 
-    @Override
+	@Override
     OffsetTime getTimePart( Supplier<ZoneId> defaultZone )
     {
         return value;
     }
 
-    @Override
+	@Override
     ZoneId getZoneId( Supplier<ZoneId> defaultZone )
     {
         return value.getOffset();
     }
 
-    @Override
+	@Override
     ZoneId getZoneId()
     {
         throw new UnsupportedTemporalTypeException( "Cannot get the timezone of" + this );
     }
 
-    @Override
+	@Override
     ZoneOffset getZoneOffset()
     {
         return value.getOffset();
     }
 
-    @Override
+	@Override
     public boolean supportsTimeZone()
     {
         return true;
     }
 
-    @Override
+	@Override
     public boolean equals( Value other )
     {
         return other instanceof TimeValue && value.equals( ((TimeValue) other).value );
     }
 
-    @Override
+	@Override
     public <E extends Exception> void writeTo( ValueWriter<E> writer ) throws E
     {
         writer.writeTime( value );
     }
 
-    @Override
+	@Override
     public String prettyPrint()
     {
         return assertPrintable( () -> value.format( DateTimeFormatter.ISO_TIME ) );
     }
 
-    @Override
+	@Override
     public ValueGroup valueGroup()
     {
         return ValueGroup.ZONED_TIME;
     }
 
-    @Override
+	@Override
     protected int computeHash()
     {
         return Long.hashCode( value.toLocalTime().toNanoOfDay() - value.getOffset().getTotalSeconds() * 1000_000_000L );
     }
 
-    @Override
+	@Override
     public <T> T map( ValueMapper<T> mapper )
     {
         return mapper.mapTime( this );
     }
 
-    @Override
+	@Override
     public TimeValue add( DurationValue duration )
     {
         return replacement( assertValidArithmetic( () -> value.plusNanos( duration.nanosOfDay() ) ) );
     }
 
-    @Override
+	@Override
     public TimeValue sub( DurationValue duration )
     {
         return replacement( assertValidArithmetic( () -> value.minusNanos( duration.nanosOfDay() ) ) );
     }
 
-    @Override
+	@Override
     TimeValue replacement( OffsetTime time )
     {
         return time == value ? this : new TimeValue( time );
     }
 
-    private static final String OFFSET_PATTERN = "(?<zone>Z|[+-](?<zoneHour>[0-9]{2})(?::?(?<zoneMinute>[0-9]{2}))?)";
-    static final String TIME_PATTERN = LocalTimeValue.TIME_PATTERN + "(?:" + OFFSET_PATTERN + ")?";
-    private static final Pattern PATTERN = Pattern.compile( "(?:T)?" + TIME_PATTERN );
-    static final Pattern OFFSET = Pattern.compile( OFFSET_PATTERN );
-
-    static ZoneOffset parseOffset( String offset )
+	static ZoneOffset parseOffset( String offset )
     {
         Matcher matcher = OFFSET.matcher( offset );
         if ( matcher.matches() )
@@ -407,7 +405,7 @@ public final class TimeValue extends TemporalValue<OffsetTime,TimeValue>
         throw new InvalidValuesArgumentException( "Not a valid offset: " + offset );
     }
 
-    static ZoneOffset parseOffset( Matcher matcher )
+	static ZoneOffset parseOffset( Matcher matcher )
     {
         String zone = matcher.group( "zone" );
         if ( null == zone )
@@ -424,12 +422,12 @@ public final class TimeValue extends TemporalValue<OffsetTime,TimeValue>
         return assertValidZone( () -> ZoneOffset.ofHoursMinutes( factor * hours, factor * minutes ) );
     }
 
-    private static TimeValue parse( Matcher matcher, Supplier<ZoneId> defaultZone )
+	private static TimeValue parse( Matcher matcher, Supplier<ZoneId> defaultZone )
     {
         return new TimeValue( OffsetTime.of( parseTime( matcher ), parseOffset( matcher, defaultZone ) ) );
     }
 
-    private static ZoneOffset parseOffset( Matcher matcher, Supplier<ZoneId> defaultZone )
+	private static ZoneOffset parseOffset( Matcher matcher, Supplier<ZoneId> defaultZone )
     {
         ZoneOffset offset = parseOffset( matcher );
         if ( offset == null )

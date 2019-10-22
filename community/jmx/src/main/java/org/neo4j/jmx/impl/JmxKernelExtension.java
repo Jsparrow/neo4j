@@ -80,7 +80,7 @@ public class JmxKernelExtension extends LifecycleAdapter
             }
             catch ( Exception e )
             {
-                log.info( "Failed to register JMX Bean " + provider + " (" + e + ")" );
+                log.info( new StringBuilder().append("Failed to register JMX Bean ").append(provider).append(" (").append(e).append(")").toString() );
             }
         }
         try

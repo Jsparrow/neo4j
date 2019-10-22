@@ -46,24 +46,29 @@ import static org.neo4j.helpers.Numbers.safeCastLongToInt;
 
 public class MandatoryProperties
 {
-    private final MutableIntObjectMap<int[]> nodes = new IntObjectHashMap<>();
-    private final MutableIntObjectMap<int[]> relationships = new IntObjectHashMap<>();
-    private final StoreAccess storeAccess;
-
-    public MandatoryProperties( StoreAccess storeAccess )
+    @SuppressWarnings( "rawtypes" )
+    private static final Check NONE = new Check()
     {
-        this.storeAccess = storeAccess;
-        SchemaStorage schemaStorage = new SchemaStorage( storeAccess.getSchemaStore() );
-        for ( ConstraintRule rule : constraintsIgnoringMalformed( schemaStorage ) )
+        @Override
+        public void receive( int[] keys )
         {
-            if ( rule.getConstraintDescriptor().enforcesPropertyExistence() )
-            {
-                rule.schema().processWith( constraintRecorder );
-            }
         }
-    }
 
-    private SchemaProcessor constraintRecorder = new SchemaProcessor()
+        @Override
+        public void close()
+        {
+        }
+
+        @Override
+        public String toString()
+        {
+            return "NONE";
+        }
+    };
+	private final MutableIntObjectMap<int[]> nodes = new IntObjectHashMap<>();
+	private final MutableIntObjectMap<int[]> relationships = new IntObjectHashMap<>();
+	private final StoreAccess storeAccess;
+	private SchemaProcessor constraintRecorder = new SchemaProcessor()
     {
         @Override
         public void processSpecific( LabelSchemaDescriptor schema )
@@ -90,7 +95,20 @@ public class MandatoryProperties
         }
     };
 
-    public Function<NodeRecord,Check<NodeRecord,ConsistencyReport.NodeConsistencyReport>> forNodes(
+	public MandatoryProperties( StoreAccess storeAccess )
+    {
+        this.storeAccess = storeAccess;
+        SchemaStorage schemaStorage = new SchemaStorage( storeAccess.getSchemaStore() );
+        for ( ConstraintRule rule : constraintsIgnoringMalformed( schemaStorage ) )
+        {
+            if ( rule.getConstraintDescriptor().enforcesPropertyExistence() )
+            {
+                rule.schema().processWith( constraintRecorder );
+            }
+        }
+    }
+
+	public Function<NodeRecord,Check<NodeRecord,ConsistencyReport.NodeConsistencyReport>> forNodes(
             final ConsistencyReporter reporter )
     {
         return node ->
@@ -119,7 +137,7 @@ public class MandatoryProperties
         };
     }
 
-    public Function<RelationshipRecord,Check<RelationshipRecord,ConsistencyReport.RelationshipConsistencyReport>>
+	public Function<RelationshipRecord,Check<RelationshipRecord,ConsistencyReport.RelationshipConsistencyReport>>
             forRelationships( final ConsistencyReporter reporter )
     {
         return relationship ->
@@ -139,12 +157,12 @@ public class MandatoryProperties
         };
     }
 
-    private Iterable<ConstraintRule> constraintsIgnoringMalformed( SchemaStorage schemaStorage )
+	private Iterable<ConstraintRule> constraintsIgnoringMalformed( SchemaStorage schemaStorage )
     {
         return schemaStorage::constraintsGetAllIgnoreMalformed;
     }
 
-    private static void recordConstraint( int labelOrRelType, int propertyKey, MutableIntObjectMap<int[]> storage )
+	private static void recordConstraint( int labelOrRelType, int propertyKey, MutableIntObjectMap<int[]> storage )
     {
         int[] propertyKeys = storage.get( labelOrRelType );
         if ( propertyKeys == null )
@@ -159,7 +177,14 @@ public class MandatoryProperties
         storage.put( labelOrRelType, propertyKeys );
     }
 
-    public interface Check<RECORD extends PrimitiveRecord,REPORT extends ConsistencyReport.PrimitiveConsistencyReport>
+	@SuppressWarnings( "unchecked" )
+    private static <RECORD extends PrimitiveRecord,
+            REPORT extends ConsistencyReport.PrimitiveConsistencyReport> Check<RECORD,REPORT> noCheck()
+    {
+        return NONE;
+    }
+
+	public interface Check<RECORD extends PrimitiveRecord,REPORT extends ConsistencyReport.PrimitiveConsistencyReport>
             extends AutoCloseable
     {
         void receive( int[] keys );
@@ -167,33 +192,6 @@ public class MandatoryProperties
         @Override
         void close();
     }
-
-    @SuppressWarnings( "unchecked" )
-    private static <RECORD extends PrimitiveRecord,
-            REPORT extends ConsistencyReport.PrimitiveConsistencyReport> Check<RECORD,REPORT> noCheck()
-    {
-        return NONE;
-    }
-
-    @SuppressWarnings( "rawtypes" )
-    private static final Check NONE = new Check()
-    {
-        @Override
-        public void receive( int[] keys )
-        {
-        }
-
-        @Override
-        public void close()
-        {
-        }
-
-        @Override
-        public String toString()
-        {
-            return "NONE";
-        }
-    };
 
     private static class RealCheck<RECORD extends PrimitiveRecord,REPORT extends ConsistencyReport.PrimitiveConsistencyReport>
             implements Check<RECORD,REPORT>

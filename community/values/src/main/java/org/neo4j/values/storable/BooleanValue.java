@@ -31,48 +31,6 @@ import static java.lang.String.format;
 public abstract class BooleanValue extends ScalarValue
 {
 
-    private BooleanValue()
-    {
-    }
-
-    @Override
-    public boolean eq( Object other )
-    {
-        return other instanceof Value && equals( (Value) other );
-    }
-
-    @Override
-    public <T> T map( ValueMapper<T> mapper )
-    {
-        return mapper.mapBoolean( this );
-    }
-
-    @Override
-    public ValueGroup valueGroup()
-    {
-        return ValueGroup.BOOLEAN;
-    }
-
-    public abstract boolean booleanValue();
-
-    @Override
-    public NumberType numberType()
-    {
-        return NumberType.NO_NUMBER;
-    }
-
-    @Override
-    public long updateHash( HashFunction hashFunction, long hash )
-    {
-        return hashFunction.update( hash, hashCode() );
-    }
-
-    @Override
-    public String getTypeName()
-    {
-        return "Boolean";
-    }
-
     public static final BooleanValue TRUE = new BooleanValue()
     {
         @Override
@@ -132,7 +90,7 @@ public abstract class BooleanValue extends ScalarValue
         }
     };
 
-    public static final BooleanValue FALSE = new BooleanValue()
+	public static final BooleanValue FALSE = new BooleanValue()
     {
         @Override
         public boolean equals( Value other )
@@ -190,4 +148,46 @@ public abstract class BooleanValue extends ScalarValue
             return format( "%s('%s')", getTypeName(), Boolean.toString( false ) );
         }
     };
+
+	private BooleanValue()
+    {
+    }
+
+	@Override
+    public boolean eq( Object other )
+    {
+        return other instanceof Value && equals( (Value) other );
+    }
+
+	@Override
+    public <T> T map( ValueMapper<T> mapper )
+    {
+        return mapper.mapBoolean( this );
+    }
+
+	@Override
+    public ValueGroup valueGroup()
+    {
+        return ValueGroup.BOOLEAN;
+    }
+
+	public abstract boolean booleanValue();
+
+	@Override
+    public NumberType numberType()
+    {
+        return NumberType.NO_NUMBER;
+    }
+
+	@Override
+    public long updateHash( HashFunction hashFunction, long hash )
+    {
+        return hashFunction.update( hash, hashCode() );
+    }
+
+	@Override
+    public String getTypeName()
+    {
+        return "Boolean";
+    }
 }

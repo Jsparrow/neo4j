@@ -50,24 +50,6 @@ public class RelationshipGroupDefragmenter
     private final Monitor monitor;
     private final NumberArrayFactory numberArrayFactory;
 
-    public interface Monitor
-    {
-        /**
-         * When defragmenting the relationship group store it may happen in chunks, selected by node range.
-         * Every time a chunk is selected this method is called.
-         *
-         * @param fromNodeId low node id in the range to process (inclusive).
-         * @param toNodeId high node id in the range to process (exclusive).
-         */
-        default void defragmentingNodeRange( long fromNodeId, long toNodeId )
-        {   // empty
-        }
-
-        Monitor EMPTY = new Monitor()
-        {   // empty
-        };
-    }
-
     public RelationshipGroupDefragmenter( Configuration config, ExecutionMonitor executionMonitor, Monitor monitor,
             NumberArrayFactory numberArrayFactory )
     {
@@ -77,7 +59,7 @@ public class RelationshipGroupDefragmenter
         this.numberArrayFactory = numberArrayFactory;
     }
 
-    public void run( long memoryWeCanHoldForCertain, BatchingNeoStores neoStore, long highNodeId )
+	public void run( long memoryWeCanHoldForCertain, BatchingNeoStores neoStore, long highNodeId )
     {
         try ( RelationshipGroupCache groupCache =
                 new RelationshipGroupCache( numberArrayFactory, memoryWeCanHoldForCertain, highNodeId ) )
@@ -117,8 +99,26 @@ public class RelationshipGroupDefragmenter
         }
     }
 
-    private void executeStage( Stage stage )
+	private void executeStage( Stage stage )
     {
         superviseExecution( executionMonitor, stage );
+    }
+
+	public interface Monitor
+    {
+        Monitor EMPTY = new Monitor()
+        {   // empty
+        };
+
+		/**
+         * When defragmenting the relationship group store it may happen in chunks, selected by node range.
+         * Every time a chunk is selected this method is called.
+         *
+         * @param fromNodeId low node id in the range to process (inclusive).
+         * @param toNodeId high node id in the range to process (exclusive).
+         */
+        default void defragmentingNodeRange( long fromNodeId, long toNodeId )
+        {   // empty
+        }
     }
 }

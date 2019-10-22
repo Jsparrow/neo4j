@@ -36,6 +36,7 @@ import org.neo4j.io.pagecache.tracing.FlushEventOpportunity;
 import org.neo4j.io.pagecache.tracing.MajorFlushEvent;
 import org.neo4j.io.pagecache.tracing.PageFaultEvent;
 import org.neo4j.io.pagecache.tracing.PinEvent;
+import java.util.Collections;
 
 /**
  * Container of events for page cache tracers that are used to build linear historical representation of page cache
@@ -52,7 +53,7 @@ class HEvents
 
     static final class EndHEvent extends HEvent
     {
-        private static final Map<Class<?>,String> classSimpleNameCache = new IdentityHashMap<>();
+        private static final Map<Class<?>,String> classSimpleNameCache = Collections.unmodifiableMap(new IdentityHashMap<>());
         IntervalHEvent event;
 
         EndHEvent( IntervalHEvent event )
@@ -465,31 +466,31 @@ class HEvents
 
         protected final void print( PrintStream out, Throwable exception, String linePrefix )
         {
-            if ( exception != null )
-            {
-                out.println( ", exception:" );
-                ByteArrayOutputStream buf = new ByteArrayOutputStream();
-                PrintStream sbuf = new PrintStream( buf );
-                exception.printStackTrace( sbuf );
-                sbuf.flush();
-                BufferedReader reader = new BufferedReader( new StringReader( buf.toString() ) );
-                try
-                {
-                    String line = reader.readLine();
-                    while ( line != null )
-                    {
-                        out.print( linePrefix );
-                        out.print( '\t' );
-                        out.println( line );
-                        line = reader.readLine();
-                    }
-                    out.print( linePrefix );
-                }
-                catch ( IOException e )
-                {
-                    throw new RuntimeException( e );
-                }
-            }
+            if (exception == null) {
+				return;
+			}
+			out.println( ", exception:" );
+			ByteArrayOutputStream buf = new ByteArrayOutputStream();
+			PrintStream sbuf = new PrintStream( buf );
+			exception.printStackTrace( sbuf );
+			sbuf.flush();
+			BufferedReader reader = new BufferedReader( new StringReader( buf.toString() ) );
+			try
+			{
+			    String line = reader.readLine();
+			    while ( line != null )
+			    {
+			        out.print( linePrefix );
+			        out.print( '\t' );
+			        out.println( line );
+			        line = reader.readLine();
+			    }
+			    out.print( linePrefix );
+			}
+			catch ( IOException e )
+			{
+			    throw new RuntimeException( e );
+			}
         }
     }
 

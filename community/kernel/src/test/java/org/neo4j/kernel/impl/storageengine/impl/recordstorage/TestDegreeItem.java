@@ -71,10 +71,7 @@ public class TestDegreeItem
     @Override
     public String toString()
     {
-        return "TestDegreeItem{" +
-               "type=" + type +
-               ", outgoing=" + outgoing +
-               ", incoming=" + incoming +
-               '}';
+        return new StringBuilder().append("TestDegreeItem{").append("type=").append(type).append(", outgoing=").append(outgoing).append(", incoming=").append(incoming)
+				.append('}').toString();
     }
 }

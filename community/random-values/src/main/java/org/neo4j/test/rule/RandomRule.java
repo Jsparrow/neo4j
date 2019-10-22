@@ -104,10 +104,7 @@ public class RandomRule implements TestRule
                     if ( t instanceof MultipleFailureException )
                     {
                         MultipleFailureException multipleFailures = (MultipleFailureException) t;
-                        for ( Throwable failure : multipleFailures.getFailures() )
-                        {
-                            enhanceFailureWithSeed( failure );
-                        }
+                        multipleFailures.getFailures().forEach(failure -> enhanceFailureWithSeed(failure));
                     }
                     else
                     {
@@ -119,7 +116,7 @@ public class RandomRule implements TestRule
 
             private void enhanceFailureWithSeed( Throwable t )
             {
-                Exceptions.withMessage( t, t.getMessage() + ": random seed used:" + seed + "L" );
+                Exceptions.withMessage( t, new StringBuilder().append(t.getMessage()).append(": random seed used:").append(seed).append("L").toString() );
             }
         };
     }

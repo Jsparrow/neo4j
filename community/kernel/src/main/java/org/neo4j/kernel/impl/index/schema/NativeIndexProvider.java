@@ -100,14 +100,14 @@ abstract class NativeIndexProvider<KEY extends NativeIndexKey<KEY>,VALUE extends
     protected abstract IndexAccessor newIndexAccessor( File storeFile, LAYOUT layout, StoreIndexDescriptor descriptor, boolean readOnly ) throws IOException;
 
     @Override
-    public String getPopulationFailure( StoreIndexDescriptor descriptor ) throws IllegalStateException
+    public String getPopulationFailure( StoreIndexDescriptor descriptor )
     {
         try
         {
             String failureMessage = NativeIndexes.readFailureMessage( pageCache, nativeIndexFileFromIndexId( descriptor.getId() ) );
             if ( failureMessage == null )
             {
-                throw new IllegalStateException( "Index " + descriptor.getId() + " isn't failed" );
+                throw new IllegalStateException( new StringBuilder().append("Index ").append(descriptor.getId()).append(" isn't failed").toString() );
             }
             return failureMessage;
         }

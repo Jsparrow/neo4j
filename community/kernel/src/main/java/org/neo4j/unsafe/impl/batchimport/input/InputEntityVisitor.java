@@ -28,37 +28,41 @@ import java.io.IOException;
  */
 public interface InputEntityVisitor extends Closeable
 {
-    boolean propertyId( long nextProp );
+    InputEntityVisitor NULL = new Adapter()
+    {   // empty
+    };
 
-    boolean property( String key, Object value );
+	boolean propertyId( long nextProp );
 
-    boolean property( int propertyKeyId, Object value );
+	boolean property( String key, Object value );
 
-    // For nodes
+	boolean property( int propertyKeyId, Object value );
+
+	// For nodes
     boolean id( long id );
 
-    boolean id( Object id, Group group );
+	boolean id( Object id, Group group );
 
-    boolean labels( String[] labels );
+	boolean labels( String[] labels );
 
-    boolean labelField( long labelField );
+	boolean labelField( long labelField );
 
-    // For relationships
+	// For relationships
     boolean startId( long id );
 
-    boolean startId( Object id, Group group );
+	boolean startId( Object id, Group group );
 
-    boolean endId( long id );
+	boolean endId( long id );
 
-    boolean endId( Object id, Group group );
+	boolean endId( Object id, Group group );
 
-    boolean type( int type );
+	boolean type( int type );
 
-    boolean type( String type );
+	boolean type( String type );
 
-    void endOfEntity() throws IOException;
+	void endOfEntity() throws IOException;
 
-    class Adapter implements InputEntityVisitor
+	class Adapter implements InputEntityVisitor
     {
         @Override
         public boolean property( String key, Object value )
@@ -248,8 +252,4 @@ public interface InputEntityVisitor extends Closeable
             actual.close();
         }
     }
-
-    InputEntityVisitor NULL = new Adapter()
-    {   // empty
-    };
 }

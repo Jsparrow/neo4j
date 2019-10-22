@@ -40,21 +40,21 @@ public class PingerHandler implements HttpRequestHandler
     {
         final String requestUri = httpRequest.getRequestLine().getUri();
         final int offset = requestUri.indexOf( '?' );
-        if ( offset > -1 )
-        {
-            String query = requestUri.substring( offset + 1 );
-            String[] params = query.split( "\\+" );
-            if ( params.length > 0 )
-            {
-                for ( String param : params )
-                {
-                    String[] pair = param.split( "=" );
-                    String key = URLDecoder.decode( pair[0], StandardCharsets.UTF_8.name() );
-                    String value = URLDecoder.decode( pair[1], StandardCharsets.UTF_8.name() );
-                    queryMap.put( key, value );
-                }
-            }
-        }
+        if (!(offset > -1)) {
+			return;
+		}
+		String query = requestUri.substring( offset + 1 );
+		String[] params = query.split( "\\+" );
+		if ( params.length > 0 )
+		{
+		    for ( String param : params )
+		    {
+		        String[] pair = param.split( "=" );
+		        String key = URLDecoder.decode( pair[0], StandardCharsets.UTF_8.name() );
+		        String value = URLDecoder.decode( pair[1], StandardCharsets.UTF_8.name() );
+		        queryMap.put( key, value );
+		    }
+		}
     }
 
     public Map<String, String> getQueryMap()

@@ -25,6 +25,6 @@ public class PropertyKeyNotFoundException extends KernelException
 {
     public PropertyKeyNotFoundException( String propertyKey, Exception cause )
     {
-        super( Status.Schema.PropertyKeyAccessFailed, cause, "Property key '" + propertyKey + "' not found" );
+        super( Status.Schema.PropertyKeyAccessFailed, cause, new StringBuilder().append("Property key '").append(propertyKey).append("' not found").toString() );
     }
 }

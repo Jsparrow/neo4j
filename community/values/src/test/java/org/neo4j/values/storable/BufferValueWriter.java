@@ -38,7 +38,135 @@ import static org.neo4j.values.storable.BufferValueWriter.SpecialKind.WriteByteA
 
 public class BufferValueWriter implements ValueWriter<RuntimeException>
 {
-    enum SpecialKind
+    protected List<Object> buffer = new ArrayList<>();
+
+	@SuppressWarnings( "WeakerAccess" )
+    public void assertBuffer( Object... writeEvents )
+    {
+        assertThat( buffer, Matchers.contains( writeEvents ) );
+    }
+
+	@Override
+    public void writeNull()
+    {
+        buffer.add( null );
+    }
+
+	@Override
+    public void writeBoolean( boolean value )
+    {
+        buffer.add( value );
+    }
+
+	@Override
+    public void writeInteger( byte value )
+    {
+        buffer.add( value );
+    }
+
+	@Override
+    public void writeInteger( short value )
+    {
+        buffer.add( value );
+    }
+
+	@Override
+    public void writeInteger( int value )
+    {
+        buffer.add( value );
+    }
+
+	@Override
+    public void writeInteger( long value )
+    {
+        buffer.add( value );
+    }
+
+	@Override
+    public void writeFloatingPoint( float value )
+    {
+        buffer.add( value );
+    }
+
+	@Override
+    public void writeFloatingPoint( double value )
+    {
+        buffer.add( value );
+    }
+
+	@Override
+    public void writeString( String value )
+    {
+        buffer.add( value );
+    }
+
+	@Override
+    public void writeString( char value )
+    {
+        buffer.add( value );
+    }
+
+	@Override
+    public void beginArray( int size, ArrayType arrayType )
+    {
+        buffer.add( Specials.beginArray( size, arrayType ) );
+    }
+
+	@Override
+    public void endArray()
+    {
+        buffer.add( Specials.endArray() );
+    }
+
+	@Override
+    public void writePoint( CoordinateReferenceSystem crs, double[] coordinate )
+    {
+        buffer.add( new PointValue( crs, coordinate ) );
+    }
+
+	@Override
+    public void writeByteArray( byte[] value )
+    {
+        buffer.add( Specials.byteArray( value ) );
+    }
+
+	@Override
+    public void writeDuration( long months, long days, long seconds, int nanos )
+    {
+        buffer.add( DurationValue.duration( months, days, seconds, nanos ) );
+    }
+
+	@Override
+    public void writeDate( LocalDate localDate )
+    {
+        buffer.add( DateValue.date( localDate ) );
+    }
+
+	@Override
+    public void writeLocalTime( LocalTime localTime )
+    {
+        buffer.add( LocalTimeValue.localTime( localTime ) );
+    }
+
+	@Override
+    public void writeTime( OffsetTime offsetTime )
+    {
+        buffer.add( TimeValue.time( offsetTime ) );
+    }
+
+	@Override
+    public void writeLocalDateTime( LocalDateTime localDateTime )
+    {
+        buffer.add( LocalDateTimeValue.localDateTime( localDateTime ) );
+    }
+
+	@Override
+    public void writeDateTime( ZonedDateTime zonedDateTime )
+    {
+        buffer.add( DateTimeValue.datetime( zonedDateTime ) );
+    }
+
+	enum SpecialKind
     {
         WriteCharArray,
         WriteByteArray,
@@ -46,12 +174,24 @@ public class BufferValueWriter implements ValueWriter<RuntimeException>
         EndArray,
     }
 
-    public static class Special
+	public static class Special
     {
         final SpecialKind kind;
         final String key;
 
-        @Override
+        Special( SpecialKind kind, String key )
+        {
+            this.kind = kind;
+            this.key = key;
+        }
+
+		Special( SpecialKind kind, int key )
+        {
+            this.kind = kind;
+            this.key = Integer.toString( key );
+        }
+
+		@Override
         public boolean equals( Object o )
         {
             if ( o == null || getClass() != o.getClass() )
@@ -63,157 +203,17 @@ public class BufferValueWriter implements ValueWriter<RuntimeException>
             return kind == special.kind && key.equals( special.key );
         }
 
-        @Override
+		@Override
         public int hashCode()
         {
             return 31 * kind.hashCode() + key.hashCode();
         }
 
-        Special( SpecialKind kind, String key )
-        {
-            this.kind = kind;
-            this.key = key;
-        }
-
-        Special( SpecialKind kind, int key )
-        {
-            this.kind = kind;
-            this.key = Integer.toString( key );
-        }
-
-        @Override
+		@Override
         public String toString()
         {
             return format( "Special(%s)", key );
         }
-    }
-
-    protected List<Object> buffer = new ArrayList<>();
-
-    @SuppressWarnings( "WeakerAccess" )
-    public void assertBuffer( Object... writeEvents )
-    {
-        assertThat( buffer, Matchers.contains( writeEvents ) );
-    }
-
-    @Override
-    public void writeNull()
-    {
-        buffer.add( null );
-    }
-
-    @Override
-    public void writeBoolean( boolean value )
-    {
-        buffer.add( value );
-    }
-
-    @Override
-    public void writeInteger( byte value )
-    {
-        buffer.add( value );
-    }
-
-    @Override
-    public void writeInteger( short value )
-    {
-        buffer.add( value );
-    }
-
-    @Override
-    public void writeInteger( int value )
-    {
-        buffer.add( value );
-    }
-
-    @Override
-    public void writeInteger( long value )
-    {
-        buffer.add( value );
-    }
-
-    @Override
-    public void writeFloatingPoint( float value )
-    {
-        buffer.add( value );
-    }
-
-    @Override
-    public void writeFloatingPoint( double value )
-    {
-        buffer.add( value );
-    }
-
-    @Override
-    public void writeString( String value )
-    {
-        buffer.add( value );
-    }
-
-    @Override
-    public void writeString( char value )
-    {
-        buffer.add( value );
-    }
-
-    @Override
-    public void beginArray( int size, ArrayType arrayType )
-    {
-        buffer.add( Specials.beginArray( size, arrayType ) );
-    }
-
-    @Override
-    public void endArray()
-    {
-        buffer.add( Specials.endArray() );
-    }
-
-    @Override
-    public void writePoint( CoordinateReferenceSystem crs, double[] coordinate )
-    {
-        buffer.add( new PointValue( crs, coordinate ) );
-    }
-
-    @Override
-    public void writeByteArray( byte[] value ) throws RuntimeException
-    {
-        buffer.add( Specials.byteArray( value ) );
-    }
-
-    @Override
-    public void writeDuration( long months, long days, long seconds, int nanos )
-    {
-        buffer.add( DurationValue.duration( months, days, seconds, nanos ) );
-    }
-
-    @Override
-    public void writeDate( LocalDate localDate ) throws RuntimeException
-    {
-        buffer.add( DateValue.date( localDate ) );
-    }
-
-    @Override
-    public void writeLocalTime( LocalTime localTime ) throws RuntimeException
-    {
-        buffer.add( LocalTimeValue.localTime( localTime ) );
-    }
-
-    @Override
-    public void writeTime( OffsetTime offsetTime ) throws RuntimeException
-    {
-        buffer.add( TimeValue.time( offsetTime ) );
-    }
-
-    @Override
-    public void writeLocalDateTime( LocalDateTime localDateTime ) throws RuntimeException
-    {
-        buffer.add( LocalDateTimeValue.localDateTime( localDateTime ) );
-    }
-
-    @Override
-    public void writeDateTime( ZonedDateTime zonedDateTime ) throws RuntimeException
-    {
-        buffer.add( DateTimeValue.datetime( zonedDateTime ) );
     }
 
     @SuppressWarnings( "WeakerAccess" )

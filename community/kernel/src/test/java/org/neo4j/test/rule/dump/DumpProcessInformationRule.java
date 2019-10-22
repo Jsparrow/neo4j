@@ -34,28 +34,13 @@ import org.neo4j.logging.NullLogProvider;
 
 public class DumpProcessInformationRule extends ExternalResource
 {
-    public interface Dump
-    {
-        void dump() throws Exception;
-    }
-
-    public static Dump localVm( final PrintStream out )
-    {
-        return () -> DumpVmInformation.dumpVmInfo( out );
-    }
-
-    public static Dump otherVm( final Matcher<String> processFilter, final File baseDir )
-    {
-        return () -> new DumpProcessInformation( NullLogProvider.getInstance(), baseDir ).doThreadDump( processFilter );
-    }
-
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool( 2 );
-    private final long duration;
-    private final TimeUnit timeUnit;
-    private volatile ScheduledFuture<?> thunk;
-    private final Dump[] dumps;
+	private final long duration;
+	private final TimeUnit timeUnit;
+	private volatile ScheduledFuture<?> thunk;
+	private final Dump[] dumps;
 
-    /**
+	/**
      * Dumps process information about processes on the local machine, filtered by processFilter
      */
     public DumpProcessInformationRule( long duration, TimeUnit timeUnit, Dump... dumps )
@@ -65,7 +50,17 @@ public class DumpProcessInformationRule extends ExternalResource
         this.dumps = dumps;
     }
 
-    @Override
+	public static Dump localVm( final PrintStream out )
+    {
+        return () -> DumpVmInformation.dumpVmInfo( out );
+    }
+
+	public static Dump otherVm( final Matcher<String> processFilter, final File baseDir )
+    {
+        return () -> new DumpProcessInformation( NullLogProvider.getInstance(), baseDir ).doThreadDump( processFilter );
+    }
+
+	@Override
     protected synchronized void before() throws Throwable
     {
         if ( null == thunk )
@@ -83,7 +78,7 @@ public class DumpProcessInformationRule extends ExternalResource
         }
     }
 
-    @Override
+	@Override
     protected synchronized void after()
     {
         if ( null != thunk && !thunk.isDone() )
@@ -94,11 +89,16 @@ public class DumpProcessInformationRule extends ExternalResource
         super.after();
     }
 
-    public void dump() throws Exception
+	public void dump() throws Exception
     {
         for ( Dump dump : dumps )
         {
             dump.dump();
         }
+    }
+
+	public interface Dump
+    {
+        void dump() throws Exception;
     }
 }

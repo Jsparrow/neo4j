@@ -82,109 +82,341 @@ import static org.neo4j.io.fs.FileUtils.fixSeparatorsInPath;
 public class Settings
 {
     private static final String MATCHES_PATTERN_MESSAGE = "matches the pattern `%s`";
-
-    private interface SettingHelper<T> extends Setting<T>
-    {
-        String lookup( Function<String, String> settings );
-
-        String defaultLookup( Function<String, String> settings );
-    }
-
-    public static final String NO_DEFAULT = null;
-    public static final String EMPTY = "";
-
-    public static final String TRUE = "true";
-    public static final String FALSE = "false";
-
-    public static final String DEFAULT = "default";
-
-    public static final String SEPARATOR = ",";
-
-    private static final String SIZE_FORMAT = "\\d+[kmgKMG]?";
-
-    private static final String SIZE_UNITS = Arrays.toString(
+	public static final String NO_DEFAULT = null;
+	public static final String EMPTY = "";
+	public static final String TRUE = "true";
+	public static final String FALSE = "false";
+	public static final String DEFAULT = "default";
+	public static final String SEPARATOR = ",";
+	private static final String SIZE_FORMAT = "\\d+[kmgKMG]?";
+	private static final String SIZE_UNITS = Arrays.toString(
             SIZE_FORMAT.substring( SIZE_FORMAT.indexOf( '[' ) + 1,
                     SIZE_FORMAT.indexOf( ']' ) )
                     .toCharArray() )
             .replace( "[", "" )
             .replace( "]", "" );
-
-    public static final String ANY = ".+";
-
-    /**
-     * Helper class to build a {@link Setting}. A setting always have a name, a parser and a default value.
-     *
-     * @param <T> The concrete type of the setting that is being build
-     */
-    public static final class SettingBuilder<T>
+	public static final String ANY = ".+";
+	public static final Function<String, Integer> INTEGER = new Function<String, Integer>()
     {
-        private final String name;
-        private final Function<String,T> parser;
-        private final String defaultValue;
-        private Setting<T> inheritedSetting;
-        private List<BiFunction<T, Function<String,String>,T>> valueConstraints;
-
-        private SettingBuilder( @Nonnull final String name, @Nonnull final Function<String,T> parser, @Nullable final String defaultValue )
+        @Override
+        public Integer apply( String value )
         {
-            this.name = name;
-            this.parser = parser;
-            this.defaultValue = defaultValue;
-        }
-
-        /**
-         * Setup a class to inherit from. Both the default value and the actual user supplied value will be inherited.
-         * Limited to one parent, but chains are allowed and works as expected by going up on level until a valid value
-         * is found.
-         *
-         * @param inheritedSetting the setting to inherit value and default value from.
-         * @throws AssertionError if more than one inheritance is provided.
-         */
-        @Nonnull
-        public SettingBuilder<T> inherits( @Nonnull final Setting<T> inheritedSetting )
-        {
-            // Make sure we only inherits from one other setting
-            if ( this.inheritedSetting != null )
+            try
             {
-                throw new AssertionError( "Can only inherit from one setting" );
+                return Integer.valueOf( value );
             }
-
-            this.inheritedSetting = inheritedSetting;
-            return this;
-        }
-
-        /**
-         * Add a constraint to this setting. If an error occurs, the constraint should throw {@link IllegalArgumentException}.
-         * Constraints are allowed to modify values and they are applied in the order they are attached to the builder.
-         *
-         * @param constraint to add.
-         */
-        @Nonnull
-        public SettingBuilder<T> constraint( @Nonnull final BiFunction<T, Function<String,String>,T> constraint )
-        {
-            if ( valueConstraints == null )
+            catch ( NumberFormatException e )
             {
-                valueConstraints = new LinkedList<>(); // Must guarantee order
+                throw new IllegalArgumentException( "not a valid integer value" );
             }
-            valueConstraints.add( constraint );
-            return this;
         }
 
-        @Nonnull
-        public Setting<T> build()
+        @Override
+        public String toString()
         {
-            BiFunction<String,Function<String, String>, String> valueLookup = named();
-            BiFunction<String, Function<String, String>, String> defaultLookup = determineDefaultLookup( defaultValue, valueLookup );
-            if ( inheritedSetting != null )
-            {
-                valueLookup = inheritedValue( valueLookup, inheritedSetting );
-                defaultLookup = inheritedDefault( defaultLookup, inheritedSetting );
-            }
-
-            return new DefaultSetting<>( name, parser, valueLookup, defaultLookup, valueConstraints );
+            return "an integer";
         }
+    };
+	public static final Function<String, Long> LONG = new Function<String, Long>()
+    {
+        @Override
+        public Long apply( String value )
+        {
+            try
+            {
+                return Long.valueOf( value );
+            }
+            catch ( NumberFormatException e )
+            {
+                throw new IllegalArgumentException( "not a valid long value" );
+            }
+        }
+
+        @Override
+        public String toString()
+        {
+            return "a long";
+        }
+    };
+	public static final Function<String, Boolean> BOOLEAN = new Function<String, Boolean>()
+    {
+        @Override
+        public Boolean apply( String value )
+        {
+            if ( "true".equalsIgnoreCase( value ) )
+            {
+                return Boolean.TRUE;
+            }
+            else if ( "false".equalsIgnoreCase( value ) )
+            {
+                return Boolean.FALSE;
+            }
+            else
+            {
+                throw new IllegalArgumentException( "must be 'true' or 'false'" );
+            }
+        }
+
+        @Override
+        public String toString()
+        {
+            return "a boolean";
+        }
+    };
+	public static final Function<String, Float> FLOAT = new Function<String, Float>()
+    {
+        @Override
+        public Float apply( String value )
+        {
+            try
+            {
+                return Float.valueOf( value );
+            }
+            catch ( NumberFormatException e )
+            {
+                throw new IllegalArgumentException( "not a valid float value" );
+            }
+        }
+
+        @Override
+        public String toString()
+        {
+            return "a float";
+        }
+    };
+	public static final Function<String, Double> DOUBLE = new Function<String, Double>()
+    {
+        @Override
+        public Double apply( String value )
+        {
+            try
+            {
+                return Double.valueOf( value );
+            }
+            catch ( NumberFormatException e )
+            {
+                throw new IllegalArgumentException( "not a valid double value" );
+            }
+        }
+
+        @Override
+        public String toString()
+        {
+            return "a double";
+        }
+    };
+	public static final Function<String, String> STRING = new Function<String, String>()
+    {
+        @Override
+        public String apply( String value )
+        {
+            return value.trim();
+        }
+
+        @Override
+        public String toString()
+        {
+            return "a string";
+        }
+    };
+	public static final Function<String,List<String>> STRING_LIST = list( SEPARATOR, STRING );
+	public static final Function<String,HostnamePort> HOSTNAME_PORT = new Function<String, HostnamePort>()
+    {
+        @Override
+        public HostnamePort apply( String value )
+        {
+            return new HostnamePort( value );
+        }
+
+        @Override
+        public String toString()
+        {
+            return "a hostname and port";
+        }
+    };
+	public static final Function<String,Duration> DURATION = new Function<String, Duration>()
+    {
+        @Override
+        public Duration apply( String value )
+        {
+            return Duration.ofMillis( TimeUtil.parseTimeMillis.apply( value ) );
+        }
+
+        @Override
+        public String toString()
+        {
+            return new StringBuilder().append("a duration (").append(TimeUtil.VALID_TIME_DESCRIPTION).append(")").toString();
+        }
+    };
+	public static final Function<String,ZoneId> TIMEZONE = new Function<String,ZoneId>()
+    {
+        @Override
+        public ZoneId apply( String value )
+        {
+            return DateTimeValue.parseZoneOffsetOrZoneName(value);
+        }
+
+        @Override
+        public String toString()
+        {
+            return "a string describing a timezone, either described by offset (e.g. '+02:00') or by name (e.g. 'Europe/Stockholm')";
+        }
+    };
+	public static final Function<String, ListenSocketAddress> LISTEN_SOCKET_ADDRESS =
+            new Function<String, ListenSocketAddress>()
+            {
+                @Override
+                public ListenSocketAddress apply( String value )
+                {
+                    return SocketAddressParser.socketAddress( value, ListenSocketAddress::new );
+                }
+
+                @Override
+                public String toString()
+                {
+                    return "a listen socket address";
+                }
+            };
+	public static final Function<String, AdvertisedSocketAddress> ADVERTISED_SOCKET_ADDRESS =
+            new Function<String, AdvertisedSocketAddress>()
+            {
+                @Override
+                public AdvertisedSocketAddress apply( String value )
+                {
+                    return SocketAddressParser.socketAddress( value, AdvertisedSocketAddress::new );
+                }
+
+                @Override
+                public String toString()
+                {
+                    return "an advertised socket address";
+                }
+            };
+	public static final Function<String, Long> BYTES = new Function<String, Long>()
+    {
+        @Override
+        public Long apply( String value )
+        {
+            long bytes;
+            try
+            {
+                bytes = ByteUnit.parse( value );
+            }
+            catch ( IllegalArgumentException e )
+            {
+                throw new IllegalArgumentException( format(
+                        "%s is not a valid size, must be e.g. 10, 5K, 1M, 11G", value ) );
+            }
+            if ( bytes < 0 )
+            {
+                throw new IllegalArgumentException(
+                        value + " is not a valid number of bytes. Must be positive or zero." );
+            }
+            return bytes;
+        }
+
+        @Override
+        public String toString()
+        {
+            return new StringBuilder().append("a byte size (valid multipliers are `").append(SIZE_UNITS.replace( ", ", "`, `" )).append("`)").toString();
+        }
+    };
+	public static final Function<String, URI> URI =
+            new Function<String, URI>()
+            {
+                @Override
+                public URI apply( String value )
+                {
+                    try
+                    {
+                        return new URI( value );
+                    }
+                    catch ( URISyntaxException e )
+                    {
+                        throw new IllegalArgumentException( "not a valid URI" );
+                    }
+                }
+
+                @Override
+                public String toString()
+                {
+                    return "a URI";
+                }
+            };
+	public static final Function<String, URI> NORMALIZED_RELATIVE_URI = new Function<String, URI>()
+    {
+        @Override
+        public URI apply( String value )
+        {
+            try
+            {
+                String normalizedUri = new URI( value ).normalize().getPath();
+                if ( normalizedUri.endsWith( "/" ) )
+                {
+                    // Force the string end without "/"
+                    normalizedUri = normalizedUri.substring( 0, normalizedUri.length() - 1 );
+                }
+                return new URI( normalizedUri );
+            }
+            catch ( URISyntaxException e )
+            {
+                throw new IllegalArgumentException( "not a valid URI" );
+            }
+        }
+
+        @Override
+        public String toString()
+        {
+            return "a URI";
+        }
+    };
+	public static final Function<String, File> PATH = new Function<String, File>()
+    {
+        @Override
+        public File apply( String setting )
+        {
+            File file = new File( fixSeparatorsInPath( setting ) );
+            if ( !file.isAbsolute() )
+            {
+                throw new IllegalArgumentException( "Paths must be absolute. Got " + file );
+            }
+            return file;
+        }
+
+        @Override
+        public String toString()
+        {
+            return "a path";
+        }
+    };
+	public static final BiFunction<List<String>,Function<String,String>,List<String>> nonEmptyList =
+            new BiFunction<List<String>,Function<String,String>,List<String>>()
+            {
+                @Override
+                public List<String> apply( List<String> values, Function<String,String> settings )
+                {
+                    if ( values.isEmpty() )
+                    {
+                        throw new IllegalArgumentException( "setting must not be empty" );
+                    }
+                    return values;
+                }
+
+                @Override
+                public String toString()
+                {
+                    return "non-empty list";
+                }
+            };
+	public static final BiFunction<Integer, Function<String, String>, Integer> port =
+            illegalValueMessage( "must be a valid port number", range( 0, 65535 ) );
+
+	private Settings()
+    {
+        throw new AssertionError();
     }
 
-    /**
+	/**
      * Constructs a {@link Setting} with a specified default value.
      *
      * @param name of the setting, e.g. "dbms.transaction.timeout".
@@ -199,7 +431,7 @@ public class Settings
         return new SettingBuilder<>( name, parser, defaultValue ).build();
     }
 
-    /**
+	/**
      * Start building a setting with default value set to {@link Settings#NO_DEFAULT}.
      *
      * @param name of the setting, e.g. "dbms.transaction.timeout".
@@ -212,7 +444,7 @@ public class Settings
         return buildSetting( name, parser, NO_DEFAULT );
     }
 
-    /**
+	/**
      * Start building a setting with a specified default value.
      *
      * @param name of the setting, e.g. "dbms.transaction.timeout".
@@ -227,7 +459,7 @@ public class Settings
         return new SettingBuilder<>( name, parser, defaultValue );
     }
 
-    public static BiFunction<String,Function<String,String>,String> determineDefaultLookup( String defaultValue,
+	public static BiFunction<String,Function<String,String>,String> determineDefaultLookup( String defaultValue,
             BiFunction<String,Function<String,String>,String> valueLookup )
     {
         BiFunction<String,Function<String,String>,String> defaultLookup;
@@ -242,7 +474,7 @@ public class Settings
         return defaultLookup;
     }
 
-    public static <OUT, IN1, IN2> Setting<OUT> derivedSetting( String name,
+	public static <OUT, IN1, IN2> Setting<OUT> derivedSetting( String name,
                                                                Setting<IN1> in1, Setting<IN2> in2,
                                                                BiFunction<IN1, IN2, OUT> derivation,
                                                                Function<String, OUT> overrideConverter )
@@ -293,7 +525,7 @@ public class Settings
         };
     }
 
-    public static <OUT, IN1> Setting<OUT> derivedSetting( String name,
+	public static <OUT, IN1> Setting<OUT> derivedSetting( String name,
                                                           Setting<IN1> in1,
                                                           Function<IN1, OUT> derivation,
                                                           Function<String,OUT> overrideConverter )
@@ -337,17 +569,17 @@ public class Settings
         };
     }
 
-    public static Setting<File> pathSetting( String name, String defaultValue )
+	public static Setting<File> pathSetting( String name, String defaultValue )
     {
         return new FileSetting( name, defaultValue );
     }
 
-    public static Setting<File> pathSetting( String name, String defaultValue, Setting<File> relativeRoot )
+	public static Setting<File> pathSetting( String name, String defaultValue, Setting<File> relativeRoot )
     {
         return new FileSetting( name, defaultValue, relativeRoot );
     }
 
-    private static <T> BiFunction<String,Function<String, String>, String> inheritedValue(
+	private static <T> BiFunction<String,Function<String, String>, String> inheritedValue(
             final BiFunction<String,Function<String,String>, String> lookup, final Setting<T> inheritedSetting )
     {
         return ( name, settings ) ->
@@ -361,7 +593,7 @@ public class Settings
         };
     }
 
-    private static <T> BiFunction<String,Function<String, String>, String> inheritedDefault(
+	private static <T> BiFunction<String,Function<String, String>, String> inheritedDefault(
             final BiFunction<String,Function<String,String>, String> lookup, final Setting<T> inheritedSetting )
     {
         return ( name, settings ) ->
@@ -375,215 +607,7 @@ public class Settings
         };
     }
 
-    public static final Function<String, Integer> INTEGER = new Function<String, Integer>()
-    {
-        @Override
-        public Integer apply( String value )
-        {
-            try
-            {
-                return Integer.valueOf( value );
-            }
-            catch ( NumberFormatException e )
-            {
-                throw new IllegalArgumentException( "not a valid integer value" );
-            }
-        }
-
-        @Override
-        public String toString()
-        {
-            return "an integer";
-        }
-    };
-
-    public static final Function<String, Long> LONG = new Function<String, Long>()
-    {
-        @Override
-        public Long apply( String value )
-        {
-            try
-            {
-                return Long.valueOf( value );
-            }
-            catch ( NumberFormatException e )
-            {
-                throw new IllegalArgumentException( "not a valid long value" );
-            }
-        }
-
-        @Override
-        public String toString()
-        {
-            return "a long";
-        }
-    };
-
-    public static final Function<String, Boolean> BOOLEAN = new Function<String, Boolean>()
-    {
-        @Override
-        public Boolean apply( String value )
-        {
-            if ( value.equalsIgnoreCase( "true" ) )
-            {
-                return Boolean.TRUE;
-            }
-            else if ( value.equalsIgnoreCase( "false" ) )
-            {
-                return Boolean.FALSE;
-            }
-            else
-            {
-                throw new IllegalArgumentException( "must be 'true' or 'false'" );
-            }
-        }
-
-        @Override
-        public String toString()
-        {
-            return "a boolean";
-        }
-    };
-
-    public static final Function<String, Float> FLOAT = new Function<String, Float>()
-    {
-        @Override
-        public Float apply( String value )
-        {
-            try
-            {
-                return Float.valueOf( value );
-            }
-            catch ( NumberFormatException e )
-            {
-                throw new IllegalArgumentException( "not a valid float value" );
-            }
-        }
-
-        @Override
-        public String toString()
-        {
-            return "a float";
-        }
-    };
-
-    public static final Function<String, Double> DOUBLE = new Function<String, Double>()
-    {
-        @Override
-        public Double apply( String value )
-        {
-            try
-            {
-                return Double.valueOf( value );
-            }
-            catch ( NumberFormatException e )
-            {
-                throw new IllegalArgumentException( "not a valid double value" );
-            }
-        }
-
-        @Override
-        public String toString()
-        {
-            return "a double";
-        }
-    };
-
-    public static final Function<String, String> STRING = new Function<String, String>()
-    {
-        @Override
-        public String apply( String value )
-        {
-            return value.trim();
-        }
-
-        @Override
-        public String toString()
-        {
-            return "a string";
-        }
-    };
-
-    public static final Function<String,List<String>> STRING_LIST = list( SEPARATOR, STRING );
-
-    public static final Function<String,HostnamePort> HOSTNAME_PORT = new Function<String, HostnamePort>()
-    {
-        @Override
-        public HostnamePort apply( String value )
-        {
-            return new HostnamePort( value );
-        }
-
-        @Override
-        public String toString()
-        {
-            return "a hostname and port";
-        }
-    };
-
-    public static final Function<String,Duration> DURATION = new Function<String, Duration>()
-    {
-        @Override
-        public Duration apply( String value )
-        {
-            return Duration.ofMillis( TimeUtil.parseTimeMillis.apply( value ) );
-        }
-
-        @Override
-        public String toString()
-        {
-            return "a duration (" + TimeUtil.VALID_TIME_DESCRIPTION + ")";
-        }
-    };
-
-    public static final Function<String,ZoneId> TIMEZONE = new Function<String,ZoneId>()
-    {
-        @Override
-        public ZoneId apply( String value )
-        {
-            return DateTimeValue.parseZoneOffsetOrZoneName(value);
-        }
-
-        @Override
-        public String toString()
-        {
-            return "a string describing a timezone, either described by offset (e.g. '+02:00') or by name (e.g. 'Europe/Stockholm')";
-        }
-    };
-
-    public static final Function<String, ListenSocketAddress> LISTEN_SOCKET_ADDRESS =
-            new Function<String, ListenSocketAddress>()
-            {
-                @Override
-                public ListenSocketAddress apply( String value )
-                {
-                    return SocketAddressParser.socketAddress( value, ListenSocketAddress::new );
-                }
-
-                @Override
-                public String toString()
-                {
-                    return "a listen socket address";
-                }
-            };
-
-    public static final Function<String, AdvertisedSocketAddress> ADVERTISED_SOCKET_ADDRESS =
-            new Function<String, AdvertisedSocketAddress>()
-            {
-                @Override
-                public AdvertisedSocketAddress apply( String value )
-                {
-                    return SocketAddressParser.socketAddress( value, AdvertisedSocketAddress::new );
-                }
-
-                @Override
-                public String toString()
-                {
-                    return "an advertised socket address";
-                }
-            };
-
-    public static BaseSetting<ListenSocketAddress> listenAddress( String name, int defaultPort )
+	public static BaseSetting<ListenSocketAddress> listenAddress( String name, int defaultPort )
     {
         return new ScopeAwareSetting<ListenSocketAddress>()
         {
@@ -596,7 +620,7 @@ public class Settings
             @Override
             public String getDefaultValue()
             {
-                return default_listen_address.getDefaultValue() + ":" + defaultPort;
+                return new StringBuilder().append(default_listen_address.getDefaultValue()).append(":").append(defaultPort).toString();
             }
 
             @Override
@@ -623,7 +647,7 @@ public class Settings
         };
     }
 
-    public static BaseSetting<AdvertisedSocketAddress> advertisedAddress( String name,
+	public static BaseSetting<AdvertisedSocketAddress> advertisedAddress( String name,
             Setting<ListenSocketAddress> listenAddressSetting )
     {
         return new ScopeAwareSetting<AdvertisedSocketAddress>()
@@ -637,8 +661,7 @@ public class Settings
             @Override
             public String getDefaultValue()
             {
-                return default_advertised_address.getDefaultValue() + ":" +
-                        LISTEN_SOCKET_ADDRESS.apply( listenAddressSetting.getDefaultValue() ).socketAddress().getPort();
+                return new StringBuilder().append(default_advertised_address.getDefaultValue()).append(":").append(LISTEN_SOCKET_ADDRESS.apply( listenAddressSetting.getDefaultValue() ).socketAddress().getPort()).toString();
             }
 
             @Override
@@ -675,128 +698,27 @@ public class Settings
         };
     }
 
-    public static final Function<String, Long> BYTES = new Function<String, Long>()
-    {
-        @Override
-        public Long apply( String value )
-        {
-            long bytes;
-            try
-            {
-                bytes = ByteUnit.parse( value );
-            }
-            catch ( IllegalArgumentException e )
-            {
-                throw new IllegalArgumentException( format(
-                        "%s is not a valid size, must be e.g. 10, 5K, 1M, 11G", value ) );
-            }
-            if ( bytes < 0 )
-            {
-                throw new IllegalArgumentException(
-                        value + " is not a valid number of bytes. Must be positive or zero." );
-            }
-            return bytes;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "a byte size (valid multipliers are `" + SIZE_UNITS.replace( ", ", "`, `" ) + "`)";
-        }
-    };
-
-    public static final Function<String, URI> URI =
-            new Function<String, URI>()
-            {
-                @Override
-                public URI apply( String value )
-                {
-                    try
-                    {
-                        return new URI( value );
-                    }
-                    catch ( URISyntaxException e )
-                    {
-                        throw new IllegalArgumentException( "not a valid URI" );
-                    }
-                }
-
-                @Override
-                public String toString()
-                {
-                    return "a URI";
-                }
-            };
-
-    public static final Function<String, URI> NORMALIZED_RELATIVE_URI = new Function<String, URI>()
-    {
-        @Override
-        public URI apply( String value )
-        {
-            try
-            {
-                String normalizedUri = new URI( value ).normalize().getPath();
-                if ( normalizedUri.endsWith( "/" ) )
-                {
-                    // Force the string end without "/"
-                    normalizedUri = normalizedUri.substring( 0, normalizedUri.length() - 1 );
-                }
-                return new URI( normalizedUri );
-            }
-            catch ( URISyntaxException e )
-            {
-                throw new IllegalArgumentException( "not a valid URI" );
-            }
-        }
-
-        @Override
-        public String toString()
-        {
-            return "a URI";
-        }
-    };
-
-    public static final Function<String, File> PATH = new Function<String, File>()
-    {
-        @Override
-        public File apply( String setting )
-        {
-            File file = new File( fixSeparatorsInPath( setting ) );
-            if ( !file.isAbsolute() )
-            {
-                throw new IllegalArgumentException( "Paths must be absolute. Got " + file );
-            }
-            return file;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "a path";
-        }
-    };
-
-    public static <T extends Enum<T>> Function<String, T> optionsObeyCase( final Class<T> enumClass )
+	public static <T extends Enum<T>> Function<String, T> optionsObeyCase( final Class<T> enumClass )
     {
         return options( EnumSet.allOf( enumClass ), false );
     }
 
-    public static <T extends Enum<T>> Function<String, T> optionsIgnoreCase( final Class<T> enumClass )
+	public static <T extends Enum<T>> Function<String, T> optionsIgnoreCase( final Class<T> enumClass )
     {
         return options( EnumSet.allOf( enumClass ), true );
     }
 
-    public static <T> Function<String, T> optionsObeyCase( T... optionValues )
+	public static <T> Function<String, T> optionsObeyCase( T... optionValues )
     {
         return options( Iterables.iterable( optionValues ), false );
     }
 
-    public static <T> Function<String, T> optionsIgnoreCase( T... optionValues )
+	public static <T> Function<String, T> optionsIgnoreCase( T... optionValues )
     {
         return options( Iterables.iterable( optionValues ), true );
     }
 
-    public static <T> Function<String, T> options( final Iterable<T> optionValues, final boolean ignoreCase )
+	public static <T> Function<String, T> options( final Iterable<T> optionValues, final boolean ignoreCase )
     {
         return new Function<String, T>()
         {
@@ -814,7 +736,8 @@ public class Settings
                 }
                 String possibleValues = Iterables.asList( optionValues ).toString();
                 throw new IllegalArgumentException(
-                        "must be one of " + possibleValues + " case " + (ignoreCase ? "insensitive" : "sensitive") );
+                        new StringBuilder().append("must be one of ").append(possibleValues).append(" case ").append(ignoreCase ? "insensitive" : "sensitive")
+								.toString() );
             }
 
             @Override
@@ -825,7 +748,7 @@ public class Settings
         };
     }
 
-    /**
+	/**
      *
      * @param optionValues iterable of objects with descriptive toString methods
      * @return a string describing possible values like "one of `X, Y, Z`"
@@ -845,7 +768,7 @@ public class Settings
         return builder.toString();
     }
 
-    public static <T> Function<String, List<T>> list( final String separator, final Function<String, T> itemParser )
+	public static <T> Function<String, List<T>> list( final String separator, final Function<String, T> itemParser )
     {
         return new Function<String, List<T>>()
         {
@@ -868,12 +791,12 @@ public class Settings
             @Override
             public String toString()
             {
-                return "a list separated by \"" + separator + "\" where items are " + itemParser;
+                return new StringBuilder().append("a list separated by \"").append(separator).append("\" where items are ").append(itemParser).toString();
             }
         };
     }
 
-    // Modifiers
+	// Modifiers
     public static BiFunction<String, Function<String, String>, String> matches( final String regex )
     {
         final Pattern pattern = Pattern.compile( regex );
@@ -899,27 +822,7 @@ public class Settings
         };
     }
 
-    public static final BiFunction<List<String>,Function<String,String>,List<String>> nonEmptyList =
-            new BiFunction<List<String>,Function<String,String>,List<String>>()
-            {
-                @Override
-                public List<String> apply( List<String> values, Function<String,String> settings )
-                {
-                    if ( values.isEmpty() )
-                    {
-                        throw new IllegalArgumentException( "setting must not be empty" );
-                    }
-                    return values;
-                }
-
-                @Override
-                public String toString()
-                {
-                    return "non-empty list";
-                }
-            };
-
-    public static BiFunction<List<String>,Function<String,String>,List<String>> matchesAny( final String regex )
+	public static BiFunction<List<String>,Function<String,String>,List<String>> matchesAny( final String regex )
     {
         final Pattern pattern = Pattern.compile( regex );
 
@@ -947,20 +850,16 @@ public class Settings
         };
     }
 
-    public static BiFunction<String,Function<String,String>,String> except( final String... forbiddenValues )
+	public static BiFunction<String,Function<String,String>,String> except( final String... forbiddenValues )
     {
         return new BiFunction<String,Function<String,String>,String>()
         {
             @Override
             public String apply( String value, Function<String,String> stringStringFunction )
             {
-                if ( StringUtils.isNotBlank( value ) )
-                {
-                    if ( ArrayUtils.contains( forbiddenValues, value ) )
-                    {
-                        throw new IllegalArgumentException( format( "not allowed value is: %s", value ) );
-                    }
-                }
+                if ( StringUtils.isNotBlank( value ) && ArrayUtils.contains( forbiddenValues, value ) ) {
+				    throw new IllegalArgumentException( format( "not allowed value is: %s", value ) );
+				}
                 return value;
             }
 
@@ -980,7 +879,7 @@ public class Settings
         };
     }
 
-    public static BiFunction<Long,Function<String,String>,Long> powerOf2()
+	public static BiFunction<Long,Function<String,String>,Long> powerOf2()
     {
         return new BiFunction<Long,Function<String,String>,Long>()
         {
@@ -1002,7 +901,7 @@ public class Settings
         };
     }
 
-    public static <T extends Comparable<T>> BiFunction<T, Function<String, String>, T> min( final T min )
+	public static <T extends Comparable<T>> BiFunction<T, Function<String, String>, T> min( final T min )
     {
         return new BiFunction<T, Function<String, String>, T>()
         {
@@ -1019,12 +918,12 @@ public class Settings
             @Override
             public String toString()
             {
-                return "is minimum `" + min + "`";
+                return new StringBuilder().append("is minimum `").append(min).append("`").toString();
             }
         };
     }
 
-    public static <T extends Comparable<T>> BiFunction<T, Function<String, String>, T> max( final T max )
+	public static <T extends Comparable<T>> BiFunction<T, Function<String, String>, T> max( final T max )
     {
         return new BiFunction<T, Function<String, String>, T>()
         {
@@ -1041,12 +940,12 @@ public class Settings
             @Override
             public String toString()
             {
-                return "is maximum `" + max + "`";
+                return new StringBuilder().append("is maximum `").append(max).append("`").toString();
             }
         };
     }
 
-    public static <T extends Comparable<T>> BiFunction<T, Function<String, String>, T> range( final T min, final T max )
+	public static <T extends Comparable<T>> BiFunction<T, Function<String, String>, T> range( final T min, final T max )
     {
         return new BiFunction<T, Function<String, String>, T>()
         {
@@ -1064,10 +963,7 @@ public class Settings
         };
     }
 
-    public static final BiFunction<Integer, Function<String, String>, Integer> port =
-            illegalValueMessage( "must be a valid port number", range( 0, 65535 ) );
-
-    public static <T> BiFunction<T, Function<String, String>, T> illegalValueMessage( final String message,
+	public static <T> BiFunction<T, Function<String, String>, T> illegalValueMessage( final String message,
             final BiFunction<T,Function<String,String>,T> valueFunction )
     {
         return new BiFunction<T, Function<String, String>, T>()
@@ -1093,14 +989,14 @@ public class Settings
                      && !format( MATCHES_PATTERN_MESSAGE, ANY ).equals(
                              valueFunction.toString() ) )
                 {
-                    description += " (" + valueFunction + ")";
+                    description += new StringBuilder().append(" (").append(valueFunction).append(")").toString();
                 }
                 return description;
             }
         };
     }
 
-    // Setting converters and constraints
+	// Setting converters and constraints
     public static long parseLongWithUnit( String numberWithPotentialUnit )
     {
         int firstNonDigitIndex = findFirstNonDigit( numberWithPotentialUnit );
@@ -1110,29 +1006,29 @@ public class Settings
         if ( firstNonDigitIndex < numberWithPotentialUnit.length() )
         {
             String unit = numberWithPotentialUnit.substring( firstNonDigitIndex );
-            if ( unit.equalsIgnoreCase( "k" ) )
+            if ( "k".equalsIgnoreCase( unit ) )
             {
                 multiplier = 1024;
             }
-            else if ( unit.equalsIgnoreCase( "m" ) )
+            else if ( "m".equalsIgnoreCase( unit ) )
             {
                 multiplier = 1024 * 1024;
             }
-            else if ( unit.equalsIgnoreCase( "g" ) )
+            else if ( "g".equalsIgnoreCase( unit ) )
             {
                 multiplier = 1024 * 1024 * 1024;
             }
             else
             {
                 throw new IllegalArgumentException(
-                        "Illegal unit '" + unit + "' for number '" + numberWithPotentialUnit + "'" );
+                        new StringBuilder().append("Illegal unit '").append(unit).append("' for number '").append(numberWithPotentialUnit).append("'").toString() );
             }
         }
 
         return parseLong( number ) * multiplier;
     }
 
-    /**
+	/**
      * @return index of first non-digit character in {@code numberWithPotentialUnit}. If all digits then
      * {@code numberWithPotentialUnit.length()} is returned.
      */
@@ -1150,13 +1046,13 @@ public class Settings
         return firstNonDigitIndex;
     }
 
-    // Setting helpers
+	// Setting helpers
     private static BiFunction<String,Function<String, String>, String> named()
     {
         return ( name, settings ) -> settings.apply( name );
     }
 
-    private static BiFunction<String,Function<String,String>,String> withDefault( final String defaultValue,
+	private static BiFunction<String,Function<String,String>,String> withDefault( final String defaultValue,
             final BiFunction<String,Function<String,String>,String> lookup )
     {
         return ( name, settings ) ->
@@ -1173,7 +1069,7 @@ public class Settings
         };
     }
 
-    public static <T> Setting<T> legacyFallback( Setting<T> fallbackSetting, Setting<T> newSetting )
+	public static <T> Setting<T> legacyFallback( Setting<T> fallbackSetting, Setting<T> newSetting )
     {
         return new Setting<T>()
         {
@@ -1258,9 +1154,110 @@ public class Settings
         };
     }
 
-    private Settings()
+	public static BaseSetting<String> prefixSetting( final String name, final Function<String,String> parser, final String defaultValue )
     {
-        throw new AssertionError();
+        BiFunction<String,Function<String,String>,String> valueLookup = ( n, settings ) -> settings.apply( n );
+        BiFunction<String,Function<String,String>,String> defaultLookup = determineDefaultLookup( defaultValue, valueLookup );
+
+        return new Settings.DefaultSetting<String>( name, parser, valueLookup, defaultLookup, Collections.emptyList() )
+        {
+            @Override
+            public Map<String,String> validate( Map<String,String> rawConfig, Consumer<String> warningConsumer )
+            {
+                // Validate setting, if present or default value otherwise
+                try
+                {
+                    apply( rawConfig::get );
+                    // only return if it was present though
+
+                    return rawConfig.entrySet().stream().filter( entry -> entry.getKey().startsWith( name() ) ).collect( CollectorsUtil.entriesToMap() );
+                }
+                catch ( RuntimeException e )
+                {
+                    throw new InvalidSettingException( e.getMessage(), e );
+                }
+            }
+        };
+    }
+
+    private interface SettingHelper<T> extends Setting<T>
+    {
+        String lookup( Function<String, String> settings );
+
+        String defaultLookup( Function<String, String> settings );
+    }
+
+    /**
+     * Helper class to build a {@link Setting}. A setting always have a name, a parser and a default value.
+     *
+     * @param <T> The concrete type of the setting that is being build
+     */
+    public static final class SettingBuilder<T>
+    {
+        private final String name;
+        private final Function<String,T> parser;
+        private final String defaultValue;
+        private Setting<T> inheritedSetting;
+        private List<BiFunction<T, Function<String,String>,T>> valueConstraints;
+
+        private SettingBuilder( @Nonnull final String name, @Nonnull final Function<String,T> parser, @Nullable final String defaultValue )
+        {
+            this.name = name;
+            this.parser = parser;
+            this.defaultValue = defaultValue;
+        }
+
+        /**
+         * Setup a class to inherit from. Both the default value and the actual user supplied value will be inherited.
+         * Limited to one parent, but chains are allowed and works as expected by going up on level until a valid value
+         * is found.
+         *
+         * @param inheritedSetting the setting to inherit value and default value from.
+         * @throws AssertionError if more than one inheritance is provided.
+         */
+        @Nonnull
+        public SettingBuilder<T> inherits( @Nonnull final Setting<T> inheritedSetting )
+        {
+            // Make sure we only inherits from one other setting
+            if ( this.inheritedSetting != null )
+            {
+                throw new AssertionError( "Can only inherit from one setting" );
+            }
+
+            this.inheritedSetting = inheritedSetting;
+            return this;
+        }
+
+        /**
+         * Add a constraint to this setting. If an error occurs, the constraint should throw {@link IllegalArgumentException}.
+         * Constraints are allowed to modify values and they are applied in the order they are attached to the builder.
+         *
+         * @param constraint to add.
+         */
+        @Nonnull
+        public SettingBuilder<T> constraint( @Nonnull final BiFunction<T, Function<String,String>,T> constraint )
+        {
+            if ( valueConstraints == null )
+            {
+                valueConstraints = new LinkedList<>(); // Must guarantee order
+            }
+            valueConstraints.add( constraint );
+            return this;
+        }
+
+        @Nonnull
+        public Setting<T> build()
+        {
+            BiFunction<String,Function<String, String>, String> valueLookup = named();
+            BiFunction<String, Function<String, String>, String> defaultLookup = determineDefaultLookup( defaultValue, valueLookup );
+            if ( inheritedSetting != null )
+            {
+                valueLookup = inheritedValue( valueLookup, inheritedSetting );
+                defaultLookup = inheritedDefault( defaultLookup, inheritedSetting );
+            }
+
+            return new DefaultSetting<>( name, parser, valueLookup, defaultLookup, valueConstraints );
+        }
     }
 
     public static class DefaultSetting<T> extends ScopeAwareSetting<T> implements SettingHelper<T>
@@ -1456,33 +1453,7 @@ public class Settings
         @Override
         public String valueDescription()
         {
-            return "A filesystem path; relative paths are resolved against the root, _<" + relativeRoot.name() + ">_";
+            return new StringBuilder().append("A filesystem path; relative paths are resolved against the root, _<").append(relativeRoot.name()).append(">_").toString();
         }
-    }
-
-    public static BaseSetting<String> prefixSetting( final String name, final Function<String,String> parser, final String defaultValue )
-    {
-        BiFunction<String,Function<String,String>,String> valueLookup = ( n, settings ) -> settings.apply( n );
-        BiFunction<String,Function<String,String>,String> defaultLookup = determineDefaultLookup( defaultValue, valueLookup );
-
-        return new Settings.DefaultSetting<String>( name, parser, valueLookup, defaultLookup, Collections.emptyList() )
-        {
-            @Override
-            public Map<String,String> validate( Map<String,String> rawConfig, Consumer<String> warningConsumer ) throws InvalidSettingException
-            {
-                // Validate setting, if present or default value otherwise
-                try
-                {
-                    apply( rawConfig::get );
-                    // only return if it was present though
-
-                    return rawConfig.entrySet().stream().filter( entry -> entry.getKey().startsWith( name() ) ).collect( CollectorsUtil.entriesToMap() );
-                }
-                catch ( RuntimeException e )
-                {
-                    throw new InvalidSettingException( e.getMessage(), e );
-                }
-            }
-        };
     }
 }

@@ -61,10 +61,10 @@ abstract class AbstractTraverserIterator extends PrefetchingResourceIterator<Pat
     @Override
     public void close()
     {
-        if ( resource != null )
-        {
-            resource.close();
-            resource = null;
-        }
+        if (resource == null) {
+			return;
+		}
+		resource.close();
+		resource = null;
     }
 }

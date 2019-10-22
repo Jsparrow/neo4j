@@ -50,10 +50,39 @@ public class IndexingCompositeQueryAcceptanceTest
 {
     @ClassRule
     public static ImpermanentDatabaseRule dbRule = new ImpermanentDatabaseRule();
-    @Rule
+	private static Label LABEL = Label.label( "LABEL1" );
+	private static IndexSeek biIndexSeek =
+            ( keys, values, db ) ->
+            {
+                assert keys.length == 2;
+                assert values.length == 2;
+                return db.findNodes( LABEL, keys[0], values[0], keys[1], values[1] );
+            };
+	private static IndexSeek triIndexSeek =
+            ( keys, values, db ) ->
+            {
+                assert keys.length == 3;
+                assert values.length == 3;
+                return db.findNodes( LABEL, keys[0], values[0], keys[1], values[1], keys[2], values[2] );
+            };
+	private static IndexSeek mapIndexSeek =
+            ( keys, values, db ) ->
+            db.findNodes(LABEL, propertyMap(keys, values));
+	@Rule
     public final TestName testName = new TestName();
+	@Parameterized.Parameter( 0 )
+    public String[] keys;
+	@Parameterized.Parameter( 1 )
+    public Object[] values;
+	@Parameterized.Parameter( 2 )
+    public Object[][] nonMatching;
+	@Parameterized.Parameter( 3 )
+    public IndexSeek indexSeek;
+	@Parameterized.Parameter( 4 )
+    public boolean withIndex;
+	private GraphDatabaseService db;
 
-    @Parameterized.Parameters
+	@Parameterized.Parameters
     public static List<Object[]> data()
     {
         return Arrays.asList(
@@ -66,54 +95,39 @@ public class IndexingCompositeQueryAcceptanceTest
         );
     }
 
-    @Parameterized.Parameter( 0 )
-    public String[] keys;
-    @Parameterized.Parameter( 1 )
-    public Object[] values;
-    @Parameterized.Parameter( 2 )
-    public Object[][] nonMatching;
-    @Parameterized.Parameter( 3 )
-    public IndexSeek indexSeek;
-    @Parameterized.Parameter( 4 )
-    public boolean withIndex;
-
-    private static Label LABEL = Label.label( "LABEL1" );
-    private GraphDatabaseService db;
-
-    @Before
+	@Before
     public void setup()
     {
         db = dbRule.getGraphDatabaseAPI();
-        if ( withIndex )
-        {
-            try ( org.neo4j.graphdb.Transaction tx = db.beginTx() )
-            {
-                db.schema().indexFor( LABEL ).on( keys[0] ).create();
+        if (!withIndex) {
+			return;
+		}
+		try ( org.neo4j.graphdb.Transaction tx = db.beginTx() )
+		{
+		    db.schema().indexFor( LABEL ).on( keys[0] ).create();
 
-                IndexCreator indexCreator = db.schema().indexFor( LABEL );
-                for ( String key : keys )
-                {
-                    indexCreator = indexCreator.on( key );
-                }
-                indexCreator.create();
-                tx.success();
-            }
-
-            try ( org.neo4j.graphdb.Transaction tx = db.beginTx() )
-            {
-                db.schema().awaitIndexesOnline( 5, TimeUnit.MINUTES );
-                tx.success();
-            }
-        }
+		    IndexCreator indexCreator = db.schema().indexFor( LABEL );
+		    for ( String key : keys )
+		    {
+		        indexCreator = indexCreator.on( key );
+		    }
+		    indexCreator.create();
+		    tx.success();
+		}
+		try ( org.neo4j.graphdb.Transaction tx = db.beginTx() )
+		{
+		    db.schema().awaitIndexesOnline( 5, TimeUnit.MINUTES );
+		    tx.success();
+		}
     }
 
-    @After
+	@After
     public void tearDown()
     {
         dbRule.shutdown();
     }
 
-    @Test
+	@Test
     public void shouldSupportIndexSeek()
     {
         // GIVEN
@@ -131,7 +145,7 @@ public class IndexingCompositeQueryAcceptanceTest
         assertThat( found, equalTo( expected ) );
     }
 
-    @Test
+	@Test
     public void shouldSupportIndexSeekBackwardsOrder()
     {
         // GIVEN
@@ -156,7 +170,7 @@ public class IndexingCompositeQueryAcceptanceTest
         assertThat( found, equalTo( expected ) );
     }
 
-    @Test
+	@Test
     public void shouldIncludeNodesCreatedInSameTxInIndexSeek()
     {
         // GIVEN
@@ -175,7 +189,7 @@ public class IndexingCompositeQueryAcceptanceTest
         assertThat( found, equalTo( expected ) );
     }
 
-    @Test
+	@Test
     public void shouldNotIncludeNodesDeletedInSameTxInIndexSeek()
     {
         // GIVEN
@@ -200,7 +214,7 @@ public class IndexingCompositeQueryAcceptanceTest
         assertThat( found, equalTo( expected ) );
     }
 
-    @Test
+	@Test
     public void shouldConsiderNodesChangedInSameTxInIndexSeek()
     {
         // GIVEN
@@ -233,7 +247,7 @@ public class IndexingCompositeQueryAcceptanceTest
         assertThat( found, equalTo( expected ) );
     }
 
-    public MutableLongSet createNodes( GraphDatabaseService db, Label label, Object[]... propertyValueTuples )
+	public MutableLongSet createNodes( GraphDatabaseService db, Label label, Object[]... propertyValueTuples )
     {
         MutableLongSet expected = new LongHashSet();
         try ( Transaction tx = db.beginTx() )
@@ -247,7 +261,7 @@ public class IndexingCompositeQueryAcceptanceTest
         return expected;
     }
 
-    public static Map<String,Object> propertyMap( String[] keys, Object[] valueTuple )
+	public static Map<String,Object> propertyMap( String[] keys, Object[] valueTuple )
     {
         Map<String,Object> propertyValues = new HashMap<>();
         for ( int i = 0; i < keys.length; i++ )
@@ -257,7 +271,7 @@ public class IndexingCompositeQueryAcceptanceTest
         return propertyValues;
     }
 
-    public void collectNodes( MutableLongSet bucket, ResourceIterator<Node> toCollect )
+	public void collectNodes( MutableLongSet bucket, ResourceIterator<Node> toCollect )
     {
         while ( toCollect.hasNext() )
         {
@@ -265,28 +279,25 @@ public class IndexingCompositeQueryAcceptanceTest
         }
     }
 
-    public Node createNode( GraphDatabaseService beansAPI, Map<String, Object> properties, Label... labels )
+	public Node createNode( GraphDatabaseService beansAPI, Map<String, Object> properties, Label... labels )
     {
         try ( Transaction tx = beansAPI.beginTx() )
         {
             Node node = beansAPI.createNode( labels );
-            for ( Map.Entry<String,Object> property : properties.entrySet() )
-            {
-                node.setProperty( property.getKey(), property.getValue() );
-            }
+            properties.entrySet().forEach(property -> node.setProperty(property.getKey(), property.getValue()));
             tx.success();
             return node;
         }
     }
 
-    public static Object[] testCase( Integer[] values, IndexSeek indexSeek, boolean withIndex )
+	public static Object[] testCase( Integer[] values, IndexSeek indexSeek, boolean withIndex )
     {
         Object[][] nonMatching = {plus( values, 1 ), plus( values, 2 ), plus( values, 3 )};
         String[] keys = Arrays.stream( values ).map( v -> "key" + v ).toArray( String[]::new );
         return new Object[]{keys, values, nonMatching, indexSeek, withIndex};
     }
 
-    public static <T> Object[] plus( Integer[] values, int offset )
+	public static <T> Object[] plus( Integer[] values, int offset )
     {
         Object[] result = new Object[values.length];
         for ( int i = 0; i < values.length; i++ )
@@ -296,7 +307,7 @@ public class IndexingCompositeQueryAcceptanceTest
         return result;
     }
 
-    private void setProperties( long id, Object[] values )
+	private void setProperties( long id, Object[] values )
     {
         Node node = db.getNodeById( id );
         for ( int i = 0; i < keys.length; i++ )
@@ -304,31 +315,8 @@ public class IndexingCompositeQueryAcceptanceTest
             node.setProperty( keys[i], values[i] );
         }
     }
-
     private interface IndexSeek
     {
         ResourceIterator<Node> findNodes( String[] keys, Object[] values, GraphDatabaseService db );
     }
-
-    private static IndexSeek biIndexSeek =
-            ( keys, values, db ) ->
-            {
-                assert keys.length == 2;
-                assert values.length == 2;
-                return db.findNodes( LABEL, keys[0], values[0], keys[1], values[1] );
-            };
-
-    private static IndexSeek triIndexSeek =
-            ( keys, values, db ) ->
-            {
-                assert keys.length == 3;
-                assert values.length == 3;
-                return db.findNodes( LABEL, keys[0], values[0], keys[1], values[1], keys[2], values[2] );
-            };
-
-    private static IndexSeek mapIndexSeek =
-            ( keys, values, db ) ->
-            {
-                return db.findNodes( LABEL, propertyMap( keys, values ) );
-            };
 }

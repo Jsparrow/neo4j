@@ -234,9 +234,7 @@ abstract class AbstractLinearProbeLongHashSet extends AbstractLongIterable imple
     {
         final MutableSet<V> result = new UnifiedSet<>( size() );
         each( element ->
-        {
-            result.add( function.apply( element ) );
-        } );
+        result.add(function.apply(element)) );
         return result;
     }
 

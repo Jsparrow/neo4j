@@ -438,10 +438,7 @@ public class FreeIdKeeperTest
         assertEquals( 2 * batchSize, remainingIds.size() );
 
         // then
-        for ( Long remainingId : remainingIds )
-        {
-            assertFalse( reusedIds.contains( remainingId ) );
-        }
+		remainingIds.forEach(remainingId -> assertFalse(reusedIds.contains(remainingId)));
     }
 
     @Test

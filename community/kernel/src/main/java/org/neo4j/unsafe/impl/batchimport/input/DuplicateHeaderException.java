@@ -29,7 +29,7 @@ public class DuplicateHeaderException extends HeaderException
 
     public DuplicateHeaderException( Header.Entry first, Header.Entry other )
     {
-        super( "Duplicate header entries found, first " + first + ", other (and conflicting) " + other );
+        super( new StringBuilder().append("Duplicate header entries found, first ").append(first).append(", other (and conflicting) ").append(other).toString() );
         this.first = first;
         this.other = other;
     }

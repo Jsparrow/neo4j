@@ -44,12 +44,11 @@ public class GivenTransactionCursor implements TransactionCursor
     @Override
     public boolean next()
     {
-        if ( index + 1 < transactions.length )
-        {
-            index++;
-            return true;
-        }
-        return false;
+        if (!(index + 1 < transactions.length)) {
+			return false;
+		}
+		index++;
+		return true;
     }
 
     @Override

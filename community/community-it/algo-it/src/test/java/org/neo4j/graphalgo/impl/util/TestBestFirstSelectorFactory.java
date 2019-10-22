@@ -49,7 +49,44 @@ import static org.junit.Assert.assertEquals;
 @RunWith( Parameterized.class )
 public class TestBestFirstSelectorFactory extends Neo4jAlgoTestCase
 {
-    /*
+    private final String length = "length";
+	private final PathExpander expander;
+	private final Uniqueness uniqueness;
+	private final String[] expectedResult;
+	private final BestFirstSelectorFactory<Integer, Integer> factory;
+
+	public TestBestFirstSelectorFactory( PathExpander expander, PathInterest<Integer> interest, Uniqueness uniqueness,
+            String[] expectedResult )
+    {
+
+        this.expander = expander;
+        this.uniqueness = uniqueness;
+        this.expectedResult = expectedResult;
+        factory = new BestFirstSelectorFactory<Integer, Integer>( interest )
+        {
+            private final CostEvaluator<Integer> evaluator = CommonEvaluators.intCostEvaluator( length );
+
+            @Override
+            protected Integer getStartData()
+            {
+                return 0;
+            }
+
+            @Override
+            protected Integer addPriority( TraversalBranch source, Integer currentAggregatedValue, Integer value )
+            {
+                return value + currentAggregatedValue;
+            }
+
+            @Override
+            protected Integer calculateValue( TraversalBranch next )
+            {
+                return next.length() == 0 ? 0 : evaluator.getCost( next.lastRelationship(), Direction.BOTH );
+            }
+        };
+    }
+
+	/*
      * LAYOUT
      *
      *  (a) - 1 -> (b) - 2 -> (d)
@@ -64,7 +101,7 @@ public class TestBestFirstSelectorFactory extends Neo4jAlgoTestCase
         graph.makePathWithRelProperty( length, "a-2-c-4-b" );
     }
 
-    @Test
+	@Test
     public void shouldDoWholeTraversalInCorrectOrder()
     {
         Node a = graph.getNode( "a" );
@@ -83,12 +120,12 @@ public class TestBestFirstSelectorFactory extends Neo4jAlgoTestCase
             assertPath( iterator.next(), expectedResult[i] );
             i++;
         }
-        assertEquals( String.format( "Not all expected paths where traversed. Missing paths are %s\n",
+        assertEquals( String.format( "Not all expected paths where traversed. Missing paths are %s%n",
                 Arrays.toString( Arrays.copyOfRange(expectedResult, i, expectedResult.length ) ) ),
                 expectedResult.length, i );
     }
 
-    @Parameterized.Parameters
+	@Parameterized.Parameters
     public static Collection<Object[]> data()
     {
         return Arrays.asList( new Object[][] {
@@ -126,42 +163,5 @@ public class TestBestFirstSelectorFactory extends Neo4jAlgoTestCase
                         new String[]{ "a", "a,b", "a,c", "a,b,d", "a,b,c" }
                 }
         } );
-    }
-
-    private final String length = "length";
-    private final PathExpander expander;
-    private final Uniqueness uniqueness;
-    private final String[] expectedResult;
-    private final BestFirstSelectorFactory<Integer, Integer> factory;
-
-    public TestBestFirstSelectorFactory( PathExpander expander, PathInterest<Integer> interest, Uniqueness uniqueness,
-            String[] expectedResult )
-    {
-
-        this.expander = expander;
-        this.uniqueness = uniqueness;
-        this.expectedResult = expectedResult;
-        factory = new BestFirstSelectorFactory<Integer, Integer>( interest )
-        {
-            private final CostEvaluator<Integer> evaluator = CommonEvaluators.intCostEvaluator( length );
-
-            @Override
-            protected Integer getStartData()
-            {
-                return 0;
-            }
-
-            @Override
-            protected Integer addPriority( TraversalBranch source, Integer currentAggregatedValue, Integer value )
-            {
-                return value + currentAggregatedValue;
-            }
-
-            @Override
-            protected Integer calculateValue( TraversalBranch next )
-            {
-                return next.length() == 0 ? 0 : evaluator.getCost( next.lastRelationship(), Direction.BOTH );
-            }
-        };
     }
 }

@@ -43,20 +43,22 @@ import static org.neo4j.internal.kernel.api.procs.Neo4jTypes.NTList;
 import static org.neo4j.internal.kernel.api.procs.Neo4jTypes.NTMap;
 import static org.neo4j.internal.kernel.api.procs.Neo4jTypes.NTNumber;
 import static org.neo4j.internal.kernel.api.procs.Neo4jTypes.NTString;
+import java.util.Collections;
 
 @RunWith( Parameterized.class )
 public class TypeMappersTest
 {
-    @Parameterized.Parameter( 0 )
+    static Type listOfListOfMap = typeOf( "listOfListOfMap" );
+	@Parameterized.Parameter( 0 )
     public Type javaClass;
-    @Parameterized.Parameter( 1 )
+	@Parameterized.Parameter( 1 )
     public Neo4jTypes.AnyType neoType;
-    @Parameterized.Parameter( 2 )
+	@Parameterized.Parameter( 2 )
     public Object javaValue;
-    @Parameterized.Parameter( 3 )
+	@Parameterized.Parameter( 3 )
     public Object expectedNeoValue;
 
-    @Parameterized.Parameters( name = "{0} to {1}" )
+	@Parameterized.Parameters( name = "{0} to {1}" )
     public static List<Object[]> conversions()
     {
         return asList(
@@ -81,7 +83,7 @@ public class TypeMappersTest
                         asList( asList( 1, 2 ), asList( "three", "four" ) )},
                 new Object[]{List.class, NTList( NTAny ), null, null},
 
-                new Object[]{listOfListOfMap, NTList( NTList( NTMap ) ), asList(), asList()},
+                new Object[]{listOfListOfMap, NTList( NTList( NTMap ) ), Collections.emptyList(), Collections.emptyList()},
 
                 new Object[]{boolean.class, NTBoolean, false, false},
                 new Object[]{boolean.class, NTBoolean, true, true},
@@ -128,7 +130,7 @@ public class TypeMappersTest
         );
     }
 
-    private static HashMap<String,Object> getKMap()
+	private static HashMap<String,Object> getKMap()
     {
         return new HashMap<String,Object>()
         {{
@@ -136,7 +138,7 @@ public class TypeMappersTest
         }};
     }
 
-    @Test
+	@Test
     public void shouldDetectCorrectType() throws Throwable
     {
         // When
@@ -146,7 +148,7 @@ public class TypeMappersTest
         assertEquals( neoType, type );
     }
 
-    @Test
+	@Test
     public void shouldMapCorrectly() throws Throwable
     {
         // Given
@@ -159,14 +161,7 @@ public class TypeMappersTest
         assertEquals( expectedNeoValue, converted );
     }
 
-    static Type listOfListOfMap = typeOf( "listOfListOfMap" );
-
-    interface ClassToGetGenericTypeSignatures
-    {
-        void listOfListOfMap( List<List<Map<String,Object>>> arg );
-    }
-
-    static Type typeOf( String methodName )
+	static Type typeOf( String methodName )
     {
         try
         {
@@ -183,5 +178,10 @@ public class TypeMappersTest
         {
             throw new AssertionError( e );
         }
+    }
+
+	interface ClassToGetGenericTypeSignatures
+    {
+        void listOfListOfMap( List<List<Map<String,Object>>> arg );
     }
 }

@@ -87,7 +87,7 @@ public class RelationshipProxy implements Relationship, RelationshipVisitor<Runt
     }
 
     @Override
-    public final void visit( long id, int type, long startNode, long endNode ) throws RuntimeException
+    public final void visit( long id, int type, long startNode, long endNode )
     {
         this.id = id;
         this.type = type;
@@ -156,8 +156,7 @@ public class RelationshipProxy implements Relationship, RelationshipVisitor<Runt
             boolean deleted = transaction.dataWrite().relationshipDelete( id );
             if ( !deleted )
             {
-                throw new NotFoundException( "Unable to delete relationship[" +
-                                             getId() + "] since it is already deleted." );
+                throw new NotFoundException( new StringBuilder().append("Unable to delete relationship[").append(getId()).append("] since it is already deleted.").toString() );
             }
         }
         catch ( InvalidTransactionTypeKernelException e )
@@ -226,7 +225,7 @@ public class RelationshipProxy implements Relationship, RelationshipVisitor<Runt
         {
             return start;
         }
-        throw new NotFoundException( "Node[" + id + "] not connected to this relationship[" + getId() + "]" );
+        throw new NotFoundException( new StringBuilder().append("Node[").append(id).append("] not connected to this relationship[").append(getId()).append("]").toString() );
     }
 
     @Override
@@ -536,7 +535,7 @@ public class RelationshipProxy implements Relationship, RelationshipVisitor<Runt
             // database access in a transaction. However, failing on toString would be uncomfortably evil, so we fall
             // back to noting the relationship type id.
         }
-        relType = "RELTYPE(" + type + ")";
+        relType = new StringBuilder().append("RELTYPE(").append(type).append(")").toString();
         return format( "(?)-[%s,%d]->(?)", relType, getId() );
     }
 

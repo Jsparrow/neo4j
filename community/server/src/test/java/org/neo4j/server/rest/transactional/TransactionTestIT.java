@@ -211,9 +211,7 @@ public class TransactionTestIT extends AbstractRestFunctionalTestBase
     {
         // Document
         ResponseEntity response = gen.get().expectedStatus( 200 )
-                .payload( quotedJson( "{ 'statements': [ { 'statement': 'CREATE (n) RETURN id(n)' }, "
-                        + "{ 'statement': 'CREATE (n {props}) RETURN n', "
-                        + "'parameters': { 'props': { 'name': 'My Node' } } } ] }" ) )
+                .payload( quotedJson( new StringBuilder().append("{ 'statements': [ { 'statement': 'CREATE (n) RETURN id(n)' }, ").append("{ 'statement': 'CREATE (n {props}) RETURN n', ").append("'parameters': { 'props': { 'name': 'My Node' } } } ] }").toString() ) )
                 .post( getDataUri() + "transaction/commit" );
 
         // Then
@@ -236,14 +234,8 @@ public class TransactionTestIT extends AbstractRestFunctionalTestBase
         // Document
         ResponseEntity response = gen.get()
                 .expectedStatus( 200 )
-                .payload( quotedJson( "{'statements':[{'statement':" +
-                        "'CREATE ( bike:Bike { weight: 10 } ) " +
-                        "CREATE ( frontWheel:Wheel { spokes: 3 } ) " +
-                        "CREATE ( backWheel:Wheel { spokes: 32 } ) " +
-                        "CREATE p1 = (bike)-[:HAS { position: 1 } ]->(frontWheel) " +
-                        "CREATE p2 = (bike)-[:HAS { position: 2 } ]->(backWheel) " +
-                        "RETURN bike, p1, p2', " +
-                        "'resultDataContents': ['row','graph']}] }" ) )
+                .payload( quotedJson( new StringBuilder().append("{'statements':[{'statement':").append("'CREATE ( bike:Bike { weight: 10 } ) ").append("CREATE ( frontWheel:Wheel { spokes: 3 } ) ").append("CREATE ( backWheel:Wheel { spokes: 32 } ) ").append("CREATE p1 = (bike)-[:HAS { position: 1 } ]->(frontWheel) ").append("CREATE p2 = (bike)-[:HAS { position: 2 } ]->(backWheel) ").append("RETURN bike, p1, p2', ")
+						.append("'resultDataContents': ['row','graph']}] }").toString() ) )
                         .post( getDataUri() + "transaction/commit" );
 
         // Then
@@ -373,11 +365,11 @@ public class TransactionTestIT extends AbstractRestFunctionalTestBase
             assertTrue( errors.hasNext() );
             assertThat( errors.next().get( "code" ), equalTo( expected.next().code().serialize() ) );
         }
-        if ( errors.hasNext() )
-        {
-            Map<String, Object> error = errors.next();
-            fail( "Expected no more errors, but got " + error.get( "code" ) + " - '" + error.get( "message" ) + "'." );
-        }
+        if (!errors.hasNext()) {
+			return;
+		}
+		Map<String, Object> error = errors.next();
+		fail( new StringBuilder().append("Expected no more errors, but got ").append(error.get( "code" )).append(" - '").append(error.get( "message" )).append("'.").toString() );
     }
 
     private <T> T resultCell( HTTP.Response response, int row, int column )

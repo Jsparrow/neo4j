@@ -24,21 +24,6 @@ package org.neo4j.unsafe.impl.batchimport.input.csv;
  */
 public interface Configuration extends org.neo4j.csv.reader.Configuration
 {
-    /**
-     * Delimiting character between each values in a CSV input line.
-     * Typical character is '\t' (TAB) or ',' (it is Comma Separated Values after all).
-     */
-    char delimiter();
-
-    /**
-     * Character separating array values from one another for values that represent arrays.
-     */
-    char arrayDelimiter();
-
-    abstract class Default extends org.neo4j.csv.reader.Configuration.Default implements Configuration
-    {
-    }
-
     Configuration COMMAS = new Default()
     {
         @Override
@@ -54,7 +39,7 @@ public interface Configuration extends org.neo4j.csv.reader.Configuration
         }
     };
 
-    Configuration TABS = new Default()
+	Configuration TABS = new Default()
     {
         @Override
         public char delimiter()
@@ -68,6 +53,21 @@ public interface Configuration extends org.neo4j.csv.reader.Configuration
             return ',';
         }
     };
+
+	/**
+     * Delimiting character between each values in a CSV input line.
+     * Typical character is '\t' (TAB) or ',' (it is Comma Separated Values after all).
+     */
+    char delimiter();
+
+	/**
+     * Character separating array values from one another for values that represent arrays.
+     */
+    char arrayDelimiter();
+
+	abstract class Default extends org.neo4j.csv.reader.Configuration.Default implements Configuration
+    {
+    }
 
     class Overridden extends org.neo4j.csv.reader.Configuration.Overridden implements Configuration
     {

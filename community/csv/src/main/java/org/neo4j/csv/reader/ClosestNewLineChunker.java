@@ -62,20 +62,18 @@ public class ClosestNewLineChunker extends CharReadableChunker
             }
             else
             {   // There was no newline character, isn't that weird?
-                throw new IllegalStateException( "Weird input data, no newline character in the whole buffer " +
-                        chunkSize + ", not supported a.t.m." );
+                throw new IllegalStateException( new StringBuilder().append("Weird input data, no newline character in the whole buffer ").append(chunkSize).append(", not supported a.t.m.").toString() );
             }
         }
         // else we couldn't completely fill the buffer, this means that we're at the end of a data source, we're good.
 
-        if ( read > 0 )
-        {
-            offset += read;
-            position += read;
-            into.initialize( offset, reader.sourceDescription() );
-            return true;
-        }
-        return false;
+        if (read <= 0) {
+			return false;
+		}
+		offset += read;
+		position += read;
+		into.initialize( offset, reader.sourceDescription() );
+		return true;
     }
 
     private static int offsetOfLastNewline( char[] buffer )

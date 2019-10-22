@@ -54,35 +54,34 @@ public class LifeSupport implements Lifecycle
      */
     @Override
     public synchronized void init()
-            throws LifecycleException
     {
-        if ( status == LifecycleStatus.NONE )
-        {
-            status = changedStatus( this, status, LifecycleStatus.INITIALIZING );
-            for ( LifecycleInstance instance : instances )
-            {
-                try
-                {
-                    instance.init();
-                }
-                catch ( LifecycleException e )
-                {
-                    status = changedStatus( this, status, LifecycleStatus.STOPPED );
+        if (status != LifecycleStatus.NONE) {
+			return;
+		}
+		status = changedStatus( this, status, LifecycleStatus.INITIALIZING );
+		for ( LifecycleInstance instance : instances )
+		{
+		    try
+		    {
+		        instance.init();
+		    }
+		    catch ( LifecycleException e )
+		    {
+		        status = changedStatus( this, status, LifecycleStatus.STOPPED );
 
-                    try
-                    {
-                        shutdown();
-                    }
-                    catch ( LifecycleException shutdownErr )
-                    {
-                        e.addSuppressed( shutdownErr );
-                    }
+		        try
+		        {
+		            shutdown();
+		        }
+		        catch ( LifecycleException shutdownErr )
+		        {
+		            e.addSuppressed( shutdownErr );
+		        }
 
-                    throw e;
-                }
-            }
-            status = changedStatus( this, status, LifecycleStatus.STOPPED );
-        }
+		        throw e;
+		    }
+		}
+		status = changedStatus( this, status, LifecycleStatus.STOPPED );
     }
 
     /**
@@ -97,38 +96,37 @@ public class LifeSupport implements Lifecycle
      */
     @Override
     public synchronized void start()
-            throws LifecycleException
     {
         init();
 
-        if ( status == LifecycleStatus.STOPPED )
-        {
-            status = changedStatus( this, status, LifecycleStatus.STARTING );
-            for ( LifecycleInstance instance : instances )
-            {
-                try
-                {
-                    instance.start();
-                }
-                catch ( LifecycleException e )
-                {
-                    // TODO perhaps reconsider chaining of exceptions coming from LifeSupports?
-                    status = changedStatus( this, status, LifecycleStatus.STARTED );
-                    try
-                    {
-                        stop();
+        if (status != LifecycleStatus.STOPPED) {
+			return;
+		}
+		status = changedStatus( this, status, LifecycleStatus.STARTING );
+		for ( LifecycleInstance instance : instances )
+		{
+		    try
+		    {
+		        instance.start();
+		    }
+		    catch ( LifecycleException e )
+		    {
+		        // TODO perhaps reconsider chaining of exceptions coming from LifeSupports?
+		        status = changedStatus( this, status, LifecycleStatus.STARTED );
+		        try
+		        {
+		            stop();
 
-                    }
-                    catch ( LifecycleException stopErr )
-                    {
-                        e.addSuppressed( stopErr );
-                    }
+		        }
+		        catch ( LifecycleException stopErr )
+		        {
+		            e.addSuppressed( stopErr );
+		        }
 
-                    throw e;
-                }
-            }
-            status = changedStatus( this, status, LifecycleStatus.STARTED );
-        }
+		        throw e;
+		    }
+		}
+		status = changedStatus( this, status, LifecycleStatus.STARTED );
     }
 
     /**
@@ -139,19 +137,17 @@ public class LifeSupport implements Lifecycle
      */
     @Override
     public synchronized void stop()
-            throws LifecycleException
     {
-        if ( status == LifecycleStatus.STARTED )
-        {
-            status = changedStatus( this, status, LifecycleStatus.STOPPING );
-            LifecycleException ex = stopInstances( instances );
-            status = changedStatus( this, status, LifecycleStatus.STOPPED );
-
-            if ( ex != null )
-            {
-                throw ex;
-            }
-        }
+        if (status != LifecycleStatus.STARTED) {
+			return;
+		}
+		status = changedStatus( this, status, LifecycleStatus.STOPPING );
+		LifecycleException ex = stopInstances( instances );
+		status = changedStatus( this, status, LifecycleStatus.STOPPED );
+		if ( ex != null )
+		{
+		    throw ex;
+		}
     }
 
     /**
@@ -162,7 +158,6 @@ public class LifeSupport implements Lifecycle
      */
     @Override
     public synchronized void shutdown()
-            throws LifecycleException
     {
         LifecycleException ex = null;
         try
@@ -174,29 +169,27 @@ public class LifeSupport implements Lifecycle
             ex = e;
         }
 
-        if ( status == LifecycleStatus.STOPPED )
-        {
-            status = changedStatus( this, status, LifecycleStatus.SHUTTING_DOWN );
-            for ( int i = instances.size() - 1; i >= 0; i-- )
-            {
-                LifecycleInstance lifecycleInstance = instances.get( i );
-                try
-                {
-                    lifecycleInstance.shutdown();
-                }
-                catch ( LifecycleException e )
-                {
-                    ex = Exceptions.chain( ex, e );
-                }
-            }
-
-            status = changedStatus( this, status, LifecycleStatus.SHUTDOWN );
-
-            if ( ex != null )
-            {
-                throw ex;
-            }
-        }
+        if (status != LifecycleStatus.STOPPED) {
+			return;
+		}
+		status = changedStatus( this, status, LifecycleStatus.SHUTTING_DOWN );
+		for ( int i = instances.size() - 1; i >= 0; i-- )
+		{
+		    LifecycleInstance lifecycleInstance = instances.get( i );
+		    try
+		    {
+		        lifecycleInstance.shutdown();
+		    }
+		    catch ( LifecycleException e )
+		    {
+		        ex = Exceptions.chain( ex, e );
+		    }
+		}
+		status = changedStatus( this, status, LifecycleStatus.SHUTDOWN );
+		if ( ex != null )
+		{
+		    throw ex;
+		}
     }
 
     /**
@@ -209,7 +202,6 @@ public class LifeSupport implements Lifecycle
      * @throws LifecycleException if the instance could not be transitioned properly
      */
     public synchronized <T extends Lifecycle> T add( T instance )
-            throws LifecycleException
     {
         addNewComponent( instance );
         return instance;
@@ -296,10 +288,7 @@ public class LifeSupport implements Lifecycle
      */
     public synchronized void clear()
     {
-        for ( LifecycleInstance instance : instances )
-        {
-            instance.shutdown();
-        }
+        instances.forEach(LifecycleInstance::shutdown);
         instances = new ArrayList<>( );
     }
 
@@ -314,7 +303,6 @@ public class LifeSupport implements Lifecycle
     }
 
     private void bringToState( LifecycleInstance instance )
-            throws LifecycleException
     {
             switch ( status )
             {
@@ -334,10 +322,7 @@ public class LifeSupport implements Lifecycle
                                            LifecycleStatus newStatus
     )
     {
-        for ( LifecycleListener listener : listeners )
-        {
-            listener.notifyStatusChanged( instance, oldStatus, newStatus );
-        }
+        listeners.forEach(listener -> listener.notifyStatusChanged(instance, oldStatus, newStatus));
 
         return newStatus;
     }
@@ -362,8 +347,7 @@ public class LifeSupport implements Lifecycle
             sb.append( ' ' );
         }
         sb.append( "Lifecycle status:" + status.name() ).append( '\n' );
-        for ( LifecycleInstance instance : instances )
-        {
+        instances.forEach(instance -> {
             if ( instance.instance instanceof LifeSupport )
             {
                 ((LifeSupport) instance.instance).toString( indent + 3, sb );
@@ -378,7 +362,7 @@ public class LifeSupport implements Lifecycle
 
             }
 
-        }
+        });
 
     }
 
@@ -403,139 +387,131 @@ public class LifeSupport implements Lifecycle
 
         @Override
         public void init()
-                throws LifecycleException
         {
-            if ( currentStatus == LifecycleStatus.NONE )
-            {
-                currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.INITIALIZING );
-                try
-                {
-                    instance.init();
-                    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STOPPED );
-                }
-                catch ( Throwable e )
-                {
-                    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.NONE );
-                    try
-                    {
-                        instance.shutdown();
-                    }
-                    catch ( Throwable se )
-                    {
-                        LifecycleException lifecycleException = new LifecycleException( "Exception during graceful " +
-                                "attempt to shutdown partially initialized component. Please use non suppressed" +
-                                " exception to see original component failure.", se );
-                        e.addSuppressed( lifecycleException );
-                    }
-                    if ( e instanceof LifecycleException )
-                    {
-                        throw (LifecycleException) e;
-                    }
-                    throw new LifecycleException( instance, LifecycleStatus.NONE, LifecycleStatus.STOPPED, e );
-                }
-            }
+            if (currentStatus != LifecycleStatus.NONE) {
+				return;
+			}
+			currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.INITIALIZING );
+			try
+			{
+			    instance.init();
+			    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STOPPED );
+			}
+			catch ( Throwable e )
+			{
+			    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.NONE );
+			    try
+			    {
+			        instance.shutdown();
+			    }
+			    catch ( Throwable se )
+			    {
+			        LifecycleException lifecycleException = new LifecycleException( new StringBuilder().append("Exception during graceful ").append("attempt to shutdown partially initialized component. Please use non suppressed").append(" exception to see original component failure.").toString(), se );
+			        e.addSuppressed( lifecycleException );
+			    }
+			    if ( e instanceof LifecycleException )
+			    {
+			        throw (LifecycleException) e;
+			    }
+			    throw new LifecycleException( instance, LifecycleStatus.NONE, LifecycleStatus.STOPPED, e );
+			}
         }
 
         @Override
         public void start()
-                throws LifecycleException
         {
             if ( currentStatus == LifecycleStatus.NONE )
             {
                 init();
             }
-            if ( currentStatus == LifecycleStatus.STOPPED )
-            {
-                currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STARTING );
-                try
-                {
-                    instance.start();
-                    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STARTED );
-                }
-                catch ( Throwable e )
-                {
-                    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STOPPED );
-                    try
-                    {
-                        instance.stop();
-                    }
-                    catch ( Throwable se )
-                    {
-                        LifecycleException lifecycleException = new LifecycleException( "Exception during graceful " +
-                                "attempt to stop partially started component. Please use non suppressed" +
-                                " exception to see original component failure.", se );
-                        e.addSuppressed( lifecycleException );
-                    }
-                    if ( e instanceof LifecycleException )
-                    {
-                        throw (LifecycleException) e;
-                    }
-                    throw new LifecycleException( instance, LifecycleStatus.STOPPED, LifecycleStatus.STARTED, e );
-                }
-            }
+            if (currentStatus != LifecycleStatus.STOPPED) {
+				return;
+			}
+			currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STARTING );
+			try
+			{
+			    instance.start();
+			    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STARTED );
+			}
+			catch ( Throwable e )
+			{
+			    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STOPPED );
+			    try
+			    {
+			        instance.stop();
+			    }
+			    catch ( Throwable se )
+			    {
+			        LifecycleException lifecycleException = new LifecycleException( new StringBuilder().append("Exception during graceful ").append("attempt to stop partially started component. Please use non suppressed").append(" exception to see original component failure.").toString(), se );
+			        e.addSuppressed( lifecycleException );
+			    }
+			    if ( e instanceof LifecycleException )
+			    {
+			        throw (LifecycleException) e;
+			    }
+			    throw new LifecycleException( instance, LifecycleStatus.STOPPED, LifecycleStatus.STARTED, e );
+			}
         }
 
         @Override
         public void stop()
-                throws LifecycleException
         {
-            if ( currentStatus == LifecycleStatus.STARTED )
-            {
-                currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STOPPING );
-                try
-                {
-                    instance.stop();
-                }
-                catch ( LifecycleException e )
-                {
-                    throw e;
-                }
-                catch ( Throwable e )
-                {
-                    throw new LifecycleException( instance, LifecycleStatus.STARTED, LifecycleStatus.STOPPED, e );
-                }
-                finally
-                {
-                    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STOPPED );
-                }
-            }
+            if (currentStatus != LifecycleStatus.STARTED) {
+				return;
+			}
+			currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STOPPING );
+			try
+			{
+			    instance.stop();
+			}
+			catch ( LifecycleException e )
+			{
+			    throw e;
+			}
+			catch ( Throwable e )
+			{
+			    throw new LifecycleException( instance, LifecycleStatus.STARTED, LifecycleStatus.STOPPED, e );
+			}
+			finally
+			{
+			    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.STOPPED );
+			}
         }
 
         @Override
         public void shutdown()
-                throws LifecycleException
         {
             if ( currentStatus == LifecycleStatus.STARTED )
             {
                 stop();
             }
 
-            if ( currentStatus == LifecycleStatus.STOPPED )
-            {
-                currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.SHUTTING_DOWN );
-                try
-                {
-                    instance.shutdown();
-                }
-                catch ( LifecycleException e )
-                {
-                    throw e;
-                }
-                catch ( Throwable e )
-                {
-                    throw new LifecycleException( instance, LifecycleStatus.STOPPED, LifecycleStatus.SHUTTING_DOWN, e );
-                }
-                finally
-                {
-                    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.SHUTDOWN );
-                }
-            }
+            if (currentStatus != LifecycleStatus.STOPPED) {
+				return;
+			}
+			currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.SHUTTING_DOWN );
+			try
+			{
+			    instance.shutdown();
+			}
+			catch ( LifecycleException e )
+			{
+			    throw e;
+			}
+			catch ( Throwable e )
+			{
+			    throw new LifecycleException( instance, LifecycleStatus.STOPPED, LifecycleStatus.SHUTTING_DOWN, e );
+			}
+			finally
+			{
+			    currentStatus = changedStatus( instance, currentStatus, LifecycleStatus.SHUTDOWN );
+			}
         }
 
         @Override
         public String toString()
         {
-            return instance.toString() + ": " + currentStatus.name();
+            return new StringBuilder().append(instance.toString()).append(": ").append(currentStatus.name()).toString();
         }
 
         public boolean isInstance( Lifecycle instance )

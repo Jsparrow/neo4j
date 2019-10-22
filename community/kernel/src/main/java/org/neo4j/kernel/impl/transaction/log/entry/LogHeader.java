@@ -63,10 +63,7 @@ public class LogHeader
     @Override
     public String toString()
     {
-        return "LogHeader{" +
-                "logFormatVersion=" + logFormatVersion +
-                ", logVersion=" + logVersion +
-                ", lastCommittedTxId=" + lastCommittedTxId +
-                '}';
+        return new StringBuilder().append("LogHeader{").append("logFormatVersion=").append(logFormatVersion).append(", logVersion=").append(logVersion).append(", lastCommittedTxId=").append(lastCommittedTxId)
+				.append('}').toString();
     }
 }

@@ -87,94 +87,28 @@ class RWLock
         this.lockAcquisitionTimeoutMillis = lockAcquisitionTimeoutMillis;
     }
 
-    // keeps track of a transactions read and write lock count on this RWLock
-    private static class TxLockElement
-    {
-        private final Object tx;
-
-        // access to these is guarded by synchronized blocks
-        private int readCount;
-        private int writeCount;
-        // represent number of active request that where current TxLockElement participate in
-        // as soon as hasNoRequests return true - txLockElement can be cleaned up
-        private int requests;
-        // flag indicate that current TxLockElement is terminated because owning client closed
-        private boolean terminated;
-
-        TxLockElement( Object tx )
-        {
-            this.tx = tx;
-        }
-
-        void incrementRequests()
-        {
-            requests = Math.incrementExact( requests );
-        }
-
-        void decrementRequests()
-        {
-            requests = MathUtil.decrementExactNotPastZero( requests );
-        }
-
-        boolean hasNoRequests()
-        {
-            return requests == 0;
-        }
-
-        boolean isFree()
-        {
-            return readCount == 0 && writeCount == 0;
-        }
-
-        public boolean isTerminated()
-        {
-            return terminated;
-        }
-
-        public void setTerminated( boolean terminated )
-        {
-            this.terminated = terminated;
-        }
-    }
-
-    // keeps track of what type of lock a thread is waiting for
-    private static class LockRequest
-    {
-        private final TxLockElement element;
-        private final LockType lockType;
-        private final Thread waitingThread;
-        private final long since = System.currentTimeMillis();
-
-        LockRequest( TxLockElement element, LockType lockType, Thread thread )
-        {
-            this.element = element;
-            this.lockType = lockType;
-            this.waitingThread = thread;
-        }
-    }
-
     public Object resource()
     {
         return resource;
     }
 
-    synchronized void mark()
+	synchronized void mark()
     {
         marked = Math.incrementExact( marked );
     }
 
-    /** synchronized by all caller methods */
+	/** synchronized by all caller methods */
     private void unmark()
     {
         marked = MathUtil.decrementExactNotPastZero( marked );
     }
 
-    synchronized boolean isMarked()
+	synchronized boolean isMarked()
     {
         return marked > 0;
     }
 
-    /**
+	/**
      * Tries to acquire read lock for a given transaction. If
      * <CODE>this.writeCount</CODE> is greater than the currents tx's write
      * count the transaction has to wait and the {@link RagManager#checkWaitOn}
@@ -189,7 +123,7 @@ class RWLock
      * @return true is lock was acquired, false otherwise
      * @throws DeadlockDetectedException if a deadlock is detected
      */
-    synchronized boolean acquireReadLock( LockTracer tracer, Object tx ) throws DeadlockDetectedException
+    synchronized boolean acquireReadLock( LockTracer tracer, Object tx )
     {
         TxLockElement tle = getOrCreateLockElement( tx );
 
@@ -255,7 +189,7 @@ class RWLock
         }
     }
 
-    synchronized boolean tryAcquireReadLock( Object tx )
+	synchronized boolean tryAcquireReadLock( Object tx )
     {
         TxLockElement tle = getOrCreateLockElement( tx );
 
@@ -276,7 +210,7 @@ class RWLock
         }
     }
 
-    /**
+	/**
      * Releases the read lock held by the provided transaction. If it is null then
      * an attempt to acquire the current transaction will be made. This is to
      * make safe calling the method from the context of an
@@ -285,13 +219,13 @@ class RWLock
      * transactions in the queue they will be interrupted if they can acquire
      * the lock.
      */
-    synchronized void releaseReadLock( Object tx ) throws LockNotFoundException
+    synchronized void releaseReadLock( Object tx )
     {
         TxLockElement tle = getLockElement( tx );
 
         if ( tle.readCount == 0 )
         {
-            throw new LockNotFoundException( "" + tx + " don't have readLock" );
+            throw new LockNotFoundException( new StringBuilder().append("").append(tx).append(" don't have readLock").toString() );
         }
 
         totalReadCount = MathUtil.decrementExactNotPastZero( totalReadCount );
@@ -304,64 +238,63 @@ class RWLock
                 txLockElementMap.remove( tx );
             }
         }
-        if ( !waitingThreadList.isEmpty() )
-        {
-            LockRequest lockRequest = waitingThreadList.getLast();
-
-            if ( lockRequest.lockType == LockType.WRITE )
-            {
-                // this one is tricky...
-                // if readCount > 0 lockRequest either have to find a waiting read lock
-                // in the queue or a waiting write lock that has all read
-                // locks, if none of these are found it means that there
-                // is a (are) thread(s) that will release read lock(s) in the
-                // near future...
-                if ( totalReadCount == lockRequest.element.readCount )
-                {
-                    // found a write lock with all read locks
-                    waitingThreadList.removeLast();
-                    lockRequest.waitingThread.interrupt();
-                }
-                else
-                {
-                    ListIterator<LockRequest> listItr = waitingThreadList.listIterator(
-                            waitingThreadList.lastIndexOf( lockRequest ) );
-                    // hm am I doing the first all over again?
-                    // think I am if cursor is at lastIndex + 0.5 oh well...
-                    while ( listItr.hasPrevious() )
-                    {
-                        lockRequest = listItr.previous();
-                        if ( lockRequest.lockType == LockType.WRITE && totalReadCount == lockRequest.element.readCount )
-                        {
-                            // found a write lock with all read locks
-                            listItr.remove();
-                            lockRequest.waitingThread.interrupt();
-                            break;
-                        }
-                        else if ( lockRequest.lockType == LockType.READ )
-                        {
-                            // found a read lock, let it do the job...
-                            listItr.remove();
-                            lockRequest.waitingThread.interrupt();
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // some thread may have the write lock and released a read lock
-                // if writeCount is down to zero lockRequest can interrupt the waiting
-                // read lock
-                if ( totalWriteCount == 0 )
-                {
-                    waitingThreadList.removeLast();
-                    lockRequest.waitingThread.interrupt();
-                }
-            }
-        }
+        if (waitingThreadList.isEmpty()) {
+			return;
+		}
+		LockRequest lockRequest = waitingThreadList.getLast();
+		if ( lockRequest.lockType == LockType.WRITE )
+		{
+		    // this one is tricky...
+		    // if readCount > 0 lockRequest either have to find a waiting read lock
+		    // in the queue or a waiting write lock that has all read
+		    // locks, if none of these are found it means that there
+		    // is a (are) thread(s) that will release read lock(s) in the
+		    // near future...
+		    if ( totalReadCount == lockRequest.element.readCount )
+		    {
+		        // found a write lock with all read locks
+		        waitingThreadList.removeLast();
+		        lockRequest.waitingThread.interrupt();
+		    }
+		    else
+		    {
+		        ListIterator<LockRequest> listItr = waitingThreadList.listIterator(
+		                waitingThreadList.lastIndexOf( lockRequest ) );
+		        // hm am I doing the first all over again?
+		        // think I am if cursor is at lastIndex + 0.5 oh well...
+		        while ( listItr.hasPrevious() )
+		        {
+		            lockRequest = listItr.previous();
+		            if ( lockRequest.lockType == LockType.WRITE && totalReadCount == lockRequest.element.readCount )
+		            {
+		                // found a write lock with all read locks
+		                listItr.remove();
+		                lockRequest.waitingThread.interrupt();
+		                break;
+		            }
+		            else if ( lockRequest.lockType == LockType.READ )
+		            {
+		                // found a read lock, let it do the job...
+		                listItr.remove();
+		                lockRequest.waitingThread.interrupt();
+		            }
+		        }
+		    }
+		}
+		else
+		{
+		    // some thread may have the write lock and released a read lock
+		    // if writeCount is down to zero lockRequest can interrupt the waiting
+		    // read lock
+		    if ( totalWriteCount == 0 )
+		    {
+		        waitingThreadList.removeLast();
+		        lockRequest.waitingThread.interrupt();
+		    }
+		}
     }
 
-    /**
+	/**
      * Tries to acquire write lock for a given transaction. If
      * <CODE>this.writeCount</CODE> is greater than the currents tx's write
      * count or the read count is greater than the currents tx's read count the
@@ -377,7 +310,7 @@ class RWLock
      * @return true is lock was acquired, false otherwise
      * @throws DeadlockDetectedException if a deadlock is detected
      */
-    synchronized boolean acquireWriteLock( LockTracer tracer, Object tx ) throws DeadlockDetectedException
+    synchronized boolean acquireWriteLock( LockTracer tracer, Object tx )
     {
         TxLockElement tle = getOrCreateLockElement( tx );
 
@@ -443,7 +376,7 @@ class RWLock
         }
     }
 
-    private boolean waitUninterruptedly( long lockAcquisitionTimeBoundary )
+	private boolean waitUninterruptedly( long lockAcquisitionTimeBoundary )
     {
         boolean addLockRequest;
         try
@@ -467,7 +400,7 @@ class RWLock
         return addLockRequest;
     }
 
-    // in case of spurious wake up, deadlock during spurious wake up, termination
+	// in case of spurious wake up, deadlock during spurious wake up, termination
     // when we already have request in a queue we need to clean it up
     private void cleanupWaitingListRequests( LockRequest lockRequest, TxLockElement lockElement,
                                              boolean addLockRequest )
@@ -478,7 +411,7 @@ class RWLock
         }
     }
 
-    synchronized boolean tryAcquireWriteLock( Object tx )
+	synchronized boolean tryAcquireWriteLock( Object tx )
     {
         TxLockElement tle = getOrCreateLockElement( tx );
 
@@ -499,7 +432,7 @@ class RWLock
         }
     }
 
-    /**
+	/**
      * Releases the write lock held by the provided tx. If it is null then an
      * attempt to acquire the current transaction from the transaction manager
      * will be made. This is to make safe calling this method as an
@@ -508,13 +441,13 @@ class RWLock
      * transactions in the queue they will be interrupted if they can acquire
      * the lock.
      */
-    synchronized void releaseWriteLock( Object tx ) throws LockNotFoundException
+    synchronized void releaseWriteLock( Object tx )
     {
         TxLockElement tle = getLockElement( tx );
 
         if ( tle.writeCount == 0 )
         {
-            throw new LockNotFoundException( "" + tx + " don't have writeLock" );
+            throw new LockNotFoundException( new StringBuilder().append("").append(tx).append(" don't have writeLock").toString() );
         }
 
         totalWriteCount = MathUtil.decrementExactNotPastZero( totalWriteCount );
@@ -550,34 +483,32 @@ class RWLock
         }
     }
 
-    synchronized int getWriteCount()
+	synchronized int getWriteCount()
     {
         return totalWriteCount;
     }
 
-    synchronized int getReadCount()
+	synchronized int getReadCount()
     {
         return totalReadCount;
     }
 
-    synchronized int getWaitingThreadsCount()
+	synchronized int getWaitingThreadsCount()
     {
         return waitingThreadList.size();
     }
 
-    public synchronized boolean logTo( Logger logger )
+	public synchronized boolean logTo( Logger logger )
     {
-        logger.log( "Total lock count: readCount=" + totalReadCount
-                    + " writeCount=" + totalWriteCount + " for " + resource );
+        logger.log( new StringBuilder().append("Total lock count: readCount=").append(totalReadCount).append(" writeCount=").append(totalWriteCount).append(" for ").append(resource).toString() );
 
         logger.log( "Waiting list:" );
         Iterator<LockRequest> wElements = waitingThreadList.iterator();
         while ( wElements.hasNext() )
         {
             LockRequest lockRequest = wElements.next();
-            logger.log( "[" + lockRequest.waitingThread + "("
-                        + lockRequest.element.readCount + "r," + lockRequest.element.writeCount + "w),"
-                        + lockRequest.lockType + "]" );
+            logger.log( new StringBuilder().append("[").append(lockRequest.waitingThread).append("(").append(lockRequest.element.readCount).append("r,")
+					.append(lockRequest.element.writeCount).append("w),").append(lockRequest.lockType).append("]").toString() );
             if ( wElements.hasNext() )
             {
                 logger.log( "," );
@@ -589,15 +520,12 @@ class RWLock
         }
 
         logger.log( "Locking transactions:" );
-        for ( TxLockElement tle : txLockElementMap.values() )
-        {
-            logger.log( "" + tle.tx + "(" + tle.readCount + "r,"
-                        + tle.writeCount + "w)" );
-        }
+        txLockElementMap.values().forEach(tle -> logger.log(new StringBuilder().append("").append(tle.tx).append("(").append(tle.readCount).append("r,")
+				.append(tle.writeCount).append("w)").toString()));
         return true;
     }
 
-    public synchronized String describe()
+	public synchronized String describe()
     {
         StringBuilder sb = new StringBuilder( this.toString() );
         sb.append( " Total lock count: readCount=" ).append( totalReadCount ).append( " writeCount=" )
@@ -617,15 +545,11 @@ class RWLock
         }
 
         sb.append( "Locking transactions:\n" );
-        for ( TxLockElement tle : txLockElementMap.values() )
-        {
-            sb.append( tle.tx ).append( "(" ).append( tle.readCount ).append( "r," )
-              .append( tle.writeCount ).append( "w)\n" );
-        }
+        txLockElementMap.values().forEach(tle -> sb.append(tle.tx).append("(").append(tle.readCount).append("r,").append(tle.writeCount).append("w)\n"));
         return sb.toString();
     }
 
-    public synchronized long maxWaitTime()
+	public synchronized long maxWaitTime()
     {
         long max = 0L;
         for ( LockRequest thread : waitingThreadList )
@@ -638,45 +562,39 @@ class RWLock
         return System.currentTimeMillis() - max;
     }
 
-    // for specified transaction object mark all lock elements as terminated
+	// for specified transaction object mark all lock elements as terminated
     // and interrupt all waiters
     synchronized void terminateLockRequestsForLockTransaction( Object lockTransaction )
     {
         TxLockElement lockElement = txLockElementMap.get( lockTransaction );
-        if ( lockElement != null && !lockElement.isTerminated() )
-        {
-            lockElement.setTerminated( true );
-            for ( LockRequest lockRequest : waitingThreadList )
-            {
-                if ( lockRequest.element.tx.equals( lockTransaction ) )
-                {
-                    lockRequest.waitingThread.interrupt();
-                }
-            }
-        }
+        if (!(lockElement != null && !lockElement.isTerminated())) {
+			return;
+		}
+		lockElement.setTerminated( true );
+		waitingThreadList.stream().filter(lockRequest -> lockRequest.element.tx.equals( lockTransaction )).forEach(lockRequest -> lockRequest.waitingThread.interrupt());
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return "RWLock[" + resource + ", hash=" + hashCode() + "]";
+        return new StringBuilder().append("RWLock[").append(resource).append(", hash=").append(hashCode()).append("]").toString();
     }
 
-    private void registerReadLockAcquired( Object tx, TxLockElement tle )
+	private void registerReadLockAcquired( Object tx, TxLockElement tle )
     {
         registerLockAcquired( tx, tle );
         totalReadCount = Math.incrementExact( totalReadCount );
         tle.readCount = Math.incrementExact( tle.readCount );
     }
 
-    private void registerWriteLockAcquired( Object tx, TxLockElement tle )
+	private void registerWriteLockAcquired( Object tx, TxLockElement tle )
     {
         registerLockAcquired( tx, tle );
         totalWriteCount = Math.incrementExact( totalWriteCount );
         tle.writeCount = Math.incrementExact( tle.writeCount );
     }
 
-    private void registerLockAcquired( Object tx, TxLockElement tle )
+	private void registerLockAcquired( Object tx, TxLockElement tle )
     {
         if ( tle.isFree() )
         {
@@ -684,7 +602,7 @@ class RWLock
         }
     }
 
-    private TxLockElement getLockElement( Object tx )
+	private TxLockElement getLockElement( Object tx )
     {
         TxLockElement tle = txLockElementMap.get( tx );
         if ( tle == null )
@@ -694,7 +612,7 @@ class RWLock
         return tle;
     }
 
-    private void assertTransaction( Object tx )
+	private void assertTransaction( Object tx )
     {
         if ( tx == null )
         {
@@ -702,7 +620,7 @@ class RWLock
         }
     }
 
-    private TxLockElement getOrCreateLockElement( Object tx )
+	private TxLockElement getOrCreateLockElement( Object tx )
     {
         assertTransaction( tx );
         TxLockElement tle = txLockElementMap.get( tx );
@@ -713,20 +631,83 @@ class RWLock
         return tle;
     }
 
-    private void assertNotExpired( long timeBoundary )
+	private void assertNotExpired( long timeBoundary )
     {
-        if ( lockAcquisitionTimeoutMillis > 0 )
+        boolean condition = lockAcquisitionTimeoutMillis > 0 && timeBoundary < clock.millis();
+		if ( condition ) {
+		    throw new LockAcquisitionTimeoutException( resource.type(), resource.resourceId(),
+		            lockAcquisitionTimeoutMillis );
+		}
+    }
+
+	synchronized Object getTxLockElementCount()
+    {
+        return txLockElementMap.size();
+    }
+
+	// keeps track of a transactions read and write lock count on this RWLock
+    private static class TxLockElement
+    {
+        private final Object tx;
+
+        // access to these is guarded by synchronized blocks
+        private int readCount;
+        private int writeCount;
+        // represent number of active request that where current TxLockElement participate in
+        // as soon as hasNoRequests return true - txLockElement can be cleaned up
+        private int requests;
+        // flag indicate that current TxLockElement is terminated because owning client closed
+        private boolean terminated;
+
+        TxLockElement( Object tx )
         {
-            if ( timeBoundary < clock.millis() )
-            {
-                throw new LockAcquisitionTimeoutException( resource.type(), resource.resourceId(),
-                        lockAcquisitionTimeoutMillis );
-            }
+            this.tx = tx;
+        }
+
+        void incrementRequests()
+        {
+            requests = Math.incrementExact( requests );
+        }
+
+        void decrementRequests()
+        {
+            requests = MathUtil.decrementExactNotPastZero( requests );
+        }
+
+        boolean hasNoRequests()
+        {
+            return requests == 0;
+        }
+
+        boolean isFree()
+        {
+            return readCount == 0 && writeCount == 0;
+        }
+
+        public boolean isTerminated()
+        {
+            return terminated;
+        }
+
+        public void setTerminated( boolean terminated )
+        {
+            this.terminated = terminated;
         }
     }
 
-    synchronized Object getTxLockElementCount()
+    // keeps track of what type of lock a thread is waiting for
+    private static class LockRequest
     {
-        return txLockElementMap.size();
+        private final TxLockElement element;
+        private final LockType lockType;
+        private final Thread waitingThread;
+        private final long since = System.currentTimeMillis();
+
+        LockRequest( TxLockElement element, LockType lockType, Thread thread )
+        {
+            this.element = element;
+            this.lockType = lockType;
+            this.waitingThread = thread;
+        }
     }
 }

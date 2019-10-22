@@ -32,7 +32,11 @@ import static org.neo4j.collection.PrimitiveLongCollections.EMPTY_LONG_ARRAY;
  */
 public class PrimitiveArrays
 {
-    /**
+    private PrimitiveArrays()
+    {   // No instances allowed
+    }
+
+	/**
      * Compute union of two sets of integers represented as sorted arrays.
      *
      * @param lhs
@@ -114,7 +118,7 @@ public class PrimitiveArrays
         return merged;
     }
 
-    /**
+	/**
      * Compute the intersection of two sorted long array sets.
      * @param left a sorted array set
      * @param right another sorted array set
@@ -165,7 +169,8 @@ public class PrimitiveArrays
         assert cursor == intersect.length;
         return intersect;
     }
-    /**
+
+	/**
      * Compute the symmetric difference (set XOR basically) of two sorted long array sets.
      * @param left a sorted array set
      * @param right another sorted array set
@@ -224,7 +229,7 @@ public class PrimitiveArrays
         return difference;
     }
 
-    /**
+	/**
      * Compute the number of unique values in two sorted long array sets
      * @param left a sorted array set
      * @param right another sorted array set
@@ -259,22 +264,22 @@ public class PrimitiveArrays
         return intPair( uniqueInLeft, uniqueInRight );
     }
 
-    private static long intPair( int left, int right )
+	private static long intPair( int left, int right )
     {
         return (((long) left) << Integer.SIZE) | right;
     }
 
-    private static int left( long pair )
+	private static int left( long pair )
     {
         return (int)(pair >> Integer.SIZE);
     }
 
-    private static int right( long pair )
+	private static int right( long pair )
     {
         return (int)(pair & 0xFFFF_FFFFL);
     }
 
-    /**
+	/**
      * @param set the int[] to be check whether or not it's a sorted set.
      * @return whether or not the given int[] is a sorted set.
      */
@@ -287,7 +292,7 @@ public class PrimitiveArrays
         return true;
     }
 
-    /**
+	/**
      * @param set the long[] to be checked whether or not it's a sorted set.
      * @return whether or not the given long[] is a sorted set.
      */
@@ -300,15 +305,11 @@ public class PrimitiveArrays
         return true;
     }
 
-    private static void assertSortedSetItem( int i, long item, long next )
+	private static void assertSortedSetItem( int i, long item, long next )
     {
         if ( item >= next )
         {
             throw new IllegalArgumentException( format( "Array is not a sorted set: has %d before %d at i:%d", item, next, i ) );
         }
-    }
-
-    private PrimitiveArrays()
-    {   // No instances allowed
     }
 }

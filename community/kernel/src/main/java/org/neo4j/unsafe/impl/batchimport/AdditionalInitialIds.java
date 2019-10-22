@@ -37,14 +37,6 @@ import org.neo4j.kernel.impl.transaction.log.TransactionIdStore;
  */
 public interface AdditionalInitialIds
 {
-    long lastCommittedTransactionId();
-
-    long lastCommittedTransactionChecksum();
-
-    long lastCommittedTransactionLogVersion();
-
-    long lastCommittedTransactionLogByteOffset();
-
     /**
      * High ids of zero, useful when creating a completely new store with {@link ParallelBatchImporter}.
      */
@@ -74,4 +66,12 @@ public interface AdditionalInitialIds
             return TransactionIdStore.BASE_TX_LOG_BYTE_OFFSET;
         }
     };
+
+	long lastCommittedTransactionId();
+
+	long lastCommittedTransactionChecksum();
+
+	long lastCommittedTransactionLogVersion();
+
+	long lastCommittedTransactionLogByteOffset();
 }

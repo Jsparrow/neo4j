@@ -41,7 +41,51 @@ public class JavaAggregationFunctionsTestIT
     @Rule
     public SuppressOutput suppressOutput = SuppressOutput.suppressAll();
 
-    public static class MyFunctions
+    @Test
+    public void shouldLaunchWithDeclaredFunctions() throws Exception
+    {
+        // When
+        try ( ServerControls server = createServer( MyFunctions.class ).newServer() )
+        {
+            // Then
+            HTTP.Response response = HTTP.POST( server.httpURI().resolve( "db/data/transaction/commit" ).toString(),
+                    quotedJson(
+                            "{ 'statements': [ { 'statement': 'RETURN org.neo4j.harness.myFunc() AS someNumber' } ] " +
+                            "}" ) );
+
+            JsonNode result = response.get( "results" ).get( 0 );
+            assertEquals( "someNumber", result.get( "columns" ).get( 0 ).asText() );
+            assertEquals( 1337, result.get( "data" ).get( 0 ).get( "row" ).get( 0 ).asInt() );
+            assertEquals( "[]", response.get( "errors" ).toString() );
+        }
+    }
+
+	private TestServerBuilder createServer( Class<?> functionClass )
+    {
+        return TestServerBuilders.newInProcessBuilder()
+                                 .withAggregationFunction( functionClass );
+    }
+
+	@Test
+    public void shouldGetHelpfulErrorOnProcedureThrowsException() throws Exception
+    {
+        // When
+        try ( ServerControls server = createServer( MyFunctions.class ).newServer() )
+        {
+            // Then
+            HTTP.Response response = HTTP.POST( server.httpURI().resolve( "db/data/transaction/commit" ).toString(),
+                    quotedJson(
+                            "{ 'statements': [ { 'statement': 'RETURN org.neo4j.harness.funcThatThrows()' } ] }" ) );
+
+            String error = response.get( "errors" ).get( 0 ).get( "message" ).asText();
+            assertEquals(
+                    "Failed to invoke function `org.neo4j.harness.funcThatThrows`: Caused by: java.lang" +
+                    ".RuntimeException: This is an exception",
+                    error );
+        }
+    }
+
+	public static class MyFunctions
     {
         @UserAggregationFunction
         public EliteAggregator myFunc()
@@ -68,50 +112,6 @@ public class JavaAggregationFunctionsTestIT
         public long result()
         {
             return 1337L;
-        }
-    }
-
-    @Test
-    public void shouldLaunchWithDeclaredFunctions() throws Exception
-    {
-        // When
-        try ( ServerControls server = createServer( MyFunctions.class ).newServer() )
-        {
-            // Then
-            HTTP.Response response = HTTP.POST( server.httpURI().resolve( "db/data/transaction/commit" ).toString(),
-                    quotedJson(
-                            "{ 'statements': [ { 'statement': 'RETURN org.neo4j.harness.myFunc() AS someNumber' } ] " +
-                            "}" ) );
-
-            JsonNode result = response.get( "results" ).get( 0 );
-            assertEquals( "someNumber", result.get( "columns" ).get( 0 ).asText() );
-            assertEquals( 1337, result.get( "data" ).get( 0 ).get( "row" ).get( 0 ).asInt() );
-            assertEquals( "[]", response.get( "errors" ).toString() );
-        }
-    }
-
-    private TestServerBuilder createServer( Class<?> functionClass )
-    {
-        return TestServerBuilders.newInProcessBuilder()
-                                 .withAggregationFunction( functionClass );
-    }
-
-    @Test
-    public void shouldGetHelpfulErrorOnProcedureThrowsException() throws Exception
-    {
-        // When
-        try ( ServerControls server = createServer( MyFunctions.class ).newServer() )
-        {
-            // Then
-            HTTP.Response response = HTTP.POST( server.httpURI().resolve( "db/data/transaction/commit" ).toString(),
-                    quotedJson(
-                            "{ 'statements': [ { 'statement': 'RETURN org.neo4j.harness.funcThatThrows()' } ] }" ) );
-
-            String error = response.get( "errors" ).get( 0 ).get( "message" ).asText();
-            assertEquals(
-                    "Failed to invoke function `org.neo4j.harness.funcThatThrows`: Caused by: java.lang" +
-                    ".RuntimeException: This is an exception",
-                    error );
         }
     }
 }

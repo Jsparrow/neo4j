@@ -80,12 +80,11 @@ public class SchemaStorageTest
 
     @ClassRule
     public static final DatabaseRule db = new ImpermanentDatabaseRule();
-    @Rule
+	private static SchemaStorage storage;
+	@Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    private static SchemaStorage storage;
-
-    @BeforeClass
+	@BeforeClass
     public static void initStorage() throws Exception
     {
         try ( Transaction transaction = db.beginTx() )
@@ -102,13 +101,13 @@ public class SchemaStorageTest
         storage = new SchemaStorage( schemaStore );
     }
 
-    @Before
+	@Before
     public void clearSchema()
     {
         GraphDatabaseServiceCleaner.cleanupSchema( db );
     }
 
-    @Test
+	@Test
     public void shouldReturnIndexRuleForLabelAndProperty()
     {
         // Given
@@ -125,7 +124,7 @@ public class SchemaStorageTest
         assertRule( rule, LABEL1, PROP2, IndexDescriptor.Type.GENERAL );
     }
 
-    @Test
+	@Test
     public void shouldReturnIndexRuleForLabelAndPropertyComposite()
     {
         String a = "a";
@@ -151,7 +150,7 @@ public class SchemaStorageTest
         assertEquals( IndexDescriptor.Type.GENERAL, rule.type() );
     }
 
-    @Test
+	@Test
     public void shouldReturnIndexRuleForLabelAndVeryManyPropertiesComposite()
     {
         String[] props = "abcdefghijklmnopqrstuvwxyzABCDEFGHJILKMNOPQRSTUVWXYZ".split( "\\B" );
@@ -177,7 +176,7 @@ public class SchemaStorageTest
         assertEquals( IndexDescriptor.Type.GENERAL, rule.type() );
     }
 
-    @Test
+	@Test
     public void shouldReturnNullIfIndexRuleForLabelAndPropertyDoesNotExist()
     {
         // Given
@@ -191,7 +190,7 @@ public class SchemaStorageTest
         assertNull( rule );
     }
 
-    @Test
+	@Test
     public void shouldListIndexRulesForLabelPropertyAndKind()
     {
         // Given
@@ -207,7 +206,7 @@ public class SchemaStorageTest
         assertRule( rule, LABEL1, PROP1, IndexDescriptor.Type.UNIQUE );
     }
 
-    @Test
+	@Test
     public void shouldListAllIndexRules()
     {
         // Given
@@ -228,7 +227,7 @@ public class SchemaStorageTest
         assertEquals( expectedRules, listedRules );
     }
 
-    @Test
+	@Test
     public void shouldReturnCorrectUniquenessRuleForLabelAndProperty()
             throws SchemaRuleNotFoundException, DuplicateSchemaRuleException
     {
@@ -246,7 +245,7 @@ public class SchemaStorageTest
         assertRule( rule, LABEL1, PROP1, ConstraintDescriptor.Type.UNIQUE );
     }
 
-    @Test
+	@Test
     public void shouldThrowExceptionOnNodeRuleNotFound()
             throws DuplicateSchemaRuleException, SchemaRuleNotFoundException
     {
@@ -263,7 +262,7 @@ public class SchemaStorageTest
                 ConstraintDescriptorFactory.existsForLabel( labelId( LABEL1 ), propId( PROP1 ) ) );
     }
 
-    @Test
+	@Test
     public void shouldThrowExceptionOnNodeDuplicateRuleFound()
             throws DuplicateSchemaRuleException, SchemaRuleNotFoundException
     {
@@ -286,7 +285,7 @@ public class SchemaStorageTest
                 ConstraintDescriptorFactory.uniqueForLabel( labelId( LABEL1 ), propId( PROP1 ) ) );
     }
 
-    @Test
+	@Test
     public void shouldThrowExceptionOnRelationshipRuleNotFound()
             throws DuplicateSchemaRuleException, SchemaRuleNotFoundException
     {
@@ -302,7 +301,7 @@ public class SchemaStorageTest
                 ConstraintDescriptorFactory.existsForRelType( typeId( TYPE1 ), propId( PROP1 ) ) );
     }
 
-    @Test
+	@Test
     public void shouldThrowExceptionOnRelationshipDuplicateRuleFound()
             throws DuplicateSchemaRuleException, SchemaRuleNotFoundException
     {
@@ -325,7 +324,7 @@ public class SchemaStorageTest
                 ConstraintDescriptorFactory.existsForRelType( typeId( TYPE1 ), propId( PROP1 ) ) );
     }
 
-    private TokenNameLookup getDefaultTokenNameLookup()
+	private TokenNameLookup getDefaultTokenNameLookup()
     {
         TokenNameLookup tokenNameLookup = mock( TokenNameLookup.class );
         Mockito.when( tokenNameLookup.labelGetName( labelId( LABEL1 ) ) ).thenReturn( LABEL1 );
@@ -334,52 +333,52 @@ public class SchemaStorageTest
         return tokenNameLookup;
     }
 
-    private void assertRule( StoreIndexDescriptor rule, String label, String propertyKey, IndexDescriptor.Type type )
+	private void assertRule( StoreIndexDescriptor rule, String label, String propertyKey, IndexDescriptor.Type type )
     {
         assertTrue( SchemaDescriptorPredicates.hasLabel( rule, labelId( label ) ) );
         assertTrue( SchemaDescriptorPredicates.hasProperty( rule, propId( propertyKey ) ) );
         assertEquals( type, rule.type() );
     }
 
-    private void assertRule( ConstraintRule rule, String label, String propertyKey, ConstraintDescriptor.Type type )
+	private void assertRule( ConstraintRule rule, String label, String propertyKey, ConstraintDescriptor.Type type )
     {
         assertTrue( SchemaDescriptorPredicates.hasLabel( rule, labelId( label ) ) );
         assertTrue( SchemaDescriptorPredicates.hasProperty( rule, propId( propertyKey ) ) );
         assertEquals( type, rule.getConstraintDescriptor().type() );
     }
 
-    private IndexDescriptor indexDescriptor( String label, String property )
+	private IndexDescriptor indexDescriptor( String label, String property )
     {
         return TestIndexDescriptorFactory.forLabel( labelId( label ), propId( property ) );
     }
 
-    private IndexDescriptor uniqueIndexDescriptor( String label, String property )
+	private IndexDescriptor uniqueIndexDescriptor( String label, String property )
     {
         return TestIndexDescriptorFactory.uniqueForLabel( labelId( label ), propId( property ) );
     }
 
-    private StoreIndexDescriptor makeIndexRule( long ruleId, String label, String propertyKey )
+	private StoreIndexDescriptor makeIndexRule( long ruleId, String label, String propertyKey )
     {
         return forSchema( forLabel( labelId( label ), propId( propertyKey ) ), EMPTY.getProviderDescriptor() ).withId( ruleId );
     }
 
-    private StoreIndexDescriptor makeIndexRuleForConstraint( long ruleId, String label, String propertyKey, long constraintId )
+	private StoreIndexDescriptor makeIndexRuleForConstraint( long ruleId, String label, String propertyKey, long constraintId )
     {
         return uniqueForSchema( forLabel( labelId( label ), propId( propertyKey ) ), EMPTY.getProviderDescriptor() ).withIds( ruleId, constraintId );
     }
 
-    private ConstraintRule getUniquePropertyConstraintRule( long id, String label, String property )
+	private ConstraintRule getUniquePropertyConstraintRule( long id, String label, String property )
     {
         return ConstraintRule.constraintRule( id, ConstraintDescriptorFactory.uniqueForLabel( labelId( label ), propId( property ) ), 0L );
     }
 
-    private ConstraintRule getRelationshipPropertyExistenceConstraintRule( long id, String type,
+	private ConstraintRule getRelationshipPropertyExistenceConstraintRule( long id, String type,
             String property )
     {
         return ConstraintRule.constraintRule( id, ConstraintDescriptorFactory.existsForRelType( typeId( type ), propId( property ) ) );
     }
 
-    private static int labelId( String labelName )
+	private static int labelId( String labelName )
     {
         try ( Transaction ignore = db.beginTx() )
         {
@@ -387,7 +386,7 @@ public class SchemaStorageTest
         }
     }
 
-    private int propId( String propName )
+	private int propId( String propName )
     {
         try ( Transaction ignore = db.beginTx() )
         {
@@ -395,7 +394,7 @@ public class SchemaStorageTest
         }
     }
 
-    private static int typeId( String typeName )
+	private static int typeId( String typeName )
     {
         try ( Transaction ignore = db.beginTx() )
         {
@@ -403,27 +402,27 @@ public class SchemaStorageTest
         }
     }
 
-    private static KernelTransaction getTransaction()
+	private static KernelTransaction getTransaction()
     {
         return resolveDependency( ThreadToStatementContextBridge.class ).getKernelTransactionBoundToThisThread( true );
     }
 
-    private static <T> T resolveDependency( Class<T> clazz )
+	private static <T> T resolveDependency( Class<T> clazz )
     {
         return db.getGraphDatabaseAPI().getDependencyResolver().resolveDependency( clazz );
     }
 
-    private static Consumer<GraphDatabaseService> index( String label, String prop )
+	private static Consumer<GraphDatabaseService> index( String label, String prop )
     {
         return db -> db.schema().indexFor( Label.label( label ) ).on( prop ).create();
     }
 
-    private static Consumer<GraphDatabaseService> uniquenessConstraint( String label, String prop )
+	private static Consumer<GraphDatabaseService> uniquenessConstraint( String label, String prop )
     {
         return db -> db.schema().constraintFor( Label.label( label ) ).assertPropertyIsUnique( prop ).create();
     }
 
-    @SafeVarargs
+	@SafeVarargs
     private static void createSchema( Consumer<GraphDatabaseService>... creators )
     {
         try ( Transaction tx = db.beginTx() )
@@ -437,7 +436,7 @@ public class SchemaStorageTest
         awaitIndexes();
     }
 
-    private static void awaitIndexes()
+	private static void awaitIndexes()
     {
         try ( Transaction tx = db.beginTx() )
         {

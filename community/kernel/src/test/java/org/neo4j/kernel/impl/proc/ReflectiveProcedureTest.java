@@ -168,9 +168,7 @@ public class ReflectiveProcedureTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Unable to find a usable public no-argument constructor " +
-                                 "in the class `WierdConstructorProcedure`. Please add a " +
-                                 "valid, public constructor, recompile the class and try again." );
+        exception.expectMessage( new StringBuilder().append("Unable to find a usable public no-argument constructor ").append("in the class `WierdConstructorProcedure`. Please add a ").append("valid, public constructor, recompile the class and try again.").toString() );
 
         // When
         compile( WierdConstructorProcedure.class );
@@ -181,9 +179,7 @@ public class ReflectiveProcedureTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Unable to find a usable public no-argument constructor " +
-                                 "in the class `PrivateConstructorProcedure`. Please add " +
-                                 "a valid, public constructor, recompile the class and try again." );
+        exception.expectMessage( new StringBuilder().append("Unable to find a usable public no-argument constructor ").append("in the class `PrivateConstructorProcedure`. Please add ").append("a valid, public constructor, recompile the class and try again.").toString() );
 
         // When
         compile( PrivateConstructorProcedure.class );
@@ -205,15 +201,8 @@ public class ReflectiveProcedureTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( String.format("Procedures must return a Stream of records, where a record is a concrete class%n" +
-                                 "that you define, with public non-final fields defining the fields in the record.%n" +
-                                 "If you''d like your procedure to return `String`, you could define a record class " +
-                                 "like:%n" +
-                                 "public class Output '{'%n" +
-                                 "    public String out;%n" +
-                                 "'}'%n" +
-                                 "%n" +
-                                 "And then define your procedure as returning `Stream<Output>`." ));
+        exception.expectMessage( String.format(new StringBuilder().append("Procedures must return a Stream of records, where a record is a concrete class%n").append("that you define, with public non-final fields defining the fields in the record.%n").append("If you''d like your procedure to return `String`, you could define a record class ").append("like:%n").append("public class Output '{'%n").append("    public String out;%n").append("'}'%n").append("%n")
+				.append("And then define your procedure as returning `Stream<Output>`.").toString() ));
 
         // When
         compile( ProcedureWithInvalidRecordOutput.class ).get( 0 );
@@ -224,10 +213,7 @@ public class ReflectiveProcedureTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( String.format("The field `gdb` in the class named `ProcedureWithStaticContextAnnotatedField` is " +
-                                 "annotated as a @Context field,%n" +
-                                 "but it is static. @Context fields must be public, non-final and non-static,%n" +
-                                 "because they are reset each time a procedure is invoked." ));
+        exception.expectMessage( String.format(new StringBuilder().append("The field `gdb` in the class named `ProcedureWithStaticContextAnnotatedField` is ").append("annotated as a @Context field,%n").append("but it is static. @Context fields must be public, non-final and non-static,%n").append("because they are reset each time a procedure is invoked.").toString() ));
 
         // When
         compile( ProcedureWithStaticContextAnnotatedField.class ).get( 0 );
@@ -305,13 +291,9 @@ public class ReflectiveProcedureTest
                 Exception e = (Exception) item;
                 for ( Throwable suppressed : e.getSuppressed() )
                 {
-                    if ( suppressed instanceof ResourceCloseFailureException )
-                    {
-                        if ( suppressed.getCause() instanceof ExceptionDuringClose )
-                        {
-                            return true;
-                        }
-                    }
+                    if ( suppressed instanceof ResourceCloseFailureException && suppressed.getCause() instanceof ExceptionDuringClose ) {
+					    return true;
+					}
                 }
                 return false;
             }
@@ -437,7 +419,12 @@ public class ReflectiveProcedureTest
         assertThat( proc.isEmpty(), is(true) );
     }
 
-    public static class MyOutputRecord
+    private List<CallableProcedure> compile( Class<?> clazz ) throws KernelException
+    {
+        return procedureCompiler.compileProcedure( clazz, null, true );
+    }
+
+	public static class MyOutputRecord
     {
         public String name;
 
@@ -654,11 +641,6 @@ public class ReflectiveProcedureTest
         public void badProc()
         {
         }
-    }
-
-    private List<CallableProcedure> compile( Class<?> clazz ) throws KernelException
-    {
-        return procedureCompiler.compileProcedure( clazz, null, true );
     }
 
     private static class ExceptionDuringClose extends RuntimeException

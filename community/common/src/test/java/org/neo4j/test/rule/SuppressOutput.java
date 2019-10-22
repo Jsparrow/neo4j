@@ -51,18 +51,191 @@ import static java.util.Arrays.asList;
 public final class SuppressOutput implements TestRule
 {
     private static final Suppressible java_util_logging = java_util_logging( new ByteArrayOutputStream(), null );
+	private final Suppressible[] suppressibles;
+	private Voice[] voices;
 
-    public static SuppressOutput suppress( Suppressible... suppressibles )
+	private SuppressOutput( Suppressible[] suppressibles )
+    {
+        this.suppressibles = suppressibles;
+    }
+
+	public static SuppressOutput suppress( Suppressible... suppressibles )
     {
         return new SuppressOutput( suppressibles );
     }
 
-    public static SuppressOutput suppressAll()
+	public static SuppressOutput suppressAll()
     {
         return suppress( System.out, System.err, java_util_logging );
     }
 
-    public enum System implements Suppressible
+	public static Suppressible java_util_logging( final ByteArrayOutputStream redirectTo, Level level )
+    {
+        final Handler replacement = redirectTo == null ? null : new StreamHandler( redirectTo, new SimpleFormatter() );
+        if ( replacement != null && level != null )
+        {
+            replacement.setLevel( level );
+        }
+        return () -> {
+		    final Logger logger = LogManager.getLogManager().getLogger( "" );
+		    final Level level1 = logger.getLevel();
+		    final Handler[] handlers = logger.getHandlers();
+		    for ( Handler handler : handlers )
+		    {
+		        logger.removeHandler( handler );
+		    }
+		    if ( replacement != null )
+		    {
+		        logger.addHandler( replacement );
+		        logger.setLevel( Level.ALL );
+		    }
+		    return new Voice( this, redirectTo )
+		    {
+		        @Override
+		        void restore( boolean failure )
+		        {
+		            for ( Handler handler : handlers )
+		            {
+		                logger.addHandler( handler );
+		            }
+		            logger.setLevel( level1 );
+		            if ( replacement != null )
+		            {
+		                logger.removeHandler( replacement );
+		            }
+		        }
+		    };
+		};
+    }
+
+	public <T> T call( Callable<T> callable ) throws Exception
+    {
+        captureVoices();
+        boolean failure = true;
+        try
+        {
+            T result = callable.call();
+            failure = false;
+            return result;
+        }
+        finally
+        {
+            releaseVoices( voices, failure );
+        }
+    }
+
+	public Voice[] getAllVoices()
+    {
+        return voices;
+    }
+
+	public Voice getOutputVoice()
+    {
+        return getVoice( System.out );
+    }
+
+	public Voice getErrorVoice()
+    {
+        return getVoice( System.err );
+    }
+
+	public Voice getVoice( Suppressible suppressible )
+    {
+        for ( Voice voice : voices )
+        {
+            if ( suppressible.equals( voice.getSuppressible() ) )
+            {
+                return voice;
+            }
+        }
+        return null;
+    }
+
+	@Override
+    public Statement apply( final Statement base, Description description )
+    {
+        return new Statement()
+        {
+            @Override
+            public void evaluate() throws Throwable
+            {
+                captureVoices();
+                boolean failure = true;
+                try
+                {
+                    base.evaluate();
+                    failure = false;
+                }
+                finally
+                {
+                    releaseVoices( voices, failure );
+                }
+            }
+        };
+    }
+
+	public void captureVoices()
+    {
+        Voice[] voices = new Voice[suppressibles.length];
+        boolean ok = false;
+        try
+        {
+            for ( int i = 0; i < voices.length; i++ )
+            {
+                voices[i] = suppressibles[i].suppress();
+            }
+            ok = true;
+        }
+        finally
+        {
+            if ( !ok )
+            {
+                releaseVoices( voices, false );
+            }
+        }
+        this.voices = voices;
+    }
+
+	public void releaseVoices( boolean failure )
+    {
+        releaseVoices( voices, failure );
+    }
+
+	void releaseVoices( Voice[] voices, boolean failure )
+    {
+        List<Throwable> failures = null;
+        try
+        {
+            failures = new ArrayList<>( voices.length );
+        }
+        catch ( Throwable oom )
+        {
+            // nothing we can do...
+        }
+        for ( Voice voice : voices )
+        {
+            if ( voice != null )
+            {
+                try
+                {
+                    voice.restore( failure );
+                }
+                catch ( Throwable exception )
+                {
+                    if ( failures != null )
+                    {
+                        failures.add( exception );
+                    }
+                }
+            }
+        }
+        if ( failures != null && !failures.isEmpty() )
+        {
+            failures.forEach(Throwable::printStackTrace);
+        }
+    }
+
+	public enum System implements Suppressible
     {
         out
         {
@@ -105,124 +278,6 @@ public final class SuppressOutput implements TestRule
         }
 
         abstract PrintStream replace( PrintStream replacement );
-    }
-
-    public static Suppressible java_util_logging( final ByteArrayOutputStream redirectTo, Level level )
-    {
-        final Handler replacement = redirectTo == null ? null : new StreamHandler( redirectTo, new SimpleFormatter() );
-        if ( replacement != null && level != null )
-        {
-            replacement.setLevel( level );
-        }
-        return new Suppressible()
-        {
-            @Override
-            public Voice suppress()
-            {
-                final Logger logger = LogManager.getLogManager().getLogger( "" );
-                final Level level = logger.getLevel();
-                final Handler[] handlers = logger.getHandlers();
-                for ( Handler handler : handlers )
-                {
-                    logger.removeHandler( handler );
-                }
-                if ( replacement != null )
-                {
-                    logger.addHandler( replacement );
-                    logger.setLevel( Level.ALL );
-                }
-                return new Voice( this, redirectTo )
-                {
-                    @Override
-                    void restore( boolean failure )
-                    {
-                        for ( Handler handler : handlers )
-                        {
-                            logger.addHandler( handler );
-                        }
-                        logger.setLevel( level );
-                        if ( replacement != null )
-                        {
-                            logger.removeHandler( replacement );
-                        }
-                    }
-                };
-            }
-        };
-    }
-
-    public <T> T call( Callable<T> callable ) throws Exception
-    {
-        captureVoices();
-        boolean failure = true;
-        try
-        {
-            T result = callable.call();
-            failure = false;
-            return result;
-        }
-        finally
-        {
-            releaseVoices( voices, failure );
-        }
-    }
-
-    private final Suppressible[] suppressibles;
-    private Voice[] voices;
-
-    private SuppressOutput( Suppressible[] suppressibles )
-    {
-        this.suppressibles = suppressibles;
-    }
-
-    public Voice[] getAllVoices()
-    {
-        return voices;
-    }
-
-    public Voice getOutputVoice()
-    {
-        return getVoice( System.out );
-    }
-
-    public Voice getErrorVoice()
-    {
-        return getVoice( System.err );
-    }
-
-    public Voice getVoice( Suppressible suppressible )
-    {
-        for ( Voice voice : voices )
-        {
-            if ( suppressible.equals( voice.getSuppressible() ) )
-            {
-                return voice;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public Statement apply( final Statement base, Description description )
-    {
-        return new Statement()
-        {
-            @Override
-            public void evaluate() throws Throwable
-            {
-                captureVoices();
-                boolean failure = true;
-                try
-                {
-                    base.evaluate();
-                    failure = false;
-                }
-                finally
-                {
-                    releaseVoices( voices, failure );
-                }
-            }
-        };
     }
 
     public interface Suppressible
@@ -271,69 +326,5 @@ public final class SuppressOutput implements TestRule
         }
 
         abstract void restore( boolean failure ) throws IOException;
-    }
-
-    public void captureVoices()
-    {
-        Voice[] voices = new Voice[suppressibles.length];
-        boolean ok = false;
-        try
-        {
-            for ( int i = 0; i < voices.length; i++ )
-            {
-                voices[i] = suppressibles[i].suppress();
-            }
-            ok = true;
-        }
-        finally
-        {
-            if ( !ok )
-            {
-                releaseVoices( voices, false );
-            }
-        }
-        this.voices = voices;
-    }
-
-    public void releaseVoices( boolean failure )
-    {
-        releaseVoices( voices, failure );
-    }
-
-    void releaseVoices( Voice[] voices, boolean failure )
-    {
-        List<Throwable> failures = null;
-        try
-        {
-            failures = new ArrayList<>( voices.length );
-        }
-        catch ( Throwable oom )
-        {
-            // nothing we can do...
-        }
-        for ( Voice voice : voices )
-        {
-            if ( voice != null )
-            {
-                try
-                {
-                    voice.restore( failure );
-                }
-                catch ( Throwable exception )
-                {
-                    if ( failures != null )
-                    {
-                        failures.add( exception );
-                    }
-                }
-            }
-        }
-        if ( failures != null && !failures.isEmpty() )
-        {
-            for ( Throwable exception : failures )
-            {
-                exception.printStackTrace();
-            }
-        }
     }
 }

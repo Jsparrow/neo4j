@@ -134,32 +134,32 @@ class FulltextIndexTransactionStateVisitor extends TxStateVisitor.Adapter
 
     private void indexNode( long id )
     {
-        if ( visitingNodes )
-        {
-            read.singleNode( id, nodeCursor );
-            if ( nodeCursor.next() )
-            {
-                LabelSet labels = nodeCursor.labels();
-                if ( schema.isAffected( labels.all() ) )
-                {
-                    nodeCursor.properties( propertyCursor );
-                    indexProperties( id );
-                }
-            }
-        }
+        if (!visitingNodes) {
+			return;
+		}
+		read.singleNode( id, nodeCursor );
+		if ( nodeCursor.next() )
+		{
+		    LabelSet labels = nodeCursor.labels();
+		    if ( schema.isAffected( labels.all() ) )
+		    {
+		        nodeCursor.properties( propertyCursor );
+		        indexProperties( id );
+		    }
+		}
     }
 
     private void indexRelationship( long id )
     {
-        if ( !visitingNodes )
-        {
-            read.singleRelationship( id, relationshipCursor );
-            if ( relationshipCursor.next() && schema.isAffected( new long[]{relationshipCursor.type()} ) )
-            {
-                relationshipCursor.properties( propertyCursor );
-                indexProperties( id );
-            }
-        }
+        if (visitingNodes) {
+			return;
+		}
+		read.singleRelationship( id, relationshipCursor );
+		if ( relationshipCursor.next() && schema.isAffected( new long[]{relationshipCursor.type()} ) )
+		{
+		    relationshipCursor.properties( propertyCursor );
+		    indexProperties( id );
+		}
     }
 
     private void indexProperties( long id )

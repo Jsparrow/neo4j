@@ -37,6 +37,61 @@ public class RateLimitedAuthenticationStrategy implements AuthenticationStrategy
     private final Clock clock;
     private final long lockDurationMs;
     private final int maxFailedAttempts;
+	/**
+     * Tracks authentication state for each user
+     */
+    private final ConcurrentMap<String, AuthenticationMetadata> authenticationData = new ConcurrentHashMap<>();
+
+	public RateLimitedAuthenticationStrategy( Clock clock, Config config )
+    {
+        this( clock, config.get( auth_lock_time ), config.get( auth_max_failed_attempts ) );
+    }
+
+	RateLimitedAuthenticationStrategy( Clock clock, Duration lockDuration, int maxFailedAttempts )
+    {
+        this.clock = clock;
+        this.lockDurationMs = lockDuration.toMillis();
+        this.maxFailedAttempts = maxFailedAttempts;
+    }
+
+	@Override
+    public AuthenticationResult authenticate( User user, byte[] password )
+    {
+        AuthenticationMetadata authMetadata = authMetadataFor( user.name() );
+
+        if ( !authMetadata.authenticationPermitted() )
+        {
+            return AuthenticationResult.TOO_MANY_ATTEMPTS;
+        }
+
+        if ( user.credentials().matchesPassword( password ) )
+        {
+            authMetadata.authSuccess();
+            return AuthenticationResult.SUCCESS;
+        }
+        else
+        {
+            authMetadata.authFailed();
+            return AuthenticationResult.FAILURE;
+        }
+    }
+
+	private AuthenticationMetadata authMetadataFor( String username )
+    {
+        AuthenticationMetadata authMeta = authenticationData.get( username );
+
+        if ( authMeta == null )
+        {
+            authMeta = new AuthenticationMetadata();
+            AuthenticationMetadata preExisting = authenticationData.putIfAbsent( username, authMeta );
+            if ( preExisting != null )
+            {
+                authMeta = preExisting;
+            }
+        }
+
+        return authMeta;
+    }
 
     private class AuthenticationMetadata
     {
@@ -60,62 +115,6 @@ public class RateLimitedAuthenticationStrategy implements AuthenticationStrategy
             failedAuthAttempts.incrementAndGet();
             lastFailedAttemptTime = clock.millis();
         }
-    }
-
-    /**
-     * Tracks authentication state for each user
-     */
-    private final ConcurrentMap<String, AuthenticationMetadata> authenticationData = new ConcurrentHashMap<>();
-
-    public RateLimitedAuthenticationStrategy( Clock clock, Config config )
-    {
-        this( clock, config.get( auth_lock_time ), config.get( auth_max_failed_attempts ) );
-    }
-
-    RateLimitedAuthenticationStrategy( Clock clock, Duration lockDuration, int maxFailedAttempts )
-    {
-        this.clock = clock;
-        this.lockDurationMs = lockDuration.toMillis();
-        this.maxFailedAttempts = maxFailedAttempts;
-    }
-
-    @Override
-    public AuthenticationResult authenticate( User user, byte[] password )
-    {
-        AuthenticationMetadata authMetadata = authMetadataFor( user.name() );
-
-        if ( !authMetadata.authenticationPermitted() )
-        {
-            return AuthenticationResult.TOO_MANY_ATTEMPTS;
-        }
-
-        if ( user.credentials().matchesPassword( password ) )
-        {
-            authMetadata.authSuccess();
-            return AuthenticationResult.SUCCESS;
-        }
-        else
-        {
-            authMetadata.authFailed();
-            return AuthenticationResult.FAILURE;
-        }
-    }
-
-    private AuthenticationMetadata authMetadataFor( String username )
-    {
-        AuthenticationMetadata authMeta = authenticationData.get( username );
-
-        if ( authMeta == null )
-        {
-            authMeta = new AuthenticationMetadata();
-            AuthenticationMetadata preExisting = authenticationData.putIfAbsent( username, authMeta );
-            if ( preExisting != null )
-            {
-                authMeta = preExisting;
-            }
-        }
-
-        return authMeta;
     }
 
 }

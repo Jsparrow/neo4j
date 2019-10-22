@@ -36,24 +36,47 @@ import static java.util.Objects.requireNonNull;
 
 public final class AsyncLogEvent extends AsyncEvent
 {
-    static AsyncLogEvent logEvent( @Nonnull Logger logger, @Nonnull String message )
+    private static final ThreadLocal<DateFormat> DATE_FORMAT_THREAD_LOCAL = ThreadLocal.withInitial( () -> {
+        SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSSZ" );
+        format.setTimeZone( TimeZone.getTimeZone( "UTC" ) );
+        return format;
+    } );
+	private final long timestamp;
+	private final Object target;
+	private final String message;
+	private final Object parameter;
+
+	private AsyncLogEvent( @Nonnull Object target, @Nullable Object parameter )
+    {
+        this( target, "", parameter );
+    }
+
+	private AsyncLogEvent( @Nonnull Object target, @Nonnull String message, @Nullable Object parameter )
+    {
+        this.target = target;
+        this.message = message;
+        this.parameter = parameter;
+        this.timestamp = System.currentTimeMillis();
+    }
+
+	static AsyncLogEvent logEvent( @Nonnull Logger logger, @Nonnull String message )
     {
         return new AsyncLogEvent( requireNonNull( logger, "logger" ), requireNonNull( message, "message" ), null );
     }
 
-    static AsyncLogEvent logEvent( @Nonnull Logger logger, @Nonnull String message, @Nonnull Throwable throwable )
+	static AsyncLogEvent logEvent( @Nonnull Logger logger, @Nonnull String message, @Nonnull Throwable throwable )
     {
         return new AsyncLogEvent( requireNonNull( logger, "logger" ), requireNonNull( message, "message" ),
                 requireNonNull( throwable, "Throwable" ) );
     }
 
-    static AsyncLogEvent logEvent( @Nonnull Logger logger, @Nonnull String format, @Nullable Object... arguments )
+	static AsyncLogEvent logEvent( @Nonnull Logger logger, @Nonnull String format, @Nullable Object... arguments )
     {
         return new AsyncLogEvent( requireNonNull( logger, "logger" ), requireNonNull( format, "format" ),
                 arguments == null ? new Object[0] : arguments );
     }
 
-    static AsyncLogEvent bulkLogEvent( @Nonnull Log log, @Nonnull final Consumer<Log> consumer )
+	static AsyncLogEvent bulkLogEvent( @Nonnull Log log, @Nonnull final Consumer<Log> consumer )
     {
         requireNonNull( consumer, "Consumer<Log>" );
         return new AsyncLogEvent( requireNonNull( log, "log" ), new BulkLogger()
@@ -67,12 +90,12 @@ public final class AsyncLogEvent extends AsyncEvent
             @Override
             public String toString()
             {
-                return "Log.bulkLog( " + consumer + " )";
+                return new StringBuilder().append("Log.bulkLog( ").append(consumer).append(" )").toString();
             }
         } );
     }
 
-    static AsyncLogEvent bulkLogEvent( @Nonnull Logger logger, @Nonnull final Consumer<Logger> consumer )
+	static AsyncLogEvent bulkLogEvent( @Nonnull Logger logger, @Nonnull final Consumer<Logger> consumer )
     {
         requireNonNull( consumer, "Consumer<Logger>" );
         return new AsyncLogEvent( requireNonNull( logger, "logger" ), new BulkLogger()
@@ -86,24 +109,24 @@ public final class AsyncLogEvent extends AsyncEvent
             @Override
             public String toString()
             {
-                return "Logger.bulkLog( " + consumer + " )";
+                return new StringBuilder().append("Logger.bulkLog( ").append(consumer).append(" )").toString();
             }
         } );
     }
 
-    public void process()
+	public void process()
     {
         if ( parameter == null )
         {
-            ((Logger) target).log( "[AsyncLog @ " + timestamp() + "]  " + message );
+            ((Logger) target).log( new StringBuilder().append("[AsyncLog @ ").append(timestamp()).append("]  ").append(message).toString() );
         }
         else if ( parameter instanceof Throwable )
         {
-            ((Logger) target).log( "[AsyncLog @ " + timestamp() + "]  " + message, (Throwable) parameter );
+            ((Logger) target).log( new StringBuilder().append("[AsyncLog @ ").append(timestamp()).append("]  ").append(message).toString(), (Throwable) parameter );
         }
         else if ( parameter instanceof Object[] )
         {
-            ((Logger) target).log( "[AsyncLog @ " + timestamp() + "]  " + message, (Object[]) parameter );
+            ((Logger) target).log( new StringBuilder().append("[AsyncLog @ ").append(timestamp()).append("]  ").append(message).toString(), (Object[]) parameter );
         }
         else if ( parameter instanceof BulkLogger )
         {
@@ -111,39 +134,22 @@ public final class AsyncLogEvent extends AsyncEvent
         }
     }
 
-    private final long timestamp;
-    private final Object target;
-    private final String message;
-    private final Object parameter;
-
-    private AsyncLogEvent( @Nonnull Object target, @Nullable Object parameter )
-    {
-        this( target, "", parameter );
-    }
-
-    private AsyncLogEvent( @Nonnull Object target, @Nonnull String message, @Nullable Object parameter )
-    {
-        this.target = target;
-        this.message = message;
-        this.parameter = parameter;
-        this.timestamp = System.currentTimeMillis();
-    }
-
-    @Override
+	@Override
     public String toString()
     {
         if ( parameter == null )
         {
-            return "log( @ " + timestamp() + ": \"" + message + "\" )";
+            return new StringBuilder().append("log( @ ").append(timestamp()).append(": \"").append(message).append("\" )").toString();
         }
         if ( parameter instanceof Throwable )
         {
-            return "log( @ " + timestamp() + ": \"" + message + "\", " + parameter + " )";
+            return new StringBuilder().append("log( @ ").append(timestamp()).append(": \"").append(message).append("\", ").append(parameter)
+					.append(" )").toString();
         }
         if ( parameter instanceof Object[] )
         {
-            return "log( @ " + timestamp() + ": \"" + message + "\", " +
-                   Arrays.toString( (Object[]) parameter ) + " )";
+            return new StringBuilder().append("log( @ ").append(timestamp()).append(": \"").append(message).append("\", ").append(Arrays.toString( (Object[]) parameter ))
+					.append(" )").toString();
         }
         if ( parameter instanceof BulkLogger )
         {
@@ -152,20 +158,14 @@ public final class AsyncLogEvent extends AsyncEvent
         return super.toString();
     }
 
-    private abstract static class BulkLogger
-    {
-        abstract void process( long timestamp, Object target );
-    }
-
-    private String timestamp()
+	private String timestamp()
     {
         return DATE_FORMAT_THREAD_LOCAL.get().format( new Date( timestamp ) );
     }
 
-    private static final ThreadLocal<DateFormat> DATE_FORMAT_THREAD_LOCAL = ThreadLocal.withInitial( () -> {
-        SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSSZ" );
-        format.setTimeZone( TimeZone.getTimeZone( "UTC" ) );
-        return format;
-    } );
+	private abstract static class BulkLogger
+    {
+        abstract void process( long timestamp, Object target );
+    }
 }
 

@@ -71,7 +71,7 @@ class TemporalIndexPartReader<KEY extends NativeIndexSingleValueKey<KEY>> extend
             break;
 
         default:
-            throw new IllegalArgumentException( "IndexQuery of type " + predicate.type() + " is not supported." );
+            throw new IllegalArgumentException( new StringBuilder().append("IndexQuery of type ").append(predicate.type()).append(" is not supported.").toString() );
         }
         return false; // no filtering
     }

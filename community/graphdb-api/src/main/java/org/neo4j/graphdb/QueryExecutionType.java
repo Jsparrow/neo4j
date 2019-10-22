@@ -49,7 +49,139 @@ import static java.util.Objects.requireNonNull;
  */
 public final class QueryExecutionType
 {
-    /**
+    private final Execution execution;
+	private final QueryType type;
+
+	private QueryExecutionType( Execution execution, QueryType type )
+    {
+        this.execution = execution;
+        this.type = type;
+    }
+
+	/**
+     * Get the {@link QueryExecutionType} that signifies normal execution of a query of the supplied type.
+     *
+     * @param type the type of query executed.
+     * @return The instance that signifies normal execution of the supplied {@link QueryType}.
+     */
+    public static QueryExecutionType query( QueryType type )
+    {
+        return requireNonNull( type, "QueryType" ).query;
+    }
+
+	/**
+     * Get the {@link QueryExecutionType} that signifies profiled execution of a query of the supplied type.
+     *
+     * @param type the type of query executed.
+     * @return The instance that signifies profiled execution of the supplied {@link QueryType}.
+     */
+    public static QueryExecutionType profiled( QueryType type )
+    {
+        return requireNonNull( type, "QueryType" ).profiled;
+    }
+
+	/**
+     * Get the {@link QueryExecutionType} that signifies explaining the plan of a query of the supplied type.
+     *
+     * @param type the type of query executed.
+     * @return The instance that signifies explaining the plan of the supplied {@link QueryType}.
+     */
+    public static QueryExecutionType explained( QueryType type )
+    {
+        return requireNonNull( type, "QueryType" ).explained;
+    }
+
+	/**
+     * Get the type of query this execution refers to.
+     *
+     * @return the type of query this execution refers to.
+     */
+    public QueryType queryType()
+    {
+        return type;
+    }
+
+	/**
+     * Signifies whether results from this execution
+     * {@linkplain ExecutionPlanDescription#getProfilerStatistics() contains profiling information}.
+     *
+     * This is {@code true} for queries executed with the
+     * <a href="https://neo4j.com/docs/developer-manual/current/cypher/execution-plans/">{@code PROFILE}</a> directive.
+     *
+     * @return {@code true} if the results from this execution would contain profiling information.
+     */
+    public boolean isProfiled()
+    {
+        return execution == Execution.PROFILE;
+    }
+
+	/**
+     * Signifies whether the supplied query contained a directive that asked for a
+     * {@linkplain ExecutionPlanDescription description of the execution plan}.
+     *
+     * This is {@code true} for queries executed with either the
+     * <a href="https://neo4j.com/docs/developer-manual/current/cypher/execution-plans/">{@code EXPLAIN} or {@code PROFILE} directives</a>.
+     *
+     * @return {@code true} if a description of the plan should be presented to the user.
+     */
+    public boolean requestedExecutionPlanDescription()
+    {
+        return execution != Execution.QUERY;
+    }
+
+	/**
+     * Signifies that the query was executed with the
+     * <a href="https://neo4j.com/docs/developer-manual/current/cypher/execution-plans/">{@code EXPLAIN} directive</a>.
+     *
+     * @return {@code true} if the query was executed using the {@code EXPLAIN} directive.
+     */
+    public boolean isExplained()
+    {
+        return execution == Execution.EXPLAIN;
+    }
+
+	/**
+     * Signifies that the execution of the query could produce a result.
+     *
+     * This is an important distinction from the result being empty.
+     *
+     * @return {@code true} if the execution would yield rows in the result set.
+     */
+    public boolean canContainResults()
+    {
+        return (type == QueryType.READ_ONLY || type == QueryType.READ_WRITE) && execution != Execution.EXPLAIN;
+    }
+
+	/**
+     * Signifies that the execution of the query could perform changes to the data.
+     *
+     * {@link Result}{@link Result#getQueryStatistics() .getQueryStatistics()}{@link QueryStatistics#containsUpdates()
+     * .containsUpdates()} signifies whether the query actually performed any updates.
+     *
+     * @return {@code true} if the execution could perform changes to data.
+     */
+    public boolean canUpdateData()
+    {
+        return (type == QueryType.READ_WRITE || type == QueryType.WRITE) && execution != Execution.EXPLAIN;
+    }
+
+	/**
+     * Signifies that the execution of the query updates the schema.
+     *
+     * @return {@code true} if the execution updates the schema.
+     */
+    public boolean canUpdateSchema()
+    {
+        return type == QueryType.SCHEMA_WRITE && execution != Execution.EXPLAIN;
+    }
+
+	@Override
+    public String toString()
+    {
+        return execution.toString( type );
+    }
+
+	/**
      * Signifies what type of query an {@link QueryExecutionType} executes.
      */
     public enum QueryType
@@ -77,139 +209,7 @@ public final class QueryExecutionType
         }
     }
 
-    /**
-     * Get the {@link QueryExecutionType} that signifies normal execution of a query of the supplied type.
-     *
-     * @param type the type of query executed.
-     * @return The instance that signifies normal execution of the supplied {@link QueryType}.
-     */
-    public static QueryExecutionType query( QueryType type )
-    {
-        return requireNonNull( type, "QueryType" ).query;
-    }
-
-    /**
-     * Get the {@link QueryExecutionType} that signifies profiled execution of a query of the supplied type.
-     *
-     * @param type the type of query executed.
-     * @return The instance that signifies profiled execution of the supplied {@link QueryType}.
-     */
-    public static QueryExecutionType profiled( QueryType type )
-    {
-        return requireNonNull( type, "QueryType" ).profiled;
-    }
-
-    /**
-     * Get the {@link QueryExecutionType} that signifies explaining the plan of a query of the supplied type.
-     *
-     * @param type the type of query executed.
-     * @return The instance that signifies explaining the plan of the supplied {@link QueryType}.
-     */
-    public static QueryExecutionType explained( QueryType type )
-    {
-        return requireNonNull( type, "QueryType" ).explained;
-    }
-
-    /**
-     * Get the type of query this execution refers to.
-     *
-     * @return the type of query this execution refers to.
-     */
-    public QueryType queryType()
-    {
-        return type;
-    }
-
-    /**
-     * Signifies whether results from this execution
-     * {@linkplain ExecutionPlanDescription#getProfilerStatistics() contains profiling information}.
-     *
-     * This is {@code true} for queries executed with the
-     * <a href="https://neo4j.com/docs/developer-manual/current/cypher/execution-plans/">{@code PROFILE}</a> directive.
-     *
-     * @return {@code true} if the results from this execution would contain profiling information.
-     */
-    public boolean isProfiled()
-    {
-        return execution == Execution.PROFILE;
-    }
-
-    /**
-     * Signifies whether the supplied query contained a directive that asked for a
-     * {@linkplain ExecutionPlanDescription description of the execution plan}.
-     *
-     * This is {@code true} for queries executed with either the
-     * <a href="https://neo4j.com/docs/developer-manual/current/cypher/execution-plans/">{@code EXPLAIN} or {@code PROFILE} directives</a>.
-     *
-     * @return {@code true} if a description of the plan should be presented to the user.
-     */
-    public boolean requestedExecutionPlanDescription()
-    {
-        return execution != Execution.QUERY;
-    }
-
-    /**
-     * Signifies that the query was executed with the
-     * <a href="https://neo4j.com/docs/developer-manual/current/cypher/execution-plans/">{@code EXPLAIN} directive</a>.
-     *
-     * @return {@code true} if the query was executed using the {@code EXPLAIN} directive.
-     */
-    public boolean isExplained()
-    {
-        return execution == Execution.EXPLAIN;
-    }
-
-    /**
-     * Signifies that the execution of the query could produce a result.
-     *
-     * This is an important distinction from the result being empty.
-     *
-     * @return {@code true} if the execution would yield rows in the result set.
-     */
-    public boolean canContainResults()
-    {
-        return (type == QueryType.READ_ONLY || type == QueryType.READ_WRITE) && execution != Execution.EXPLAIN;
-    }
-
-    /**
-     * Signifies that the execution of the query could perform changes to the data.
-     *
-     * {@link Result}{@link Result#getQueryStatistics() .getQueryStatistics()}{@link QueryStatistics#containsUpdates()
-     * .containsUpdates()} signifies whether the query actually performed any updates.
-     *
-     * @return {@code true} if the execution could perform changes to data.
-     */
-    public boolean canUpdateData()
-    {
-        return (type == QueryType.READ_WRITE || type == QueryType.WRITE) && execution != Execution.EXPLAIN;
-    }
-
-    /**
-     * Signifies that the execution of the query updates the schema.
-     *
-     * @return {@code true} if the execution updates the schema.
-     */
-    public boolean canUpdateSchema()
-    {
-        return type == QueryType.SCHEMA_WRITE && execution != Execution.EXPLAIN;
-    }
-
-    private final Execution execution;
-    private final QueryType type;
-
-    private QueryExecutionType( Execution execution, QueryType type )
-    {
-        this.execution = execution;
-        this.type = type;
-    }
-
-    @Override
-    public String toString()
-    {
-        return execution.toString( type );
-    }
-
-    private enum Execution
+	private enum Execution
     {
         QUERY
                 {
@@ -224,7 +224,7 @@ public final class QueryExecutionType
 
         String toString( QueryType type )
         {
-            return name() + ":" + type.name();
+            return new StringBuilder().append(name()).append(":").append(type.name()).toString();
         }
     }
 }

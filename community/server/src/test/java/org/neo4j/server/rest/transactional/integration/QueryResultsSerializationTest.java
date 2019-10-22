@@ -827,17 +827,17 @@ public class QueryResultsSerializationTest extends AbstractRestFunctionalTestBas
 
     private HTTP.RawPayload queryAsJsonGraph( String query )
     {
-        return quotedJson( "{ 'statements': [ { 'statement': '" + query + "', 'resultDataContents': [ 'graph' ] } ] }" );
+        return quotedJson( new StringBuilder().append("{ 'statements': [ { 'statement': '").append(query).append("', 'resultDataContents': [ 'graph' ] } ] }").toString() );
     }
 
     private HTTP.RawPayload queryAsJsonRest( String query )
     {
-        return quotedJson( "{ 'statements': [ { 'statement': '" + query + "', 'resultDataContents': [ 'rest' ] } ] }" );
+        return quotedJson( new StringBuilder().append("{ 'statements': [ { 'statement': '").append(query).append("', 'resultDataContents': [ 'rest' ] } ] }").toString() );
     }
 
     private HTTP.RawPayload queryAsJsonRow( String query )
     {
-        return quotedJson( "{ 'statements': [ { 'statement': '" + query + "', 'resultDataContents': [ 'row' ] } ] }" );
+        return quotedJson( new StringBuilder().append("{ 'statements': [ { 'statement': '").append(query).append("', 'resultDataContents': [ 'row' ] } ] }").toString() );
     }
 
     private long nodesInDatabase()

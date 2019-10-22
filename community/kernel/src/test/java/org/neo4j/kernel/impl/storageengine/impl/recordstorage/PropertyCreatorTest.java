@@ -385,7 +385,32 @@ public class PropertyCreatorTest
         }
     }
 
-    private static class ExpectedProperty
+    private static ExpectedProperty property( int key, Object value )
+    {
+        return new ExpectedProperty( key, value );
+    }
+
+	private static ExpectedProperty property( int key, Object value, boolean hasDynamicRecords )
+    {
+        return new ExpectedProperty( key, value, hasDynamicRecords );
+    }
+
+	private ExpectedRecord record( ExpectedProperty... properties )
+    {
+        return new ExpectedRecord( properties );
+    }
+
+	private long propertyRecordsInUse()
+    {
+        return propertyStore.getHighId();
+    }
+
+	private long dynamicStringRecordsInUse()
+    {
+        return propertyStore.getStringStore().getHighId();
+    }
+
+	private static class ExpectedProperty
     {
         private final int key;
         private final Value value;
@@ -412,21 +437,6 @@ public class PropertyCreatorTest
         {
             this.properties = properties;
         }
-    }
-
-    private static ExpectedProperty property( int key, Object value )
-    {
-        return new ExpectedProperty( key, value );
-    }
-
-    private static ExpectedProperty property( int key, Object value, boolean hasDynamicRecords )
-    {
-        return new ExpectedProperty( key, value, hasDynamicRecords );
-    }
-
-    private ExpectedRecord record( ExpectedProperty... properties )
-    {
-        return new ExpectedRecord( properties );
     }
 
     private static class MyPrimitiveProxy implements RecordProxy<NodeRecord,Void>
@@ -494,15 +504,5 @@ public class PropertyCreatorTest
         {
             return false;
         }
-    }
-
-    private long propertyRecordsInUse()
-    {
-        return propertyStore.getHighId();
-    }
-
-    private long dynamicStringRecordsInUse()
-    {
-        return propertyStore.getStringStore().getHighId();
     }
 }

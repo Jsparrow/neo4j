@@ -39,34 +39,15 @@ import static java.util.Arrays.copyOf;
  */
 public class DelayedBuffer<T>
 {
-    private static class Chunk<T>
-    {
-        private final T threshold;
-        private final long[] values;
-
-        Chunk( T threshold, long[] values )
-        {
-            this.threshold = threshold;
-            this.values = values;
-        }
-
-        @Override
-        public String toString()
-        {
-            return Arrays.toString( values );
-        }
-    }
-
     private final Supplier<T> thresholdSupplier;
-    private final Predicate<T> safeThreshold;
-    private final Consumer<long[]> chunkConsumer;
-    private final Deque<Chunk<T>> chunks = new LinkedList<>();
-    private final int chunkSize;
+	private final Predicate<T> safeThreshold;
+	private final Consumer<long[]> chunkConsumer;
+	private final Deque<Chunk<T>> chunks = new LinkedList<>();
+	private final int chunkSize;
+	private final long[] chunk;
+	private int chunkCursor;
 
-    private final long[] chunk;
-    private int chunkCursor;
-
-    public DelayedBuffer( Supplier<T> thresholdSupplier, Predicate<T> safeThreshold, int chunkSize,
+	public DelayedBuffer( Supplier<T> thresholdSupplier, Predicate<T> safeThreshold, int chunkSize,
             Consumer<long[]> chunkConsumer )
     {
         assert chunkSize > 0;
@@ -77,7 +58,7 @@ public class DelayedBuffer<T>
         this.chunk = new long[chunkSize];
     }
 
-    /**
+	/**
      * Should be called every now and then to check for safe thresholds of buffered chunks and potentially
      * release them onto the {@link Consumer}.
      */
@@ -111,21 +92,21 @@ public class DelayedBuffer<T>
         }
     }
 
-    // Must be called under synchronized on this
+	// Must be called under synchronized on this
     private void flush()
     {
-        if ( chunkCursor > 0 )
-        {
-            synchronized ( chunks )
-            {
-                Chunk<T> chunkToAdd = new Chunk<>( thresholdSupplier.get(), copyOf( chunk, chunkCursor ) );
-                chunks.offer( chunkToAdd );
-            }
-            chunkCursor = 0;
-        }
+        if (chunkCursor <= 0) {
+			return;
+		}
+		synchronized ( chunks )
+		{
+		    Chunk<T> chunkToAdd = new Chunk<>( thresholdSupplier.get(), copyOf( chunk, chunkCursor ) );
+		    chunks.offer( chunkToAdd );
+		}
+		chunkCursor = 0;
     }
 
-    /**
+	/**
      * Offers a value to this buffer. This value will at a later point be part of a buffered chunk,
      * released by a call to {@link #maintenance()} when the safe threshold for the chunk, which is determined
      * when the chunk is full or otherwise queued.
@@ -139,7 +120,7 @@ public class DelayedBuffer<T>
         }
     }
 
-    /**
+	/**
      * Closes this buffer, releasing all {@link #offer(long)} values into the {@link Consumer}.
      *
      * This class is typically not used in a scenario suitable for try-with-resource
@@ -154,9 +135,27 @@ public class DelayedBuffer<T>
         }
     }
 
-    public synchronized void clear()
+	public synchronized void clear()
     {
         chunks.clear();
         chunkCursor = 0;
+    }
+
+	private static class Chunk<T>
+    {
+        private final T threshold;
+        private final long[] values;
+
+        Chunk( T threshold, long[] values )
+        {
+            this.threshold = threshold;
+            this.values = values;
+        }
+
+        @Override
+        public String toString()
+        {
+            return Arrays.toString( values );
+        }
     }
 }

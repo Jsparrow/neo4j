@@ -40,7 +40,7 @@ public interface DependencyResolver
      * @throws IllegalArgumentException if no matching dependency was found.
      * @deprecated in next major version default selection strategy will be changed to more strict {@link DependencyResolver.SelectionStrategy#ONLY}
      */
-    <T> T resolveDependency( Class<T> type ) throws IllegalArgumentException;
+    <T> T resolveDependency( Class<T> type );
 
     /**
      * Tries to resolve a dependency that matches a given class. All candidates are fed to the
@@ -53,7 +53,7 @@ public interface DependencyResolver
      * @return the resolved dependency for the given type.
      * @throws IllegalArgumentException if no matching dependency was found.
      */
-    <T> T resolveDependency( Class<T> type, SelectionStrategy selector ) throws IllegalArgumentException;
+    <T> T resolveDependency( Class<T> type, SelectionStrategy selector );
 
     /**
      * Tries to resolve a dependencies that matches a given class.
@@ -76,23 +76,10 @@ public interface DependencyResolver
      */
     interface SelectionStrategy
     {
-        /**
-         * Given a set of candidates, select an appropriate one. Even if there are candidates this
-         * method may throw {@link IllegalArgumentException} if there was no suitable candidate.
-         *
-         * @param type the type of items.
-         * @param candidates candidates up for selection, where one should be picked. There might
-         * also be no suitable candidate, in which case an exception should be thrown.
-         * @param <T> the type of items
-         * @return a suitable candidate among all available.
-         * @throws IllegalArgumentException if no suitable candidate was found.
-         */
-        <T> T select( Class<T> type, Iterable<? extends T> candidates ) throws IllegalArgumentException;
-
         SelectionStrategy FIRST = new SelectionStrategy()
         {
             @Override
-            public <T> T select( Class<T> type, Iterable<? extends T> candidates ) throws IllegalArgumentException
+            public <T> T select( Class<T> type, Iterable<? extends T> candidates )
             {
                 Iterator<? extends T> iterator = candidates.iterator();
                 if ( !iterator.hasNext() )
@@ -103,13 +90,13 @@ public interface DependencyResolver
             }
         };
 
-        /**
+		/**
          * Returns the one and only dependency, or throws.
          */
         SelectionStrategy ONLY = new SelectionStrategy()
         {
             @Override
-            public <T> T select( Class<T> type, Iterable<? extends T> candidates ) throws IllegalArgumentException
+            public <T> T select( Class<T> type, Iterable<? extends T> candidates )
             {
                 Iterator<? extends T> iterator = candidates.iterator();
                 if ( !iterator.hasNext() )
@@ -129,6 +116,19 @@ public interface DependencyResolver
                 }
             }
         };
+
+		/**
+         * Given a set of candidates, select an appropriate one. Even if there are candidates this
+         * method may throw {@link IllegalArgumentException} if there was no suitable candidate.
+         *
+         * @param type the type of items.
+         * @param candidates candidates up for selection, where one should be picked. There might
+         * also be no suitable candidate, in which case an exception should be thrown.
+         * @param <T> the type of items
+         * @return a suitable candidate among all available.
+         * @throws IllegalArgumentException if no suitable candidate was found.
+         */
+        <T> T select( Class<T> type, Iterable<? extends T> candidates );
     }
 
     /**
@@ -140,7 +140,7 @@ public interface DependencyResolver
     abstract class Adapter implements DependencyResolver
     {
         @Override
-        public <T> T resolveDependency( Class<T> type ) throws IllegalArgumentException
+        public <T> T resolveDependency( Class<T> type )
         {
             return resolveDependency( type, FIRST );
         }

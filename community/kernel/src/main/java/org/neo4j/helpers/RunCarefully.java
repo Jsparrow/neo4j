@@ -58,11 +58,11 @@ public class RunCarefully
             }
         }
 
-        if ( !errors.isEmpty() )
-        {
-            RuntimeException exception = new RuntimeException();
-            errors.forEach( exception::addSuppressed );
-            throw exception;
-        }
+        if (errors.isEmpty()) {
+			return;
+		}
+		RuntimeException exception = new RuntimeException();
+		errors.forEach( exception::addSuppressed );
+		throw exception;
     }
 }

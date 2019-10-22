@@ -43,19 +43,12 @@ public class UdcKernelExtensionFactory extends KernelExtensionFactory<UdcKernelE
 {
     static final String KEY = "kernel udc";
 
-    public interface Dependencies
-    {
-        Config config();
-        DataSourceManager dataSourceManager();
-        UsageData usageData();
-    }
-
     public UdcKernelExtensionFactory()
     {
         super( KEY );
     }
 
-    @Override
+	@Override
     public Lifecycle newInstance( KernelContext kernelContext, UdcKernelExtensionFactory.Dependencies dependencies )
     {
         Config config = dependencies.config();
@@ -64,5 +57,12 @@ public class UdcKernelExtensionFactory extends KernelExtensionFactory<UdcKernelE
                 dependencies.dataSourceManager(),
                 dependencies.usageData(),
                 new Timer( "Neo4j UDC Timer", true ) );
+    }
+
+	public interface Dependencies
+    {
+        Config config();
+        DataSourceManager dataSourceManager();
+        UsageData usageData();
     }
 }

@@ -165,7 +165,7 @@ class ValueMapperTest
 
             return builder.build();
         }
-        throw new AssertionError( "cannot convert: " + obj + " (a " + obj.getClass().getName() + ")" );
+        throw new AssertionError( new StringBuilder().append("cannot convert: ").append(obj).append(" (a ").append(obj.getClass().getName()).append(")").toString() );
     }
 
     private static class Mapper extends ValueMapper.JavaMapper

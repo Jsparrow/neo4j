@@ -39,12 +39,13 @@ import org.neo4j.values.virtual.MapValue;
 import org.neo4j.values.virtual.MapValueBuilder;
 
 import static org.neo4j.bolt.v1.messaging.response.IgnoredMessage.IGNORED_MESSAGE;
+import java.util.Collections;
 
 public class MessageProcessingHandler implements BoltResponseHandler
 {
     // Errors that are expected when the client disconnects mid-operation
     private static final Set<Status> CLIENT_MID_OP_DISCONNECT_ERRORS =
-            new HashSet<>( Arrays.asList( Status.Transaction.Terminated, Status.Transaction.LockClientStopped ) );
+            Collections.unmodifiableSet(new HashSet<>( Arrays.asList( Status.Transaction.Terminated, Status.Transaction.LockClientStopped ) ));
     private final MapValueBuilder metadata = new MapValueBuilder();
 
     protected final Log log;
@@ -148,9 +149,7 @@ public class MessageProcessingHandler implements BoltResponseHandler
             // stack trace to highlight clients are disconnecting while stuff is running:
             if ( CLIENT_MID_OP_DISCONNECT_ERRORS.contains( error.status() ) )
             {
-                log.warn( "Client %s disconnected while query was running. Session has been cleaned up. " +
-                        "This can be caused by temporary network problems, but if you see this often, " +
-                        "ensure your applications are properly waiting for operations to complete before exiting.", e.clientAddress() );
+                log.warn( new StringBuilder().append("Client %s disconnected while query was running. Session has been cleaned up. ").append("This can be caused by temporary network problems, but if you see this often, ").append("ensure your applications are properly waiting for operations to complete before exiting.").toString(), e.clientAddress() );
                 return;
             }
 

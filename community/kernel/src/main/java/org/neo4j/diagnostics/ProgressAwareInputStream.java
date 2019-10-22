@@ -88,11 +88,11 @@ public class ProgressAwareInputStream extends InputStream
         {
             percent = 0;
         }
-        if ( percent > lastReportedPercent )
-        {
-            lastReportedPercent = percent;
-            listener.onProgress( percent );
-        }
+        if (percent <= lastReportedPercent) {
+			return;
+		}
+		lastReportedPercent = percent;
+		listener.onProgress( percent );
     }
 
     @Override

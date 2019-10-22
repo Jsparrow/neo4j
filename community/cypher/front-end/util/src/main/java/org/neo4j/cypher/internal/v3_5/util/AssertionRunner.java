@@ -42,15 +42,15 @@ public class AssertionRunner
         return true;
     }
 
-    public interface Thunk
-    {
-        void apply();
-    }
-
     public static boolean isAssertionsEnabled()
     {
         boolean assertionsEnabled = false;
         assert assertionsEnabled = true;
         return assertionsEnabled;
+    }
+
+	public interface Thunk
+    {
+        void apply();
     }
 }

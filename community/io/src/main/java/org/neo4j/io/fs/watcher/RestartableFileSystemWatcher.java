@@ -87,10 +87,7 @@ public class RestartableFileSystemWatcher implements FileWatcher
     @Override
     public void startWatching() throws InterruptedException
     {
-        for ( File fileToWatch : filesToWatch )
-        {
-            watchFile( fileToWatch );
-        }
+        filesToWatch.forEach(this::watchFile);
         delegate.startWatching();
     }
 

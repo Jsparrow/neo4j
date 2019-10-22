@@ -36,6 +36,62 @@ public class ByteArrayBitsManipulator
     private static final int MAX_BITS = MAX_BYTES * Byte.SIZE;
     public static final int MAX_SLOT_BITS = 5 * Byte.SIZE;
     static final long MAX_SLOT_VALUE = (1L << MAX_SLOT_BITS) - 1;
+	private final Slot[] slots;
+
+	public ByteArrayBitsManipulator( int... slotsAndTheirBitCounts )
+    {
+        slots = intoSlots( slotsAndTheirBitCounts );
+    }
+
+	private Slot[] intoSlots( int[] slotsAndTheirSizes )
+    {
+        Slot[] slots = new Slot[slotsAndTheirSizes.length];
+        int bitCursor = 0;
+        for ( int i = 0; i < slotsAndTheirSizes.length; i++ )
+        {
+            int bits = slotsAndTheirSizes[i];
+            if ( bits > 1 && bitCursor % Byte.SIZE != 0 )
+            {
+                throw new IllegalArgumentException( "Larger slots, i.e. size > 1 needs to be placed at the beginning of a byte" );
+            }
+            if ( bits > MAX_SLOT_BITS )
+            {
+                throw new IllegalArgumentException( new StringBuilder().append("Too large slot ").append(bits).append(", biggest allowed ").append(MAX_SLOT_BITS).toString() );
+            }
+            slots[i] = new Slot( bits, bitCursor );
+            bitCursor += bits;
+        }
+        if ( bitCursor > MAX_BITS )
+        {
+            throw new IllegalArgumentException( "Max number of bits is " + MAX_BITS );
+        }
+        return slots;
+    }
+
+	public void set( ByteArray array, long index, int slotIndex, long value )
+    {
+        slot( slotIndex ).set( array, index, value );
+    }
+
+	public long get( ByteArray array, long index, int slotIndex )
+    {
+        return slot( slotIndex ).get( array, index );
+    }
+
+	private Slot slot( int slotIndex )
+    {
+        if ( slotIndex < 0 || slotIndex >= slots.length )
+        {
+            throw new IllegalArgumentException( new StringBuilder().append("Invalid slot ").append(slotIndex).append(", I've got ").append(this).toString() );
+        }
+        return slots[slotIndex];
+    }
+
+	@Override
+    public String toString()
+    {
+        return Arrays.toString( slots );
+    }
 
     private static class Slot
     {
@@ -75,7 +131,7 @@ public class ByteArrayBitsManipulator
         {
             if ( value < -1 || value > mask )
             {
-                throw new IllegalStateException( "Invalid value " + value + ", max is " + mask );
+                throw new IllegalStateException( new StringBuilder().append("Invalid value ").append(value).append(", max is ").append(mask).toString() );
             }
 
             if ( bitCount == 1 )
@@ -95,64 +151,7 @@ public class ByteArrayBitsManipulator
         @Override
         public String toString()
         {
-            return getClass().getSimpleName() + "[" + Bits.numbersToBitString( new long[] {mask << bitOffset} ) + "]";
+            return new StringBuilder().append(getClass().getSimpleName()).append("[").append(Bits.numbersToBitString( new long[] {mask << bitOffset} )).append("]").toString();
         }
-    }
-
-    private final Slot[] slots;
-
-    public ByteArrayBitsManipulator( int... slotsAndTheirBitCounts )
-    {
-        slots = intoSlots( slotsAndTheirBitCounts );
-    }
-
-    private Slot[] intoSlots( int[] slotsAndTheirSizes )
-    {
-        Slot[] slots = new Slot[slotsAndTheirSizes.length];
-        int bitCursor = 0;
-        for ( int i = 0; i < slotsAndTheirSizes.length; i++ )
-        {
-            int bits = slotsAndTheirSizes[i];
-            if ( bits > 1 && bitCursor % Byte.SIZE != 0 )
-            {
-                throw new IllegalArgumentException( "Larger slots, i.e. size > 1 needs to be placed at the beginning of a byte" );
-            }
-            if ( bits > MAX_SLOT_BITS )
-            {
-                throw new IllegalArgumentException( "Too large slot " + bits + ", biggest allowed " + MAX_SLOT_BITS );
-            }
-            slots[i] = new Slot( bits, bitCursor );
-            bitCursor += bits;
-        }
-        if ( bitCursor > MAX_BITS )
-        {
-            throw new IllegalArgumentException( "Max number of bits is " + MAX_BITS );
-        }
-        return slots;
-    }
-
-    public void set( ByteArray array, long index, int slotIndex, long value )
-    {
-        slot( slotIndex ).set( array, index, value );
-    }
-
-    public long get( ByteArray array, long index, int slotIndex )
-    {
-        return slot( slotIndex ).get( array, index );
-    }
-
-    private Slot slot( int slotIndex )
-    {
-        if ( slotIndex < 0 || slotIndex >= slots.length )
-        {
-            throw new IllegalArgumentException( "Invalid slot " + slotIndex + ", I've got " + this );
-        }
-        return slots[slotIndex];
-    }
-
-    @Override
-    public String toString()
-    {
-        return Arrays.toString( slots );
     }
 }
