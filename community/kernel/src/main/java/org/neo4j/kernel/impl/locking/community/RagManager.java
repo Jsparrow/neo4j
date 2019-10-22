@@ -108,19 +108,17 @@ public class RagManager
     {
         if ( waitingTxMap.remove( tx ) == null )
         {
-            throw new LockException( tx + " not waiting on " + resource );
+            throw new LockException( new StringBuilder().append(tx).append(" not waiting on ").append(resource).toString() );
         }
     }
 
     // after invoke the transaction must wait on the resource
     synchronized void checkWaitOn( Object resource, Object tx )
-            throws DeadlockDetectedException
     {
         List<Object> lockingTxList = resourceMap.get( resource );
         if ( lockingTxList == null )
         {
-            throw new LockException( "Illegal resource[" + resource
-                                     + "], not found in map" );
+            throw new LockException( new StringBuilder().append("Illegal resource[").append(resource).append("], not found in map").toString() );
         }
 
         if ( waitingTxMap.get( tx ) != null )
@@ -128,14 +126,11 @@ public class RagManager
             throw new LockException( tx + " already waiting for resource" );
         }
 
-        Iterator<Object> itr = lockingTxList.iterator();
         List<Object> checkedTransactions = new LinkedList<>();
         final Deque<Object> graphStack = new ArrayDeque<>();
         // has resource,transaction interleaved
         graphStack.push( resource );
-        while ( itr.hasNext() )
-        {
-            Object lockingTx = itr.next();
+        for (Object lockingTx : lockingTxList) {
             // the if statement bellow is valid because:
             // t1 -> r1 -> t1 (can happened with RW locks) is ok but,
             // t1 -> r1 -> t1&t2 where t2 -> r1 is a deadlock
@@ -170,7 +165,7 @@ public class RagManager
 
     private synchronized void checkWaitOnRecursive( Object lockingTx,
                                                     Object waitingTx, List<Object> checkedTransactions,
-                                                    Deque<Object> graphStack ) throws DeadlockDetectedException
+                                                    Deque<Object> graphStack )
     {
         if ( lockingTx.equals( waitingTx ) )
         {
@@ -193,39 +188,39 @@ public class RagManager
             }
             while ( !graphStack.isEmpty() );
             throw new DeadlockDetectedException(
-                    waitingTx + " can't wait on resource " + resource + " since => " + circle );
+                    new StringBuilder().append(waitingTx).append(" can't wait on resource ").append(resource).append(" since => ").append(circle).toString() );
         }
         checkedTransactions.add( lockingTx );
         Object resource = waitingTxMap.get( lockingTx );
-        if ( resource != null )
-        {
-            graphStack.push( resource );
-            // if the resource doesn't exist in resourceMap that means all the
-            // locks on the resource has been released
-            // it is possible when this tx was in RWLock.acquire and
-            // saw it had to wait for the lock the scheduler changes to some
-            // other tx that will release the locks on the resource and
-            // remove it from the map
-            // this is ok since current tx or any other tx will wake
-            // in the synchronized block and will be forced to do the deadlock
-            // check once more if lock cannot be acquired
-            List<Object> lockingTxList = resourceMap.get( resource );
-            if ( lockingTxList != null )
-            {
-                for ( Object aLockingTxList : lockingTxList )
-                {
-                    lockingTx = aLockingTxList;
-                    // so we don't
-                    if ( !checkedTransactions.contains( lockingTx ) )
-                    {
-                        graphStack.push( lockingTx );
-                        checkWaitOnRecursive( lockingTx, waitingTx,
-                                checkedTransactions, graphStack );
-                        graphStack.pop();
-                    }
-                }
-            }
-            graphStack.pop();
-        }
+        if (resource == null) {
+			return;
+		}
+		graphStack.push( resource );
+		// if the resource doesn't exist in resourceMap that means all the
+		// locks on the resource has been released
+		// it is possible when this tx was in RWLock.acquire and
+		// saw it had to wait for the lock the scheduler changes to some
+		// other tx that will release the locks on the resource and
+		// remove it from the map
+		// this is ok since current tx or any other tx will wake
+		// in the synchronized block and will be forced to do the deadlock
+		// check once more if lock cannot be acquired
+		List<Object> lockingTxList = resourceMap.get( resource );
+		if ( lockingTxList != null )
+		{
+		    for ( Object aLockingTxList : lockingTxList )
+		    {
+		        lockingTx = aLockingTxList;
+		        // so we don't
+		        if ( !checkedTransactions.contains( lockingTx ) )
+		        {
+		            graphStack.push( lockingTx );
+		            checkWaitOnRecursive( lockingTx, waitingTx,
+		                    checkedTransactions, graphStack );
+		            graphStack.pop();
+		        }
+		    }
+		}
+		graphStack.pop();
     }
 }

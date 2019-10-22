@@ -36,93 +36,93 @@ import org.neo4j.values.storable.Value;
 
 public class TrackingReadersIndexAccessor implements IndexAccessor
 {
-    private final IndexAccessor accessor;
     private static final AtomicLong openReaders = new AtomicLong();
-    private static final AtomicLong closedReaders = new AtomicLong();
+	private static final AtomicLong closedReaders = new AtomicLong();
+	private final IndexAccessor accessor;
 
-    public static long numberOfOpenReaders()
-    {
-        return openReaders.get();
-    }
-
-    public static long numberOfClosedReaders()
-    {
-        return closedReaders.get();
-    }
-
-    TrackingReadersIndexAccessor( IndexAccessor accessor )
+	TrackingReadersIndexAccessor( IndexAccessor accessor )
     {
         this.accessor = accessor;
     }
 
-    @Override
+	public static long numberOfOpenReaders()
+    {
+        return openReaders.get();
+    }
+
+	public static long numberOfClosedReaders()
+    {
+        return closedReaders.get();
+    }
+
+	@Override
     public void drop()
     {
         accessor.drop();
     }
 
-    @Override
+	@Override
     public IndexUpdater newUpdater( IndexUpdateMode mode )
     {
         return accessor.newUpdater( mode );
     }
 
-    @Override
+	@Override
     public void force( IOLimiter ioLimiter )
     {
         accessor.force( ioLimiter );
     }
 
-    @Override
+	@Override
     public void refresh()
     {
         accessor.refresh();
     }
 
-    @Override
+	@Override
     public void close()
     {
         accessor.close();
     }
 
-    @Override
+	@Override
     public IndexReader newReader()
     {
         openReaders.incrementAndGet();
         return new TrackingIndexReader( accessor.newReader(), closedReaders );
     }
 
-    @Override
+	@Override
     public BoundedIterable<Long> newAllEntriesReader()
     {
         return accessor.newAllEntriesReader();
     }
 
-    @Override
+	@Override
     public ResourceIterator<File> snapshotFiles()
     {
         return accessor.snapshotFiles();
     }
 
-    @Override
+	@Override
     public void verifyDeferredConstraints( NodePropertyAccessor nodePropertyAccessor ) throws IndexEntryConflictException
     {
         accessor.verifyDeferredConstraints( nodePropertyAccessor );
     }
 
-    @Override
+	@Override
     public boolean isDirty()
     {
         return accessor.isDirty();
     }
 
-    @Override
+	@Override
     public void validateBeforeCommit( Value[] tuple )
     {
         accessor.validateBeforeCommit( tuple );
     }
 
-    @Override
+	@Override
     public boolean consistencyCheck( ReporterFactory reporterFactory )
     {
         return accessor.consistencyCheck( reporterFactory );

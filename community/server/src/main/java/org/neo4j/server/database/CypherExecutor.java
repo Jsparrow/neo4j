@@ -45,26 +45,25 @@ import static org.neo4j.server.web.HttpHeaderUtils.getTransactionTimeout;
 
 public class CypherExecutor extends LifecycleAdapter
 {
-    private final Database database;
-    private final Log log;
-    private ExecutionEngine executionEngine;
-    private TransactionalContextFactory contextFactory;
-
     private static final PropertyContainerLocker locker = new PropertyContainerLocker();
-    private GraphDatabaseQueryService service;
+	private final Database database;
+	private final Log log;
+	private ExecutionEngine executionEngine;
+	private TransactionalContextFactory contextFactory;
+	private GraphDatabaseQueryService service;
 
-    public CypherExecutor( Database database, LogProvider logProvider )
+	public CypherExecutor( Database database, LogProvider logProvider )
     {
         this.database = database;
         log = logProvider.getLog( getClass() );
     }
 
-    public ExecutionEngine getExecutionEngine()
+	public ExecutionEngine getExecutionEngine()
     {
         return executionEngine;
     }
 
-    @Override
+	@Override
     public void start()
     {
         DependencyResolver resolver = database.getGraph().getDependencyResolver();
@@ -73,35 +72,35 @@ public class CypherExecutor extends LifecycleAdapter
         this.contextFactory = Neo4jTransactionalContextFactory.create( this.service, locker );
     }
 
-    @Override
+	@Override
     public void stop()
     {
         this.executionEngine = null;
         this.contextFactory = null;
     }
 
-    public TransactionalContext createTransactionContext( String query, MapValue parameters,
+	public TransactionalContext createTransactionContext( String query, MapValue parameters,
             HttpServletRequest request )
     {
         InternalTransaction tx = getInternalTransaction( request );
         return contextFactory.newContext( HttpConnectionInfoFactory.create( request ), tx, query, parameters );
     }
 
-    private InternalTransaction getInternalTransaction( HttpServletRequest request )
+	private InternalTransaction getInternalTransaction( HttpServletRequest request )
     {
         long customTimeout = getTransactionTimeout( request, log );
         return customTimeout > GraphDatabaseSettings.UNSPECIFIED_TIMEOUT ?
            beginCustomTransaction( customTimeout ) : beginDefaultTransaction();
     }
 
-    private InternalTransaction beginCustomTransaction( long customTimeout )
+	private InternalTransaction beginCustomTransaction( long customTimeout )
     {
         return service.beginTransaction(
             KernelTransaction.Type.implicit, AUTH_DISABLED, customTimeout, TimeUnit.MILLISECONDS
         );
     }
 
-    private InternalTransaction beginDefaultTransaction()
+	private InternalTransaction beginDefaultTransaction()
     {
         return service.beginTransaction( KernelTransaction.Type.implicit, AUTH_DISABLED );
     }

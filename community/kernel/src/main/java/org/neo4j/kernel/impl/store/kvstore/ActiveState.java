@@ -28,51 +28,46 @@ import org.neo4j.io.pagecache.tracing.cursor.context.VersionContextSupplier;
 
 public abstract class ActiveState<Key> extends ProgressiveState<Key>
 {
-    public interface Factory
-    {
-        <Key> ActiveState<Key> open( ReadableState<Key> store, File file, VersionContextSupplier versionContextSupplier );
-    }
-
     protected final ReadableState<Key> store;
-    protected final VersionContextSupplier versionContextSupplier;
+	protected final VersionContextSupplier versionContextSupplier;
 
-    public ActiveState( ReadableState<Key> store, VersionContextSupplier versionContextSupplier )
+	public ActiveState( ReadableState<Key> store, VersionContextSupplier versionContextSupplier )
     {
         this.store = store;
         this.versionContextSupplier = versionContextSupplier;
     }
 
-    @Override
+	@Override
     protected final KeyFormat<Key> keyFormat()
     {
         return store.keyFormat();
     }
 
-    @Override
+	@Override
     final String stateName()
     {
         return "active";
     }
 
-    @Override
+	@Override
     protected abstract long storedVersion();
 
-    @Override
+	@Override
     final RotationState.Rotation<Key> prepareRotation( long version )
     {
         version = Math.max( version, version() );
         return new RotationState.Rotation<>( this, prototype( version ), version );
     }
 
-    @Override
+	@Override
     final Optional<EntryUpdater<Key>> optionalUpdater( long version, Lock lock )
     {
         return Optional.of( updater( version, lock ) );
     }
 
-    protected abstract EntryUpdater<Key> updater( long version, Lock lock );
+	protected abstract EntryUpdater<Key> updater( long version, Lock lock );
 
-    @Override
+	@Override
     final EntryUpdater<Key> resetter( Lock lock, Runnable closeAction )
     {
         if ( hasChanges() )
@@ -82,33 +77,38 @@ public abstract class ActiveState<Key> extends ProgressiveState<Key>
         return resettingUpdater( lock, closeAction );
     }
 
-    @Override
+	@Override
     final ProgressiveState<Key> stop() throws IOException
     {
         close();
         return new DeadState.Stopped<>( keyFormat(), factory(), versionContextSupplier );
     }
 
-    @Override
+	@Override
     protected final Headers headers()
     {
         return store.headers();
     }
 
-    @Override
+	@Override
     protected final int storedEntryCount()
     {
         return store.storedEntryCount();
     }
 
-    protected abstract EntryUpdater<Key> resettingUpdater( Lock lock, Runnable closeAction );
+	protected abstract EntryUpdater<Key> resettingUpdater( Lock lock, Runnable closeAction );
 
-    @Override
+	@Override
     protected abstract boolean hasChanges();
 
-    protected abstract PrototypeState<Key> prototype( long version );
+	protected abstract PrototypeState<Key> prototype( long version );
 
-    protected abstract Factory factory();
+	protected abstract Factory factory();
 
-    protected abstract long applied();
+	protected abstract long applied();
+
+	public interface Factory
+    {
+        <Key> ActiveState<Key> open( ReadableState<Key> store, File file, VersionContextSupplier versionContextSupplier );
+    }
 }

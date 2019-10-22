@@ -77,56 +77,54 @@ public class TransportWriteThrottle implements TransportThrottle
     public void acquire( Channel channel ) throws TransportThrottleException
     {
         // if this channel's max lock duration is already exceeded, we'll allow the protocol to
-        // (at least) try to communicate the error to the client before aborting the connection
-        if ( !isDurationAlreadyExceeded( channel ) )
-        {
-            ThrottleLock lock = channel.attr( LOCK_KEY ).get();
+		// (at least) try to communicate the error to the client before aborting the connection
+		if (isDurationAlreadyExceeded( channel )) {
+			return;
+		}
+		ThrottleLock lock = channel.attr( LOCK_KEY ).get();
+		long startTimeMillis = 0;
+		while ( channel.isOpen() && !channel.isWritable() )
+		{
+		    if ( maxLockDuration > 0 )
+		    {
+		        long currentTimeMillis = clock.millis();
+		        if ( startTimeMillis == 0 )
+		        {
+		            startTimeMillis = currentTimeMillis;
+		        }
+		        else
+		        {
+		            if ( currentTimeMillis - startTimeMillis > maxLockDuration )
+		            {
+		                setDurationExceeded( channel );
 
-            long startTimeMillis = 0;
-            while ( channel.isOpen() && !channel.isWritable() )
-            {
-                if ( maxLockDuration > 0 )
-                {
-                    long currentTimeMillis = clock.millis();
-                    if ( startTimeMillis == 0 )
-                    {
-                        startTimeMillis = currentTimeMillis;
-                    }
-                    else
-                    {
-                        if ( currentTimeMillis - startTimeMillis > maxLockDuration )
-                        {
-                            setDurationExceeded( channel );
+		                throw new TransportThrottleException( String.format(
+		                        "Bolt connection [%s] will be closed because the client did not consume outgoing buffers for %s which is not expected.",
+		                        channel.remoteAddress(), DurationFormatUtils.formatDurationHMS( maxLockDuration ) ) );
+		            }
+		        }
+		    }
 
-                            throw new TransportThrottleException( String.format(
-                                    "Bolt connection [%s] will be closed because the client did not consume outgoing buffers for %s which is not expected.",
-                                    channel.remoteAddress(), DurationFormatUtils.formatDurationHMS( maxLockDuration ) ) );
-                        }
-                    }
-                }
-
-                try
-                {
-                    lock.lock( channel, 1000 );
-                }
-                catch ( InterruptedException ex )
-                {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException( ex );
-                }
-            }
-        }
+		    try
+		    {
+		        lock.lock( channel, 1000 );
+		    }
+		    catch ( InterruptedException ex )
+		    {
+		        Thread.currentThread().interrupt();
+		        throw new RuntimeException( ex );
+		    }
+		}
     }
 
     @Override
     public void release( Channel channel )
     {
-        if ( channel.isWritable() )
-        {
-            ThrottleLock lock = channel.attr( LOCK_KEY ).get();
-
-            lock.unlock( channel );
-        }
+        if (!channel.isWritable()) {
+			return;
+		}
+		ThrottleLock lock = channel.attr( LOCK_KEY ).get();
+		lock.unlock( channel );
     }
 
     @Override

@@ -102,7 +102,7 @@ public class SubGraphExporter
                 {
                     String key = quote( id );
                     String label = quote( single( index.getLabels() ).name() );
-                    result.add( "create index on :" + label + "(" + key + ")" );
+                    result.add( new StringBuilder().append("create index on :").append(label).append("(").append(key).append(")").toString() );
                 }
                 // We don't know how to deal with multi-token indexes here, so we just ignore them.
             }
@@ -147,7 +147,7 @@ public class SubGraphExporter
 
             String key = quote( id );
             String label = quote( constraint.getLabel().name() );
-            result.add( "create constraint on (n:" + label + ") assert n." + key + " is unique" );
+            result.add( new StringBuilder().append("create constraint on (n:").append(label).append(") assert n.").append(key).append(" is unique").toString() );
         }
         Collections.sort( result );
         return result;
@@ -155,7 +155,7 @@ public class SubGraphExporter
 
     private static String quote( String id )
     {
-        return "`" + id + "`";
+        return new StringBuilder().append("`").append(id).append("`").toString();
     }
 
     private String labelString( Node node )
@@ -182,20 +182,18 @@ public class SubGraphExporter
 
     private void appendIndexes( PrintWriter out )
     {
-        for ( String line : exportIndexes() )
-        {
+        exportIndexes().forEach(line -> {
             out.print( line );
             out.println( ";" );
-        }
+        });
     }
 
     private void appendConstraints( PrintWriter out )
     {
-        for ( String line : exportConstraints() )
-        {
+        exportConstraints().forEach(line -> {
             out.print( line );
             out.println( ";" );
-        }
+        });
     }
 
     private long appendRelationships( PrintWriter out )
@@ -264,17 +262,15 @@ public class SubGraphExporter
         StringBuilder result = new StringBuilder();
         List<String> keys = Iterables.asList( pc.getPropertyKeys() );
         Collections.sort( keys );
-        for ( String prop : keys )
-        {
-            if ( result.length() > 0 )
+        keys.stream().map(prop -> {
+			if ( result.length() > 0 )
             {
                 result.append( ", " );
             }
-            result.append( quote( prop ) ).append( ':' );
-            Object value = pc.getProperty( prop );
-            result.append( toString( value ) );
-        }
-        return "{" + result + "}";
+			result.append( quote( prop ) ).append( ':' );
+			return pc.getProperty( prop );
+		}).forEach(value -> result.append( toString( value ) ));
+        return new StringBuilder().append("{").append(result).append("}").toString();
     }
 
     private String toString( Iterator<?> iterator )
@@ -289,7 +285,7 @@ public class SubGraphExporter
             Object value = iterator.next();
             result.append( toString( value ) );
         }
-        return "[" + result + "]";
+        return new StringBuilder().append("[").append(result).append("]").toString();
     }
 
     private String arrayToString( Object value )
@@ -304,12 +300,12 @@ public class SubGraphExporter
             }
             result.append( toString( Array.get( value, i ) ) );
         }
-        return "[" + result + "]";
+        return new StringBuilder().append("[").append(result).append("]").toString();
     }
 
     private static String escapeString( String value )
     {
-        return "\"" + value.replaceAll( "\\\\", "\\\\\\\\" ).replaceAll( "\"", "\\\\\"" ) + "\"";
+        return new StringBuilder().append("\"").append(value.replaceAll( "\\\\", "\\\\\\\\" ).replaceAll( "\"", "\\\\\"" )).append("\"").toString();
     }
 
     private String toString( Object value )

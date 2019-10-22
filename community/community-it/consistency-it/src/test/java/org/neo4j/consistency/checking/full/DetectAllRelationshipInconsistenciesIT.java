@@ -177,26 +177,6 @@ public class DetectAllRelationshipInconsistenciesIT
         return StringUtils.EMPTY;
     }
 
-    private static class Sabotage
-    {
-        private final RelationshipRecord before;
-        private final RelationshipRecord after;
-        private final RelationshipRecord other;
-
-        Sabotage( RelationshipRecord before, RelationshipRecord after, RelationshipRecord other )
-        {
-            this.before = before;
-            this.after = after;
-            this.other = other;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "Sabotaged " + before + " --> " + after + ", other relationship " + other;
-        }
-    }
-
     private Sabotage sabotage( RelationshipStore store, long id )
     {
         RelationshipRecord before = store.getRecord( id, store.newRecord(), RecordLoad.NORMAL );
@@ -217,5 +197,26 @@ public class DetectAllRelationshipInconsistenciesIT
 
         RelationshipRecord other = store.getRecord( otherReference, store.newRecord(), RecordLoad.FORCE );
         return new Sabotage( before, after, other );
+    }
+
+	private static class Sabotage
+    {
+        private final RelationshipRecord before;
+        private final RelationshipRecord after;
+        private final RelationshipRecord other;
+
+        Sabotage( RelationshipRecord before, RelationshipRecord after, RelationshipRecord other )
+        {
+            this.before = before;
+            this.after = after;
+            this.other = other;
+        }
+
+        @Override
+        public String toString()
+        {
+            return new StringBuilder().append("Sabotaged ").append(before).append(" --> ").append(after).append(", other relationship ").append(other)
+					.toString();
+        }
     }
 }

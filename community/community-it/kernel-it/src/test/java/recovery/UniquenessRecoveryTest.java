@@ -73,21 +73,9 @@ public class UniquenessRecoveryTest
             15/*SIGTERM - should run exit hooks*/,
             // none of these permit exit hooks to run:
             24, 26, 27, 30, 31};
+	private static final Field PID;
 
-    private static String param( String name )
-    {
-        return UniquenessRecoveryTest.class.getName() + "." + name;
-    }
-
-    @Rule
-    public final SuppressOutput muted = suppress( SuppressOutput.System.out );
-    @Rule
-    public final TestDirectory dir = TestDirectory.testDirectory();
-    private final Configuration config;
-
-    private static final Field PID;
-
-    static
+	static
     {
         Field pid;
         try
@@ -102,7 +90,23 @@ public class UniquenessRecoveryTest
         PID = pid;
     }
 
-    /** This test uses sub-processes, the code in here is the orchestration of those processes. */
+	@Rule
+    public final SuppressOutput muted = suppress( SuppressOutput.System.out );
+	@Rule
+    public final TestDirectory dir = TestDirectory.testDirectory();
+	private final Configuration config;
+
+	public UniquenessRecoveryTest( Configuration config )
+    {
+        this.config = config;
+    }
+
+	private static String param( String name )
+    {
+        return new StringBuilder().append(UniquenessRecoveryTest.class.getName()).append(".").append(name).toString();
+    }
+
+	/** This test uses sub-processes, the code in here is the orchestration of those processes. */
     @Test
     public void shouldUpholdConstraintEvenAfterRestart() throws Exception
     {
@@ -113,7 +117,7 @@ public class UniquenessRecoveryTest
         System.out.println( "in path: " + path );
         ProcessBuilder prototype = new ProcessBuilder( "java", "-ea", "-Xmx1G", "-Djava.awt.headless=true",
                 "-Dforce_create_constraint=" + config.force_create_constraint,
-                "-D" + param( "use_cypher" ) + "=" + USE_CYPHER,
+                new StringBuilder().append("-D").append(param( "use_cypher" )).append("=").append(USE_CYPHER).toString(),
                 "-cp", System.getProperty( "java.class.path" ),
                 getClass().getName(), path.getPath() );
         prototype.environment().put( "JAVA_HOME", System.getProperty( "java.home" ) );
@@ -157,7 +161,7 @@ public class UniquenessRecoveryTest
         }
     }
 
-    /** This is the code that the test actually executes to attempt to violate the constraint. */
+	/** This is the code that the test actually executes to attempt to violate the constraint. */
     public static void main( String... args ) throws Exception
     {
         System.out.println( "hello world" );
@@ -214,9 +218,7 @@ public class UniquenessRecoveryTest
         await();
     }
 
-    // ASSERTIONS
-
-    private static void shouldHaveUniquenessConstraintForNamePropertyOnPersonLabel( GraphDatabaseService db )
+	private static void shouldHaveUniquenessConstraintForNamePropertyOnPersonLabel( GraphDatabaseService db )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -229,7 +231,7 @@ public class UniquenessRecoveryTest
         }
     }
 
-    private static void nodesWithPersonLabelHaveUniqueName( GraphDatabaseService db )
+	private static void nodesWithPersonLabelHaveUniqueName( GraphDatabaseService db )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -250,9 +252,7 @@ public class UniquenessRecoveryTest
         }
     }
 
-    // UTILITIES used for execution
-
-    private static void createConstraint( GraphDatabaseService db )
+	private static void createConstraint( GraphDatabaseService db )
     {
         if ( USE_CYPHER )
         {
@@ -269,7 +269,7 @@ public class UniquenessRecoveryTest
         }
     }
 
-    private static void addNode( GraphDatabaseService db )
+	private static void addNode( GraphDatabaseService db )
     {
         if ( USE_CYPHER )
         {
@@ -287,12 +287,12 @@ public class UniquenessRecoveryTest
         }
     }
 
-    private static GraphDatabaseService graphdb( File path )
+	private static GraphDatabaseService graphdb( File path )
     {
         return new TestGraphDatabaseFactory().newEmbeddedDatabaseBuilder( path ).newGraphDatabase();
     }
 
-    private static void flushPageCache( GraphDatabaseService db )
+	private static void flushPageCache( GraphDatabaseService db )
     {
         try
         {
@@ -305,14 +305,12 @@ public class UniquenessRecoveryTest
         }
     }
 
-    static void await() throws IOException
+	static void await() throws IOException
     {
         System.in.read();
     }
 
-    // PARAMETERIZATION
-
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static List<Object[]> configurations()
     {
         ArrayList<Object[]> configurations = new ArrayList<>();
@@ -332,6 +330,54 @@ public class UniquenessRecoveryTest
         }
         return configurations;
     }
+
+	private static String pidOf( Process process ) throws Exception
+    {
+        return PID.get( process ).toString();
+    }
+
+	private static void kill( int signal, Process process ) throws Exception
+    {
+        int exitCode = new ProcessBuilder( "kill", "-" + signal, pidOf( process ) ).start().waitFor();
+        if ( exitCode != 0 )
+        {
+            throw new IllegalStateException( new StringBuilder().append("<kill -").append(signal).append("> failed, exit code: ").append(exitCode).toString() );
+        }
+    }
+
+	private Integer awaitMessage( Process process, String message ) throws IOException, InterruptedException
+    {
+        BufferedReader out = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
+        for ( String line; (line = out.readLine()) != null; )
+        {
+            System.out.println( line );
+            if ( message != null && line.contains( message ) )
+            {
+                return null;
+            }
+        }
+        int exitCode = process.waitFor();
+        BufferedReader err = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
+        for ( String line; (line = out.readLine()) != null; )
+        {
+            System.out.println( line );
+        }
+        err.lines().forEach(System.err::println);
+        System.out.println( "process exited with exit code: " + exitCode );
+        return exitCode;
+    }
+
+    
+
+    // ASSERTIONS
+
+    
+
+    // UTILITIES used for execution
+
+    
+
+    // PARAMETERIZATION
 
     public static class Configuration
     {
@@ -358,57 +404,11 @@ public class UniquenessRecoveryTest
         @Override
         public String toString()
         {
-            return "Configuration{" +
-                   "use_cypher=" + USE_CYPHER +
-                   ", force_create_constraint=" + force_create_constraint +
-                   ", kill_signal=" + kill_signal +
-                   '}';
+            return new StringBuilder().append("Configuration{").append("use_cypher=").append(USE_CYPHER).append(", force_create_constraint=").append(force_create_constraint).append(", kill_signal=")
+					.append(kill_signal).append('}').toString();
         }
-    }
-
-    public UniquenessRecoveryTest( Configuration config )
-    {
-        this.config = config;
     }
 
     // UTILITIES for process management
 
-    private static String pidOf( Process process ) throws Exception
-    {
-        return PID.get( process ).toString();
-    }
-
-    private static void kill( int signal, Process process ) throws Exception
-    {
-        int exitCode = new ProcessBuilder( "kill", "-" + signal, pidOf( process ) ).start().waitFor();
-        if ( exitCode != 0 )
-        {
-            throw new IllegalStateException( "<kill -" + signal + "> failed, exit code: " + exitCode );
-        }
-    }
-
-    private Integer awaitMessage( Process process, String message ) throws IOException, InterruptedException
-    {
-        BufferedReader out = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
-        for ( String line; (line = out.readLine()) != null; )
-        {
-            System.out.println( line );
-            if ( message != null && line.contains( message ) )
-            {
-                return null;
-            }
-        }
-        int exitCode = process.waitFor();
-        BufferedReader err = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
-        for ( String line; (line = out.readLine()) != null; )
-        {
-            System.out.println( line );
-        }
-        for ( String line; (line = err.readLine()) != null; )
-        {
-            System.err.println( line );
-        }
-        System.out.println( "process exited with exit code: " + exitCode );
-        return exitCode;
-    }
 }

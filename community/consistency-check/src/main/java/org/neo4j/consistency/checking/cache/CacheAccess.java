@@ -41,7 +41,136 @@ import org.neo4j.kernel.impl.store.record.PropertyRecord;
  */
 public interface CacheAccess
 {
-    /**
+    Client EMPTY_CLIENT = new Client()
+    {
+        @Override
+        public void putPropertiesToCache( Collection<PropertyRecord> properties )
+        {
+        }
+
+        @Override
+        public void putToCache( long id, long... cacheFields )
+        {
+        }
+
+        @Override
+        public void putToCacheSingle( long id, int slot, long value )
+        {
+        }
+
+        @Override
+        public void clearCache( long id )
+        {
+        }
+
+        @Override
+        public void incAndGetCount( Type type )
+        {
+        }
+
+        @Override
+        public PropertyRecord getPropertyFromCache( long id )
+        {
+            return null;
+        }
+
+        @Override
+        public Iterable<PropertyRecord> getPropertiesFromCache()
+        {
+            return null;
+        }
+
+        @Override
+        public long getFromCache( long id, int slot )
+        {
+            return 0;
+        }
+
+        @Override
+        public boolean getBooleanFromCache( long id, int slot )
+        {
+            return false;
+        }
+
+        @Override
+        public boolean withinBounds( long id )
+        {
+            return false;
+        }
+    };
+
+	CacheAccess EMPTY = new CacheAccess()
+    {
+        @Override
+        public Client client()
+        {
+            return EMPTY_CLIENT;
+        }
+
+        @Override
+        public void setForward( boolean forward )
+        {
+        }
+
+        @Override
+        public void setCacheSlotSizes( int... slotSizes )
+        {
+        }
+
+        @Override
+        public boolean isForward()
+        {
+            return false;
+        }
+
+        @Override
+        public void clearCache()
+        {
+        }
+
+        @Override
+        public void prepareForProcessingOfSingleStore( long recordsPerCPU )
+        {
+        }
+    };
+
+	/**
+     * @return {@link Client} for the current {@link Thread}.
+     */
+    Client client();
+
+	/**
+     * A flag for record checkers using this cache, where cached values are treated differently if
+     * we're scanning through a store forwards or backwards.
+     *
+     * @return {@code true} if the scanning is currently set to go forward.
+     */
+    boolean isForward();
+
+	/**
+     * Tells this {@link CacheAccess} whether or not the current stage, i.e is scanning forwards or backwards
+     * through a store or not. The cached values are treated differently depending on which. This is due to
+     * the double-linked nature of some stores, specifically the relationship store.
+     *
+     * @param forward {@code true} if the current scanning is forwards, otherwise it's backwards.
+     */
+    void setForward( boolean forward );
+
+	/**
+     * Clears all cached values.
+     */
+    void clearCache();
+
+	/**
+     * Sets the slot sizes of the cached values.
+     *
+     * @param slotSize defines how many and how big the slots are for cached values that are put after this call.
+     */
+    void setCacheSlotSizes( int... slotSize );
+
+	void prepareForProcessingOfSingleStore( long recordsPerCPU );
+
+	/**
      * Client per thread for accessing cache and counts for statistics
      */
     interface Client
@@ -129,133 +258,4 @@ public interface CacheAccess
          */
         boolean withinBounds( long id );
     }
-
-    /**
-     * @return {@link Client} for the current {@link Thread}.
-     */
-    Client client();
-
-    /**
-     * A flag for record checkers using this cache, where cached values are treated differently if
-     * we're scanning through a store forwards or backwards.
-     *
-     * @return {@code true} if the scanning is currently set to go forward.
-     */
-    boolean isForward();
-
-    /**
-     * Tells this {@link CacheAccess} whether or not the current stage, i.e is scanning forwards or backwards
-     * through a store or not. The cached values are treated differently depending on which. This is due to
-     * the double-linked nature of some stores, specifically the relationship store.
-     *
-     * @param forward {@code true} if the current scanning is forwards, otherwise it's backwards.
-     */
-    void setForward( boolean forward );
-
-    /**
-     * Clears all cached values.
-     */
-    void clearCache();
-
-    /**
-     * Sets the slot sizes of the cached values.
-     *
-     * @param slotSize defines how many and how big the slots are for cached values that are put after this call.
-     */
-    void setCacheSlotSizes( int... slotSize );
-
-    void prepareForProcessingOfSingleStore( long recordsPerCPU );
-
-    Client EMPTY_CLIENT = new Client()
-    {
-        @Override
-        public void putPropertiesToCache( Collection<PropertyRecord> properties )
-        {
-        }
-
-        @Override
-        public void putToCache( long id, long... cacheFields )
-        {
-        }
-
-        @Override
-        public void putToCacheSingle( long id, int slot, long value )
-        {
-        }
-
-        @Override
-        public void clearCache( long id )
-        {
-        }
-
-        @Override
-        public void incAndGetCount( Type type )
-        {
-        }
-
-        @Override
-        public PropertyRecord getPropertyFromCache( long id )
-        {
-            return null;
-        }
-
-        @Override
-        public Iterable<PropertyRecord> getPropertiesFromCache()
-        {
-            return null;
-        }
-
-        @Override
-        public long getFromCache( long id, int slot )
-        {
-            return 0;
-        }
-
-        @Override
-        public boolean getBooleanFromCache( long id, int slot )
-        {
-            return false;
-        }
-
-        @Override
-        public boolean withinBounds( long id )
-        {
-            return false;
-        }
-    };
-
-    CacheAccess EMPTY = new CacheAccess()
-    {
-        @Override
-        public Client client()
-        {
-            return EMPTY_CLIENT;
-        }
-
-        @Override
-        public void setForward( boolean forward )
-        {
-        }
-
-        @Override
-        public void setCacheSlotSizes( int... slotSizes )
-        {
-        }
-
-        @Override
-        public boolean isForward()
-        {
-            return false;
-        }
-
-        @Override
-        public void clearCache()
-        {
-        }
-
-        @Override
-        public void prepareForProcessingOfSingleStore( long recordsPerCPU )
-        {
-        }
-    };
 }

@@ -29,31 +29,6 @@ package org.neo4j.kernel.impl.util;
  */
 public interface IdOrderingQueue
 {
-    /**
-     * Adds this id at the tail of the queue. The argument must be larger than all previous arguments
-     * passed to this method.
-     * @param value The id to add
-     */
-    void offer( long value );
-
-    /**
-     * Waits for the argument to become the head of the queue. This is a blocking operation and as such it may
-     * throw InterruptedException.
-     * @param value The id to wait for to become the head of the queue
-     * @throws InterruptedException if interrupted while waiting.
-     */
-    void waitFor( long value ) throws InterruptedException;
-
-    /**
-     * Remove the current minimum value, while ensuring that it the expected value.
-     * @param expectedValue The value the minimum value is supposed to be - if the check fails,
-     *                      an IllegalStateException will be thrown and the notification of waiting threads will not
-     *                      happen.
-     */
-    void removeChecked( long expectedValue );
-
-    boolean isEmpty();
-
     IdOrderingQueue BYPASS = new IdOrderingQueue()
     {
         @Override
@@ -77,4 +52,29 @@ public interface IdOrderingQueue
             return true;
         }
     };
+
+	/**
+     * Adds this id at the tail of the queue. The argument must be larger than all previous arguments
+     * passed to this method.
+     * @param value The id to add
+     */
+    void offer( long value );
+
+	/**
+     * Waits for the argument to become the head of the queue. This is a blocking operation and as such it may
+     * throw InterruptedException.
+     * @param value The id to wait for to become the head of the queue
+     * @throws InterruptedException if interrupted while waiting.
+     */
+    void waitFor( long value ) throws InterruptedException;
+
+	/**
+     * Remove the current minimum value, while ensuring that it the expected value.
+     * @param expectedValue The value the minimum value is supposed to be - if the check fails,
+     *                      an IllegalStateException will be thrown and the notification of waiting threads will not
+     *                      happen.
+     */
+    void removeChecked( long expectedValue );
+
+	boolean isEmpty();
 }

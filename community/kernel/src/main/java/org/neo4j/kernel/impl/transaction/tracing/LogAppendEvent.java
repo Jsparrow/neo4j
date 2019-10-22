@@ -25,7 +25,30 @@ package org.neo4j.kernel.impl.transaction.tracing;
  */
 public interface LogAppendEvent extends LogForceEvents, AutoCloseable
 {
-    class Empty implements LogAppendEvent
+    LogAppendEvent NULL = new Empty();
+
+	/**
+     * Mark the end of the process of appending a transaction to the transaction log.
+     */
+    @Override
+    void close();
+
+	/**
+     * Note whether or not the log was rotated by the appending of this transaction to the log.
+     */
+    void setLogRotated( boolean logRotated );
+
+	/**
+     * Begin a log rotation as part of this appending to the transaction log.
+     */
+    LogRotateEvent beginLogRotate();
+
+	/**
+     * Begin serializing and writing out the commands for this transaction.
+     */
+    SerializeTransactionEvent beginSerializeTransaction();
+
+	class Empty implements LogAppendEvent
     {
         @Override
         public void close()
@@ -62,27 +85,4 @@ public interface LogAppendEvent extends LogForceEvents, AutoCloseable
             return LogForceEvent.NULL;
         }
     }
-
-    LogAppendEvent NULL = new Empty();
-
-    /**
-     * Mark the end of the process of appending a transaction to the transaction log.
-     */
-    @Override
-    void close();
-
-    /**
-     * Note whether or not the log was rotated by the appending of this transaction to the log.
-     */
-    void setLogRotated( boolean logRotated );
-
-    /**
-     * Begin a log rotation as part of this appending to the transaction log.
-     */
-    LogRotateEvent beginLogRotate();
-
-    /**
-     * Begin serializing and writing out the commands for this transaction.
-     */
-    SerializeTransactionEvent beginSerializeTransaction();
 }

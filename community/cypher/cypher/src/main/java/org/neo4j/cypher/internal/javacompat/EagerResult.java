@@ -128,11 +128,10 @@ class EagerResult implements Result, QueryResultProvider
         {
             builder.append( lineSeparator() );
             int numberOfColumns = columns.size();
-            for ( Map<String,Object> row : queryResult )
-            {
+            queryResult.forEach(row -> {
                 writeRow( columns, builder, numberOfColumns, row );
                 builder.append( lineSeparator() );
-            }
+            });
         }
         return builder.toString();
     }

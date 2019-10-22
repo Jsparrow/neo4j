@@ -39,7 +39,7 @@ abstract class OffHeapRegularNumberArray<N extends NumberArray<N>> extends OffHe
         index = rebase( index );
         if ( index < 0 || index >= length )
         {
-            throw new ArrayIndexOutOfBoundsException( "Requested index " + index + ", but length is " + length );
+            throw new ArrayIndexOutOfBoundsException( new StringBuilder().append("Requested index ").append(index).append(", but length is ").append(length).toString() );
         }
         return address + (index << shift);
     }

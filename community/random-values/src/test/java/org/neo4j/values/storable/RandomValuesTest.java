@@ -48,39 +48,27 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.neo4j.values.storable.Values.ZERO_INT;
 import static org.neo4j.values.storable.Values.longValue;
+import java.util.Collections;
 
 @RunWith( Parameterized.class )
 public class RandomValuesTest
 {
     private static final int ITERATIONS = 500;
 
-    @Parameterized.Parameter()
-    public RandomValues randomValues;
+	private static final byte BOUND = 100;
 
-    @Parameterized.Parameter( 1 )
-    public String name;
+	private static final LongValue UPPER = longValue( BOUND );
 
-    @Parameterized.Parameters( name = "{1}" )
-    public static Iterable<Object[]> generators()
-    {
-        return Arrays.asList(
-                new Object[]{RandomValues.create( ThreadLocalRandom.current() ), Random.class.getName()},
-                new Object[]{RandomValues.create( new SplittableRandom() ), SplittableRandom.class.getName()}
-        );
-    }
-
-    private static final byte BOUND = 100;
-    private static final LongValue UPPER = longValue( BOUND );
-    private static final Set<Class<? extends NumberValue>> NUMBER_TYPES = new HashSet<>(
+	private static final Set<Class<? extends NumberValue>> NUMBER_TYPES = Collections.unmodifiableSet(new HashSet<>(
             Arrays.asList(
                     LongValue.class,
                     IntValue.class,
                     ShortValue.class,
                     ByteValue.class,
                     FloatValue.class,
-                    DoubleValue.class ) );
+                    DoubleValue.class ) ));
 
-    private static final Set<Class<? extends AnyValue>> TYPES = new HashSet<>(
+	private static final Set<Class<? extends AnyValue>> TYPES = Collections.unmodifiableSet(new HashSet<>(
             Arrays.asList(
                     LongValue.class,
                     IntValue.class,
@@ -97,22 +85,37 @@ public class RandomValuesTest
                     TimeValue.class,
                     LocalTimeValue.class,
                     DurationValue.class
-            ) );
+            ) ));
 
-    @Test
+	@Parameterized.Parameter()
+    public RandomValues randomValues;
+
+	@Parameterized.Parameter( 1 )
+    public String name;
+
+	@Parameterized.Parameters( name = "{1}" )
+    public static Iterable<Object[]> generators()
+    {
+        return Arrays.asList(
+                new Object[]{RandomValues.create( ThreadLocalRandom.current() ), Random.class.getName()},
+                new Object[]{RandomValues.create( new SplittableRandom() ), SplittableRandom.class.getName()}
+        );
+    }
+
+	@Test
     public void nextLongValueUnbounded()
     {
         checkDistribution( randomValues::nextLongValue );
     }
 
-    @Test
+	@Test
     public void nextLongValueBounded()
     {
         checkDistribution( () -> randomValues.nextLongValue( BOUND ) );
         checkBounded( () -> randomValues.nextLongValue( BOUND ) );
     }
 
-    @Test
+	@Test
     public void nextLongValueBoundedAndShifted()
     {
         Set<Value> values = new HashSet<>();
@@ -128,64 +131,64 @@ public class RandomValuesTest
         assertThat( values.size(), greaterThan( 1 ) );
     }
 
-    @Test
+	@Test
     public void nextBooleanValue()
     {
         checkDistribution( randomValues::nextBooleanValue );
     }
 
-    @Test
+	@Test
     public void nextIntValueUnbounded()
     {
         checkDistribution( randomValues::nextIntValue );
     }
 
-    @Test
+	@Test
     public void nextIntValueBounded()
     {
         checkDistribution( () -> randomValues.nextIntValue( BOUND ) );
         checkBounded( () -> randomValues.nextIntValue( BOUND ) );
     }
 
-    @Test
+	@Test
     public void nextShortValueUnbounded()
     {
         checkDistribution( randomValues::nextShortValue );
     }
 
-    @Test
+	@Test
     public void nextShortValueBounded()
     {
         checkDistribution( () -> randomValues.nextShortValue( BOUND ) );
         checkBounded( () -> randomValues.nextShortValue( BOUND ) );
     }
 
-    @Test
+	@Test
     public void nextByteValueUnbounded()
     {
         checkDistribution( randomValues::nextByteValue );
     }
 
-    @Test
+	@Test
     public void nextByteValueBounded()
     {
         checkDistribution( () -> randomValues.nextByteValue( BOUND ) );
         checkBounded( () -> randomValues.nextByteValue( BOUND ) );
     }
 
-    @Test
+	@Test
     public void nextFloatValue()
     {
         checkDistribution( randomValues::nextFloatValue );
     }
 
-    @Test
+	@Test
     public void nextDoubleValue()
     {
         checkDistribution( randomValues::nextDoubleValue );
     }
 
-    @Test
+	@Test
     public void nextNumberValue()
     {
         HashSet<Class<? extends NumberValue>> seen = new HashSet<>( NUMBER_TYPES );
@@ -199,7 +202,7 @@ public class RandomValuesTest
         assertThat( seen, empty() );
     }
 
-    @Test
+	@Test
     public void nextAlphaNumericString()
     {
         Set<Integer> seenDigits = "ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz0123456789".chars().boxed()
@@ -219,7 +222,7 @@ public class RandomValuesTest
         assertThat( seenDigits, empty() );
     }
 
-    @Test
+	@Test
     public void nextAsciiString()
     {
         for ( int i = 0; i < ITERATIONS; i++ )
@@ -232,7 +235,7 @@ public class RandomValuesTest
         }
     }
 
-    @Test
+	@Test
     public void nextString()
     {
         for ( int i = 0; i < ITERATIONS; i++ )
@@ -245,7 +248,7 @@ public class RandomValuesTest
         }
     }
 
-    @Test
+	@Test
     public void nextArray()
     {
         HashSet<Class<? extends AnyValue>> seen = new HashSet<>( TYPES );
@@ -261,7 +264,7 @@ public class RandomValuesTest
         assertThat( seen, empty() );
     }
 
-    @Test
+	@Test
     public void nextValue()
     {
         HashSet<Class<? extends AnyValue>> all = new HashSet<>( TYPES );
@@ -278,7 +281,7 @@ public class RandomValuesTest
         assertThat( seen, empty() );
     }
 
-    @Test
+	@Test
     public void nextValueOfTypes()
     {
         ValueType[] allTypes = ValueType.values();
@@ -297,7 +300,7 @@ public class RandomValuesTest
         assertThat( seen, empty() );
     }
 
-    @Test
+	@Test
     public void excluding()
     {
         ValueType[] allTypes = ValueType.values();
@@ -307,12 +310,12 @@ public class RandomValuesTest
         {
             if ( ArrayUtils.contains( including, excludedType ) )
             {
-                fail( "Including array " + Arrays.toString( including ) + " contains excluded type " + excludedType );
+                fail( new StringBuilder().append("Including array ").append(Arrays.toString( including )).append(" contains excluded type ").append(excludedType).toString() );
             }
         }
     }
 
-    @Test
+	@Test
     public void nextBasicMultilingualPlaneTextValue()
     {
         for ( int i = 0; i < ITERATIONS; i++ )
@@ -324,7 +327,7 @@ public class RandomValuesTest
         }
     }
 
-    private void assertValueAmongTypes( ValueType[] types, Value value )
+	private void assertValueAmongTypes( ValueType[] types, Value value )
     {
         for ( ValueType type : types )
         {
@@ -333,10 +336,10 @@ public class RandomValuesTest
                 return;
             }
         }
-        fail( "Value " + value + " was not among types " + Arrays.toString( types ) );
+        fail( new StringBuilder().append("Value ").append(value).append(" was not among types ").append(Arrays.toString( types )).toString() );
     }
 
-    private void assertKnownType( Class<? extends AnyValue> typeToCheck, Set<Class<? extends AnyValue>> types )
+	private void assertKnownType( Class<? extends AnyValue> typeToCheck, Set<Class<? extends AnyValue>> types )
     {
         for ( Class<? extends AnyValue> type : types )
         {
@@ -348,12 +351,12 @@ public class RandomValuesTest
         fail( typeToCheck + " is not an expected type " );
     }
 
-    private void markSeen( Class<? extends AnyValue> typeToCheck, Set<Class<? extends AnyValue>> seen )
+	private void markSeen( Class<? extends AnyValue> typeToCheck, Set<Class<? extends AnyValue>> seen )
     {
         seen.removeIf( t -> t.isAssignableFrom( typeToCheck ) );
     }
 
-    private void checkDistribution( Supplier<Value> supplier )
+	private void checkDistribution( Supplier<Value> supplier )
     {
         Set<Value> values = new HashSet<>();
         for ( int i = 0; i < ITERATIONS; i++ )
@@ -366,7 +369,7 @@ public class RandomValuesTest
         assertThat( values.size(), greaterThan( 1 ) );
     }
 
-    private void checkBounded( Supplier<NumberValue> supplier )
+	private void checkBounded( Supplier<NumberValue> supplier )
     {
         for ( int i = 0; i < ITERATIONS; i++ )
         {

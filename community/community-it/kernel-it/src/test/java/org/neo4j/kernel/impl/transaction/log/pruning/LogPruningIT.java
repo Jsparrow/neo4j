@@ -43,12 +43,12 @@ import static org.neo4j.graphdb.factory.GraphDatabaseSettings.keep_logical_logs;
 
 public class LogPruningIT
 {
-    @Rule
-    public final DatabaseRule db = new EmbeddedDatabaseRule().withSetting( keep_logical_logs, "true" );
-
     private static final SimpleTriggerInfo triggerInfo = new SimpleTriggerInfo( "forced trigger" );
 
-    @Test
+	@Rule
+    public final DatabaseRule db = new EmbeddedDatabaseRule().withSetting( keep_logical_logs, "true" );
+
+	@Test
     public void pruningStrategyShouldBeDynamic() throws IOException
     {
         CheckPointer checkPointer = getInstanceFromDb( CheckPointer.class );
@@ -79,7 +79,7 @@ public class LogPruningIT
         assertThat( countTransactionLogs( logFiles ), is( 2 ) );
     }
 
-    private void writeTransactionsAndRotateTwice() throws IOException
+	private void writeTransactionsAndRotateTwice() throws IOException
     {
         LogRotation logRotation = db.getDependencyResolver().resolveDependency( LogRotation.class );
         // Apparently we always keep an extra log file what even though the threshold is reached... produce two then
@@ -107,12 +107,12 @@ public class LogPruningIT
         }
     }
 
-    private <T> T getInstanceFromDb( Class<T> clazz )
+	private <T> T getInstanceFromDb( Class<T> clazz )
     {
         return db.getDependencyResolver().resolveDependency( clazz );
     }
 
-    private int countTransactionLogs( LogFiles logFiles )
+	private int countTransactionLogs( LogFiles logFiles )
     {
         return logFiles.logFiles().length;
     }

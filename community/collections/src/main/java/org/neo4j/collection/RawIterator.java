@@ -34,24 +34,24 @@ import org.neo4j.helpers.collection.Iterators;
  */
 public interface RawIterator<T,EXCEPTION extends Exception>
 {
-    boolean hasNext() throws EXCEPTION;
+    RawIterator<Object,Exception> EMPTY_ITERATOR = RawIterator.of();
 
-    T next() throws EXCEPTION;
+	boolean hasNext() throws EXCEPTION;
 
-    default void remove()
+	T next() throws EXCEPTION;
+
+	default void remove()
     {
         throw new UnsupportedOperationException();
     }
 
-    RawIterator<Object,Exception> EMPTY_ITERATOR = RawIterator.of();
-
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     static <T, EXCEPTION extends Exception> RawIterator<T,EXCEPTION> empty()
     {
         return (RawIterator<T,EXCEPTION>) EMPTY_ITERATOR;
     }
 
-    static <T, EX extends Exception> RawIterator<T, EX> of( T ... values )
+	static <T, EX extends Exception> RawIterator<T, EX> of( T ... values )
     {
         return new RawIterator<T,EX>()
         {
@@ -75,7 +75,7 @@ public interface RawIterator<T,EXCEPTION extends Exception>
         };
     }
 
-    /**
+	/**
      * Create a raw iterator from the provided {@link ThrowingSupplier} - the iterator will end
      * when the supplier returns null.
      */
@@ -91,7 +91,7 @@ public interface RawIterator<T,EXCEPTION extends Exception>
         };
     }
 
-    /**
+	/**
      * Create a raw iterator from a regular iterator, assuming no exceptions are being thrown
      */
     static <T, EX extends Exception> RawIterator<T, EX> wrap( final Iterator<T> iterator )

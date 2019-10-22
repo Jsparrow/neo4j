@@ -34,28 +34,31 @@ import static org.neo4j.test.rule.SuppressOutput.suppressAll;
 
 public class TestPreflightTasks
 {
-    @Test
+    @Rule
+    public SuppressOutput suppressOutput = suppressAll();
+
+	@Test
     public void shouldPassWithNoRules()
     {
         PreFlightTasks check = new PreFlightTasks( NullLogProvider.getInstance() );
         assertTrue( check.run() );
     }
 
-    @Test
+	@Test
     public void shouldRunAllHealthChecksToCompletionIfNonFail()
     {
         PreFlightTasks check = new PreFlightTasks( NullLogProvider.getInstance(), getPassingRules() );
         assertTrue( check.run() );
     }
 
-    @Test
+	@Test
     public void shouldFailIfOneOrMoreHealthChecksFail()
     {
         PreFlightTasks check = new PreFlightTasks( NullLogProvider.getInstance(), getWithOneFailingRule() );
         assertFalse( check.run() );
     }
 
-    @Test
+	@Test
     public void shouldLogFailedRule()
     {
         AssertableLogProvider logProvider = new AssertableLogProvider();
@@ -67,7 +70,7 @@ public class TestPreflightTasks
         );
     }
 
-    @Test
+	@Test
     public void shouldAdvertiseFailedRule()
     {
         PreFlightTasks check = new PreFlightTasks( NullLogProvider.getInstance(), getWithOneFailingRule() );
@@ -75,7 +78,7 @@ public class TestPreflightTasks
         assertNotNull( check.failedTask() );
     }
 
-    private PreflightTask[] getWithOneFailingRule()
+	private PreflightTask[] getWithOneFailingRule()
     {
         PreflightTask[] rules = new PreflightTask[5];
 
@@ -115,7 +118,7 @@ public class TestPreflightTasks
         return rules;
     }
 
-    private PreflightTask[] getPassingRules()
+	private PreflightTask[] getPassingRules()
     {
         PreflightTask[] rules = new PreflightTask[5];
 
@@ -139,7 +142,4 @@ public class TestPreflightTasks
 
         return rules;
     }
-
-    @Rule
-    public SuppressOutput suppressOutput = suppressAll();
 }

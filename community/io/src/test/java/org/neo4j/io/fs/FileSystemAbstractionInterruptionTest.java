@@ -47,26 +47,26 @@ public class FileSystemAbstractionInterruptionTest
 {
     private static final Factory<FileSystemAbstraction> ephemeral = EphemeralFileSystemAbstraction::new;
     private static final Factory<FileSystemAbstraction> real = DefaultFileSystemAbstraction::new;
-
-    @Parameterized.Parameters( name = "{0}" )
-    public static Iterable<Object[]> dataPoints()
-    {
-        return Arrays.asList( new Object[][]{{"ephemeral", ephemeral}, {"real", real}} );
-    }
-
-    @Rule
+	@Rule
     public final TestDirectory testdir = TestDirectory.testDirectory();
+	private FileSystemAbstraction fs;
+	private File file;
+	private StoreChannel channel;
+	private boolean channelShouldBeClosed;
 
-    private FileSystemAbstraction fs;
-    private File file;
-
-    public FileSystemAbstractionInterruptionTest( @SuppressWarnings( "UnusedParameters" ) String name,
+	public FileSystemAbstractionInterruptionTest( @SuppressWarnings( "UnusedParameters" ) String name,
             Factory<FileSystemAbstraction> factory )
     {
         fs = factory.newInstance();
     }
 
-    @Before
+	@Parameterized.Parameters( name = "{0}" )
+    public static Iterable<Object[]> dataPoints()
+    {
+        return Arrays.asList( new Object[][]{{"ephemeral", ephemeral}, {"real", real}} );
+    }
+
+	@Before
     public void createWorkingDirectoryAndTestFile() throws IOException
     {
         Thread.interrupted();
@@ -78,10 +78,7 @@ public class FileSystemAbstractionInterruptionTest
         Thread.currentThread().interrupt();
     }
 
-    private StoreChannel channel;
-    private boolean channelShouldBeClosed;
-
-    @After
+	@After
     public void verifyInterruptionAndChannelState() throws IOException
     {
         assertTrue( Thread.interrupted() );
@@ -105,104 +102,104 @@ public class FileSystemAbstractionInterruptionTest
         fs.close();
     }
 
-    private StoreChannel chan( boolean channelShouldBeClosed ) throws IOException
+	private StoreChannel chan( boolean channelShouldBeClosed ) throws IOException
     {
         this.channelShouldBeClosed = channelShouldBeClosed;
         channel = fs.open( file, OpenMode.READ_WRITE );
         return channel;
     }
 
-    @Test
+	@Test
     public void fs_openClose() throws IOException
     {
         chan( true ).close();
     }
 
-    @Test
+	@Test
     public void ch_tryLock() throws IOException
     {
         chan( false ).tryLock().release();
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_setPosition() throws IOException
     {
         chan( true ).position( 0 );
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_getPosition() throws IOException
     {
         chan( true ).position();
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_truncate() throws IOException
     {
         chan( true ).truncate( 0 );
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_force() throws IOException
     {
         chan( true ).force( true );
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_writeAll_ByteBuffer() throws IOException
     {
         chan( true ).writeAll( ByteBuffer.allocate( 1 ) );
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_writeAll_ByteBuffer_position() throws IOException
     {
         chan( true ).writeAll( ByteBuffer.allocate( 1 ), 1 );
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_read_ByteBuffer() throws IOException
     {
         chan( true ).read( ByteBuffer.allocate( 1 ) );
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_write_ByteBuffer() throws IOException
     {
         chan( true ).write( ByteBuffer.allocate( 1 ) );
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_size() throws IOException
     {
         chan( true ).size();
     }
 
-    @Test
+	@Test
     public void ch_isOpen() throws IOException
     {
         chan( false ).isOpen();
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_write_ByteBuffers_offset_length() throws IOException
     {
         chan( true ).write( new ByteBuffer[]{ByteBuffer.allocate( 1 )}, 0, 1 );
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_write_ByteBuffers() throws IOException
     {
         chan( true ).write( new ByteBuffer[]{ByteBuffer.allocate( 1 )} );
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_read_ByteBuffers_offset_length() throws IOException
     {
         chan( true ).read( new ByteBuffer[]{ByteBuffer.allocate( 1 )}, 0, 1 );
     }
 
-    @Test( expected = ClosedByInterruptException.class )
+	@Test( expected = ClosedByInterruptException.class )
     public void ch_read_ByteBuffers() throws IOException
     {
         chan( true ).read( new ByteBuffer[]{ByteBuffer.allocate( 1 )} );

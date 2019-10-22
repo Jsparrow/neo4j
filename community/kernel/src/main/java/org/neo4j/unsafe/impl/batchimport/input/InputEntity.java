@@ -34,49 +34,42 @@ public class InputEntity implements InputEntityVisitor, Cloneable
     public static final String[] NO_LABELS = new String[0];
 
     private final InputEntityVisitor delegate;
+	public boolean hasPropertyId;
+	public long propertyId;
+	public boolean hasIntPropertyKeyIds;
+	public final List<Object> properties = new ArrayList<>();
+	public boolean hasLongId;
+	public long longId;
+	public Object objectId;
+	public Group idGroup;
+	public final List<String> labels = new ArrayList<>();
+	public boolean hasLabelField;
+	public long labelField;
+	public boolean hasLongStartId;
+	public long longStartId;
+	public Object objectStartId;
+	public Group startIdGroup;
+	public boolean hasLongEndId;
+	public long longEndId;
+	public Object objectEndId;
+	public Group endIdGroup;
+	public boolean hasIntType;
+	public int intType;
+	public String stringType;
+	private boolean end;
 
-    public InputEntity( InputEntityVisitor delegate )
+	public InputEntity( InputEntityVisitor delegate )
     {
         this.delegate = delegate;
         clear();
     }
 
-    public InputEntity()
+	public InputEntity()
     {
         this( InputEntityVisitor.NULL );
     }
 
-    public boolean hasPropertyId;
-    public long propertyId;
-    public boolean hasIntPropertyKeyIds;
-    public final List<Object> properties = new ArrayList<>();
-
-    public boolean hasLongId;
-    public long longId;
-    public Object objectId;
-    public Group idGroup;
-
-    public final List<String> labels = new ArrayList<>();
-    public boolean hasLabelField;
-    public long labelField;
-
-    public boolean hasLongStartId;
-    public long longStartId;
-    public Object objectStartId;
-    public Group startIdGroup;
-
-    public boolean hasLongEndId;
-    public long longEndId;
-    public Object objectEndId;
-    public Group endIdGroup;
-
-    public boolean hasIntType;
-    public int intType;
-    public String stringType;
-
-    private boolean end;
-
-    @Override
+	@Override
     public boolean propertyId( long nextProp )
     {
         checkClear();
@@ -85,7 +78,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.propertyId( nextProp );
     }
 
-    @Override
+	@Override
     public boolean property( String key, Object value )
     {
         checkClear();
@@ -94,7 +87,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.property( key, value );
     }
 
-    @Override
+	@Override
     public boolean property( int propertyKeyId, Object value )
     {
         checkClear();
@@ -104,7 +97,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.property( propertyKeyId, value );
     }
 
-    @Override
+	@Override
     public boolean id( long id )
     {
         checkClear();
@@ -113,7 +106,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.id( id );
     }
 
-    @Override
+	@Override
     public boolean id( Object id, Group group )
     {
         checkClear();
@@ -122,7 +115,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.id( id, group );
     }
 
-    @Override
+	@Override
     public boolean labels( String[] labels )
     {
         checkClear();
@@ -130,7 +123,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.labels( labels );
     }
 
-    @Override
+	@Override
     public boolean labelField( long labelField )
     {
         checkClear();
@@ -139,7 +132,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.labelField( labelField );
     }
 
-    @Override
+	@Override
     public boolean startId( long id )
     {
         checkClear();
@@ -148,7 +141,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.startId( id );
     }
 
-    @Override
+	@Override
     public boolean startId( Object id, Group group )
     {
         checkClear();
@@ -157,7 +150,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.startId( id, group );
     }
 
-    @Override
+	@Override
     public boolean endId( long id )
     {
         checkClear();
@@ -166,7 +159,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.endId( id );
     }
 
-    @Override
+	@Override
     public boolean endId( Object id, Group group )
     {
         checkClear();
@@ -175,7 +168,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.endId( id, group );
     }
 
-    @Override
+	@Override
     public boolean type( int type )
     {
         checkClear();
@@ -184,7 +177,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.type( type );
     }
 
-    @Override
+	@Override
     public boolean type( String type )
     {
         checkClear();
@@ -192,7 +185,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         return delegate.type( type );
     }
 
-    @Override
+	@Override
     public void endOfEntity() throws IOException
     {
         // Mark that the next call to any data method should clear the state
@@ -200,32 +193,32 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         delegate.endOfEntity();
     }
 
-    public String[] labels()
+	public String[] labels()
     {
         return labels.toArray( new String[labels.size()] );
     }
 
-    public Object[] properties()
+	public Object[] properties()
     {
         return properties.toArray();
     }
 
-    public Object id()
+	public Object id()
     {
         return hasLongId ? longId : objectId;
     }
 
-    public Object endId()
+	public Object endId()
     {
         return hasLongEndId ? longEndId : objectEndId;
     }
 
-    public Object startId()
+	public Object startId()
     {
         return hasLongStartId ? longStartId : objectStartId;
     }
 
-    private void checkClear()
+	private void checkClear()
     {
         if ( end )
         {
@@ -233,7 +226,7 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         }
     }
 
-    private void clear()
+	private void clear()
     {
         end = false;
         hasPropertyId = false;
@@ -260,28 +253,28 @@ public class InputEntity implements InputEntityVisitor, Cloneable
         stringType = null;
     }
 
-    @Override
+	@Override
     public void close() throws IOException
     {
         delegate.close();
     }
 
-    public int propertyCount()
+	public int propertyCount()
     {
         return properties.size() / 2;
     }
 
-    public Object propertyKey( int i )
+	public Object propertyKey( int i )
     {
         return properties.get( i * 2 );
     }
 
-    public Object propertyValue( int i )
+	public Object propertyValue( int i )
     {
         return properties.get( i * 2 + 1 );
     }
 
-    public void replayOnto( InputEntityVisitor visitor ) throws IOException
+	public void replayOnto( InputEntityVisitor visitor ) throws IOException
     {
         // properties
         if ( hasPropertyId )

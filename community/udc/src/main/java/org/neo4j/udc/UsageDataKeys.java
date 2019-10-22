@@ -61,7 +61,11 @@ public class UsageDataKeys
      */
     public static final UsageDataKey<DecayingFlags> features = key( "neo4j.features", () -> new DecayingFlags( 7/*days*/ ) );
 
-    public interface Features
+    private UsageDataKeys()
+    {
+    }
+
+	public interface Features
     {
         // Note: The indexes used here is how we track which feature a flag
         //       refers to. Be very careful about re-using indexes so features
@@ -72,9 +76,5 @@ public class UsageDataKeys
 
         Key bolt = new Key( 3 );
 
-    }
-
-    private UsageDataKeys()
-    {
     }
 }

@@ -237,10 +237,7 @@ class NodeInUseWithCorrectLabelsCheckTest
         Collection<DynamicRecord> dynamicRecords = new ArrayList<>();
         DynamicArrayStore.allocateFromNumbers( dynamicRecords, prependNodeId( nodeRecord.getId(), labelIds ),
                 new ReusableRecordsAllocator( 4, preAllocatedRecords ) );
-        for ( DynamicRecord dynamicRecord : dynamicRecords )
-        {
-            recordAccess.addNodeDynamicLabels( dynamicRecord );
-        }
+        dynamicRecords.forEach(recordAccess::addNodeDynamicLabels);
 
         nodeRecord.setLabelField( dynamicPointer( dynamicRecords ), dynamicRecords );
         return nodeRecord;

@@ -34,7 +34,10 @@ public abstract class TransactionStateTestBase<G extends KernelAPIWriteTestSuppo
     public void shouldDetectNodeDeletedInTransaction() throws Exception
     {
         // GIVEN
-        long deletedInTx, unaffected, addedInTx, addedAndRemovedInTx;
+        long deletedInTx;
+		long unaffected;
+		long addedInTx;
+		long addedAndRemovedInTx;
         try ( Transaction tx = beginTransaction() )
         {
             deletedInTx = tx.dataWrite().nodeCreate();
@@ -64,7 +67,10 @@ public abstract class TransactionStateTestBase<G extends KernelAPIWriteTestSuppo
         // GIVEN
         long node;
         int relType;
-        long deletedInTx, unaffected, addedInTx, addedAndRemovedInTx;
+        long deletedInTx;
+		long unaffected;
+		long addedInTx;
+		long addedAndRemovedInTx;
         try ( Transaction tx = beginTransaction() )
         {
             node = tx.dataWrite().nodeCreate();
@@ -95,7 +101,11 @@ public abstract class TransactionStateTestBase<G extends KernelAPIWriteTestSuppo
     {
         // GIVEN
         long node;
-        int p1, p2, p3, p4, p5;
+        int p1;
+		int p2;
+		int p3;
+		int p4;
+		int p5;
         try ( Transaction tx = beginTransaction() )
         {
             node = tx.dataWrite().nodeCreate();

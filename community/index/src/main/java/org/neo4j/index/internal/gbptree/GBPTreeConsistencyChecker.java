@@ -98,19 +98,19 @@ class GBPTreeConsistencyChecker<KEY>
     private static <KEY> void assertAllIdsOccupied( File file, long highId, BitSet seenIds, GBPTreeConsistencyCheckVisitor<KEY> visitor )
     {
         long expectedNumberOfPages = highId - IdSpace.MIN_TREE_NODE_ID;
-        if ( seenIds.cardinality() != expectedNumberOfPages )
-        {
-            int index = (int) IdSpace.MIN_TREE_NODE_ID;
-            while ( index >= 0 && index < highId )
-            {
-                index = seenIds.nextClearBit( index );
-                if ( index != -1 && index < highId )
-                {
-                    visitor.unusedPage( index, file );
-                }
-                index++;
-            }
-        }
+        if (seenIds.cardinality() == expectedNumberOfPages) {
+			return;
+		}
+		int index = (int) IdSpace.MIN_TREE_NODE_ID;
+		while ( index >= 0 && index < highId )
+		{
+		    index = seenIds.nextClearBit( index );
+		    if ( index != -1 && index < highId )
+		    {
+		        visitor.unusedPage( index, file );
+		    }
+		    index++;
+		}
     }
 
     private static <KEY> void addToSeenList( File file, BitSet target, long id, long lastId, GBPTreeConsistencyCheckVisitor<KEY> visitor )

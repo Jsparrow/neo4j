@@ -122,8 +122,7 @@ public class BufferedChannelInput implements PackInput
                 attempt( endIndex - index );
                 if ( buffer.remaining() == 0 )
                 {
-                    throw new PackStream.EndOfStream( "Expected " + (endIndex - index) + " bytes available, " +
-                                                      "but no more bytes accessible from underlying stream." );
+                    throw new PackStream.EndOfStream( new StringBuilder().append("Expected ").append(endIndex - index).append(" bytes available, ").append("but no more bytes accessible from underlying stream.").toString() );
                 }
             }
         }
@@ -141,7 +140,7 @@ public class BufferedChannelInput implements PackInput
     {
         if ( !attempt( numBytes ) )
         {
-            throw new PackStream.EndOfStream( "Unexpected end of stream while trying to read " + numBytes + " bytes." );
+            throw new PackStream.EndOfStream( new StringBuilder().append("Unexpected end of stream while trying to read ").append(numBytes).append(" bytes.").toString() );
         }
     }
 }

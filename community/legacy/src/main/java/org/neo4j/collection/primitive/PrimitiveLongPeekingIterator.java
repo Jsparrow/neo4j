@@ -40,12 +40,11 @@ public class PrimitiveLongPeekingIterator extends PrimitiveLongCollections.Primi
     @Override
     protected boolean fetchNext()
     {
-        if ( hasFirstValue )
-        {
-            hasFirstValue = false;
-            return next( firstValue );
-        }
-        return actual.hasNext() && next( actual.next() );
+        if (!hasFirstValue) {
+			return actual.hasNext() && next( actual.next() );
+		}
+		hasFirstValue = false;
+		return next( firstValue );
     }
 
     public boolean hasMultipleValues()

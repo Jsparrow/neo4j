@@ -33,81 +33,15 @@ public class CoordinateReferenceSystem implements CRS
     public static final CoordinateReferenceSystem WGS84_3D = new CoordinateReferenceSystem( "wgs-84-3d", CRSTable.EPSG, 4979, 3, true );
 
     private static final CoordinateReferenceSystem[] TYPES = new CoordinateReferenceSystem[]{Cartesian, Cartesian_3D, WGS84, WGS84_3D};
+	private final String name;
+	private final CRSTable table;
+	private final int code;
+	private final String href;
+	private final int dimension;
+	private final boolean geographic;
+	private final CRSCalculator calculator;
 
-    public static Iterable<CoordinateReferenceSystem> all()
-    {
-        return Iterables.asIterable( TYPES );
-    }
-
-    public static CoordinateReferenceSystem get( int tableId, int code )
-    {
-        CRSTable table = CRSTable.find( tableId );
-        for ( CoordinateReferenceSystem type : TYPES )
-        {
-            if ( type.table == table && type.code == code )
-            {
-                return type;
-            }
-        }
-        throw new InvalidValuesArgumentException( "Unknown coordinate reference system: " + tableId + "-" + code );
-    }
-
-    public static CoordinateReferenceSystem get( CRS crs )
-    {
-        Objects.requireNonNull( crs );
-        return get( crs.getHref() );
-    }
-
-    public static CoordinateReferenceSystem byName( String name )
-    {
-        for ( CoordinateReferenceSystem type : TYPES )
-        {
-            if ( type.name.equals( name.toLowerCase() ) )
-            {
-                return type;
-            }
-        }
-
-        throw new InvalidValuesArgumentException( "Unknown coordinate reference system: " + name );
-    }
-
-    public static CoordinateReferenceSystem get( String href )
-    {
-        for ( CoordinateReferenceSystem type : TYPES )
-        {
-            if ( type.href.equals( href ) )
-            {
-                return type;
-            }
-        }
-        throw new InvalidValuesArgumentException( "Unknown coordinate reference system: " + href );
-    }
-
-    public static CoordinateReferenceSystem get( int code )
-    {
-        for ( CRSTable table : CRSTable.values() )
-        {
-            String href = table.href( code );
-            for ( CoordinateReferenceSystem type : TYPES )
-            {
-                if ( type.href.equals( href ) )
-                {
-                    return type;
-                }
-            }
-        }
-        throw new InvalidValuesArgumentException( "Unknown coordinate reference system code: " + code );
-    }
-
-    private final String name;
-    private final CRSTable table;
-    private final int code;
-    private final String href;
-    private final int dimension;
-    private final boolean geographic;
-    private final CRSCalculator calculator;
-
-    private CoordinateReferenceSystem( String name, CRSTable table, int code, int dimension, boolean geographic )
+	private CoordinateReferenceSystem( String name, CRSTable table, int code, int dimension, boolean geographic )
     {
         assert name.toLowerCase().equals( name );
         this.name = name;
@@ -126,56 +60,121 @@ public class CoordinateReferenceSystem implements CRS
         }
     }
 
-    @Override
+	public static Iterable<CoordinateReferenceSystem> all()
+    {
+        return Iterables.asIterable( TYPES );
+    }
+
+	public static CoordinateReferenceSystem get( int tableId, int code )
+    {
+        CRSTable table = CRSTable.find( tableId );
+        for ( CoordinateReferenceSystem type : TYPES )
+        {
+            if ( type.table == table && type.code == code )
+            {
+                return type;
+            }
+        }
+        throw new InvalidValuesArgumentException( new StringBuilder().append("Unknown coordinate reference system: ").append(tableId).append("-").append(code).toString() );
+    }
+
+	public static CoordinateReferenceSystem get( CRS crs )
+    {
+        Objects.requireNonNull( crs );
+        return get( crs.getHref() );
+    }
+
+	public static CoordinateReferenceSystem byName( String name )
+    {
+        for ( CoordinateReferenceSystem type : TYPES )
+        {
+            if ( type.name.equals( name.toLowerCase() ) )
+            {
+                return type;
+            }
+        }
+
+        throw new InvalidValuesArgumentException( "Unknown coordinate reference system: " + name );
+    }
+
+	public static CoordinateReferenceSystem get( String href )
+    {
+        for ( CoordinateReferenceSystem type : TYPES )
+        {
+            if ( type.href.equals( href ) )
+            {
+                return type;
+            }
+        }
+        throw new InvalidValuesArgumentException( "Unknown coordinate reference system: " + href );
+    }
+
+	public static CoordinateReferenceSystem get( int code )
+    {
+        for ( CRSTable table : CRSTable.values() )
+        {
+            String href = table.href( code );
+            for ( CoordinateReferenceSystem type : TYPES )
+            {
+                if ( type.href.equals( href ) )
+                {
+                    return type;
+                }
+            }
+        }
+        throw new InvalidValuesArgumentException( "Unknown coordinate reference system code: " + code );
+    }
+
+	@Override
     public String toString()
     {
         return name;
     }
 
-    @Override
+	@Override
     public int getCode()
     {
         return code;
     }
 
-    @Override
+	@Override
     public String getType()
     {
         return name;
     }
 
-    @Override
+	@Override
     public String getHref()
     {
         return href;
     }
 
-    public String getName()
+	public String getName()
     {
         return name;
     }
 
-    public CRSTable getTable()
+	public CRSTable getTable()
     {
         return table;
     }
 
-    public int getDimension()
+	public int getDimension()
     {
         return dimension;
     }
 
-    public boolean isGeographic()
+	public boolean isGeographic()
     {
         return geographic;
     }
 
-    public CRSCalculator getCalculator()
+	public CRSCalculator getCalculator()
     {
         return calculator;
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -192,7 +191,7 @@ public class CoordinateReferenceSystem implements CRS
         return href.equals( that.href );
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return href.hashCode();

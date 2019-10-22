@@ -48,7 +48,7 @@ public class SetInitialPasswordCommandProvider extends AdminCommand.Provider
     @Nonnull
     public String description()
     {
-        return "Sets the initial password of the initial admin user ('" + INITIAL_USER_NAME + "').";
+        return new StringBuilder().append("Sets the initial password of the initial admin user ('").append(INITIAL_USER_NAME).append("').").toString();
     }
 
     @Override

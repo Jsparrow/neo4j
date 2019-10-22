@@ -359,14 +359,13 @@ public final class OffHeapPageLock
     public static long tryFlushLock( long address )
     {
         long s = getState( address );
-        if ( (s & FAE_MASK) == 0 )
-        {
-            long n = s + FLS_MASK;
-            boolean res = compareAndSetState( address, s, n );
-            UnsafeUtil.storeFence();
-            return res ? n : 0;
-        }
-        return 0;
+        if (!((s & FAE_MASK) == 0)) {
+			return 0;
+		}
+		long n = s + FLS_MASK;
+		boolean res = compareAndSetState( address, s, n );
+		UnsafeUtil.storeFence();
+		return res ? n : 0;
     }
 
     /**
@@ -406,8 +405,8 @@ public final class OffHeapPageLock
         long mod = (s & MOD_MASK) >>> CNT_BITS + SEQ_BITS;
         long cnt = (s & CNT_MASK) >> SEQ_BITS;
         long seq = s & SEQ_MASK;
-        return "OffHeapPageLock[" +
-               "Flush: " + flush + ", Excl: " + excl + ", Mod: " + mod + ", Ws: " + cnt + ", S: " + seq + "]";
+        return new StringBuilder().append("OffHeapPageLock[").append("Flush: ").append(flush).append(", Excl: ").append(excl).append(", Mod: ").append(mod)
+				.append(", Ws: ").append(cnt).append(", S: ").append(seq).append("]").toString();
     }
 
     static String toString( long address )

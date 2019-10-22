@@ -70,19 +70,19 @@ class ReadOnlyLuceneSchemaIndexTest
     @Test
     void indexDeletionIndReadOnlyModeIsNotSupported()
     {
-        assertThrows( UnsupportedOperationException.class, () -> luceneSchemaIndex.drop() );
+        assertThrows( UnsupportedOperationException.class, luceneSchemaIndex::drop );
     }
 
     @Test
     void indexCreationInReadOnlyModeIsNotSupported()
     {
-        assertThrows( UnsupportedOperationException.class, () -> luceneSchemaIndex.create() );
+        assertThrows( UnsupportedOperationException.class, luceneSchemaIndex::create );
     }
 
     @Test
     void readOnlyIndexMarkingIsNotSupported()
     {
-        assertThrows( UnsupportedOperationException.class, () -> luceneSchemaIndex.markAsOnline() );
+        assertThrows( UnsupportedOperationException.class, luceneSchemaIndex::markAsOnline );
     }
 
     @Test
@@ -94,6 +94,6 @@ class ReadOnlyLuceneSchemaIndexTest
     @Test
     void writerIsNotAccessibleInReadOnlyMode()
     {
-        assertThrows( UnsupportedOperationException.class, () -> luceneSchemaIndex.getIndexWriter() );
+        assertThrows( UnsupportedOperationException.class, luceneSchemaIndex::getIndexWriter );
     }
 }

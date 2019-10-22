@@ -141,17 +141,17 @@ class EnvelopeTest
         assertThat( "Expected dimension to be same as max.length", env.getDimension(), equalTo( max.length ) );
         for ( int i = 0; i < min.length; i++ )
         {
-            assertThat( "Expected min[" + i + "] to be correct", env.getMin( i ), equalTo( min[i] ) );
-            assertThat( "Expected max[" + i + "] to be correct", env.getMax( i ), equalTo( max[i] ) );
+            assertThat( new StringBuilder().append("Expected min[").append(i).append("] to be correct").toString(), env.getMin( i ), equalTo( min[i] ) );
+            assertThat( new StringBuilder().append("Expected max[").append(i).append("] to be correct").toString(), env.getMax( i ), equalTo( max[i] ) );
         }
         double area = 1.0;
         Envelope copy = new Envelope( env );
         Envelope intersection = env.intersection( copy );
         for ( int i = 0; i < min.length; i++ )
         {
-            assertThat( "Expected width[" + i + "] to be correct", env.getWidth( i ), equalTo( width[i] ) );
-            assertThat( "Expected copied width[" + i + "] to be correct", copy.getWidth( i ), equalTo( width[i] ) );
-            assertThat( "Expected intersected width[" + i + "] to be correct", intersection.getWidth( i ), equalTo( width[i] ) );
+            assertThat( new StringBuilder().append("Expected width[").append(i).append("] to be correct").toString(), env.getWidth( i ), equalTo( width[i] ) );
+            assertThat( new StringBuilder().append("Expected copied width[").append(i).append("] to be correct").toString(), copy.getWidth( i ), equalTo( width[i] ) );
+            assertThat( new StringBuilder().append("Expected intersected width[").append(i).append("] to be correct").toString(), intersection.getWidth( i ), equalTo( width[i] ) );
             area *= width[i];
         }
         assertThat( "Expected area to be correct", env.getArea(), equalTo( area ) );

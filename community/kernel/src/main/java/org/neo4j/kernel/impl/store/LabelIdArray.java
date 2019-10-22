@@ -44,7 +44,7 @@ public class LabelIdArray
     {
         if ( Arrays.binarySearch( existingLabels, labelId ) >= 0 )
         {
-            throw new IllegalStateException( "Label " + labelId + " already exists." );
+            throw new IllegalStateException( new StringBuilder().append("Label ").append(labelId).append(" already exists.").toString() );
         }
     }
 
@@ -61,7 +61,7 @@ public class LabelIdArray
         }
         if ( !found )
         {
-            throw new IllegalStateException( "Label " + excludeId + " not found." );
+            throw new IllegalStateException( new StringBuilder().append("Label ").append(excludeId).append(" not found.").toString() );
         }
 
         long[] result = new long[ids.length - 1];

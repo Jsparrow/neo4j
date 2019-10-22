@@ -31,40 +31,40 @@ public class NullResponseHandler implements BoltResponseHandler
 {
     private static final NullResponseHandler INSTANCE = new NullResponseHandler();
 
-    public static NullResponseHandler nullResponseHandler()
-    {
-        return INSTANCE;
-    }
-
     private NullResponseHandler()
     {
     }
 
-    @Override
+	public static NullResponseHandler nullResponseHandler()
+    {
+        return INSTANCE;
+    }
+
+	@Override
     public void onRecords( BoltResult result, boolean pull )
     {
         // this page intentionally left blank
     }
 
-    @Override
+	@Override
     public void onMetadata( String key, AnyValue value )
     {
         // this page intentionally left blank
     }
 
-    @Override
+	@Override
     public void markFailed( Neo4jError error )
     {
         // this page intentionally left blank
     }
 
-    @Override
+	@Override
     public void onFinish()
     {
         // this page intentionally left blank
     }
 
-    @Override
+	@Override
     public void markIgnored()
     {
         // this page intentionally left blank

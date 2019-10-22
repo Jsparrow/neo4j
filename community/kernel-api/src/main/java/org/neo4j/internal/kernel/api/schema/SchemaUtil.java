@@ -25,38 +25,6 @@ import static java.lang.String.format;
 
 public class SchemaUtil
 {
-    private SchemaUtil()
-    {
-    }
-
-    public static String niceProperties( TokenNameLookup tokenNameLookup, int[] propertyIds )
-    {
-        return niceProperties( tokenNameLookup, propertyIds, "", false );
-    }
-
-    public static String niceProperties( TokenNameLookup tokenNameLookup, int[] propertyIds, String prefix,
-            boolean useBrackets )
-    {
-        StringBuilder properties = new StringBuilder();
-        if ( useBrackets )
-        {
-            properties.append( "(" );
-        }
-        for ( int i = 0; i < propertyIds.length; i++ )
-        {
-            if ( i > 0 )
-            {
-                properties.append( ", " );
-            }
-            properties.append( prefix ).append( tokenNameLookup.propertyKeyGetName( propertyIds[i] ) );
-        }
-        if ( useBrackets )
-        {
-            properties.append( ")" );
-        }
-        return properties.toString();
-    }
-
     public static final TokenNameLookup idTokenNameLookup = new TokenNameLookup()
     {
 
@@ -78,4 +46,36 @@ public class SchemaUtil
             return format( "property[%d]", propertyKeyId );
         }
     };
+
+	private SchemaUtil()
+    {
+    }
+
+	public static String niceProperties( TokenNameLookup tokenNameLookup, int[] propertyIds )
+    {
+        return niceProperties( tokenNameLookup, propertyIds, "", false );
+    }
+
+	public static String niceProperties( TokenNameLookup tokenNameLookup, int[] propertyIds, String prefix,
+            boolean useBrackets )
+    {
+        StringBuilder properties = new StringBuilder();
+        if ( useBrackets )
+        {
+            properties.append( "(" );
+        }
+        for ( int i = 0; i < propertyIds.length; i++ )
+        {
+            if ( i > 0 )
+            {
+                properties.append( ", " );
+            }
+            properties.append( prefix ).append( tokenNameLookup.propertyKeyGetName( propertyIds[i] ) );
+        }
+        if ( useBrackets )
+        {
+            properties.append( ")" );
+        }
+        return properties.toString();
+    }
 }

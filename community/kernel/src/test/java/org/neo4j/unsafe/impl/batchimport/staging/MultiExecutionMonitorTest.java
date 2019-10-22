@@ -93,7 +93,7 @@ public class MultiExecutionMonitorTest
         @Override
         public String toString()
         {
-            return "[" + name + ":" + timesPolled + "]";
+            return new StringBuilder().append("[").append(name).append(":").append(timesPolled).append("]").toString();
         }
     }
 }

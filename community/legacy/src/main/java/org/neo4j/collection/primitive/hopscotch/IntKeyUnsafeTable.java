@@ -38,7 +38,7 @@ public class IntKeyUnsafeTable<VALUE> extends UnsafeTable<VALUE>
     @Override
     protected void internalPut( long keyAddress, long key, VALUE value )
     {
-        assert (int) key == key : "Illegal key " + key + ", it's bigger than int";
+        assert (int) key == key : new StringBuilder().append("Illegal key ").append(key).append(", it's bigger than int").toString();
 
         // We can "safely" cast to int here, assuming that this call trickles in via a PrimitiveIntCollection
         UnsafeUtil.putInt( keyAddress, (int) key );

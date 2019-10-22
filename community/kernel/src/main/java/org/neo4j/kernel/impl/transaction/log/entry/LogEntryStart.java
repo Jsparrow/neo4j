@@ -117,16 +117,10 @@ public class LogEntryStart extends AbstractLogEntry
     @Override
     public String toString( TimeZone timeZone )
     {
-        return "Start[" +
-                "master=" + masterId + "," +
-                "me=" + authorId + "," +
-                "time=" + timestamp( timeWritten, timeZone ) + "," +
-                "lastCommittedTxWhenTransactionStarted=" + lastCommittedTxWhenTransactionStarted + "," +
-                "additionalHeaderLength=" + (additionalHeader == null ? -1 : additionalHeader.length) + "," +
-                (additionalHeader == null ? "" : Arrays.toString( additionalHeader ) ) + "," +
-                "position=" + startPosition + "," +
-                "checksum=" + checksum( this ) +
-                "]";
+        return new StringBuilder().append("Start[").append("master=").append(masterId).append(",").append("me=").append(authorId).append(",")
+				.append("time=").append(timestamp( timeWritten, timeZone )).append(",").append("lastCommittedTxWhenTransactionStarted=").append(lastCommittedTxWhenTransactionStarted).append(",").append("additionalHeaderLength=")
+				.append(additionalHeader == null ? -1 : additionalHeader.length).append(",").append(additionalHeader == null ? "" : Arrays.toString( additionalHeader )).append(",")
+				.append("position=").append(startPosition).append(",").append("checksum=").append(checksum( this )).append("]").toString();
     }
 
     @Override

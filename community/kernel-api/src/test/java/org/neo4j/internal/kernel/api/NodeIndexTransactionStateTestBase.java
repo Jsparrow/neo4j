@@ -49,8 +49,10 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
 {
     @Rule
     public ExpectedException exception = ExpectedException.none();
+	@Parameterized.Parameter
+    public boolean needsValues;
 
-    @Parameterized.Parameters()
+	@Parameterized.Parameters()
     public static Iterable<Object[]> data()
     {
         return Arrays.asList(new Object[][] {
@@ -58,10 +60,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         });
     }
 
-    @Parameterized.Parameter
-    public boolean needsValues;
-
-    @Test
+	@Test
     public void shouldPerformStringSuffixSearch() throws Exception
     {
         // given
@@ -87,7 +86,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    @Test
+	@Test
     public void shouldPerformScan() throws Exception
     {
         // given
@@ -123,7 +122,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    @Test
+	@Test
     public void shouldPerformEqualitySeek() throws Exception
     {
         // given
@@ -150,7 +149,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    @Test
+	@Test
     public void shouldPerformStringPrefixSearch() throws Exception
     {
         // given
@@ -177,7 +176,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    @Test
+	@Test
     public void shouldPerformStringRangeSearch() throws Exception
     {
         // given
@@ -203,7 +202,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    @Test
+	@Test
     public void shouldPerformStringRangeSearchWithAddedNodeInTxState() throws Exception
     {
         // given
@@ -234,7 +233,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    @Test
+	@Test
     public void shouldPerformStringRangeSearchWithRemovedNodeInTxState() throws Exception
     {
         // given
@@ -264,7 +263,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    @Test
+	@Test
     public void shouldPerformStringRangeSearchWithDeletedNodeInTxState() throws Exception
     {
         // given
@@ -293,7 +292,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    @Test
+	@Test
     public void shouldPerformStringContainsSearch() throws Exception
     {
         // given
@@ -320,7 +319,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    @Test
+	@Test
     public void shouldThrowIfTransactionTerminated() throws Exception
     {
         try ( Transaction tx = beginTransaction() )
@@ -336,14 +335,14 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    protected abstract void terminate( Transaction transaction );
+	protected abstract void terminate( Transaction transaction );
 
-    private long nodeWithPropId( Transaction tx, Object value ) throws Exception
+	private long nodeWithPropId( Transaction tx, Object value ) throws Exception
     {
         return nodeWithProp( tx, value ).first();
     }
 
-    private Pair<Long,Value> nodeWithProp( Transaction tx, Object value ) throws Exception
+	private Pair<Long,Value> nodeWithProp( Transaction tx, Object value ) throws Exception
     {
         Write write = tx.dataWrite();
         long node = write.nodeCreate();
@@ -353,7 +352,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         return Pair.of( node, val );
     }
 
-    private void createIndex()
+	private void createIndex()
     {
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
@@ -367,7 +366,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    /**
+	/**
      * Perform an index seek and assert that the correct nodes and values were found.
      *
      * Since this method modifies TX state for the test it is not safe to call this method more than once in the same transaction.
@@ -390,7 +389,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    /**
+	/**
      * Perform an index scan and assert that the correct nodes and values were found.
      *
      * Since this method modifies TX state for the test it is not safe to call this method more than once in the same transaction.
@@ -412,7 +411,7 @@ public abstract class NodeIndexTransactionStateTestBase<G extends KernelAPIWrite
         }
     }
 
-    private void assertNodeAndValue( Set<Pair<Long,Value>> expected, Transaction tx, boolean needsValues, Object anotherValueFoundByQuery,
+	private void assertNodeAndValue( Set<Pair<Long,Value>> expected, Transaction tx, boolean needsValues, Object anotherValueFoundByQuery,
             NodeValueIndexCursor nodes ) throws Exception
     {
         // Modify tx state with changes that should not be reflected in the cursor, since it was already initialized in the above statement

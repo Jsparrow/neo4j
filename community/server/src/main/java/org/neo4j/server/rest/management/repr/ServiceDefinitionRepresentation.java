@@ -60,7 +60,7 @@ public class ServiceDefinitionRepresentation extends MappingRepresentation
         }
         else if ( !subPath.startsWith( "/" ) )
         {
-            return basePath + "/" + subPath;
+            return new StringBuilder().append(basePath).append("/").append(subPath).toString();
         }
         return basePath + subPath;
     }
@@ -73,15 +73,9 @@ public class ServiceDefinitionRepresentation extends MappingRepresentation
             @Override
             protected void serialize( MappingSerializer resourceSerializer )
             {
-                for ( Map.Entry<String, String> entry : uris.entrySet() )
-                {
-                    resourceSerializer.putRelativeUri( entry.getKey(), entry.getValue() );
-                }
+                uris.entrySet().forEach(entry -> resourceSerializer.putRelativeUri(entry.getKey(), entry.getValue()));
 
-                for ( Map.Entry<String, String> entry : templates.entrySet() )
-                {
-                    resourceSerializer.putRelativeUriTemplate( entry.getKey(), entry.getValue() );
-                }
+                templates.entrySet().forEach(entry -> resourceSerializer.putRelativeUriTemplate(entry.getKey(), entry.getValue()));
             }
         } );
     }

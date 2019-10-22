@@ -42,11 +42,10 @@ public class ShortestPathsBranchCollisionDetector extends StandardBranchCollisio
             return false;
         }
 
-        if ( depth == -1 )
-        {
-            depth = path.length();
-            return true;
-        }
-        return path.length() == depth;
+        if (!(depth == -1)) {
+			return path.length() == depth;
+		}
+		depth = path.length();
+		return true;
     }
 }

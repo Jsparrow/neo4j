@@ -486,10 +486,7 @@ class SeekCursor<KEY,VALUE> implements RawCursor<Hit<KEY,VALUE>,IOException>, Hi
             }
             else if ( !saneRead() )
             {
-                throw new TreeInconsistencyException( "Read inconsistent tree node %d%n" +
-                        "  nodeType:%d%n  currentNodeGeneration:%d%n  successor:%d%n  successorGeneration:%d%n" +
-                        "  isInternal:%b%n  keyCount:%d%n  searchResult:%d%n  pos:%d%n" +
-                        "  childId:%d%n  childIdGeneration:%d",
+                throw new TreeInconsistencyException( new StringBuilder().append("Read inconsistent tree node %d%n").append("  nodeType:%d%n  currentNodeGeneration:%d%n  successor:%d%n  successorGeneration:%d%n").append("  isInternal:%b%n  keyCount:%d%n  searchResult:%d%n  pos:%d%n").append("  childId:%d%n  childIdGeneration:%d").toString(),
                         cursor.getCurrentPageId(), nodeType, currentNodeGeneration, successor, successorGeneration,
                         isInternal, keyCount, searchResult, pos, pointerId, pointerGeneration );
             }
@@ -606,14 +603,11 @@ class SeekCursor<KEY,VALUE> implements RawCursor<Hit<KEY,VALUE>,IOException>, Hi
             cachedLength = 0;
             resultOnTrack = false;
 
-            // Where we are
-            if ( concurrentWriteHappened || forceReadHeader || !seekForward )
-            {
-                if ( !readHeader() || isInternal )
-                {
-                    continue;
-                }
-            }
+            boolean condition = (concurrentWriteHappened || forceReadHeader || !seekForward) && (!readHeader() || isInternal);
+			// Where we are
+            if ( condition ) {
+			    continue;
+			}
 
             if ( verifyExpectedFirstAfterGoToNext )
             {
@@ -687,10 +681,7 @@ class SeekCursor<KEY,VALUE> implements RawCursor<Hit<KEY,VALUE>,IOException>, Hi
         }
         else if ( !saneRead() )
         {
-            throw new TreeInconsistencyException( "Read inconsistent tree node %d%n" +
-                    "  nodeType:%d%n  currentNodeGeneration:%d%n  successor:%d%n  successorGeneration:%d%n" +
-                    "  keyCount:%d%n  searchResult:%d%n  pos:%d%n" +
-                    "  rightSibling:%d%n  rightSiblingGeneration:%d",
+            throw new TreeInconsistencyException( new StringBuilder().append("Read inconsistent tree node %d%n").append("  nodeType:%d%n  currentNodeGeneration:%d%n  successor:%d%n  successorGeneration:%d%n").append("  keyCount:%d%n  searchResult:%d%n  pos:%d%n").append("  rightSibling:%d%n  rightSiblingGeneration:%d").toString(),
                     cursor.getCurrentPageId(), nodeType, currentNodeGeneration, successor, successorGeneration,
                     keyCount, searchResult, pos, pointerId, pointerGeneration );
         }
@@ -1169,13 +1160,12 @@ class SeekCursor<KEY,VALUE> implements RawCursor<Hit<KEY,VALUE>,IOException>, Hi
         long newGeneration = generationSupplier.getAsLong();
         long newStableGeneration = Generation.stableGeneration( newGeneration );
         long newUnstableGeneration = Generation.unstableGeneration( newGeneration );
-        if ( newStableGeneration != stableGeneration || newUnstableGeneration != unstableGeneration )
-        {
-            stableGeneration = newStableGeneration;
-            unstableGeneration = newUnstableGeneration;
-            return true;
-        }
-        return false;
+        if (!(newStableGeneration != stableGeneration || newUnstableGeneration != unstableGeneration)) {
+			return false;
+		}
+		stableGeneration = newStableGeneration;
+		unstableGeneration = newUnstableGeneration;
+		return true;
     }
 
     @Override

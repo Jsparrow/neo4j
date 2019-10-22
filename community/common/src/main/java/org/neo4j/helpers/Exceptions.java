@@ -43,12 +43,26 @@ public class Exceptions
 
     private static final String UNEXPECTED_MESSAGE = "Unexpected Exception";
 
-    private Exceptions()
+	private static final Field THROWABLE_MESSAGE_FIELD;
+	static
+    {
+        try
+        {
+            THROWABLE_MESSAGE_FIELD = Throwable.class.getDeclaredField( "detailMessage" );
+            THROWABLE_MESSAGE_FIELD.setAccessible( true );
+        }
+        catch ( Exception e )
+        {
+            throw new LinkageError( "Could not get Throwable message field", e );
+        }
+    }
+
+	private Exceptions()
     {
         throw new AssertionError( "No instances" );
     }
 
-    /**
+	/**
      * Rethrows {@code exception} if it is an instance of {@link RuntimeException} or {@link Error}. Typical usage is:
      *
      * <pre>
@@ -86,7 +100,7 @@ public class Exceptions
         }
     }
 
-    /**
+	/**
      * Will rethrow the provided {@code exception} if it is an instance of {@code clazz}. Typical usage is:
      *
      * <pre>
@@ -122,7 +136,7 @@ public class Exceptions
         }
     }
 
-    /**
+	/**
      * @deprecated Use {@link Throwable#initCause(Throwable)} instead.
      */
     @Deprecated
@@ -139,7 +153,7 @@ public class Exceptions
         return exception;
     }
 
-    /**
+	/**
      * @deprecated Use {@link Throwable#addSuppressed(Throwable)} instead.
      */
     @Deprecated
@@ -155,7 +169,7 @@ public class Exceptions
         return exception;
     }
 
-    /**
+	/**
      * @deprecated See {@link #launderedException(Class, String, Throwable)}.
      */
     @Deprecated
@@ -164,7 +178,7 @@ public class Exceptions
         return launderedException( RuntimeException.class, UNEXPECTED_MESSAGE, exception );
     }
 
-    /**
+	/**
      * @deprecated See {@link #launderedException(Class, String, Throwable)}.
      */
     @Deprecated
@@ -173,7 +187,7 @@ public class Exceptions
         return launderedException( RuntimeException.class, messageForUnexpected, exception );
     }
 
-    /**
+	/**
      * @deprecated See {@link #launderedException(Class, String, Throwable)}.
      */
     @Deprecated
@@ -182,7 +196,7 @@ public class Exceptions
         return launderedException( type, UNEXPECTED_MESSAGE, exception );
     }
 
-    /**
+	/**
      * @deprecated use {@code throw e} or {@code throw new RuntimeException(e)} directly. Prefer multi-caches if applicable.
      * For more elaborate scenarios, have a look at {@link #throwIfUnchecked(Throwable)} and
      * {@link #throwIfInstanceOf(Throwable, Class)}
@@ -217,7 +231,7 @@ public class Exceptions
         }
     }
 
-    /**
+	/**
      * Peels off layers of causes. For example:
      *
      * MyFarOuterException
@@ -245,7 +259,7 @@ public class Exceptions
         return exception;
     }
 
-    /**
+	/**
      * Returns the root cause of an exception.
      *
      * @param caughtException exception to find the root cause of.
@@ -266,7 +280,7 @@ public class Exceptions
         return root;
     }
 
-    /**
+	/**
      * Searches the entire exception hierarchy of causes and suppressed exceptions against the given predicate.
      *
      * @param e exception to start searching from.
@@ -308,7 +322,7 @@ public class Exceptions
         return Optional.empty();
     }
 
-    public static String stringify( Throwable throwable )
+	public static String stringify( Throwable throwable )
     {
         if ( throwable == null )
         {
@@ -320,13 +334,12 @@ public class Exceptions
         return stringWriter.toString();
     }
 
-    public static String stringify( Thread thread, StackTraceElement[] elements )
+	public static String stringify( Thread thread, StackTraceElement[] elements )
     {
         StringBuilder builder = new StringBuilder(
-                "\"" + thread.getName() + "\"" + (thread.isDaemon() ? " daemon" : "") +
-                " prio=" + thread.getPriority() +
-                " tid=" + thread.getId() +
-                " " + thread.getState().name().toLowerCase() + "\n" );
+                new StringBuilder().append("\"").append(thread.getName()).append("\"").append(thread.isDaemon() ? " daemon" : "")
+						.append(" prio=").append(thread.getPriority()).append(" tid=").append(thread.getId()).append(" ").append(thread.getState().name().toLowerCase())
+						.append("\n").toString() );
         builder.append( "   " ).append( State.class.getName() ).append( ": " )
                 .append( thread.getState().name().toUpperCase() ).append( "\n" );
         for ( StackTraceElement element : elements )
@@ -351,7 +364,7 @@ public class Exceptions
         return builder.toString();
     }
 
-    @SuppressWarnings( "rawtypes" )
+	@SuppressWarnings( "rawtypes" )
     public static boolean contains( final Throwable cause, final String containsMessage, final Class... anyOfTheseClasses )
     {
         final Predicate<Throwable> anyOfClasses = Predicates.instanceOfAny( anyOfTheseClasses );
@@ -359,13 +372,13 @@ public class Exceptions
                                 anyOfClasses.test( item ) );
     }
 
-    @SuppressWarnings( "rawtypes" )
+	@SuppressWarnings( "rawtypes" )
     public static boolean contains( Throwable cause, Class... anyOfTheseClasses )
     {
         return contains( cause, org.neo4j.function.Predicates.instanceOfAny( anyOfTheseClasses ) );
     }
 
-    public static boolean contains( Throwable cause, Predicate<Throwable> toLookFor )
+	public static boolean contains( Throwable cause, Predicate<Throwable> toLookFor )
     {
         while ( cause != null )
         {
@@ -378,7 +391,7 @@ public class Exceptions
         return false;
     }
 
-    /**
+	/**
      * @deprecated Use {@link Throwable#addSuppressed(Throwable)} and {@link Throwable#initCause(Throwable)} where
      * appropriate instead.
      */
@@ -404,21 +417,7 @@ public class Exceptions
         return first;
     }
 
-    private static final Field THROWABLE_MESSAGE_FIELD;
-    static
-    {
-        try
-        {
-            THROWABLE_MESSAGE_FIELD = Throwable.class.getDeclaredField( "detailMessage" );
-            THROWABLE_MESSAGE_FIELD.setAccessible( true );
-        }
-        catch ( Exception e )
-        {
-            throw new LinkageError( "Could not get Throwable message field", e );
-        }
-    }
-
-    public static void setMessage( Throwable cause, String message )
+	public static void setMessage( Throwable cause, String message )
     {
         try
         {
@@ -430,13 +429,13 @@ public class Exceptions
         }
     }
 
-    public static <T extends Throwable> T withMessage( T cause, String message )
+	public static <T extends Throwable> T withMessage( T cause, String message )
     {
         setMessage( cause, message );
         return cause;
     }
 
-    public static <T extends Throwable> T chain( T initial, T current )
+	public static <T extends Throwable> T chain( T initial, T current )
     {
         if ( initial == null )
         {

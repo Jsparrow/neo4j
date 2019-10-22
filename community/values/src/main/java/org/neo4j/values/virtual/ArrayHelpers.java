@@ -89,14 +89,7 @@ final class ArrayHelpers
 
     static boolean containsNull( List<AnyValue> values )
     {
-        for ( AnyValue value : values )
-        {
-            if ( value == null )
-            {
-                return true;
-            }
-        }
-        return false;
+        return values.stream().anyMatch(value -> value == null);
     }
 
     static <T> Iterator<T> asIterator( T[] array )

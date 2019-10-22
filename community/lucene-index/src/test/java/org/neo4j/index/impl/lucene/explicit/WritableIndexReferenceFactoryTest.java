@@ -44,27 +44,24 @@ import static org.junit.Assert.assertSame;
 public class WritableIndexReferenceFactoryTest
 {
 
-    private final TestDirectory testDirectory = TestDirectory.testDirectory();
-    private final CleanupRule cleanupRule = new CleanupRule();
-    private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
-
-    @Rule
+    private static final String INDEX_NAME = "testIndex";
+	private final TestDirectory testDirectory = TestDirectory.testDirectory();
+	private final CleanupRule cleanupRule = new CleanupRule();
+	private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	@Rule
     public final RuleChain ruleChain = RuleChain.outerRule( testDirectory )
             .around( cleanupRule ).around( fileSystemRule );
+	private LuceneDataSource.LuceneFilesystemFacade filesystemFacade = LuceneDataSource.LuceneFilesystemFacade.MEMORY;
+	private IndexIdentifier indexIdentifier = new IndexIdentifier( IndexEntityType.Node, INDEX_NAME );
+	private IndexConfigStore indexStore;
 
-    private static final String INDEX_NAME = "testIndex";
-
-    private LuceneDataSource.LuceneFilesystemFacade filesystemFacade = LuceneDataSource.LuceneFilesystemFacade.MEMORY;
-    private IndexIdentifier indexIdentifier = new IndexIdentifier( IndexEntityType.Node, INDEX_NAME );
-    private IndexConfigStore indexStore;
-
-    @Before
+	@Before
     public void setUp()
     {
         setupIndexInfrastructure();
     }
 
-    @Test
+	@Test
     public void createWritableIndexReference() throws Exception
     {
         WritableIndexReferenceFactory indexReferenceFactory = createFactory();
@@ -73,7 +70,7 @@ public class WritableIndexReferenceFactoryTest
         assertNotNull( "Index should have writer.", indexReference.getWriter() );
     }
 
-    @Test
+	@Test
     public void refreshNotChangedWritableIndexReference() throws Exception
     {
         WritableIndexReferenceFactory indexReferenceFactory = createFactory();
@@ -83,7 +80,7 @@ public class WritableIndexReferenceFactoryTest
         assertSame( indexReference, refreshedInstance );
     }
 
-    @Test
+	@Test
     public void refreshChangedWritableIndexReference() throws Exception
     {
         WritableIndexReferenceFactory indexReferenceFactory = createFactory();
@@ -97,27 +94,27 @@ public class WritableIndexReferenceFactoryTest
         assertNotSame( "Should return new refreshed index reference.", indexReference, refreshedIndexReference );
     }
 
-    private static void writeSomething( IndexReference indexReference ) throws IOException
+	private static void writeSomething( IndexReference indexReference ) throws IOException
     {
         IndexWriter writer = indexReference.getWriter();
         writer.addDocument( new Document() );
         writer.commit();
     }
 
-    private IndexReference createIndexReference( WritableIndexReferenceFactory indexReferenceFactory ) throws Exception
+	private IndexReference createIndexReference( WritableIndexReferenceFactory indexReferenceFactory ) throws Exception
     {
         IndexReference indexReference = indexReferenceFactory.createIndexReference( indexIdentifier );
         cleanupRule.add( indexReference );
         return indexReference;
     }
 
-    private WritableIndexReferenceFactory createFactory()
+	private WritableIndexReferenceFactory createFactory()
     {
         return new WritableIndexReferenceFactory( filesystemFacade, testDirectory.databaseLayout().file( "index" ),
                 new IndexTypeCache( indexStore ) );
     }
 
-    private void setupIndexInfrastructure()
+	private void setupIndexInfrastructure()
     {
         indexStore = new IndexConfigStore( testDirectory.databaseLayout(), fileSystemRule.get() );
         indexStore.set( Node.class, INDEX_NAME, MapUtil.stringMap( IndexManager.PROVIDER, "lucene", "type", "fulltext" ) );

@@ -73,29 +73,6 @@ class HopScotchHashingAlgorithmTest
         assertEquals( added, iterated );
     }
 
-    private static class TableGrowthAwareMonitor extends Monitor.Adapter
-    {
-        private boolean grew;
-
-        @Override
-        public boolean tableGrew( int fromCapacity, int toCapacity, int currentSize )
-        {
-            return grew = true;
-        }
-
-        boolean checkAndReset()
-        {
-            try
-            {
-                return grew;
-            }
-            finally
-            {
-                grew = false;
-            }
-        }
-    }
-
     private static int figureOutGrowthThreshold()
     {
         final AtomicBoolean grew = new AtomicBoolean();
@@ -117,6 +94,29 @@ class HopScotchHashingAlgorithmTest
                 set.add( i * 3 );
             }
             return i;
+        }
+    }
+
+	private static class TableGrowthAwareMonitor extends Monitor.Adapter
+    {
+        private boolean grew;
+
+        @Override
+        public boolean tableGrew( int fromCapacity, int toCapacity, int currentSize )
+        {
+            return grew = true;
+        }
+
+        boolean checkAndReset()
+        {
+            try
+            {
+                return grew;
+            }
+            finally
+            {
+                grew = false;
+            }
         }
     }
 }

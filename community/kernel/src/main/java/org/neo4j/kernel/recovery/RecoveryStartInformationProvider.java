@@ -33,50 +33,21 @@ import static org.neo4j.kernel.impl.transaction.log.LogVersionRepository.INITIAL
  */
 public class RecoveryStartInformationProvider implements ThrowingSupplier<RecoveryStartInformation,IOException>
 {
-    public interface Monitor
-    {
-        /**
-         * There's a check point log entry as the last entry in the transaction log.
-         *
-         * @param logPosition {@link LogPosition} of the last check point.
-         */
-        default void noCommitsAfterLastCheckPoint( LogPosition logPosition )
-        {   // no-op by default
-        }
-
-        /**
-         * There's a check point log entry, but there are other log entries after it.
-         *
-         * @param logPosition {@link LogPosition} pointing to the first log entry after the last
-         * check pointed transaction.
-         * @param firstTxIdAfterLastCheckPoint transaction id of the first transaction after the last check point.
-         */
-        default void commitsAfterLastCheckPoint( LogPosition logPosition, long firstTxIdAfterLastCheckPoint )
-        {   // no-op by default
-        }
-
-        /**
-         * No check point log entry found in the transaction log.
-         */
-        default void noCheckPointFound()
-        {   // no-op by default
-        }
-    }
-
     public static final Monitor NO_MONITOR = new Monitor()
     {
     };
 
-    private final LogTailScanner logTailScanner;
-    private final Monitor monitor;
+	private final LogTailScanner logTailScanner;
 
-    public RecoveryStartInformationProvider( LogTailScanner logTailScanner, Monitor monitor )
+	private final Monitor monitor;
+
+	public RecoveryStartInformationProvider( LogTailScanner logTailScanner, Monitor monitor )
     {
         this.logTailScanner = logTailScanner;
         this.monitor = monitor;
     }
 
-    /**
+	/**
      * Find the log position to start recovery from
      *
      * @return {@link LogPosition#UNSPECIFIED} if there is no need to recover otherwise the {@link LogPosition} to
@@ -106,16 +77,45 @@ public class RecoveryStartInformationProvider implements ThrowingSupplier<Recove
             {
                 long fromLogVersion = Math.max( INITIAL_LOG_VERSION, logTailInformation.oldestLogVersionFound );
                 throw new UnderlyingStorageException(
-                        "No check point found in any log file from version " + fromLogVersion + " to " +
-                                logTailInformation.currentLogVersion );
+                        new StringBuilder().append("No check point found in any log file from version ").append(fromLogVersion).append(" to ").append(logTailInformation.currentLogVersion).toString() );
             }
             monitor.noCheckPointFound();
             return createRecoveryInformation( LogPosition.start( 0 ), txIdAfterLastCheckPoint );
         }
     }
 
-    private RecoveryStartInformation createRecoveryInformation( LogPosition logPosition, long firstTxId )
+	private RecoveryStartInformation createRecoveryInformation( LogPosition logPosition, long firstTxId )
     {
         return new RecoveryStartInformation( logPosition, firstTxId );
+    }
+
+	public interface Monitor
+    {
+        /**
+         * There's a check point log entry as the last entry in the transaction log.
+         *
+         * @param logPosition {@link LogPosition} of the last check point.
+         */
+        default void noCommitsAfterLastCheckPoint( LogPosition logPosition )
+        {   // no-op by default
+        }
+
+        /**
+         * There's a check point log entry, but there are other log entries after it.
+         *
+         * @param logPosition {@link LogPosition} pointing to the first log entry after the last
+         * check pointed transaction.
+         * @param firstTxIdAfterLastCheckPoint transaction id of the first transaction after the last check point.
+         */
+        default void commitsAfterLastCheckPoint( LogPosition logPosition, long firstTxIdAfterLastCheckPoint )
+        {   // no-op by default
+        }
+
+        /**
+         * No check point log entry found in the transaction log.
+         */
+        default void noCheckPointFound()
+        {   // no-op by default
+        }
     }
 }

@@ -86,18 +86,18 @@ public class BasicAuthManager implements AuthManager, UserManager, UserManagerSu
         userRepository.start();
         initialUserRepository.start();
 
-        if ( userRepository.numberOfUsers() == 0 )
-        {
-            User neo4j = newUser( INITIAL_USER_NAME, UTF8.encode( INITIAL_PASSWORD ), true );
-            if ( initialUserRepository.numberOfUsers() > 0 )
-            {
-                User user = initialUserRepository.getUserByName( INITIAL_USER_NAME );
-                if ( user != null )
-                {
-                    userRepository.update( neo4j, user );
-                }
-            }
-        }
+        if (userRepository.numberOfUsers() != 0) {
+			return;
+		}
+		User neo4j = newUser( INITIAL_USER_NAME, UTF8.encode( INITIAL_PASSWORD ), true );
+		if ( initialUserRepository.numberOfUsers() > 0 )
+		{
+		    User user = initialUserRepository.getUserByName( INITIAL_USER_NAME );
+		    if ( user != null )
+		    {
+		        userRepository.update( neo4j, user );
+		    }
+		}
     }
 
     @Override
@@ -184,7 +184,7 @@ public class BasicAuthManager implements AuthManager, UserManager, UserManagerSu
         User user = userRepository.getUserByName( username );
         if ( user == null )
         {
-            throw new InvalidArgumentsException( "User '" + username + "' does not exist." );
+            throw new InvalidArgumentsException( new StringBuilder().append("User '").append(username).append("' does not exist.").toString() );
         }
         return user;
     }
@@ -253,13 +253,13 @@ public class BasicAuthManager implements AuthManager, UserManager, UserManagerSu
     private void assertValidScheme( Map<String,Object> token ) throws InvalidAuthTokenException
     {
         String scheme = AuthToken.safeCast( AuthToken.SCHEME_KEY, token );
-        if ( scheme.equals( "none" ) )
+        if ( "none".equals( scheme ) )
         {
             throw invalidToken( ", scheme 'none' is only allowed when auth is disabled." );
         }
         if ( !scheme.equals( AuthToken.BASIC_SCHEME ) )
         {
-            throw invalidToken( ", scheme '" + scheme + "' is not supported." );
+            throw invalidToken( new StringBuilder().append(", scheme '").append(scheme).append("' is not supported.").toString() );
         }
     }
 

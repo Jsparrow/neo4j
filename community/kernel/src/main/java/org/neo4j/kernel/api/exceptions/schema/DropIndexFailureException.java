@@ -30,17 +30,17 @@ import static java.lang.String.format;
 
 public class DropIndexFailureException extends SchemaKernelException
 {
-    private final SchemaDescriptor descriptor;
     private static final String message = "Unable to drop index on %s: %s";
+	private final SchemaDescriptor descriptor;
 
-    public DropIndexFailureException( SchemaDescriptor descriptor, SchemaKernelException cause )
+	public DropIndexFailureException( SchemaDescriptor descriptor, SchemaKernelException cause )
     {
         super( Status.Schema.IndexDropFailed, format( message, descriptor.userDescription( SchemaUtil.idTokenNameLookup ),
                         cause.getMessage() ), cause );
         this.descriptor = descriptor;
     }
 
-    @Override
+	@Override
     public String getUserMessage( TokenNameLookup tokenNameLookup )
     {
         return format( message, descriptor.userDescription( tokenNameLookup ),

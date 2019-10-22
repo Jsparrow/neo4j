@@ -41,6 +41,6 @@ public class IndexRecord extends AbstractBaseRecord
     @Override
     public String toString()
     {
-        return "Index[ " + indexRule.toString() + " ]";
+        return new StringBuilder().append("Index[ ").append(indexRule.toString()).append(" ]").toString();
     }
 }

@@ -80,33 +80,26 @@ public class ConsistencyReporter implements ConsistencyReport.Reporter
             ProxyFactory.create( ConsistencyReport.RelationshipGroupConsistencyReport.class );
     private static final ProxyFactory<ConsistencyReport.CountsConsistencyReport> COUNTS_REPORT =
             ProxyFactory.create( ConsistencyReport.CountsConsistencyReport.class );
-
-    private final RecordAccess records;
-    private final InconsistencyReport report;
-    private final Monitor monitor;
-
-    public interface Monitor
-    {
-        void reported( Class<?> report, String method, String message );
-    }
-
-    public static final Monitor NO_MONITOR = ( report, method, message ) ->
+	public static final Monitor NO_MONITOR = ( report, method, message ) ->
     {
     };
+	private final RecordAccess records;
+	private final InconsistencyReport report;
+	private final Monitor monitor;
 
-    public ConsistencyReporter( RecordAccess records, InconsistencyReport report )
+	public ConsistencyReporter( RecordAccess records, InconsistencyReport report )
     {
         this( records, report, NO_MONITOR );
     }
 
-    public ConsistencyReporter( RecordAccess records, InconsistencyReport report, Monitor monitor )
+	public ConsistencyReporter( RecordAccess records, InconsistencyReport report, Monitor monitor )
     {
         this.records = records;
         this.report = report;
         this.monitor = monitor;
     }
 
-    private <RECORD extends AbstractBaseRecord, REPORT extends ConsistencyReport>
+	private <RECORD extends AbstractBaseRecord, REPORT extends ConsistencyReport>
     void dispatch( RecordType type, ProxyFactory<REPORT> factory, RECORD record, RecordCheck<RECORD, REPORT> checker )
     {
         ReportInvocationHandler<RECORD,REPORT> handler = new ReportHandler<>( report, factory, type, records, record,
@@ -125,7 +118,7 @@ public class ConsistencyReporter implements ConsistencyReport.Reporter
         handler.updateSummary();
     }
 
-    static void dispatchReference( CheckerEngine engine, ComparativeRecordChecker checker,
+	static void dispatchReference( CheckerEngine engine, ComparativeRecordChecker checker,
                                    AbstractBaseRecord referenced, RecordAccess records )
     {
         ReportInvocationHandler handler = (ReportInvocationHandler) engine;
@@ -133,13 +126,13 @@ public class ConsistencyReporter implements ConsistencyReport.Reporter
         handler.updateSummary();
     }
 
-    static String pendingCheckToString( CheckerEngine engine, ComparativeRecordChecker checker )
+	static String pendingCheckToString( CheckerEngine engine, ComparativeRecordChecker checker )
     {
         ReportInvocationHandler handler = (ReportInvocationHandler) engine;
         return handler.pendingCheckToString(checker);
     }
 
-    static void dispatchChangeReference( CheckerEngine engine, ComparativeRecordChecker checker,
+	static void dispatchChangeReference( CheckerEngine engine, ComparativeRecordChecker checker,
                                          AbstractBaseRecord oldReferenced, AbstractBaseRecord newReferenced,
                                          RecordAccess records )
     {
@@ -148,12 +141,12 @@ public class ConsistencyReporter implements ConsistencyReport.Reporter
         handler.updateSummary();
     }
 
-    static void dispatchSkip( CheckerEngine engine )
+	static void dispatchSkip( CheckerEngine engine )
     {
         ((ReportInvocationHandler) engine ).updateSummary();
     }
 
-    public <RECORD extends AbstractBaseRecord,REPORT extends ConsistencyReport> REPORT report( RECORD record,
+	public <RECORD extends AbstractBaseRecord,REPORT extends ConsistencyReport> REPORT report( RECORD record,
             Class<REPORT> cls, RecordType recordType )
     {
         ProxyFactory<REPORT> proxyFactory = ProxyFactory.get( cls );
@@ -169,9 +162,106 @@ public class ConsistencyReporter implements ConsistencyReport.Reporter
         return handler.report();
     }
 
-    public FormattingDocumentedHandler formattingHandler( RecordType type )
+	public FormattingDocumentedHandler formattingHandler( RecordType type )
     {
         return new FormattingDocumentedHandler( report, type );
+    }
+
+	@Override
+    public void forSchema( DynamicRecord schema,
+                           RecordCheck<DynamicRecord, ConsistencyReport.SchemaConsistencyReport> checker )
+    {
+        dispatch( RecordType.SCHEMA, SCHEMA_REPORT, schema, checker );
+    }
+
+	@Override
+    public void forNode( NodeRecord node,
+                         RecordCheck<NodeRecord, ConsistencyReport.NodeConsistencyReport> checker )
+    {
+        dispatch( RecordType.NODE, NODE_REPORT, node, checker );
+    }
+
+	@Override
+    public void forRelationship( RelationshipRecord relationship,
+                                 RecordCheck<RelationshipRecord, ConsistencyReport.RelationshipConsistencyReport> checker )
+    {
+        dispatch( RecordType.RELATIONSHIP, RELATIONSHIP_REPORT, relationship, checker );
+    }
+
+	@Override
+    public void forProperty( PropertyRecord property,
+                             RecordCheck<PropertyRecord, ConsistencyReport.PropertyConsistencyReport> checker )
+    {
+        dispatch( RecordType.PROPERTY, PROPERTY_REPORT, property, checker );
+    }
+
+	@Override
+    public void forRelationshipTypeName( RelationshipTypeTokenRecord relationshipTypeTokenRecord,
+                                         RecordCheck<RelationshipTypeTokenRecord,
+                                         ConsistencyReport.RelationshipTypeConsistencyReport> checker )
+    {
+        dispatch( RecordType.RELATIONSHIP_TYPE, RELATIONSHIP_TYPE_REPORT, relationshipTypeTokenRecord, checker );
+    }
+
+	@Override
+    public void forLabelName( LabelTokenRecord label,
+                              RecordCheck<LabelTokenRecord, ConsistencyReport.LabelTokenConsistencyReport> checker )
+    {
+        dispatch( RecordType.LABEL, LABEL_KEY_REPORT, label, checker );
+    }
+
+	@Override
+    public void forNodeLabelScan( LabelScanDocument document,
+                                  RecordCheck<LabelScanDocument, ConsistencyReport.LabelScanConsistencyReport> checker )
+    {
+        dispatch( RecordType.LABEL_SCAN_DOCUMENT, LABEL_SCAN_REPORT, document, checker );
+    }
+
+	@Override
+    public void forIndexEntry( IndexEntry entry,
+                               RecordCheck<IndexEntry, ConsistencyReport.IndexConsistencyReport> checker )
+    {
+        dispatch( RecordType.INDEX, INDEX, entry, checker );
+    }
+
+	@Override
+    public void forPropertyKey( PropertyKeyTokenRecord key,
+                                RecordCheck<PropertyKeyTokenRecord, ConsistencyReport.PropertyKeyTokenConsistencyReport> checker )
+    {
+        dispatch( RecordType.PROPERTY_KEY, PROPERTY_KEY_REPORT, key, checker );
+    }
+
+	@Override
+    public void forDynamicBlock( RecordType type, DynamicRecord record,
+                                 RecordCheck<DynamicRecord, ConsistencyReport.DynamicConsistencyReport> checker )
+    {
+        dispatch( type, DYNAMIC_REPORT, record, checker );
+    }
+
+	@Override
+    public void forDynamicLabelBlock( RecordType type, DynamicRecord record,
+                                      RecordCheck<DynamicRecord, DynamicLabelConsistencyReport> checker )
+    {
+        dispatch( type, DYNAMIC_LABEL_REPORT, record, checker );
+    }
+
+	@Override
+    public void forRelationshipGroup( RelationshipGroupRecord record,
+            RecordCheck<RelationshipGroupRecord, RelationshipGroupConsistencyReport> checker )
+    {
+        dispatch( RecordType.RELATIONSHIP_GROUP, RELATIONSHIP_GROUP_REPORT, record, checker );
+    }
+
+	@Override
+    public void forCounts( CountsEntry countsEntry,
+                           RecordCheck<CountsEntry,ConsistencyReport.CountsConsistencyReport> checker )
+    {
+        dispatch( RecordType.COUNTS, COUNTS_REPORT, countsEntry, checker );
+    }
+
+    public interface Monitor
+    {
+        void reported( Class<?> report, String method, String message );
     }
 
     public static class FormattingDocumentedHandler implements InvocationHandler
@@ -249,7 +339,7 @@ public class ConsistencyReporter implements ConsistencyReport.Reporter
                 if ( checker.getClass().getMethod( "toString" ).getDeclaringClass() == Object.class )
                 {
                     checkName = checker.getClass().getSimpleName();
-                    if ( checkName.length() == 0 )
+                    if ( checkName.isEmpty() )
                     {
                         checkName = checker.getClass().getName();
                     }
@@ -402,109 +492,11 @@ public class ConsistencyReporter implements ConsistencyReport.Reporter
         }
     }
 
-    @Override
-    public void forSchema( DynamicRecord schema,
-                           RecordCheck<DynamicRecord, ConsistencyReport.SchemaConsistencyReport> checker )
-    {
-        dispatch( RecordType.SCHEMA, SCHEMA_REPORT, schema, checker );
-    }
-
-    @Override
-    public void forNode( NodeRecord node,
-                         RecordCheck<NodeRecord, ConsistencyReport.NodeConsistencyReport> checker )
-    {
-        dispatch( RecordType.NODE, NODE_REPORT, node, checker );
-    }
-
-    @Override
-    public void forRelationship( RelationshipRecord relationship,
-                                 RecordCheck<RelationshipRecord, ConsistencyReport.RelationshipConsistencyReport> checker )
-    {
-        dispatch( RecordType.RELATIONSHIP, RELATIONSHIP_REPORT, relationship, checker );
-    }
-
-    @Override
-    public void forProperty( PropertyRecord property,
-                             RecordCheck<PropertyRecord, ConsistencyReport.PropertyConsistencyReport> checker )
-    {
-        dispatch( RecordType.PROPERTY, PROPERTY_REPORT, property, checker );
-    }
-
-    @Override
-    public void forRelationshipTypeName( RelationshipTypeTokenRecord relationshipTypeTokenRecord,
-                                         RecordCheck<RelationshipTypeTokenRecord,
-                                         ConsistencyReport.RelationshipTypeConsistencyReport> checker )
-    {
-        dispatch( RecordType.RELATIONSHIP_TYPE, RELATIONSHIP_TYPE_REPORT, relationshipTypeTokenRecord, checker );
-    }
-
-    @Override
-    public void forLabelName( LabelTokenRecord label,
-                              RecordCheck<LabelTokenRecord, ConsistencyReport.LabelTokenConsistencyReport> checker )
-    {
-        dispatch( RecordType.LABEL, LABEL_KEY_REPORT, label, checker );
-    }
-
-    @Override
-    public void forNodeLabelScan( LabelScanDocument document,
-                                  RecordCheck<LabelScanDocument, ConsistencyReport.LabelScanConsistencyReport> checker )
-    {
-        dispatch( RecordType.LABEL_SCAN_DOCUMENT, LABEL_SCAN_REPORT, document, checker );
-    }
-
-    @Override
-    public void forIndexEntry( IndexEntry entry,
-                               RecordCheck<IndexEntry, ConsistencyReport.IndexConsistencyReport> checker )
-    {
-        dispatch( RecordType.INDEX, INDEX, entry, checker );
-    }
-
-    @Override
-    public void forPropertyKey( PropertyKeyTokenRecord key,
-                                RecordCheck<PropertyKeyTokenRecord, ConsistencyReport.PropertyKeyTokenConsistencyReport> checker )
-    {
-        dispatch( RecordType.PROPERTY_KEY, PROPERTY_KEY_REPORT, key, checker );
-    }
-
-    @Override
-    public void forDynamicBlock( RecordType type, DynamicRecord record,
-                                 RecordCheck<DynamicRecord, ConsistencyReport.DynamicConsistencyReport> checker )
-    {
-        dispatch( type, DYNAMIC_REPORT, record, checker );
-    }
-
-    @Override
-    public void forDynamicLabelBlock( RecordType type, DynamicRecord record,
-                                      RecordCheck<DynamicRecord, DynamicLabelConsistencyReport> checker )
-    {
-        dispatch( type, DYNAMIC_LABEL_REPORT, record, checker );
-    }
-
-    @Override
-    public void forRelationshipGroup( RelationshipGroupRecord record,
-            RecordCheck<RelationshipGroupRecord, RelationshipGroupConsistencyReport> checker )
-    {
-        dispatch( RecordType.RELATIONSHIP_GROUP, RELATIONSHIP_GROUP_REPORT, record, checker );
-    }
-
-    @Override
-    public void forCounts( CountsEntry countsEntry,
-                           RecordCheck<CountsEntry,ConsistencyReport.CountsConsistencyReport> checker )
-    {
-        dispatch( RecordType.COUNTS, COUNTS_REPORT, countsEntry, checker );
-    }
-
     public static class ProxyFactory<T>
     {
         private static Map<Class<?>,ProxyFactory<?>> instances = new HashMap<>();
         private Constructor<? extends T> constructor;
         private final Class<T> type;
-
-        @SuppressWarnings( "unchecked" )
-        static <T> ProxyFactory<T> get( Class<T> cls )
-        {
-            return (ProxyFactory<T>) instances.get( cls );
-        }
 
         @SuppressWarnings( "unchecked" )
         ProxyFactory( Class<T> type ) throws LinkageError
@@ -523,18 +515,24 @@ public class ConsistencyReporter implements ConsistencyReport.Reporter
             }
         }
 
-        @Override
+		@SuppressWarnings( "unchecked" )
+        static <T> ProxyFactory<T> get( Class<T> cls )
+        {
+            return (ProxyFactory<T>) instances.get( cls );
+        }
+
+		@Override
         public String toString()
         {
             return getClass().getSimpleName() + asList( constructor.getDeclaringClass().getInterfaces() );
         }
 
-        Class<?> type()
+		Class<?> type()
         {
             return type;
         }
 
-        public T create( InvocationHandler handler )
+		public T create( InvocationHandler handler )
         {
             try
             {
@@ -546,7 +544,7 @@ public class ConsistencyReporter implements ConsistencyReport.Reporter
             }
         }
 
-        public static <T> ProxyFactory<T> create( Class<T> type )
+		public static <T> ProxyFactory<T> create( Class<T> type )
         {
             return new ProxyFactory<>( type );
         }

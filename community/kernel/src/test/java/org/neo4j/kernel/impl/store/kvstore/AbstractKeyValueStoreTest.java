@@ -61,18 +61,6 @@ import static org.neo4j.test.rule.Resources.InitialLifecycle.STARTED;
 
 public class AbstractKeyValueStoreTest
 {
-    private final ExpectedException expectedException = ExpectedException.none();
-    private final Resources resourceManager = new Resources();
-    private final ThreadingRule threading = new ThreadingRule();
-    private final Timeout timeout = Timeout.builder()
-                                           .withTimeout( 20, TimeUnit.SECONDS )
-                                           .withLookingForStuckThread( true )
-                                           .build();
-
-    @Rule
-    public final RuleChain ruleChain = RuleChain.outerRule( expectedException )
-            .around( resourceManager ).around( threading ).around( timeout );
-
     private static final HeaderField<Long> TX_ID = new HeaderField<Long>()
     {
         @Override
@@ -93,8 +81,18 @@ public class AbstractKeyValueStoreTest
             return "txId";
         }
     };
+	private final ExpectedException expectedException = ExpectedException.none();
+	private final Resources resourceManager = new Resources();
+	private final ThreadingRule threading = new ThreadingRule();
+	private final Timeout timeout = Timeout.builder()
+                                           .withTimeout( 20, TimeUnit.SECONDS )
+                                           .withLookingForStuckThread( true )
+                                           .build();
+	@Rule
+    public final RuleChain ruleChain = RuleChain.outerRule( expectedException )
+            .around( resourceManager ).around( threading ).around( timeout );
 
-    @Test
+	@Test
     @Resources.Life( STARTED )
     @SuppressWarnings( "unchecked" )
     public void retryLookupOnConcurrentStoreStateChange() throws IOException
@@ -115,7 +113,7 @@ public class AbstractKeyValueStoreTest
         verify( workingState, times( 1 ) ).lookup( any(), any() );
     }
 
-    @Test
+	@Test
     @Resources.Life( STARTED )
     public void accessClosedStateShouldThrow() throws Exception
     {
@@ -138,7 +136,7 @@ public class AbstractKeyValueStoreTest
         } );
     }
 
-    @Test
+	@Test
     public void shouldStartAndStopStore()
     {
         // given
@@ -149,7 +147,7 @@ public class AbstractKeyValueStoreTest
         resourceManager.lifeShutsDown();
     }
 
-    @Test
+	@Test
     @Resources.Life( STARTED )
     public void shouldRotateStore() throws Exception
     {
@@ -160,7 +158,7 @@ public class AbstractKeyValueStoreTest
         store.prepareRotation( 0 ).rotate();
     }
 
-    @Test
+	@Test
     @Resources.Life( STARTED )
     public void shouldStoreEntries() throws Exception
     {
@@ -183,7 +181,7 @@ public class AbstractKeyValueStoreTest
         assertEquals( "too old", store.get( "age" ) );
     }
 
-    @Test
+	@Test
     public void shouldPickFileWithGreatestTransactionId() throws Exception
     {
         try ( Lifespan life = new Lifespan() )
@@ -206,7 +204,7 @@ public class AbstractKeyValueStoreTest
         }
     }
 
-    @Test
+	@Test
     public void shouldNotPickCorruptStoreFile() throws Exception
     {
         // given
@@ -272,7 +270,7 @@ public class AbstractKeyValueStoreTest
         }
     }
 
-    @Test
+	@Test
     public void shouldPickTheUncorruptedStoreWhenTruncatingAfterTheHeader() throws IOException
     {
         /*
@@ -328,7 +326,7 @@ public class AbstractKeyValueStoreTest
         }
     }
 
-    @Test
+	@Test
     @Resources.Life( STARTED )
     public void shouldRotateWithCorrectVersion() throws Exception
     {
@@ -345,7 +343,7 @@ public class AbstractKeyValueStoreTest
         store.prepareRotation( 2 ).rotate();
     }
 
-    @Test
+	@Test
     @Resources.Life( STARTED )
     public void postStateUpdatesCountedOnlyForTransactionsGreaterThanRotationVersion()
             throws IOException, InterruptedException, ExecutionException
@@ -371,7 +369,7 @@ public class AbstractKeyValueStoreTest
         assertEquals( 5, rotationFuture.get().longValue() );
     }
 
-    @Test
+	@Test
     @Resources.Life( STARTED )
     public void shouldBlockRotationUntilRequestedTransactionsAreApplied() throws Exception
     {
@@ -418,7 +416,7 @@ public class AbstractKeyValueStoreTest
         store.rotation.apply( 4L );
     }
 
-    @Test
+	@Test
     @Resources.Life( STARTED )
     public void shouldFailRotationAfterTimeout() throws IOException
     {
@@ -432,7 +430,7 @@ public class AbstractKeyValueStoreTest
         store.prepareRotation( 10L ).rotate();
     }
 
-    @Test
+	@Test
     @Resources.Life( STARTED )
     public void shouldLeaveStoreInGoodStateAfterRotationFailure() throws Exception
     {
@@ -479,12 +477,12 @@ public class AbstractKeyValueStoreTest
         }
     }
 
-    private Store createTestStore()
+	private Store createTestStore()
     {
         return createTestStore( TimeUnit.SECONDS.toMillis( 100 ) );
     }
 
-    private Store createTestStore( long rotationTimeout )
+	private Store createTestStore( long rotationTimeout )
     {
         return new Store( rotationTimeout, TX_ID )
         {
@@ -516,7 +514,7 @@ public class AbstractKeyValueStoreTest
         };
     }
 
-    private void updateStore( final Store store, long transaction ) throws IOException
+	private void updateStore( final Store store, long transaction ) throws IOException
     {
         ThrowingConsumer<Long,IOException> update = u ->
         {
@@ -528,7 +526,7 @@ public class AbstractKeyValueStoreTest
         update.accept( transaction );
     }
 
-    private static DataProvider data( final Entry... data )
+	private static DataProvider data( final Entry... data )
     {
         return new DataProvider()
         {
@@ -537,12 +535,11 @@ public class AbstractKeyValueStoreTest
             @Override
             public boolean visit( WritableBuffer key, WritableBuffer value )
             {
-                if ( i < data.length )
-                {
-                    data[i++].write( key, value );
-                    return true;
-                }
-                return false;
+                if (i >= data.length) {
+					return false;
+				}
+				data[i++].write( key, value );
+				return true;
             }
 
             @Override
@@ -552,12 +549,7 @@ public class AbstractKeyValueStoreTest
         };
     }
 
-    interface Entry
-    {
-        void write( WritableBuffer key, WritableBuffer value );
-    }
-
-    private AbstractKeyValueStore.Reader<String> stringReader( String value )
+	private AbstractKeyValueStore.Reader<String> stringReader( String value )
     {
         return new AbstractKeyValueStore.Reader<String>()
         {
@@ -569,7 +561,7 @@ public class AbstractKeyValueStoreTest
         };
     }
 
-    private ProgressiveState<String> stateWithLookup( ThrowingSupplier<Boolean, IOException> valueSupplier )
+	private ProgressiveState<String> stateWithLookup( ThrowingSupplier<Boolean, IOException> valueSupplier )
             throws IOException
     {
         ProgressiveState<String> state = mock( ProgressiveState.class );
@@ -581,11 +573,34 @@ public class AbstractKeyValueStoreTest
         return state;
     }
 
-    private void setState( Store store, ProgressiveState<String> workingState )
+	private void setState( Store store, ProgressiveState<String> workingState )
             throws IOException
     {
         store.state.close();
         store.state = workingState;
+    }
+
+	private static ValueUpdate value( final String value )
+    {
+        return target -> awriteKey( value, target );
+    }
+
+	private static void awriteKey( String key, WritableBuffer buffer )
+    {
+        for ( int i = 0; i < key.length(); i++ )
+        {
+            char c = key.charAt( i );
+            if ( c == 0 || c >= 128 )
+            {
+                throw new IllegalArgumentException( "Only ASCII keys allowed." );
+            }
+            buffer.putByte( i, (byte) c );
+        }
+    }
+
+	interface Entry
+    {
+        void write( WritableBuffer key, WritableBuffer value );
     }
 
     @Rotation( Rotation.Strategy.INCREMENTING )
@@ -708,24 +723,6 @@ public class AbstractKeyValueStoreTest
                     return readKey( value );
                 }
             } );
-        }
-    }
-
-    private static ValueUpdate value( final String value )
-    {
-        return target -> awriteKey( value, target );
-    }
-
-    private static void awriteKey( String key, WritableBuffer buffer )
-    {
-        for ( int i = 0; i < key.length(); i++ )
-        {
-            char c = key.charAt( i );
-            if ( c == 0 || c >= 128 )
-            {
-                throw new IllegalArgumentException( "Only ASCII keys allowed." );
-            }
-            buffer.putByte( i, (byte) c );
         }
     }
 }

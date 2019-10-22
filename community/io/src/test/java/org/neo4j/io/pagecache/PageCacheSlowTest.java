@@ -63,57 +63,6 @@ import static org.neo4j.test.matchers.ByteArrayMatcher.byteArray;
 
 public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTestSupport<T>
 {
-    private static class UpdateResult
-    {
-        final int threadId;
-        final long realThreadId;
-        final int[] pageCounts;
-
-        UpdateResult( int threadId, int[] pageCounts )
-        {
-            this.threadId = threadId;
-            this.realThreadId = Thread.currentThread().getId();
-            this.pageCounts = pageCounts;
-        }
-    }
-
-    private abstract static class UpdateWorker implements Callable<UpdateResult>
-    {
-        final int threadId;
-        final int filePages;
-        final AtomicBoolean shouldStop;
-        final PagedFile pagedFile;
-        final int[] pageCounts;
-        final int offset;
-
-        UpdateWorker( int threadId, int filePages, AtomicBoolean shouldStop, PagedFile pagedFile )
-        {
-            this.threadId = threadId;
-            this.filePages = filePages;
-            this.shouldStop = shouldStop;
-            this.pagedFile = pagedFile;
-            pageCounts = new int[filePages];
-            offset = threadId * 4;
-        }
-
-        @Override
-        public UpdateResult call() throws Exception
-        {
-            ThreadLocalRandom rng = ThreadLocalRandom.current();
-
-            while ( !shouldStop.get() )
-            {
-                boolean updateCounter = rng.nextBoolean();
-                int pfFlags = updateCounter ? PF_SHARED_WRITE_LOCK : PF_SHARED_READ_LOCK;
-                performReadOrUpdate( rng, updateCounter, pfFlags );
-            }
-
-            return new UpdateResult( threadId, pageCounts );
-        }
-
-        protected abstract void performReadOrUpdate( ThreadLocalRandom rng, boolean updateCounter, int pf_flags ) throws IOException;
-    }
-
     @RepeatedTest( 50 )
     void mustNotLoseUpdates()
     {
@@ -197,7 +146,8 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
                             {
                                 shouldStop.set( true );
                                 throw new IndexOutOfBoundsException(
-                                        "offset = " + offset + ", filPageId:" + pageId + ", threadId: " + threadId + ", updateCounter = " + updateCounter );
+                                        new StringBuilder().append("offset = ").append(offset).append(", filPageId:").append(pageId)
+												.append(", threadId: ").append(threadId).append(", updateCounter = ").append(updateCounter).toString() );
                             }
                         }
                     }
@@ -232,7 +182,7 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
         } );
     }
 
-    private void ensureAllPagesExists( int filePages, PagedFile pagedFile ) throws IOException
+	private void ensureAllPagesExists( int filePages, PagedFile pagedFile ) throws IOException
     {
         try ( PageCursor cursor = pagedFile.io( 0, PF_SHARED_WRITE_LOCK ) )
         {
@@ -244,7 +194,7 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
         pageCache.flushAndForce();
     }
 
-    private void verifyUpdateResults( int filePages, PagedFile pagedFile, List<Future<UpdateResult>> futures )
+	private void verifyUpdateResults( int filePages, PagedFile pagedFile, List<Future<UpdateResult>> futures )
             throws InterruptedException, ExecutionException, IOException
     {
         UpdateResult[] results = new UpdateResult[futures.size()];
@@ -270,14 +220,15 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
                     }
                     while ( cursor.shouldRetry() );
 
-                    assertThat( "wrong count for threadId:" + threadId + ", aka. real threadId:" + result.realThreadId + ", filePageId:" + i, actualCount,
+                    assertThat( new StringBuilder().append("wrong count for threadId:").append(threadId).append(", aka. real threadId:").append(result.realThreadId).append(", filePageId:")
+							.append(i).toString(), actualCount,
                             is( expectedCount ) );
                 }
             }
         }
     }
 
-    @RepeatedTest( 100 )
+	@RepeatedTest( 100 )
     void mustNotLoseUpdatesWhenOpeningMultiplePageCursorsPerThread()
     {
         assertTimeout( ofMillis( SEMI_LONG_TIMEOUT_MILLIS ), () ->
@@ -371,7 +322,7 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
         } );
     }
 
-    @RepeatedTest( 50 )
+	@RepeatedTest( 50 )
     void writeLockingCursorMustThrowWhenLockingPageRacesWithUnmapping()
     {
         assertTimeout( ofMillis( SEMI_LONG_TIMEOUT_MILLIS ), () ->
@@ -485,7 +436,7 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
         } );
     }
 
-    @RepeatedTest( 20 )
+	@RepeatedTest( 20 )
     void pageCacheMustRemainInternallyConsistentWhenGettingRandomFailures()
     {
         assertTimeout( ofMillis( LONG_TIMEOUT_MILLIS ), () ->
@@ -577,7 +528,7 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
         } );
     }
 
-    private void performConsistentAdversarialRead( PageCursor cursor, long maxPageId, long startingPage, int pageSize ) throws IOException
+	private void performConsistentAdversarialRead( PageCursor cursor, long maxPageId, long startingPage, int pageSize ) throws IOException
     {
         long pagesToLookAt = Math.min( maxPageId, startingPage + 3 ) - startingPage + 1;
         for ( int j = 0; j < pagesToLookAt; j++ )
@@ -587,7 +538,7 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
         }
     }
 
-    private void readAndVerifyAdversarialPage( PageCursor cursor, int pageSize ) throws IOException
+	private void readAndVerifyAdversarialPage( PageCursor cursor, int pageSize ) throws IOException
     {
         byte[] actualPage = new byte[pageSize];
         byte[] expectedPage = new byte[pageSize];
@@ -601,7 +552,7 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
         assertThat( msg, actualPage, byteArray( expectedPage ) );
     }
 
-    private void performConsistentAdversarialWrite( PageCursor cursor, ThreadLocalRandom rng, int pageSize ) throws IOException
+	private void performConsistentAdversarialWrite( PageCursor cursor, ThreadLocalRandom rng, int pageSize ) throws IOException
     {
         for ( int j = 0; j < 3; j++ )
         {
@@ -617,7 +568,7 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
         }
     }
 
-    private void verifyAdversarialPagedContent( PagedFile pagedFile ) throws IOException
+	private void verifyAdversarialPagedContent( PagedFile pagedFile ) throws IOException
     {
         try ( PageCursor cursor = pagedFile.io( 0, PF_SHARED_READ_LOCK ) )
         {
@@ -628,7 +579,7 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
         }
     }
 
-    @Test
+	@Test
     void mustNotRunOutOfSwapperAllocationSpace() throws Exception
     {
         assumeTrue( fs instanceof EphemeralFileSystemAbstraction, "This test is file system agnostic, and too slow on a real file system" );
@@ -645,5 +596,56 @@ public abstract class PageCacheSlowTest<T extends PageCache> extends PageCacheTe
             }
             pagedFile.close();
         }
+    }
+
+	private static class UpdateResult
+    {
+        final int threadId;
+        final long realThreadId;
+        final int[] pageCounts;
+
+        UpdateResult( int threadId, int[] pageCounts )
+        {
+            this.threadId = threadId;
+            this.realThreadId = Thread.currentThread().getId();
+            this.pageCounts = pageCounts;
+        }
+    }
+
+    private abstract static class UpdateWorker implements Callable<UpdateResult>
+    {
+        final int threadId;
+        final int filePages;
+        final AtomicBoolean shouldStop;
+        final PagedFile pagedFile;
+        final int[] pageCounts;
+        final int offset;
+
+        UpdateWorker( int threadId, int filePages, AtomicBoolean shouldStop, PagedFile pagedFile )
+        {
+            this.threadId = threadId;
+            this.filePages = filePages;
+            this.shouldStop = shouldStop;
+            this.pagedFile = pagedFile;
+            pageCounts = new int[filePages];
+            offset = threadId * 4;
+        }
+
+        @Override
+        public UpdateResult call() throws Exception
+        {
+            ThreadLocalRandom rng = ThreadLocalRandom.current();
+
+            while ( !shouldStop.get() )
+            {
+                boolean updateCounter = rng.nextBoolean();
+                int pfFlags = updateCounter ? PF_SHARED_WRITE_LOCK : PF_SHARED_READ_LOCK;
+                performReadOrUpdate( rng, updateCounter, pfFlags );
+            }
+
+            return new UpdateResult( threadId, pageCounts );
+        }
+
+        protected abstract void performReadOrUpdate( ThreadLocalRandom rng, boolean updateCounter, int pf_flags ) throws IOException;
     }
 }

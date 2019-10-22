@@ -459,17 +459,15 @@ class RotatingFileOutputStreamSupplierTest
         };
 
         ExecutorService rotationExecutor = Executors.newSingleThreadExecutor();
-        try
+        try (RotatingFileOutputStreamSupplier supplier = new RotatingFileOutputStreamSupplier(fs, logFile, 10, 0, 10,
+				rotationExecutor, rotationListener))
         {
-            RotatingFileOutputStreamSupplier supplier = new RotatingFileOutputStreamSupplier( fs, logFile, 10, 0,
-                    10, rotationExecutor, rotationListener );
             OutputStream outputStream = supplier.get();
 
             write( supplier, "A string longer than 10 bytes" );
             assertThat( supplier.get(), is( outputStream ) );
 
             allowRotationComplete.countDown();
-            supplier.close();
         }
         finally
         {

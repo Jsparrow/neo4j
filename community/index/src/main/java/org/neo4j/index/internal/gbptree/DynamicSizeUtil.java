@@ -265,7 +265,7 @@ public class DynamicSizeUtil
 
     private static byte withTombstoneFlag( byte firstByte )
     {
-        assert (firstByte & FLAG_FIRST_BYTE_TOMBSTONE) == 0 : "First key size byte " + firstByte + " is too large to fit tombstone.";
+        assert (firstByte & FLAG_FIRST_BYTE_TOMBSTONE) == 0 : new StringBuilder().append("First key size byte ").append(firstByte).append(" is too large to fit tombstone.").toString();
         return (byte) (firstByte | FLAG_FIRST_BYTE_TOMBSTONE);
     }
 }

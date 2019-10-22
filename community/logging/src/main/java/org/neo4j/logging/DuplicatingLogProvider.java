@@ -35,7 +35,7 @@ public class DuplicatingLogProvider extends AbstractLogProvider<DuplicatingLog>
 {
     private final CopyOnWriteArraySet<LogProvider> logProviders;
     private final Map<DuplicatingLog,Map<LogProvider,Log>> duplicatingLogCache =
-            Collections.synchronizedMap( new WeakHashMap<DuplicatingLog,Map<LogProvider,Log>>() );
+            Collections.synchronizedMap( new WeakHashMap<>() );
 
     /**
      * @param logProviders A list of {@link LogProvider} instances that messages should be duplicated to
@@ -58,10 +58,7 @@ public class DuplicatingLogProvider extends AbstractLogProvider<DuplicatingLog>
         {
             return false;
         }
-        for ( DuplicatingLog duplicatingLog : cachedLogs() )
-        {
-            duplicatingLog.remove( duplicatingLogCache.get( duplicatingLog ).remove( logProvider ) );
-        }
+        cachedLogs().forEach(duplicatingLog -> duplicatingLog.remove(duplicatingLogCache.get(duplicatingLog).remove(logProvider)));
         return true;
     }
 
@@ -81,12 +78,11 @@ public class DuplicatingLogProvider extends AbstractLogProvider<DuplicatingLog>
     {
         ArrayList<Log> logs = new ArrayList<>( logProviders.size() );
         HashMap<LogProvider, Log> providedLogs = new HashMap<>();
-        for ( LogProvider logProvider : logProviders )
-        {
+        logProviders.forEach(logProvider -> {
             Log log = logConstructor.apply( logProvider );
             providedLogs.put( logProvider, log );
             logs.add( log );
-        }
+        });
         DuplicatingLog duplicatingLog = new DuplicatingLog( logs );
         duplicatingLogCache.put( duplicatingLog, providedLogs );
         return duplicatingLog;

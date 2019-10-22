@@ -58,8 +58,10 @@ public class StringCollisionValuesTest
             return (1 << Short.SIZE) - 1;
         }
     } );
+	@Parameter( 0 )
+    public Function<PageCacheAndDependenciesRule,NumberArrayFactory> factory;
 
-    @Parameters
+	@Parameters
     public static Collection<Function<PageCacheAndDependenciesRule,NumberArrayFactory>> data()
     {
         return Arrays.asList(
@@ -70,10 +72,7 @@ public class StringCollisionValuesTest
                 storage -> new PageCachedNumberArrayFactory( storage.pageCache(), storage.directory().directory() ) );
     }
 
-    @Parameter( 0 )
-    public Function<PageCacheAndDependenciesRule,NumberArrayFactory> factory;
-
-    @Test
+	@Test
     public void shouldStoreAndLoadStrings()
     {
         // given
@@ -97,7 +96,7 @@ public class StringCollisionValuesTest
         }
     }
 
-    @Test
+	@Test
     public void shouldMoveOverToNextChunkOnNearEnd()
     {
         // given

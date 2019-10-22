@@ -42,13 +42,6 @@ class SearchEnvelope
         }
     }
 
-    private SearchEnvelope( long[] min, long[] max )
-    {
-        this.min = min;
-        this.max = max;
-        this.nbrDim = min.length;
-    }
-
     SearchEnvelope( long min, long max, int nbrDim )
     {
         this.nbrDim = nbrDim;
@@ -62,7 +55,14 @@ class SearchEnvelope
         }
     }
 
-    SearchEnvelope quadrant( int[] quadNbrs )
+	private SearchEnvelope( long[] min, long[] max )
+    {
+        this.min = min;
+        this.max = max;
+        this.nbrDim = min.length;
+    }
+
+	SearchEnvelope quadrant( int[] quadNbrs )
     {
         long[] newMin = new long[nbrDim];
         long[] newMax = new long[nbrDim];
@@ -76,7 +76,7 @@ class SearchEnvelope
         return new SearchEnvelope( newMin, newMax );
     }
 
-    boolean contains( long[] coord )
+	boolean contains( long[] coord )
     {
         for ( int dim = 0; dim < nbrDim; dim++ )
         {
@@ -88,7 +88,7 @@ class SearchEnvelope
         return true;
     }
 
-    boolean intersects( SearchEnvelope other )
+	boolean intersects( SearchEnvelope other )
     {
         for ( int dim = 0; dim < nbrDim; dim++ )
         {
@@ -100,7 +100,7 @@ class SearchEnvelope
         return true;
     }
 
-    /**
+	/**
      * Calculates the faction of the overlapping area between {@code this} and {@code} other compared
      * to the area of {@code this}.
      *
@@ -119,7 +119,7 @@ class SearchEnvelope
         return fraction;
     }
 
-    /**
+	/**
      * The smallest possible envelope has unit area 1
      */
     public long getArea()

@@ -44,7 +44,22 @@ import static org.neo4j.server.rest.discovery.DiscoverableURIs.Precedence.LOWEST
  */
 public class DiscoverableURIs
 {
-    public enum Precedence
+    private final Collection<URIEntry> entries;
+
+	private DiscoverableURIs( Collection<URIEntry> entries )
+    {
+        this.entries = entries;
+    }
+
+	public void forEach( BiConsumer<String,URI> consumer )
+    {
+        entries.stream().collect( Collectors.groupingBy( e -> e.key ) )
+                .forEach( ( key, list ) -> list.stream()
+                        .max( Comparator.comparing( e -> e.precedence ) )
+                        .ifPresent( e -> consumer.accept( key, e.uri ) ) );
+    }
+
+	public enum Precedence
     {
         LOWEST,
         LOW,
@@ -53,22 +68,7 @@ public class DiscoverableURIs
         HIGHEST
     }
 
-    private final Collection<URIEntry> entries;
-
-    private DiscoverableURIs( Collection<URIEntry> entries )
-    {
-        this.entries = entries;
-    }
-
-    public void forEach( BiConsumer<String,URI> consumer )
-    {
-        entries.stream().collect( Collectors.groupingBy( e -> e.key ) )
-                .forEach( ( key, list ) -> list.stream()
-                        .max( Comparator.comparing( e -> e.precedence ) )
-                        .ifPresent( e -> consumer.accept( key, e.uri ) ) );
-    }
-
-    private static class URIEntry
+	private static class URIEntry
     {
         private String key;
         private Precedence precedence;
@@ -163,10 +163,7 @@ public class DiscoverableURIs
             // Find all default entries with absolute URIs and replace the corresponding host name entries with the one from the request uri.
             List<URIEntry> defaultEntries = entries.stream().filter( e -> e.uri.isAbsolute() && e.precedence == LOWEST ).collect( Collectors.toList() );
 
-            for ( URIEntry entry : defaultEntries )
-            {
-                add( entry.key, entry.uri.getScheme(), requestUri.getHost(), entry.uri.getPort(), LOW );
-            }
+            defaultEntries.forEach(entry -> add(entry.key, entry.uri.getScheme(), requestUri.getHost(), entry.uri.getPort(), LOW));
 
             return this;
         }

@@ -277,7 +277,7 @@ public class BlockBasedIndexPopulatorTest
             populator.add( updates );
             int nextId = updates.size();
             externalUpdates( populator, nextId, nextId + 10 );
-            nextId = nextId + 10;
+            nextId += 10;
             long memoryBeforeScanCompleted = memoryTracker.usedDirectMemory();
             populator.scanCompleted( nullInstance );
             externalUpdates( populator, nextId, nextId + 10 );
@@ -316,7 +316,7 @@ public class BlockBasedIndexPopulatorTest
             populator.add( updates );
             int nextId = updates.size();
             externalUpdates( populator, nextId, nextId + 10 );
-            nextId = nextId + 10;
+            nextId += 10;
             long memoryBeforeScanCompleted = memoryTracker.usedDirectMemory();
             populator.scanCompleted( nullInstance );
             externalUpdates( populator, nextId, nextId + 10 );

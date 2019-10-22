@@ -45,18 +45,18 @@ public class Loader
 {
     private final ArchiveProgressPrinter progressPrinter;
 
-    @VisibleForTesting
-    Loader()
-    {
-        progressPrinter = new ArchiveProgressPrinter( null );
-    }
-
     public Loader( PrintStream output )
     {
         progressPrinter = new ArchiveProgressPrinter( output );
     }
 
-    public void load( Path archive, Path databaseDestination, Path transactionLogsDirectory ) throws IOException, IncorrectFormat
+	@VisibleForTesting
+    Loader()
+    {
+        progressPrinter = new ArchiveProgressPrinter( null );
+    }
+
+	public void load( Path archive, Path databaseDestination, Path transactionLogsDirectory ) throws IOException, IncorrectFormat
     {
         validatePath( databaseDestination );
         validatePath( transactionLogsDirectory );
@@ -76,7 +76,7 @@ public class Loader
         }
     }
 
-    private void createDestination( Path destination ) throws IOException
+	private void createDestination( Path destination ) throws IOException
     {
         if ( !destination.toFile().exists() )
         {
@@ -84,7 +84,7 @@ public class Loader
         }
     }
 
-    private void validatePath( Path path ) throws FileSystemException
+	private void validatePath( Path path ) throws FileSystemException
     {
         if ( exists( path ) )
         {
@@ -93,7 +93,7 @@ public class Loader
         checkWritableDirectory( path.getParent() );
     }
 
-    private static Path determineEntryDestination( ArchiveEntry entry, Path databaseDestination,
+	private static Path determineEntryDestination( ArchiveEntry entry, Path databaseDestination,
             Path transactionLogsDirectory )
     {
         String entryName = Paths.get( entry.getName() ).getFileName().toString();
@@ -101,7 +101,7 @@ public class Loader
                                                                                            : databaseDestination;
     }
 
-    private ArchiveEntry nextEntry( ArchiveInputStream stream, Path archive ) throws IncorrectFormat
+	private ArchiveEntry nextEntry( ArchiveInputStream stream, Path archive ) throws IncorrectFormat
     {
         try
         {
@@ -113,7 +113,7 @@ public class Loader
         }
     }
 
-    private void loadEntry( Path destination, ArchiveInputStream stream, ArchiveEntry entry ) throws IOException
+	private void loadEntry( Path destination, ArchiveInputStream stream, ArchiveEntry entry ) throws IOException
     {
         Path file = destination.resolve( entry.getName() );
         if ( !file.normalize().startsWith( destination ) )
@@ -134,7 +134,7 @@ public class Loader
         }
     }
 
-    private ArchiveInputStream openArchiveIn( Path archive ) throws IOException, IncorrectFormat
+	private ArchiveInputStream openArchiveIn( Path archive ) throws IOException, IncorrectFormat
     {
         InputStream input = Files.newInputStream( archive );
         InputStream decompressor;
@@ -163,7 +163,7 @@ public class Loader
         return new TarArchiveInputStream( decompressor );
     }
 
-    /**
+	/**
      * @see Dumper#writeArchiveMetadata(OutputStream)
      */
     void readArchiveMetadata( InputStream stream ) throws IOException
@@ -177,7 +177,7 @@ public class Loader
         }
         else
         {
-            throw new IOException( "Cannot read archive meta-data. I don't recognise this archive version: " + version + "." );
+            throw new IOException( new StringBuilder().append("Cannot read archive meta-data. I don't recognise this archive version: ").append(version).append(".").toString() );
         }
     }
 }

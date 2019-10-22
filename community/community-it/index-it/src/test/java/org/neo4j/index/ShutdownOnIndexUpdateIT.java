@@ -43,14 +43,16 @@ import static org.junit.Assert.assertTrue;
 
 public class ShutdownOnIndexUpdateIT
 {
-    @Rule
+    private static final String UNIQUE_PROPERTY_NAME = "uniquePropertyName";
+
+	private static final AtomicLong indexProvider = new AtomicLong();
+
+	private static Label constraintIndexLabel = Label.label( "ConstraintIndexLabel" );
+
+	@Rule
     public DatabaseRule database = new ImpermanentDatabaseRule();
 
-    private static final String UNIQUE_PROPERTY_NAME = "uniquePropertyName";
-    private static final AtomicLong indexProvider = new AtomicLong();
-    private static Label constraintIndexLabel = Label.label( "ConstraintIndexLabel" );
-
-    @Test
+	@Test
     public void shutdownWhileFinishingTransactionWithIndexUpdates()
     {
         createConstraint( database );
@@ -73,7 +75,7 @@ public class ShutdownOnIndexUpdateIT
         }
     }
 
-    private void waitIndexesOnline( GraphDatabaseService database )
+	private void waitIndexesOnline( GraphDatabaseService database )
     {
         try ( Transaction ignored = database.beginTx() )
         {
@@ -81,7 +83,7 @@ public class ShutdownOnIndexUpdateIT
         }
     }
 
-    private void createConstraint( GraphDatabaseService database )
+	private void createConstraint( GraphDatabaseService database )
     {
         try ( Transaction transaction = database.beginTx() )
         {
@@ -91,7 +93,7 @@ public class ShutdownOnIndexUpdateIT
         }
     }
 
-    private static class TransactionCloseListener implements LifecycleListener
+	private static class TransactionCloseListener implements LifecycleListener
     {
         private final Transaction transaction;
         private boolean transactionClosed;
@@ -104,12 +106,12 @@ public class ShutdownOnIndexUpdateIT
         @Override
         public void notifyStatusChanged( Object instance, LifecycleStatus from, LifecycleStatus to )
         {
-            if ( (LifecycleStatus.STOPPED == to) && (instance instanceof RecordStorageEngine) )
-            {
-                transaction.success();
-                transaction.close();
-                transactionClosed = true;
-            }
+            if (!((LifecycleStatus.STOPPED == to) && (instance instanceof RecordStorageEngine))) {
+				return;
+			}
+			transaction.success();
+			transaction.close();
+			transactionClosed = true;
         }
 
         boolean isTransactionClosed()

@@ -46,23 +46,23 @@ import static org.neo4j.unsafe.impl.batchimport.cache.NumberArrayFactory.auto;
 
 class LongArrayTest extends NumberArrayPageCacheTestSupport
 {
-    private final long seed = currentTimeMillis();
-    private final Random random = new Random( seed );
     private static Fixture fixture;
+	private final long seed = currentTimeMillis();
+	private final Random random = new Random( seed );
 
-    @BeforeAll
+	@BeforeAll
     static void setUp() throws IOException
     {
         fixture = prepareDirectoryAndPageCache( LongArrayTest.class );
     }
 
-    @AfterAll
+	@AfterAll
     static void closeFixture() throws Exception
     {
         fixture.close();
     }
 
-    @TestFactory
+	@TestFactory
     Stream<DynamicTest> shouldHandleSomeRandomSetAndGet()
     {
         ThrowingConsumer<NumberArrayFactory> arrayFactoryConsumer = factory ->
@@ -102,7 +102,7 @@ class LongArrayTest extends NumberArrayPageCacheTestSupport
         return stream( arrayFactories(), getNumberArrayFactoryName(), arrayFactoryConsumer );
     }
 
-    @TestFactory
+	@TestFactory
     Stream<DynamicTest> shouldHandleMultipleCallsToClose()
     {
         return stream( arrayFactories(), getNumberArrayFactoryName(), numberArrayFactory ->
@@ -117,7 +117,7 @@ class LongArrayTest extends NumberArrayPageCacheTestSupport
         } );
     }
 
-    private static Iterator<NumberArrayFactory> arrayFactories()
+	private static Iterator<NumberArrayFactory> arrayFactories()
     {
         PageCache pageCache = fixture.pageCache;
         File dir = fixture.directory;
@@ -126,12 +126,12 @@ class LongArrayTest extends NumberArrayPageCacheTestSupport
         return Iterators.iterator( HEAP, OFF_HEAP, autoWithPageCacheFallback, pageCacheArrayFactory );
     }
 
-    private static Function<NumberArrayFactory,String> getNumberArrayFactoryName()
+	private static Function<NumberArrayFactory,String> getNumberArrayFactoryName()
     {
         return factory -> factory.getClass().getName();
     }
 
-    private static void swap( long[] expected, int fromIndex, int toIndex )
+	private static void swap( long[] expected, int fromIndex, int toIndex )
     {
         long fromValue = expected[fromIndex];
         expected[fromIndex] = expected[toIndex];

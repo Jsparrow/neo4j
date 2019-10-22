@@ -128,8 +128,8 @@ public class PrimitiveLongCollections
             long item = iterator.next();
             if ( iterator.hasNext() )
             {
-                throw new NoSuchElementException( "More than one item in " + iterator + ", first:" + item +
-                        ", second:" + iterator.next() );
+                throw new NoSuchElementException( new StringBuilder().append("More than one item in ").append(iterator).append(", first:").append(item).append(", second:").append(iterator.next())
+						.toString() );
             }
             closeSafely( iterator );
             return item;
@@ -164,10 +164,7 @@ public class PrimitiveLongCollections
     public static PrimitiveLongSet asSet( Collection<Long> collection )
     {
         PrimitiveLongSet set = Primitive.longSet( collection.size() );
-        for ( Long next: collection )
-        {
-            set.add( next );
-        }
+        collection.forEach(set::add);
         return set;
     }
 
@@ -274,16 +271,15 @@ public class PrimitiveLongCollections
             @Override
             protected boolean fetchNext()
             {
-                if ( iterator.hasNext() )
-                {
-                    Long nextValue = iterator.next();
-                    if ( null == nextValue )
-                    {
-                        throw new IllegalArgumentException( "Cannot convert null Long to primitive long" );
-                    }
-                    return next( nextValue.longValue() );
-                }
-                return false;
+                if (!iterator.hasNext()) {
+					return false;
+				}
+				Long nextValue = iterator.next();
+				if ( null == nextValue )
+				{
+				    throw new IllegalArgumentException( "Cannot convert null Long to primitive long" );
+				}
+				return next( nextValue.longValue() );
             }
         };
     }
@@ -435,8 +431,7 @@ public class PrimitiveLongCollections
     {
         if ( !collection.add( item ) )
         {
-            throw new IllegalStateException( "Encountered an already added item:" + item +
-                    " when adding items uniquely to a collection:" + collection );
+            throw new IllegalStateException( new StringBuilder().append("Encountered an already added item:").append(item).append(" when adding items uniquely to a collection:").append(collection).toString() );
         }
     }
 
@@ -449,9 +444,7 @@ public class PrimitiveLongCollections
     public static long[] deduplicate( long[] values )
     {
         int unique = 0;
-        for ( int i = 0; i < values.length; i++ )
-        {
-            long value = values[i];
+        for (long value : values) {
             for ( int j = 0; j < unique; j++ )
             {
                 if ( value == values[j] )
@@ -462,7 +455,7 @@ public class PrimitiveLongCollections
             }
             if ( value != -1 )
             {   // this has to be done outside the inner loop, otherwise we'd never accept a single one...
-                values[unique++] = values[i];
+                values[unique++] = value;
             }
         }
         return unique < values.length ? Arrays.copyOf( values, unique ) : values;

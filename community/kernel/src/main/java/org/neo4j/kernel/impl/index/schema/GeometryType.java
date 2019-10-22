@@ -186,7 +186,8 @@ class GeometryType extends Type
     {
         if ( (value & ~maskAllowed) != 0 )
         {
-            throw new IllegalArgumentException( "Expected 0 < " + name + " <= " + maskAllowed + ", but was " + value );
+            throw new IllegalArgumentException( new StringBuilder().append("Expected 0 < ").append(name).append(" <= ").append(maskAllowed).append(", but was ").append(value)
+					.toString() );
         }
     }
 

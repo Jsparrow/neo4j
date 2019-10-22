@@ -27,6 +27,6 @@ public class IllegalTokenNameException extends SchemaKernelException
     {
         super( Status.Schema.TokenNameError,
                 String.format( "%s is not a valid token name. Only non-null, non-empty strings are allowed.",
-                tokenName != null ? "'" + tokenName + "'" : "Null" ) );
+                tokenName != null ? new StringBuilder().append("'").append(tokenName).append("'").toString() : "Null" ) );
     }
 }

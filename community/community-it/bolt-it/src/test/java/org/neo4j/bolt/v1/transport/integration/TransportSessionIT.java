@@ -159,9 +159,7 @@ public class TransportSessionIT extends AbstractBoltTransportsTest
         assertThat( connection, util.eventuallyReceives(
                 msgSuccess(),
                 msgFailure( Status.Statement.SyntaxError,
-                        String.format( "Invalid input 'Q': expected <init> (line 1, column 1 (offset: 0))%n" +
-                                       "\"QINVALID\"%n" +
-                                       " ^" ) ), msgIgnored() ) );
+                        String.format( new StringBuilder().append("Invalid input 'Q': expected <init> (line 1, column 1 (offset: 0))%n").append("\"QINVALID\"%n").append(" ^").toString() ) ), msgIgnored() ) );
 
         // When
         connection.send( util.chunk( AckFailureMessage.INSTANCE, new RunMessage( "RETURN 1" ), PullAllMessage.INSTANCE ) );
@@ -323,10 +321,7 @@ public class TransportSessionIT extends AbstractBoltTransportsTest
                 hasNotification(
                         new TestNotification( "Neo.ClientNotification.Statement.UnknownLabelWarning",
                                 "The provided label is not in the database.",
-                                "One of the labels in your query is not available in the database, " +
-                                "make sure you didn't misspell it or that the label is available when " +
-                                "you run this statement in your application (the missing label name is: " +
-                                "THIS_IS_NOT_A_LABEL)",
+                                new StringBuilder().append("One of the labels in your query is not available in the database, ").append("make sure you didn't misspell it or that the label is available when ").append("you run this statement in your application (the missing label name is: ").append("THIS_IS_NOT_A_LABEL)").toString(),
                                 SeverityLevel.WARNING, new InputPosition( 17, 1, 18 ) ) ) ) );
 
     }

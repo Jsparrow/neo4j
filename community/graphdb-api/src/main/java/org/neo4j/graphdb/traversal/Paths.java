@@ -19,7 +19,6 @@
  */
 package org.neo4j.graphdb.traversal;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
@@ -42,6 +41,189 @@ public class Paths
     }
 
     /**
+     * Method for building a string representation of a {@link Path}, using
+     * the given {@code builder}.
+     * @param <T> the type of {@link Path}.
+     * @param path the {@link Path} to build a string representation of.
+     * @param builder the {@link PathDescriptor} to get
+     * {@link Node} and {@link Relationship} representations from.
+     * @return a string representation of a {@link Path}.
+     */
+    public static <T extends Path> String pathToString( T path, PathDescriptor<T> builder )
+    {
+        Node current = path.startNode();
+        StringBuilder result = new StringBuilder();
+        for ( Relationship rel : path.relationships() )
+        {
+            result.append( builder.nodeRepresentation( path, current ) );
+            result.append( builder.relationshipRepresentation( path, current, rel ) );
+            current = rel.getOtherNode( current );
+        }
+        if ( null != current )
+        {
+            result.append( builder.nodeRepresentation( path, current ) );
+        }
+        return result.toString();
+    }
+
+	/**
+     * TODO: This method re-binds nodes and relationships. It should not.
+     *
+     * Returns the default string representation of a {@link Path}. It uses
+     * the {@link DefaultPathDescriptor} to get representations.
+     * @param path the {@link Path} to build a string representation of.
+     * @return the default string representation of a {@link Path}.
+     */
+    public static String defaultPathToString( Path path )
+    {
+        return pathToString( path, new DefaultPathDescriptor<>() );
+    }
+
+	/**
+     * Returns a quite simple string representation of a {@link Path}. It
+     * doesn't print relationship types or ids, just directions.
+     * @param path the {@link Path} to build a string representation of.
+     * @return a quite simple representation of a {@link Path}.
+     */
+    public static String simplePathToString( Path path )
+    {
+        return pathToString( path, new DefaultPathDescriptor<Path>()
+        {
+            @Override
+            public String relationshipRepresentation( Path path, Node from,
+                                                      Relationship relationship )
+            {
+                return relationship.getStartNode().equals( from ) ? "-->" : "<--";
+            }
+        } );
+    }
+
+	/**
+     * Returns a quite simple string representation of a {@link Path}. It
+     * doesn't print relationship types or ids, just directions. it uses the
+     * {@code nodePropertyKey} to try to display that property value as in the
+     * node representation instead of the node id. If that property doesn't
+     * exist, the id is used.
+     * @param path the {@link Path} to build a string representation of.
+     * @param nodePropertyKey the key of the property value to display
+     * @return a quite simple representation of a {@link Path}.
+     */
+    public static String simplePathToString( Path path, final String nodePropertyKey )
+    {
+        return pathToString( path, new DefaultPathDescriptor<Path>()
+        {
+            @Override
+            public String nodeRepresentation( Path path, Node node )
+            {
+                return new StringBuilder().append("(").append(node.getProperty( nodePropertyKey, node.getId() )).append(")").toString();
+            }
+
+            @Override
+            public String relationshipRepresentation( Path path, Node from,
+                                                      Relationship relationship )
+            {
+                return relationship.getStartNode().equals( from ) ? "-->" : "<--";
+            }
+        } );
+    }
+
+	/**
+     * Create a new {@link Paths.PathDescriptor} that prints values of listed property keys
+     * and id of nodes and relationships if configured so.
+     * @param nodeId            true if node id should be included.
+     * @param relId             true if relationship id should be included.
+     * @param propertyKeys      all property keys that should be included.
+     * @param <T>               the type of the {@link Path}
+     * @return                  a new {@link Paths.PathDescriptor}
+     */
+    public static <T extends Path> PathDescriptor<T> descriptorForIdAndProperties( final boolean nodeId,
+    final boolean relId, final String... propertyKeys )
+    {
+        return new Paths.PathDescriptor<T>()
+        {
+            @Override
+            public String nodeRepresentation( T path, Node node )
+            {
+                String representation = representation( node );
+                return new StringBuilder().append("(").append(nodeId ? node.getId() : "").append(nodeId && !"".equals( representation ) ? "," : "")
+						.append(representation).append(")").toString();
+            }
+
+            private String representation( PropertyContainer entity )
+            {
+                StringBuilder builder = new StringBuilder();
+                for ( String key : propertyKeys )
+                {
+                    Object value = entity.getProperty( key, null );
+                    if ( value != null )
+                    {
+                        if ( builder.length() > 0 )
+                        {
+                            builder.append( "," );
+                        }
+                        builder.append( value );
+                    }
+                }
+                return builder.toString();
+            }
+
+            @Override
+            public String relationshipRepresentation( T path, Node from, Relationship relationship )
+            {
+                Direction direction = relationship.getEndNode().equals( from ) ? Direction.INCOMING : Direction.OUTGOING;
+                StringBuilder builder = new StringBuilder();
+                if ( direction == Direction.INCOMING )
+                {
+                    builder.append( "<" );
+                }
+                builder.append( "-[" + (relId ? relationship.getId() : "") );
+                String representation = representation( relationship );
+                if ( relId && !"".equals( representation ) )
+                {
+                    builder.append( "," );
+                }
+                builder.append( representation );
+                builder.append( "]-" );
+
+                if ( direction == Direction.OUTGOING )
+                {
+                    builder.append( ">" );
+                }
+                return builder.toString();
+            }
+        };
+    }
+
+	public static Path singleNodePath( Node node )
+    {
+        return new SingleNodePath( node );
+    }
+
+	public static String defaultPathToStringWithNotInTransactionFallback( Path path )
+    {
+        try
+        {
+            return Paths.defaultPathToString( path );
+        }
+        catch ( NotInTransactionException | DatabaseShutdownException e )
+        {
+            // We don't keep the rel-name lookup if the database is shut down. Source ID and target ID also requires
+            // database access in a transaction. However, failing on toString would be uncomfortably evil, so we fall
+            // back to noting the relationship type id.
+        }
+        StringBuilder sb = new StringBuilder();
+        for ( Relationship rel : path.relationships() )
+        {
+            if ( sb.length() == 0 )
+            {
+                sb.append( "(?)" );
+            }
+            sb.append( "-[?," ).append( rel.getId() ).append( "]-(?)" );
+        }
+        return sb.toString();
+    }
+
+	/**
      * Provides hooks to help build a string representation of a {@link org.neo4j.graphdb.Path}.
      * @param <T> the type of {@link org.neo4j.graphdb.Path}.
      */
@@ -79,7 +261,7 @@ public class Paths
         @Override
         public String nodeRepresentation( Path path, Node node )
         {
-            return "(" + node.getId() + ")";
+            return new StringBuilder().append("(").append(node.getId()).append(")").toString();
         }
 
         @Override
@@ -96,169 +278,9 @@ public class Paths
             {
                 suffix = "->";
             }
-            return prefix + "[" + relationship.getType().name() + "," +
-                    relationship.getId() + "]" + suffix;
+            return new StringBuilder().append(prefix).append("[").append(relationship.getType().name()).append(",").append(relationship.getId()).append("]")
+					.append(suffix).toString();
         }
-    }
-
-    /**
-     * Method for building a string representation of a {@link Path}, using
-     * the given {@code builder}.
-     * @param <T> the type of {@link Path}.
-     * @param path the {@link Path} to build a string representation of.
-     * @param builder the {@link PathDescriptor} to get
-     * {@link Node} and {@link Relationship} representations from.
-     * @return a string representation of a {@link Path}.
-     */
-    public static <T extends Path> String pathToString( T path, PathDescriptor<T> builder )
-    {
-        Node current = path.startNode();
-        StringBuilder result = new StringBuilder();
-        for ( Relationship rel : path.relationships() )
-        {
-            result.append( builder.nodeRepresentation( path, current ) );
-            result.append( builder.relationshipRepresentation( path, current, rel ) );
-            current = rel.getOtherNode( current );
-        }
-        if ( null != current )
-        {
-            result.append( builder.nodeRepresentation( path, current ) );
-        }
-        return result.toString();
-    }
-
-    /**
-     * TODO: This method re-binds nodes and relationships. It should not.
-     *
-     * Returns the default string representation of a {@link Path}. It uses
-     * the {@link DefaultPathDescriptor} to get representations.
-     * @param path the {@link Path} to build a string representation of.
-     * @return the default string representation of a {@link Path}.
-     */
-    public static String defaultPathToString( Path path )
-    {
-        return pathToString( path, new DefaultPathDescriptor<>() );
-    }
-
-    /**
-     * Returns a quite simple string representation of a {@link Path}. It
-     * doesn't print relationship types or ids, just directions.
-     * @param path the {@link Path} to build a string representation of.
-     * @return a quite simple representation of a {@link Path}.
-     */
-    public static String simplePathToString( Path path )
-    {
-        return pathToString( path, new DefaultPathDescriptor<Path>()
-        {
-            @Override
-            public String relationshipRepresentation( Path path, Node from,
-                                                      Relationship relationship )
-            {
-                return relationship.getStartNode().equals( from ) ? "-->" : "<--";
-            }
-        } );
-    }
-
-    /**
-     * Returns a quite simple string representation of a {@link Path}. It
-     * doesn't print relationship types or ids, just directions. it uses the
-     * {@code nodePropertyKey} to try to display that property value as in the
-     * node representation instead of the node id. If that property doesn't
-     * exist, the id is used.
-     * @param path the {@link Path} to build a string representation of.
-     * @param nodePropertyKey the key of the property value to display
-     * @return a quite simple representation of a {@link Path}.
-     */
-    public static String simplePathToString( Path path, final String nodePropertyKey )
-    {
-        return pathToString( path, new DefaultPathDescriptor<Path>()
-        {
-            @Override
-            public String nodeRepresentation( Path path, Node node )
-            {
-                return "(" + node.getProperty( nodePropertyKey, node.getId() ) + ")";
-            }
-
-            @Override
-            public String relationshipRepresentation( Path path, Node from,
-                                                      Relationship relationship )
-            {
-                return relationship.getStartNode().equals( from ) ? "-->" : "<--";
-            }
-        } );
-    }
-
-    /**
-     * Create a new {@link Paths.PathDescriptor} that prints values of listed property keys
-     * and id of nodes and relationships if configured so.
-     * @param nodeId            true if node id should be included.
-     * @param relId             true if relationship id should be included.
-     * @param propertyKeys      all property keys that should be included.
-     * @param <T>               the type of the {@link Path}
-     * @return                  a new {@link Paths.PathDescriptor}
-     */
-    public static <T extends Path> PathDescriptor<T> descriptorForIdAndProperties( final boolean nodeId,
-    final boolean relId, final String... propertyKeys )
-    {
-        return new Paths.PathDescriptor<T>()
-        {
-            @Override
-            public String nodeRepresentation( T path, Node node )
-            {
-                String representation = representation( node );
-                return "(" + (nodeId ? node.getId() : "" ) +
-                       ( nodeId && !representation.equals( "" ) ? "," : "" ) +
-                       representation + ")";
-            }
-
-            private String representation( PropertyContainer entity )
-            {
-                StringBuilder builder = new StringBuilder();
-                for ( String key : propertyKeys )
-                {
-                    Object value = entity.getProperty( key, null );
-                    if ( value != null )
-                    {
-                        if ( builder.length() > 0 )
-                        {
-                            builder.append( "," );
-                        }
-                        builder.append( value );
-                    }
-                }
-                return builder.toString();
-            }
-
-            @Override
-            public String relationshipRepresentation( T path, Node from, Relationship relationship )
-            {
-                Direction direction = relationship.getEndNode().equals( from ) ? Direction.INCOMING : Direction.OUTGOING;
-                StringBuilder builder = new StringBuilder();
-                if ( direction.equals( Direction.INCOMING ) )
-                {
-                    builder.append( "<" );
-                }
-                builder.append( "-[" + (relId ? relationship.getId() : "") );
-                String representation = representation( relationship );
-                if ( relId && !representation.equals( "" ) )
-                {
-                    builder.append( "," );
-                }
-                builder.append( representation );
-                builder.append( "]-" );
-
-                if ( direction.equals( Direction.OUTGOING ) )
-                {
-                    builder.append( ">" );
-                }
-                return builder.toString();
-            }
-        };
-    }
-
-    public static Path singleNodePath( Node node )
-    {
-        return new SingleNodePath( node );
     }
 
     private static class SingleNodePath implements Path
@@ -303,7 +325,7 @@ public class Paths
         @Override
         public Iterable<Node> nodes()
         {
-            return Arrays.asList( node );
+            return Collections.singletonList( node );
         }
 
         @Override
@@ -321,31 +343,7 @@ public class Paths
         @Override
         public Iterator<PropertyContainer> iterator()
         {
-            return Arrays.<PropertyContainer>asList( node ).iterator();
+            return Collections.<PropertyContainer>singletonList( node ).iterator();
         }
-    }
-
-    public static String defaultPathToStringWithNotInTransactionFallback( Path path )
-    {
-        try
-        {
-            return Paths.defaultPathToString( path );
-        }
-        catch ( NotInTransactionException | DatabaseShutdownException e )
-        {
-            // We don't keep the rel-name lookup if the database is shut down. Source ID and target ID also requires
-            // database access in a transaction. However, failing on toString would be uncomfortably evil, so we fall
-            // back to noting the relationship type id.
-        }
-        StringBuilder sb = new StringBuilder();
-        for ( Relationship rel : path.relationships() )
-        {
-            if ( sb.length() == 0 )
-            {
-                sb.append( "(?)" );
-            }
-            sb.append( "-[?," ).append( rel.getId() ).append( "]-(?)" );
-        }
-        return sb.toString();
     }
 }

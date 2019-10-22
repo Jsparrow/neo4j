@@ -62,33 +62,32 @@ public class LookupFilter
                         .filter( LookupFilter::isNumericOrGeometricPredicate )
                         .toArray( IndexQuery[]::new );
 
-        if ( filteredPredicates.length > 0 )
-        {
-            LongPredicate combinedPredicate = nodeId ->
-            {
-                try
-                {
-                    for ( IndexQuery predicate : filteredPredicates )
-                    {
-                        int propertyKeyId = predicate.propertyKeyId();
-                        Value value = accessor.getNodePropertyValue( nodeId, propertyKeyId );
-                        if ( !predicate.acceptsValue( value ) )
-                        {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-                catch ( EntityNotFoundException ignored )
-                {
-                    return false; // The node has been deleted but was still reported from the index. CC will catch
-                                  // this through other mechanism (NodeInUseWithCorrectLabelsCheck), so we can
-                                  // silently ignore here
-                }
-            };
-            return PrimitiveLongCollections.filter( indexedNodeIds, combinedPredicate );
-        }
-        return indexedNodeIds;
+        if (filteredPredicates.length <= 0) {
+			return indexedNodeIds;
+		}
+		LongPredicate combinedPredicate = nodeId ->
+		{
+		    try
+		    {
+		        for ( IndexQuery predicate : filteredPredicates )
+		        {
+		            int propertyKeyId = predicate.propertyKeyId();
+		            Value value = accessor.getNodePropertyValue( nodeId, propertyKeyId );
+		            if ( !predicate.acceptsValue( value ) )
+		            {
+		                return false;
+		            }
+		        }
+		        return true;
+		    }
+		    catch ( EntityNotFoundException ignored )
+		    {
+		        return false; // The node has been deleted but was still reported from the index. CC will catch
+		                      // this through other mechanism (NodeInUseWithCorrectLabelsCheck), so we can
+		                      // silently ignore here
+		    }
+		};
+		return PrimitiveLongCollections.filter( indexedNodeIds, combinedPredicate );
     }
 
     private static boolean isNumericOrGeometricPredicate( IndexQuery predicate )

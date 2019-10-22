@@ -74,9 +74,7 @@ class PrintingImportLogicMonitor implements ImportLogic.Monitor
     @Override
     public void insufficientAvailableMemory( long estimatedCacheSize, long optimalMinimalHeapSize, long availableMemory )
     {
-        err.printf( "WARNING: %s memory may not be sufficient to complete this import. Suggested memory distribution is:%n" +
-                "heap size: %s%n" +
-                "minimum free and available memory excluding heap size: %s",
+        err.printf( new StringBuilder().append("WARNING: %s memory may not be sufficient to complete this import. Suggested memory distribution is:%n").append("heap size: %s%n").append("minimum free and available memory excluding heap size: %s").toString(),
                 bytes( availableMemory ), bytes( optimalMinimalHeapSize ), bytes( estimatedCacheSize ) );
     }
 }

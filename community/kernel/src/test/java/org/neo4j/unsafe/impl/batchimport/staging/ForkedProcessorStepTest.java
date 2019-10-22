@@ -199,7 +199,8 @@ public class ForkedProcessorStepTest
                     if ( batch[i] % processors == id )
                     {
                         boolean compareAndSet = reference.compareAndSet( batch[i], ticket, ticket + 1 );
-                        assertTrue( "I am " + id + ". Was expecting " + ticket + " for " + batch[i] + " but was " + reference.get( batch[i] ), compareAndSet );
+                        assertTrue( new StringBuilder().append("I am ").append(id).append(". Was expecting ").append(ticket).append(" for ")
+								.append(batch[i]).append(" but was ").append(reference.get( batch[i] )).toString(), compareAndSet );
                     }
                 }
             }
@@ -311,7 +312,19 @@ public class ForkedProcessorStepTest
         assertEquals( batches, steps.get( steps.size() - 1 ).stats().stat( Keys.done_batches ).asLong() );
     }
 
-    private static class StressStage extends Stage
+    private static Configuration config( int processors )
+    {
+        return new Configuration()
+        {
+            @Override
+            public int maxNumberOfProcessors()
+            {
+                return processors;
+            }
+        };
+    }
+
+	private static class StressStage extends Stage
     {
         StressStage( Configuration config, int orderingGuarantees, int batches )
         {
@@ -366,18 +379,6 @@ public class ForkedProcessorStepTest
         }
     }
 
-    private static Configuration config( int processors )
-    {
-        return new Configuration()
-        {
-            @Override
-            public int maxNumberOfProcessors()
-            {
-                return processors;
-            }
-        };
-    }
-
     private static class Batch
     {
         private final boolean[] processed;
@@ -428,7 +429,7 @@ public class ForkedProcessorStepTest
             assertEquals( batch.processed.length, count );
             if ( !received.compareAndSet( ticket - 1, ticket ) )
             {
-                fail( "Hmm " + ticket + " " + received.get() );
+                fail( new StringBuilder().append("Hmm ").append(ticket).append(" ").append(received.get()).toString() );
             }
             return 0;
         }

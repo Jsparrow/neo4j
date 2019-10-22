@@ -36,24 +36,74 @@ import org.neo4j.kernel.spi.explicitindex.IndexImplementation;
 
 public class DummyIndexImplementation extends LifecycleAdapter implements IndexImplementation
 {
-    @Override
+    private static final ExplicitIndexHits NO_HITS = new EmptyHits();
+	private static final TransactionApplier NO_APPLIER = new TransactionApplier.Adapter();
+
+	@Override
     public Map<String, String> fillInDefaults( Map<String, String> config )
     {
         return config;
     }
 
-    @Override
+	@Override
     public boolean configMatches( Map<String, String> storedConfig, Map<String, String> suppliedConfig )
     {
         return true;
     }
 
-    private boolean failing( Map<String, String> config )
+	private boolean failing( Map<String, String> config )
     {
         return Boolean.parseBoolean( config.get( DummyIndexExtensionFactory.KEY_FAIL_ON_MUTATE ) );
     }
 
-    private static class EmptyHits extends PrimitiveLongBaseIterator implements ExplicitIndexHits
+	@Override
+    public File getIndexImplementationDirectory( DatabaseLayout directoryLayout )
+    {
+        return directoryLayout.databaseDirectory();
+    }
+
+	@Override
+    public ExplicitIndexProviderTransaction newTransaction( IndexCommandFactory commandFactory )
+    {
+        return new ExplicitIndexProviderTransaction()
+        {
+            @Override
+            public ExplicitIndex relationshipIndex( String indexName, Map<String, String> configuration )
+            {
+                return new EmptyExplicitIndex( failing( configuration ) );
+            }
+
+            @Override
+            public ExplicitIndex nodeIndex( String indexName, Map<String, String> configuration )
+            {
+                return new EmptyExplicitIndex( failing( configuration ) );
+            }
+
+            @Override
+            public void close()
+            {
+            }
+        };
+    }
+
+	@Override
+    public TransactionApplier newApplier( boolean recovery )
+    {
+        return NO_APPLIER;
+    }
+
+	@Override
+    public void force()
+    {
+    }
+
+	@Override
+    public ResourceIterator<File> listStoreFiles()
+    {
+        return Iterators.emptyResourceIterator();
+    }
+
+	private static class EmptyHits extends PrimitiveLongBaseIterator implements ExplicitIndexHits
     {
         @Override
         public void close()
@@ -78,8 +128,6 @@ public class DummyIndexImplementation extends LifecycleAdapter implements IndexI
             return false;
         }
     }
-
-    private static final ExplicitIndexHits NO_HITS = new EmptyHits();
 
     private static class EmptyExplicitIndex implements ExplicitIndex
     {
@@ -187,54 +235,5 @@ public class DummyIndexImplementation extends LifecycleAdapter implements IndexI
                 throw new UnsupportedOperationException();
             }
         }
-    }
-
-    @Override
-    public File getIndexImplementationDirectory( DatabaseLayout directoryLayout )
-    {
-        return directoryLayout.databaseDirectory();
-    }
-
-    @Override
-    public ExplicitIndexProviderTransaction newTransaction( IndexCommandFactory commandFactory )
-    {
-        return new ExplicitIndexProviderTransaction()
-        {
-            @Override
-            public ExplicitIndex relationshipIndex( String indexName, Map<String, String> configuration )
-            {
-                return new EmptyExplicitIndex( failing( configuration ) );
-            }
-
-            @Override
-            public ExplicitIndex nodeIndex( String indexName, Map<String, String> configuration )
-            {
-                return new EmptyExplicitIndex( failing( configuration ) );
-            }
-
-            @Override
-            public void close()
-            {
-            }
-        };
-    }
-
-    private static final TransactionApplier NO_APPLIER = new TransactionApplier.Adapter();
-
-    @Override
-    public TransactionApplier newApplier( boolean recovery )
-    {
-        return NO_APPLIER;
-    }
-
-    @Override
-    public void force()
-    {
-    }
-
-    @Override
-    public ResourceIterator<File> listStoreFiles()
-    {
-        return Iterators.emptyResourceIterator();
     }
 }

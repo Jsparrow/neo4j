@@ -123,14 +123,9 @@ public class BoltChannel implements TrackedNetworkConnection
     @Override
     public String toString()
     {
-        return "BoltChannel{" +
-               "id='" + id + '\'' +
-               ", connectTime=" + connectTime +
-               ", connector='" + connector + '\'' +
-               ", rawChannel=" + rawChannel +
-               ", username='" + username + '\'' +
-               ", userAgent='" + userAgent + '\'' +
-               '}';
+        return new StringBuilder().append("BoltChannel{").append("id='").append(id).append('\'').append(", connectTime=").append(connectTime).append(", connector='")
+				.append(connector).append('\'').append(", rawChannel=").append(rawChannel).append(", username='").append(username).append('\'')
+				.append(", userAgent='").append(userAgent).append('\'').append('}').toString();
     }
 
     private ClientConnectionInfo createConnectionInfo()

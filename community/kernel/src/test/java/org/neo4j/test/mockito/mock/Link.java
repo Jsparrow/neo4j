@@ -24,7 +24,25 @@ import org.neo4j.graphdb.Relationship;
 
 public class Link
 {
-    public static Link link( Relationship relationship, Node node )
+    final Relationship relationship;
+	private final Node node;
+	private final boolean isStartNode;
+
+	private Link( Node node, Relationship relationship )
+    {
+        this.relationship = relationship;
+        this.node = node;
+        this.isStartNode = true;
+    }
+
+	private Link( Relationship relationship, Node node )
+    {
+        this.relationship = relationship;
+        this.node = node;
+        this.isStartNode = false;
+    }
+
+	public static Link link( Relationship relationship, Node node )
     {
         if ( relationship.getStartNode().getId() == node.getId() )
         {
@@ -37,25 +55,7 @@ public class Link
         throw illegalArgument( "%s is neither the start node nor the end node of %s", node, relationship );
     }
 
-    final Relationship relationship;
-    private final Node node;
-    private final boolean isStartNode;
-
-    private Link( Node node, Relationship relationship )
-    {
-        this.relationship = relationship;
-        this.node = node;
-        this.isStartNode = true;
-    }
-
-    private Link( Relationship relationship, Node node )
-    {
-        this.relationship = relationship;
-        this.node = node;
-        this.isStartNode = false;
-    }
-
-    public Node checkNode( Node node )
+	public Node checkNode( Node node )
     {
         if ( isStartNode )
         {
@@ -74,7 +74,7 @@ public class Link
         return this.node;
     }
 
-    private static IllegalArgumentException illegalArgument( String message, Object... parameters )
+	private static IllegalArgumentException illegalArgument( String message, Object... parameters )
     {
         return new IllegalArgumentException( String.format( message, parameters ) );
     }

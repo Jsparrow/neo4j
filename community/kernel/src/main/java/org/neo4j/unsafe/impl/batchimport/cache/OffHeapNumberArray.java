@@ -73,14 +73,14 @@ public abstract class OffHeapNumberArray<N extends NumberArray<N>> extends BaseN
     @Override
     public void close()
     {
-        if ( !closed )
-        {
-            if ( length > 0 )
-            {
-                // Allocating 0 bytes actually returns address 0
-                UnsafeUtil.free( allocatedAddress, allocatedBytes, allocationTracker );
-            }
-            closed = true;
-        }
+        if (closed) {
+			return;
+		}
+		if ( length > 0 )
+		{
+		    // Allocating 0 bytes actually returns address 0
+		    UnsafeUtil.free( allocatedAddress, allocatedBytes, allocationTracker );
+		}
+		closed = true;
     }
 }

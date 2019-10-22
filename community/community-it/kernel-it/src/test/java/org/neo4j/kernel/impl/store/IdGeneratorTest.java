@@ -148,7 +148,7 @@ public class IdGeneratorTest
             int readCount = fileChannel.read( buffer );
             if ( readCount != -1 && readCount != 0 )
             {
-                fail( "Id generator header not ok read 9 + " + readCount + " bytes from file" );
+                fail( new StringBuilder().append("Id generator header not ok read 9 + ").append(readCount).append(" bytes from file").toString() );
             }
             fileChannel.close();
 
@@ -402,7 +402,8 @@ public class IdGeneratorTest
                 long id = idGenerator.nextId();
                 if ( freedIds.remove( id ) == null )
                 {
-                    throw new RuntimeException( "Id=" + id + " prevId=" + oldId + " list.size()=" + freedIds.size() );
+                    throw new RuntimeException( new StringBuilder().append("Id=").append(id).append(" prevId=").append(oldId).append(" list.size()=")
+							.append(freedIds.size()).toString() );
                 }
                 oldId = id;
             }
@@ -732,7 +733,7 @@ public class IdGeneratorTest
                 }
             }
             long newId = idGenerator.nextId();
-            assertTrue( "Expected IDs to be reused (" + grabSize + " at a time). high ID was: " + newId,
+            assertTrue( new StringBuilder().append("Expected IDs to be reused (").append(grabSize).append(" at a time). high ID was: ").append(newId).toString(),
                     newId < grabSize * rounds );
         }
         finally

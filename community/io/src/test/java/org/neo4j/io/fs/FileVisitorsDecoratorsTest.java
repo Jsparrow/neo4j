@@ -57,7 +57,12 @@ public class FileVisitorsDecoratorsTest
     @Parameterized.Parameter( 2 )
     public boolean throwsExceptions;
 
-    @Parameterized.Parameters( name = "{0}" )
+	@SuppressWarnings( "unchecked" )
+    public FileVisitor<Path> wrapped = mock( FileVisitor.class );
+
+	public FileVisitor<Path> decorator;
+
+	@Parameterized.Parameters( name = "{0}" )
     public static List<Object[]> formats()
     {
         return asList(
@@ -86,17 +91,13 @@ public class FileVisitorsDecoratorsTest
         );
     }
 
-    @SuppressWarnings( "unchecked" )
-    public FileVisitor<Path> wrapped = mock( FileVisitor.class );
-    public FileVisitor<Path> decorator;
-
-    @Before
+	@Before
     public void setup()
     {
         decorator = decoratorConstructor.apply( wrapped );
     }
 
-    @Test
+	@Test
     public void shouldDelegatePreVisitDirectory() throws IOException
     {
         Path dir = Paths.get( "some-dir" );
@@ -105,7 +106,7 @@ public class FileVisitorsDecoratorsTest
         verify( wrapped ).preVisitDirectory( dir, attrs );
     }
 
-    @Test
+	@Test
     public void shouldPropagateReturnValueFromPreVisitDirectory() throws IOException
     {
         for ( FileVisitResult result : FileVisitResult.values() )
@@ -115,7 +116,7 @@ public class FileVisitorsDecoratorsTest
         }
     }
 
-    @Test
+	@Test
     public void shouldPropagateExceptionsFromPreVisitDirectory() throws IOException
     {
         when( wrapped.preVisitDirectory( any(), any() ) ).thenThrow( new IOException() );
@@ -130,7 +131,7 @@ public class FileVisitorsDecoratorsTest
         }
     }
 
-    @Test
+	@Test
     public void shouldDelegatePostVisitDirectory() throws IOException
     {
         Path dir = Paths.get( "some-dir" );
@@ -139,7 +140,7 @@ public class FileVisitorsDecoratorsTest
         verify( wrapped ).postVisitDirectory( dir, e );
     }
 
-    @Test
+	@Test
     public void shouldPropagateReturnValueFromPostVisitDirectory() throws IOException
     {
         for ( FileVisitResult result : FileVisitResult.values() )
@@ -149,7 +150,7 @@ public class FileVisitorsDecoratorsTest
         }
     }
 
-    @Test
+	@Test
     public void shouldPropagateExceptionsFromPostVisitDirectory() throws IOException
     {
         when( wrapped.postVisitDirectory( any(), any() ) ).thenThrow( new IOException() );
@@ -164,7 +165,7 @@ public class FileVisitorsDecoratorsTest
         }
     }
 
-    @Test
+	@Test
     public void shouldDelegateVisitFile() throws IOException
     {
         Path dir = Paths.get( "some-dir" );
@@ -173,7 +174,7 @@ public class FileVisitorsDecoratorsTest
         verify( wrapped ).visitFile( dir, attrs );
     }
 
-    @Test
+	@Test
     public void shouldPropagateReturnValueFromVisitFile() throws IOException
     {
         for ( FileVisitResult result : FileVisitResult.values() )
@@ -183,7 +184,7 @@ public class FileVisitorsDecoratorsTest
         }
     }
 
-    @Test
+	@Test
     public void shouldPropagateExceptionsFromVisitFile() throws IOException
     {
         when( wrapped.visitFile( any(), any() ) ).thenThrow( new IOException() );
@@ -198,7 +199,7 @@ public class FileVisitorsDecoratorsTest
         }
     }
 
-    @Test
+	@Test
     public void shouldDelegateVisitFileFailed() throws IOException
     {
         Path dir = Paths.get( "some-dir" );
@@ -207,7 +208,7 @@ public class FileVisitorsDecoratorsTest
         verify( wrapped ).visitFileFailed( dir, e );
     }
 
-    @Test
+	@Test
     public void shouldPropagateReturnValueFromVisitFileFailed() throws IOException
     {
         for ( FileVisitResult result : FileVisitResult.values() )
@@ -217,7 +218,7 @@ public class FileVisitorsDecoratorsTest
         }
     }
 
-    @Test
+	@Test
     public void shouldPropagateExceptionsFromVisitFileFailed() throws IOException
     {
         when( wrapped.visitFileFailed( any(), any() ) ).thenThrow( new IOException() );

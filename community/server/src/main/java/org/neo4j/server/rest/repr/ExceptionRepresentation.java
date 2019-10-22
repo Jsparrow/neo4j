@@ -102,7 +102,24 @@ public class ExceptionRepresentation extends MappingRepresentation
         }
     }
 
-    private static class ErrorEntryRepresentation extends MappingRepresentation
+    private static Status statusCode( Throwable current )
+    {
+        while ( current != null )
+        {
+            if ( current instanceof Status.HasStatus )
+            {
+                return ((Status.HasStatus) current).status();
+            }
+            if ( current instanceof ConstraintViolationException )
+            {
+                return Status.Schema.ConstraintValidationFailed;
+            }
+            current = current.getCause();
+        }
+        return Status.General.UnknownError;
+    }
+
+	private static class ErrorEntryRepresentation extends MappingRepresentation
     {
         private final Neo4jError error;
 
@@ -134,22 +151,5 @@ public class ExceptionRepresentation extends MappingRepresentation
                 }
             } );
         }
-    }
-
-    private static Status statusCode( Throwable current )
-    {
-        while ( current != null )
-        {
-            if ( current instanceof Status.HasStatus )
-            {
-                return ((Status.HasStatus) current).status();
-            }
-            if ( current instanceof ConstraintViolationException )
-            {
-                return Status.Schema.ConstraintValidationFailed;
-            }
-            current = current.getCause();
-        }
-        return Status.General.UnknownError;
     }
 }

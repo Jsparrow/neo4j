@@ -66,17 +66,16 @@ class SamplingProfiler implements Profiler
         if ( underSampling.get() > 0 )
         {
             long allSamplesTotal = samples.reduceToLong( Long.MAX_VALUE, ( thread, sample ) -> sample.get(), 0, ( a, b ) -> a + b );
-            out.println( "Info: Did not achieve target sampling frequency. " + underSampling + " of " + allSamplesTotal + " samples were delayed." );
+            out.println( new StringBuilder().append("Info: Did not achieve target sampling frequency. ").append(underSampling).append(" of ").append(allSamplesTotal).append(" samples were delayed.").toString() );
         }
-        for ( Map.Entry<Thread,Sample> entry : samples.entrySet() )
-        {
+        samples.entrySet().forEach(entry -> {
             Thread thread = entry.getKey();
             Sample rootSample = entry.getValue();
             rootSample.intoOrdered();
-            out.println( "Profile (" + rootSample.get() + " samples) " + thread.getName() );
+            out.println( new StringBuilder().append("Profile (").append(rootSample.get()).append(" samples) ").append(thread.getName()).toString() );
             double total = rootSample.get();
             printSampleTree( out, total, rootSample.orderedChildren, 2 );
-        }
+        });
     }
 
     @Override
@@ -181,10 +180,7 @@ class SamplingProfiler implements Profiler
             orderedChildren = new PriorityQueue<>();
             orderedChildren.addAll( children.values() );
             children.clear();
-            for ( Sample child : orderedChildren )
-            {
-                child.intoOrdered();
-            }
+            orderedChildren.forEach(Sample::intoOrdered);
         }
     }
 }

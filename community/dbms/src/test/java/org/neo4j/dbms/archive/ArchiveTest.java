@@ -116,9 +116,7 @@ class ArchiveTest
     void shouldCopeWithLongPaths( CompressionFormat compressionFormat ) throws IOException, IncorrectFormat
     {
         Path directory = testDirectory.directory( "a-directory" ).toPath();
-        Path subdir = directory.resolve( "a/very/long/path/which/is/not/realistic/for/a/database/today/but/which" +
-                "/ensures/that/we/dont/get/caught/out/at/in/the/future/the/point/being/that/there/are/multiple/tar" +
-                "/formats/some/of/which/do/not/cope/with/long/paths" );
+        Path subdir = directory.resolve( new StringBuilder().append("a/very/long/path/which/is/not/realistic/for/a/database/today/but/which").append("/ensures/that/we/dont/get/caught/out/at/in/the/future/the/point/being/that/there/are/multiple/tar").append("/formats/some/of/which/do/not/cope/with/long/paths").toString() );
         Files.createDirectories( subdir );
         Files.write( subdir.resolve( "a-file" ), "text".getBytes() );
         assertRoundTrips( directory, compressionFormat );
@@ -134,7 +132,7 @@ class ArchiveTest
         Files.write( directory.resolve( "another-file" ), new byte[0] );
 
         Path archive = testDirectory.file( "the-archive.dump" ).toPath();
-        new Dumper().dump( directory, directory, archive, compressionFormat, path -> path.getFileName().toString().equals( "another-file" ) );
+        new Dumper().dump( directory, directory, archive, compressionFormat, path -> "another-file".equals( path.getFileName().toString() ) );
         Path newDirectory = testDirectory.file( "the-new-directory" ).toPath();
         new Loader().load( archive, newDirectory, newDirectory );
 
@@ -155,7 +153,7 @@ class ArchiveTest
         Files.write( subdir.resolve( "a-file" ), new byte[0] );
 
         Path archive = testDirectory.file( "the-archive.dump" ).toPath();
-        new Dumper().dump( directory, directory, archive, compressionFormat, path -> path.getFileName().toString().equals( "subdir" ) );
+        new Dumper().dump( directory, directory, archive, compressionFormat, path -> "subdir".equals( path.getFileName().toString() ) );
         Path newDirectory = testDirectory.file( "the-new-directory" ).toPath();
         new Loader().load( archive, newDirectory, newDirectory );
 

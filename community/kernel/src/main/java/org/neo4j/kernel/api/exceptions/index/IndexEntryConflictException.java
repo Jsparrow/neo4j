@@ -144,11 +144,8 @@ public class IndexEntryConflictException extends Exception
     @Override
     public String toString()
     {
-        return "IndexEntryConflictException{" +
-                "propertyValues=" + propertyValues +
-                ", addedNodeId=" + addedNodeId +
-                ", existingNodeId=" + existingNodeId +
-                '}';
+        return new StringBuilder().append("IndexEntryConflictException{").append("propertyValues=").append(propertyValues).append(", addedNodeId=").append(addedNodeId).append(", existingNodeId=").append(existingNodeId)
+				.append('}').toString();
     }
 
     private String propertyString( TokenNameLookup tokenNameLookup, int[] propertyIds )

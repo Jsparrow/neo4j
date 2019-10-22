@@ -67,11 +67,8 @@ public abstract class UnsafeTable<VALUE> extends PowerOfTwoQuantizedTable<VALUE>
             // requires aligned access, which seems to be the case right here and now.
             if ( (bytesPerEntry % Integer.BYTES) != 0 )
             {
-                throw new IllegalArgumentException( "Memory system requires aligned memory access and " +
-                        getClass().getSimpleName() + " was designed to cope with this requirement by " +
-                        "being able to accessing data in 4-byte chunks, if needed to. " +
-                        "Although this table tried to be constructed with bytesPerKey:" + bytesPerKey +
-                        " yielding a bytesPerEntry:" + bytesPerEntry + ", which isn't 4-byte aligned." );
+                throw new IllegalArgumentException( new StringBuilder().append("Memory system requires aligned memory access and ").append(getClass().getSimpleName()).append(" was designed to cope with this requirement by ").append("being able to accessing data in 4-byte chunks, if needed to. ").append("Although this table tried to be constructed with bytesPerKey:").append(bytesPerKey)
+						.append(" yielding a bytesPerEntry:").append(bytesPerEntry).append(", which isn't 4-byte aligned.").toString() );
             }
 
             allocatedBytes = dataSize + Integer.BYTES - 1;

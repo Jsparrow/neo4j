@@ -88,9 +88,8 @@ public class HttpConnectorValidator extends ConnectorValidator
         case "address":
             setting = listenAddress( settingName, defaultPort( name, params ) );
             setting.setDeprecated( true );
-            setting.setReplacement( "dbms.connector." + name + ".listen_address" );
-            setting.setDescription( "Address the connector should bind to. Deprecated and replaced by "
-                    + setting.replacement().get() + "." );
+            setting.setReplacement( new StringBuilder().append("dbms.connector.").append(name).append(".listen_address").toString() );
+            setting.setDescription( new StringBuilder().append("Address the connector should bind to. Deprecated and replaced by ").append(setting.replacement().get()).append(".").toString() );
             break;
         case "listen_address":
             setting = listenAddress( settingName, defaultPort( name, params ) );
@@ -138,7 +137,7 @@ public class HttpConnectorValidator extends ConnectorValidator
     @Nonnull
     private static Map<String,String> assertEncryption( @Nonnull String name,
             @Nonnull Setting<?> setting,
-            @Nonnull Map<String,String> rawConfig ) throws InvalidSettingException
+            @Nonnull Map<String,String> rawConfig )
     {
         Map<String,String> result = setting.validate( rawConfig, nullConsumer );
 
@@ -176,7 +175,7 @@ public class HttpConnectorValidator extends ConnectorValidator
     public static BaseSetting<HttpConnector.Encryption> encryptionSetting( @Nonnull String name, Encryption
             defaultValue )
     {
-        Setting<Encryption> s = setting( "dbms.connector." + name + ".encryption",
+        Setting<Encryption> s = setting( new StringBuilder().append("dbms.connector.").append(name).append(".encryption").toString(),
                 optionsObeyCase( Encryption.class ), defaultValue.name() );
 
         return new BaseSetting<Encryption>()
@@ -251,7 +250,6 @@ public class HttpConnectorValidator extends ConnectorValidator
 
             @Override
             public Map<String,String> validate( Map<String,String> rawConfig, Consumer<String> warningConsumer )
-                    throws InvalidSettingException
             {
                 Map<String,String> result = s.validate( rawConfig, warningConsumer );
                 assertEncryption( name, s, rawConfig );

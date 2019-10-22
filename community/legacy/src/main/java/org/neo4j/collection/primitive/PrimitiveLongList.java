@@ -54,7 +54,7 @@ public class PrimitiveLongList implements PrimitiveLongCollection
     {
         if ( position >= size )
         {
-            throw new IndexOutOfBoundsException( "Requested element: " + position + ", list size: " + size );
+            throw new IndexOutOfBoundsException( new StringBuilder().append("Requested element: ").append(position).append(", list size: ").append(size).toString() );
         }
         return elements[position];
     }

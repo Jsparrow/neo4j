@@ -31,23 +31,12 @@ import org.neo4j.kernel.spi.explicitindex.IndexProviders;
 
 public class LuceneKernelExtensionFactory extends KernelExtensionFactory<LuceneKernelExtensionFactory.Dependencies>
 {
-    public interface Dependencies
-    {
-        Config getConfig();
-
-        IndexProviders getIndexProviders();
-
-        IndexConfigStore getIndexStore();
-
-        FileSystemAbstraction fileSystem();
-    }
-
     public LuceneKernelExtensionFactory()
     {
         super( ExtensionType.DATABASE, LuceneIndexImplementation.SERVICE_NAME );
     }
 
-    @Override
+	@Override
     public Lifecycle newInstance( KernelContext context, Dependencies dependencies )
     {
         return new LuceneKernelExtension(
@@ -57,5 +46,16 @@ public class LuceneKernelExtensionFactory extends KernelExtensionFactory<LuceneK
                 dependencies.fileSystem(),
                 dependencies.getIndexProviders(),
                 context.databaseInfo().operationalMode );
+    }
+
+	public interface Dependencies
+    {
+        Config getConfig();
+
+        IndexProviders getIndexProviders();
+
+        IndexConfigStore getIndexStore();
+
+        FileSystemAbstraction fileSystem();
     }
 }

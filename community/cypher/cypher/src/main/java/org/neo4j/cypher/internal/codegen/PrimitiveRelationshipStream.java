@@ -33,17 +33,19 @@ import static java.lang.String.format;
 
 public class PrimitiveRelationshipStream extends PrimitiveEntityStream<VirtualRelationshipValue>
 {
-    public PrimitiveRelationshipStream( LongStream inner )
+    private static final PrimitiveRelationshipStream empty = new PrimitiveRelationshipStream( LongStream.empty() );
+
+	public PrimitiveRelationshipStream( LongStream inner )
     {
         super( inner );
     }
 
-    public static PrimitiveRelationshipStream of( long[] array )
+	public static PrimitiveRelationshipStream of( long[] array )
     {
         return new PrimitiveRelationshipStream( LongStream.of( array ) );
     }
 
-    public static PrimitiveRelationshipStream of( Object list )
+	public static PrimitiveRelationshipStream of( Object list )
     {
         if ( null == list )
         {
@@ -62,12 +64,10 @@ public class PrimitiveRelationshipStream extends PrimitiveEntityStream<VirtualRe
         throw new IllegalArgumentException( format( "Can not convert to stream: %s", list.getClass().getName() ) );
     }
 
-    @Override
+	@Override
     // This method is only used when we do not know the element type at compile time, so it has to box the elements
     public Iterator<VirtualRelationshipValue> iterator()
     {
         return inner.mapToObj( (LongFunction<VirtualRelationshipValue>) VirtualValues::relationship ).iterator();
     }
-
-    private static final PrimitiveRelationshipStream empty = new PrimitiveRelationshipStream( LongStream.empty() );
 }

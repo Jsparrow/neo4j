@@ -211,7 +211,7 @@ class SchemaDescriptorLookupSetTest
             for ( int a = 0; a < countToAdd; a++ )
             {
                 SchemaDescriptor descriptor = randomSchemaDescriptor( highEntityKeyId, highPropertyKeyId, maxNumberOfEntityKeys, maxNumberOfPropertyKeys );
-                if ( !includeIdempotentAddsAndRemoves && all.indexOf( descriptor ) != -1 )
+                if ( !includeIdempotentAddsAndRemoves && all.contains(descriptor) )
                 {
                     // Oops, we randomly generated a descriptor that already exists
                     continue;

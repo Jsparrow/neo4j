@@ -121,90 +121,6 @@ public abstract class Service
     private final Set<String> keys;
 
     /**
-     * Designates that a class implements the specified service and should be
-     * added to the services listings file (META-INF/services/[service-name]).
-     * <p>
-     * The annotation in itself does not provide any functionality for adding
-     * the implementation class to the services listings file. But it serves as
-     * a handle for an Annotation Processing Tool to utilize for performing that
-     * task.
-     * <p>
-     * This annotation is deprecated and will be removed in a future release.
-     *
-     * @author Tobias Ivarsson
-     */
-    @Target( ElementType.TYPE )
-    @Retention( RetentionPolicy.SOURCE )
-    @Deprecated
-    public @interface Implementation
-    {
-        /**
-         * The service(s) this class implements.
-         *
-         * @return the services this class implements.
-         */
-        Class<?>[] value();
-    }
-
-    /**
-     * Load all implementations of a Service.
-     *
-     * @param <T> the type of the Service
-     * @param type the type of the Service to load
-     * @return all registered implementations of the Service
-     */
-    public static <T> Iterable<T> load( Class<T> type )
-    {
-        Iterable<T> loader;
-        if ( null != (loader = java6Loader( type )) )
-        {
-            return loader;
-        }
-        return Collections.emptyList();
-    }
-
-    /**
-     * Load the Service implementation with the specified key. This method will return null if requested service not
-     * found.
-     *
-     * @param type the type of the Service to load
-     * @param key the key that identifies the desired implementation
-     * @param <T> the type of the Service to load
-     * @return requested service
-     */
-    public static <T extends Service> T loadSilently( Class<T> type, String key )
-    {
-        for ( T service : load( type ) )
-        {
-            if ( service.matches( key ) )
-            {
-                return service;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Load the Service implementation with the specified key. This method should never return null.
-     *
-     * @param <T> the type of the Service
-     * @param type the type of the Service to load
-     * @param key the key that identifies the desired implementation
-     * @return the matching Service implementation
-     * @throws NoSuchElementException if no service could be loaded with the given key.
-     */
-    public static <T extends Service> T load( Class<T> type, String key )
-    {
-        T service = loadSilently( type, key );
-        if ( service == null )
-        {
-            throw new NoSuchElementException(
-                    String.format( "Could not find any implementation of %s with a key=\"%s\"", type.getName(), key ) );
-        }
-        return service;
-    }
-
-    /**
      * Create a new instance of a service implementation identified with the
      * specified key(s).
      *
@@ -225,23 +141,81 @@ public abstract class Service
         }
     }
 
-    @Override
-    public String toString()
+	/**
+     * Load all implementations of a Service.
+     *
+     * @param <T> the type of the Service
+     * @param type the type of the Service to load
+     * @return all registered implementations of the Service
+     */
+    public static <T> Iterable<T> load( Class<T> type )
     {
-        return getClass().getSuperclass().getName() + "" + keys;
+        Iterable<T> loader;
+        if ( null != (loader = java6Loader( type )) )
+        {
+            return loader;
+        }
+        return Collections.emptyList();
     }
 
-    public boolean matches( String key )
+	/**
+     * Load the Service implementation with the specified key. This method will return null if requested service not
+     * found.
+     *
+     * @param type the type of the Service to load
+     * @param key the key that identifies the desired implementation
+     * @param <T> the type of the Service to load
+     * @return requested service
+     */
+    public static <T extends Service> T loadSilently( Class<T> type, String key )
+    {
+        for ( T service : load( type ) )
+        {
+            if ( service.matches( key ) )
+            {
+                return service;
+            }
+        }
+        return null;
+    }
+
+	/**
+     * Load the Service implementation with the specified key. This method should never return null.
+     *
+     * @param <T> the type of the Service
+     * @param type the type of the Service to load
+     * @param key the key that identifies the desired implementation
+     * @return the matching Service implementation
+     * @throws NoSuchElementException if no service could be loaded with the given key.
+     */
+    public static <T extends Service> T load( Class<T> type, String key )
+    {
+        T service = loadSilently( type, key );
+        if ( service == null )
+        {
+            throw new NoSuchElementException(
+                    String.format( "Could not find any implementation of %s with a key=\"%s\"", type.getName(), key ) );
+        }
+        return service;
+    }
+
+	@Override
+    public String toString()
+    {
+        return new StringBuilder().append(getClass().getSuperclass().getName()).append("").append(keys).toString();
+    }
+
+	public boolean matches( String key )
     {
         return keys.contains( key );
     }
 
-    public Iterable<String> getKeys()
+	public Iterable<String> getKeys()
     {
         return keys;
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -257,13 +231,13 @@ public abstract class Service
         return keys.equals( service.keys );
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return keys.hashCode();
     }
 
-    private static <T> Iterable<T> filterExceptions( final Iterable<T> iterable )
+	private static <T> Iterable<T> filterExceptions( final Iterable<T> iterable )
     {
         return () -> new PrefetchingIterator<T>()
         {
@@ -291,7 +265,7 @@ public abstract class Service
         };
     }
 
-    private static <T> Iterable<T> java6Loader( Class<T> type )
+	private static <T> Iterable<T> java6Loader( Class<T> type )
     {
         try
         {
@@ -329,7 +303,7 @@ public abstract class Service
         }
     }
 
-    private static <T> void putAllInstancesToMap( Iterable<T> services, Map<String,T> servicesMap )
+	private static <T> void putAllInstancesToMap( Iterable<T> services, Map<String,T> servicesMap )
     {
         for ( T instance : filterExceptions( services ) )
         {
@@ -338,5 +312,31 @@ public abstract class Service
                 servicesMap.put( instance.getClass().getName(), instance );
             }
         }
+    }
+
+	/**
+     * Designates that a class implements the specified service and should be
+     * added to the services listings file (META-INF/services/[service-name]).
+     * <p>
+     * The annotation in itself does not provide any functionality for adding
+     * the implementation class to the services listings file. But it serves as
+     * a handle for an Annotation Processing Tool to utilize for performing that
+     * task.
+     * <p>
+     * This annotation is deprecated and will be removed in a future release.
+     *
+     * @author Tobias Ivarsson
+     */
+    @Target( ElementType.TYPE )
+    @Retention( RetentionPolicy.SOURCE )
+    @Deprecated
+    public @interface Implementation
+    {
+        /**
+         * The service(s) this class implements.
+         *
+         * @return the services this class implements.
+         */
+        Class<?>[] value();
     }
 }

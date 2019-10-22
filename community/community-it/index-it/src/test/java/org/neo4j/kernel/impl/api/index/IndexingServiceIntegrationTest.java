@@ -71,17 +71,16 @@ public class IndexingServiceIntegrationTest
     @Rule
     public EphemeralFileSystemRule fileSystemRule = new EphemeralFileSystemRule();
     private GraphDatabaseService database;
+	@Parameterized.Parameter()
+    public GraphDatabaseSettings.SchemaIndex schemaIndex;
 
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static GraphDatabaseSettings.SchemaIndex[] parameters()
     {
         return GraphDatabaseSettings.SchemaIndex.values();
     }
 
-    @Parameterized.Parameter()
-    public GraphDatabaseSettings.SchemaIndex schemaIndex;
-
-    @Before
+	@Before
     public void setUp()
     {
         EphemeralFileSystemAbstraction fileSystem = fileSystemRule.get();
@@ -93,7 +92,7 @@ public class IndexingServiceIntegrationTest
         createData( database, 100 );
     }
 
-    @After
+	@After
     public void tearDown()
     {
         try
@@ -106,7 +105,7 @@ public class IndexingServiceIntegrationTest
         }
     }
 
-    @Test
+	@Test
     public void testManualIndexPopulation() throws InterruptedException, IndexNotFoundKernelException
     {
         try ( Transaction tx = database.beginTx() )
@@ -127,7 +126,7 @@ public class IndexingServiceIntegrationTest
         assertEquals( progress.getCompleted(), progress.getTotal() );
     }
 
-    @Test
+	@Test
     public void testManualRelationshipIndexPopulation() throws Exception
     {
         RelationTypeSchemaDescriptor descriptor;
@@ -150,7 +149,7 @@ public class IndexingServiceIntegrationTest
         assertEquals( progress.getCompleted(), progress.getTotal() );
     }
 
-    @Test
+	@Test
     public void testSchemaIndexMatchIndexingService() throws IndexNotFoundKernelException
     {
         try ( Transaction transaction = database.beginTx() )
@@ -177,7 +176,7 @@ public class IndexingServiceIntegrationTest
         assertEquals( InternalIndexState.ONLINE, weatherIndex.getState());
     }
 
-    @Test
+	@Test
     public void failForceIndexesWhenOneOfTheIndexesIsBroken() throws Exception
     {
         String constraintLabelPrefix = "ConstraintLabel";
@@ -214,7 +213,7 @@ public class IndexingServiceIntegrationTest
         indexingService.forceAll( IOLimiter.UNLIMITED );
     }
 
-    private void waitIndexOnline( IndexProxy indexProxy ) throws InterruptedException
+	private void waitIndexOnline( IndexProxy indexProxy ) throws InterruptedException
     {
         while ( InternalIndexState.ONLINE != indexProxy.getState() )
         {
@@ -222,17 +221,17 @@ public class IndexingServiceIntegrationTest
         }
     }
 
-    private IndexingService getIndexingService( GraphDatabaseService database )
+	private IndexingService getIndexingService( GraphDatabaseService database )
     {
         return getDependencyResolver(database).resolveDependency( IndexingService.class );
     }
 
-    private DependencyResolver getDependencyResolver( GraphDatabaseService database )
+	private DependencyResolver getDependencyResolver( GraphDatabaseService database )
     {
         return ((GraphDatabaseAPI)database).getDependencyResolver();
     }
 
-    private void createData( GraphDatabaseService database, int numberOfNodes )
+	private void createData( GraphDatabaseService database, int numberOfNodes )
     {
         for ( int i = 0; i < numberOfNodes; i++ )
         {
@@ -248,7 +247,7 @@ public class IndexingServiceIntegrationTest
         }
     }
 
-    private int getPropertyKeyId( String name )
+	private int getPropertyKeyId( String name )
     {
         try ( Transaction tx = database.beginTx() )
         {
@@ -258,7 +257,7 @@ public class IndexingServiceIntegrationTest
         }
     }
 
-    private int getLabelId( String name )
+	private int getLabelId( String name )
     {
         try ( Transaction tx = database.beginTx() )
         {

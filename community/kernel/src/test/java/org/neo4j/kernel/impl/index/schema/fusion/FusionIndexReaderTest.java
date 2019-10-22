@@ -68,13 +68,15 @@ import static org.neo4j.values.storable.Values.stringValue;
 @RunWith( Parameterized.class )
 public class FusionIndexReaderTest
 {
-    private IndexReader[] aliveReaders;
-    private EnumMap<IndexSlot,IndexReader> readers;
-    private FusionIndexReader fusionIndexReader;
     private static final int PROP_KEY = 1;
-    private static final int LABEL_KEY = 11;
+	private static final int LABEL_KEY = 11;
+	@Parameterized.Parameter
+    public static FusionVersion fusionVersion;
+	private IndexReader[] aliveReaders;
+	private EnumMap<IndexSlot,IndexReader> readers;
+	private FusionIndexReader fusionIndexReader;
 
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static FusionVersion[] versions()
     {
         return new FusionVersion[]
@@ -83,16 +85,13 @@ public class FusionIndexReaderTest
                 };
     }
 
-    @Parameterized.Parameter
-    public static FusionVersion fusionVersion;
-
-    @Before
+	@Before
     public void setup()
     {
         initiateMocks();
     }
 
-    private void initiateMocks()
+	private void initiateMocks()
     {
         IndexSlot[] activeSlots = fusionVersion.aliveSlots();
         readers = new EnumMap<>( IndexSlot.class );
@@ -127,7 +126,7 @@ public class FusionIndexReaderTest
                 TestIndexDescriptorFactory.forLabel( LABEL_KEY, PROP_KEY ) );
     }
 
-    private Function<IndexSlot,IndexReader> throwingFactory()
+	private Function<IndexSlot,IndexReader> throwingFactory()
     {
         return i ->
         {
@@ -135,9 +134,7 @@ public class FusionIndexReaderTest
         };
     }
 
-    /* close */
-
-    @Test
+	@Test
     public void closeMustCloseBothNativeAndLucene()
     {
         // when
@@ -150,9 +147,7 @@ public class FusionIndexReaderTest
         }
     }
 
-    // close iterator
-
-    @Test
+	@Test
     public void closeIteratorMustCloseAll() throws Exception
     {
         // given
@@ -174,9 +169,7 @@ public class FusionIndexReaderTest
         }
     }
 
-    /* countIndexedNodes */
-
-    @Test
+	@Test
     public void countIndexedNodesMustSelectCorrectReader()
     {
         // given
@@ -201,7 +194,7 @@ public class FusionIndexReaderTest
         }
     }
 
-    private void verifyCountIndexedNodesWithCorrectReader( IndexReader correct, Value... nativeValue )
+	private void verifyCountIndexedNodesWithCorrectReader( IndexReader correct, Value... nativeValue )
     {
         fusionIndexReader.countIndexedNodes( 0, new int[] {PROP_KEY}, nativeValue );
         verify( correct, times( 1 ) ).countIndexedNodes( 0, new int[] {PROP_KEY}, nativeValue );
@@ -214,16 +207,14 @@ public class FusionIndexReaderTest
         }
     }
 
-    /* query */
-
-    @Test
+	@Test
     public void mustSelectLuceneForCompositePredicate() throws Exception
     {
         // then
         verifyQueryWithCorrectReader( readers.get( LUCENE ), any( IndexQuery.class ), any( IndexQuery.class ) );
     }
 
-    @Test
+	@Test
     public void mustSelectStringForExactPredicateWithNumberValue() throws Exception
     {
         // given
@@ -236,7 +227,7 @@ public class FusionIndexReaderTest
         }
     }
 
-    @Test
+	@Test
     public void mustSelectNumberForExactPredicateWithNumberValue() throws Exception
     {
         // given
@@ -249,7 +240,7 @@ public class FusionIndexReaderTest
         }
     }
 
-    @Test
+	@Test
     public void mustSelectSpatialForExactPredicateWithSpatialValue() throws Exception
     {
         // given
@@ -263,7 +254,7 @@ public class FusionIndexReaderTest
         }
     }
 
-    @Test
+	@Test
     public void mustSelectTemporalForExactPredicateWithTemporalValue() throws Exception
     {
         // given
@@ -277,7 +268,7 @@ public class FusionIndexReaderTest
         }
     }
 
-    @Test
+	@Test
     public void mustSelectLuceneForExactPredicateWithOtherValue() throws Exception
     {
         // given
@@ -290,7 +281,7 @@ public class FusionIndexReaderTest
         }
     }
 
-    @Test
+	@Test
     public void mustSelectStringForRangeStringPredicate() throws Exception
     {
         // given
@@ -300,7 +291,7 @@ public class FusionIndexReaderTest
         verifyQueryWithCorrectReader( expectedForStrings(), stringRange );
     }
 
-    @Test
+	@Test
     public void mustSelectNumberForRangeNumericPredicate() throws Exception
     {
         // given
@@ -310,7 +301,7 @@ public class FusionIndexReaderTest
         verifyQueryWithCorrectReader( expectedForNumbers(), numberRange );
     }
 
-    @Test
+	@Test
     public void mustSelectSpatialForRangeGeometricPredicate() throws Exception
     {
         // given
@@ -323,7 +314,7 @@ public class FusionIndexReaderTest
         verifyQueryWithCorrectReader( readers.get( SPATIAL ), geometryRange );
     }
 
-    @Test
+	@Test
     public void mustSelectStringForStringPrefixPredicate() throws Exception
     {
         // given
@@ -333,7 +324,7 @@ public class FusionIndexReaderTest
         verifyQueryWithCorrectReader( expectedForStrings(), stringPrefix );
     }
 
-    @Test
+	@Test
     public void mustSelectStringForStringSuffixPredicate() throws Exception
     {
         // given
@@ -343,7 +334,7 @@ public class FusionIndexReaderTest
         verifyQueryWithCorrectReader( expectedForStrings(), stringPrefix );
     }
 
-    @Test
+	@Test
     public void mustSelectStringForStringContainsPredicate() throws Exception
     {
         // given
@@ -353,7 +344,7 @@ public class FusionIndexReaderTest
         verifyQueryWithCorrectReader( expectedForStrings(), stringContains );
     }
 
-    @Test
+	@Test
     public void mustCombineResultFromExistsPredicate() throws Exception
     {
         // given
@@ -372,11 +363,11 @@ public class FusionIndexReaderTest
         LongSet resultSet = PrimitiveLongCollections.asSet( result );
         for ( long i = 0L; i < lastId; i++ )
         {
-            assertTrue( "Expected to contain " + i + ", but was " + resultSet, resultSet.contains( i ) );
+            assertTrue( new StringBuilder().append("Expected to contain ").append(i).append(", but was ").append(resultSet).toString(), resultSet.contains( i ) );
         }
     }
 
-    @Test
+	@Test
     public void shouldInstantiatePartLazilyForSpecificValueGroupQuery() throws IndexNotApplicableKernelException
     {
         // given
@@ -409,7 +400,7 @@ public class FusionIndexReaderTest
         }
     }
 
-    private void verifyQueryWithCorrectReader( IndexReader expectedReader, IndexQuery... indexQuery )
+	private void verifyQueryWithCorrectReader( IndexReader expectedReader, IndexQuery... indexQuery )
             throws IndexNotApplicableKernelException
     {
         // when
@@ -426,28 +417,44 @@ public class FusionIndexReaderTest
         }
     }
 
-    private IndexReader expectedForStrings()
+	private IndexReader expectedForStrings()
     {
         return orLucene( readers.get( STRING ) );
     }
 
-    private IndexReader expectedForNumbers()
+	private IndexReader expectedForNumbers()
     {
         return orLucene( readers.get( NUMBER ) );
     }
 
-    private boolean hasSpatialSupport()
+	private boolean hasSpatialSupport()
     {
         return readers.get( SPATIAL ) != IndexReader.EMPTY;
     }
 
-    private boolean hasTemporalSupport()
+	private boolean hasTemporalSupport()
     {
         return readers.get( TEMPORAL ) != IndexReader.EMPTY;
     }
 
-    private IndexReader orLucene( IndexReader reader )
+	private IndexReader orLucene( IndexReader reader )
     {
         return reader != IndexReader.EMPTY ? reader : readers.get( LUCENE );
     }
+
+    /* close */
+
+    
+
+    // close iterator
+
+    
+
+    /* countIndexedNodes */
+
+    
+
+    /* query */
+
+    
 }

@@ -31,7 +31,11 @@ import org.neo4j.helpers.collection.IteratorWrapper;
 
 public class ObjectToRepresentationConverter
 {
-    public static Representation convert( final Object data )
+    private ObjectToRepresentationConverter()
+    {
+    }
+
+	public static Representation convert( final Object data )
     {
         if ( data instanceof Iterable )
         {
@@ -50,17 +54,13 @@ public class ObjectToRepresentationConverter
         return getSingleRepresentation( data );
     }
 
-    private ObjectToRepresentationConverter()
-    {
-    }
-
-    public static MappingRepresentation getMapRepresentation( Map data )
+	public static MappingRepresentation getMapRepresentation( Map data )
     {
 
         return new MapRepresentation( data );
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     static Representation getIteratorRepresentation( Iterator data )
     {
         final FirstItemIterable<Representation> results =
@@ -84,13 +84,13 @@ public class ObjectToRepresentationConverter
         return new ListRepresentation( getType( results ), results );
     }
 
-    public static ListRepresentation getListRepresentation( Iterable data )
+	public static ListRepresentation getListRepresentation( Iterable data )
     {
         final FirstItemIterable<Representation> results = convertValuesToRepresentations( data );
         return new ServerListRepresentation( getType( results ), results );
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     static FirstItemIterable<Representation> convertValuesToRepresentations( Iterable data )
     {
         return new FirstItemIterable<>( new IterableWrapper<Representation,Object>( data )
@@ -103,7 +103,7 @@ public class ObjectToRepresentationConverter
         } );
     }
 
-    static RepresentationType getType( FirstItemIterable<Representation> representations )
+	static RepresentationType getType( FirstItemIterable<Representation> representations )
     {
         Representation  representation = representations.getFirst();
         if ( representation == null )
@@ -113,7 +113,7 @@ public class ObjectToRepresentationConverter
         return representation.getRepresentationType();
     }
 
-    static Representation getSingleRepresentation( Object result )
+	static Representation getSingleRepresentation( Object result )
     {
         if ( result == null )
         {

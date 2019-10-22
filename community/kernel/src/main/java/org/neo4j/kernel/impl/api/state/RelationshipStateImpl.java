@@ -110,11 +110,10 @@ class RelationshipStateImpl extends PropertyContainerStateImpl implements Relati
     @Override
     public <EX extends Exception> boolean accept( RelationshipVisitor<EX> visitor ) throws EX
     {
-        if ( type != -1 )
-        {
-            visitor.visit( getId(), type, startNode, endNode );
-            return true;
-        }
-        return false;
+        if (!(type != -1)) {
+			return false;
+		}
+		visitor.visit( getId(), type, startNode, endNode );
+		return true;
     }
 }

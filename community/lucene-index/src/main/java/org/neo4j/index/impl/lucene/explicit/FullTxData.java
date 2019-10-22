@@ -263,10 +263,7 @@ class FullTxData extends TxData
         {
             BooleanQuery source = (BooleanQuery) query;
             BooleanQuery.Builder builder = new BooleanQuery.Builder();
-            for ( BooleanClause clause : source.clauses() )
-            {
-                builder.add( injectOrphans( clause.getQuery() ), clause.getOccur() );
-            }
+            source.clauses().forEach(clause -> builder.add(injectOrphans(clause.getQuery()), clause.getOccur()));
             return builder.build();
         }
 

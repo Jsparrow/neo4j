@@ -253,7 +253,7 @@ class GraphDatabaseSettingsTest
 
         // then
         assertEquals( 2, connectors.size() );
-        if ( connectors.get( 0 ).encryptionLevel().equals( TLS ) )
+        if ( connectors.get( 0 ).encryptionLevel() == TLS )
         {
             assertEquals( new ListenSocketAddress( "localhost", 7474 ),
                     config.get( connectors.get( 1 ).listen_address ) );
@@ -334,7 +334,7 @@ class GraphDatabaseSettingsTest
             {
                 Config config = Config.defaults( stringMap( GraphDatabaseSettings.bookmark_ready_timeout.name(), value ) );
                 config.get( GraphDatabaseSettings.bookmark_ready_timeout );
-            }, "Exception expected for value '" + value + "'" );
+            }, new StringBuilder().append("Exception expected for value '").append(value).append("'").toString() );
         }
     }
 
@@ -367,7 +367,7 @@ class GraphDatabaseSettingsTest
 
         config.enabledHttpConnectors().forEach( c ->
                 {
-                    if ( c.key().equals( "https" ) )
+                    if ( "https".equals( c.key() ) )
                     {
                         assertEquals( new ListenSocketAddress( "0.0.0.0", 9000 ),
                                 config.get( c.listen_address ) );
@@ -428,7 +428,7 @@ class GraphDatabaseSettingsTest
         for ( String invalid : invalidSet )
         {
             assertThrows( InvalidSettingException.class, () -> Config.defaults( keep_logical_logs, invalid ),
-                    "Value \"" + invalid + "\" should be considered invalid" );
+                    new StringBuilder().append("Value \"").append(invalid).append("\" should be considered invalid").toString() );
 
         }
     }

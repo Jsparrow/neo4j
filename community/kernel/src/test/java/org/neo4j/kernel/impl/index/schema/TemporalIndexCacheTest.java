@@ -48,7 +48,9 @@ import static org.neo4j.values.storable.ValueGroup.ZONED_TIME;
 
 public class TemporalIndexCacheTest
 {
-    @Test
+    private static final ValueGroup[] valueGroups = {ZONED_DATE_TIME, LOCAL_DATE_TIME, DATE, ZONED_TIME, LOCAL_TIME, DURATION};
+
+	@Test
     public void shouldIterateOverCreatedParts() throws Exception
     {
         StringFactory factory = new StringFactory();
@@ -71,7 +73,7 @@ public class TemporalIndexCacheTest
         assertThat( cache, containsInAnyOrder( "Date", "LocalDateTime", "ZonedDateTime", "LocalTime", "ZonedTime", "Duration" ) );
     }
 
-    @SuppressWarnings( "Duplicates" )
+	@SuppressWarnings( "Duplicates" )
     @Test
     public void stressCache() throws Exception
     {
@@ -104,7 +106,7 @@ public class TemporalIndexCacheTest
         }
     }
 
-    @Test
+	@Test
     public void stressInstantiationWithClose() throws Throwable
     {
         // given
@@ -146,9 +148,7 @@ public class TemporalIndexCacheTest
         assertEquals( instantiatedAtClose.intValue(), count( cache ) );
     }
 
-    private static final ValueGroup[] valueGroups = {ZONED_DATE_TIME, LOCAL_DATE_TIME, DATE, ZONED_TIME, LOCAL_TIME, DURATION};
-
-    static class CacheStresser extends Thread
+	static class CacheStresser extends Thread
     {
         private final TemporalIndexCache<String> cache;
         private final AtomicBoolean shouldContinue;

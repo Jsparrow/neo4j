@@ -94,8 +94,7 @@ class GenericNativeIndexReader extends NativeIndexReader<GenericKey,NativeIndexV
                 CoordinateReferenceSystem crs = geometryRangePredicate.crs();
                 SpaceFillingCurve curve = spaceFillingCurveSettings.forCrs( crs, false );
                 List<SpaceFillingCurve.LongRange> ranges = curve.getTilesIntersectingEnvelope( from, to, configuration );
-                for ( SpaceFillingCurve.LongRange range : ranges )
-                {
+                ranges.forEach(range -> {
                     // Here's a sub-query that we'll have to do for this geometry range. Build this query from all predicates
                     // and when getting to the geometry range predicate that sparked these sub-query chenanigans, swap in this sub-query in its place.
                     GenericKey treeKeyFrom = layout.newKey();
@@ -103,7 +102,7 @@ class GenericNativeIndexReader extends NativeIndexReader<GenericKey,NativeIndexV
                     initializeFromToKeys( treeKeyFrom, treeKeyTo );
                     boolean needFiltering = initializeRangeForGeometrySubQuery( treeKeyFrom, treeKeyTo, query, crs, range );
                     startSeekForInitializedRange( multiProgressor, treeKeyFrom, treeKeyTo, query, indexOrder, needFiltering, needsValues );
-                }
+                });
             }
             catch ( IllegalArgumentException e )
             {
@@ -181,7 +180,7 @@ class GenericNativeIndexReader extends NativeIndexReader<GenericKey,NativeIndexV
                 needsFiltering = true;
                 break;
             default:
-                throw new IllegalArgumentException( "IndexQuery of type " + predicate.type() + " is not supported." );
+                throw new IllegalArgumentException( new StringBuilder().append("IndexQuery of type ").append(predicate.type()).append(" is not supported.").toString() );
             }
         }
         return needsFiltering;

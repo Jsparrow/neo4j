@@ -24,24 +24,26 @@ package org.neo4j.internal.kernel.api.helpers;
  */
 public interface RelationshipSelectionCursor extends AutoCloseable
 {
-    boolean next();
+    RelationshipSelectionCursor EMPTY = new EMPTY();
 
-    @Override
+	boolean next();
+
+	@Override
     void close();
 
-    long relationshipReference();
+	long relationshipReference();
 
-    int type();
+	int type();
 
-    long otherNodeReference();
+	long otherNodeReference();
 
-    long sourceNodeReference();
+	long sourceNodeReference();
 
-    long targetNodeReference();
+	long targetNodeReference();
 
-    long propertiesReference();
+	long propertiesReference();
 
-    final class EMPTY implements RelationshipSelectionCursor
+	final class EMPTY implements RelationshipSelectionCursor
     {
         @Override
         public boolean next()
@@ -91,6 +93,4 @@ public interface RelationshipSelectionCursor extends AutoCloseable
             return -1;
         }
     }
-
-    RelationshipSelectionCursor EMPTY = new EMPTY();
 }

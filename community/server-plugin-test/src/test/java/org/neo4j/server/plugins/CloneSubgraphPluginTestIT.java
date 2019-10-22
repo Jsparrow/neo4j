@@ -56,15 +56,16 @@ public class CloneSubgraphPluginTestIT extends ExclusiveServerTestBase
 
     private static NeoServer server;
     private static FunctionalTestHelper functionalTestHelper;
+	private Node jw;
 
-    @BeforeClass
+	@BeforeClass
     public static void setupServer() throws IOException
     {
         server = ServerHelper.createNonPersistentServer();
         functionalTestHelper = new FunctionalTestHelper( server );
     }
 
-    @AfterClass
+	@AfterClass
     public static void shutdownServer()
     {
         try
@@ -80,16 +81,14 @@ public class CloneSubgraphPluginTestIT extends ExclusiveServerTestBase
         }
     }
 
-    @Before
+	@Before
     public void setupTheDatabase()
     {
         ServerHelper.cleanTheDatabase( server );
         createASocialNetwork( server.getDatabase().getGraph() );
     }
 
-    private Node jw;
-
-    private void createASocialNetwork( GraphDatabaseService db )
+	private void createASocialNetwork( GraphDatabaseService db )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -151,9 +150,8 @@ public class CloneSubgraphPluginTestIT extends ExclusiveServerTestBase
         }
     }
 
-    @Test
-    public void shouldAdvertiseExtensionThatPluginCreates() throws JsonParseException, ClientHandlerException,
-            UniformInterfaceException
+	@Test
+    public void shouldAdvertiseExtensionThatPluginCreates() throws JsonParseException
     {
         int originalCount = nodeCount();
 
@@ -188,7 +186,7 @@ public class CloneSubgraphPluginTestIT extends ExclusiveServerTestBase
         assertEquals( doubleTheNumberOfNodes, nodeCount() );
     }
 
-    private int nodeCount()
+	private int nodeCount()
     {
         try ( Transaction ignore = server.getDatabase().getGraph().beginTx() )
         {

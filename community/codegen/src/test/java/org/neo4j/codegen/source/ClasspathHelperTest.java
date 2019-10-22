@@ -98,7 +98,7 @@ public class ClasspathHelperTest
         String classpath = fullClasspathStringFor( child );
 
         // Then
-        assertThat( classpath, containsString( pathTo( "bar" ) + File.pathSeparator + pathTo( "foo" ) ) );
+        assertThat( classpath, containsString( new StringBuilder().append(pathTo( "bar" )).append(File.pathSeparator).append(pathTo( "foo" )).toString() ) );
     }
 
     private static URL[] urls( String... strings ) throws MalformedURLException

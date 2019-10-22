@@ -75,12 +75,11 @@ public class MergingBlockEntryReader<KEY,VALUE> implements BlockEntryCursor<KEY,
         }
 
         // Make state transitions so that this entry is now considered used
-        if ( lowest != null )
-        {
-            lastReturned = lowestSource.takeHead();
-            return true;
-        }
-        return false;
+		if (lowest == null) {
+			return false;
+		}
+		lastReturned = lowestSource.takeHead();
+		return true;
     }
 
     @Override

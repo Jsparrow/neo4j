@@ -73,28 +73,23 @@ import static org.neo4j.kernel.impl.transaction.log.TransactionIdStore.UNKNOWN_T
 @RunWith( Parameterized.class )
 public class StoreMigratorIT
 {
-    private final TestDirectory directory = TestDirectory.testDirectory();
-    private final PageCacheRule pageCacheRule = new PageCacheRule();
-    private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
     private static final Config CONFIG = Config.defaults( GraphDatabaseSettings.pagecache_memory, "8m" );
-
-    @Rule
+	private final TestDirectory directory = TestDirectory.testDirectory();
+	private final PageCacheRule pageCacheRule = new PageCacheRule();
+	private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	@Rule
     public RuleChain ruleChain = RuleChain.outerRule( directory ).around( fileSystemRule ).around( pageCacheRule );
-
-    private final Monitors monitors = new Monitors();
-    private final FileSystemAbstraction fs = fileSystemRule.get();
-    private JobScheduler jobScheduler;
-
-    @Parameterized.Parameter( 0 )
+	private final Monitors monitors = new Monitors();
+	private final FileSystemAbstraction fs = fileSystemRule.get();
+	private JobScheduler jobScheduler;
+	@Parameterized.Parameter( 0 )
     public String version;
-
-    @Parameterized.Parameter( 1 )
+	@Parameterized.Parameter( 1 )
     public LogPosition expectedLogPosition;
-
-    @Parameterized.Parameter( 2 )
+	@Parameterized.Parameter( 2 )
     public Function<TransactionId, Boolean> txIdComparator;
 
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static Collection<Object[]> versions()
     {
         return Arrays.<Object[]>asList(
@@ -105,19 +100,19 @@ public class StoreMigratorIT
         );
     }
 
-    @Before
+	@Before
     public void setUp() throws Exception
     {
         jobScheduler = new ThreadPoolJobScheduler();
     }
 
-    @After
+	@After
     public void tearDown() throws Exception
     {
         jobScheduler.close();
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToResumeMigrationOnMoving() throws Exception
     {
         // GIVEN a legacy database
@@ -156,7 +151,7 @@ public class StoreMigratorIT
         storeFactory.openAllNeoStores().close();
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToMigrateWithoutErrors() throws Exception
     {
         // GIVEN a legacy database
@@ -196,7 +191,7 @@ public class StoreMigratorIT
         logProvider.rawMessageMatcher().assertNotContains( "ERROR" );
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToResumeMigrationOnRebuildingCounts() throws Exception
     {
         // GIVEN a legacy database
@@ -233,7 +228,7 @@ public class StoreMigratorIT
         storeFactory.openAllNeoStores().close();
     }
 
-    @Test
+	@Test
     public void shouldComputeTheLastTxLogPositionCorrectly() throws Throwable
     {
         // GIVEN a legacy database
@@ -259,7 +254,7 @@ public class StoreMigratorIT
         assertEquals( expectedLogPosition, migrator.readLastTxLogPosition( migrationLayout ) );
     }
 
-    @Test
+	@Test
     public void shouldComputeTheLastTxInfoCorrectly() throws Exception
     {
         // given
@@ -285,23 +280,23 @@ public class StoreMigratorIT
         assertTrue( txIdComparator.apply( migrator.readLastTxInformation( migrationLayout ) ) );
     }
 
-    private static UpgradableDatabase getUpgradableDatabase( PageCache pageCache, LogTailScanner tailScanner )
+	private static UpgradableDatabase getUpgradableDatabase( PageCache pageCache, LogTailScanner tailScanner )
     {
         return new UpgradableDatabase( new StoreVersionCheck( pageCache ), selectFormat(), tailScanner );
     }
 
-    private LogTailScanner getTailScanner( File databaseDirectory ) throws IOException
+	private LogTailScanner getTailScanner( File databaseDirectory ) throws IOException
     {
         LogFiles logFiles = LogFilesBuilder.logFilesBasedOnlyBuilder( databaseDirectory, fs ).build();
         return new LogTailScanner( logFiles, new VersionAwareLogEntryReader<>(), monitors );
     }
 
-    private static RecordFormats selectFormat()
+	private static RecordFormats selectFormat()
     {
         return Standard.LATEST_RECORD_FORMATS;
     }
 
-    private static Function<TransactionId,Boolean> txInfoAcceptanceOnIdAndTimestamp( long id, long timestamp )
+	private static Function<TransactionId,Boolean> txInfoAcceptanceOnIdAndTimestamp( long id, long timestamp )
     {
         return txInfo -> txInfo.transactionId() == id &&
                 txInfo.commitTimestamp() == timestamp;

@@ -117,7 +117,8 @@ public class RelationshipProxyTest extends PropertyContainerProxyTest
             String toString = relationship.toString();
 
             // THEN
-            assertEquals( "(" + start.getId() + ")-[" + type + "," + relationship.getId() + "]->(" + end.getId() + ")",
+            assertEquals( new StringBuilder().append("(").append(start.getId()).append(")-[").append(type).append(",").append(relationship.getId())
+					.append("]->(").append(end.getId()).append(")").toString(),
                     toString );
         }
     }

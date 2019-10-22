@@ -76,7 +76,228 @@ public abstract class MapValue extends VirtualValue
         }
     };
 
-    static final class MapWrappingMapValue extends MapValue
+    @Override
+    public int computeHash()
+    {
+        int[] h = new int[1];
+        foreach( ( key, value ) -> h[0] += key.hashCode() ^ value.hashCode() );
+        return h[0];
+    }
+
+	@Override
+    public <E extends Exception> void writeTo( AnyValueWriter<E> writer ) throws E
+    {
+        writer.beginMap( size() );
+        foreach( ( s, anyValue ) -> {
+            writer.writeString( s );
+            anyValue.writeTo( writer );
+        } );
+        writer.endMap();
+    }
+
+	@Override
+    public boolean equals( VirtualValue other )
+    {
+        if ( !(other instanceof MapValue) )
+        {
+            return false;
+        }
+        MapValue that = (MapValue) other;
+        int size = size();
+        if ( size != that.size() )
+        {
+            return false;
+        }
+
+        Iterable<String> keys = keySet();
+        for ( String key : keys )
+        {
+            if ( !get( key ).equals( that.get( key ) ) )
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+	public abstract Iterable<String> keySet();
+
+	public ListValue keys()
+    {
+        String[] keys = new String[size()];
+        int i = 0;
+        for ( String key : keySet() )
+        {
+            keys[i++] = key;
+        }
+        return VirtualValues.fromArray( Values.stringArray( keys ) );
+    }
+
+	@Override
+    public VirtualValueGroup valueGroup()
+    {
+        return VirtualValueGroup.MAP;
+    }
+
+	@Override
+    public int compareTo( VirtualValue other, Comparator<AnyValue> comparator )
+    {
+        if ( !(other instanceof MapValue) )
+        {
+            throw new IllegalArgumentException( "Cannot compare different virtual values" );
+        }
+        MapValue otherMap = (MapValue) other;
+        int size = size();
+        int compare = Integer.compare( size, otherMap.size() );
+        if ( compare == 0 )
+        {
+            String[] thisKeys = StreamSupport.stream( keySet().spliterator(), false).toArray( String[]::new  );
+            Arrays.sort( thisKeys, String::compareTo );
+            String[] thatKeys = StreamSupport.stream( otherMap.keySet().spliterator(), false).toArray( String[]::new  );
+            Arrays.sort( thatKeys, String::compareTo );
+            for ( int i = 0; i < size; i++ )
+            {
+                compare = thisKeys[i].compareTo( thatKeys[i] );
+                if ( compare != 0 )
+                {
+                    return compare;
+                }
+            }
+
+            for ( int i = 0; i < size; i++ )
+            {
+                String key = thisKeys[i];
+                compare = comparator.compare( get( key ), otherMap.get( key ) );
+                if ( compare != 0 )
+                {
+                    return compare;
+                }
+            }
+        }
+        return compare;
+    }
+
+	@Override
+    public Boolean ternaryEquals( AnyValue other )
+    {
+        if ( other == null || other == NO_VALUE )
+        {
+            return null;
+        }
+        else if ( !(other instanceof MapValue) )
+        {
+            return Boolean.FALSE;
+        }
+        MapValue otherMap = (MapValue) other;
+        int size = size();
+        if ( size != otherMap.size() )
+        {
+            return Boolean.FALSE;
+        }
+        String[] thisKeys = StreamSupport.stream( keySet().spliterator(), false ).toArray( String[]::new );
+        Arrays.sort( thisKeys, String::compareTo );
+        String[] thatKeys = StreamSupport.stream( otherMap.keySet().spliterator(), false ).toArray( String[]::new );
+        Arrays.sort( thatKeys, String::compareTo );
+        for ( int i = 0; i < size; i++ )
+        {
+            if ( thisKeys[i].compareTo( thatKeys[i] ) != 0 )
+            {
+                return Boolean.FALSE;
+            }
+        }
+        Boolean equalityResult = Boolean.TRUE;
+
+        for ( int i = 0; i < size; i++ )
+        {
+            String key = thisKeys[i];
+            Boolean s = get( key ).ternaryEquals( otherMap.get( key ) );
+            if ( s == null )
+            {
+                equalityResult = null;
+            }
+            else if ( !s )
+            {
+                return Boolean.FALSE;
+            }
+        }
+        return equalityResult;
+    }
+
+	@Override
+    public <T> T map( ValueMapper<T> mapper )
+    {
+        return mapper.mapMap( this );
+    }
+
+	public abstract <E extends Exception> void foreach( ThrowingBiConsumer<String,AnyValue,E> f ) throws E;
+
+	public abstract boolean containsKey( String key );
+
+	public abstract AnyValue get( String key );
+
+	public MapValue filter( BiFunction<String,AnyValue,Boolean> filterFunction )
+    {
+        return new FilteringMapValue( this, filterFunction );
+    }
+
+	public MapValue updatedWith( String key, AnyValue value )
+    {
+        AnyValue current = get( key );
+        if ( current.equals( value ) )
+        {
+            return this;
+        }
+        else if ( current == NO_VALUE )
+        {
+            return new UpdatedMapValue( this, new String[]{key}, new AnyValue[]{value} );
+        }
+        else
+        {
+            return new MappedMapValue( this, ( k, v ) -> {
+                if ( k.equals( key ) )
+                {
+                    return value;
+                }
+                else
+                {
+                    return v;
+                }
+            } );
+        }
+    }
+
+	public MapValue updatedWith(  MapValue other )
+    {
+        return new CombinedMapValue( this, other );
+    }
+
+	@Override
+	public String getTypeName()
+    {
+        return "Map";
+    }
+
+	@Override
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder( getTypeName() + "{" );
+        final String[] sep = new String[]{""};
+        foreach( ( key, value ) ->
+        {
+            sb.append( sep[0] );
+            sb.append( key );
+            sb.append( " -> " );
+            sb.append( value );
+            sep[0] = ", ";
+        } );
+        sb.append( '}' );
+        return sb.toString();
+    }
+
+	public abstract int size();
+
+	static final class MapWrappingMapValue extends MapValue
     {
         private final Map<String,AnyValue> map;
 
@@ -478,224 +699,4 @@ public abstract class MapValue extends VirtualValue
             return size[0];
         }
     }
-
-    @Override
-    public int computeHash()
-    {
-        int[] h = new int[1];
-        foreach( ( key, value ) -> h[0] += key.hashCode() ^ value.hashCode() );
-        return h[0];
-    }
-
-    @Override
-    public <E extends Exception> void writeTo( AnyValueWriter<E> writer ) throws E
-    {
-        writer.beginMap( size() );
-        foreach( ( s, anyValue ) -> {
-            writer.writeString( s );
-            anyValue.writeTo( writer );
-        } );
-        writer.endMap();
-    }
-
-    @Override
-    public boolean equals( VirtualValue other )
-    {
-        if ( !(other instanceof MapValue) )
-        {
-            return false;
-        }
-        MapValue that = (MapValue) other;
-        int size = size();
-        if ( size != that.size() )
-        {
-            return false;
-        }
-
-        Iterable<String> keys = keySet();
-        for ( String key : keys )
-        {
-            if ( !get( key ).equals( that.get( key ) ) )
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public abstract Iterable<String> keySet();
-
-    public ListValue keys()
-    {
-        String[] keys = new String[size()];
-        int i = 0;
-        for ( String key : keySet() )
-        {
-            keys[i++] = key;
-        }
-        return VirtualValues.fromArray( Values.stringArray( keys ) );
-    }
-
-    @Override
-    public VirtualValueGroup valueGroup()
-    {
-        return VirtualValueGroup.MAP;
-    }
-
-    @Override
-    public int compareTo( VirtualValue other, Comparator<AnyValue> comparator )
-    {
-        if ( !(other instanceof MapValue) )
-        {
-            throw new IllegalArgumentException( "Cannot compare different virtual values" );
-        }
-        MapValue otherMap = (MapValue) other;
-        int size = size();
-        int compare = Integer.compare( size, otherMap.size() );
-        if ( compare == 0 )
-        {
-            String[] thisKeys = StreamSupport.stream( keySet().spliterator(), false).toArray( String[]::new  );
-            Arrays.sort( thisKeys, String::compareTo );
-            String[] thatKeys = StreamSupport.stream( otherMap.keySet().spliterator(), false).toArray( String[]::new  );
-            Arrays.sort( thatKeys, String::compareTo );
-            for ( int i = 0; i < size; i++ )
-            {
-                compare = thisKeys[i].compareTo( thatKeys[i] );
-                if ( compare != 0 )
-                {
-                    return compare;
-                }
-            }
-
-            for ( int i = 0; i < size; i++ )
-            {
-                String key = thisKeys[i];
-                compare = comparator.compare( get( key ), otherMap.get( key ) );
-                if ( compare != 0 )
-                {
-                    return compare;
-                }
-            }
-        }
-        return compare;
-    }
-
-    @Override
-    public Boolean ternaryEquals( AnyValue other )
-    {
-        if ( other == null || other == NO_VALUE )
-        {
-            return null;
-        }
-        else if ( !(other instanceof MapValue) )
-        {
-            return Boolean.FALSE;
-        }
-        MapValue otherMap = (MapValue) other;
-        int size = size();
-        if ( size != otherMap.size() )
-        {
-            return Boolean.FALSE;
-        }
-        String[] thisKeys = StreamSupport.stream( keySet().spliterator(), false ).toArray( String[]::new );
-        Arrays.sort( thisKeys, String::compareTo );
-        String[] thatKeys = StreamSupport.stream( otherMap.keySet().spliterator(), false ).toArray( String[]::new );
-        Arrays.sort( thatKeys, String::compareTo );
-        for ( int i = 0; i < size; i++ )
-        {
-            if ( thisKeys[i].compareTo( thatKeys[i] ) != 0 )
-            {
-                return Boolean.FALSE;
-            }
-        }
-        Boolean equalityResult = Boolean.TRUE;
-
-        for ( int i = 0; i < size; i++ )
-        {
-            String key = thisKeys[i];
-            Boolean s = get( key ).ternaryEquals( otherMap.get( key ) );
-            if ( s == null )
-            {
-                equalityResult = null;
-            }
-            else if ( !s )
-            {
-                return Boolean.FALSE;
-            }
-        }
-        return equalityResult;
-    }
-
-    @Override
-    public <T> T map( ValueMapper<T> mapper )
-    {
-        return mapper.mapMap( this );
-    }
-
-    public abstract <E extends Exception> void foreach( ThrowingBiConsumer<String,AnyValue,E> f ) throws E;
-
-    public abstract boolean containsKey( String key );
-
-    public abstract AnyValue get( String key );
-
-    public MapValue filter( BiFunction<String,AnyValue,Boolean> filterFunction )
-    {
-        return new FilteringMapValue( this, filterFunction );
-    }
-
-    public MapValue updatedWith( String key, AnyValue value )
-    {
-        AnyValue current = get( key );
-        if ( current.equals( value ) )
-        {
-            return this;
-        }
-        else if ( current == NO_VALUE )
-        {
-            return new UpdatedMapValue( this, new String[]{key}, new AnyValue[]{value} );
-        }
-        else
-        {
-            return new MappedMapValue( this, ( k, v ) -> {
-                if ( k.equals( key ) )
-                {
-                    return value;
-                }
-                else
-                {
-                    return v;
-                }
-            } );
-        }
-    }
-
-    public MapValue updatedWith(  MapValue other )
-    {
-        return new CombinedMapValue( this, other );
-    }
-
-    public String getTypeName()
-    {
-        return "Map";
-    }
-
-    @Override
-    public String toString()
-    {
-        StringBuilder sb = new StringBuilder( getTypeName() + "{" );
-        final String[] sep = new String[]{""};
-        foreach( ( key, value ) ->
-        {
-            sb.append( sep[0] );
-            sb.append( key );
-            sb.append( " -> " );
-            sb.append( value );
-            sep[0] = ", ";
-        } );
-        sb.append( '}' );
-        return sb.toString();
-    }
-
-    public abstract int size();
 }

@@ -46,22 +46,12 @@ class TemporalIndexCache<T> extends IndexPartsCache<TemporalIndexCache.Offset,T>
 {
     private final Factory<T> factory;
 
-    enum Offset
-    {
-        date,
-        localDateTime,
-        zonedDateTime,
-        localTime,
-        zonedTime,
-        duration
-    }
-
     TemporalIndexCache( Factory<T> factory )
     {
         this.factory = factory;
     }
 
-    /**
+	/**
      * Select the path corresponding to the given ValueGroup. Creates the path if needed,
      * and rethrows any create time exception as a RuntimeException.
      *
@@ -95,7 +85,7 @@ class TemporalIndexCache<T> extends IndexPartsCache<TemporalIndexCache.Offset,T>
         }
     }
 
-    /**
+	/**
      * Select the part corresponding to the given ValueGroup. Creates the part if needed,
      * in which case an exception of type E might be thrown.
      *
@@ -107,7 +97,7 @@ class TemporalIndexCache<T> extends IndexPartsCache<TemporalIndexCache.Offset,T>
         return uncheckedSelect( valueGroup );
     }
 
-    /**
+	/**
      * Select the part corresponding to the given ValueGroup, apply function to it and return the result.
      * If the part isn't created yet return orElse.
      *
@@ -147,7 +137,7 @@ class TemporalIndexCache<T> extends IndexPartsCache<TemporalIndexCache.Offset,T>
         return cachedValue != null ? function.apply( cachedValue ) : orElse;
     }
 
-    private T getOrCreatePart( Offset key, ThrowingSupplier<T,IOException> factory ) throws UncheckedIOException
+	private T getOrCreatePart( Offset key, ThrowingSupplier<T,IOException> factory )
     {
         T existing = cache.get( key );
         if ( existing != null )
@@ -180,37 +170,37 @@ class TemporalIndexCache<T> extends IndexPartsCache<TemporalIndexCache.Offset,T>
         }
     }
 
-    private T date() throws UncheckedIOException
+	private T date()
     {
         return getOrCreatePart( date, factory::newDate );
     }
 
-    private T localDateTime() throws UncheckedIOException
+	private T localDateTime()
     {
         return getOrCreatePart( localDateTime, factory::newLocalDateTime );
     }
 
-    private T zonedDateTime() throws UncheckedIOException
+	private T zonedDateTime()
     {
         return getOrCreatePart( zonedDateTime, factory::newZonedDateTime );
     }
 
-    private T localTime() throws UncheckedIOException
+	private T localTime()
     {
         return getOrCreatePart( localTime, factory::newLocalTime );
     }
 
-    private T zonedTime() throws UncheckedIOException
+	private T zonedTime()
     {
         return getOrCreatePart( zonedTime, factory::newZonedTime );
     }
 
-    private T duration() throws UncheckedIOException
+	private T duration()
     {
         return getOrCreatePart( duration, factory::newDuration );
     }
 
-    void loadAll()
+	void loadAll()
     {
         try
         {
@@ -227,7 +217,17 @@ class TemporalIndexCache<T> extends IndexPartsCache<TemporalIndexCache.Offset,T>
         }
     }
 
-    /**
+	enum Offset
+    {
+        date,
+        localDateTime,
+        zonedDateTime,
+        localTime,
+        zonedTime,
+        duration
+    }
+
+	/**
      * Factory used by the TemporalIndexCache to create parts.
      *
      * @param <T> Type of parts

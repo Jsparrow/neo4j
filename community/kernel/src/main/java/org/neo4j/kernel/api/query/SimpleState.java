@@ -29,40 +29,40 @@ final class SimpleState extends ExecutingQueryStatus
     private static final ExecutingQueryStatus RUNNING = new SimpleState( RUNNING_STATE );
     private final String name;
 
-    static ExecutingQueryStatus planning()
-    {
-        return PLANNING;
-    }
-
-    static ExecutingQueryStatus running()
-    {
-        return RUNNING;
-    }
-
     private SimpleState( String name )
     {
         this.name = name;
     }
 
-    @Override
+	static ExecutingQueryStatus planning()
+    {
+        return PLANNING;
+    }
+
+	static ExecutingQueryStatus running()
+    {
+        return RUNNING;
+    }
+
+	@Override
     long waitTimeNanos( long currentTimeNanos )
     {
         return 0;
     }
 
-    @Override
+	@Override
     Map<String,Object> toMap( long currentTimeNanos )
     {
         return emptyMap();
     }
 
-    @Override
+	@Override
     String name()
     {
         return name;
     }
 
-    @Override
+	@Override
     boolean isPlanning()
     {
         return this == PLANNING;

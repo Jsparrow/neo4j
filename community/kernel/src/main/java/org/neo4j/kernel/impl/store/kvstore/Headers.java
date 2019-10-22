@@ -25,58 +25,31 @@ import java.util.Set;
 
 public abstract class Headers
 {
-    public abstract <Value> Value get( HeaderField<Value> field );
-
-    public static Builder headersBuilder()
-    {
-        return new Builder( new HashMap<>() );
-    }
-
-    public static class Builder
-    {
-        private final Map<HeaderField<?>, Object> headers;
-
-        Builder( Map<HeaderField<?>, Object> headers )
-        {
-            this.headers = headers;
-        }
-
-        public final <Value> Builder put( HeaderField<Value> field, Value value )
-        {
-            headers.put( field, value );
-            return this;
-        }
-
-        @SuppressWarnings( "unchecked" )
-        public final <Value> Value get( HeaderField<Value> field )
-        {
-            return (Value) headers.get( field );
-        }
-
-        public Headers headers()
-        {
-            return new Simple( new HashMap<>( headers ) );
-        }
-    }
-
-    <Value> void write( HeaderField<Value> field, BigEndianByteArrayBuffer target )
-    {
-        field.write( get( field ), target );
-    }
-
-    public abstract Set<HeaderField<?>> fields();
-
     private Headers()
     {
         // internal subclasses
     }
 
-    static Headers indexedHeaders( Map<HeaderField<?>, Integer> indexes, Object[] values )
+	public abstract <Value> Value get( HeaderField<Value> field );
+
+	public static Builder headersBuilder()
+    {
+        return new Builder( new HashMap<>() );
+    }
+
+	<Value> void write( HeaderField<Value> field, BigEndianByteArrayBuffer target )
+    {
+        field.write( get( field ), target );
+    }
+
+	public abstract Set<HeaderField<?>> fields();
+
+	static Headers indexedHeaders( Map<HeaderField<?>, Integer> indexes, Object[] values )
     {
         return new Indexed( indexes, values );
     }
 
-    @Override
+	@Override
     public final int hashCode()
     {
         int hash = 0;
@@ -87,7 +60,7 @@ public abstract class Headers
         return hash;
     }
 
-    @Override
+	@Override
     public final boolean equals( Object obj )
     {
         if ( this == obj )
@@ -116,7 +89,7 @@ public abstract class Headers
         return false;
     }
 
-    @Override
+	@Override
     public final String toString()
     {
         StringBuilder result = new StringBuilder().append( "Headers{" );
@@ -127,6 +100,43 @@ public abstract class Headers
             pre = ", ";
         }
         return result.append( "}" ).toString();
+    }
+
+	static Map<HeaderField<?>, Object> copy( Headers headers )
+    {
+        Map<HeaderField<?>, Object> copy = new HashMap<>();
+        for ( HeaderField<?> field : headers.fields() )
+        {
+            copy.put( field, headers.get( field ) );
+        }
+        return copy;
+    }
+
+	public static class Builder
+    {
+        private final Map<HeaderField<?>, Object> headers;
+
+        Builder( Map<HeaderField<?>, Object> headers )
+        {
+            this.headers = headers;
+        }
+
+        public final <Value> Builder put( HeaderField<Value> field, Value value )
+        {
+            headers.put( field, value );
+            return this;
+        }
+
+        @SuppressWarnings( "unchecked" )
+        public final <Value> Value get( HeaderField<Value> field )
+        {
+            return (Value) headers.get( field );
+        }
+
+        public Headers headers()
+        {
+            return new Simple( new HashMap<>( headers ) );
+        }
     }
 
     private static class Indexed extends Headers
@@ -176,15 +186,5 @@ public abstract class Headers
         {
             return headers.keySet();
         }
-    }
-
-    static Map<HeaderField<?>, Object> copy( Headers headers )
-    {
-        Map<HeaderField<?>, Object> copy = new HashMap<>();
-        for ( HeaderField<?> field : headers.fields() )
-        {
-            copy.put( field, headers.get( field ) );
-        }
-        return copy;
     }
 }

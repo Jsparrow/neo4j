@@ -210,10 +210,7 @@ public class AsyncLogTest
 
         public void process()
         {
-            for ( AsyncLogEvent event : events )
-            {
-                event.process();
-            }
+            events.forEach(AsyncLogEvent::process);
             events.clear();
         }
     }

@@ -56,10 +56,7 @@ public class CombinedIndexHits extends PrimitiveLongCollections.PrimitiveLongCon
     @Override
     public void close()
     {
-        for ( ExplicitIndexHits hits : allIndexHits )
-        {
-            hits.close();
-        }
+        allIndexHits.forEach(ExplicitIndexHits::close);
     }
 
     @Override

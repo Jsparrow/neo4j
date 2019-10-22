@@ -58,20 +58,25 @@ import static org.neo4j.test.TestLabels.LABEL_TWO;
 
 public class AllNodesInStoreExistInLabelIndexTest
 {
-    @Rule
+    private static final Label[] LABEL_ALPHABET = new Label[]{LABEL_ONE, LABEL_TWO, LABEL_THREE};
+
+	private static final Label EXTRA_LABEL = Label.label( "extra" );
+
+	private static final double DELETE_RATIO = 0.2;
+
+	private static final double UPDATE_RATIO = 0.2;
+
+	private static final int NODE_COUNT_BASELINE = 10;
+
+	@Rule
     public final EmbeddedDatabaseRule db = new EmbeddedDatabaseRule();
 
-    @Rule
+	@Rule
     public final RandomRule random = new RandomRule();
 
-    private final AssertableLogProvider log = new AssertableLogProvider();
-    private static final Label[] LABEL_ALPHABET = new Label[]{LABEL_ONE, LABEL_TWO, LABEL_THREE};
-    private static final Label EXTRA_LABEL = Label.label( "extra" );
-    private static final double DELETE_RATIO = 0.2;
-    private static final double UPDATE_RATIO = 0.2;
-    private static final int NODE_COUNT_BASELINE = 10;
+	private final AssertableLogProvider log = new AssertableLogProvider();
 
-    @Test
+	@Test
     public void mustReportSuccessfulForConsistentLabelScanStore() throws Exception
     {
         // given
@@ -85,7 +90,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         assertTrue( "Expected consistency check to succeed", result.isSuccessful() );
     }
 
-    @Test
+	@Test
     public void reportNotCleanLabelIndex() throws IOException, ConsistencyCheckIncompleteException
     {
         DatabaseLayout databaseLayout = db.databaseLayout();
@@ -110,7 +115,7 @@ public class AllNodesInStoreExistInLabelIndexTest
                 hasItem( containsString("WARN : Label index was not properly shutdown and rebuild is required.") ) );
     }
 
-    @Test
+	@Test
     public void reportNotCleanLabelIndexWithCorrectData() throws IOException, ConsistencyCheckIncompleteException
     {
         DatabaseLayout databaseLayout = db.databaseLayout();
@@ -129,7 +134,7 @@ public class AllNodesInStoreExistInLabelIndexTest
                 hasItem( containsString("WARN : Label index was not properly shutdown and rebuild is required.") ) );
     }
 
-    @Test
+	@Test
     public void mustReportMissingNode() throws Exception
     {
         // given
@@ -152,7 +157,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         assertFalse( "Expected consistency check to fail", result.isSuccessful() );
     }
 
-    @Test
+	@Test
     public void mustReportMissingLabel() throws Exception
     {
         // given
@@ -175,7 +180,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         assertFalse( "Expected consistency check to fail", result.isSuccessful() );
     }
 
-    @Test
+	@Test
     public void mustReportExtraLabelsOnExistingNode() throws Exception
     {
         // given
@@ -198,7 +203,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         assertFalse( "Expected consistency check to fail", result.isSuccessful() );
     }
 
-    @Test
+	@Test
     public void mustReportExtraNode() throws Exception
     {
         // given
@@ -221,13 +226,13 @@ public class AllNodesInStoreExistInLabelIndexTest
         assertFalse( "Expected consistency check to fail", result.isSuccessful() );
     }
 
-    private List<String> readReport( ConsistencyCheckService.Result result )
+	private List<String> readReport( ConsistencyCheckService.Result result )
             throws IOException
     {
         return Files.readAllLines( result.reportFile().toPath() );
     }
 
-    private void removeExistingNode( List<Pair<Long,Label[]>> nodesInStore )
+	private void removeExistingNode( List<Pair<Long,Label[]>> nodesInStore )
     {
         Node node;
         Label[] labels;
@@ -242,7 +247,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         node.delete();
     }
 
-    private void addLabelToExistingNode( List<Pair<Long,Label[]>> nodesInStore )
+	private void addLabelToExistingNode( List<Pair<Long,Label[]>> nodesInStore )
     {
         int targetIndex = random.nextInt( nodesInStore.size() );
         Pair<Long,Label[]> existingNode = nodesInStore.get( targetIndex );
@@ -250,7 +255,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         node.addLabel( EXTRA_LABEL );
     }
 
-    private void removeLabelFromExistingNode( List<Pair<Long,Label[]>> nodesInStore )
+	private void removeLabelFromExistingNode( List<Pair<Long,Label[]>> nodesInStore )
     {
         Pair<Long,Label[]> existingNode;
         Node node;
@@ -264,7 +269,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         node.removeLabel( existingNode.other()[0] );
     }
 
-    private void replaceLabelIndexWithCopy( File labelIndexFileCopy ) throws IOException
+	private void replaceLabelIndexWithCopy( File labelIndexFileCopy ) throws IOException
     {
         db.restartDatabase( ( fs, directory ) ->
         {
@@ -274,7 +279,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         } );
     }
 
-    private File copyLabelIndexFile() throws IOException
+	private File copyLabelIndexFile() throws IOException
     {
         DatabaseLayout databaseLayout = db.databaseLayout();
         File labelIndexFileCopy = databaseLayout.file( "label_index_copy" );
@@ -283,12 +288,12 @@ public class AllNodesInStoreExistInLabelIndexTest
         return labelIndexFileCopy;
     }
 
-    private List<Pair<Long,Label[]>> someData()
+	private List<Pair<Long,Label[]>> someData()
     {
         return someData( 50 );
     }
 
-    private List<Pair<Long,Label[]>> someData( int numberOfModifications )
+	private List<Pair<Long,Label[]>> someData( int numberOfModifications )
     {
         List<Pair<Long,Label[]>> existingNodes;
         existingNodes = new ArrayList<>();
@@ -300,7 +305,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         return existingNodes;
     }
 
-    private void randomModifications( List<Pair<Long,Label[]>> existingNodes,
+	private void randomModifications( List<Pair<Long,Label[]>> existingNodes,
             int numberOfModifications )
     {
         for ( int i = 0; i < numberOfModifications; i++ )
@@ -321,14 +326,14 @@ public class AllNodesInStoreExistInLabelIndexTest
         }
     }
 
-    private void createNewNode( List<Pair<Long,Label[]>> existingNodes )
+	private void createNewNode( List<Pair<Long,Label[]>> existingNodes )
     {
         Label[] labels = randomLabels();
         Node node = db.createNode( labels );
         existingNodes.add( Pair.of( node.getId(), labels ) );
     }
 
-    private void modifyLabelsOnExistingNode( List<Pair<Long,Label[]>> existingNodes )
+	private void modifyLabelsOnExistingNode( List<Pair<Long,Label[]>> existingNodes )
     {
         int targetIndex = random.nextInt( existingNodes.size() );
         Pair<Long,Label[]> existingPair = existingNodes.get( targetIndex );
@@ -344,7 +349,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         existingNodes.add( Pair.of( nodeId, newLabels ) );
     }
 
-    private void deleteExistingNode( List<Pair<Long,Label[]>> existingNodes )
+	private void deleteExistingNode( List<Pair<Long,Label[]>> existingNodes )
     {
         int targetIndex = random.nextInt( existingNodes.size() );
         Pair<Long,Label[]> existingPair = existingNodes.get( targetIndex );
@@ -353,7 +358,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         existingNodes.remove( targetIndex );
     }
 
-    private Label[] randomLabels()
+	private Label[] randomLabels()
     {
         List<Label> labels = new ArrayList<>( 3 );
         for ( Label label : LABEL_ALPHABET )
@@ -366,7 +371,7 @@ public class AllNodesInStoreExistInLabelIndexTest
         return labels.toArray( new Label[labels.size()] );
     }
 
-    private ConsistencyCheckService.Result fullConsistencyCheck()
+	private ConsistencyCheckService.Result fullConsistencyCheck()
             throws ConsistencyCheckIncompleteException, IOException
     {
         try ( FileSystemAbstraction fsa = new DefaultFileSystemAbstraction() )

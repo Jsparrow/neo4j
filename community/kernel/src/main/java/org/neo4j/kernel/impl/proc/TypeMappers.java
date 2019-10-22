@@ -71,42 +71,33 @@ import static org.neo4j.internal.kernel.api.procs.Neo4jTypes.NTTime;
 
 public class TypeMappers extends DefaultValueMapper
 {
-    public abstract static class TypeChecker
+    private static final DefaultValueConverter TO_ANY = new DefaultValueConverter( NTAny, Object.class );
+	private static final DefaultValueConverter TO_STRING = new DefaultValueConverter( NTString, String.class,
+            DefaultParameterValue::ntString );
+	private static final DefaultValueConverter TO_INTEGER = new DefaultValueConverter( NTInteger, Long.class, s ->
+            ntInteger( parseLong( s ) ) );
+	private static final DefaultValueConverter TO_FLOAT = new DefaultValueConverter( NTFloat, Double.class, s ->
+            ntFloat( parseDouble( s ) ) );
+	private static final DefaultValueConverter TO_NUMBER = new DefaultValueConverter( NTNumber, Number.class, s ->
     {
-        final AnyType type;
-        final Class<?> javaClass;
-
-        private TypeChecker( AnyType type, Class<?> javaClass )
+        try
         {
-            this.type = type;
-            this.javaClass = javaClass;
+            return ntInteger( parseLong( s ) );
         }
-
-        public AnyType type()
+        catch ( NumberFormatException e )
         {
-            return type;
+            return ntFloat( parseDouble( s ) );
         }
+    } );
+	private static final DefaultValueConverter TO_BOOLEAN = new DefaultValueConverter( NTBoolean, Boolean.class, s ->
+            ntBoolean( parseBoolean( s ) ) );
+	private static final DefaultValueConverter TO_MAP =
+            new DefaultValueConverter( NTMap, Map.class, new MapConverter() );
+	private static final DefaultValueConverter TO_LIST = toList( TO_ANY, Object.class );
+	private final Map<Type,DefaultValueConverter> javaToNeo = new HashMap<>();
+	private final DefaultValueConverter toBytearray = new DefaultValueConverter( NTByteArray, byte[].class, new ByteArrayConverter() );
 
-        public Object typeCheck( Object javaValue ) throws ProcedureException
-        {
-            if ( javaValue == null || javaClass.isInstance( javaValue ) )
-            {
-                return javaValue;
-            }
-            throw new ProcedureException( Status.Procedure.ProcedureCallFailed,
-                    "Expected `%s` to be a `%s`, found `%s`.", javaValue, javaClass.getSimpleName(),
-                    javaValue.getClass() );
-        }
-
-        public AnyValue toValue( Object obj )
-        {
-            return ValueUtils.of( obj );
-        }
-    }
-
-    private final Map<Type,DefaultValueConverter> javaToNeo = new HashMap<>();
-
-    /**
+	/**
      * Used by testing.
      */
     public TypeMappers()
@@ -114,13 +105,13 @@ public class TypeMappers extends DefaultValueMapper
         this( null );
     }
 
-    public TypeMappers( EmbeddedProxySPI proxySPI )
+	public TypeMappers( EmbeddedProxySPI proxySPI )
     {
         super( proxySPI );
         registerScalarsAndCollections();
     }
 
-    /**
+	/**
      * We don't have Node, Relationship, Property available down here - and don't strictly want to,
      * we want the procedures to be independent of which Graph API is being used (and we don't want
      * them to get tangled up with kernel code). So, we only register the "core" type system here,
@@ -140,7 +131,7 @@ public class TypeMappers extends DefaultValueMapper
         registerType( Map.class, TO_MAP );
         registerType( List.class, TO_LIST );
         registerType( Object.class, TO_ANY );
-        registerType( byte[].class, TO_BYTEARRAY );
+        registerType( byte[].class, toBytearray );
         registerType( ZonedDateTime.class, new DefaultValueConverter( NTDateTime, ZonedDateTime.class ) );
         registerType( LocalDateTime.class, new DefaultValueConverter( NTLocalDateTime, LocalDateTime.class ) );
         registerType( LocalDate.class, new DefaultValueConverter( NTDate, LocalDate.class ) );
@@ -149,17 +140,17 @@ public class TypeMappers extends DefaultValueMapper
         registerType( TemporalAmount.class, new DefaultValueConverter( NTDuration, TemporalAmount.class ) );
     }
 
-    public AnyType toNeo4jType( Type type ) throws ProcedureException
+	public AnyType toNeo4jType( Type type ) throws ProcedureException
     {
         return converterFor( type ).type;
     }
 
-    public TypeChecker checkerFor( Type javaType ) throws ProcedureException
+	public TypeChecker checkerFor( Type javaType ) throws ProcedureException
     {
         return converterFor( javaType );
     }
 
-    DefaultValueConverter converterFor( Type javaType ) throws ProcedureException
+	DefaultValueConverter converterFor( Type javaType ) throws ProcedureException
     {
         DefaultValueConverter converter = javaToNeo.get( javaType );
         if ( converter != null )
@@ -193,42 +184,17 @@ public class TypeMappers extends DefaultValueMapper
         throw javaToNeoMappingError( javaType );
     }
 
-    void registerType( Class<?> javaClass, DefaultValueConverter toNeo )
+	void registerType( Class<?> javaClass, DefaultValueConverter toNeo )
     {
         javaToNeo.put( javaClass, toNeo );
     }
 
-    private static final DefaultValueConverter TO_ANY = new DefaultValueConverter( NTAny, Object.class );
-    private static final DefaultValueConverter TO_STRING = new DefaultValueConverter( NTString, String.class,
-            DefaultParameterValue::ntString );
-    private static final DefaultValueConverter TO_INTEGER = new DefaultValueConverter( NTInteger, Long.class, s ->
-            ntInteger( parseLong( s ) ) );
-    private static final DefaultValueConverter TO_FLOAT = new DefaultValueConverter( NTFloat, Double.class, s ->
-            ntFloat( parseDouble( s ) ) );
-    private static final DefaultValueConverter TO_NUMBER = new DefaultValueConverter( NTNumber, Number.class, s ->
-    {
-        try
-        {
-            return ntInteger( parseLong( s ) );
-        }
-        catch ( NumberFormatException e )
-        {
-            return ntFloat( parseDouble( s ) );
-        }
-    } );
-    private static final DefaultValueConverter TO_BOOLEAN = new DefaultValueConverter( NTBoolean, Boolean.class, s ->
-            ntBoolean( parseBoolean( s ) ) );
-    private static final DefaultValueConverter TO_MAP =
-            new DefaultValueConverter( NTMap, Map.class, new MapConverter() );
-    private static final DefaultValueConverter TO_LIST = toList( TO_ANY, Object.class );
-    private final DefaultValueConverter TO_BYTEARRAY = new DefaultValueConverter( NTByteArray, byte[].class, new ByteArrayConverter() );
-
-    private static DefaultValueConverter toList( DefaultValueConverter inner, Type type )
+	private static DefaultValueConverter toList( DefaultValueConverter inner, Type type )
     {
         return new DefaultValueConverter( NTList( inner.type() ), List.class, new ListConverter( type, inner.type() ) );
     }
 
-    private ProcedureException javaToNeoMappingError( Type cls )
+	private ProcedureException javaToNeoMappingError( Type cls )
     {
         List<String> types = Iterables.asList( javaToNeo.keySet() )
                 .stream()
@@ -237,9 +203,40 @@ public class TypeMappers extends DefaultValueMapper
                 .collect( Collectors.toList() );
 
         return new ProcedureException( Status.Statement.TypeError,
-                "Don't know how to map `%s` to the Neo4j Type System.%n" +
-                        "Please refer to to the documentation for full details.%n" +
-                        "For your reference, known types are: %s", cls.getTypeName(), types );
+                new StringBuilder().append("Don't know how to map `%s` to the Neo4j Type System.%n").append("Please refer to to the documentation for full details.%n").append("For your reference, known types are: %s").toString(), cls.getTypeName(), types );
+    }
+
+	public abstract static class TypeChecker
+    {
+        final AnyType type;
+        final Class<?> javaClass;
+
+        private TypeChecker( AnyType type, Class<?> javaClass )
+        {
+            this.type = type;
+            this.javaClass = javaClass;
+        }
+
+        public AnyType type()
+        {
+            return type;
+        }
+
+        public Object typeCheck( Object javaValue ) throws ProcedureException
+        {
+            if ( javaValue == null || javaClass.isInstance( javaValue ) )
+            {
+                return javaValue;
+            }
+            throw new ProcedureException( Status.Procedure.ProcedureCallFailed,
+                    "Expected `%s` to be a `%s`, found `%s`.", javaValue, javaClass.getSimpleName(),
+                    javaValue.getClass() );
+        }
+
+        public AnyValue toValue( Object obj )
+        {
+            return ValueUtils.of( obj );
+        }
     }
 
     public static final class DefaultValueConverter extends TypeChecker
@@ -283,7 +280,7 @@ public class TypeMappers extends DefaultValueMapper
         {
             return s ->
             {
-                if ( s.equalsIgnoreCase( "null" ) )
+                if ( "null".equalsIgnoreCase( s ) )
                 {
                     return nullValue( neoType );
                 }

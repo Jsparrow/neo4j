@@ -97,7 +97,7 @@ public class LucenePartitionAllDocumentsReader implements BoundedIterable<Docume
         }
         catch ( IOException e )
         {
-            throw new LuceneDocumentRetrievalException( "Can't retrieve document with id: " + docId + ".", docId, e );
+            throw new LuceneDocumentRetrievalException( new StringBuilder().append("Can't retrieve document with id: ").append(docId).append(".").toString(), docId, e );
         }
     }
 

@@ -23,7 +23,6 @@ import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -45,6 +44,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.neo4j.helpers.collection.MapUtil.map;
+import java.util.Collections;
 
 public class GraphDatabaseServiceExecuteTest
 {
@@ -259,7 +259,7 @@ public class GraphDatabaseServiceExecuteTest
             @Override
             public List<Coordinate> getCoordinates()
             {
-                return Arrays.asList( coord );
+                return Collections.singletonList( coord );
             }
 
             @Override
@@ -285,7 +285,7 @@ public class GraphDatabaseServiceExecuteTest
             @Override
             public List<Coordinate> getCoordinates()
             {
-                return Arrays.asList( coord );
+                return Collections.singletonList( coord );
             }
 
             @Override

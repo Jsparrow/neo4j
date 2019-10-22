@@ -71,6 +71,6 @@ public class MessageDecoder extends SimpleChannelInboundHandler<ByteBuf>
     {
         // move reader index back to the beginning of the message in order to log its full content
         byteBuf.resetReaderIndex();
-        log.error( "Failed to read an inbound message:\n" + hexDump( byteBuf ) + '\n' );
+        log.error( new StringBuilder().append("Failed to read an inbound message:\n").append(hexDump( byteBuf )).append('\n').toString() );
     }
 }

@@ -91,11 +91,10 @@ public class NativeStringIndexingIT
         // then
         try ( Transaction tx = db.beginTx() )
         {
-            for ( String string : strings.keySet() )
-            {
+            strings.keySet().forEach(string -> {
                 Node node = db.findNode( LABEL, KEY, string );
                 assertEquals( strings.get( string ).longValue(), node.getId() );
-            }
+            });
             tx.success();
         }
     }

@@ -75,7 +75,16 @@ import static org.neo4j.test.mockito.matcher.Neo4jMatchers.createIndex;
 
 public class IndexCRUDIT
 {
-    @Test
+    private GraphDatabaseAPI db;
+	@Rule
+    public EphemeralFileSystemRule fs = new EphemeralFileSystemRule();
+	private final IndexProvider mockedIndexProvider = mock( IndexProvider.class );
+	private final KernelExtensionFactory<?> mockedIndexProviderFactory =
+            singleInstanceIndexProviderFactory( "none", mockedIndexProvider );
+	private ThreadToStatementContextBridge ctxSupplier;
+	private final Label myLabel = Label.label( "MYLABEL" );
+
+	@Test
     public void addingANodeWithPropertyShouldGetIndexed() throws Exception
     {
         // Given
@@ -107,7 +116,7 @@ public class IndexCRUDIT
         // one NodePropertyUpdate.
     }
 
-    @Test
+	@Test
     public void addingALabelToPreExistingNodeShouldGetIndexed() throws Exception
     {
         // GIVEN
@@ -146,30 +155,18 @@ public class IndexCRUDIT
         }
     }
 
-    private GraphDatabaseAPI db;
-    @Rule
-    public EphemeralFileSystemRule fs = new EphemeralFileSystemRule();
-    private final IndexProvider mockedIndexProvider = mock( IndexProvider.class );
-    private final KernelExtensionFactory<?> mockedIndexProviderFactory =
-            singleInstanceIndexProviderFactory( "none", mockedIndexProvider );
-    private ThreadToStatementContextBridge ctxSupplier;
-    private final Label myLabel = Label.label( "MYLABEL" );
-
-    private Node createNode( Map<String, Object> properties, Label ... labels )
+	private Node createNode( Map<String, Object> properties, Label ... labels )
     {
         try ( Transaction tx = db.beginTx() )
         {
             Node node = db.createNode( labels );
-            for ( Map.Entry<String, Object> prop : properties.entrySet() )
-            {
-                node.setProperty( prop.getKey(), prop.getValue() );
-            }
+            properties.entrySet().forEach(prop -> node.setProperty(prop.getKey(), prop.getValue()));
             tx.success();
             return node;
         }
     }
 
-    @Before
+	@Before
     public void before() throws MisconfiguredIndexException
     {
         when( mockedIndexProvider.getProviderDescriptor() ).thenReturn( PROVIDER_DESCRIPTOR );
@@ -184,7 +181,7 @@ public class IndexCRUDIT
         ctxSupplier = db.getDependencyResolver().resolveDependency( ThreadToStatementContextBridge.class );
     }
 
-    private GatheringIndexWriter newWriter() throws IOException
+	private GatheringIndexWriter newWriter() throws IOException
     {
         GatheringIndexWriter writer = new GatheringIndexWriter();
         when( mockedIndexProvider.getPopulator( any( StoreIndexDescriptor.class ), any( IndexSamplingConfig.class ), any() ) ).thenReturn( writer );
@@ -192,13 +189,13 @@ public class IndexCRUDIT
         return writer;
     }
 
-    @After
+	@After
     public void after()
     {
         db.shutdown();
     }
 
-    private static class GatheringIndexWriter extends IndexAccessor.Adapter implements IndexPopulator
+	private static class GatheringIndexWriter extends IndexAccessor.Adapter implements IndexPopulator
     {
         private final Set<IndexEntryUpdate<?>> updatesCommitted = new HashSet<>();
         private final Map<Object,Set<Long>> indexSamples = new HashMap<>();

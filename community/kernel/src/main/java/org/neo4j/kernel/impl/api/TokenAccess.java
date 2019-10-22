@@ -126,7 +126,13 @@ public abstract class TokenAccess<R>
         return false;
     }
 
-    private abstract static class TokenIterator<T> extends PrefetchingResourceIterator<T>
+    abstract Iterator<NamedToken> tokens( TokenRead tokenRead );
+
+	abstract R token( NamedToken token );
+
+	abstract boolean inUse( KernelTransaction transaction, SchemaReadCore schemaReadCore, int tokenId );
+
+	private abstract static class TokenIterator<T> extends PrefetchingResourceIterator<T>
     {
         private Statement statement;
         protected final TokenAccess<T> access;
@@ -150,11 +156,11 @@ public abstract class TokenAccess<R>
         @Override
         public void close()
         {
-            if ( statement != null )
-            {
-                statement.close();
-                statement = null;
-            }
+            if (statement == null) {
+				return;
+			}
+			statement.close();
+			statement = null;
         }
 
         static <T> ResourceIterator<T> inUse( KernelTransaction transaction, TokenAccess<T> access )
@@ -199,10 +205,4 @@ public abstract class TokenAccess<R>
             };
         }
     }
-
-    abstract Iterator<NamedToken> tokens( TokenRead tokenRead );
-
-    abstract R token( NamedToken token );
-
-    abstract boolean inUse( KernelTransaction transaction, SchemaReadCore schemaReadCore, int tokenId );
 }

@@ -100,7 +100,7 @@ public interface RecordIdIterator
         @Override
         public String toString()
         {
-            return "[" + lowIncluded + "-" + highExcluded + "[";
+            return new StringBuilder().append("[").append(lowIncluded).append("-").append(highExcluded).append("[").toString();
         }
     }
 
@@ -142,7 +142,7 @@ public interface RecordIdIterator
         @Override
         public String toString()
         {
-            return "]" + highExcluded + "-" + lowIncluded + "]";
+            return new StringBuilder().append("]").append(highExcluded).append("-").append(lowIncluded).append("]").toString();
         }
     }
 }

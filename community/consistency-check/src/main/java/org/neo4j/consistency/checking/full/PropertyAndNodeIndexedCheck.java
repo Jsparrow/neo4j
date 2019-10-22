@@ -179,33 +179,31 @@ public class PropertyAndNodeIndexedCheck implements RecordCheck<NodeRecord, Cons
             CheckerEngine<NodeRecord, ConsistencyReport.NodeConsistencyReport> engine,
             Collection<PropertyRecord> props )
     {
-        if ( !Record.NO_NEXT_PROPERTY.is( record.getNextProp() ) )
-        {
-            PropertyRecord firstProp = props.iterator().next();
-            if ( !Record.NO_PREVIOUS_PROPERTY.is( firstProp.getPrevProp() ) )
-            {
-                engine.report().propertyNotFirstInChain( firstProp );
-            }
-
-            final MutableIntSet keys = new IntHashSet();
-            for ( PropertyRecord property : props )
-            {
-                if ( !property.inUse() )
-                {
-                    engine.report().propertyNotInUse( property );
-                }
-                else
-                {
-                    for ( int key : ChainCheck.keys( property ) )
-                    {
-                        if ( !keys.add( key ) )
-                        {
-                            engine.report().propertyKeyNotUniqueInChain();
-                        }
-                    }
-                }
-            }
-        }
+        if (Record.NO_NEXT_PROPERTY.is( record.getNextProp() )) {
+			return;
+		}
+		PropertyRecord firstProp = props.iterator().next();
+		if ( !Record.NO_PREVIOUS_PROPERTY.is( firstProp.getPrevProp() ) )
+		{
+		    engine.report().propertyNotFirstInChain( firstProp );
+		}
+		final MutableIntSet keys = new IntHashSet();
+		props.forEach(property -> {
+		    if ( !property.inUse() )
+		    {
+		        engine.report().propertyNotInUse( property );
+		    }
+		    else
+		    {
+		        for ( int key : ChainCheck.keys( property ) )
+		        {
+		            if ( !keys.add( key ) )
+		            {
+		                engine.report().propertyKeyNotUniqueInChain();
+		            }
+		        }
+		    }
+		});
     }
 
     static Value[] getPropertyValues( PropertyReader propertyReader, IntObjectMap<PropertyBlock> propertyMap, int[] indexPropertyIds )
@@ -222,10 +220,7 @@ public class PropertyAndNodeIndexedCheck implements RecordCheck<NodeRecord, Cons
     static IntObjectMap<PropertyBlock> properties( List<PropertyBlock> propertyBlocks )
     {
         final MutableIntObjectMap<PropertyBlock> propertyIds = new IntObjectHashMap<>();
-        for ( PropertyBlock propertyBlock : propertyBlocks )
-        {
-            propertyIds.put( propertyBlock.getKeyIndexId(), propertyBlock );
-        }
+        propertyBlocks.forEach(propertyBlock -> propertyIds.put(propertyBlock.getKeyIndexId(), propertyBlock));
         return propertyIds;
     }
 

@@ -63,21 +63,11 @@ import static org.neo4j.test.MockedNeoStores.mockedTokenHolders;
 
 public class KernelTransactionFactory
 {
-    public static class Instances
-    {
-        public KernelTransactionImplementation transaction;
-
-        public Instances( KernelTransactionImplementation transaction )
-        {
-            this.transaction = transaction;
-        }
-    }
-
     private KernelTransactionFactory()
     {
     }
 
-    private static Instances kernelTransactionWithInternals( LoginContext loginContext )
+	private static Instances kernelTransactionWithInternals( LoginContext loginContext )
     {
         TransactionHeaderInformation headerInformation = new TransactionHeaderInformation( -1, -1, new byte[0] );
         TransactionHeaderInformationFactory headerInformationFactory = mock( TransactionHeaderInformationFactory.class );
@@ -104,8 +94,18 @@ public class KernelTransactionFactory
         return new Instances( transaction );
     }
 
-    static KernelTransaction kernelTransaction( LoginContext loginContext )
+	static KernelTransaction kernelTransaction( LoginContext loginContext )
     {
         return kernelTransactionWithInternals( loginContext ).transaction;
+    }
+
+	public static class Instances
+    {
+        public KernelTransactionImplementation transaction;
+
+        public Instances( KernelTransactionImplementation transaction )
+        {
+            this.transaction = transaction;
+        }
     }
 }

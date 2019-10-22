@@ -78,7 +78,7 @@ public class Registers
             @Override
             public String toString()
             {
-                return "DoubleLongRegister{first=" + first + ", second=" + second + "}";
+                return new StringBuilder().append("DoubleLongRegister{first=").append(first).append(", second=").append(second).append("}").toString();
             }
         };
     }

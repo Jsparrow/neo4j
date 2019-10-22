@@ -33,7 +33,12 @@ public abstract class InjectableProvider<E> extends AbstractHttpContextInjectabl
 {
     public final Class<E> t;
 
-    public static <E> InjectableProvider<? extends E> providerForSingleton(
+    public InjectableProvider( Class<E> t )
+    {
+        this.t = t;
+    }
+
+	public static <E> InjectableProvider<? extends E> providerForSingleton(
             final E component,
             final Class<E> componentClass )
     {
@@ -47,7 +52,7 @@ public abstract class InjectableProvider<E> extends AbstractHttpContextInjectabl
         };
     }
 
-    public static <E> InjectableProvider<? extends E> providerFromSupplier(
+	public static <E> InjectableProvider<? extends E> providerFromSupplier(
             final Supplier<E> supplier,
             final Class<E> componentClass )
     {
@@ -61,12 +66,7 @@ public abstract class InjectableProvider<E> extends AbstractHttpContextInjectabl
         };
     }
 
-    public InjectableProvider( Class<E> t )
-    {
-        this.t = t;
-    }
-
-    @Override
+	@Override
     public Injectable<E> getInjectable( ComponentContext ic, Context a, Class<E> c )
     {
         if ( c.equals( t ) )
@@ -77,12 +77,12 @@ public abstract class InjectableProvider<E> extends AbstractHttpContextInjectabl
         return null;
     }
 
-    public Injectable<E> getInjectable()
+	public Injectable<E> getInjectable()
     {
         return this;
     }
 
-    @Override
+	@Override
     public ComponentScope getScope()
     {
         return ComponentScope.PerRequest;

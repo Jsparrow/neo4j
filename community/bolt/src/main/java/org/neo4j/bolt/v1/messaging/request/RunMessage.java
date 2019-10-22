@@ -86,6 +86,6 @@ public class RunMessage implements RequestMessage
     @Override
     public String toString()
     {
-        return "RUN " + statement + ' ' + params;
+        return new StringBuilder().append("RUN ").append(statement).append(' ').append(params).toString();
     }
 }

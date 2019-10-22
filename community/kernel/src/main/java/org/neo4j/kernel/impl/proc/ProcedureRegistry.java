@@ -157,8 +157,7 @@ public class ProcedureRegistry
             if ( !names.add( field.name() ) )
             {
                 throw new ProcedureException( Status.Procedure.ProcedureRegistrationFailed,
-                        "Procedure `%s` cannot be registered, because it contains a duplicated " + fieldType + " field, '%s'. " +
-                        "You need to rename or remove one of the duplicate fields.", descriptiveName, field.name() );
+                        new StringBuilder().append("Procedure `%s` cannot be registered, because it contains a duplicated ").append(fieldType).append(" field, '%s'. ").append("You need to rename or remove one of the duplicate fields.").toString(), descriptiveName, field.name() );
             }
         }
     }
@@ -274,9 +273,7 @@ public class ProcedureRegistry
     private ProcedureException noSuchProcedure( QualifiedName name )
     {
         return new ProcedureException( Status.Procedure.ProcedureNotFound,
-                "There is no procedure with the name `%s` registered for this database instance. " +
-                "Please ensure you've spelled the procedure name correctly and that the " +
-                "procedure is properly deployed.", name );
+                new StringBuilder().append("There is no procedure with the name `%s` registered for this database instance. ").append("Please ensure you've spelled the procedure name correctly and that the ").append("procedure is properly deployed.").toString(), name );
     }
 
     private ProcedureException noSuchProcedure( int id )
@@ -288,9 +285,7 @@ public class ProcedureRegistry
     private ProcedureException noSuchFunction( QualifiedName name )
     {
         return new ProcedureException( Status.Procedure.ProcedureNotFound,
-                "There is no function with the name `%s` registered for this database instance. " +
-                "Please ensure you've spelled the function name correctly and that the " +
-                "function is properly deployed.", name );
+                new StringBuilder().append("There is no function with the name `%s` registered for this database instance. ").append("Please ensure you've spelled the function name correctly and that the ").append("function is properly deployed.").toString(), name );
     }
 
     private ProcedureException noSuchFunction( int id )

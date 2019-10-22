@@ -23,7 +23,6 @@ public class MissingEndQuoteException extends FormatException
 {
     public MissingEndQuoteException( SourceTraceability source, int startingLine, char quoteChar )
     {
-        super( source, "Missing end for quote (" + quoteChar + ") which started on line " +
-                startingLine );
+        super( source, new StringBuilder().append("Missing end for quote (").append(quoteChar).append(") which started on line ").append(startingLine).toString() );
     }
 }

@@ -475,131 +475,222 @@ public abstract class TemporalValue<T extends Temporal, V extends TemporalValue<
         return fields;
     }
 
-    abstract static class Builder<Result> implements StructureBuilder<AnyValue,Result>
+    private static AnyValue assignment( TemporalFields field, AnyValue oldValue, AnyValue newValue )
     {
-        private final Supplier<ZoneId> defaultZone;
-        private DateTimeBuilder state;
-        protected AnyValue timezone;
-
-        protected Map<TemporalFields,AnyValue> fields = new EnumMap<>( TemporalFields.class );
-
-        Builder( Supplier<ZoneId> defaultZone )
+        if ( oldValue != null )
         {
-            this.defaultZone = defaultZone;
+            throw new InvalidValuesArgumentException( "cannot re-assign " + field );
         }
-
-        @Override
-        public final Result build()
-        {
-            if ( state == null )
-            {
-                throw new InvalidValuesArgumentException( "Builder state empty" );
-            }
-            state.checkAssignments( this.supportsDate() );
-            try
-            {
-                return buildInternal();
-            }
-            catch ( DateTimeException e )
-            {
-                throw new InvalidValuesArgumentException( e.getMessage(), e );
-            }
-        }
-
-        <Temp extends Temporal> Temp assignAllFields( Temp temp )
-        {
-            Temp result = temp;
-            for ( Map.Entry<TemporalFields,AnyValue> entry : fields.entrySet() )
-            {
-                TemporalFields f = entry.getKey();
-                if ( f == TemporalFields.year && fields.containsKey( TemporalFields.week ) )
-                {
-                    // Year can mean week-based year, if a week is specified.
-                    result = (Temp) result.with( IsoFields.WEEK_BASED_YEAR,
-                            safeCastIntegral( f.name(), entry.getValue(), f.defaultValue ) );
-                }
-                else if ( !f.isGroupSelector() && f != TemporalFields.timezone && f != TemporalFields.millisecond &&
-                          f != TemporalFields.microsecond && f != TemporalFields.nanosecond )
-                {
-                    TemporalField temporalField = f.field;
-                    result = (Temp) result
-                            .with( temporalField, safeCastIntegral( f.name(), entry.getValue(), f.defaultValue ) );
-                }
-            }
-            // Assign all sub-second parts in one step
-            if ( supportsTime() &&
-                 (fields.containsKey( TemporalFields.millisecond ) ||
-                  fields.containsKey( TemporalFields.microsecond ) || fields.containsKey( TemporalFields.nanosecond )) )
-            {
-                result = (Temp) result.with( TemporalFields.nanosecond.field,
-                        validNano( fields.get( TemporalFields.millisecond ), fields.get( TemporalFields.microsecond ),
-                                fields.get( TemporalFields.nanosecond ) ) );
-            }
-            return result;
-        }
-
-        @Override
-        public final StructureBuilder<AnyValue,Result> add( String fieldName, AnyValue value )
-        {
-            TemporalFields field = TemporalFields.fields.get( fieldName.toLowerCase() );
-            if ( field == null )
-            {
-                throw new InvalidValuesArgumentException( "No such field: " + fieldName );
-            }
-            // Change state
-            field.assign( this, value );
-
-            // Set field for this builder
-            fields.put( field, value );
-            return this;
-        }
-
-        @SuppressWarnings( "BooleanMethodIsAlwaysInverted" )
-        private boolean supports( TemporalField field )
-        {
-            if ( field.isDateBased() )
-            {
-                return supportsDate();
-            }
-            if ( field.isTimeBased() )
-            {
-                return supportsTime();
-            }
-            throw new IllegalStateException( "Fields should be either date based or time based" );
-        }
-
-        protected abstract boolean supportsDate();
-
-        protected abstract boolean supportsTime();
-
-        protected abstract boolean supportsTimeZone();
-
-        protected abstract boolean supportsEpoch();
-
-        protected ZoneId timezone( AnyValue timezone )
-        {
-            return timezone == null ? defaultZone.get() : timezoneOf( timezone );
-        }
-
-        // Construction
-
-        protected abstract Result buildInternal();
-
-        // Timezone utilities
-
-        protected final ZoneId optionalTimezone()
-        {
-            return timezone == null ? null : timezone();
-        }
-
-        protected final ZoneId timezone()
-        {
-            return timezone( timezone );
-        }
-
+        return newValue;
     }
 
-    /**
+	@SafeVarargs
+    static void assertDefinedInOrder( Pair<org.neo4j.values.AnyValue, String>... values )
+    {
+        if ( values[0].first() == null )
+        {
+            throw new InvalidValuesArgumentException( values[0].other() + " must be specified" );
+        }
+
+        String firstNotAssigned = null;
+
+        for ( Pair<org.neo4j.values.AnyValue,String> value : values )
+        {
+            if ( value.first() == null )
+            {
+                if ( firstNotAssigned == null )
+                {
+                    firstNotAssigned = value.other();
+                }
+            }
+            else if ( firstNotAssigned != null )
+            {
+                throw new InvalidValuesArgumentException( new StringBuilder().append(value.other()).append(" cannot be specified without ").append(firstNotAssigned).toString() );
+            }
+        }
+    }
+
+	@SafeVarargs
+    static void assertAllDefined( Pair<org.neo4j.values.AnyValue, String>... values )
+    {
+        for ( Pair<org.neo4j.values.AnyValue,String> value : values )
+        {
+            if ( value.first() == null )
+            {
+                throw new InvalidValuesArgumentException( value.other() + " must be specified" );
+            }
+        }
+    }
+
+	static org.neo4j.values.AnyValue oneOf( org.neo4j.values.AnyValue a, org.neo4j.values.AnyValue b, org.neo4j.values.AnyValue c )
+    {
+        return a != null ? a : b != null ? b : c;
+    }
+
+	static ZoneId timezoneOf( AnyValue timezone )
+    {
+        if ( timezone instanceof TextValue )
+        {
+            return parseZoneName( ((TextValue) timezone).stringValue() );
+        }
+        throw new UnsupportedOperationException( "Cannot convert to ZoneId: " + timezone );
+    }
+
+	static int validNano( AnyValue millisecond, AnyValue microsecond, AnyValue nanosecond )
+    {
+        long ms = safeCastIntegral( "millisecond", millisecond, TemporalFields.millisecond.defaultValue );
+        long us = safeCastIntegral( "microsecond", microsecond, TemporalFields.microsecond.defaultValue );
+        long ns = safeCastIntegral( "nanosecond", nanosecond, TemporalFields.nanosecond.defaultValue );
+        if ( ms < 0 || ms >= 1000 )
+        {
+            throw new InvalidValuesArgumentException( "Invalid value for Millisecond: " + ms );
+        }
+        if ( us < 0 || us >= (millisecond != null ? 1000 : 1000_000) )
+        {
+            throw new InvalidValuesArgumentException( "Invalid value for Microsecond: " + us );
+        }
+        if ( ns < 0 || ns >= ( microsecond != null ? 1000 : millisecond != null ? 1000_000 : 1000_000_000 ) )
+        {
+            throw new InvalidValuesArgumentException( "Invalid value for Nanosecond: " + ns );
+        }
+        return (int) (ms * 1000_000 + us * 1000 + ns);
+    }
+
+	static <TEMP extends Temporal, VALUE> VALUE updateFieldMapWithConflictingSubseconds( MapValue fields,
+            TemporalUnit unit,
+            TEMP temporal, BiFunction<MapValue,TEMP,VALUE> mapFunction )
+    {
+        boolean conflictingMilliSeconds =
+                unit == ChronoUnit.MILLIS &&
+                (fields.containsKey( "microsecond" ) || fields.containsKey( "nanosecond" ));
+        boolean conflictingMicroSeconds = unit == ChronoUnit.MICROS && fields.containsKey( "nanosecond" );
+
+        if ( conflictingMilliSeconds )
+        {
+            AnyValue millis = Values.intValue( temporal.get( ChronoField.MILLI_OF_SECOND ) );
+            AnyValue micros = fields.get( "microsecond" );
+            AnyValue nanos = fields.get( "nanosecond" );
+
+            int newNanos = validNano( millis, micros, nanos );
+            TEMP newTemporal = (TEMP) temporal.with( ChronoField.NANO_OF_SECOND, newNanos );
+            MapValue filtered = fields.filter(
+                    ( k, ignore ) -> !"microsecond".equals( k ) && !"nanosecond".equals( k ) );
+            return mapFunction.apply( filtered, newTemporal );
+        }
+        else if ( conflictingMicroSeconds )
+        {
+            AnyValue micros = Values.intValue( temporal.get( ChronoField.MICRO_OF_SECOND ) );
+            AnyValue nanos = fields.get( "nanosecond" );
+            int newNanos = validNano( null, micros, nanos );
+            TEMP newTemporal = (TEMP) temporal.with( ChronoField.NANO_OF_SECOND, newNanos );
+            MapValue filtered = fields.filter(
+                    ( k, ignore ) -> !"nanosecond".equals( k ) );
+
+            return mapFunction.apply( filtered, newTemporal );
+        }
+        else
+        {
+            return mapFunction.apply( fields, temporal );
+        }
+    }
+
+	static <TEMP extends Temporal> TEMP assertValidArgument( Supplier<TEMP> func )
+    {
+        try
+        {
+            return func.get();
+        }
+        catch ( DateTimeException e )
+        {
+            throw new InvalidValuesArgumentException( e.getMessage(), e );
+        }
+    }
+
+	static <TEMP extends Temporal> TEMP assertValidUnit( Supplier<TEMP> func )
+    {
+        try
+        {
+            return func.get();
+        }
+        catch ( DateTimeException e )
+        {
+            throw new UnsupportedTemporalUnitException( e.getMessage(), e );
+        }
+    }
+
+	static <OFFSET extends ZoneId> OFFSET assertValidZone( Supplier<OFFSET> func )
+    {
+        try
+        {
+            return func.get();
+        }
+        catch ( DateTimeException e )
+        {
+            throw new InvalidValuesArgumentException( e.getMessage(), e );
+        }
+    }
+
+	static <TEMP extends Temporal> TEMP assertParsable( Supplier<TEMP> func )
+    {
+        try
+        {
+            return func.get();
+        }
+        catch ( DateTimeException e )
+        {
+            throw new TemporalParseException( e.getMessage(), e );
+        }
+    }
+
+	static String assertPrintable( Supplier<String> func )
+    {
+        try
+        {
+            return func.get();
+        }
+        catch ( DateTimeException e )
+        {
+            throw new TemporalParseException( e.getMessage(), e );
+        }
+    }
+
+	static <TEMP extends Temporal> TEMP assertValidArithmetic( Supplier<TEMP> func )
+    {
+        try
+        {
+            return func.get();
+        }
+        catch ( DateTimeException | ArithmeticException e )
+        {
+            throw new TemporalArithmeticException( e.getMessage(), e );
+        }
+    }
+
+	static Pair<LocalDate,LocalTime> getTruncatedDateAndTime( TemporalUnit unit, TemporalValue input, String type )
+    {
+        if ( unit.isTimeBased() && !(input instanceof DateTimeValue || input instanceof LocalDateTimeValue) )
+        {
+            throw new UnsupportedTemporalUnitException( String.format( "Cannot truncate %s to %s with a time based unit.", input, type ) );
+        }
+        LocalDate localDate = input.getDatePart();
+        LocalTime localTime = input.hasTime() ? input.getLocalTimePart() : LocalTimeValue.DEFAULT_LOCAL_TIME;
+
+        LocalTime truncatedTime;
+        LocalDate truncatedDate;
+        if ( unit.isDateBased() )
+        {
+            truncatedDate = DateValue.truncateTo( localDate, unit );
+            truncatedTime = LocalTimeValue.DEFAULT_LOCAL_TIME;
+        }
+        else
+        {
+            truncatedDate = localDate;
+            truncatedTime = localTime.truncatedTo( unit );
+        }
+        return Pair.of( truncatedDate, truncatedTime );
+    }
+
+	/**
      * All fields that can be a asigned to or read from temporals.
      * Make sure that writable fields defined in "decreasing" order between year and nanosecond.
      */
@@ -843,6 +934,130 @@ public abstract class TemporalValue<T extends Temporal, V extends TemporalValue<
         }
     }
 
+	abstract static class Builder<Result> implements StructureBuilder<AnyValue,Result>
+    {
+        private final Supplier<ZoneId> defaultZone;
+        private DateTimeBuilder state;
+        protected AnyValue timezone;
+
+        protected Map<TemporalFields,AnyValue> fields = new EnumMap<>( TemporalFields.class );
+
+        Builder( Supplier<ZoneId> defaultZone )
+        {
+            this.defaultZone = defaultZone;
+        }
+
+        @Override
+        public final Result build()
+        {
+            if ( state == null )
+            {
+                throw new InvalidValuesArgumentException( "Builder state empty" );
+            }
+            state.checkAssignments( this.supportsDate() );
+            try
+            {
+                return buildInternal();
+            }
+            catch ( DateTimeException e )
+            {
+                throw new InvalidValuesArgumentException( e.getMessage(), e );
+            }
+        }
+
+        <Temp extends Temporal> Temp assignAllFields( Temp temp )
+        {
+            Temp result = temp;
+            for ( Map.Entry<TemporalFields,AnyValue> entry : fields.entrySet() )
+            {
+                TemporalFields f = entry.getKey();
+                if ( f == TemporalFields.year && fields.containsKey( TemporalFields.week ) )
+                {
+                    // Year can mean week-based year, if a week is specified.
+                    result = (Temp) result.with( IsoFields.WEEK_BASED_YEAR,
+                            safeCastIntegral( f.name(), entry.getValue(), f.defaultValue ) );
+                }
+                else if ( !f.isGroupSelector() && f != TemporalFields.timezone && f != TemporalFields.millisecond &&
+                          f != TemporalFields.microsecond && f != TemporalFields.nanosecond )
+                {
+                    TemporalField temporalField = f.field;
+                    result = (Temp) result
+                            .with( temporalField, safeCastIntegral( f.name(), entry.getValue(), f.defaultValue ) );
+                }
+            }
+            // Assign all sub-second parts in one step
+            if ( supportsTime() &&
+                 (fields.containsKey( TemporalFields.millisecond ) ||
+                  fields.containsKey( TemporalFields.microsecond ) || fields.containsKey( TemporalFields.nanosecond )) )
+            {
+                result = (Temp) result.with( TemporalFields.nanosecond.field,
+                        validNano( fields.get( TemporalFields.millisecond ), fields.get( TemporalFields.microsecond ),
+                                fields.get( TemporalFields.nanosecond ) ) );
+            }
+            return result;
+        }
+
+        @Override
+        public final StructureBuilder<AnyValue,Result> add( String fieldName, AnyValue value )
+        {
+            TemporalFields field = TemporalFields.fields.get( fieldName.toLowerCase() );
+            if ( field == null )
+            {
+                throw new InvalidValuesArgumentException( "No such field: " + fieldName );
+            }
+            // Change state
+            field.assign( this, value );
+
+            // Set field for this builder
+            fields.put( field, value );
+            return this;
+        }
+
+        @SuppressWarnings( "BooleanMethodIsAlwaysInverted" )
+        private boolean supports( TemporalField field )
+        {
+            if ( field.isDateBased() )
+            {
+                return supportsDate();
+            }
+            if ( field.isTimeBased() )
+            {
+                return supportsTime();
+            }
+            throw new IllegalStateException( "Fields should be either date based or time based" );
+        }
+
+        protected abstract boolean supportsDate();
+
+        protected abstract boolean supportsTime();
+
+        protected abstract boolean supportsTimeZone();
+
+        protected abstract boolean supportsEpoch();
+
+        protected ZoneId timezone( AnyValue timezone )
+        {
+            return timezone == null ? defaultZone.get() : timezoneOf( timezone );
+        }
+
+        // Construction
+
+        protected abstract Result buildInternal();
+
+        // Timezone utilities
+
+        protected final ZoneId optionalTimezone()
+        {
+            return timezone == null ? null : timezone();
+        }
+
+        protected final ZoneId timezone()
+        {
+            return timezone( timezone );
+        }
+
+    }
+
     private static class DateTimeBuilder
     {
         protected DateBuilder date;
@@ -864,21 +1079,21 @@ public abstract class TemporalValue<T extends Temporal, V extends TemporalValue<
             {
                 date.checkAssignments();
             }
-            if ( time != null )
-            {
-                if ( requiresDate )
-                {
-                    if ( date != null )
-                    {
-                        date.assertFullyAssigned();
-                    }
-                    else
-                    {
-                        throw new InvalidValuesArgumentException( TemporalFields.year.name() + " must be specified" );
-                    }
-                }
-                time.checkAssignments();
-            }
+            if (time == null) {
+				return;
+			}
+			if ( requiresDate )
+			{
+			    if ( date != null )
+			    {
+			        date.assertFullyAssigned();
+			    }
+			    else
+			    {
+			        throw new InvalidValuesArgumentException( TemporalFields.year.name() + " must be specified" );
+			    }
+			}
+			time.checkAssignments();
         }
 
         DateTimeBuilder assign( TemporalFields field, AnyValue value )
@@ -1164,7 +1379,7 @@ public abstract class TemporalValue<T extends Temporal, V extends TemporalValue<
                 date = assignment( field, date, value );
                 return this;
             default:
-                throw new UnsupportedTemporalUnitException( "Cannot assign " + field + " to calendar date." );
+                throw new UnsupportedTemporalUnitException( new StringBuilder().append("Cannot assign ").append(field).append(" to calendar date.").toString() );
             }
         }
 
@@ -1217,7 +1432,7 @@ public abstract class TemporalValue<T extends Temporal, V extends TemporalValue<
                 date = assignment( field, date, value );
                 return this;
             default:
-                throw new UnsupportedTemporalUnitException( "Cannot assign " + field + " to week date." );
+                throw new UnsupportedTemporalUnitException( new StringBuilder().append("Cannot assign ").append(field).append(" to week date.").toString() );
             }
         }
 
@@ -1270,7 +1485,7 @@ public abstract class TemporalValue<T extends Temporal, V extends TemporalValue<
                 date = assignment( field, date, value );
                 return this;
             default:
-                throw new UnsupportedTemporalUnitException( "Cannot assign " + field + " to quarter date." );
+                throw new UnsupportedTemporalUnitException( new StringBuilder().append("Cannot assign ").append(field).append(" to quarter date.").toString() );
             }
         }
 
@@ -1319,7 +1534,7 @@ public abstract class TemporalValue<T extends Temporal, V extends TemporalValue<
                 date = assignment( field, date, value );
                 return this;
             default:
-                throw new UnsupportedTemporalUnitException( "Cannot assign " + field + " to ordinal date." );
+                throw new UnsupportedTemporalUnitException( new StringBuilder().append("Cannot assign ").append(field).append(" to ordinal date.").toString() );
             }
         }
 
@@ -1331,221 +1546,6 @@ public abstract class TemporalValue<T extends Temporal, V extends TemporalValue<
                 assertAllDefined( Pair.of( year, "year" ), Pair.of( ordinalDay, "ordinalDay" ) );
             }
         }
-    }
-
-    private static AnyValue assignment( TemporalFields field, AnyValue oldValue, AnyValue newValue )
-    {
-        if ( oldValue != null )
-        {
-            throw new InvalidValuesArgumentException( "cannot re-assign " + field );
-        }
-        return newValue;
-    }
-
-    @SafeVarargs
-    static void assertDefinedInOrder( Pair<org.neo4j.values.AnyValue, String>... values )
-    {
-        if ( values[0].first() == null )
-        {
-            throw new InvalidValuesArgumentException( values[0].other() + " must be specified" );
-        }
-
-        String firstNotAssigned = null;
-
-        for ( Pair<org.neo4j.values.AnyValue,String> value : values )
-        {
-            if ( value.first() == null )
-            {
-                if ( firstNotAssigned == null )
-                {
-                    firstNotAssigned = value.other();
-                }
-            }
-            else if ( firstNotAssigned != null )
-            {
-                throw new InvalidValuesArgumentException( value.other() + " cannot be specified without " + firstNotAssigned );
-            }
-        }
-    }
-
-    @SafeVarargs
-    static void assertAllDefined( Pair<org.neo4j.values.AnyValue, String>... values )
-    {
-        for ( Pair<org.neo4j.values.AnyValue,String> value : values )
-        {
-            if ( value.first() == null )
-            {
-                throw new InvalidValuesArgumentException( value.other() + " must be specified" );
-            }
-        }
-    }
-
-    static org.neo4j.values.AnyValue oneOf( org.neo4j.values.AnyValue a, org.neo4j.values.AnyValue b, org.neo4j.values.AnyValue c )
-    {
-        return a != null ? a : b != null ? b : c;
-    }
-
-    static ZoneId timezoneOf( AnyValue timezone )
-    {
-        if ( timezone instanceof TextValue )
-        {
-            return parseZoneName( ((TextValue) timezone).stringValue() );
-        }
-        throw new UnsupportedOperationException( "Cannot convert to ZoneId: " + timezone );
-    }
-
-    static int validNano( AnyValue millisecond, AnyValue microsecond, AnyValue nanosecond )
-    {
-        long ms = safeCastIntegral( "millisecond", millisecond, TemporalFields.millisecond.defaultValue );
-        long us = safeCastIntegral( "microsecond", microsecond, TemporalFields.microsecond.defaultValue );
-        long ns = safeCastIntegral( "nanosecond", nanosecond, TemporalFields.nanosecond.defaultValue );
-        if ( ms < 0 || ms >= 1000 )
-        {
-            throw new InvalidValuesArgumentException( "Invalid value for Millisecond: " + ms );
-        }
-        if ( us < 0 || us >= (millisecond != null ? 1000 : 1000_000) )
-        {
-            throw new InvalidValuesArgumentException( "Invalid value for Microsecond: " + us );
-        }
-        if ( ns < 0 || ns >= ( microsecond != null ? 1000 : millisecond != null ? 1000_000 : 1000_000_000 ) )
-        {
-            throw new InvalidValuesArgumentException( "Invalid value for Nanosecond: " + ns );
-        }
-        return (int) (ms * 1000_000 + us * 1000 + ns);
-    }
-
-    static <TEMP extends Temporal, VALUE> VALUE updateFieldMapWithConflictingSubseconds( MapValue fields,
-            TemporalUnit unit,
-            TEMP temporal, BiFunction<MapValue,TEMP,VALUE> mapFunction )
-    {
-        boolean conflictingMilliSeconds =
-                unit == ChronoUnit.MILLIS &&
-                (fields.containsKey( "microsecond" ) || fields.containsKey( "nanosecond" ));
-        boolean conflictingMicroSeconds = unit == ChronoUnit.MICROS && fields.containsKey( "nanosecond" );
-
-        if ( conflictingMilliSeconds )
-        {
-            AnyValue millis = Values.intValue( temporal.get( ChronoField.MILLI_OF_SECOND ) );
-            AnyValue micros = fields.get( "microsecond" );
-            AnyValue nanos = fields.get( "nanosecond" );
-
-            int newNanos = validNano( millis, micros, nanos );
-            TEMP newTemporal = (TEMP) temporal.with( ChronoField.NANO_OF_SECOND, newNanos );
-            MapValue filtered = fields.filter(
-                    ( k, ignore ) -> !k.equals( "microsecond" ) && !k.equals( "nanosecond" ) );
-            return mapFunction.apply( filtered, newTemporal );
-        }
-        else if ( conflictingMicroSeconds )
-        {
-            AnyValue micros = Values.intValue( temporal.get( ChronoField.MICRO_OF_SECOND ) );
-            AnyValue nanos = fields.get( "nanosecond" );
-            int newNanos = validNano( null, micros, nanos );
-            TEMP newTemporal = (TEMP) temporal.with( ChronoField.NANO_OF_SECOND, newNanos );
-            MapValue filtered = fields.filter(
-                    ( k, ignore ) -> !k.equals( "nanosecond" ) );
-
-            return mapFunction.apply( filtered, newTemporal );
-        }
-        else
-        {
-            return mapFunction.apply( fields, temporal );
-        }
-    }
-
-    static <TEMP extends Temporal> TEMP assertValidArgument( Supplier<TEMP> func )
-    {
-        try
-        {
-            return func.get();
-        }
-        catch ( DateTimeException e )
-        {
-            throw new InvalidValuesArgumentException( e.getMessage(), e );
-        }
-    }
-
-    static <TEMP extends Temporal> TEMP assertValidUnit( Supplier<TEMP> func )
-    {
-        try
-        {
-            return func.get();
-        }
-        catch ( DateTimeException e )
-        {
-            throw new UnsupportedTemporalUnitException( e.getMessage(), e );
-        }
-    }
-
-    static <OFFSET extends ZoneId> OFFSET assertValidZone( Supplier<OFFSET> func )
-    {
-        try
-        {
-            return func.get();
-        }
-        catch ( DateTimeException e )
-        {
-            throw new InvalidValuesArgumentException( e.getMessage(), e );
-        }
-    }
-
-    static <TEMP extends Temporal> TEMP assertParsable( Supplier<TEMP> func )
-    {
-        try
-        {
-            return func.get();
-        }
-        catch ( DateTimeException e )
-        {
-            throw new TemporalParseException( e.getMessage(), e );
-        }
-    }
-
-    static String assertPrintable( Supplier<String> func )
-    {
-        try
-        {
-            return func.get();
-        }
-        catch ( DateTimeException e )
-        {
-            throw new TemporalParseException( e.getMessage(), e );
-        }
-    }
-
-    static <TEMP extends Temporal> TEMP assertValidArithmetic( Supplier<TEMP> func )
-    {
-        try
-        {
-            return func.get();
-        }
-        catch ( DateTimeException | ArithmeticException e )
-        {
-            throw new TemporalArithmeticException( e.getMessage(), e );
-        }
-    }
-
-    static Pair<LocalDate,LocalTime> getTruncatedDateAndTime( TemporalUnit unit, TemporalValue input, String type )
-    {
-        if ( unit.isTimeBased() && !(input instanceof DateTimeValue || input instanceof LocalDateTimeValue) )
-        {
-            throw new UnsupportedTemporalUnitException( String.format( "Cannot truncate %s to %s with a time based unit.", input, type ) );
-        }
-        LocalDate localDate = input.getDatePart();
-        LocalTime localTime = input.hasTime() ? input.getLocalTimePart() : LocalTimeValue.DEFAULT_LOCAL_TIME;
-
-        LocalTime truncatedTime;
-        LocalDate truncatedDate;
-        if ( unit.isDateBased() )
-        {
-            truncatedDate = DateValue.truncateTo( localDate, unit );
-            truncatedTime = LocalTimeValue.DEFAULT_LOCAL_TIME;
-        }
-        else
-        {
-            truncatedDate = localDate;
-            truncatedTime = localTime.truncatedTo( unit );
-        }
-        return Pair.of( truncatedDate, truncatedTime );
     }
 
     static class TimeCSVHeaderInformation implements CSVHeaderInformation
@@ -1579,13 +1579,12 @@ public abstract class TemporalValue<T extends Temporal, V extends TemporalValue<
 
         Supplier<ZoneId> zoneSupplier( Supplier<ZoneId> defaultSupplier )
         {
-            if ( timezone != null )
-            {
-                ZoneId tz = DateTimeValue.parseZoneName( timezone );
-                // Override defaultZone
-                return () -> tz;
-            }
-            return defaultSupplier;
+            if (timezone == null) {
+				return defaultSupplier;
+			}
+			ZoneId tz = DateTimeValue.parseZoneName( timezone );
+			// Override defaultZone
+			return () -> tz;
         }
     }
 }

@@ -51,22 +51,22 @@ public class Neo4jRule implements TestRule, TestServerBuilder
     private ServerControls controls;
     private Supplier<PrintStream> dumpLogsOnFailureTarget;
 
-    Neo4jRule( TestServerBuilder builder )
-    {
-        this.builder = builder;
-    }
-
     public Neo4jRule( )
     {
         this( TestServerBuilders.newInProcessBuilder() );
     }
 
-    public Neo4jRule( File workingDirectory )
+	public Neo4jRule( File workingDirectory )
     {
         this( TestServerBuilders.newInProcessBuilder( workingDirectory ) );
     }
 
-    @Override
+	Neo4jRule( TestServerBuilder builder )
+    {
+        this.builder = builder;
+    }
+
+	@Override
     public Statement apply( final Statement base, Description description )
     {
         return new Statement()
@@ -94,102 +94,102 @@ public class Neo4jRule implements TestRule, TestServerBuilder
         };
     }
 
-    @Override
+	@Override
     public ServerControls newServer()
     {
         throw new UnsupportedOperationException( "The server cannot be manually started via this class, it must be used as a JUnit rule." );
     }
 
-    @Override
+	@Override
     public Neo4jRule withConfig( Setting<?> key, String value )
     {
         builder = builder.withConfig( key, value );
         return this;
     }
 
-    @Override
+	@Override
     public Neo4jRule withConfig( String key, String value )
     {
         builder = builder.withConfig( key, value );
         return this;
     }
 
-    @Override
+	@Override
     public Neo4jRule withExtension( String mountPath, Class<?> extension )
     {
         builder = builder.withExtension( mountPath, extension );
         return this;
     }
 
-    @Override
+	@Override
     public Neo4jRule withExtension( String mountPath, String packageName )
     {
         builder = builder.withExtension( mountPath, packageName );
         return this;
     }
 
-    @Override
+	@Override
     public Neo4jRule withFixture( File cypherFileOrDirectory )
     {
         builder = builder.withFixture( cypherFileOrDirectory );
         return this;
     }
 
-    @Override
+	@Override
     public Neo4jRule withFixture( String fixtureStatement )
     {
         builder = builder.withFixture( fixtureStatement );
         return this;
     }
 
-    @Override
+	@Override
     public Neo4jRule withFixture( Function<GraphDatabaseService, Void> fixtureFunction )
     {
         builder = builder.withFixture( fixtureFunction );
         return this;
     }
 
-    @Override
+	@Override
     public Neo4jRule copyFrom( File sourceDirectory )
     {
         builder = builder.copyFrom( sourceDirectory );
         return this;
     }
 
-    @Override
+	@Override
     public Neo4jRule withProcedure( Class<?> procedureClass )
     {
         builder = builder.withProcedure( procedureClass );
         return this;
     }
 
-    @Override
+	@Override
     public Neo4jRule withFunction( Class<?> functionClass )
     {
         builder = builder.withFunction( functionClass );
         return this;
     }
 
-    @Override
+	@Override
     public Neo4jRule withAggregationFunction( Class<?> functionClass )
     {
         builder = builder.withAggregationFunction( functionClass );
         return this;
     }
 
-    public Neo4jRule dumpLogsOnFailure( PrintStream out )
+	public Neo4jRule dumpLogsOnFailure( PrintStream out )
     {
         dumpLogsOnFailureTarget = () -> out;
         return this;
     }
 
-    public Neo4jRule dumpLogsOnFailure( Supplier<PrintStream> out )
+	public Neo4jRule dumpLogsOnFailure( Supplier<PrintStream> out )
     {
         dumpLogsOnFailureTarget = out;
         return this;
     }
 
-    public URI boltURI()
+	public URI boltURI()
     {
         if ( controls == null )
         {
@@ -198,7 +198,7 @@ public class Neo4jRule implements TestRule, TestServerBuilder
         return controls.boltURI();
     }
 
-    public URI httpURI()
+	public URI httpURI()
     {
         if ( controls == null )
         {
@@ -207,7 +207,7 @@ public class Neo4jRule implements TestRule, TestServerBuilder
         return controls.httpURI();
     }
 
-    public URI httpsURI()
+	public URI httpsURI()
     {
         if ( controls == null )
         {
@@ -216,12 +216,12 @@ public class Neo4jRule implements TestRule, TestServerBuilder
         return controls.httpsURI().orElseThrow( () -> new IllegalStateException( "HTTPS connector is not configured" ) );
     }
 
-    public GraphDatabaseService getGraphDatabaseService()
+	public GraphDatabaseService getGraphDatabaseService()
     {
         return controls.graph();
     }
 
-    public Configuration getConfig()
+	public Configuration getConfig()
     {
         return controls.config();
     }

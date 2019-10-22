@@ -140,8 +140,7 @@ class ArgumentsTest
     @Test
     void withDatabaseDescription()
     {
-        assertEquals( String.format( "How to use%n%noptions:%n" +
-                        "  --database=<name>   Name of database. [default:" + GraphDatabaseSettings.DEFAULT_DATABASE_NAME + "]" ),
+        assertEquals( String.format( new StringBuilder().append("How to use%n%noptions:%n").append("  --database=<name>   Name of database. [default:").append(GraphDatabaseSettings.DEFAULT_DATABASE_NAME).append("]").toString() ),
                 builder.withDatabase().description( "How to use" ) );
     }
 
@@ -155,19 +154,14 @@ class ArgumentsTest
     @Test
     void withDatabaseToDescription()
     {
-        assertEquals( String.format( "How to use%n%noptions:%n" +
-                        "  --database=<name>         Name of database. [default:" + GraphDatabaseSettings.DEFAULT_DATABASE_NAME + "]%n" +
-                        "  --to=<destination-path>   Destination file." ),
+        assertEquals( String.format( new StringBuilder().append("How to use%n%noptions:%n").append("  --database=<name>         Name of database. [default:").append(GraphDatabaseSettings.DEFAULT_DATABASE_NAME).append("]%n").append("  --to=<destination-path>   Destination file.").toString() ),
                 builder.withDatabase().withTo( "Destination file." ).description( "How to use" ) );
     }
 
     @Test
     void withDatabaseToMultilineDescription()
     {
-        assertEquals( String.format( "How to use%n%noptions:%n" +
-                        "  --database=<name>         Name of database. [default:" + GraphDatabaseSettings.DEFAULT_DATABASE_NAME + "]%n" +
-                        "  --to=<destination-path>   This is a long string which should wrap on right%n" +
-                        "                            col." ),
+        assertEquals( String.format( new StringBuilder().append("How to use%n%noptions:%n").append("  --database=<name>         Name of database. [default:").append(GraphDatabaseSettings.DEFAULT_DATABASE_NAME).append("]%n").append("  --to=<destination-path>   This is a long string which should wrap on right%n").append("                            col.").toString() ),
                 builder.withDatabase()
                         .withTo( "This is a long string which should wrap on right col." )
                         .description( "How to use" ) );
@@ -176,14 +170,8 @@ class ArgumentsTest
     @Test
     void longNamesTriggerNewLineFormatting()
     {
-        assertEquals( String.format( "How to use%n%noptions:%n" +
-                        "  --database=<name>%n" +
-                        "      Name of database. [default:" + GraphDatabaseSettings.DEFAULT_DATABASE_NAME + "]%n" +
-                        "  --to=<destination-path>%n" +
-                        "      This is a long string which should not wrap on right col.%n" +
-                        "  --loooooooooooooong-variable-name=<loooooooooooooong-variable-value>%n" +
-                        "      This is also a long string which should be printed on a new line because%n" +
-                        "      of long names." ),
+        assertEquals( String.format( new StringBuilder().append("How to use%n%noptions:%n").append("  --database=<name>%n").append("      Name of database. [default:").append(GraphDatabaseSettings.DEFAULT_DATABASE_NAME).append("]%n").append("  --to=<destination-path>%n").append("      This is a long string which should not wrap on right col.%n")
+				.append("  --loooooooooooooong-variable-name=<loooooooooooooong-variable-value>%n").append("      This is also a long string which should be printed on a new line because%n").append("      of long names.").toString() ),
                 builder.withDatabase()
                         .withTo( "This is a long string which should not wrap on right col." )
                         .withArgument( new MandatoryNamedArg( "loooooooooooooong-variable-name",
@@ -196,31 +184,17 @@ class ArgumentsTest
     @Test
     void descriptionShouldHandleExistingNewlines()
     {
-        assertEquals( String.format( "This is the first line%n" +
-                        "And this is the second line%n" +
-                        "The third line is so long that it requires some wrapping by the code itself%n" +
-                        "because as you can see it just keeps going ang going and going and going and%n" +
-                        "going and going." ),
+        assertEquals( String.format( new StringBuilder().append("This is the first line%n").append("And this is the second line%n").append("The third line is so long that it requires some wrapping by the code itself%n").append("because as you can see it just keeps going ang going and going and going and%n").append("going and going.").toString() ),
                 builder.description( String.format(
-                        "This is the first line%n" + "And this is the second line%n" +
-                                "The third line is so long that it requires some wrapping by the code itself because " +
-                                "as you " +
-                                "can see it just keeps going ang going and going and going and going and going." ) ) );
+                        new StringBuilder().append("This is the first line%n").append("And this is the second line%n").append("The third line is so long that it requires some wrapping by the code itself because ").append("as you ").append("can see it just keeps going ang going and going and going and going and going.").toString() ) ) );
     }
 
     @Test
     void wrappingHandlesBothKindsOfLineEndingsAndOutputsPlatformDependentOnes()
     {
-        assertEquals( String.format( "One with Linux%n" +
-                        "One with Windows%n" +
-                        "And one which is%n" +
-                        "just long and should%n" +
-                        "be wrapped by the%n" +
-                        "function" ),
+        assertEquals( String.format( new StringBuilder().append("One with Linux%n").append("One with Windows%n").append("And one which is%n").append("just long and should%n").append("be wrapped by the%n").append("function").toString() ),
                 Arguments.wrapText(
-                        "One with Linux\n" +
-                                "One with Windows\r\n" +
-                                "And one which is just long and should be wrapped by the function",
+                        new StringBuilder().append("One with Linux\n").append("One with Windows\r\n").append("And one which is just long and should be wrapped by the function").toString(),
                         20 ) );
     }
 }

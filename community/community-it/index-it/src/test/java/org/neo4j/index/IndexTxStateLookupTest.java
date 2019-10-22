@@ -46,14 +46,24 @@ public class IndexTxStateLookupTest
 {
     private static final String TRIGGER_LAZY = "this is supposed to be a really long property to trigger lazy loading";
     private static final Random random = new Random();
+	@ClassRule
+    public static final DatabaseRule db = new ImpermanentDatabaseRule();
+	private final Object store;
+	private final Object lookup;
 
-    @SuppressWarnings( "RedundantStringConstructorCall" )
+	public IndexTxStateLookupTest( Object store, Object lookup )
+    {
+        this.store = realValue( store );
+        this.lookup = realValue( lookup );
+    }
+
+	@SuppressWarnings( "RedundantStringConstructorCall" )
     @Parameterized.Parameters( name = "store=<{0}> lookup=<{1}>" )
     public static Iterable<Object[]> parameters()
     {
         List<Object[]> parameters = new ArrayList<>();
         parameters.addAll( asList(
-                new Object[]{new String( "name" ), new String( "name" )},
+                new Object[]{"name", "name"},
                 new Object[]{7, 7L},
                 new Object[]{9L, 9},
                 new Object[]{2, 2.0},
@@ -83,35 +93,17 @@ public class IndexTxStateLookupTest
         return parameters;
     }
 
-    private static class NamedObject
-    {
-        private final Object object;
-        private final String name;
-
-        NamedObject( Object object, String name )
-        {
-            this.object = object;
-            this.name = name;
-        }
-
-        @Override
-        public String toString()
-        {
-            return name;
-        }
-    }
-
-    private static NamedObject stringArray( String... items )
+	private static NamedObject stringArray( String... items )
     {
         return new NamedObject( items, arrayToString( items ) );
     }
 
-    private static NamedObject charArray( char... items )
+	private static NamedObject charArray( char... items )
     {
         return new NamedObject( items, arrayToString( items ) );
     }
 
-    private static Object[] randomNumbers( int length, Class<?> lhsType, Class<?> rhsType )
+	private static Object[] randomNumbers( int length, Class<?> lhsType, Class<?> rhsType )
     {
         Object lhs = Array.newInstance( lhsType, length );
         Object rhs = Array.newInstance( rhsType, length );
@@ -126,11 +118,11 @@ public class IndexTxStateLookupTest
                 new NamedObject( rhs, arrayToString( rhs ) )};
     }
 
-    private static String arrayToString( Object arrayObject )
+	private static String arrayToString( Object arrayObject )
     {
         int length = Array.getLength( arrayObject );
         String type = arrayObject.getClass().getComponentType().getSimpleName();
-        StringBuilder builder = new StringBuilder( "(" + type + ") {" );
+        StringBuilder builder = new StringBuilder( new StringBuilder().append("(").append(type).append(") {").toString() );
         for ( int i = 0; i < length; i++ )
         {
             builder.append( i > 0 ? "," : "" ).append( Array.get( arrayObject, i ) );
@@ -138,7 +130,7 @@ public class IndexTxStateLookupTest
         return builder.append( "}" ).toString();
     }
 
-    private static Object convert( int value, Class<?> type )
+	private static Object convert( int value, Class<?> type )
     {
         switch ( type.getName() )
         {
@@ -159,7 +151,7 @@ public class IndexTxStateLookupTest
         }
     }
 
-    private static NamedObject splitStrings( String string )
+	private static NamedObject splitStrings( String string )
     {
         char[] chars = internalSplitChars( string );
         String[] result = new String[chars.length];
@@ -170,37 +162,25 @@ public class IndexTxStateLookupTest
         return stringArray( result );
     }
 
-    private static char[] internalSplitChars( String string )
+	private static char[] internalSplitChars( String string )
     {
         char[] result = new char[string.length()];
         string.getChars( 0, result.length, result, 0 );
         return result;
     }
 
-    private static NamedObject splitChars( String string )
+	private static NamedObject splitChars( String string )
     {
         char[] result = internalSplitChars( string );
         return charArray( result );
     }
 
-    @ClassRule
-    public static final DatabaseRule db = new ImpermanentDatabaseRule();
-
-    private final Object store;
-    private final Object lookup;
-
-    public IndexTxStateLookupTest( Object store, Object lookup )
-    {
-        this.store = realValue( store );
-        this.lookup = realValue( lookup );
-    }
-
-    private Object realValue( Object object )
+	private Object realValue( Object object )
     {
         return object instanceof NamedObject ? ((NamedObject)object).object : object;
     }
 
-    @BeforeClass
+	@BeforeClass
     public static void given()
     {
         // database with an index on `(:Node).prop`
@@ -216,7 +196,7 @@ public class IndexTxStateLookupTest
         }
     }
 
-    @Test
+	@Test
     public void lookupWithinTransaction()
     {
         try ( Transaction tx = db.beginTx() )
@@ -231,7 +211,7 @@ public class IndexTxStateLookupTest
         }
     }
 
-    @Test
+	@Test
     public void lookupWithinTransactionWithCacheEviction()
     {
         try ( Transaction tx = db.beginTx() )
@@ -246,7 +226,7 @@ public class IndexTxStateLookupTest
         }
     }
 
-    @Test
+	@Test
     public void lookupWithoutTransaction()
     {
         // when
@@ -265,7 +245,7 @@ public class IndexTxStateLookupTest
         deleteNode( node );
     }
 
-    private void deleteNode( Node node )
+	private void deleteNode( Node node )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -274,7 +254,7 @@ public class IndexTxStateLookupTest
         }
     }
 
-    @Test
+	@Test
     public void lookupWithoutTransactionWithCacheEviction()
     {
         // when
@@ -291,5 +271,23 @@ public class IndexTxStateLookupTest
             tx.success();
         }
         deleteNode( node );
+    }
+
+    private static class NamedObject
+    {
+        private final Object object;
+        private final String name;
+
+        NamedObject( Object object, String name )
+        {
+            this.object = object;
+            this.name = name;
+        }
+
+        @Override
+        public String toString()
+        {
+            return name;
+        }
     }
 }

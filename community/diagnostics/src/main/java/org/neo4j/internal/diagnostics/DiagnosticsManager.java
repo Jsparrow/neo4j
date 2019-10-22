@@ -54,14 +54,11 @@ public class DiagnosticsManager implements Iterable<DiagnosticsProvider>, Lifecy
             @Override
             public void dump( DiagnosticsPhase phase, final Logger logger )
             {
-                if ( phase.isInitialization() || phase.isExplicitlyRequested() )
-                {
-                    logger.log( "Diagnostics providers:" );
-                    for ( DiagnosticsProvider provider : providers )
-                    {
-                        logger.log( provider.getDiagnosticsIdentifier() );
-                    }
-                }
+                if (!(phase.isInitialization() || phase.isExplicitlyRequested())) {
+					return;
+				}
+				logger.log( "Diagnostics providers:" );
+				providers.forEach(provider -> logger.log(provider.getDiagnosticsIdentifier()));
             }
 
             @Override
@@ -142,7 +139,140 @@ public class DiagnosticsManager implements Iterable<DiagnosticsProvider>, Lifecy
         providers.clear();
     }
 
-    private enum State
+    public Log getTargetLog()
+    {
+        return targetLog;
+    }
+
+	public void dumpAll()
+    {
+        dumpAll( DiagnosticsPhase.REQUESTED, getTargetLog() );
+    }
+
+	public void dump( String identifier )
+    {
+        extract( identifier, getTargetLog() );
+    }
+
+	public void dumpAll( Log log )
+    {
+        log.bulk( bulkLog ->
+        providers.forEach(provider -> dump(provider, DiagnosticsPhase.EXPLICIT, bulkLog)) );
+    }
+
+	public void extract( final String identifier, Log log )
+    {
+        log.bulk( bulkLog ->
+        {
+            for ( DiagnosticsProvider provider : providers )
+            {
+                if ( identifier.equals( provider.getDiagnosticsIdentifier() ) )
+                {
+                    dump( provider, DiagnosticsPhase.EXPLICIT, bulkLog );
+                    return;
+                }
+            }
+        } );
+    }
+
+	private void dumpAll( final DiagnosticsPhase phase, Log log )
+    {
+        log.bulk( bulkLog ->
+        {
+            phase.emitStart( bulkLog );
+            providers.forEach(provider -> dump(provider, phase, bulkLog));
+            phase.emitDone( bulkLog );
+        } );
+    }
+
+	public <T> void register( DiagnosticsExtractor<T> extractor, T source )
+    {
+        appendProvider( extractedProvider( extractor, source ) );
+    }
+
+	public <T, E extends Enum<E> & DiagnosticsExtractor<T>> void registerAll( Class<E> extractorEnum, T source )
+    {
+        for ( DiagnosticsExtractor<T> extractor : extractorEnum.getEnumConstants() )
+        {
+            register( extractor, source );
+        }
+    }
+
+	public void prependProvider( DiagnosticsProvider provider )
+    {
+        State state = this.state;
+        if ( state == State.STOPPED )
+        {
+            return;
+        }
+        providers.add( 0, provider );
+        if ( state == State.STARTED )
+        {
+            dump( DiagnosticsPhase.STARTED, provider, getTargetLog() );
+        }
+    }
+
+	public void appendProvider( DiagnosticsProvider provider )
+    {
+        @SuppressWarnings( "hiding" )
+        State state = this.state;
+        if ( state == State.STOPPED )
+        {
+            return;
+        }
+        providers.add( provider );
+        if ( state == State.STARTED )
+        {
+            dump( DiagnosticsPhase.STARTED, provider, getTargetLog() );
+        }
+    }
+
+	private void dump( DiagnosticsPhase phase, DiagnosticsProvider provider, Log log )
+    {
+        phase.emitStart( log, provider );
+        dump( provider, phase, log );
+        phase.emitDone( log, provider );
+    }
+
+	private static void dump( DiagnosticsProvider provider, DiagnosticsPhase phase, Log log )
+    {
+        // Optimization to skip diagnostics dumping (which is time consuming) if there's no log anyway.
+        // This is first and foremost useful for speeding up testing.
+        if ( log == NullLog.getInstance() )
+        {
+            return;
+        }
+
+        try
+        {
+            provider.dump( phase, log.infoLogger() );
+        }
+        catch ( Exception cause )
+        {
+            log.error( "Failure while logging diagnostics for " + provider, cause );
+        }
+    }
+
+	@Override
+    public Iterator<DiagnosticsProvider> iterator()
+    {
+        return providers.iterator();
+    }
+
+	static <T> DiagnosticsProvider extractedProvider( DiagnosticsExtractor<T> extractor, T source )
+    {
+        if ( extractor instanceof DiagnosticsExtractor.VisitableDiagnostics<?> )
+        {
+            return new ExtractedVisitableDiagnosticsProvider<>(
+                    (DiagnosticsExtractor.VisitableDiagnostics<T>) extractor, source );
+        }
+        else
+        {
+            return new ExtractedDiagnosticsProvider<>( extractor, source );
+        }
+    }
+
+	private enum State
     {
         INITIAL
         {
@@ -175,148 +305,7 @@ public class DiagnosticsManager implements Iterable<DiagnosticsProvider>, Lifecy
         }
     }
 
-    public Log getTargetLog()
-    {
-        return targetLog;
-    }
-
-    public void dumpAll()
-    {
-        dumpAll( DiagnosticsPhase.REQUESTED, getTargetLog() );
-    }
-
-    public void dump( String identifier )
-    {
-        extract( identifier, getTargetLog() );
-    }
-
-    public void dumpAll( Log log )
-    {
-        log.bulk( bulkLog ->
-        {
-            for ( DiagnosticsProvider provider : providers )
-            {
-                dump( provider, DiagnosticsPhase.EXPLICIT, bulkLog );
-            }
-        } );
-    }
-
-    public void extract( final String identifier, Log log )
-    {
-        log.bulk( bulkLog ->
-        {
-            for ( DiagnosticsProvider provider : providers )
-            {
-                if ( identifier.equals( provider.getDiagnosticsIdentifier() ) )
-                {
-                    dump( provider, DiagnosticsPhase.EXPLICIT, bulkLog );
-                    return;
-                }
-            }
-        } );
-    }
-
-    private void dumpAll( final DiagnosticsPhase phase, Log log )
-    {
-        log.bulk( bulkLog ->
-        {
-            phase.emitStart( bulkLog );
-            for ( DiagnosticsProvider provider : providers )
-            {
-                dump( provider, phase, bulkLog );
-            }
-            phase.emitDone( bulkLog );
-        } );
-    }
-
-    public <T> void register( DiagnosticsExtractor<T> extractor, T source )
-    {
-        appendProvider( extractedProvider( extractor, source ) );
-    }
-
-    public <T, E extends Enum<E> & DiagnosticsExtractor<T>> void registerAll( Class<E> extractorEnum, T source )
-    {
-        for ( DiagnosticsExtractor<T> extractor : extractorEnum.getEnumConstants() )
-        {
-            register( extractor, source );
-        }
-    }
-
-    public void prependProvider( DiagnosticsProvider provider )
-    {
-        State state = this.state;
-        if ( state == State.STOPPED )
-        {
-            return;
-        }
-        providers.add( 0, provider );
-        if ( state == State.STARTED )
-        {
-            dump( DiagnosticsPhase.STARTED, provider, getTargetLog() );
-        }
-    }
-
-    public void appendProvider( DiagnosticsProvider provider )
-    {
-        @SuppressWarnings( "hiding" )
-        State state = this.state;
-        if ( state == State.STOPPED )
-        {
-            return;
-        }
-        providers.add( provider );
-        if ( state == State.STARTED )
-        {
-            dump( DiagnosticsPhase.STARTED, provider, getTargetLog() );
-        }
-    }
-
-    private void dump( DiagnosticsPhase phase, DiagnosticsProvider provider, Log log )
-    {
-        phase.emitStart( log, provider );
-        dump( provider, phase, log );
-        phase.emitDone( log, provider );
-    }
-
-    private static void dump( DiagnosticsProvider provider, DiagnosticsPhase phase, Log log )
-    {
-        // Optimization to skip diagnostics dumping (which is time consuming) if there's no log anyway.
-        // This is first and foremost useful for speeding up testing.
-        if ( log == NullLog.getInstance() )
-        {
-            return;
-        }
-
-        try
-        {
-            provider.dump( phase, log.infoLogger() );
-        }
-        catch ( Exception cause )
-        {
-            log.error( "Failure while logging diagnostics for " + provider, cause );
-        }
-    }
-
-    @Override
-    public Iterator<DiagnosticsProvider> iterator()
-    {
-        return providers.iterator();
-    }
-
-    static <T> DiagnosticsProvider extractedProvider( DiagnosticsExtractor<T> extractor, T source )
-    {
-        if ( extractor instanceof DiagnosticsExtractor.VisitableDiagnostics<?> )
-        {
-            return new ExtractedVisitableDiagnosticsProvider<>(
-                    (DiagnosticsExtractor.VisitableDiagnostics<T>) extractor, source );
-        }
-        else
-        {
-            return new ExtractedDiagnosticsProvider<>( extractor, source );
-        }
-    }
-
-    private static class ExtractedDiagnosticsProvider<T> implements DiagnosticsProvider
+	private static class ExtractedDiagnosticsProvider<T> implements DiagnosticsProvider
     {
         final DiagnosticsExtractor<T> extractor;
         final T source;

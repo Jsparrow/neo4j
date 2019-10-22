@@ -834,7 +834,7 @@ public abstract class NativeIndexAccessorTests<KEY extends NativeIndexKey<KEY>, 
         ValueGroup valueGroup = value.valueGroup();
 
         IndexValueCapability valueCapability = indexCapability().valueCapability( valueGroup.category() );
-        if ( !valueCapability.equals( IndexValueCapability.YES ) )
+        if ( valueCapability != IndexValueCapability.YES )
         {
             // We don't need to do this test
             return;

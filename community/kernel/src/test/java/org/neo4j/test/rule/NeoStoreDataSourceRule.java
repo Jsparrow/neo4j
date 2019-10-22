@@ -360,7 +360,8 @@ public class NeoStoreDataSourceRule extends ExternalResource
             return mock( Locks.class );
         }
 
-        public StatementLocksFactory getStatementLocksFactory()
+        @Override
+		public StatementLocksFactory getStatementLocksFactory()
         {
             return statementLocksFactory;
         }

@@ -34,26 +34,25 @@ import static org.neo4j.util.FeatureToggles.flag;
 
 public class DefaultCursors implements CursorFactory
 {
-    private final StorageReader storageReader;
-    private DefaultNodeCursor nodeCursor;
-    private DefaultRelationshipScanCursor relationshipScanCursor;
-    private DefaultRelationshipTraversalCursor relationshipTraversalCursor;
-    private DefaultPropertyCursor propertyCursor;
-    private DefaultRelationshipGroupCursor relationshipGroupCursor;
-    private DefaultNodeValueIndexCursor nodeValueIndexCursor;
-    private DefaultNodeLabelIndexCursor nodeLabelIndexCursor;
-    private DefaultNodeExplicitIndexCursor nodeExplicitIndexCursor;
-    private DefaultRelationshipExplicitIndexCursor relationshipExplicitIndexCursor;
-
     private static final boolean DEBUG_CLOSING = flag( DefaultCursors.class, "trackCursors", false );
-    private List<CloseableStacktrace> closeables = new ArrayList<>();
+	private final StorageReader storageReader;
+	private DefaultNodeCursor nodeCursor;
+	private DefaultRelationshipScanCursor relationshipScanCursor;
+	private DefaultRelationshipTraversalCursor relationshipTraversalCursor;
+	private DefaultPropertyCursor propertyCursor;
+	private DefaultRelationshipGroupCursor relationshipGroupCursor;
+	private DefaultNodeValueIndexCursor nodeValueIndexCursor;
+	private DefaultNodeLabelIndexCursor nodeLabelIndexCursor;
+	private DefaultNodeExplicitIndexCursor nodeExplicitIndexCursor;
+	private DefaultRelationshipExplicitIndexCursor relationshipExplicitIndexCursor;
+	private List<CloseableStacktrace> closeables = new ArrayList<>();
 
-    public DefaultCursors( StorageReader storageReader )
+	public DefaultCursors( StorageReader storageReader )
     {
         this.storageReader = storageReader;
     }
 
-    @Override
+	@Override
     public DefaultNodeCursor allocateNodeCursor()
     {
         if ( nodeCursor == null )
@@ -71,7 +70,7 @@ public class DefaultCursors implements CursorFactory
         }
     }
 
-    public void accept( DefaultNodeCursor cursor )
+	public void accept( DefaultNodeCursor cursor )
     {
         if ( nodeCursor != null )
         {
@@ -80,7 +79,7 @@ public class DefaultCursors implements CursorFactory
         nodeCursor = cursor;
     }
 
-    @Override
+	@Override
     public DefaultRelationshipScanCursor allocateRelationshipScanCursor()
     {
         if ( relationshipScanCursor == null )
@@ -98,7 +97,7 @@ public class DefaultCursors implements CursorFactory
         }
     }
 
-    public void accept( DefaultRelationshipScanCursor cursor )
+	public void accept( DefaultRelationshipScanCursor cursor )
     {
         if ( relationshipScanCursor != null )
         {
@@ -107,7 +106,7 @@ public class DefaultCursors implements CursorFactory
         relationshipScanCursor = cursor;
     }
 
-    @Override
+	@Override
     public DefaultRelationshipTraversalCursor allocateRelationshipTraversalCursor()
     {
         if ( relationshipTraversalCursor == null )
@@ -125,7 +124,7 @@ public class DefaultCursors implements CursorFactory
         }
     }
 
-    public void accept( DefaultRelationshipTraversalCursor cursor )
+	public void accept( DefaultRelationshipTraversalCursor cursor )
     {
         if ( relationshipTraversalCursor != null )
         {
@@ -134,7 +133,7 @@ public class DefaultCursors implements CursorFactory
         relationshipTraversalCursor = cursor;
     }
 
-    @Override
+	@Override
     public DefaultPropertyCursor allocatePropertyCursor()
     {
         if ( propertyCursor == null )
@@ -152,7 +151,7 @@ public class DefaultCursors implements CursorFactory
         }
     }
 
-    public void accept( DefaultPropertyCursor cursor )
+	public void accept( DefaultPropertyCursor cursor )
     {
         if ( propertyCursor != null )
         {
@@ -161,7 +160,7 @@ public class DefaultCursors implements CursorFactory
         propertyCursor = cursor;
     }
 
-    @Override
+	@Override
     public DefaultRelationshipGroupCursor allocateRelationshipGroupCursor()
     {
         if ( relationshipGroupCursor == null )
@@ -179,7 +178,7 @@ public class DefaultCursors implements CursorFactory
         }
     }
 
-    public void accept( DefaultRelationshipGroupCursor cursor )
+	public void accept( DefaultRelationshipGroupCursor cursor )
     {
         if ( relationshipGroupCursor != null )
         {
@@ -188,7 +187,7 @@ public class DefaultCursors implements CursorFactory
         relationshipGroupCursor = cursor;
     }
 
-    @Override
+	@Override
     public DefaultNodeValueIndexCursor allocateNodeValueIndexCursor()
     {
         if ( nodeValueIndexCursor == null )
@@ -206,7 +205,7 @@ public class DefaultCursors implements CursorFactory
         }
     }
 
-    public void accept( DefaultNodeValueIndexCursor cursor )
+	public void accept( DefaultNodeValueIndexCursor cursor )
     {
         if ( nodeValueIndexCursor != null )
         {
@@ -215,7 +214,7 @@ public class DefaultCursors implements CursorFactory
         nodeValueIndexCursor = cursor;
     }
 
-    @Override
+	@Override
     public DefaultNodeLabelIndexCursor allocateNodeLabelIndexCursor()
     {
         if ( nodeLabelIndexCursor == null )
@@ -233,7 +232,7 @@ public class DefaultCursors implements CursorFactory
         }
     }
 
-    public void accept( DefaultNodeLabelIndexCursor cursor )
+	public void accept( DefaultNodeLabelIndexCursor cursor )
     {
         if ( nodeLabelIndexCursor != null )
         {
@@ -242,7 +241,7 @@ public class DefaultCursors implements CursorFactory
         nodeLabelIndexCursor = cursor;
     }
 
-    @Override
+	@Override
     public DefaultNodeExplicitIndexCursor allocateNodeExplicitIndexCursor()
     {
         if ( nodeExplicitIndexCursor == null )
@@ -260,7 +259,7 @@ public class DefaultCursors implements CursorFactory
         }
     }
 
-    public void accept( DefaultNodeExplicitIndexCursor cursor )
+	public void accept( DefaultNodeExplicitIndexCursor cursor )
     {
         if ( nodeExplicitIndexCursor != null )
         {
@@ -269,7 +268,7 @@ public class DefaultCursors implements CursorFactory
         nodeExplicitIndexCursor = cursor;
     }
 
-    @Override
+	@Override
     public DefaultRelationshipExplicitIndexCursor allocateRelationshipExplicitIndexCursor()
     {
         if ( relationshipExplicitIndexCursor == null )
@@ -288,7 +287,7 @@ public class DefaultCursors implements CursorFactory
         }
     }
 
-    public void accept( DefaultRelationshipExplicitIndexCursor cursor )
+	public void accept( DefaultRelationshipExplicitIndexCursor cursor )
     {
         if ( relationshipExplicitIndexCursor != null )
         {
@@ -297,7 +296,7 @@ public class DefaultCursors implements CursorFactory
         relationshipExplicitIndexCursor = cursor;
     }
 
-    public void release()
+	public void release()
     {
         if ( nodeCursor != null )
         {
@@ -339,14 +338,14 @@ public class DefaultCursors implements CursorFactory
             nodeExplicitIndexCursor.release();
             nodeExplicitIndexCursor = null;
         }
-        if ( relationshipExplicitIndexCursor != null )
-        {
-            relationshipExplicitIndexCursor.release();
-            relationshipExplicitIndexCursor = null;
-        }
+        if (relationshipExplicitIndexCursor == null) {
+			return;
+		}
+		relationshipExplicitIndexCursor.release();
+		relationshipExplicitIndexCursor = null;
     }
 
-    private <T extends AutoCloseablePlus> T trace( T closeable )
+	private <T extends AutoCloseablePlus> T trace( T closeable )
     {
         if ( DEBUG_CLOSING )
         {
@@ -356,19 +355,16 @@ public class DefaultCursors implements CursorFactory
         return closeable;
     }
 
-    void assertClosed()
+	void assertClosed()
     {
-        if ( DEBUG_CLOSING )
-        {
-            for ( CloseableStacktrace c : closeables )
-            {
-                c.assertClosed();
-            }
-            closeables.clear();
-        }
+        if (!DEBUG_CLOSING) {
+			return;
+		}
+		closeables.forEach(CloseableStacktrace::assertClosed);
+		closeables.clear();
     }
 
-    static class CloseableStacktrace
+	static class CloseableStacktrace
     {
         private final AutoCloseablePlus c;
         private final StackTraceElement[] stackTrace;
@@ -381,18 +377,17 @@ public class DefaultCursors implements CursorFactory
 
         void assertClosed()
         {
-            if ( !c.isClosed() )
-            {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                PrintStream printStream = new PrintStream( out );
-
-                for ( StackTraceElement traceElement : stackTrace )
-                {
-                    printStream.println( "\tat " + traceElement );
-                }
-                printStream.println();
-                throw new IllegalStateException( format( "Closeable %s was not closed!\n%s", c, out.toString() ) );
-            }
+            if (c.isClosed()) {
+				return;
+			}
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			PrintStream printStream = new PrintStream( out );
+			for ( StackTraceElement traceElement : stackTrace )
+			{
+			    printStream.println( "\tat " + traceElement );
+			}
+			printStream.println();
+			throw new IllegalStateException( format( "Closeable %s was not closed!\n%s", c, out.toString() ) );
         }
     }
 }

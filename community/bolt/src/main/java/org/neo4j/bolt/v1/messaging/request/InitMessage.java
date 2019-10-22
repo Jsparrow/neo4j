@@ -80,6 +80,6 @@ public class InitMessage implements RequestMessage
     @Override
     public String toString()
     {
-        return "INIT " + userAgent + ' ' + authToken;
+        return new StringBuilder().append("INIT ").append(userAgent).append(' ').append(authToken).toString();
     }
 }

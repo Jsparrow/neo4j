@@ -43,91 +43,25 @@ import static java.nio.ByteBuffer.wrap;
  */
 public class HexPrinter
 {
-    private final PrintStream out;
-    private int bytesPerLine;
-    private int bytesPerGroup;
-    private String byteSeparator;
-    private String groupSeparator;
-    private int maxLineNumberDigits;
-    private String lineNumberPrefix;
-    private String lineNumberSuffix;
-
-    private long currentLineNumber;
-    private int bytesOnThisLine;
-
     private static final int DEFAULT_BYTES_PER_GROUP = 8;
-    private static final int DEFAULT_GROUPS_PER_LINE = 4;
-    private static final int DEFAULT_MAX_LINE_NUMBER_DIGITS = 0;
-    private static final String DEFAULT_GROUP_SEPARATOR = "    ";
-    private static final String DEFAULT_LINE_NUMBER_PREFIX = "@ ";
-    private static final String DEFAULT_LINE_NUMBER_SUFFIX = ": ";
-    private static final String DEFAULT_BYTE_SEPARATOR = " ";
+	private static final int DEFAULT_GROUPS_PER_LINE = 4;
+	private static final int DEFAULT_MAX_LINE_NUMBER_DIGITS = 0;
+	private static final String DEFAULT_GROUP_SEPARATOR = "    ";
+	private static final String DEFAULT_LINE_NUMBER_PREFIX = "@ ";
+	private static final String DEFAULT_LINE_NUMBER_SUFFIX = ": ";
+	private static final String DEFAULT_BYTE_SEPARATOR = " ";
+	private final PrintStream out;
+	private int bytesPerLine;
+	private int bytesPerGroup;
+	private String byteSeparator;
+	private String groupSeparator;
+	private int maxLineNumberDigits;
+	private String lineNumberPrefix;
+	private String lineNumberSuffix;
+	private long currentLineNumber;
+	private int bytesOnThisLine;
 
-    public HexPrinter withBytesPerLine( int bytesPerLine )
-    {
-        this.bytesPerLine = bytesPerLine;
-        return this;
-    }
-
-    public HexPrinter withBytesPerGroup( int bytesPerGroup )
-    {
-        this.bytesPerGroup = bytesPerGroup;
-        return this;
-    }
-
-    public HexPrinter withGroupSeparator( String separator )
-    {
-        this.groupSeparator = separator;
-        return this;
-    }
-
-    public HexPrinter withLineNumberDigits( int maxLineNumberDigits )
-    {
-        this.maxLineNumberDigits = maxLineNumberDigits;
-        return this;
-    }
-
-    public HexPrinter withLineNumberPrefix( String prefix )
-    {
-        this.lineNumberPrefix = prefix;
-        return this;
-    }
-
-    public HexPrinter withLineNumberSuffix( String suffix )
-    {
-        this.lineNumberSuffix = suffix;
-        return this;
-    }
-
-    public HexPrinter withLineNumberOffset( long offset )
-    {
-        this.currentLineNumber = offset;
-        return this;
-    }
-
-    public HexPrinter withByteSeparator( String byteSeparator )
-    {
-        this.byteSeparator = byteSeparator;
-        return this;
-    }
-
-    public HexPrinter withBytesGroupingFormat( int bytesPerLine, int bytesPerGroup, String separator )
-    {
-        this.bytesPerLine = bytesPerLine;
-        this.bytesPerGroup = bytesPerGroup;
-        this.groupSeparator = separator;
-        return this;
-    }
-
-    public HexPrinter withLineNumberFormat( int maxLineNumberDigits, String prefix, String suffix )
-    {
-        this.maxLineNumberDigits = maxLineNumberDigits;
-        this.lineNumberPrefix = prefix;
-        this.lineNumberSuffix = suffix;
-        return this;
-    }
-
-    /**
+	/**
      * Using no line number, 8 bytes per group, 32 bytes per line, 4-space separator as default formating to
      * print bytes as hex. Output looks like:
      * <p>
@@ -142,7 +76,7 @@ public class HexPrinter
         this( out, DEFAULT_BYTES_PER_GROUP, DEFAULT_GROUP_SEPARATOR );
     }
 
-    public HexPrinter( PrintStream out, int bytesPerGroup, String groupSep )
+	public HexPrinter( PrintStream out, int bytesPerGroup, String groupSep )
     {
         this.out = out;
         this.bytesPerLine = DEFAULT_GROUPS_PER_LINE * bytesPerGroup;
@@ -154,7 +88,71 @@ public class HexPrinter
         this.byteSeparator = DEFAULT_BYTE_SEPARATOR;
     }
 
-    /**
+	public HexPrinter withBytesPerLine( int bytesPerLine )
+    {
+        this.bytesPerLine = bytesPerLine;
+        return this;
+    }
+
+	public HexPrinter withBytesPerGroup( int bytesPerGroup )
+    {
+        this.bytesPerGroup = bytesPerGroup;
+        return this;
+    }
+
+	public HexPrinter withGroupSeparator( String separator )
+    {
+        this.groupSeparator = separator;
+        return this;
+    }
+
+	public HexPrinter withLineNumberDigits( int maxLineNumberDigits )
+    {
+        this.maxLineNumberDigits = maxLineNumberDigits;
+        return this;
+    }
+
+	public HexPrinter withLineNumberPrefix( String prefix )
+    {
+        this.lineNumberPrefix = prefix;
+        return this;
+    }
+
+	public HexPrinter withLineNumberSuffix( String suffix )
+    {
+        this.lineNumberSuffix = suffix;
+        return this;
+    }
+
+	public HexPrinter withLineNumberOffset( long offset )
+    {
+        this.currentLineNumber = offset;
+        return this;
+    }
+
+	public HexPrinter withByteSeparator( String byteSeparator )
+    {
+        this.byteSeparator = byteSeparator;
+        return this;
+    }
+
+	public HexPrinter withBytesGroupingFormat( int bytesPerLine, int bytesPerGroup, String separator )
+    {
+        this.bytesPerLine = bytesPerLine;
+        this.bytesPerGroup = bytesPerGroup;
+        this.groupSeparator = separator;
+        return this;
+    }
+
+	public HexPrinter withLineNumberFormat( int maxLineNumberDigits, String prefix, String suffix )
+    {
+        this.maxLineNumberDigits = maxLineNumberDigits;
+        this.lineNumberPrefix = prefix;
+        this.lineNumberSuffix = suffix;
+        return this;
+    }
+
+	/**
      * Append one byte into the print stream
      * @param value
      * @return
@@ -166,7 +164,7 @@ public class HexPrinter
         return this;
     }
 
-    /**
+	/**
      * Append all the bytes in the channel into print stream
      * @param source
      * @return
@@ -177,7 +175,7 @@ public class HexPrinter
         return append( source, -1 );
     }
 
-    /**
+	/**
      * Append {@code atMost} count of bytes into print stream
      * @param source
      * @param atMost
@@ -211,7 +209,7 @@ public class HexPrinter
         return this;
     }
 
-    /**
+	/**
      * Append a part of byte buffer into print stream
      * @param bytes
      * @param offset
@@ -227,7 +225,7 @@ public class HexPrinter
         return this;
     }
 
-    /**
+	/**
      * Append the bytes in the byte buffer, from its current position to its limit into print stream. This operation
      * will not move the buffers current position.
      * @param bytes
@@ -238,7 +236,7 @@ public class HexPrinter
         return append( bytes, bytes.position(), bytes.remaining() );
     }
 
-    /**
+	/**
      * Append the whole byte array into print stream
      * @param bytes
      * @return
@@ -248,7 +246,7 @@ public class HexPrinter
         return append( wrap( bytes ), 0, bytes.length );
     }
 
-    private void addHexValue( byte value )
+	private void addHexValue( byte value )
     {
         if ( bytesOnThisLine == 1 )
         {
@@ -267,7 +265,7 @@ public class HexPrinter
         out.printf( "%X%X", 0xF & (value >> 4), 0xF & value );
     }
 
-    private void checkNewLine()
+	private void checkNewLine()
     {
         if ( bytesOnThisLine >= bytesPerLine )
         {
@@ -279,15 +277,13 @@ public class HexPrinter
         {
             // a new line and line number enabled
             out.append( lineNumberPrefix );
-            out.printf( "0x%0" + maxLineNumberDigits + "X", currentLineNumber );
+            out.printf( new StringBuilder().append("0x%0").append(maxLineNumberDigits).append("X").toString(), currentLineNumber );
             out.append( lineNumberSuffix );
         }
         bytesOnThisLine++;
     }
 
-    // Some static methods that could be used directly
-
-    /**
+	/**
      * Convert a subsection of a byte buffer to a human readable string of nicely formatted hex numbers.
      * Output looks like:
      *
@@ -304,7 +300,7 @@ public class HexPrinter
         return hex( bytes, offset, length, DEFAULT_BYTES_PER_GROUP, DEFAULT_GROUP_SEPARATOR );
     }
 
-    public static String hex( ByteBuffer bytes, int offset, int length, int bytesPerBlock, String groupSep )
+	public static String hex( ByteBuffer bytes, int offset, int length, int bytesPerBlock, String groupSep )
     {
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
         PrintStream out = new PrintStream( outStream );
@@ -314,7 +310,7 @@ public class HexPrinter
         return outStream.toString();
     }
 
-    /**
+	/**
      * Convert a full byte buffer to a human readable string of nicely formatted hex numbers using default hex format.
      * Output looks like:
      *
@@ -329,12 +325,12 @@ public class HexPrinter
         return hex( bytes, DEFAULT_BYTES_PER_GROUP, DEFAULT_GROUP_SEPARATOR );
     }
 
-    public static String hex( ByteBuffer bytes, int bytesPerBlock, String groupSep  )
+	public static String hex( ByteBuffer bytes, int bytesPerBlock, String groupSep  )
     {
         return hex( bytes, bytes.position(), bytes.limit(), bytesPerBlock, groupSep );
     }
 
-    /**
+	/**
      * Convert a full byte buffer to a human readable string of nicely formatted hex numbers.
      * Output looks like:
      *
@@ -349,12 +345,12 @@ public class HexPrinter
         return hex( bytes, DEFAULT_BYTES_PER_GROUP, DEFAULT_GROUP_SEPARATOR );
     }
 
-    public static String hex( byte[] bytes, int bytesPerBlock, String groupSep )
+	public static String hex( byte[] bytes, int bytesPerBlock, String groupSep )
     {
         return hex( wrap( bytes ), bytesPerBlock, groupSep );
     }
 
-    /**
+	/**
      * Convert a single byte to a human-readable hex number. The number will always be two characters wide.
      * @param b
      * @return formatted hex numbers in string
@@ -363,4 +359,8 @@ public class HexPrinter
     {
         return String.format( "%02X", b );
     }
+
+    // Some static methods that could be used directly
+
+    
 }

@@ -215,38 +215,37 @@ public class LabelScanWriteMonitor implements NativeLabelScanWriter.WriteMonitor
         }
 
         position.add( 1 );
-        if ( position.sum() > rotationThreshold )
-        {
-            // Rotate
-            lock.lock();
-            try
-            {
-                channel.prepareForFlush().flush();
-                channel.close();
-                moveAwayFile();
-                position.reset();
-                channel = instantiateChannel();
-            }
-            catch ( IOException e )
-            {
-                throw new UncheckedIOException( e );
-            }
-            finally
-            {
-                lock.unlock();
-            }
-
-            // Prune
-            long time = currentTimeMillis();
-            long threshold = time - pruneThreshold;
-            for ( File file : fs.listFiles( storeDir, ( dir, name ) -> name.startsWith( file.getName() + "-" ) ) )
-            {
-                if ( millisOf( file ) < threshold )
-                {
-                    fs.deleteFile( file );
-                }
-            }
-        }
+        if (position.sum() <= rotationThreshold) {
+			return;
+		}
+		// Rotate
+		lock.lock();
+		try
+		{
+		    channel.prepareForFlush().flush();
+		    channel.close();
+		    moveAwayFile();
+		    position.reset();
+		    channel = instantiateChannel();
+		}
+		catch ( IOException e )
+		{
+		    throw new UncheckedIOException( e );
+		}
+		finally
+		{
+		    lock.unlock();
+		}
+		// Prune
+		long time = currentTimeMillis();
+		long threshold = time - pruneThreshold;
+		for ( File file : fs.listFiles( storeDir, ( dir, name ) -> name.startsWith( file.getName() + "-" ) ) )
+		{
+		    if ( millisOf( file ) < threshold )
+		    {
+		        fs.deleteFile( file );
+		    }
+		}
     }
 
     static long millisOf( File file )
@@ -305,7 +304,7 @@ public class LabelScanWriteMonitor implements NativeLabelScanWriter.WriteMonitor
 
     private File timestampedFile()
     {
-        return new File( storeDir, file.getName() + "-" + currentTimeMillis() );
+        return new File( storeDir, new StringBuilder().append(file.getName()).append("-").append(currentTimeMillis()).toString() );
     }
 
     /**
@@ -455,7 +454,7 @@ public class LabelScanWriteMonitor implements NativeLabelScanWriter.WriteMonitor
                     flush = 0;
                     break;
                 default:
-                    System.out.println( "Unknown type " + type + " at " + ((ReadAheadChannel) channel).position() );
+                    System.out.println( new StringBuilder().append("Unknown type ").append(type).append(" at ").append(((ReadAheadChannel) channel).position()).toString() );
                     break;
                 }
             }
@@ -504,7 +503,8 @@ public class LabelScanWriteMonitor implements NativeLabelScanWriter.WriteMonitor
         {
             String token = tokens[i];
             int index = token.lastIndexOf( '-' );
-            long low, high;
+            long low;
+			long high;
             if ( index == -1 )
             {
                 low = high = Long.parseLong( token );
@@ -576,7 +576,7 @@ public class LabelScanWriteMonitor implements NativeLabelScanWriter.WriteMonitor
         @Override
         public void file( File file )
         {
-            out.println( "=== " + file.getAbsolutePath() + " ===" );
+            out.println( new StringBuilder().append("=== ").append(file.getAbsolutePath()).append(" ===").toString() );
         }
 
         @Override

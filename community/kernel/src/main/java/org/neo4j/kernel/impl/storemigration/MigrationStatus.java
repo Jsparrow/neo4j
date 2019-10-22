@@ -70,7 +70,7 @@ enum MigrationStatus
             if ( expectedSate != null && !expectedSate.name().equals( state ) )
             {
                 throw new IllegalStateException(
-                        "Not in the expected state, expected=" + expectedSate.name() + ", actual=" + state );
+                        new StringBuilder().append("Not in the expected state, expected=").append(expectedSate.name()).append(", actual=").append(state).toString() );
             }
             String info = reader.readLine().trim();
             return Pair.of( state, info );

@@ -56,13 +56,12 @@ public class DuplicatingLog extends AbstractLog
         ArrayList<Logger> warnLoggers = new ArrayList<>( logs.size() );
         ArrayList<Logger> errorLoggers = new ArrayList<>( logs.size() );
 
-        for ( Log log : logs )
-        {
+        logs.forEach(log -> {
             debugLoggers.add( log.debugLogger() );
             infoLoggers.add( log.infoLogger() );
             warnLoggers.add( log.warnLogger() );
             errorLoggers.add( log.errorLogger() );
-        }
+        });
 
         this.logs = new CopyOnWriteArraySet<>( logs );
         this.debugLogger = new DuplicatingLogger( debugLoggers );
@@ -90,14 +89,7 @@ public class DuplicatingLog extends AbstractLog
     @Override
     public boolean isDebugEnabled()
     {
-        for ( Log log : logs )
-        {
-            if ( log.isDebugEnabled() )
-            {
-                return true;
-            }
-        }
-        return false;
+        return logs.stream().anyMatch(Log::isDebugEnabled);
     }
 
     @Nonnull
@@ -169,28 +161,19 @@ public class DuplicatingLog extends AbstractLog
         @Override
         public void log( @Nonnull String message )
         {
-            for ( Logger logger : loggers )
-            {
-                logger.log( message );
-            }
+            loggers.forEach(logger -> logger.log(message));
         }
 
         @Override
         public void log( @Nonnull String message, @Nonnull Throwable throwable )
         {
-            for ( Logger logger : loggers )
-            {
-                logger.log( message, throwable );
-            }
+            loggers.forEach(logger -> logger.log(message, throwable));
         }
 
         @Override
         public void log( @Nonnull String format, @Nonnull Object... arguments )
         {
-            for ( Logger logger : loggers )
-            {
-                logger.log( format, arguments );
-            }
+            loggers.forEach(logger -> logger.log(format, arguments));
         }
 
         @Override

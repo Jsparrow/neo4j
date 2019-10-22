@@ -201,11 +201,7 @@ public class SimpleRandomizedIndexAccessorCompatibility extends IndexAccessorCom
     private List<IndexEntryUpdate<?>> generateUpdatesFromValues( List<Value> values, MutableLong nextId )
     {
         List<IndexEntryUpdate<?>> updates = new ArrayList<>();
-        for ( Value value : values )
-        {
-            IndexEntryUpdate<SchemaDescriptor> update = add( nextId.getAndIncrement(), descriptor.schema(), value );
-            updates.add( update );
-        }
+        values.stream().map(value -> add( nextId.getAndIncrement(), descriptor.schema(), value )).forEach(updates::add);
         return updates;
     }
 

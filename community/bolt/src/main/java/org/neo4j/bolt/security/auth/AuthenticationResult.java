@@ -23,10 +23,6 @@ import org.neo4j.internal.kernel.api.security.LoginContext;
 
 public interface AuthenticationResult
 {
-    LoginContext getLoginContext();
-
-    boolean credentialsExpired();
-
     AuthenticationResult AUTH_DISABLED = new AuthenticationResult()
     {
         @Override
@@ -41,4 +37,8 @@ public interface AuthenticationResult
             return false;
         }
     };
+
+	LoginContext getLoginContext();
+
+	boolean credentialsExpired();
 }

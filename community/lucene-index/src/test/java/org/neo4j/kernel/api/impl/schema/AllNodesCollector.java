@@ -36,7 +36,10 @@ import org.neo4j.values.storable.Value;
 
 public class AllNodesCollector extends SimpleCollector
 {
-    public static List<Long> getAllNodes( Directory directory, Value propertyValue ) throws IOException
+    private final List<Long> nodeIds = new ArrayList<>();
+	private LeafReader reader;
+
+	public static List<Long> getAllNodes( Directory directory, Value propertyValue ) throws IOException
     {
         try ( SearcherManager manager = new SearcherManager( directory, new SearcherFactory() ) )
         {
@@ -48,22 +51,19 @@ public class AllNodesCollector extends SimpleCollector
         }
     }
 
-    private final List<Long> nodeIds = new ArrayList<>();
-    private LeafReader reader;
-
-    @Override
+	@Override
     public void collect( int doc ) throws IOException
     {
         nodeIds.add( LuceneDocumentStructure.getNodeId( reader.document( doc ) ) );
     }
 
-    @Override
+	@Override
     public boolean needsScores()
     {
         return false;
     }
 
-    @Override
+	@Override
     protected void doSetNextReader( LeafReaderContext context )
     {
         this.reader = context.reader();

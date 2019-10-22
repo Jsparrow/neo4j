@@ -23,7 +23,14 @@ import com.sun.management.ThreadMXBean;
 
 class SunManagementHeapAllocation extends HeapAllocation
 {
-    /**
+    private final ThreadMXBean threadMXBean;
+
+	private SunManagementHeapAllocation( ThreadMXBean threadMXBean )
+    {
+        this.threadMXBean = threadMXBean;
+    }
+
+	/**
      * Invoked from {@link HeapAllocation#load(java.lang.management.ThreadMXBean)} through reflection.
      */
     @SuppressWarnings( "unused" )
@@ -36,14 +43,7 @@ class SunManagementHeapAllocation extends HeapAllocation
         return NOT_AVAILABLE;
     }
 
-    private final ThreadMXBean threadMXBean;
-
-    private SunManagementHeapAllocation( ThreadMXBean threadMXBean )
-    {
-        this.threadMXBean = threadMXBean;
-    }
-
-    @Override
+	@Override
     public long allocatedBytes( long threadId )
     {
         if ( !threadMXBean.isThreadAllocatedMemorySupported() )

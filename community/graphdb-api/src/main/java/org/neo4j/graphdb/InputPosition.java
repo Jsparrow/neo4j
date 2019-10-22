@@ -24,16 +24,15 @@ package org.neo4j.graphdb;
  */
 public final class InputPosition
 {
-    private final int offset;
-    private final int line;
-    private final int column;
-
     /**
      * The empty position
      */
     public static final InputPosition empty = new InputPosition( -1, -1, -1 );
+	private final int offset;
+	private final int line;
+	private final int column;
 
-    /**
+	/**
      * Creating a position from and offset, line number and a column number.
      * @param offset the offset from the start of the string, starting from 0.
      * @param line the line number, starting from 1.
@@ -46,7 +45,7 @@ public final class InputPosition
         this.column = column;
     }
 
-    /**
+	/**
      * The character offset referred to by this position; offset numbers start at 0.
      * @return the offset of this position.
      */
@@ -55,7 +54,7 @@ public final class InputPosition
         return offset;
     }
 
-    /**
+	/**
      * The line number referred to by the position; line numbers start at 1.
      * @return the line number of this position.
      */
@@ -64,7 +63,7 @@ public final class InputPosition
         return line;
     }
 
-    /**
+	/**
      * The column number referred to by the position; column numbers start at 1.
      * @return the column number of this position.
      */
@@ -73,7 +72,7 @@ public final class InputPosition
         return column;
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -99,7 +98,7 @@ public final class InputPosition
 
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         int result = offset;
@@ -108,9 +107,10 @@ public final class InputPosition
         return result;
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return "InputPosition{" + "offset=" + offset + ", line=" + line + ", column=" + column + '}';
+        return new StringBuilder().append("InputPosition{").append("offset=").append(offset).append(", line=").append(line).append(", column=").append(column)
+				.append('}').toString();
     }
 }

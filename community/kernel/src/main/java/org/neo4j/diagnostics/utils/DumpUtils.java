@@ -61,10 +61,10 @@ public class DumpUtils
         String vmInfoString = systemProperties.getProperty( "java.vm.info" );
 
         StringBuilder sb = new StringBuilder();
-        sb.append( String.format( "Full thread dump %s (%s %s):\n\n", vmName, vmVersion, vmInfoString ) );
+        sb.append( String.format( "Full thread dump %s (%s %s):%n%n", vmName, vmVersion, vmInfoString ) );
         for ( ThreadInfo threadInfo : threadInfos )
         {
-            sb.append( String.format( "\"%s\" #%d\n", threadInfo.getThreadName(), threadInfo.getThreadId() ) );
+            sb.append( String.format( "\"%s\" #%d%n", threadInfo.getThreadName(), threadInfo.getThreadId() ) );
             sb.append( "   java.lang.Thread.State: " ).append( threadInfo.getThreadState() ).append( "\n" );
 
             StackTraceElement[] stackTrace = threadInfo.getStackTrace();

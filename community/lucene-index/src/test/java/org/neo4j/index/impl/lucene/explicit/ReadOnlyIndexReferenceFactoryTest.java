@@ -41,27 +41,25 @@ import static org.junit.Assert.assertSame;
 
 public class ReadOnlyIndexReferenceFactoryTest
 {
-    private final TestDirectory testDirectory = TestDirectory.testDirectory();
-    private final ExpectedException expectedException = ExpectedException.none();
-    private final CleanupRule cleanupRule = new CleanupRule();
-    private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
-
-    @Rule
+    private static final String INDEX_NAME = "testIndex";
+	private final TestDirectory testDirectory = TestDirectory.testDirectory();
+	private final ExpectedException expectedException = ExpectedException.none();
+	private final CleanupRule cleanupRule = new CleanupRule();
+	private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	@Rule
     public RuleChain ruleChain = RuleChain.outerRule( cleanupRule ).around( expectedException )
                                           .around( testDirectory ).around( fileSystemRule );
+	private LuceneDataSource.LuceneFilesystemFacade filesystemFacade = LuceneDataSource.LuceneFilesystemFacade.FS;
+	private IndexIdentifier indexIdentifier = new IndexIdentifier( IndexEntityType.Node, INDEX_NAME );
+	private IndexConfigStore indexStore;
 
-    private static final String INDEX_NAME = "testIndex";
-    private LuceneDataSource.LuceneFilesystemFacade filesystemFacade = LuceneDataSource.LuceneFilesystemFacade.FS;
-    private IndexIdentifier indexIdentifier = new IndexIdentifier( IndexEntityType.Node, INDEX_NAME );
-    private IndexConfigStore indexStore;
-
-    @Before
+	@Before
     public void setUp() throws Exception
     {
         setupIndexInfrastructure();
     }
 
-    @Test
+	@Test
     public void createReadOnlyIndexReference() throws Exception
     {
         ReadOnlyIndexReferenceFactory indexReferenceFactory = getReadOnlyIndexReferenceFactory();
@@ -72,7 +70,7 @@ public class ReadOnlyIndexReferenceFactoryTest
         indexReference.getWriter();
     }
 
-    @Test
+	@Test
     public void refreshReadOnlyIndexReference() throws Exception
     {
         ReadOnlyIndexReferenceFactory indexReferenceFactory = getReadOnlyIndexReferenceFactory();
@@ -83,7 +81,7 @@ public class ReadOnlyIndexReferenceFactoryTest
         assertSame("Refreshed instance should be the same.", indexReference, refreshedIndex);
     }
 
-    private void setupIndexInfrastructure() throws Exception
+	private void setupIndexInfrastructure() throws Exception
     {
         DatabaseLayout databaseLayout = testDirectory.databaseLayout();
         indexStore = new IndexConfigStore( databaseLayout, fileSystemRule.get() );
@@ -101,7 +99,7 @@ public class ReadOnlyIndexReferenceFactoryTest
         }
     }
 
-    private ReadOnlyIndexReferenceFactory getReadOnlyIndexReferenceFactory()
+	private ReadOnlyIndexReferenceFactory getReadOnlyIndexReferenceFactory()
     {
         return new ReadOnlyIndexReferenceFactory( filesystemFacade, testDirectory.databaseLayout().file( "index" ), new IndexTypeCache( indexStore ) );
     }

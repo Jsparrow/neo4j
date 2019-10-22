@@ -125,7 +125,7 @@ public class QueryExecutionLocksIT
             transaction.success();
         }
 
-        String query = "MATCH (n:" + labelName + ") where n." + propertyKey + " = \"Fry\" RETURN n ";
+        String query = new StringBuilder().append("MATCH (n:").append(labelName).append(") where n.").append(propertyKey).append(" = \"Fry\" RETURN n ").toString();
 
         List<LockOperationRecord> lockOperationRecords = traceQueryLocks( query );
         assertThat( "Observed list of lock operations is: " + lockOperationRecords,
@@ -152,7 +152,7 @@ public class QueryExecutionLocksIT
             transaction.success();
         }
 
-        String query = "MATCH (n:" + labelName + ") where n." + propertyKey + " = \"Bender\" RETURN n ";
+        String query = new StringBuilder().append("MATCH (n:").append(labelName).append(") where n.").append(propertyKey).append(" = \"Bender\" RETURN n ").toString();
 
         LockOperationListener lockOperationListener = new OnceSchemaFlushListener();
         List<LockOperationRecord> lockOperationRecords = traceQueryLocks( query, lockOperationListener );
@@ -382,10 +382,7 @@ public class QueryExecutionLocksIT
         {
             if ( acquisition )
             {
-                for ( LockOperationListener listener : listeners )
-                {
-                    listener.lockAcquired( exclusive, type, ids );
-                }
+                listeners.forEach(listener -> listener.lockAcquired(exclusive, type, ids));
             }
             lockOperationRecords.add( new LockOperationRecord( exclusive, acquisition, type, ids ) );
         }
@@ -529,8 +526,8 @@ public class QueryExecutionLocksIT
         @Override
         public String toString()
         {
-            return "LockOperationRecord{" + "exclusive=" + exclusive + ", acquisition=" + acquisition +
-                    ", resourceType=" + resourceType + ", ids=" + Arrays.toString( ids ) + '}';
+            return new StringBuilder().append("LockOperationRecord{").append("exclusive=").append(exclusive).append(", acquisition=").append(acquisition).append(", resourceType=")
+					.append(resourceType).append(", ids=").append(Arrays.toString( ids )).append('}').toString();
         }
     }
 

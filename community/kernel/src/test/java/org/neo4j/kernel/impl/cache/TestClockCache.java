@@ -83,27 +83,6 @@ public class TestClockCache
         cache.clear();
     }
 
-    private static class ClockCacheTest<K, E> extends ClockCache<K, E>
-    {
-        private E cleanedElement;
-
-        ClockCacheTest( String name, int maxSize )
-        {
-            super( name, maxSize );
-        }
-
-        @Override
-        public void elementCleaned( E element )
-        {
-            cleanedElement = element;
-        }
-
-        E getLastCleanedElement()
-        {
-            return cleanedElement;
-        }
-    }
-
     @Test
     public void testSimple()
     {
@@ -164,23 +143,14 @@ public class TestClockCache
 
         int size = cache.size();
         assertEquals( 3, size );
-        for ( Integer key : cleanedElements )
-        {
-            assertNull( cache.get( key ) );
-        }
-        for ( Integer key : existingElements )
-        {
-            assertEquals( keyToValue.get( key ), cache.get( key ) );
-        }
+        cleanedElements.forEach(key -> assertNull(cache.get(key)));
+        existingElements.forEach(key -> assertEquals(keyToValue.get(key), cache.get(key)));
         cache.clear();
         assertEquals( 0, cache.size() );
-        for ( Integer key : keyToValue.keySet() )
-        {
-            assertNull( cache.get( key ) );
-        }
+        keyToValue.keySet().forEach(key -> assertNull(cache.get(key)));
     }
 
-    @Test
+	@Test
     public void shouldUpdateSizeWhenRemoving()
     {
         ClockCache<String, Integer> cache = new ClockCache<>( "foo", 3 );
@@ -190,5 +160,26 @@ public class TestClockCache
         cache.remove( "bar" );
 
         assertThat( cache.size(), is( 1 ) );
+    }
+
+	private static class ClockCacheTest<K, E> extends ClockCache<K, E>
+    {
+        private E cleanedElement;
+
+        ClockCacheTest( String name, int maxSize )
+        {
+            super( name, maxSize );
+        }
+
+        @Override
+        public void elementCleaned( E element )
+        {
+            cleanedElement = element;
+        }
+
+        E getLastCleanedElement()
+        {
+            return cleanedElement;
+        }
     }
 }

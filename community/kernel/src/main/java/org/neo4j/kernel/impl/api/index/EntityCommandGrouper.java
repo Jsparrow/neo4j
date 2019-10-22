@@ -51,7 +51,7 @@ public class EntityCommandGrouper<ENTITY extends Command>
     /**
      * Enforces the order described on the class-level javadoc above.
      */
-    private final Comparator<Command> COMMAND_COMPARATOR = new Comparator<Command>()
+    private final Comparator<Command> commandComparator = new Comparator<Command>()
     {
         @Override
         public int compare( Command o1, Command o2 )
@@ -96,7 +96,7 @@ public class EntityCommandGrouper<ENTITY extends Command>
 
     public Cursor sortAndAccessGroups()
     {
-        Arrays.sort( commands, 0, writeCursor, COMMAND_COMPARATOR );
+        Arrays.sort( commands, 0, writeCursor, commandComparator );
         return new Cursor();
     }
 

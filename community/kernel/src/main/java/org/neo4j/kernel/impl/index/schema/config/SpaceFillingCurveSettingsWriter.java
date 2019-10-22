@@ -92,7 +92,8 @@ public class SpaceFillingCurveSettingsWriter implements Consumer<PageCursor>
             {
                 if ( (value & ~mask) != 0 )
                 {
-                    throw new IllegalArgumentException( "Invalid " + name + " " + value + ", max is " + mask );
+                    throw new IllegalArgumentException( new StringBuilder().append("Invalid ").append(name).append(" ").append(value).append(", max is ").append(mask)
+							.toString() );
                 }
                 return value;
             }

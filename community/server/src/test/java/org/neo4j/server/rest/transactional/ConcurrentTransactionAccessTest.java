@@ -66,12 +66,9 @@ public class ConcurrentTransactionAccessTest
             return false;
         } );
 
-        new Thread( () ->
-        {
-            // start and block until finish
-            transactionHandle.execute( statements, mock( ExecutionResultSerializer.class ), mock(
-                    HttpServletRequest.class ) );
-        } ).start();
+        // start and block until finish
+		new Thread( () ->
+        transactionHandle.execute(statements, mock(ExecutionResultSerializer.class), mock(HttpServletRequest.class)) ).start();
 
         latch.waitForAllToStart();
 

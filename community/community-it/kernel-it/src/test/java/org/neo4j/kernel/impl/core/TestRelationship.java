@@ -875,7 +875,7 @@ public class TestRelationship extends AbstractNeo4jTestCase
         int count = 0;
         for ( Relationship rel : getGraphDb().getAllRelationships() )
         {
-            assertTrue( "Unexpected rel " + rel + ", expected one of " + allRelationships,
+            assertTrue( new StringBuilder().append("Unexpected rel ").append(rel).append(", expected one of ").append(allRelationships).toString(),
                     allRelationships.contains( rel ) );
             count++;
         }

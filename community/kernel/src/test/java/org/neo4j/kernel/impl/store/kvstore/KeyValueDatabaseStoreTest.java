@@ -60,40 +60,6 @@ public class KeyValueDatabaseStoreTest
                                 page( 3, 4 ), page( 5, 6 ) ) );
     }
 
-    /** key size = 1 byte */
-    static class CataloguePage
-    {
-        static int findPage( int key, CataloguePage... pages )
-        {
-            assert key >= 0 && key <= 0xFF : "invalid usage";
-            byte[] catalogue = new byte[pages.length * 2];
-            for ( int i = 0, min = 0; i < pages.length; i++ )
-            {
-                CataloguePage page = pages[i];
-                assert (page.first & 0xFF) >= min : "invalid catalogue";
-                catalogue[i * 2] = page.first;
-                catalogue[i * 2 + 1] = page.last;
-                min = page.last & 0xFF;
-            }
-            return KeyValueStoreFile.findPage( new BigEndianByteArrayBuffer( new byte[]{(byte) key} ), catalogue );
-        }
-
-        static CataloguePage page( int first, int last )
-        {
-            assert first >= 0 && last >= 0 && first <= 0xFF && last <= 0xFF && first <= last : "invalid usage";
-            return new CataloguePage( (byte) first, (byte) last );
-        }
-
-        final byte first;
-        byte last;
-
-        CataloguePage( byte first, byte last )
-        {
-            this.first = first;
-            this.last = last;
-        }
-    }
-
     @Test
     public void shouldComputeMaxPage()
     {
@@ -104,7 +70,7 @@ public class KeyValueDatabaseStoreTest
         assertEquals( "over two pages", 2, maxPage( 1024, 4, 700 ) );
     }
 
-    @Test
+	@Test
     public void shouldFindRecordInPage() throws Exception
     {
         // given
@@ -127,7 +93,7 @@ public class KeyValueDatabaseStoreTest
         }
     }
 
-    @Test
+	@Test
     public void shouldFindRecordInPageWithDuplicates() throws Exception
     {
         // given
@@ -157,7 +123,7 @@ public class KeyValueDatabaseStoreTest
         assertEquals( 4, value[0] & 0xFF );
     }
 
-    @Test( expected = UnderlyingStorageException.class )
+	@Test( expected = UnderlyingStorageException.class )
     public void shouldThrowOnOutOfBoundsPageAccess() throws Exception
     {
         // given
@@ -184,7 +150,7 @@ public class KeyValueDatabaseStoreTest
         page.findOffset( 0 );
     }
 
-    @Test
+	@Test
     public void shouldFindFirstRecordGreaterThanIfNoExactMatch() throws Exception
     {
         // given
@@ -206,6 +172,40 @@ public class KeyValueDatabaseStoreTest
         {
             assertEquals( i + 3, page.findOffset( i ) );
             assertEquals( (i * 2) + 1, key[0] & 0xFF );
+        }
+    }
+
+	/** key size = 1 byte */
+    static class CataloguePage
+    {
+        final byte first;
+		byte last;
+
+		CataloguePage( byte first, byte last )
+        {
+            this.first = first;
+            this.last = last;
+        }
+
+		static int findPage( int key, CataloguePage... pages )
+        {
+            assert key >= 0 && key <= 0xFF : "invalid usage";
+            byte[] catalogue = new byte[pages.length * 2];
+            for ( int i = 0, min = 0; i < pages.length; i++ )
+            {
+                CataloguePage page = pages[i];
+                assert (page.first & 0xFF) >= min : "invalid catalogue";
+                catalogue[i * 2] = page.first;
+                catalogue[i * 2 + 1] = page.last;
+                min = page.last & 0xFF;
+            }
+            return KeyValueStoreFile.findPage( new BigEndianByteArrayBuffer( new byte[]{(byte) key} ), catalogue );
+        }
+
+		static CataloguePage page( int first, int last )
+        {
+            assert first >= 0 && last >= 0 && first <= 0xFF && last <= 0xFF && first <= last : "invalid usage";
+            return new CataloguePage( (byte) first, (byte) last );
         }
     }
 

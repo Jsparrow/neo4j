@@ -111,7 +111,7 @@ public class PositionAwarePhysicalFlushableChannel implements FlushablePositionA
         this.channel.setChannel( channel );
     }
 
-    public void setCurrentPosition( LogPosition position ) throws IOException, UnsupportedOperationException
+    public void setCurrentPosition( LogPosition position ) throws IOException
     {
         channel.position( position.getByteOffset() );
     }

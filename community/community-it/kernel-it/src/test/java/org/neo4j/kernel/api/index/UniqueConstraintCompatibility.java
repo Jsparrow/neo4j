@@ -68,69 +68,35 @@ import static org.neo4j.kernel.impl.locking.LockService.LockType;
         " errors or warnings in some IDEs about test classes needing a public zero-arg constructor." )
 public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTestSuite.Compatibility
 {
-    public UniqueConstraintCompatibility( IndexProviderCompatibilityTestSuite testSuite )
+    // These two values coalesce to the same double value, and therefor collides in our current index implementation:
+    private static final long COLLISION_X = 4611686018427387905L;
+	private static final long COLLISION_Y = 4611686018427387907L;
+	private static final ExecutorService executor = Executors.newCachedThreadPool();
+	private final Label label = Label.label( "Cybermen" );
+	private final String property = "name";
+	private Node a;
+	private Node b;
+	private Node c;
+	private Node d;
+	private GraphDatabaseService db;
+	private final Action success = new Action( "tx.success();" )
+    {
+        @Override
+        public void accept( Transaction transaction )
+        {
+            transaction.success();
+            // We also call close() here, because some validations and checks don't run until commit
+            transaction.close();
+        }
+    };
+	private final Map<Transaction,KernelTransaction> txMap = new IdentityHashMap<>();
+
+	public UniqueConstraintCompatibility( IndexProviderCompatibilityTestSuite testSuite )
     {
         super( testSuite, TestIndexDescriptorFactory.uniqueForLabel( 1, 2 ) );
     }
 
-    /*
-     * There are a quite a number of permutations to consider, when it comes to unique
-     * constraints.
-     *
-     * We have two supported providers:
-     *  - InMemoryIndexProvider
-     *  - LuceneIndexProvider
-     *
-     * An index can be in a number of states, two of which are interesting:
-     *  - ONLINE: the index is in active duty
-     *  - POPULATING: the index is in the process of being created and filled with data
-     *
-     * Further more, indexes that are POPULATING have two ways of ingesting data:
-     *  - Through add()'ing existing data
-     *  - Through NodePropertyUpdates sent to a "populating updater"
-     *
-     * Then, when we add data to an index, two outcomes are possible, depending on the
-     * data:
-     *  - The index does not contain an equivalent value, and the entity id is added to
-     *    the index.
-     *  - The index already contains an equivalent value, and the addition is rejected.
-     *
-     * And when it comes to observing these outcomes, there are a whole bunch of
-     * interesting transaction states that are worth exploring:
-     *  - Adding a label to a node
-     *  - Removing a label from a node
-     *  - Combinations of adding and removing a label, ultimately adding it
-     *  - Combinations of adding and removing a label, ultimately removing it
-     *  - Adding a property
-     *  - Removing a property
-     *  - Changing an existing property
-     *  - Combinations of adding and removing a property, ultimately adding it
-     *  - Combinations of adding and removing a property, ultimately removing it
-     *  - Likewise combinations of adding, removing and changing a property
-     *
-     * To make matters worse, we index a number of different types, some of which may or
-     * may not collide in the index because of coercion. We need to make sure that the
-     * indexes deal with these values correctly. And we also have the ways in which these
-     * operations can be performed in any number of transactions, for instance, if all
-     * the conflicting nodes were added in the same transaction or not.
-     *
-     * All in all, we have many cases to test for!
-     *
-     * Still, it is possible to boil things down a little bit, because there are fewer
-     * outcomes than there are scenarios that lead to those outcomes. With a bit of
-     * luck, we can abstract over the scenarios that lead to those outcomes, and then
-     * only write a test per outcome. These are the outcomes I see:
-     *  - Populating an index succeeds
-     *  - Populating an index fails because of the existing data
-     *  - Populating an index fails because of updates to data
-     *  - Adding to an online index succeeds
-     *  - Adding to an online index fails because of existing data
-     *  - Adding to an online index fails because of data in the same transaction
-     *
-     * There's a lot of work to be done here.
-     */
-
-    @Before
+	@Before
     public void setUp()
     {
         TestGraphDatabaseFactory dbFactory = new TestGraphDatabaseFactory();
@@ -140,15 +106,13 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                       .newGraphDatabase();
     }
 
-    @After
+	@After
     public void tearDown()
     {
         db.shutdown();
     }
 
-    // -- Tests:
-
-    @Test
+	@Test
     public void onlineConstraintShouldAcceptDistinctValuesInDifferentTransactions()
     {
         // Given
@@ -169,7 +133,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 assertLookupNode( "n" , is( n ) ) );
     }
 
-    @Test
+	@Test
     public void onlineConstraintShouldAcceptDistinctValuesInSameTransaction()
     {
         // Given
@@ -194,7 +158,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 assertLookupNode( "m", is( m ) ) );
     }
 
-    @Test
+	@Test
     public void onlineConstraintShouldNotFalselyCollideOnFindNodesByLabelAndProperty()
     {
         // Given
@@ -222,7 +186,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 assertLookupNode( COLLISION_Y, is( m ) ) );
     }
 
-    @Test
+	@Test
     public void onlineConstraintShouldNotConflictOnIntermediateStatesInSameTransaction()
     {
         // Given
@@ -240,7 +204,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 assertLookupNode( "b", is( a ) ) );
     }
 
-    @Test( expected = ConstraintViolationException.class )
+	@Test( expected = ConstraintViolationException.class )
     public void onlineConstraintShouldRejectChangingEntryToAlreadyIndexedValue()
     {
         // Given
@@ -256,7 +220,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 fail( "Changing a property to an already indexed value should have thrown" ) );
     }
 
-    @Test( expected = ConstraintViolationException.class )
+	@Test( expected = ConstraintViolationException.class )
     public void onlineConstraintShouldRejectConflictsInTheSameTransaction()
     {
         // Given
@@ -270,7 +234,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 fail( "Should have rejected changes of two node/properties to the same index value" ) );
     }
 
-    @Test
+	@Test
     public void onlineConstraintShouldRejectChangingEntryToAlreadyIndexedValueThatOtherTransactionsAreRemoving()
     {
         // Given
@@ -303,7 +267,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         }
     }
 
-    // Replaces UniqueIAC: shouldRemoveAndAddEntries
+	// Replaces UniqueIAC: shouldRemoveAndAddEntries
     @Test
     public void onlineConstraintShouldAddAndRemoveFromIndexAsPropertiesAndLabelsChange()
     {
@@ -329,7 +293,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 assertLookupNode( "c2", is( c ) ) );
     }
 
-    // Replaces UniqueIAC: shouldRejectEntryWithAlreadyIndexedValue
+	// Replaces UniqueIAC: shouldRejectEntryWithAlreadyIndexedValue
     @Test( expected = ConstraintViolationException.class )
     public void onlineConstraintShouldRejectConflictingPropertyChange()
     {
@@ -343,7 +307,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 fail( "Setting b.name = \"a\" should have caused a conflict" ) );
     }
 
-    @Test( expected = ConstraintViolationException.class )
+	@Test( expected = ConstraintViolationException.class )
     public void onlineConstraintShouldRejectConflictingLabelChange()
     {
         // Given
@@ -356,7 +320,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 fail( "Setting c:Cybermen should have caused a conflict" ) );
     }
 
-    // Replaces UniqueIAC: shouldRejectAddingEntryToValueAlreadyIndexedByPriorChange
+	// Replaces UniqueIAC: shouldRejectAddingEntryToValueAlreadyIndexedByPriorChange
     @Test( expected = ConstraintViolationException.class )
     public void onlineConstraintShouldRejectAddingEntryForValueAlreadyIndexedByPriorChange()
     {
@@ -373,7 +337,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 fail( "Setting b.name = \"a1\" should have caused a conflict" ) );
     }
 
-    // Replaces UniqueIAC: shouldAddUniqueEntries
+	// Replaces UniqueIAC: shouldAddUniqueEntries
     // Replaces UniqueIPC: should*EnforceUniqueConstraintsAgainstDataAddedOnline
     @Test
     public void onlineConstraintShouldAcceptUniqueEntries()
@@ -393,7 +357,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 assertLookupNode( "d", is( d ) ) );
     }
 
-    // Replaces UniqueIAC: shouldUpdateUniqueEntries
+	// Replaces UniqueIAC: shouldUpdateUniqueEntries
     @Test
     public void onlineConstraintShouldAcceptUniqueEntryChanges()
     {
@@ -407,7 +371,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         transaction( assertLookupNode( "a1", is( a ) ) );
     }
 
-    // Replaces UniqueIAC: shouldRejectEntriesInSameTransactionWithDuplicateIndexedValue\
+	// Replaces UniqueIAC: shouldRejectEntriesInSameTransactionWithDuplicateIndexedValue\
     @Test( expected = ConstraintViolationException.class )
     public void onlineConstraintShouldRejectDuplicateEntriesAddedInSameTransaction()
     {
@@ -422,7 +386,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
                 fail( "Setting b.name = \"d\" and d:Cybermen should have caused a conflict" ));
     }
 
-    // Replaces UniqueIPC: should*EnforceUniqueConstraints
+	// Replaces UniqueIPC: should*EnforceUniqueConstraints
     // Replaces UniqueIPC: should*EnforceUniqueConstraintsAgainstDataAddedThroughPopulator
     @Test
     public void populatingConstraintMustAcceptDatasetOfUniqueEntries()
@@ -434,7 +398,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         createUniqueConstraint();
     }
 
-    @Test( expected = ConstraintViolationException.class )
+	@Test( expected = ConstraintViolationException.class )
     public void populatingConstraintMustRejectDatasetWithDuplicateEntries()
     {
         // Given
@@ -447,7 +411,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         createUniqueConstraint();
     }
 
-    @Test
+	@Test
     public void populatingConstraintMustAcceptDatasetWithDalseIndexCollisions()
     {
         // Given
@@ -461,7 +425,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         createUniqueConstraint();
     }
 
-    @Test
+	@Test
     public void populatingConstraintMustAcceptDatasetThatGetsUpdatedWithUniqueEntries() throws Exception
     {
         // Given
@@ -476,7 +440,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         // Future.get() will throw an ExecutionException, if the Runnable threw an exception.
     }
 
-    // Replaces UniqueLucIAT: shouldRejectEntryWithAlreadyIndexedValue
+	// Replaces UniqueLucIAT: shouldRejectEntryWithAlreadyIndexedValue
     @Test
     public void populatingConstraintMustRejectDatasetThatGetsUpdatedWithDuplicateAddition() throws Exception
     {
@@ -500,7 +464,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         }
     }
 
-    // Replaces UniqueLucIAT: shouldRejectChangingEntryToAlreadyIndexedValue
+	// Replaces UniqueLucIAT: shouldRejectChangingEntryToAlreadyIndexedValue
     @Test
     public void populatingConstraintMustRejectDatasetThatGetsUpdatedWithDuplicates() throws Exception
     {
@@ -524,7 +488,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         }
     }
 
-    @Test
+	@Test
     public void populatingConstraintMustAcceptDatasetThatGestUpdatedWithFalseIndexCollisions() throws Exception
     {
         // Given
@@ -540,7 +504,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         // Future.get() will throw an ExecutionException, if the Runnable threw an exception.
     }
 
-    // Replaces UniqueLucIAT: shouldRejectEntriesInSameTransactionWithDuplicatedIndexedValues
+	// Replaces UniqueLucIAT: shouldRejectEntriesInSameTransactionWithDuplicatedIndexedValues
     @Test
     public void populatingConstraintMustRejectDatasetThatGetsUpdatedWithDuplicatesInSameTransaction() throws Exception
     {
@@ -564,7 +528,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         }
     }
 
-    @Test
+	@Test
     public void populatingConstraintMustAcceptDatasetThatGetsUpdatedWithDuplicatesThatAreLaterResolved() throws Exception
     {
         // Given
@@ -583,7 +547,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         // Future.get() will throw an ExecutionException, if the Runnable threw an exception.
     }
 
-    // Replaces UniqueLucIAT: shouldRejectAddingEntryToValueAlreadyIndexedByPriorChange
+	// Replaces UniqueLucIAT: shouldRejectAddingEntryToValueAlreadyIndexedByPriorChange
     @Test
     public void populatingUpdaterMustRejectDatasetWhereAdditionsConflictsWithPriorChanges() throws Exception
     {
@@ -607,7 +571,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         }
     }
 
-    /**
+	/**
      * NOTE the tests using this will currently succeed for the wrong reasons,
      * because the data-changing transaction does not actually release the
      * schema read lock early enough for the PopulatingUpdater to come into
@@ -684,23 +648,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         return createConstraintTransaction;
     }
 
-    // -- Set Up: Data parts
-
-    // These two values coalesce to the same double value, and therefor collides in our current index implementation:
-    private static final long COLLISION_X = 4611686018427387905L;
-    private static final long COLLISION_Y = 4611686018427387907L;
-    private static final ExecutorService executor = Executors.newCachedThreadPool();
-
-    private final Label label = Label.label( "Cybermen" );
-    private final String property = "name";
-    private Node a;
-    private Node b;
-    private Node c;
-    private Node d;
-
-    private GraphDatabaseService db;
-
-    /**
+	/**
      * Effectively:
      *
      * <pre><code>
@@ -730,7 +678,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         }
     }
 
-    /**
+	/**
      * Effectively:
      *
      * <pre><code>
@@ -757,7 +705,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         }
     }
 
-    /**
+	/**
      * Effectively:
      *
      * <pre><code>
@@ -770,7 +718,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         createUniqueConstraint( null );
     }
 
-    /**
+	/**
      * Effectively:
      *
      * <pre><code>
@@ -793,7 +741,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         }
     }
 
-    /**
+	/**
      * Effectively:
      *
      * <pre><code>
@@ -805,9 +753,7 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         return db.findNode( label, property, value );
     }
 
-    // -- Set Up: Transaction handling
-
-    public void transaction( Action... actions )
+	public void transaction( Action... actions )
     {
         int progress = 0;
         try ( Transaction tx = db.beginTx() )
@@ -831,6 +777,206 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         }
     }
 
+	private Action createNode( final Object propertyValue )
+    {
+        return new Action( new StringBuilder().append("Node node = db.createNode( label ); ").append("node.setProperty( property, ").append(reprValue( propertyValue )).append(" );").toString() )
+        {
+            @Override
+            public void accept( Transaction transaction )
+            {
+                Node node = db.createNode( label );
+                node.setProperty( property, propertyValue );
+            }
+        };
+    }
+
+	private Action setProperty( final Node node, final Object value )
+    {
+        return new Action( new StringBuilder().append(reprNode( node )).append(".setProperty( property, ").append(reprValue( value )).append(" );").toString() )
+        {
+            @Override
+            public void accept( Transaction transaction )
+            {
+                node.setProperty( property, value );
+            }
+        };
+    }
+
+	private Action removeProperty( final Node node )
+    {
+        return new Action( reprNode( node ) + ".removeProperty( property );" )
+        {
+            @Override
+            public void accept( Transaction transaction )
+            {
+                node.removeProperty( property );
+            }
+        };
+    }
+
+	private Action addLabel( final Node node, final Label label )
+    {
+        return new Action( new StringBuilder().append(reprNode( node )).append(".addLabel( ").append(label).append(" );").toString() )
+        {
+            @Override
+            public void accept( Transaction transaction )
+            {
+                node.addLabel( label );
+            }
+        };
+    }
+
+	private Action fail( final String message )
+    {
+        return new Action( new StringBuilder().append("fail( \"").append(message).append("\" );").toString() )
+        {
+            @Override
+            public void accept( Transaction transaction )
+            {
+                Assert.fail( message );
+            }
+        };
+    }
+
+	private Action assertLookupNode( final Object propertyValue, final Matcher<Node> matcher )
+    {
+        return new Action( new StringBuilder().append("assertThat( lookUpNode( ").append(reprValue( propertyValue )).append(" ), ").append(matcher).append(" );").toString() )
+        {
+            @Override
+            public void accept( Transaction transaction )
+            {
+                assertThat( lookUpNode( propertyValue ), matcher );
+            }
+        };
+    }
+
+	private String reprValue( Object value )
+    {
+        return value instanceof String ? new StringBuilder().append("\"").append(value).append("\"").toString() : String.valueOf( value );
+    }
+
+	private String reprNode( Node node )
+    {
+        return node == a ? "a" : node == b ? "b" : node == c ? "c" : node == d ? "d" : "n";
+    }
+
+	private void suspend( Transaction tx )
+    {
+        ThreadToStatementContextBridge txManager = getTransactionManager();
+        txMap.put( tx, txManager.getKernelTransactionBoundToThisThread( true ) );
+        txManager.unbindTransactionFromCurrentThread();
+    }
+
+	private void resume( Transaction tx )
+    {
+        ThreadToStatementContextBridge txManager = getTransactionManager();
+        txManager.bindTransactionToCurrentThread( txMap.remove(tx) );
+    }
+
+	private ThreadToStatementContextBridge getTransactionManager()
+    {
+        return resolveInternalDependency( ThreadToStatementContextBridge.class );
+    }
+
+	/**
+     * Locks controlling concurrent access to the store files.
+     */
+    private LockService getLockService()
+    {
+        return resolveInternalDependency( LockService.class );
+    }
+
+	private <T> T resolveInternalDependency( Class<T> type )
+    {
+        @SuppressWarnings( "deprecation" )
+        GraphDatabaseAPI api = (GraphDatabaseAPI) db;
+        DependencyResolver resolver = api.getDependencyResolver();
+        return resolver.resolveDependency( type );
+    }
+
+	private static void awaitUninterruptibly( CountDownLatch latch )
+    {
+        try
+        {
+            latch.await();
+        }
+        catch ( InterruptedException e )
+        {
+            throw new AssertionError( "Interrupted", e );
+        }
+    }
+
+	
+
+    /*
+     * There are a quite a number of permutations to consider, when it comes to unique
+     * constraints.
+     *
+     * We have two supported providers:
+     *  - InMemoryIndexProvider
+     *  - LuceneIndexProvider
+     *
+     * An index can be in a number of states, two of which are interesting:
+     *  - ONLINE: the index is in active duty
+     *  - POPULATING: the index is in the process of being created and filled with data
+     *
+     * Further more, indexes that are POPULATING have two ways of ingesting data:
+     *  - Through add()'ing existing data
+     *  - Through NodePropertyUpdates sent to a "populating updater"
+     *
+     * Then, when we add data to an index, two outcomes are possible, depending on the
+     * data:
+     *  - The index does not contain an equivalent value, and the entity id is added to
+     *    the index.
+     *  - The index already contains an equivalent value, and the addition is rejected.
+     *
+     * And when it comes to observing these outcomes, there are a whole bunch of
+     * interesting transaction states that are worth exploring:
+     *  - Adding a label to a node
+     *  - Removing a label from a node
+     *  - Combinations of adding and removing a label, ultimately adding it
+     *  - Combinations of adding and removing a label, ultimately removing it
+     *  - Adding a property
+     *  - Removing a property
+     *  - Changing an existing property
+     *  - Combinations of adding and removing a property, ultimately adding it
+     *  - Combinations of adding and removing a property, ultimately removing it
+     *  - Likewise combinations of adding, removing and changing a property
+     *
+     * To make matters worse, we index a number of different types, some of which may or
+     * may not collide in the index because of coercion. We need to make sure that the
+     * indexes deal with these values correctly. And we also have the ways in which these
+     * operations can be performed in any number of transactions, for instance, if all
+     * the conflicting nodes were added in the same transaction or not.
+     *
+     * All in all, we have many cases to test for!
+     *
+     * Still, it is possible to boil things down a little bit, because there are fewer
+     * outcomes than there are scenarios that lead to those outcomes. With a bit of
+     * luck, we can abstract over the scenarios that lead to those outcomes, and then
+     * only write a test per outcome. These are the outcomes I see:
+     *  - Populating an index succeeds
+     *  - Populating an index fails because of the existing data
+     *  - Populating an index fails because of updates to data
+     *  - Adding to an online index succeeds
+     *  - Adding to an online index fails because of existing data
+     *  - Adding to an online index fails because of data in the same transaction
+     *
+     * There's a lot of work to be done here.
+     */
+
+    
+
+    // -- Tests:
+
+    
+
+    // -- Set Up: Data parts
+
+    
+
+    // -- Set Up: Transaction handling
+
     private abstract class Action implements Consumer<Transaction>
     {
         private final String name;
@@ -847,171 +993,32 @@ public class UniqueConstraintCompatibility extends IndexProviderCompatibilityTes
         }
     }
 
-    private final Action success = new Action( "tx.success();" )
-    {
-        @Override
-        public void accept( Transaction transaction )
-        {
-            transaction.success();
-            // We also call close() here, because some validations and checks don't run until commit
-            transaction.close();
-        }
-    };
-
-    private Action createNode( final Object propertyValue )
-    {
-        return new Action( "Node node = db.createNode( label ); " +
-                "node.setProperty( property, " + reprValue( propertyValue ) + " );" )
-        {
-            @Override
-            public void accept( Transaction transaction )
-            {
-                Node node = db.createNode( label );
-                node.setProperty( property, propertyValue );
-            }
-        };
-    }
-
-    private Action setProperty( final Node node, final Object value )
-    {
-        return new Action( reprNode( node ) + ".setProperty( property, " + reprValue( value ) + " );" )
-        {
-            @Override
-            public void accept( Transaction transaction )
-            {
-                node.setProperty( property, value );
-            }
-        };
-    }
-
-    private Action removeProperty( final Node node )
-    {
-        return new Action( reprNode( node ) + ".removeProperty( property );" )
-        {
-            @Override
-            public void accept( Transaction transaction )
-            {
-                node.removeProperty( property );
-            }
-        };
-    }
-
-    private Action addLabel( final Node node, final Label label )
-    {
-        return new Action( reprNode( node ) + ".addLabel( " + label + " );" )
-        {
-            @Override
-            public void accept( Transaction transaction )
-            {
-                node.addLabel( label );
-            }
-        };
-    }
-
-    private Action fail( final String message )
-    {
-        return new Action( "fail( \"" + message + "\" );" )
-        {
-            @Override
-            public void accept( Transaction transaction )
-            {
-                Assert.fail( message );
-            }
-        };
-    }
-
-    private Action assertLookupNode( final Object propertyValue, final Matcher<Node> matcher )
-    {
-        return new Action( "assertThat( lookUpNode( " + reprValue( propertyValue ) + " ), " + matcher + " );" )
-        {
-            @Override
-            public void accept( Transaction transaction )
-            {
-                assertThat( lookUpNode( propertyValue ), matcher );
-            }
-        };
-    }
-
-    private String reprValue( Object value )
-    {
-        return value instanceof String ? "\"" + value + "\"" : String.valueOf( value );
-    }
-
-    private String reprNode( Node node )
-    {
-        return node == a ? "a" : node == b ? "b" : node == c ? "c" : node == d ? "d" : "n";
-    }
+    
 
     // -- Set Up: Advanced transaction handling
 
-    private final Map<Transaction,KernelTransaction> txMap = new IdentityHashMap<>();
-
-    private void suspend( Transaction tx )
-    {
-        ThreadToStatementContextBridge txManager = getTransactionManager();
-        txMap.put( tx, txManager.getKernelTransactionBoundToThisThread( true ) );
-        txManager.unbindTransactionFromCurrentThread();
-    }
-
-    private void resume( Transaction tx )
-    {
-        ThreadToStatementContextBridge txManager = getTransactionManager();
-        txManager.bindTransactionToCurrentThread( txMap.remove(tx) );
-    }
-
-    private ThreadToStatementContextBridge getTransactionManager()
-    {
-        return resolveInternalDependency( ThreadToStatementContextBridge.class );
-    }
+    
 
     // -- Set Up: Misc. sharp tools
-
-    /**
-     * Locks controlling concurrent access to the store files.
-     */
-    private LockService getLockService()
-    {
-        return resolveInternalDependency( LockService.class );
-    }
-
-    private <T> T resolveInternalDependency( Class<T> type )
-    {
-        @SuppressWarnings( "deprecation" )
-        GraphDatabaseAPI api = (GraphDatabaseAPI) db;
-        DependencyResolver resolver = api.getDependencyResolver();
-        return resolver.resolveDependency( type );
-    }
-
-    private static void awaitUninterruptibly( CountDownLatch latch )
-    {
-        try
-        {
-            latch.await();
-        }
-        catch ( InterruptedException e )
-        {
-            throw new AssertionError( "Interrupted", e );
-        }
-    }
 
     private static class PredefinedIndexProviderFactory extends KernelExtensionFactory<PredefinedIndexProviderFactory.NoDeps>
     {
         private final IndexProvider indexProvider;
 
-        @Override
+        PredefinedIndexProviderFactory( IndexProvider indexProvider )
+        {
+            super( ExtensionType.DATABASE, indexProvider.getClass().getSimpleName() );
+            this.indexProvider = indexProvider;
+        }
+
+		@Override
         public Lifecycle newInstance( KernelContext context, NoDeps noDeps )
         {
             return indexProvider;
         }
 
-        interface NoDeps
+		interface NoDeps
         {
-        }
-
-        PredefinedIndexProviderFactory( IndexProvider indexProvider )
-        {
-            super( ExtensionType.DATABASE, indexProvider.getClass().getSimpleName() );
-            this.indexProvider = indexProvider;
         }
     }
 }

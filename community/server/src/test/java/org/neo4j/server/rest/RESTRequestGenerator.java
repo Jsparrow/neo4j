@@ -266,10 +266,7 @@ public class RESTRequestGenerator
 
     private <T extends Builder> T withHeaders( T builder )
     {
-        for ( Entry<String,String> entry : addedRequestHeaders.entrySet() )
-        {
-            builder.header(entry.getKey(),entry.getValue());
-        }
+        addedRequestHeaders.entrySet().forEach(entry -> builder.header(entry.getKey(), entry.getValue()));
         return builder;
     }
 
@@ -297,11 +294,8 @@ public class RESTRequestGenerator
         {
             assertTrue( "wrong response type: " + data.entity, response.getType().isCompatible( type ) );
         }
-        for ( Pair<String,Predicate<String>> headerField : headerFields )
-        {
-            assertTrue( "wrong headers: " + response.getHeaders(), headerField.other().test( response.getHeaders()
-                    .getFirst( headerField.first() ) ) );
-        }
+        headerFields.forEach(headerField -> assertTrue("wrong headers: " + response.getHeaders(),
+				headerField.other().test(response.getHeaders().getFirst(headerField.first()))));
         data.setMethod( request.getMethod() );
         data.setUri( uri );
         data.setStatus( responseCode );
@@ -313,10 +307,7 @@ public class RESTRequestGenerator
     private List<String> headerNames( List<Pair<String, Predicate<String>>> headerPredicates )
     {
         List<String> names = new ArrayList<>();
-        for ( Pair<String, Predicate<String>> headerPredicate : headerPredicates )
-        {
-            names.add( headerPredicate.first() );
-        }
+        headerPredicates.forEach(headerPredicate -> names.add(headerPredicate.first()));
         return names;
     }
 
@@ -336,8 +327,7 @@ public class RESTRequestGenerator
             final Collection<String> additionalFilter )
     {
         Map<String, String> filteredHeaders = new TreeMap<>();
-        for ( Entry<String, List<T>> header : headers.entrySet() )
-        {
+        headers.entrySet().forEach(header -> {
             String key = header.getKey();
             if ( filter.contains( key ) || additionalFilter.contains( key ) )
             {
@@ -352,7 +342,7 @@ public class RESTRequestGenerator
                 }
                 filteredHeaders.put( key, values );
             }
-        }
+        });
         return filteredHeaders;
     }
 

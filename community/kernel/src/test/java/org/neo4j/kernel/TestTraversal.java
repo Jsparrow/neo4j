@@ -32,14 +32,14 @@ import static org.neo4j.graphdb.RelationshipType.withName;
 
 public class TestTraversal
 {
-    private static RelationshipType T1 = withName( "T1" );
-    private static RelationshipType T2 = withName( "T2" );
-    private static RelationshipType T3 = withName( "T3" );
+    private static RelationshipType t1 = withName( "T1" );
+    private static RelationshipType t2 = withName( "T2" );
+    private static RelationshipType t3 = withName( "T3" );
 
     @Test
     public void canCreateExpanderWithMultipleTypesAndDirections()
     {
-        assertNotNull( PathExpanders.forTypesAndDirections( T1, INCOMING, T2,
-                OUTGOING, T3, BOTH ) );
+        assertNotNull( PathExpanders.forTypesAndDirections( t1, INCOMING, t2,
+                OUTGOING, t3, BOTH ) );
     }
 }

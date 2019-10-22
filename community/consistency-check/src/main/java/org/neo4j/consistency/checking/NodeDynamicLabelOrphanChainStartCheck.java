@@ -69,20 +69,20 @@ public class NodeDynamicLabelOrphanChainStartCheck
                        CheckerEngine<DynamicRecord, DynamicLabelConsistencyReport> engine,
                        RecordAccess records )
     {
-        if ( record.inUse() && record.isStartRecord() )
-        {
-            Long ownerId = readOwnerFromDynamicLabelsRecord( record );
-            if ( null == ownerId )
-            {
-                // no owner but in use indicates a broken record
-                engine.report().orphanDynamicLabelRecord();
-            }
-            else
-            {
-                // look at owning node record to verify consistency
-                engine.comparativeCheck( records.node( ownerId ), VALID_NODE_RECORD );
-            }
-        }
+        if (!(record.inUse() && record.isStartRecord())) {
+			return;
+		}
+		Long ownerId = readOwnerFromDynamicLabelsRecord( record );
+		if ( null == ownerId )
+		{
+		    // no owner but in use indicates a broken record
+		    engine.report().orphanDynamicLabelRecord();
+		}
+		else
+		{
+		    // look at owning node record to verify consistency
+		    engine.comparativeCheck( records.node( ownerId ), VALID_NODE_RECORD );
+		}
     }
 
     @Override

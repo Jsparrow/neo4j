@@ -58,58 +58,36 @@ import static org.neo4j.unsafe.impl.batchimport.cache.GatheringMemoryStatsVisito
  */
 public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
 {
-    public interface Monitor
-    {
-        void progress( ImportStage stage, int percent );
-    }
-
     public static final Monitor NO_MONITOR = ( stage, percent ) -> {};
-
-    public interface ExternalMonitor
-    {
-        boolean somethingElseBrokeMyNiceOutput();
-    }
-
-    static final ExternalMonitor NO_EXTERNAL_MONITOR = () -> false;
-
-    enum ImportStage
-    {
-        nodeImport,
-        relationshipImport,
-        linking,
-        postProcessing
-    }
-
-    private static final String ESTIMATED_REQUIRED_MEMORY_USAGE = "Estimated required memory usage";
-    private static final String ESTIMATED_DISK_SPACE_USAGE = "Estimated disk space usage";
-    private static final String ESTIMATED_NUMBER_OF_RELATIONSHIP_PROPERTIES = "Estimated number of relationship properties";
-    private static final String ESTIMATED_NUMBER_OF_RELATIONSHIPS = "Estimated number of relationships";
-    private static final String ESTIMATED_NUMBER_OF_NODE_PROPERTIES = "Estimated number of node properties";
-    private static final String ESTIMATED_NUMBER_OF_NODES = "Estimated number of nodes";
-    private static final int DOT_GROUP_SIZE = 10;
-    private static final int DOT_GROUPS_PER_LINE = 5;
-    private static final int PERCENTAGES_PER_LINE = 5;
-
-    private final Monitor monitor;
-    private final ExternalMonitor externalMonitor;
-    private DependencyResolver dependencyResolver;
-    private boolean newInternalStage;
-    private PageCacheArrayFactoryMonitor pageCacheArrayFactoryMonitor;
-
-    // progress of current stage
+	static final ExternalMonitor NO_EXTERNAL_MONITOR = () -> false;
+	private static final String ESTIMATED_REQUIRED_MEMORY_USAGE = "Estimated required memory usage";
+	private static final String ESTIMATED_DISK_SPACE_USAGE = "Estimated disk space usage";
+	private static final String ESTIMATED_NUMBER_OF_RELATIONSHIP_PROPERTIES = "Estimated number of relationship properties";
+	private static final String ESTIMATED_NUMBER_OF_RELATIONSHIPS = "Estimated number of relationships";
+	private static final String ESTIMATED_NUMBER_OF_NODE_PROPERTIES = "Estimated number of node properties";
+	private static final String ESTIMATED_NUMBER_OF_NODES = "Estimated number of nodes";
+	private static final int DOT_GROUP_SIZE = 10;
+	private static final int DOT_GROUPS_PER_LINE = 5;
+	private static final int PERCENTAGES_PER_LINE = 5;
+	private final Monitor monitor;
+	private final ExternalMonitor externalMonitor;
+	private DependencyResolver dependencyResolver;
+	private boolean newInternalStage;
+	private PageCacheArrayFactoryMonitor pageCacheArrayFactoryMonitor;
+	// progress of current stage
     private long goal;
-    private long stashedProgress;
-    private long progress;
-    private ImportStage currentStage;
-    private long lastReportTime;
+	private long stashedProgress;
+	private long progress;
+	private ImportStage currentStage;
+	private long lastReportTime;
 
-    HumanUnderstandableExecutionMonitor( Monitor monitor, ExternalMonitor externalMonitor )
+	HumanUnderstandableExecutionMonitor( Monitor monitor, ExternalMonitor externalMonitor )
     {
         this.monitor = monitor;
         this.externalMonitor = externalMonitor;
     }
 
-    @Override
+	@Override
     public void initialize( DependencyResolver dependencyResolver )
     {
         this.dependencyResolver = dependencyResolver;
@@ -135,12 +113,12 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         System.out.println();
     }
 
-    private static long baselineMemoryRequirement( BatchingNeoStores neoStores )
+	private static long baselineMemoryRequirement( BatchingNeoStores neoStores )
     {
         return totalMemoryUsageOf( neoStores );
     }
 
-    private static long nodesDiskUsage( Estimates estimates, BatchingNeoStores neoStores )
+	private static long nodesDiskUsage( Estimates estimates, BatchingNeoStores neoStores )
     {
         return  // node store
                 estimates.numberOfNodes() * neoStores.getNodeStore().getRecordSize() +
@@ -148,13 +126,13 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
                 estimates.numberOfNodeLabels();
     }
 
-    private static long relationshipsDiskUsage( Estimates estimates, BatchingNeoStores neoStores )
+	private static long relationshipsDiskUsage( Estimates estimates, BatchingNeoStores neoStores )
     {
         return estimates.numberOfRelationships() * neoStores.getRelationshipStore().getRecordSize() *
                 (neoStores.usesDoubleRelationshipRecordUnits() ? 2 : 1);
     }
 
-    @Override
+	@Override
     public void start( StageExecution execution )
     {
         // Divide into 4 progress stages:
@@ -213,12 +191,12 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         lastReportTime = currentTimeMillis();
     }
 
-    private void endPrevious()
+	private void endPrevious()
     {
         updateProgress( goal );
     }
 
-    private void initializeNodeImport( Estimates estimates, IdMapper idMapper, BatchingNeoStores neoStores )
+	private void initializeNodeImport( Estimates estimates, IdMapper idMapper, BatchingNeoStores neoStores )
     {
         long numberOfNodes = estimates.numberOfNodes();
         printStageHeader( "(1/4) Node import",
@@ -240,7 +218,7 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         initializeProgress( goal, ImportStage.nodeImport );
     }
 
-    private void initializeRelationshipImport( Estimates estimates, IdMapper idMapper, BatchingNeoStores neoStores )
+	private void initializeRelationshipImport( Estimates estimates, IdMapper idMapper, BatchingNeoStores neoStores )
     {
         long numberOfRelationships = estimates.numberOfRelationships();
         printStageHeader( "(2/4) Relationship import",
@@ -254,7 +232,7 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         initializeProgress( numberOfRelationships, ImportStage.relationshipImport );
     }
 
-    private void initializeLinking( BatchingNeoStores neoStores,
+	private void initializeLinking( BatchingNeoStores neoStores,
             NodeRelationshipCache nodeRelationshipCache, DataStatistics distribution )
     {
         printStageHeader( "(3/4) Relationship linking",
@@ -275,7 +253,7 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
                 );
     }
 
-    private void initializeMisc( BatchingNeoStores neoStores, DataStatistics distribution )
+	private void initializeMisc( BatchingNeoStores neoStores, DataStatistics distribution )
     {
         printStageHeader( "(4/4) Post processing",
                 ESTIMATED_REQUIRED_MEMORY_USAGE, bytes( baselineMemoryRequirement( neoStores ) ) );
@@ -294,7 +272,7 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
                 );
     }
 
-    private void initializeProgress( long goal, ImportStage stage )
+	private void initializeProgress( long goal, ImportStage stage )
     {
         this.goal = goal;
         this.stashedProgress = 0;
@@ -303,7 +281,7 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         this.newInternalStage = false;
     }
 
-    private void updateProgress( long progress )
+	private void updateProgress( long progress )
     {
         // OK so format goes something like 5 groups of 10 dots per line, which is 5%, i.e. 50 dots for 5%, i.e. 1000 dots for 100%,
         // i.e. granularity is 1/1000
@@ -340,19 +318,19 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         this.progress = max( this.progress, progress );
     }
 
-    private String durationSinceLastReport()
+	private String durationSinceLastReport()
     {
         long diff = currentTimeMillis() - lastReportTime;
         lastReportTime = currentTimeMillis();
         return duration( diff );
     }
 
-    private static int percentage( int line )
+	private static int percentage( int line )
     {
         return (line + 1) * PERCENTAGES_PER_LINE;
     }
 
-    private void printDots( int from, int target )
+	private void printDots( int from, int target )
     {
         int current = from;
         while ( current < target )
@@ -374,18 +352,18 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         }
     }
 
-    private void printPageCacheAllocationWarningIfUsed()
+	private void printPageCacheAllocationWarningIfUsed()
     {
         String allocation = pageCacheArrayFactoryMonitor.pageCacheAllocationOrNull();
-        if ( allocation != null )
-        {
-            System.err.println();
-            System.err.println( "WARNING:" );
-            System.err.println( allocation );
-        }
+        if (allocation == null) {
+			return;
+		}
+		System.err.println();
+		System.err.println( "WARNING:" );
+		System.err.println( allocation );
     }
 
-    private int dotOf( long progress )
+	private int dotOf( long progress )
     {
         // calculated here just to reduce amount of state kept in this instance
         int dots = dotsPerLine() * lines();
@@ -394,34 +372,34 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         return (int) (progress / dotSize);
     }
 
-    private static int lines()
+	private static int lines()
     {
         return 100 / PERCENTAGES_PER_LINE;
     }
 
-    private static int dotsPerLine()
+	private static int dotsPerLine()
     {
         return DOT_GROUPS_PER_LINE * DOT_GROUP_SIZE;
     }
 
-    private void printStageHeader( String name, Object... data )
+	private void printStageHeader( String name, Object... data )
     {
-        System.out.println( name + " " + date( TimeZone.getDefault() ) );
+        System.out.println( new StringBuilder().append(name).append(" ").append(date( TimeZone.getDefault() )).toString() );
         if ( data.length > 0 )
         {
             for ( int i = 0; i < data.length; )
             {
-                System.out.println( "  " + data[i++] + ": " + data[i++] );
+                System.out.println( new StringBuilder().append("  ").append(data[i++]).append(": ").append(data[i++]).toString() );
             }
         }
     }
 
-    @Override
+	@Override
     public void end( StageExecution execution, long totalTimeMillis )
     {
     }
 
-    @Override
+	@Override
     public void done( boolean successful, long totalTimeMillis, String additionalInformation )
     {
         endPrevious();
@@ -430,13 +408,13 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         System.out.println( format( "IMPORT %s in %s. %s", successful ? "DONE" : "FAILED", duration( totalTimeMillis ), additionalInformation ) );
     }
 
-    @Override
+	@Override
     public long nextCheckTime()
     {
         return currentTimeMillis() + 200;
     }
 
-    @Override
+	@Override
     public void check( StageExecution execution )
     {
         reprintProgressIfNecessary();
@@ -446,21 +424,21 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         }
     }
 
-    private void reprintProgressIfNecessary()
+	private void reprintProgressIfNecessary()
     {
-        if ( externalMonitor.somethingElseBrokeMyNiceOutput() )
-        {
-            long prevProgress = this.progress;
-            long prevStashedProgress = this.stashedProgress;
-            this.progress = 0;
-            this.stashedProgress = 0;
-            updateProgress( prevProgress + prevStashedProgress );
-            this.progress = prevProgress;
-            this.stashedProgress = prevStashedProgress;
-        }
+        if (!externalMonitor.somethingElseBrokeMyNiceOutput()) {
+			return;
+		}
+		long prevProgress = this.progress;
+		long prevStashedProgress = this.stashedProgress;
+		this.progress = 0;
+		this.stashedProgress = 0;
+		updateProgress( prevProgress + prevStashedProgress );
+		this.progress = prevProgress;
+		this.stashedProgress = prevStashedProgress;
     }
 
-    private static boolean includeStage( StageExecution execution )
+	private static boolean includeStage( StageExecution execution )
     {
         String name = execution.getStageName();
         return !name.equals( RelationshipGroupStage.NAME ) &&
@@ -468,7 +446,7 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
                !name.equals( ScanAndCacheGroupsStage.NAME );
     }
 
-    private static double weightOf( String stageName )
+	private static double weightOf( String stageName )
     {
         if ( stageName.equals( IdMapperPreparationStage.NAME ) )
         {
@@ -477,12 +455,12 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         return 1;
     }
 
-    private static long weighted( String stageName, long progress )
+	private static long weighted( String stageName, long progress )
     {
         return (long) (progress * weightOf( stageName ));
     }
 
-    private static long progressOf( StageExecution execution )
+	private static long progressOf( StageExecution execution )
     {
         // First see if there's a "progress" stat
         Stat progressStat = findProgressStat( execution.steps() );
@@ -497,7 +475,7 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
         return weighted( execution.getStageName(), doneBatches * batchSize );
     }
 
-    private static Stat findProgressStat( Iterable<Step<?>> steps )
+	private static Stat findProgressStat( Iterable<Step<?>> steps )
     {
         for ( Step<?> step : steps )
         {
@@ -508,5 +486,23 @@ public class HumanUnderstandableExecutionMonitor implements ExecutionMonitor
             }
         }
         return null;
+    }
+
+	enum ImportStage
+    {
+        nodeImport,
+        relationshipImport,
+        linking,
+        postProcessing
+    }
+
+	public interface Monitor
+    {
+        void progress( ImportStage stage, int percent );
+    }
+
+    public interface ExternalMonitor
+    {
+        boolean somethingElseBrokeMyNiceOutput();
     }
 }

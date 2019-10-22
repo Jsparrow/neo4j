@@ -53,8 +53,21 @@ public class ConsistencyCheckTool
 {
     private static final String CONFIG = "config";
     private static final String VERBOSE = "v";
+	private final ConsistencyCheckService consistencyCheckService;
+	private final PrintStream systemOut;
+	private final PrintStream systemError;
+	private final FileSystemAbstraction fs;
 
-    public static void main( String[] args )
+	ConsistencyCheckTool( ConsistencyCheckService consistencyCheckService, FileSystemAbstraction fs,
+            PrintStream systemOut, PrintStream systemError )
+    {
+        this.consistencyCheckService = consistencyCheckService;
+        this.fs = fs;
+        this.systemOut = systemOut;
+        this.systemError = systemError;
+    }
+
+	public static void main( String[] args )
     {
         try
         {
@@ -68,7 +81,7 @@ public class ConsistencyCheckTool
         }
     }
 
-    public static ConsistencyCheckService.Result runConsistencyCheckTool( String[] args, PrintStream outStream,
+	public static ConsistencyCheckService.Result runConsistencyCheckTool( String[] args, PrintStream outStream,
                                                                           PrintStream errStream )
             throws ToolFailureException
     {
@@ -92,21 +105,7 @@ public class ConsistencyCheckTool
         }
     }
 
-    private final ConsistencyCheckService consistencyCheckService;
-    private final PrintStream systemOut;
-    private final PrintStream systemError;
-    private final FileSystemAbstraction fs;
-
-    ConsistencyCheckTool( ConsistencyCheckService consistencyCheckService, FileSystemAbstraction fs,
-            PrintStream systemOut, PrintStream systemError )
-    {
-        this.consistencyCheckService = consistencyCheckService;
-        this.fs = fs;
-        this.systemOut = systemOut;
-        this.systemError = systemError;
-    }
-
-    ConsistencyCheckService.Result run( String... args ) throws ToolFailureException
+	ConsistencyCheckService.Result run( String... args ) throws ToolFailureException
     {
         Args arguments = Args.withFlags( VERBOSE ).parse( args );
 
@@ -131,12 +130,12 @@ public class ConsistencyCheckTool
         }
     }
 
-    private static boolean isVerbose( Args arguments )
+	private static boolean isVerbose( Args arguments )
     {
         return arguments.getBoolean( VERBOSE, false, true );
     }
 
-    private void checkDbState( DatabaseLayout databaseLayout, Config tuningConfiguration ) throws ToolFailureException
+	private void checkDbState( DatabaseLayout databaseLayout, Config tuningConfiguration ) throws ToolFailureException
     {
         try ( JobScheduler jobScheduler = createInitialisedScheduler();
               PageCache pageCache = ConfigurableStandalonePageCacheFactory.createPageCache( fs, tuningConfiguration, jobScheduler ) )
@@ -153,7 +152,7 @@ public class ConsistencyCheckTool
         }
     }
 
-    private File determineStoreDirectory( Args arguments ) throws ToolFailureException
+	private File determineStoreDirectory( Args arguments ) throws ToolFailureException
     {
         List<String> unprefixedArguments = arguments.orphans();
         if ( unprefixedArguments.size() != 1 )
@@ -169,7 +168,7 @@ public class ConsistencyCheckTool
         return storeDir;
     }
 
-    private static Config readConfiguration( Args arguments ) throws ToolFailureException
+	private static Config readConfiguration( Args arguments ) throws ToolFailureException
     {
         String configFilePath = arguments.get( CONFIG, null );
         if ( configFilePath != null )
@@ -187,7 +186,7 @@ public class ConsistencyCheckTool
         return Config.defaults();
     }
 
-    private String usage()
+	private String usage()
     {
         return joinAsLines(
                 jarUsage( getClass(), " [-config <neo4j.conf>] [-v] <storedir>" ),
@@ -196,6 +195,11 @@ public class ConsistencyCheckTool
                 "         -v                  Produce execution output.",
                 "         <storedir>          Is the path to the store to check."
         );
+    }
+
+	private static void exit()
+    {
+        System.exit( 1 );
     }
 
     public static class ToolFailureException extends Exception
@@ -224,10 +228,5 @@ public class ConsistencyCheckTool
                 getCause().printStackTrace( System.err );
             }
         }
-    }
-
-    private static void exit()
-    {
-        System.exit( 1 );
     }
 }

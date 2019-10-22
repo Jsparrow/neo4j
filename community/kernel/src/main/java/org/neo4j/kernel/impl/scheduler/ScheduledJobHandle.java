@@ -101,11 +101,11 @@ final class ScheduledJobHandle extends AtomicInteger implements JobHandle
 
     void submitIfRunnable( ThreadPoolManager pools )
     {
-        if ( compareAndSet( RUNNABLE, SUBMITTED ) )
-        {
-            latestHandle = pools.submit( group, task );
-            handleRelease.release();
-        }
+        if (!compareAndSet( RUNNABLE, SUBMITTED )) {
+			return;
+		}
+		latestHandle = pools.submit( group, task );
+		handleRelease.release();
     }
 
     @Override
@@ -117,10 +117,7 @@ final class ScheduledJobHandle extends AtomicInteger implements JobHandle
         {
             handle.cancel( mayInterruptIfRunning );
         }
-        for ( CancelListener cancelListener : cancelListeners )
-        {
-            cancelListener.cancelled( mayInterruptIfRunning );
-        }
+        cancelListeners.forEach(cancelListener -> cancelListener.cancelled(mayInterruptIfRunning));
         // Release the handle to allow waitTermination() to observe the cancellation.
         handleRelease.release();
     }
@@ -134,18 +131,18 @@ final class ScheduledJobHandle extends AtomicInteger implements JobHandle
         {
             handleDelegate.waitTermination();
         }
-        if ( get() == FAILED )
-        {
-            Throwable exception = this.lastException;
-            if ( exception != null )
-            {
-                throw new ExecutionException( exception );
-            }
-            else
-            {
-                throw new CancellationException();
-            }
-        }
+        if (get() != FAILED) {
+			return;
+		}
+		Throwable exception = this.lastException;
+		if ( exception != null )
+		{
+		    throw new ExecutionException( exception );
+		}
+		else
+		{
+		    throw new CancellationException();
+		}
     }
 
     @Override

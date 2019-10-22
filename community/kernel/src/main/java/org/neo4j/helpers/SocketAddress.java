@@ -108,12 +108,11 @@ public class SocketAddress
 
     public static String format( java.net.SocketAddress address )
     {
-        if ( address instanceof InetSocketAddress )
-        {
-            InetSocketAddress inetSocketAddress = (InetSocketAddress) address;
-            return format( inetSocketAddress.getHostString(), inetSocketAddress.getPort() );
-        }
-        return address.toString();
+        if (!(address instanceof InetSocketAddress)) {
+			return address.toString();
+		}
+		InetSocketAddress inetSocketAddress = (InetSocketAddress) address;
+		return format( inetSocketAddress.getHostString(), inetSocketAddress.getPort() );
     }
 
     public static String format( String hostname, int port )

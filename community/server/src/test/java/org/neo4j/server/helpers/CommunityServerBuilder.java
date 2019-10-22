@@ -55,45 +55,64 @@ public class CommunityServerBuilder
 {
     private static final ListenSocketAddress ANY_ADDRESS = new ListenSocketAddress( "localhost", 0 );
 
-    protected final LogProvider logProvider;
-    private ListenSocketAddress address = new ListenSocketAddress( "localhost", Encryption.NONE.defaultPort );
-    private ListenSocketAddress httpsAddress = new ListenSocketAddress( "localhost", Encryption.TLS.defaultPort );
-    private String maxThreads;
-    private String dataDir;
-    private String managementUri = "/db/manage/";
-    private String restUri = "/db/data/";
-    private PreFlightTasks preflightTasks;
-    private final HashMap<String, String> thirdPartyPackages = new HashMap<>();
-    private final Properties arbitraryProperties = new Properties();
-
     static
     {
         System.setProperty( "sun.net.http.allowRestrictedHeaders", "true" );
     }
 
-    private String[] autoIndexedNodeKeys;
-    private final String[] autoIndexedRelationshipKeys = null;
-    private String[] securityRuleClassNames;
-    private boolean persistent;
-    private boolean httpEnabled = true;
-    private boolean httpsEnabled;
+	protected final LogProvider logProvider;
 
-    public static CommunityServerBuilder server( LogProvider logProvider )
+	private ListenSocketAddress address = new ListenSocketAddress( "localhost", Encryption.NONE.defaultPort );
+
+	private ListenSocketAddress httpsAddress = new ListenSocketAddress( "localhost", Encryption.TLS.defaultPort );
+
+	private String maxThreads;
+
+	private String dataDir;
+
+	private String managementUri = "/db/manage/";
+
+	private String restUri = "/db/data/";
+
+	private PreFlightTasks preflightTasks;
+
+	private final HashMap<String, String> thirdPartyPackages = new HashMap<>();
+
+	private final Properties arbitraryProperties = new Properties();
+
+	private String[] autoIndexedNodeKeys;
+
+	private final String[] autoIndexedRelationshipKeys = null;
+
+	private String[] securityRuleClassNames;
+
+	private boolean persistent;
+
+	private boolean httpEnabled = true;
+
+	private boolean httpsEnabled;
+
+	protected CommunityServerBuilder( LogProvider logProvider )
+    {
+        this.logProvider = logProvider;
+    }
+
+	public static CommunityServerBuilder server( LogProvider logProvider )
     {
         return new CommunityServerBuilder( logProvider );
     }
 
-    public static CommunityServerBuilder server()
+	public static CommunityServerBuilder server()
     {
         return new CommunityServerBuilder( NullLogProvider.getInstance() );
     }
 
-    public static CommunityServerBuilder serverOnRandomPorts()
+	public static CommunityServerBuilder serverOnRandomPorts()
     {
         return server().onRandomPorts();
     }
 
-    public CommunityNeoServer build() throws IOException
+	public CommunityNeoServer build() throws IOException
     {
         if ( dataDir == null && persistent )
         {
@@ -108,13 +127,13 @@ public class CommunityServerBuilder
                 .monitors( new Monitors() ) );
     }
 
-    protected CommunityNeoServer build( File configFile, Config config,
+	protected CommunityNeoServer build( File configFile, Config config,
             GraphDatabaseFacadeFactory.Dependencies dependencies )
     {
         return new TestCommunityNeoServer( config, configFile, dependencies );
     }
 
-    public File createConfigFiles() throws IOException
+	public File createConfigFiles() throws IOException
     {
         File temporaryConfigFile = ServerTestUtils.createTempConfigFile();
         File temporaryFolder = ServerTestUtils.createTempDir();
@@ -124,7 +143,7 @@ public class CommunityServerBuilder
         return temporaryConfigFile;
     }
 
-    public Map<String, String> createConfiguration( File temporaryFolder )
+	public Map<String, String> createConfiguration( File temporaryFolder )
     {
         Map<String, String> properties = stringMap(
                 ServerSettings.management_api_path.name(), managementUri,
@@ -190,37 +209,29 @@ public class CommunityServerBuilder
         properties.put( GraphDatabaseSettings.pagecache_memory.name(), "8m" );
         properties.put( GraphDatabaseSettings.shutdown_transaction_end_timeout.name(), "0s" );
 
-        for ( Object key : arbitraryProperties.keySet() )
-        {
-            properties.put( String.valueOf( key ), String.valueOf( arbitraryProperties.get( key ) ) );
-        }
+        arbitraryProperties.keySet().forEach(key -> properties.put(String.valueOf(key), String.valueOf(arbitraryProperties.get(key))));
         return properties;
     }
 
-    protected CommunityServerBuilder( LogProvider logProvider )
-    {
-        this.logProvider = logProvider;
-    }
-
-    public CommunityServerBuilder persistent()
+	public CommunityServerBuilder persistent()
     {
         this.persistent = true;
         return this;
     }
 
-    public CommunityServerBuilder withMaxJettyThreads( int maxThreads )
+	public CommunityServerBuilder withMaxJettyThreads( int maxThreads )
     {
         this.maxThreads = String.valueOf( maxThreads );
         return this;
     }
 
-    public CommunityServerBuilder usingDataDir( String dataDir )
+	public CommunityServerBuilder usingDataDir( String dataDir )
     {
         this.dataDir = dataDir;
         return this;
     }
 
-    public CommunityServerBuilder withRelativeManagementApiUriPath( String uri )
+	public CommunityServerBuilder withRelativeManagementApiUriPath( String uri )
     {
         try
         {
@@ -241,7 +252,7 @@ public class CommunityServerBuilder
         return this;
     }
 
-    public CommunityServerBuilder withRelativeRestApiUriPath( String uri )
+	public CommunityServerBuilder withRelativeRestApiUriPath( String uri )
     {
         try
         {
@@ -262,72 +273,72 @@ public class CommunityServerBuilder
         return this;
     }
 
-    public CommunityServerBuilder withDefaultDatabaseTuning()
+	public CommunityServerBuilder withDefaultDatabaseTuning()
     {
         return this;
     }
 
-    public CommunityServerBuilder withThirdPartyJaxRsPackage( String packageName, String mountPoint )
+	public CommunityServerBuilder withThirdPartyJaxRsPackage( String packageName, String mountPoint )
     {
         thirdPartyPackages.put( packageName, mountPoint );
         return this;
     }
 
-    public CommunityServerBuilder withAutoIndexingEnabledForNodes( String... keys )
+	public CommunityServerBuilder withAutoIndexingEnabledForNodes( String... keys )
     {
         autoIndexedNodeKeys = keys;
         return this;
     }
 
-    public CommunityServerBuilder onRandomPorts()
+	public CommunityServerBuilder onRandomPorts()
     {
         this.onHttpsAddress( ANY_ADDRESS );
         this.onAddress( ANY_ADDRESS );
         return this;
     }
 
-    public CommunityServerBuilder onAddress( ListenSocketAddress address )
+	public CommunityServerBuilder onAddress( ListenSocketAddress address )
     {
         this.address = address;
         return this;
     }
 
-    public CommunityServerBuilder onHttpsAddress( ListenSocketAddress address )
+	public CommunityServerBuilder onHttpsAddress( ListenSocketAddress address )
     {
         this.httpsAddress = address;
         return this;
     }
 
-    public CommunityServerBuilder withSecurityRules( String... securityRuleClassNames )
+	public CommunityServerBuilder withSecurityRules( String... securityRuleClassNames )
     {
         this.securityRuleClassNames = securityRuleClassNames;
         return this;
     }
 
-    public CommunityServerBuilder withHttpsEnabled()
+	public CommunityServerBuilder withHttpsEnabled()
     {
         httpsEnabled = true;
         return this;
     }
 
-    public CommunityServerBuilder withHttpDisabled()
+	public CommunityServerBuilder withHttpDisabled()
     {
         httpEnabled = false;
         return this;
     }
 
-    public CommunityServerBuilder withProperty( String key, String value )
+	public CommunityServerBuilder withProperty( String key, String value )
     {
         arbitraryProperties.put( key, value );
         return this;
     }
 
-    protected DatabaseActions createDatabaseActionsObject( Database database )
+	protected DatabaseActions createDatabaseActionsObject( Database database )
     {
         return new DatabaseActions( database.getGraph() );
     }
 
-    private File buildBefore() throws IOException
+	private File buildBefore() throws IOException
     {
         File configFile = createConfigFiles();
 
@@ -345,7 +356,7 @@ public class CommunityServerBuilder
         return configFile;
     }
 
-    private class TestCommunityNeoServer extends CommunityNeoServer
+	private class TestCommunityNeoServer extends CommunityNeoServer
     {
         private final File configFile;
 

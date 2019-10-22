@@ -44,16 +44,6 @@ package org.neo4j.kernel.impl.locking;
  */
 public interface LockService
 {
-    enum LockType
-    {
-        READ_LOCK,
-        WRITE_LOCK
-    }
-
-    Lock acquireNodeLock( long nodeId, LockType type );
-
-    Lock acquireRelationshipLock( long relationshipId, LockType type );
-
     Lock NO_LOCK = new Lock()
     {
         @Override
@@ -63,7 +53,7 @@ public interface LockService
         }
     };
 
-    LockService NO_LOCK_SERVICE = new LockService()
+	LockService NO_LOCK_SERVICE = new LockService()
     {
         @Override
         public Lock acquireNodeLock( long nodeId, LockType type )
@@ -77,4 +67,14 @@ public interface LockService
             return NO_LOCK;
         }
     };
+
+	Lock acquireNodeLock( long nodeId, LockType type );
+
+	Lock acquireRelationshipLock( long relationshipId, LockType type );
+
+	enum LockType
+    {
+        READ_LOCK,
+        WRITE_LOCK
+    }
 }

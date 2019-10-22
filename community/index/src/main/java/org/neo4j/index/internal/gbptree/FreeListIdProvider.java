@@ -29,40 +29,18 @@ import static org.neo4j.index.internal.gbptree.PageCursorUtil.goTo;
 
 class FreeListIdProvider implements IdProvider
 {
-    interface Monitor
-    {
-        /**
-         * Called when a page id was acquired for storing released ids into.
-         *
-         * @param freelistPageId page id of the acquired page.
-         */
-        default void acquiredFreelistPageId( long freelistPageId )
-        {   // Empty by default
-        }
-
-        /**
-         * Called when a free-list page was released due to all its ids being acquired.
-         * A released free-list page ends up in the free-list itself.
-         *
-         * @param freelistPageId page if of the released page.
-         */
-        default void releasedFreelistPageId( long freelistPageId )
-        {   // Empty by default
-        }
-    }
-
     static final Monitor NO_MONITOR = new Monitor()
     {   // Empty
     };
 
-    private final PagedFile pagedFile;
+	private final PagedFile pagedFile;
 
-    /**
+	/**
      * {@link FreelistNode} governs physical layout of a free-list.
      */
     private final FreelistNode freelistNode;
 
-    /**
+	/**
      * There's one free-list which both stable and unstable state (the state pages A/B) shares.
      * Each free list page links to a potential next free-list page, by using the last entry containing
      * page id to the next.
@@ -86,21 +64,24 @@ class FreeListIdProvider implements IdProvider
      * </pre>
      */
     private volatile long writePageId;
-    private volatile long readPageId;
-    private volatile int writePos;
-    private volatile int readPos;
 
-    /**
+	private volatile long readPageId;
+
+	private volatile int writePos;
+
+	private volatile int readPos;
+
+	/**
      * Last allocated page id, used for allocating new ids as more data gets inserted into the tree.
      */
     private volatile long lastId;
 
-    /**
+	/**
      * For monitoring internal free-list activity.
      */
     private final Monitor monitor;
 
-    FreeListIdProvider( PagedFile pagedFile, int pageSize, long lastId, Monitor monitor )
+	FreeListIdProvider( PagedFile pagedFile, int pageSize, long lastId, Monitor monitor )
     {
         this.pagedFile = pagedFile;
         this.monitor = monitor;
@@ -108,7 +89,7 @@ class FreeListIdProvider implements IdProvider
         this.lastId = lastId;
     }
 
-    void initialize( long lastId, long writePageId, long readPageId, int writePos, int readPos )
+	void initialize( long lastId, long writePageId, long readPageId, int writePos, int readPos )
     {
         this.lastId = lastId;
         this.writePageId = writePageId;
@@ -117,7 +98,7 @@ class FreeListIdProvider implements IdProvider
         this.readPos = readPos;
     }
 
-    void initializeAfterCreation() throws IOException
+	void initializeAfterCreation() throws IOException
     {
         // Allocate a new free-list page id and set both write/read free-list page id to it.
         writePageId = nextLastId();
@@ -131,13 +112,13 @@ class FreeListIdProvider implements IdProvider
         }
     }
 
-    @Override
+	@Override
     public long acquireNewId( long stableGeneration, long unstableGeneration ) throws IOException
     {
         return acquireNewId( stableGeneration, unstableGeneration, true );
     }
 
-    private long acquireNewId( long stableGeneration, long unstableGeneration, boolean allowTakeLastFromPage )
+	private long acquireNewId( long stableGeneration, long unstableGeneration, boolean allowTakeLastFromPage )
             throws IOException
     {
         // Acquire id from free-list or end of store file
@@ -154,7 +135,7 @@ class FreeListIdProvider implements IdProvider
         return acquiredId;
     }
 
-    private long acquireNewIdFromFreelistOrEnd( long stableGeneration, long unstableGeneration,
+	private long acquireNewIdFromFreelistOrEnd( long stableGeneration, long unstableGeneration,
             boolean allowTakeLastFromPage ) throws IOException
     {
         if ( (readPageId != writePageId || readPos < writePos) &&
@@ -205,12 +186,12 @@ class FreeListIdProvider implements IdProvider
         return nextLastId();
     }
 
-    private long nextLastId()
+	private long nextLastId()
     {
         return ++lastId;
     }
 
-    @Override
+	@Override
     public void releaseId( long stableGeneration, long unstableGeneration, long id ) throws IOException
     {
         try ( PageCursor cursor = pagedFile.io( writePageId, PagedFile.PF_SHARED_WRITE_LOCK ) )
@@ -220,24 +201,24 @@ class FreeListIdProvider implements IdProvider
             writePos++;
         }
 
-        if ( writePos >= freelistNode.maxEntries() )
-        {
-            // Current free-list write page is full, allocate a new one.
-            long nextFreelistPage = acquireNewId( stableGeneration, unstableGeneration, false );
-            try ( PageCursor cursor = pagedFile.io( writePageId, PagedFile.PF_SHARED_WRITE_LOCK ) )
-            {
-                PageCursorUtil.goTo( cursor, "free-list write page", writePageId );
-                FreelistNode.initialize( cursor );
-                // Link previous --> new writer page
-                FreelistNode.setNext( cursor, nextFreelistPage );
-            }
-            writePageId = nextFreelistPage;
-            writePos = 0;
-            monitor.acquiredFreelistPageId( nextFreelistPage );
-        }
+        if (writePos < freelistNode.maxEntries()) {
+			return;
+		}
+		// Current free-list write page is full, allocate a new one.
+		long nextFreelistPage = acquireNewId( stableGeneration, unstableGeneration, false );
+		try ( PageCursor cursor = pagedFile.io( writePageId, PagedFile.PF_SHARED_WRITE_LOCK ) )
+		{
+		    PageCursorUtil.goTo( cursor, "free-list write page", writePageId );
+		    FreelistNode.initialize( cursor );
+		    // Link previous --> new writer page
+		    FreelistNode.setNext( cursor, nextFreelistPage );
+		}
+		writePageId = nextFreelistPage;
+		writePos = 0;
+		monitor.acquiredFreelistPageId( nextFreelistPage );
     }
 
-    @Override
+	@Override
     public void visitFreelist( IdProviderVisitor visitor ) throws IOException
     {
         if ( readPageId == FreelistNode.NO_PAGE_ID )
@@ -282,35 +263,57 @@ class FreeListIdProvider implements IdProvider
         }
     }
 
-    @Override
+	@Override
     public long lastId()
     {
         return lastId;
     }
 
-    long writePageId()
+	long writePageId()
     {
         return writePageId;
     }
 
-    long readPageId()
+	long readPageId()
     {
         return readPageId;
     }
 
-    int writePos()
+	int writePos()
     {
         return writePos;
     }
 
-    int readPos()
+	int readPos()
     {
         return readPos;
     }
 
-    // test-access method
+	// test-access method
     int entriesPerPage()
     {
         return freelistNode.maxEntries();
+    }
+
+	interface Monitor
+    {
+        /**
+         * Called when a page id was acquired for storing released ids into.
+         *
+         * @param freelistPageId page id of the acquired page.
+         */
+        default void acquiredFreelistPageId( long freelistPageId )
+        {   // Empty by default
+        }
+
+        /**
+         * Called when a free-list page was released due to all its ids being acquired.
+         * A released free-list page ends up in the free-list itself.
+         *
+         * @param freelistPageId page if of the released page.
+         */
+        default void releasedFreelistPageId( long freelistPageId )
+        {   // Empty by default
+        }
     }
 }

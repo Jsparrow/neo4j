@@ -121,7 +121,7 @@ public class IndexProxyAdapter implements IndexProxy
     }
 
     @Override
-    public IndexPopulationFailure getPopulationFailure() throws IllegalStateException
+    public IndexPopulationFailure getPopulationFailure()
     {
         throw new IllegalStateException( "This index isn't failed" );
     }

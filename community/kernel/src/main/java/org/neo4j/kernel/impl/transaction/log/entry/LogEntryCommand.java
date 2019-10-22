@@ -47,7 +47,7 @@ public class LogEntryCommand extends AbstractLogEntry
     @Override
     public String toString()
     {
-        return "Command[" + command + "]";
+        return new StringBuilder().append("Command[").append(command).append("]").toString();
     }
 
     @Override

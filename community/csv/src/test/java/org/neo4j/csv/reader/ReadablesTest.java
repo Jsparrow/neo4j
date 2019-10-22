@@ -55,7 +55,12 @@ import static java.util.Arrays.copyOfRange;
 @RunWith( Parameterized.class )
 public class ReadablesTest
 {
-    @Parameters
+    @Rule
+    public final TestDirectory directory = TestDirectory.testDirectory();
+	@Parameter
+    public ReadMethod readMethod;
+
+	@Parameters
     public static Collection<ReadMethod> readMethods()
     {
         return Arrays.asList(
@@ -73,18 +78,7 @@ public class ReadablesTest
                 } );
     }
 
-    @Rule
-    public final TestDirectory directory = TestDirectory.testDirectory();
-
-    interface ReadMethod
-    {
-        char[] read( CharReadable readable, int length ) throws IOException;
-    }
-
-    @Parameter
-    public ReadMethod readMethod;
-
-    @Test
+	@Test
     public void shouldReadTextCompressedInZipArchiveWithSingleFileIn() throws Exception
     {
         // GIVEN
@@ -97,7 +91,7 @@ public class ReadablesTest
         assertReadText( compressed, text );
     }
 
-    @Test
+	@Test
     public void shouldReadTextCompressedInGZipFile() throws Exception
     {
         // GIVEN
@@ -110,7 +104,7 @@ public class ReadablesTest
         assertReadText( compressed, text );
     }
 
-    @Test
+	@Test
     public void shouldReadPlainTextFile() throws Exception
     {
         // GIVEN
@@ -123,7 +117,7 @@ public class ReadablesTest
         assertReadText( plainText, text );
     }
 
-    @Test
+	@Test
     public void shouldReadTheOnlyRealFileInThere() throws Exception
     {
         // GIVEN
@@ -136,7 +130,7 @@ public class ReadablesTest
         assertReadText( compressed, text );
     }
 
-    @Test
+	@Test
     public void shouldFailWhenThereAreMoreThanOneSuitableFileInThere() throws Exception
     {
         // GIVEN
@@ -156,7 +150,7 @@ public class ReadablesTest
         }
     }
 
-    @Test
+	@Test
     public void shouldTrackPosition() throws Exception
     {
         // GIVEN
@@ -181,19 +175,19 @@ public class ReadablesTest
         assertEquals( data.toCharArray().length, expected );
     }
 
-    @Test
+	@Test
     public void shouldComplyWithUtf8CharsetForExample() throws Exception
     {
         shouldComplyWithSpecifiedCharset( StandardCharsets.UTF_8 );
     }
 
-    @Test
+	@Test
     public void shouldComplyWithIso88591CharsetForExample() throws Exception
     {
         shouldComplyWithSpecifiedCharset( StandardCharsets.ISO_8859_1 );
     }
 
-    @Test
+	@Test
     public void shouldSkipBOM() throws Exception
     {
         // GIVEN
@@ -207,7 +201,7 @@ public class ReadablesTest
         shouldReadTextFromFileWithBom( Magic.BOM_UTF_8, text );
     }
 
-    @Test
+	@Test
     public void shouldReadTextFromWrappedInputStream() throws Exception
     {
         // GIVEN
@@ -220,7 +214,7 @@ public class ReadablesTest
         assertReadTextAsInputStream( file, text );
     }
 
-    @Test
+	@Test
     public void shouldSkipBomWhenWrappingInputStream() throws Exception
     {
         // GIVEN
@@ -234,13 +228,13 @@ public class ReadablesTest
         shouldReadTextFromInputStreamWithBom( Magic.BOM_UTF_8, text );
     }
 
-    @Test
+	@Test
     public void shouldExtractFirstLine() throws Exception
     {
         // given
         String firstLine = "characters of first line";
         String secondLine = "here on the second line";
-        CharReadable reader = Readables.wrap( firstLine + "\n" + secondLine );
+        CharReadable reader = Readables.wrap( new StringBuilder().append(firstLine).append("\n").append(secondLine).toString() );
 
         // when
         char[] firstLineCharacters = Readables.extractFirstLineFrom( reader );
@@ -252,7 +246,7 @@ public class ReadablesTest
         assertArrayEquals( secondLine.toCharArray(), secondLineCharacters );
     }
 
-    @Test
+	@Test
     public void shouldExtractOnlyLine() throws Exception
     {
         // given
@@ -268,17 +262,17 @@ public class ReadablesTest
         assertEquals( -1, readAfterwards );
     }
 
-    private void shouldReadTextFromFileWithBom( Magic bom, String text ) throws IOException
+	private void shouldReadTextFromFileWithBom( Magic bom, String text ) throws IOException
     {
         assertReadText( writeToFile( bom.bytes(), text, bom.encoding() ), text );
     }
 
-    private void shouldReadTextFromInputStreamWithBom( Magic bom, String text ) throws IOException
+	private void shouldReadTextFromInputStreamWithBom( Magic bom, String text ) throws IOException
     {
         assertReadTextAsInputStream( writeToFile( bom.bytes(), text, bom.encoding() ), text );
     }
 
-    private void shouldComplyWithSpecifiedCharset( Charset charset ) throws Exception
+	private void shouldComplyWithSpecifiedCharset( Charset charset ) throws Exception
     {
         // GIVEN
         String data = "abcåäö[]{}";
@@ -299,7 +293,7 @@ public class ReadablesTest
         }
     }
 
-    private File writeToFile( String data, Charset charset ) throws IOException
+	private File writeToFile( String data, Charset charset ) throws IOException
     {
         File file = new File( directory.directory(), "text-" + charset.name() );
         try ( Writer writer = new OutputStreamWriter( new FileOutputStream( file ), charset ) )
@@ -309,7 +303,7 @@ public class ReadablesTest
         return file;
     }
 
-    private File writeToFile( byte[] header, String data, Charset charset ) throws IOException
+	private File writeToFile( byte[] header, String data, Charset charset ) throws IOException
     {
         File file = new File( directory.directory(), "text-" + charset.name() );
         try ( OutputStream out = new FileOutputStream( file );
@@ -321,7 +315,7 @@ public class ReadablesTest
         return file;
     }
 
-    private File write( String text ) throws IOException
+	private File write( String text ) throws IOException
     {
         File file = directory.file( "plain-text" );
         try ( OutputStream out = new FileOutputStream( file ) )
@@ -331,9 +325,7 @@ public class ReadablesTest
         return file;
     }
 
-    // TODO test for failing reading a ZIP archive with multiple files in
-
-    private File compressWithZip( String text, String... otherEntries ) throws IOException
+	private File compressWithZip( String text, String... otherEntries ) throws IOException
     {
         File file = directory.file( "compressed" );
         try ( ZipOutputStream out = new ZipOutputStream( new FileOutputStream( file ) ) )
@@ -349,7 +341,7 @@ public class ReadablesTest
         return file;
     }
 
-    private File compressWithGZip( String text ) throws IOException
+	private File compressWithGZip( String text ) throws IOException
     {
         File file = directory.file( "compressed" );
         try ( GZIPOutputStream out = new GZIPOutputStream( new FileOutputStream( file ) ) )
@@ -359,12 +351,12 @@ public class ReadablesTest
         return file;
     }
 
-    private void assertReadText( File file, String text ) throws IOException
+	private void assertReadText( File file, String text ) throws IOException
     {
         assertReadText( Readables.files( Charset.defaultCharset(), file ), text );
     }
 
-    private void assertReadTextAsInputStream( File file, String text ) throws IOException
+	private void assertReadTextAsInputStream( File file, String text ) throws IOException
     {
         try ( InputStream stream = new FileInputStream( file ) )
         {
@@ -372,9 +364,17 @@ public class ReadablesTest
         }
     }
 
-    private void assertReadText( CharReadable readable, String text ) throws IOException
+	private void assertReadText( CharReadable readable, String text ) throws IOException
     {
         char[] readText = readMethod.read( readable, text.toCharArray().length );
         assertArrayEquals( readText, text.toCharArray() );
     }
+
+	interface ReadMethod
+    {
+        char[] read( CharReadable readable, int length ) throws IOException;
+    }
+
+    // TODO test for failing reading a ZIP archive with multiple files in
+
 }

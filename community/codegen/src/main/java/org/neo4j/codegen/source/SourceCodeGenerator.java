@@ -76,14 +76,13 @@ class SourceCodeGenerator extends CodeGenerator
     private synchronized List<JavaSourceFile> sourceFiles()
     {
         List<JavaSourceFile> sourceFiles = new ArrayList<>( classes.size() );
-        for ( Map.Entry<TypeReference, StringBuilder> entry : classes.entrySet() )
-        {
+        classes.entrySet().forEach(entry -> {
             TypeReference reference = entry.getKey();
             StringBuilder source = entry.getValue();
             configuration.visit( reference, source );
             sourceFiles.add( new JavaSourceFile( configuration.sourceBase().uri(
                     reference.packageName(), reference.name(), JavaFileObject.Kind.SOURCE ), source ) );
-        }
+        });
         return sourceFiles;
     }
 }

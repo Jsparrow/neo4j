@@ -69,7 +69,7 @@ public class AuthProcedures
         securityContext.assertCredentialsNotExpired();
         if ( securityContext.subject().hasUsername( username ) )
         {
-            throw new InvalidArgumentsException( "Deleting yourself (user '" + username + "') is not allowed." );
+            throw new InvalidArgumentsException( new StringBuilder().append("Deleting yourself (user '").append(username).append("') is not allowed.").toString() );
         }
         userManager.deleteUser( username );
     }

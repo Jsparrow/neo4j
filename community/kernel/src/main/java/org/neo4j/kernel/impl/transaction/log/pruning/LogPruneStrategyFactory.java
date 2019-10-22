@@ -100,8 +100,7 @@ public class LogPruneStrategyFactory
             case "days":
                 return new EntryTimespanThreshold( clock, DAYS, thresholdValue );
             default:
-                throw new IllegalArgumentException( "Invalid log pruning configuration value '" + originalConfigValue +
-                        "'. Invalid type '" + value.type + "', valid are files, size, txs, entries, hours, days." );
+                throw new IllegalArgumentException( new StringBuilder().append("Invalid log pruning configuration value '").append(originalConfigValue).append("'. Invalid type '").append(value.type).append("', valid are files, size, txs, entries, hours, days.").toString() );
         }
     }
 }

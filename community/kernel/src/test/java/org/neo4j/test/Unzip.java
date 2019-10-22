@@ -40,7 +40,7 @@ public class Unzip
         InputStream source = testClass.getResourceAsStream( resource );
         if ( source == null )
         {
-            throw new FileNotFoundException( "Could not find resource '" + resource + "' to unzip" );
+            throw new FileNotFoundException( new StringBuilder().append("Could not find resource '").append(resource).append("' to unzip").toString() );
         }
 
         try ( ZipInputStream zipStream = new ZipInputStream( source ) )

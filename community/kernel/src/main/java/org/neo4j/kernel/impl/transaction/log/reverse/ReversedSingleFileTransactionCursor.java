@@ -124,8 +124,7 @@ public class ReversedSingleFileTransactionCursor implements TransactionCursor
 
         if ( channel.getVersion() != logVersion )
         {
-            throw new IllegalArgumentException( "The channel which was passed in bridged multiple log versions, it started at version " +
-                    logVersion + ", but continued through to version " + channel.getVersion() + ". This isn't supported" );
+            throw new IllegalArgumentException( new StringBuilder().append("The channel which was passed in bridged multiple log versions, it started at version ").append(logVersion).append(", but continued through to version ").append(channel.getVersion()).append(". This isn't supported").toString() );
         }
 
         offsetsLength = offsetCursor;
@@ -138,16 +137,15 @@ public class ReversedSingleFileTransactionCursor implements TransactionCursor
     @Override
     public boolean next() throws IOException
     {
-        if ( !exhausted() )
-        {
-            if ( currentChunkExhausted() )
-            {
-                readNextChunk();
-            }
-            currentChunkTransaction = chunkTransactions.pop();
-            return true;
-        }
-        return false;
+        if (exhausted()) {
+			return false;
+		}
+		if ( currentChunkExhausted() )
+		{
+		    readNextChunk();
+		}
+		currentChunkTransaction = chunkTransactions.pop();
+		return true;
     }
 
     private void readNextChunk() throws IOException

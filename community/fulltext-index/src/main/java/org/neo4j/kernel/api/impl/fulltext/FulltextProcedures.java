@@ -187,8 +187,8 @@ public class FulltextProcedures
         EntityType entityType = indexReference.schema().entityType();
         if ( entityType != EntityType.NODE )
         {
-            throw new IllegalArgumentException( "The '" + name + "' index (" + indexReference + ") is an index on " + entityType +
-                    ", so it cannot be queried for nodes." );
+            throw new IllegalArgumentException( new StringBuilder().append("The '").append(name).append("' index (").append(indexReference).append(") is an index on ").append(entityType)
+					.append(", so it cannot be queried for nodes.").toString() );
         }
         ScoreEntityIterator resultIterator = accessor.query( tx, name, query );
         return resultIterator.stream()
@@ -206,8 +206,8 @@ public class FulltextProcedures
         EntityType entityType = indexReference.schema().entityType();
         if ( entityType != EntityType.RELATIONSHIP )
         {
-            throw new IllegalArgumentException( "The '" + name + "' index (" + indexReference + ") is an index on " + entityType +
-                    ", so it cannot be queried for relationships." );
+            throw new IllegalArgumentException( new StringBuilder().append("The '").append(name).append("' index (").append(indexReference).append(") is an index on ").append(entityType)
+					.append(", so it cannot be queried for relationships.").toString() );
         }
         ScoreEntityIterator resultIterator = accessor.query( tx, name, query );
         return resultIterator.stream()
@@ -228,17 +228,17 @@ public class FulltextProcedures
     private void awaitOnline( IndexReference indexReference ) throws IndexNotFoundKernelException
     {
         // We do the isAdded check on the transaction state first, because indexGetState will grab a schema read-lock, which can deadlock on the write-lock
-        // held by the index populator. Also, if we index was created in this transaction, then we will never see it come online in this transaction anyway.
-        // Indexes don't come online until the transaction that creates them has committed.
-        if ( !((KernelTransactionImplementation)tx).txState().indexDiffSetsBySchema( indexReference.schema() ).isAdded( (IndexDescriptor) indexReference ) )
-        {
-            // If the index was not created in this transaction, then wait for it to come online before querying.
-            Schema schema = db.schema();
-            IndexDefinition index = schema.getIndexByName( indexReference.name() );
-            schema.awaitIndexOnline( index, INDEX_ONLINE_QUERY_TIMEOUT_SECONDS, TimeUnit.SECONDS );
-        }
-        // If the index was created in this transaction, then we skip this check entirely.
-        // We will get an exception later, when we try to get an IndexReader, so this is fine.
+		// held by the index populator. Also, if we index was created in this transaction, then we will never see it come online in this transaction anyway.
+		// Indexes don't come online until the transaction that creates them has committed.
+		// We will get an exception later, when we try to get an IndexReader, so this is fine.
+		// If the index was created in this transaction, then we skip this check entirely.
+		if (((KernelTransactionImplementation)tx).txState().indexDiffSetsBySchema( indexReference.schema() ).isAdded( (IndexDescriptor) indexReference )) {
+			return;
+		}
+		// If the index was not created in this transaction, then wait for it to come online before querying.
+		Schema schema = db.schema();
+		IndexDefinition index = schema.getIndexByName( indexReference.name() );
+		schema.awaitIndexOnline( index, INDEX_ONLINE_QUERY_TIMEOUT_SECONDS, TimeUnit.SECONDS );
     }
 
     public static final class NodeOutput

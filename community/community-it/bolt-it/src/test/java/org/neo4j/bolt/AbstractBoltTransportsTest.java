@@ -90,10 +90,7 @@ public abstract class AbstractBoltTransportsTest
         List<Object[]> result = new ArrayList<>();
         for ( Class<? extends TransportConnection> connectionClass : CONNECTION_CLASSES )
         {
-            for ( Neo4jPack neo4jPack : NEO4J_PACK_VERSIONS )
-            {
-                result.add( new Object[]{connectionClass, neo4jPack, newName( connectionClass, neo4jPack )} );
-            }
+            NEO4J_PACK_VERSIONS.forEach(neo4jPack -> result.add(new Object[] { connectionClass, neo4jPack, newName(connectionClass, neo4jPack) }));
         }
         return result;
     }
@@ -114,6 +111,6 @@ public abstract class AbstractBoltTransportsTest
 
     private static String newName( Class<? extends TransportConnection> connectionClass, Neo4jPack neo4jPack )
     {
-        return connectionClass.getSimpleName() + " & " + neo4jPack;
+        return new StringBuilder().append(connectionClass.getSimpleName()).append(" & ").append(neo4jPack).toString();
     }
 }

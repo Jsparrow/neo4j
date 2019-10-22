@@ -46,10 +46,7 @@ public class LoadCommandProvider extends AdminCommand.Provider
     @Nonnull
     public String description()
     {
-        return "Load a database from an archive. <archive-path> must be an archive created with the dump " +
-                "command. <database> is the name of the database to create. Existing databases can be replaced " +
-                "by specifying --force. It is not possible to replace a database that is mounted in a running " +
-                "Neo4j server.";
+        return new StringBuilder().append("Load a database from an archive. <archive-path> must be an archive created with the dump ").append("command. <database> is the name of the database to create. Existing databases can be replaced ").append("by specifying --force. It is not possible to replace a database that is mounted in a running ").append("Neo4j server.").toString();
     }
 
     @Override

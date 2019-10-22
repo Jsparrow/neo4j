@@ -32,13 +32,18 @@ public abstract class Pair<T1, T2>
     @SuppressWarnings( "rawtypes" )
     private static final Pair EMPTY = Pair.of( null, null );
 
-    @SuppressWarnings( "unchecked" )
+    Pair()
+    {
+        // package private, limited number of subclasses
+    }
+
+	@SuppressWarnings( "unchecked" )
     public static <T1, T2> Pair<T1,T2> empty()
     {
         return EMPTY;
     }
 
-    /**
+	/**
      * Create a new pair of objects.
      *
      * @param first the first object in the pair.
@@ -65,7 +70,7 @@ public abstract class Pair<T1, T2>
         };
     }
 
-    /**
+	/**
      * Alias of {@link #pair(Object, Object)}.
      * @param first the first object in the pair.
      * @param other the other object in the pair.
@@ -78,55 +83,49 @@ public abstract class Pair<T1, T2>
         return pair( first, other );
     }
 
-    Pair()
-    {
-        // package private, limited number of subclasses
-    }
-
-    /**
+	/**
      * @return the first object in the pair.
      */
     public abstract T1 first();
 
-    /**
+	/**
      * @return the other object in the pair.
      */
     public abstract T2 other();
 
-    @Override
+	@Override
     public String toString()
     {
-        return "(" + first() + ", " + other() + ")";
+        return new StringBuilder().append("(").append(first()).append(", ").append(other()).append(")").toString();
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return ( 31 * hashCode( first() ) ) | hashCode( other() );
     }
 
-    @Override
+	@Override
     public boolean equals( Object obj )
     {
         if ( this == obj )
         {
             return true;
         }
-        if ( obj instanceof Pair )
-        {
-            @SuppressWarnings( "rawtypes" )
-            Pair that = (Pair) obj;
-            return equals( this.other(), that.other() ) && equals( this.first(), that.first() );
-        }
-        return false;
+        if (!(obj instanceof Pair)) {
+			return false;
+		}
+		@SuppressWarnings( "rawtypes" )
+		Pair that = (Pair) obj;
+		return equals( this.other(), that.other() ) && equals( this.first(), that.first() );
     }
 
-    static int hashCode( Object obj )
+	static int hashCode( Object obj )
     {
         return obj == null ? 0 : obj.hashCode();
     }
 
-    static boolean equals( Object obj1, Object obj2 )
+	static boolean equals( Object obj1, Object obj2 )
     {
         return ( obj1 == obj2 ) || ( obj1 != null && obj1.equals( obj2 ) );
     }

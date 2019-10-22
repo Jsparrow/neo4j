@@ -65,12 +65,12 @@ public class CypherResultSubGraph implements SubGraph
     public void add( Relationship rel )
     {
         final long id = rel.getId();
-        if ( !relationships.containsKey( id ) )
-        {
-            addRel( id, rel );
-            add( rel.getStartNode() );
-            add( rel.getEndNode() );
-        }
+        if (relationships.containsKey( id )) {
+			return;
+		}
+		addRel( id, rel );
+		add( rel.getStartNode() );
+		add( rel.getEndNode() );
     }
 
     public static SubGraph from( Result result, GraphDatabaseService gds, boolean addBetween )
@@ -79,11 +79,7 @@ public class CypherResultSubGraph implements SubGraph
         final List<String> columns = result.columns();
         for ( Map<String, Object> row : loop( result ) )
         {
-            for ( String column : columns )
-            {
-                final Object value = row.get( column );
-                graph.addToGraph( value );
-            }
+            columns.stream().map(row::get).forEach(graph::addToGraph);
         }
         for ( IndexDefinition def : gds.schema().getIndexes() )
         {
@@ -140,10 +136,7 @@ public class CypherResultSubGraph implements SubGraph
                 newNodes.add( other );
             }
         }
-        for ( Node node : newNodes )
-        {
-            add( node );
-        }
+        newNodes.forEach(this::add);
     }
 
     private void addToGraph( Object value )

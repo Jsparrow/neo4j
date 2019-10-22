@@ -123,7 +123,42 @@ public class PluginFunctionalTestHelper
 
     public static class RegExp extends TypeSafeMatcher<String>
     {
-        enum MatchType
+        private final String pattern;
+		private String string;
+		private final MatchType type;
+
+		RegExp( String regexp, MatchType type )
+        {
+            this.pattern = regexp;
+            this.type = type;
+        }
+
+		@Factory
+        public static Matcher<String> endsWith( String pattern )
+        {
+            return new RegExp( pattern, MatchType.end );
+        }
+
+		@Override
+        public boolean matchesSafely( String string )
+        {
+            this.string = string;
+            return type.match( pattern, string );
+        }
+
+		@Override
+        public void describeTo( Description descr )
+        {
+            descr.appendText( "expected something that " )
+                    .appendText( type.description )
+                    .appendText( " [" )
+                    .appendText( pattern )
+                    .appendText( "] but got [" )
+                    .appendText( string )
+                    .appendText( "]" );
+        }
+
+		enum MatchType
         {
             end( "ends with" )
             {
@@ -155,41 +190,6 @@ public class PluginFunctionalTestHelper
             {
                 this.description = description;
             }
-        }
-
-        private final String pattern;
-        private String string;
-        private final MatchType type;
-
-        RegExp( String regexp, MatchType type )
-        {
-            this.pattern = regexp;
-            this.type = type;
-        }
-
-        @Factory
-        public static Matcher<String> endsWith( String pattern )
-        {
-            return new RegExp( pattern, MatchType.end );
-        }
-
-        @Override
-        public boolean matchesSafely( String string )
-        {
-            this.string = string;
-            return type.match( pattern, string );
-        }
-
-        @Override
-        public void describeTo( Description descr )
-        {
-            descr.appendText( "expected something that " )
-                    .appendText( type.description )
-                    .appendText( " [" )
-                    .appendText( pattern )
-                    .appendText( "] but got [" )
-                    .appendText( string )
-                    .appendText( "]" );
         }
     }
 

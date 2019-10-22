@@ -102,10 +102,7 @@ public class GraphDbHelper
         try ( Transaction tx = database.getGraph().beginTransaction( implicit, AnonymousContext.writeToken() ) )
         {
             Node node = database.getGraph().getNodeById( nodeId );
-            for ( Map.Entry<String, Object> propertyEntry : properties.entrySet() )
-            {
-                node.setProperty( propertyEntry.getKey(), propertyEntry.getValue() );
-            }
+            properties.entrySet().forEach(propertyEntry -> node.setProperty(propertyEntry.getKey(), propertyEntry.getValue()));
             tx.success();
         }
     }
@@ -125,10 +122,7 @@ public class GraphDbHelper
         try ( Transaction tx = database.getGraph().beginTransaction( implicit, AnonymousContext.writeToken() ) )
         {
             Node node = database.getGraph().createNode( labels );
-            for ( Map.Entry<String, Object> entry : properties.entrySet() )
-            {
-                node.setProperty( entry.getKey(), entry.getValue() );
-            }
+            properties.entrySet().forEach(entry -> node.setProperty(entry.getKey(), entry.getValue()));
             tx.success();
             return node.getId();
         }
@@ -175,10 +169,7 @@ public class GraphDbHelper
         try ( Transaction tx = database.getGraph().beginTransaction( implicit, AnonymousContext.writeToken() ) )
         {
             Relationship relationship = database.getGraph().getRelationshipById( relationshipId );
-            for ( Map.Entry<String, Object> propertyEntry : properties.entrySet() )
-            {
-                relationship.setProperty( propertyEntry.getKey(), propertyEntry.getValue() );
-            }
+            properties.entrySet().forEach(propertyEntry -> relationship.setProperty(propertyEntry.getKey(), propertyEntry.getValue()));
             tx.success();
         }
     }

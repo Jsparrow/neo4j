@@ -68,10 +68,7 @@ class RecordSet<R extends AbstractBaseRecord> implements Iterable<R>
     public String toString()
     {
         StringBuilder builder = new StringBuilder( "[\n" );
-        for ( R r : map.values() )
-        {
-            builder.append( r.toString() ).append( ",\n" );
-        }
+        map.values().forEach(r -> builder.append(r.toString()).append(",\n"));
         return builder.append( "]\n" ).toString();
     }
 }

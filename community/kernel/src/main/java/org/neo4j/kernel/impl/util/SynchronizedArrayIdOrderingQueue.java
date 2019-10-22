@@ -43,8 +43,7 @@ public class SynchronizedArrayIdOrderingQueue implements IdOrderingQueue
             extendArray();
         }
         assert offerIndex == headIndex || (offerIndex - 1) % queue.length < value :
-                "Was offered ids out-of-order, " + value + " whereas last offered was " +
-                        ((offerIndex - 1) % queue.length);
+                new StringBuilder().append("Was offered ids out-of-order, ").append(value).append(" whereas last offered was ").append((offerIndex - 1) % queue.length).toString();
         queue[(offerIndex++) % queue.length] = value;
     }
 
@@ -63,8 +62,7 @@ public class SynchronizedArrayIdOrderingQueue implements IdOrderingQueue
         if ( queue[headIndex % queue.length] != expectedValue )
         {
             throw new IllegalStateException(
-                    "Was about to remove head and expected it to be " + expectedValue + ", but it was " +
-                            queue[headIndex] );
+                    new StringBuilder().append("Was about to remove head and expected it to be ").append(expectedValue).append(", but it was ").append(queue[headIndex]).toString() );
         }
         headIndex++;
         notifyAll();

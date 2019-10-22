@@ -205,12 +205,8 @@ public class Util
         // First build all paths to this node's predecessors
         if ( current != null )
         {
-            for ( Relationship r : current )
-            {
-                Node n = r.getOtherNode( node );
-                paths.addAll( constructAllPathsToNodeAsNodeLinkedLists( n,
-                    predecessors, true, backwards ) );
-            }
+            current.stream().map(r -> r.getOtherNode( node )).forEach(n -> paths.addAll( constructAllPathsToNodeAsNodeLinkedLists( n,
+			    predecessors, true, backwards ) ));
         }
         // If no paths exists to this node, just create an empty one (which will
         // have this node added to it)
@@ -221,8 +217,7 @@ public class Util
         // Then add this node to all those paths
         if ( includeNode )
         {
-            for ( LinkedList<Node> path : paths )
-            {
+            paths.forEach(path -> {
                 if ( backwards )
                 {
                     path.addFirst( node );
@@ -231,7 +226,7 @@ public class Util
                 {
                     path.addLast( node );
                 }
-            }
+            });
         }
         return paths;
     }
@@ -269,15 +264,13 @@ public class Util
         // First build all paths to this node's predecessors
         if ( current != null )
         {
-            for ( Relationship r : current )
-            {
+            current.forEach(r -> {
                 Node n = r.getOtherNode( node );
                 List<LinkedList<PropertyContainer>> newPaths = constructAllPathsToNodeAsLinkedLists(
                     n, predecessors, true, backwards );
                 paths.addAll( newPaths );
                 // Add the relationship
-                for ( LinkedList<PropertyContainer> path : newPaths )
-                {
+				newPaths.forEach(path -> {
                     if ( backwards )
                     {
                         path.addFirst( r );
@@ -286,8 +279,8 @@ public class Util
                     {
                         path.addLast( r );
                     }
-                }
-            }
+                });
+            });
         }
         // If no paths exists to this node, just create an empty one (which will
         // have this node added to it)
@@ -298,8 +291,7 @@ public class Util
         // Then add this node to all those paths
         if ( includeNode )
         {
-            for ( LinkedList<PropertyContainer> path : paths )
-            {
+            paths.forEach(path -> {
                 if ( backwards )
                 {
                     path.addFirst( node );
@@ -308,7 +300,7 @@ public class Util
                 {
                     path.addLast( node );
                 }
-            }
+            });
         }
         return paths;
     }
@@ -341,15 +333,13 @@ public class Util
         // First build all paths to this node's predecessors
         if ( current != null )
         {
-            for ( Relationship r : current )
-            {
+            current.forEach(r -> {
                 Node n = r.getOtherNode( node );
                 List<LinkedList<Relationship>> newPaths = constructAllPathsToNodeAsRelationshipLinkedLists(
                     n, predecessors, backwards );
                 paths.addAll( newPaths );
                 // Add the relationship
-                for ( LinkedList<Relationship> path : newPaths )
-                {
+				newPaths.forEach(path -> {
                     if ( backwards )
                     {
                         path.addFirst( r );
@@ -358,8 +348,8 @@ public class Util
                     {
                         path.addLast( r );
                     }
-                }
-            }
+                });
+            });
         }
         // If no paths exists to this node, just create an empty one
         if ( paths.isEmpty() )
@@ -370,6 +360,30 @@ public class Util
     }
 
     /**
+     * This can be used to generate the inverse of a structure with
+     * predecessors, i.e. the successors.
+     * @param predecessors
+     * @return
+     */
+    public static Map<Node,List<Relationship>> reversedPredecessors(
+        Map<Node,List<Relationship>> predecessors )
+    {
+        Map<Node,List<Relationship>> result = new HashMap<>();
+        Set<Node> keys = predecessors.keySet();
+        keys.forEach(node -> {
+            List<Relationship> preds = predecessors.get( node );
+            preds.forEach(relationship -> {
+                Node otherNode = relationship.getOtherNode( node );
+                // We add node as a predecessor to otherNode, instead of the
+                // other way around
+                List<Relationship> otherPreds = result.computeIfAbsent( otherNode, k -> new LinkedList<>() );
+                otherPreds.add( relationship );
+            });
+        });
+        return result;
+    }
+
+	/**
      * This can be used for counting the number of paths from the start node
      * (implicit from the predecessors) and some target nodes.
      */
@@ -380,7 +394,6 @@ public class Util
 
         public PathCounter( Map<Node,List<Relationship>> predecessors )
         {
-            super();
             this.predecessors = predecessors;
         }
 
@@ -405,31 +418,5 @@ public class Util
             pathCounts.put( node, result );
             return result;
         }
-    }
-
-    /**
-     * This can be used to generate the inverse of a structure with
-     * predecessors, i.e. the successors.
-     * @param predecessors
-     * @return
-     */
-    public static Map<Node,List<Relationship>> reversedPredecessors(
-        Map<Node,List<Relationship>> predecessors )
-    {
-        Map<Node,List<Relationship>> result = new HashMap<>();
-        Set<Node> keys = predecessors.keySet();
-        for ( Node node : keys )
-        {
-            List<Relationship> preds = predecessors.get( node );
-            for ( Relationship relationship : preds )
-            {
-                Node otherNode = relationship.getOtherNode( node );
-                // We add node as a predecessor to otherNode, instead of the
-                // other way around
-                List<Relationship> otherPreds = result.computeIfAbsent( otherNode, k -> new LinkedList<>() );
-                otherPreds.add( relationship );
-            }
-        }
-        return result;
     }
 }

@@ -72,26 +72,26 @@ public class PkiUtils
     private static final boolean useInsecureCertificateGeneration = Boolean.getBoolean( "org.neo4j.useInsecureCertificateGeneration" );
     public static final String CERTIFICATE_TYPE = "X.509";
     private static final String DEFAULT_ENCRYPTION = "RSA";
-    private final SecureRandom random;
-    /** Current time minus 1 year, just in case software clock goes back due to time synchronization */
+	/** Current time minus 1 year, just in case software clock goes back due to time synchronization */
     private static final Date NOT_BEFORE = new Date( System.currentTimeMillis() - 86400000L * 365 );
-    /** The maximum possible value in X.509 specification: 9999-12-31 23:59:59 */
+	/** The maximum possible value in X.509 specification: 9999-12-31 23:59:59 */
     private static final Date NOT_AFTER = new Date( 253402300799000L );
-    private static final Provider PROVIDER = new BouncyCastleProvider();
+	private static final Provider PROVIDER = new BouncyCastleProvider();
+	private static volatile boolean cleanupRequired = true;
 
-    private static volatile boolean cleanupRequired = true;
-
-    static
+	static
     {
         Security.addProvider( PROVIDER );
     }
 
-    public PkiUtils()
+	private final SecureRandom random;
+
+	public PkiUtils()
     {
         random = useInsecureCertificateGeneration ? new InsecureRandom() : new SecureRandom();
     }
 
-    public void createSelfSignedCertificate( File certificatePath, File privateKeyPath, String hostName )
+	public void createSelfSignedCertificate( File certificatePath, File privateKeyPath, String hostName )
             throws GeneralSecurityException, IOException, OperatorCreationException
     {
         installCleanupHook( certificatePath, privateKeyPath );
@@ -123,7 +123,7 @@ public class PkiUtils
         cleanupRequired = false;
     }
 
-    /**
+	/**
      * Makes sure to delete partially generated certificates. Does nothing if both certificate and private key have
      * been generated successfully.
      *
@@ -151,7 +151,7 @@ public class PkiUtils
         } ) );
     }
 
-    public X509Certificate[] loadCertificates( File certFile ) throws CertificateException, IOException
+	public X509Certificate[] loadCertificates( File certFile ) throws CertificateException, IOException
     {
         CertificateFactory certFactory = CertificateFactory.getInstance( CERTIFICATE_TYPE );
         Collection<X509Certificate> certificates = new LinkedList<>();
@@ -167,7 +167,7 @@ public class PkiUtils
             }
         }
 
-        if ( certificates.size() == 0 )
+        if ( certificates.isEmpty() )
         {
             // Ok, failed to read as PEM file, try and read it as raw binary certificate
             try ( FileInputStream in = new FileInputStream( certFile ) )
@@ -179,7 +179,7 @@ public class PkiUtils
         return certificates.toArray( new X509Certificate[certificates.size()] );
     }
 
-    public PrivateKey loadPrivateKey( File privateKeyFile )
+	public PrivateKey loadPrivateKey( File privateKeyFile )
             throws IOException, NoSuchAlgorithmException,
             InvalidKeySpecException
     {
@@ -227,7 +227,7 @@ public class PkiUtils
         }
     }
 
-    private void writePem( String type, byte[] encodedContent, File path ) throws IOException
+	private void writePem( String type, byte[] encodedContent, File path ) throws IOException
     {
         path.getParentFile().mkdirs();
         try ( PemWriter writer = new PemWriter( new FileWriter( path ) ) )

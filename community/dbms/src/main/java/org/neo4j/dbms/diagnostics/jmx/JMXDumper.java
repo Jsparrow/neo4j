@@ -95,7 +95,7 @@ public class JMXDumper
         }
         catch ( IOException e )
         {
-            printError( "Unable to connect to process with process id " + pid + ". Reason: " + e.getMessage(), e );
+            printError( new StringBuilder().append("Unable to connect to process with process id ").append(pid).append(". Reason: ").append(e.getMessage()).toString(), e );
         }
 
         return Optional.empty();
@@ -132,7 +132,7 @@ public class JMXDumper
 
                 catch ( NumberFormatException e )
                 {
-                    printError( pidFile.toString() + " does not contain a valid id. Found: " + pidFileContent );
+                    printError( new StringBuilder().append(pidFile.toString()).append(" does not contain a valid id. Found: ").append(pidFileContent).toString() );
                 }
             }
             catch ( IOException e )

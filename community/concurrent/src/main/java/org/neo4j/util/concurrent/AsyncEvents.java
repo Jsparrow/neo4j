@@ -42,32 +42,21 @@ import java.util.function.Consumer;
  */
 public class AsyncEvents<T extends AsyncEvent> implements AsyncEventSender<T>, Runnable
 {
-    public interface Monitor
-    {
-        void eventCount( long count );
-
-        Monitor NONE = count ->
-        {
-        };
-    }
-
     // TODO use VarHandles in Java 9
     private static final AtomicReferenceFieldUpdater<AsyncEvents,AsyncEvent> STACK_UPDATER =
             AtomicReferenceFieldUpdater.newUpdater( AsyncEvents.class, AsyncEvent.class, "stack" );
-    private static final Sentinel END_SENTINEL = new Sentinel( "END" );
-    private static final Sentinel SHUTDOWN_SENTINEL = new Sentinel( "SHUTDOWN" );
-
-    private final Consumer<T> eventConsumer;
-    private final Monitor monitor;
-    private final BinaryLatch startupLatch;
-    private final BinaryLatch shutdownLatch;
-
-    @SuppressWarnings( {"unused", "FieldCanBeLocal"} )
+	private static final Sentinel END_SENTINEL = new Sentinel( "END" );
+	private static final Sentinel SHUTDOWN_SENTINEL = new Sentinel( "SHUTDOWN" );
+	private final Consumer<T> eventConsumer;
+	private final Monitor monitor;
+	private final BinaryLatch startupLatch;
+	private final BinaryLatch shutdownLatch;
+	@SuppressWarnings( {"unused", "FieldCanBeLocal"} )
     private volatile AsyncEvent stack; // Accessed via AtomicReferenceFieldUpdater
-    private volatile Thread backgroundThread;
-    private volatile boolean shutdown;
+	private volatile Thread backgroundThread;
+	private volatile boolean shutdown;
 
-    /**
+	/**
      * Construct a new {@code AsyncEvents} instance, that will use the given consumer to process the events.
      *
      * @param eventConsumer The {@link Consumer} used for processing the events that are sent in.
@@ -81,7 +70,7 @@ public class AsyncEvents<T extends AsyncEvent> implements AsyncEventSender<T>, R
         this.stack = END_SENTINEL;
     }
 
-    @Override
+	@Override
     public void send( T event )
     {
         AsyncEvent prev = STACK_UPDATER.getAndSet( this, event );
@@ -98,7 +87,7 @@ public class AsyncEvents<T extends AsyncEvent> implements AsyncEventSender<T>, R
         }
     }
 
-    @Override
+	@Override
     public void run()
     {
         assert backgroundThread == null : "A thread is already running " + backgroundThread;
@@ -128,7 +117,7 @@ public class AsyncEvents<T extends AsyncEvent> implements AsyncEventSender<T>, R
         }
     }
 
-    private void process( AsyncEvent events )
+	private void process( AsyncEvent events )
     {
         events = reverseAndStripEndMark( events );
 
@@ -141,7 +130,7 @@ public class AsyncEvents<T extends AsyncEvent> implements AsyncEventSender<T>, R
         }
     }
 
-    private AsyncEvent reverseAndStripEndMark( AsyncEvent events )
+	private AsyncEvent reverseAndStripEndMark( AsyncEvent events )
     {
         AsyncEvent result = null;
         long count = 0;
@@ -165,7 +154,7 @@ public class AsyncEvents<T extends AsyncEvent> implements AsyncEventSender<T>, R
         return result;
     }
 
-    /**
+	/**
      * Initiate the shut down process of this {@code AsyncEvents} instance.
      * <p>
      * This call does not block or otherwise wait for the background thread to terminate.
@@ -177,14 +166,23 @@ public class AsyncEvents<T extends AsyncEvent> implements AsyncEventSender<T>, R
         LockSupport.unpark( backgroundThread );
     }
 
-    public void awaitStartup()
+	public void awaitStartup()
     {
         startupLatch.await();
     }
 
-    public void awaitTermination()
+	public void awaitTermination()
     {
         shutdownLatch.await();
+    }
+
+	public interface Monitor
+    {
+        Monitor NONE = count ->
+        {
+        };
+
+		void eventCount( long count );
     }
 
     private static class Sentinel extends AsyncEvent
@@ -193,7 +191,7 @@ public class AsyncEvents<T extends AsyncEvent> implements AsyncEventSender<T>, R
 
         Sentinel( String identifier )
         {
-            this.str = "AsyncEvent/Sentinel[" + identifier + "]";
+            this.str = new StringBuilder().append("AsyncEvent/Sentinel[").append(identifier).append("]").toString();
         }
 
         @Override

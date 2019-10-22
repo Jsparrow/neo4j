@@ -29,33 +29,6 @@ import java.util.concurrent.ExecutorService;
 public interface CleanupJob
 {
     /**
-     * @return {@code true} if gbptree still needs cleaning, meaning job is not yet finished or has not started at all.
-     * {@code false} if gbptree does not need cleaning, meaning job has finished or it was never needed in the first place.
-     */
-    boolean needed();
-
-    /**
-     * @return {@code true} if the job has failed. Use {@link #getCause()} to see cause of failure.
-     */
-    boolean hasFailed();
-
-    /**
-     * @return Cause of failure if {@link #hasFailed()} or {@code null} if job has not failed.
-     */
-    Throwable getCause();
-
-    /**
-     * Mark this job as closed and cleanup all it's resources.
-     */
-    void close();
-
-    /**
-     * Run cleanup job and use provided executor for parallel tasks.
-     * This method will wait for all jobs passed to executor to finish before returning.
-     */
-    void run( ExecutorService executor );
-
-    /**
      * A {@link CleanupJob} that doesn't need cleaning, i.e. it's already clean.
      */
     CleanupJob CLEAN = new CleanupJob()
@@ -88,4 +61,31 @@ public interface CleanupJob
         {   // no-op
         }
     };
+
+	/**
+     * @return {@code true} if gbptree still needs cleaning, meaning job is not yet finished or has not started at all.
+     * {@code false} if gbptree does not need cleaning, meaning job has finished or it was never needed in the first place.
+     */
+    boolean needed();
+
+	/**
+     * @return {@code true} if the job has failed. Use {@link #getCause()} to see cause of failure.
+     */
+    boolean hasFailed();
+
+	/**
+     * @return Cause of failure if {@link #hasFailed()} or {@code null} if job has not failed.
+     */
+    Throwable getCause();
+
+	/**
+     * Mark this job as closed and cleanup all it's resources.
+     */
+    void close();
+
+	/**
+     * Run cleanup job and use provided executor for parallel tasks.
+     * This method will wait for all jobs passed to executor to finish before returning.
+     */
+    void run( ExecutorService executor );
 }

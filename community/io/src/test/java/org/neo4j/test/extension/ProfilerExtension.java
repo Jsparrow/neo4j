@@ -110,7 +110,7 @@ public class ProfilerExtension extends StatefullFieldExtension<Profiler> impleme
 
                 try ( PrintStream out = new PrintStream( fs.openAsOutputStream( profileOutputFile, false ) ) )
                 {
-                    String displayName = context.getTestClass().map( Class::getSimpleName ).orElse( "class" ) + "." + context.getDisplayName();
+                    String displayName = new StringBuilder().append(context.getTestClass().map( Class::getSimpleName ).orElse( "class" )).append(".").append(context.getDisplayName()).toString();
                     profiler.printProfile( out, displayName );
                 }
             }

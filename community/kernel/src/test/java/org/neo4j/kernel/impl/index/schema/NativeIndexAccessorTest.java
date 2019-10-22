@@ -49,7 +49,28 @@ import static org.neo4j.kernel.impl.index.schema.ValueCreatorUtil.FRACTION_DUPLI
 @RunWith( Parameterized.class )
 public class NativeIndexAccessorTest<KEY extends NativeIndexKey<KEY>, VALUE extends NativeIndexValue> extends NativeIndexAccessorTests<KEY,VALUE>
 {
-    @Parameterized.Parameters( name = "{index}: {0}" )
+    private static final IndexSpecificSpaceFillingCurveSettingsCache spaceFillingCurveSettings =
+            new IndexSpecificSpaceFillingCurveSettingsCache( new ConfiguredSpaceFillingCurveSettingsCache( Config.defaults() ), Collections.emptyMap() );
+	private static final StandardConfiguration configuration = new StandardConfiguration();
+	private final AccessorFactory<KEY,VALUE> accessorFactory;
+	private final ValueType[] supportedTypes;
+	private final IndexLayoutFactory<KEY,VALUE> indexLayoutFactory;
+	private final IndexCapability indexCapability;
+
+	@SuppressWarnings( "unused" )
+    public NativeIndexAccessorTest( String name,
+            AccessorFactory<KEY,VALUE> accessorFactory,
+            ValueType[] supportedTypes,
+            IndexLayoutFactory<KEY,VALUE> indexLayoutFactory,
+            IndexCapability indexCapability )
+    {
+        this.accessorFactory = accessorFactory;
+        this.supportedTypes = supportedTypes;
+        this.indexLayoutFactory = indexLayoutFactory;
+        this.indexCapability = indexCapability;
+    }
+
+	@Parameterized.Parameters( name = "{index}: {0}" )
     public static Collection<Object[]> data()
     {
         return Arrays.asList( new Object[][]{
@@ -117,67 +138,45 @@ public class NativeIndexAccessorTest<KEY extends NativeIndexKey<KEY>, VALUE exte
         } );
     }
 
-    private static final IndexSpecificSpaceFillingCurveSettingsCache spaceFillingCurveSettings =
-            new IndexSpecificSpaceFillingCurveSettingsCache( new ConfiguredSpaceFillingCurveSettingsCache( Config.defaults() ), Collections.emptyMap() );
-    private static final StandardConfiguration configuration = new StandardConfiguration();
-
-    private final AccessorFactory<KEY,VALUE> accessorFactory;
-    private final ValueType[] supportedTypes;
-    private final IndexLayoutFactory<KEY,VALUE> indexLayoutFactory;
-    private final IndexCapability indexCapability;
-
-    @SuppressWarnings( "unused" )
-    public NativeIndexAccessorTest( String name,
-            AccessorFactory<KEY,VALUE> accessorFactory,
-            ValueType[] supportedTypes,
-            IndexLayoutFactory<KEY,VALUE> indexLayoutFactory,
-            IndexCapability indexCapability )
-    {
-        this.accessorFactory = accessorFactory;
-        this.supportedTypes = supportedTypes;
-        this.indexLayoutFactory = indexLayoutFactory;
-        this.indexCapability = indexCapability;
-    }
-
-    @Override
+	@Override
     NativeIndexAccessor<KEY,VALUE> makeAccessor() throws IOException
     {
         return accessorFactory.create( pageCache, fs, getIndexFile(), layout, RecoveryCleanupWorkCollector.immediate(), monitor, indexDescriptor,
                 indexDirectoryStructure, false );
     }
 
-    @Override
+	@Override
     IndexCapability indexCapability()
     {
         return indexCapability;
     }
 
-    @Override
+	@Override
     ValueCreatorUtil<KEY,VALUE> createValueCreatorUtil()
     {
         return new ValueCreatorUtil<>( forLabel( 42, 666 ).withId( 0 ), supportedTypes, FRACTION_DUPLICATE_NON_UNIQUE );
     }
 
-    @Override
+	@Override
     IndexLayout<KEY,VALUE> createLayout()
     {
         return indexLayoutFactory.create();
     }
 
-    /* Helpers */
+	/* Helpers */
     private static AccessorFactory<NumberIndexKey,NativeIndexValue> numberAccessorFactory()
     {
         return ( pageCache, fs, storeFile, layout, recoveryCleanupWorkCollector, monitor, descriptor, directory, readOnly ) ->
                 new NumberIndexAccessor( pageCache, fs, storeFile, layout, recoveryCleanupWorkCollector, monitor, descriptor, readOnly );
     }
 
-    private static AccessorFactory<StringIndexKey,NativeIndexValue> stringAccessorFactory()
+	private static AccessorFactory<StringIndexKey,NativeIndexValue> stringAccessorFactory()
     {
         return ( pageCache, fs, storeFile, layout, recoveryCleanupWorkCollector, monitor, descriptor, directory, readOnly ) ->
                 new StringIndexAccessor( pageCache, fs, storeFile, layout, recoveryCleanupWorkCollector, monitor, descriptor, readOnly );
     }
 
-    private static <TK extends NativeIndexSingleValueKey<TK>> AccessorFactory<TK,NativeIndexValue> temporalAccessorFactory( ValueGroup temporalValueGroup )
+	private static <TK extends NativeIndexSingleValueKey<TK>> AccessorFactory<TK,NativeIndexValue> temporalAccessorFactory( ValueGroup temporalValueGroup )
     {
         return ( pageCache, fs, storeFile, layout, cleanup, monitor, descriptor, directory, readOnly ) ->
         {
@@ -186,7 +185,7 @@ public class NativeIndexAccessorTest<KEY extends NativeIndexKey<KEY>, VALUE exte
         };
     }
 
-    private static AccessorFactory<GenericKey,NativeIndexValue> genericAccessorFactory()
+	private static AccessorFactory<GenericKey,NativeIndexValue> genericAccessorFactory()
     {
         return ( pageCache, fs, storeFile, layout, cleanup, monitor, descriptor, directory, readOnly ) ->
         {
@@ -196,7 +195,7 @@ public class NativeIndexAccessorTest<KEY extends NativeIndexKey<KEY>, VALUE exte
         };
     }
 
-    @FunctionalInterface
+	@FunctionalInterface
     private interface AccessorFactory<KEY extends NativeIndexKey<KEY>, VALUE extends NativeIndexValue>
     {
         NativeIndexAccessor<KEY,VALUE> create( PageCache pageCache, FileSystemAbstraction fs, File storeFile, IndexLayout<KEY,VALUE> layout,

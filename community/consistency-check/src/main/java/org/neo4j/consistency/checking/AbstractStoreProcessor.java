@@ -220,7 +220,6 @@ public abstract class AbstractStoreProcessor extends RecordStore.Processor<Runti
 
     @Override
     public void processRelationshipGroup( RecordStore<RelationshipGroupRecord> store, RelationshipGroupRecord record )
-            throws RuntimeException
     {
         checkRelationshipGroup( store, record, relationshipGroupChecker );
     }

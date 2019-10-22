@@ -59,6 +59,21 @@ public class ReversedMultiFileTransactionCursor implements TransactionCursor
     private TransactionCursor currentLogTransactionCursor;
 
     /**
+     * @param cursorFactory creates {@link TransactionCursor} from a given {@link LogPosition}. The returned cursor must
+     * return transactions from the end of that {@link LogPosition#getLogVersion() log version} and backwards in reverse order
+     * to, and including, the transaction at the {@link LogPosition} given to it.
+     * @param highestVersion highest log version right now.
+     * @param backToPosition the start position of the last transaction to return from this cursor.
+     */
+    ReversedMultiFileTransactionCursor( ThrowingFunction<LogPosition,TransactionCursor,IOException> cursorFactory, long highestVersion,
+            LogPosition backToPosition )
+    {
+        this.cursorFactory = cursorFactory;
+        this.backToPosition = backToPosition;
+        this.currentVersion = highestVersion + 1;
+    }
+
+	/**
      * Utility method for creating a {@link ReversedMultiFileTransactionCursor} with a {@link LogFile} as the source of
      * {@link TransactionCursor} for each log version.
      *
@@ -92,28 +107,13 @@ public class ReversedMultiFileTransactionCursor implements TransactionCursor
         return new ReversedMultiFileTransactionCursor( factory, highestVersion, backToPosition );
     }
 
-    /**
-     * @param cursorFactory creates {@link TransactionCursor} from a given {@link LogPosition}. The returned cursor must
-     * return transactions from the end of that {@link LogPosition#getLogVersion() log version} and backwards in reverse order
-     * to, and including, the transaction at the {@link LogPosition} given to it.
-     * @param highestVersion highest log version right now.
-     * @param backToPosition the start position of the last transaction to return from this cursor.
-     */
-    ReversedMultiFileTransactionCursor( ThrowingFunction<LogPosition,TransactionCursor,IOException> cursorFactory, long highestVersion,
-            LogPosition backToPosition )
-    {
-        this.cursorFactory = cursorFactory;
-        this.backToPosition = backToPosition;
-        this.currentVersion = highestVersion + 1;
-    }
-
-    @Override
+	@Override
     public CommittedTransactionRepresentation get()
     {
         return currentLogTransactionCursor.get();
     }
 
-    @Override
+	@Override
     public boolean next() throws IOException
     {
         while ( currentLogTransactionCursor == null || !currentLogTransactionCursor.next() )
@@ -132,22 +132,22 @@ public class ReversedMultiFileTransactionCursor implements TransactionCursor
         return true;
     }
 
-    @Override
+	@Override
     public void close() throws IOException
     {
         closeCurrent();
     }
 
-    private void closeCurrent() throws IOException
+	private void closeCurrent() throws IOException
     {
-        if ( currentLogTransactionCursor != null )
-        {
-            currentLogTransactionCursor.close();
-            currentLogTransactionCursor = null;
-        }
+        if (currentLogTransactionCursor == null) {
+			return;
+		}
+		currentLogTransactionCursor.close();
+		currentLogTransactionCursor = null;
     }
 
-    @Override
+	@Override
     public LogPosition position()
     {
         return currentLogTransactionCursor.position();

@@ -65,7 +65,7 @@ public class IndexCreatorImpl implements IndexCreator
     }
 
     @Override
-    public IndexDefinition create() throws ConstraintViolationException
+    public IndexDefinition create()
     {
         assertInUnterminatedTransaction();
 

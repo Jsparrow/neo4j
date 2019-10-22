@@ -27,7 +27,9 @@ import java.util.TreeSet;
  */
 public class User
 {
-    /*
+    public static final String PASSWORD_CHANGE_REQUIRED = "password_change_required";
+
+	/*
       Design note: These instances are shared across threads doing disparate things with them, and there are no access
       locks. Correctness depends on write-time assertions and this class remaining immutable. Please do not introduce
       mutable fields here.
@@ -35,53 +37,51 @@ public class User
     /** User name */
     private final String name;
 
-    /** Authentication credentials used by the built in username/password authentication scheme */
+	/** Authentication credentials used by the built in username/password authentication scheme */
     private final Credential credential;
 
-    /** Set of flags, eg. password_change_required */
+	/** Set of flags, eg. password_change_required */
     private final SortedSet<String> flags;
 
-    public static final String PASSWORD_CHANGE_REQUIRED = "password_change_required";
-
-    private User( String name, Credential credential, SortedSet<String> flags )
+	private User( String name, Credential credential, SortedSet<String> flags )
     {
         this.name = name;
         this.credential = credential;
         this.flags = flags;
     }
 
-    public String name()
+	public String name()
     {
         return name;
     }
 
-    public Credential credentials()
+	public Credential credentials()
     {
         return credential;
     }
 
-    public boolean hasFlag( String flag )
+	public boolean hasFlag( String flag )
     {
         return flags.contains( flag );
     }
 
-    public Iterable<String> getFlags()
+	public Iterable<String> getFlags()
     {
         return flags;
     }
 
-    public boolean passwordChangeRequired()
+	public boolean passwordChangeRequired()
     {
         return flags.contains( PASSWORD_CHANGE_REQUIRED );
     }
 
-    /** Use this user as a base for a new user object */
+	/** Use this user as a base for a new user object */
     public Builder augment()
     {
         return new Builder( this );
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -106,7 +106,7 @@ public class User
         return name != null ? name.equals( user.name ) : user.name == null;
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         int result = name != null ? name.hashCode() : 0;
@@ -115,17 +115,14 @@ public class User
         return result;
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return "User{" +
-                "name='" + name + '\'' +
-                ", credentials=" + credential +
-                ", flags=" + flags +
-                '}';
+        return new StringBuilder().append("User{").append("name='").append(name).append('\'').append(", credentials=").append(credential).append(", flags=")
+				.append(flags).append('}').toString();
     }
 
-    public static class Builder
+	public static class Builder
     {
         private String name;
         private Credential credential = Credential.INACCESSIBLE;

@@ -37,8 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MemoryAllocatorTest
 {
-    private static final String ONE_PAGE = PageCache.PAGE_SIZE + "";
-    private static final String EIGHT_PAGES = (8 * PageCache.PAGE_SIZE) + "";
+    private static final String ONE_PAGE = Integer.toString(PageCache.PAGE_SIZE);
+    private static final String EIGHT_PAGES = Integer.toString((8 * PageCache.PAGE_SIZE));
 
     private MemoryAllocator allocator;
 
@@ -76,7 +76,8 @@ class MemoryAllocatorTest
                 mman.allocateAligned( initialOffset, 1 );
                 long alignment = 1 + i;
                 long address = mman.allocateAligned( PageCache.PAGE_SIZE, alignment );
-                assertThat( "With initial offset " + initialOffset + ", iteration " + i + ", aligning to " + alignment + " and got address " + address,
+                assertThat( new StringBuilder().append("With initial offset ").append(initialOffset).append(", iteration ").append(i).append(", aligning to ").append(alignment)
+						.append(" and got address ").append(address).toString(),
                         address % alignment, is( 0L ) );
             }
         }
@@ -107,7 +108,7 @@ class MemoryAllocatorTest
         {
             int alignment = pageSize - i;
             long address = mman.allocateAligned( PageCache.PAGE_SIZE, alignment );
-            assertThat( "iteration " + i + ", aligning to " + alignment, address % alignment, is( 0L ) );
+            assertThat( new StringBuilder().append("iteration ").append(i).append(", aligning to ").append(alignment).toString(), address % alignment, is( 0L ) );
         }
     }
 
@@ -177,11 +178,11 @@ class MemoryAllocatorTest
 
     private void closeAllocator()
     {
-        if ( allocator != null )
-        {
-            allocator.close();
-            allocator = null;
-        }
+        if (allocator == null) {
+			return;
+		}
+		allocator.close();
+		allocator = null;
     }
 
     private MemoryAllocator createAllocator( String expectedMaxMemory )

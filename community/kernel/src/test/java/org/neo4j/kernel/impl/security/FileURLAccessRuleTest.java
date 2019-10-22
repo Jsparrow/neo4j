@@ -85,7 +85,7 @@ public class FileURLAccessRuleTest
     @Test
     public void shouldThrowWhenRelativePathIsOutsideImportDirectory() throws Exception
     {
-        assumeFalse( Paths.get( "/" ).relativize( Paths.get( "/../baz.csv" ) ).toString().equals( "baz.csv" ) );
+        assumeFalse( "baz.csv".equals( Paths.get( "/" ).relativize( Paths.get( "/../baz.csv" ) ).toString() ) );
         File importDir = new File( "/tmp/neo4jtest" ).getAbsoluteFile();
         final Config config = Config.defaults( GraphDatabaseSettings.load_csv_file_url_root, importDir.toString() );
         try

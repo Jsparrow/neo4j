@@ -47,42 +47,6 @@ import static java.util.stream.Collectors.toList;
  */
 public class OutputMappers
 {
-    public OutputMappers( TypeMappers typeMappers )
-    {
-        this.typeMappers = typeMappers;
-    }
-
-    /**
-     * A compiled mapper, takes an instance of a java class, and converts it to an Object[] matching
-     * the specified {@link #signature()}.
-     */
-    public static class OutputMapper
-    {
-        private final List<FieldSignature> signature;
-        private final FieldMapper[] fieldMappers;
-
-        public OutputMapper( FieldSignature[] signature, FieldMapper[] fieldMappers )
-        {
-            this.signature = asList( signature );
-            this.fieldMappers = fieldMappers;
-        }
-
-        public List<FieldSignature> signature()
-        {
-            return signature;
-        }
-
-        public Object[] apply( Object record ) throws ProcedureException
-        {
-            Object[] output = new Object[fieldMappers.length];
-            for ( int i = 0; i < fieldMappers.length; i++ )
-            {
-                output[i] = fieldMappers[i].apply( record );
-            }
-            return output;
-        }
-    }
-
     private static final OutputMapper VOID_MAPPER = new OutputMapper( new FieldSignature[0], new FieldMapper[0] )
     {
         @Override
@@ -91,45 +55,15 @@ public class OutputMappers
             return ProcedureSignature.VOID;
         }
     };
+	private final Lookup lookup = MethodHandles.lookup();
+	private final TypeMappers typeMappers;
 
-    /**
-     * Extracts field value from an instance and converts it to a Neo4j typed value.
-     */
-    private static class FieldMapper
+	public OutputMappers( TypeMappers typeMappers )
     {
-        private final MethodHandle getter;
-        private final TypeMappers.TypeChecker checker;
-
-        FieldMapper( MethodHandle getter, TypeMappers.TypeChecker checker )
-        {
-            this.getter = getter;
-            this.checker = checker;
-        }
-
-        Object apply( Object record ) throws ProcedureException
-        {
-            Object invoke = getValue( record );
-            return checker.typeCheck( invoke );
-        }
-
-        private Object getValue( Object record ) throws ProcedureException
-        {
-            try
-            {
-                return getter.invoke( record );
-            }
-            catch ( Throwable throwable )
-            {
-                throw new ProcedureException( Status.Procedure.ProcedureCallFailed, throwable,
-                        "Unable to read value from record `%s`: %s", record, throwable.getMessage() );
-            }
-        }
+        this.typeMappers = typeMappers;
     }
 
-    private final Lookup lookup = MethodHandles.lookup();
-    private final TypeMappers typeMappers;
-
-    /**
+	/**
      * Build an output mapper for the return type of a given method.
      *
      * @param method the procedure method
@@ -176,7 +110,7 @@ public class OutputMappers
         return mapper( (Class<?>) recordType );
     }
 
-    public OutputMapper mapper( Class<?> userClass ) throws ProcedureException
+	public OutputMapper mapper( Class<?> userClass ) throws ProcedureException
     {
         assertIsValidRecordClass( userClass );
 
@@ -220,7 +154,7 @@ public class OutputMappers
         return new OutputMapper( signature, fieldMappers );
     }
 
-    private void assertIsValidRecordClass( Class<?> userClass ) throws ProcedureException
+	private void assertIsValidRecordClass( Class<?> userClass ) throws ProcedureException
     {
         if ( userClass.isPrimitive() || userClass.isArray() ||
                 userClass.getPackage() != null && userClass.getPackage().getName().startsWith( "java." ) )
@@ -229,25 +163,84 @@ public class OutputMappers
         }
     }
 
-    private ProcedureException invalidReturnType( Class<?> userClass )
+	private ProcedureException invalidReturnType( Class<?> userClass )
     {
         return new ProcedureException( Status.Procedure.TypeError,
-                "Procedures must return a Stream of records, where a record is a concrete class%n" +
-                "that you define, with public non-final fields defining the fields in the record.%n" +
-                "If you''d like your procedure to return `%s`, you could define a record class like:%n" +
-                "public class Output '{'%n" +
-                "    public %s out;%n" +
-                "'}'%n" +
-                "%n" +
-                "And then define your procedure as returning `Stream<Output>`.", userClass.getSimpleName(),
+                new StringBuilder().append("Procedures must return a Stream of records, where a record is a concrete class%n").append("that you define, with public non-final fields defining the fields in the record.%n").append("If you''d like your procedure to return `%s`, you could define a record class like:%n").append("public class Output '{'%n").append("    public %s out;%n").append("'}'%n").append("%n")
+						.append("And then define your procedure as returning `Stream<Output>`.").toString(), userClass.getSimpleName(),
                 userClass.getSimpleName() );
     }
 
-    private List<Field> instanceFields( Class<?> userClass )
+	private List<Field> instanceFields( Class<?> userClass )
     {
         return Arrays.stream( userClass.getDeclaredFields() )
                 .filter( f -> !isStatic( f.getModifiers() ) &&
                                   !f.isSynthetic( ) )
                 .collect( toList() );
+    }
+
+	/**
+     * A compiled mapper, takes an instance of a java class, and converts it to an Object[] matching
+     * the specified {@link #signature()}.
+     */
+    public static class OutputMapper
+    {
+        private final List<FieldSignature> signature;
+        private final FieldMapper[] fieldMappers;
+
+        public OutputMapper( FieldSignature[] signature, FieldMapper[] fieldMappers )
+        {
+            this.signature = asList( signature );
+            this.fieldMappers = fieldMappers;
+        }
+
+        public List<FieldSignature> signature()
+        {
+            return signature;
+        }
+
+        public Object[] apply( Object record ) throws ProcedureException
+        {
+            Object[] output = new Object[fieldMappers.length];
+            for ( int i = 0; i < fieldMappers.length; i++ )
+            {
+                output[i] = fieldMappers[i].apply( record );
+            }
+            return output;
+        }
+    }
+
+    /**
+     * Extracts field value from an instance and converts it to a Neo4j typed value.
+     */
+    private static class FieldMapper
+    {
+        private final MethodHandle getter;
+        private final TypeMappers.TypeChecker checker;
+
+        FieldMapper( MethodHandle getter, TypeMappers.TypeChecker checker )
+        {
+            this.getter = getter;
+            this.checker = checker;
+        }
+
+        Object apply( Object record ) throws ProcedureException
+        {
+            Object invoke = getValue( record );
+            return checker.typeCheck( invoke );
+        }
+
+        private Object getValue( Object record ) throws ProcedureException
+        {
+            try
+            {
+                return getter.invoke( record );
+            }
+            catch ( Throwable throwable )
+            {
+                throw new ProcedureException( Status.Procedure.ProcedureCallFailed, throwable,
+                        "Unable to read value from record `%s`: %s", record, throwable.getMessage() );
+            }
+        }
     }
 }

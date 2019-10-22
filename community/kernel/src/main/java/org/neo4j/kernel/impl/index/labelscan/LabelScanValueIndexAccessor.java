@@ -70,10 +70,8 @@ abstract class LabelScanValueIndexAccessor
 
     boolean keysInOrder( LabelScanKey key )
     {
-        assert key.labelId >= prevLabel : "Expected to get ordered results, got " + key +
-                " where previous label was " + prevLabel;
-        assert key.idRange > prevRange : "Expected to get ordered results, got " + key +
-                " where previous range was " + prevRange;
+        assert key.labelId >= prevLabel : new StringBuilder().append("Expected to get ordered results, got ").append(key).append(" where previous label was ").append(prevLabel).toString();
+        assert key.idRange > prevRange : new StringBuilder().append("Expected to get ordered results, got ").append(key).append(" where previous range was ").append(prevRange).toString();
         prevLabel = key.labelId;
         prevRange = key.idRange;
         // Made as a method returning boolean so that it can participate in an assert call.

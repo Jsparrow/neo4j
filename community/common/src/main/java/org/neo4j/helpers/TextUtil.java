@@ -109,7 +109,7 @@ public class TextUtil
             lastWord = lastPart;
             if ( preserveQuotation )
             {
-                lastWord = "\"" + lastWord + (text.endsWith( "\"" ) ? "\"" : "");
+                lastWord = new StringBuilder().append("\"").append(lastWord).append(text.endsWith( "\"" ) ? "\"" : "").toString();
             }
         }
         else

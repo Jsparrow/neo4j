@@ -28,24 +28,24 @@ import java.util.Arrays;
 class LongArrayMatcher extends TypeSafeDiagnosingMatcher<long[]>
 {
 
-    public static LongArrayMatcher emptyArrayMatcher()
-    {
-        return new LongArrayMatcher( new long[]{} );
-    }
-
-    public static LongArrayMatcher of( long... values )
-    {
-        return new LongArrayMatcher( values );
-    }
-
     private long[] expectedArray;
 
-    LongArrayMatcher( long[] expectedArray )
+	LongArrayMatcher( long[] expectedArray )
     {
         this.expectedArray = expectedArray;
     }
 
-    @Override
+	public static LongArrayMatcher emptyArrayMatcher()
+    {
+        return new LongArrayMatcher( new long[]{} );
+    }
+
+	public static LongArrayMatcher of( long... values )
+    {
+        return new LongArrayMatcher( values );
+    }
+
+	@Override
     protected boolean matchesSafely( long[] items, Description mismatchDescription )
     {
         describeArray( items, mismatchDescription );
@@ -63,13 +63,13 @@ class LongArrayMatcher extends TypeSafeDiagnosingMatcher<long[]>
         return true;
     }
 
-    @Override
+	@Override
     public void describeTo( Description description )
     {
         describeArray( expectedArray, description );
     }
 
-    private void describeArray( long[] value, Description description )
+	private void describeArray( long[] value, Description description )
     {
         description.appendText( "long[]" ).appendText( Arrays.toString( value ) );
     }

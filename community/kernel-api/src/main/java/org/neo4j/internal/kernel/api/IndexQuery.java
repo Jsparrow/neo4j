@@ -40,7 +40,14 @@ import static org.neo4j.values.storable.Values.utf8Value;
 
 public abstract class IndexQuery
 {
-    /**
+    private final int propertyKeyId;
+
+	protected IndexQuery( int propertyKeyId )
+    {
+        this.propertyKeyId = propertyKeyId;
+    }
+
+	/**
      * Searches the index for all entries that has the given property.
      *
      * @param propertyKeyId the property ID to match.
@@ -51,7 +58,7 @@ public abstract class IndexQuery
         return new ExistsPredicate( propertyKeyId );
     }
 
-    /**
+	/**
      * Searches the index for a certain value.
      *
      * @param propertyKeyId the property ID to match.
@@ -63,7 +70,7 @@ public abstract class IndexQuery
         return new ExactPredicate( propertyKeyId, value );
     }
 
-    /**
+	/**
      * Searches the index for numeric values between {@code from} and {@code to}.
      *
      * @param propertyKeyId the property ID to match.
@@ -82,7 +89,7 @@ public abstract class IndexQuery
                                          to == null ? null : Values.numberValue( to ), toInclusive );
     }
 
-    public static RangePredicate<?> range( int propertyKeyId,
+	public static RangePredicate<?> range( int propertyKeyId,
                                         String from, boolean fromInclusive,
                                         String to, boolean toInclusive )
     {
@@ -91,7 +98,7 @@ public abstract class IndexQuery
                                        to == null ? null : Values.stringValue( to ), toInclusive );
     }
 
-    public static <VALUE extends Value> RangePredicate<?> range( int propertyKeyId,
+	public static <VALUE extends Value> RangePredicate<?> range( int propertyKeyId,
                                                               VALUE from, boolean fromInclusive,
                                                               VALUE to, boolean toInclusive )
     {
@@ -124,7 +131,7 @@ public abstract class IndexQuery
         }
     }
 
-    /**
+	/**
      * Create IndexQuery for retrieving all indexed entries of the given value group.
      */
     public static RangePredicate<?> range( int propertyKeyId, ValueGroup valueGroup )
@@ -136,7 +143,7 @@ public abstract class IndexQuery
         return new RangePredicate<>( propertyKeyId, valueGroup, null, true, null, true );
     }
 
-    /**
+	/**
      * Create IndexQuery for retrieving all indexed entries with spatial value of the given
      * coordinate reference system.
      */
@@ -145,7 +152,7 @@ public abstract class IndexQuery
         return new GeometryRangePredicate( propertyKeyId, crs, null, true, null, true );
     }
 
-    /**
+	/**
      * Searches the index string values starting with {@code prefix}.
      *
      * @param propertyKeyId the property ID to match.
@@ -157,7 +164,7 @@ public abstract class IndexQuery
         return new StringPrefixPredicate( propertyKeyId, prefix );
     }
 
-    /**
+	/**
      * Searches the index for string values containing the exact search string.
      *
      * @param propertyKeyId the property ID to match.
@@ -169,7 +176,7 @@ public abstract class IndexQuery
         return new StringContainsPredicate( propertyKeyId, contains );
     }
 
-    /**
+	/**
      * Searches the index string values ending with {@code suffix}.
      *
      * @param propertyKeyId the property ID to match.
@@ -181,7 +188,7 @@ public abstract class IndexQuery
         return new StringSuffixPredicate( propertyKeyId, suffix );
     }
 
-    public static ValueTuple asValueTuple( IndexQuery.ExactPredicate... query )
+	public static ValueTuple asValueTuple( IndexQuery.ExactPredicate... query )
     {
         Value[] values = new Value[query.length];
         for ( int i = 0; i < query.length; i++ )
@@ -191,16 +198,9 @@ public abstract class IndexQuery
         return ValueTuple.of( values );
     }
 
-    private final int propertyKeyId;
+	public abstract IndexQueryType type();
 
-    protected IndexQuery( int propertyKeyId )
-    {
-        this.propertyKeyId = propertyKeyId;
-    }
-
-    public abstract IndexQueryType type();
-
-    @SuppressWarnings( "EqualsWhichDoesntCheckParameterClass" )
+	@SuppressWarnings( "EqualsWhichDoesntCheckParameterClass" )
     @Override
     public final boolean equals( Object other )
     {
@@ -208,38 +208,38 @@ public abstract class IndexQuery
         return EqualsBuilder.reflectionEquals( this, other );
     }
 
-    @Override
+	@Override
     public final int hashCode()
     {
         // equals() and hashcode() are only used for testing so we don't care that they are a bit slow.
         return HashCodeBuilder.reflectionHashCode( this, false );
     }
 
-    @Override
+	@Override
     public final String toString()
     {
         // Only used to debugging, it's okay to be a bit slow.
         return ToStringBuilder.reflectionToString( this, ToStringStyle.SHORT_PREFIX_STYLE );
     }
 
-    public final int propertyKeyId()
+	public final int propertyKeyId()
     {
         return propertyKeyId;
     }
 
-    public abstract boolean acceptsValue( Value value );
+	public abstract boolean acceptsValue( Value value );
 
-    public boolean acceptsValueAt( PropertyCursor property )
+	public boolean acceptsValueAt( PropertyCursor property )
     {
         return acceptsValue( property.propertyValue() );
     }
 
-    /**
+	/**
      * @return Target {@link ValueGroup} for query or {@link ValueGroup#UNKNOWN} if not targeting single group.
      */
     public abstract ValueGroup valueGroup();
 
-    public enum IndexQueryType
+	public enum IndexQueryType
     {
         exists,
         exact,
@@ -249,7 +249,7 @@ public abstract class IndexQuery
         stringContains
     }
 
-    public static final class ExistsPredicate extends IndexQuery
+	public static final class ExistsPredicate extends IndexQuery
     {
         ExistsPredicate( int propertyKeyId )
         {
@@ -348,24 +348,23 @@ public abstract class IndexQuery
             {
                 return false;
             }
-            if ( value.valueGroup() == valueGroup )
-            {
-                if ( from != null )
-                {
-                    int compare = Values.COMPARATOR.compare( value, from );
-                    if ( compare < 0 || !fromInclusive && compare == 0 )
-                    {
-                        return false;
-                    }
-                }
-                if ( to != null )
-                {
-                    int compare = Values.COMPARATOR.compare( value, to );
-                    return compare <= 0 && (toInclusive || compare != 0);
-                }
-                return true;
-            }
-            return false;
+            if (value.valueGroup() != valueGroup) {
+				return false;
+			}
+			if ( from != null )
+			{
+			    int compare = Values.COMPARATOR.compare( value, from );
+			    if ( compare < 0 || !fromInclusive && compare == 0 )
+			    {
+			        return false;
+			    }
+			}
+			if ( to != null )
+			{
+			    int compare = Values.COMPARATOR.compare( value, to );
+			    return compare <= 0 && (toInclusive || compare != 0);
+			}
+			return true;
         }
 
         @Override

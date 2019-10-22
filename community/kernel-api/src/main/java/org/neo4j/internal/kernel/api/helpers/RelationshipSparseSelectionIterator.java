@@ -48,12 +48,11 @@ public final class RelationshipSparseSelectionIterator<R> extends RelationshipSp
             next = cursor.relationshipReference();
         }
 
-        if ( next == RelationshipSelections.NO_ID )
-        {
-            close();
-            return false;
-        }
-        return true;
+        if (next != RelationshipSelections.NO_ID) {
+			return true;
+		}
+		close();
+		return false;
     }
 
     @Override

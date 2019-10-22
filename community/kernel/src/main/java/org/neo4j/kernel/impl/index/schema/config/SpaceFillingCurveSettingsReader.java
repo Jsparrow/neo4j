@@ -49,7 +49,7 @@ public class SpaceFillingCurveSettingsReader implements Header.Reader
         byte version = headerBytes.get();
         if ( version != VERSION )
         {
-            throw new UnsupportedOperationException( "Invalid crs settings header version " + version + ", was expecting " + VERSION );
+            throw new UnsupportedOperationException( new StringBuilder().append("Invalid crs settings header version ").append(version).append(", was expecting ").append(VERSION).toString() );
         }
 
         int count = headerBytes.getInt();

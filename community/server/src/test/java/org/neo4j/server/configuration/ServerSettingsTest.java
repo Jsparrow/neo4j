@@ -77,7 +77,7 @@ public class ServerSettingsTest
                 .withSetting( new HttpConnector( "http" ).address, "localhost:123" ).build();
 
         ConfigValue address = config.getConfigValues().entrySet().stream()
-                .filter( c -> c.getKey().equals( "dbms.connector.http.address" ) )
+                .filter( c -> "dbms.connector.http.address".equals( c.getKey() ) )
                 .map( Entry::getValue )
                 .findAny()
                 .orElseThrow( () -> new RuntimeException( "Setting not present!" ) );

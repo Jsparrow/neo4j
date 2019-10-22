@@ -88,12 +88,6 @@ public class LabelsAcceptanceTest
     @Rule
     public final TestDirectory testDirectory = TestDirectory.testDirectory();
 
-    private enum Labels implements Label
-    {
-        MY_LABEL,
-        MY_OTHER_LABEL
-    }
-
     /** https://github.com/neo4j/neo4j/issues/1279 */
     @Test
     public void shouldInsertLabelsWithoutDuplicatingThem()
@@ -102,14 +96,10 @@ public class LabelsAcceptanceTest
                 (Function<GraphDatabaseService,Node>) GraphDatabaseService::createNode );
         // POST "FOOBAR"
         dbRule.executeAndCommit( db ->
-        {
-            node.addLabel( label( "FOOBAR" ) );
-        } );
+        node.addLabel(label("FOOBAR")) );
         // POST ["BAZQUX"]
         dbRule.executeAndCommit( db ->
-        {
-            node.addLabel( label( "BAZQUX" ) );
-        } );
+        node.addLabel(label("BAZQUX")) );
         // PUT ["BAZQUX"]
         dbRule.executeAndCommit( db ->
         {
@@ -133,7 +123,7 @@ public class LabelsAcceptanceTest
         assertEquals( "BAZQUX", labels.get( 0 ).name() );
     }
 
-    @Test
+	@Test
     public void addingALabelUsingAValidIdentifierShouldSucceed()
     {
         // Given
@@ -154,7 +144,7 @@ public class LabelsAcceptanceTest
                 inTx( graphDatabase, hasLabel( Labels.MY_LABEL ) ) );
     }
 
-    @Test
+	@Test
     public void addingALabelUsingAnInvalidIdentifierShouldFail()
     {
         // Given
@@ -181,7 +171,7 @@ public class LabelsAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void addingALabelThatAlreadyExistsBehavesAsNoOp()
     {
         // Given
@@ -203,7 +193,7 @@ public class LabelsAcceptanceTest
                 inTx( graphDatabase, hasLabel( Labels.MY_LABEL ) ) );
     }
 
-    @Test
+	@Test
     public void oversteppingMaxNumberOfLabelsShouldFailGracefully()
     {
         // Given
@@ -222,7 +212,7 @@ public class LabelsAcceptanceTest
         graphDatabase.shutdown();
     }
 
-    @Test
+	@Test
     public void removingCommittedLabel()
     {
         // Given
@@ -241,7 +231,7 @@ public class LabelsAcceptanceTest
         assertThat( myNode, not( inTx( graphDatabase, hasLabel( label ) ) ) );
     }
 
-    @Test
+	@Test
     public void createNodeWithLabels()
     {
         // GIVEN
@@ -261,7 +251,7 @@ public class LabelsAcceptanceTest
         assertThat( node, inTx( db, hasLabels( names ) ) );
     }
 
-    @Test
+	@Test
     public void removingNonExistentLabel()
     {
         // Given
@@ -281,7 +271,7 @@ public class LabelsAcceptanceTest
         assertThat( myNode, not( inTx( beansAPI, hasLabel( label ) ) ) );
     }
 
-    @Test
+	@Test
     public void removingExistingLabelFromUnlabeledNode()
     {
         // Given
@@ -301,7 +291,7 @@ public class LabelsAcceptanceTest
         assertThat( myNode, not( inTx( beansAPI, hasLabel( label ) ) ) );
     }
 
-    @Test
+	@Test
     public void removingUncommittedLabel()
     {
         // Given
@@ -323,7 +313,7 @@ public class LabelsAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToListLabelsForANode()
     {
         // GIVEN
@@ -333,17 +323,14 @@ public class LabelsAcceptanceTest
         try ( Transaction tx = beansAPI.beginTx() )
         {
             node = beansAPI.createNode();
-            for ( String label : expected )
-            {
-                node.addLabel( label( label ) );
-            }
+            expected.forEach(label -> node.addLabel(label(label)));
             tx.success();
         }
 
         assertThat( node, inTx( beansAPI, hasLabels( expected ) ) );
     }
 
-    @Test
+	@Test
     public void shouldReturnEmptyListIfNoLabels()
     {
         // GIVEN
@@ -354,7 +341,7 @@ public class LabelsAcceptanceTest
         assertThat( node, inTx( beansAPI, hasNoLabels() ) );
     }
 
-    @Test
+	@Test
     public void getNodesWithLabelCommitted()
     {
         // Given
@@ -374,7 +361,7 @@ public class LabelsAcceptanceTest
         assertThat( beansAPI, inTx( beansAPI, hasNoNodes( Labels.MY_OTHER_LABEL ) ) );
     }
 
-    @Test
+	@Test
     public void getNodesWithLabelsWithTxAddsAndRemoves()
     {
         // GIVEN
@@ -401,7 +388,7 @@ public class LabelsAcceptanceTest
         assertEquals( asSet( node1, node2 ), nodesWithMyOtherLabel );
     }
 
-    @Test
+	@Test
     public void shouldListAllExistingLabels()
     {
         // Given
@@ -420,7 +407,7 @@ public class LabelsAcceptanceTest
         assertThat( map( Label::name, labels ), hasItems( Labels.MY_LABEL.name(), Labels.MY_OTHER_LABEL.name() ) );
     }
 
-    @Test
+	@Test
     public void shouldListAllLabelsInUse()
     {
         // Given
@@ -445,7 +432,7 @@ public class LabelsAcceptanceTest
         assertThat( map( Label::name, labels ), hasItems( Labels.MY_LABEL.name() ) );
     }
 
-    @Test( timeout = 30_000 )
+	@Test( timeout = 30_000 )
     public void shouldListAllLabelsInUseEvenWhenExclusiveLabelLocksAreTaken() throws Exception
     {
         // Given
@@ -487,7 +474,7 @@ public class LabelsAcceptanceTest
         assertThat( map( Label::name, labels ), hasItems( Labels.MY_LABEL.name() ) );
     }
 
-    @Test( timeout = 30_000 )
+	@Test( timeout = 30_000 )
     public void shouldListAllRelationshipTypesInUseEvenWhenExclusiveRelationshipTypeLocksAreTaken() throws Exception
     {
         // Given
@@ -529,7 +516,7 @@ public class LabelsAcceptanceTest
         assertThat( map( RelationshipType::name, relTypes ), hasItems( relType.name() ) );
     }
 
-    @Test
+	@Test
     public void deleteAllNodesAndTheirLabels()
     {
         // GIVEN
@@ -561,7 +548,7 @@ public class LabelsAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void removingLabelDoesNotBreakPreviouslyCreatedLabelsIterator()
     {
         // GIVEN
@@ -581,7 +568,7 @@ public class LabelsAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void removingPropertyDoesNotBreakPreviouslyCreatedNodePropertyKeysIterator()
     {
         // GIVEN
@@ -601,7 +588,7 @@ public class LabelsAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void shouldCreateNodeWithLotsOfLabelsAndThenRemoveMostOfThem()
     {
         // given
@@ -643,7 +630,7 @@ public class LabelsAcceptanceTest
         }
     }
 
-    @Test
+	@Test
     public void shouldAllowManyLabelsAndPropertyCursor()
     {
         int propertyCount = 10;
@@ -698,7 +685,7 @@ public class LabelsAcceptanceTest
         assertEquals( labelCount, seenLabels.size() );
     }
 
-    @Test
+	@Test
     public void nodeWithManyLabels()
     {
         int labels = 500;
@@ -718,7 +705,7 @@ public class LabelsAcceptanceTest
         verifyLabels( nodeId, halveLabels - 2, 2 );
     }
 
-    private void addLabels( long nodeId, int startLabelIndex, int count )
+	private void addLabels( long nodeId, int startLabelIndex, int count )
     {
         try ( Transaction tx = dbRule.beginTx() )
         {
@@ -732,7 +719,7 @@ public class LabelsAcceptanceTest
         }
     }
 
-    private void verifyLabels( long nodeId, int startLabelIndex, int count )
+	private void verifyLabels( long nodeId, int startLabelIndex, int count )
     {
         try ( Transaction tx = dbRule.beginTx() )
         {
@@ -752,7 +739,7 @@ public class LabelsAcceptanceTest
         }
     }
 
-    private void removeLabels( long nodeId, int startLabelIndex, int count )
+	private void removeLabels( long nodeId, int startLabelIndex, int count )
     {
         try ( Transaction tx = dbRule.beginTx() )
         {
@@ -766,17 +753,17 @@ public class LabelsAcceptanceTest
         }
     }
 
-    private static Label labelWithIndex( int index )
+	private static Label labelWithIndex( int index )
     {
         return label( labelName( index ) );
     }
 
-    private static String labelName( int index )
+	private static String labelName( int index )
     {
         return "Label-" + index;
     }
 
-    @SuppressWarnings( "deprecation" )
+	@SuppressWarnings( "deprecation" )
     private GraphDatabaseService beansAPIWithNoMoreLabelIds()
     {
         final EphemeralIdGenerator.Factory idFactory = new EphemeralIdGenerator.Factory()
@@ -786,27 +773,26 @@ public class LabelsAcceptanceTest
             @Override
             public IdGenerator open( File fileName, int grabSize, IdType idType, LongSupplier highId, long maxId )
             {
-                if ( idType == IdType.LABEL_TOKEN )
-                {
-                    IdGenerator generator = generators.get( idType );
-                    if ( generator == null )
-                    {
-                        IdTypeConfiguration idTypeConfiguration =
-                                idTypeConfigurationProvider.getIdTypeConfiguration( idType );
-                        generator = new EphemeralIdGenerator( idType, idTypeConfiguration )
-                        {
-                            @Override
-                            public long nextId()
-                            {
-                                // Same exception as the one thrown by IdGeneratorImpl
-                                throw new UnderlyingStorageException( "Id capacity exceeded" );
-                            }
-                        };
-                        generators.put( idType, generator );
-                    }
-                    return generator;
-                }
-                return super.open( fileName, grabSize, idType, () -> Long.MAX_VALUE, Long.MAX_VALUE );
+                if (idType != IdType.LABEL_TOKEN) {
+					return super.open( fileName, grabSize, idType, () -> Long.MAX_VALUE, Long.MAX_VALUE );
+				}
+				IdGenerator generator = generators.get( idType );
+				if ( generator == null )
+				{
+				    IdTypeConfiguration idTypeConfiguration =
+				            idTypeConfigurationProvider.getIdTypeConfiguration( idType );
+				    generator = new EphemeralIdGenerator( idType, idTypeConfiguration )
+				    {
+				        @Override
+				        public long nextId()
+				        {
+				            // Same exception as the one thrown by IdGeneratorImpl
+				            throw new UnderlyingStorageException( "Id capacity exceeded" );
+				        }
+				    };
+				    generators.put( idType, generator );
+				}
+				return generator;
             }
         };
 
@@ -851,7 +837,7 @@ public class LabelsAcceptanceTest
         return dbFactory.newImpermanentDatabase( testDirectory.directory( "impermanent-directory" ) );
     }
 
-    private Node createNode( GraphDatabaseService db, Label... labels )
+	private Node createNode( GraphDatabaseService db, Label... labels )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -861,7 +847,13 @@ public class LabelsAcceptanceTest
         }
     }
 
-    private static class CommunityEditionModuleWithCustomIdContextFactory extends CommunityEditionModule
+	private enum Labels implements Label
+    {
+        MY_LABEL,
+        MY_OTHER_LABEL
+    }
+
+	private static class CommunityEditionModuleWithCustomIdContextFactory extends CommunityEditionModule
     {
         CommunityEditionModuleWithCustomIdContextFactory( PlatformModule platformModule, EphemeralIdGenerator.Factory idFactory )
         {

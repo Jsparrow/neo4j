@@ -29,7 +29,7 @@ public class FileIsMappedException extends IOException
 
     public FileIsMappedException( File file, Operation operation )
     {
-        super( operation.message + ": " + file );
+        super( new StringBuilder().append(operation.message).append(": ").append(file).toString() );
         this.file = file;
         this.operation = operation;
     }

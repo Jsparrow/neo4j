@@ -196,7 +196,7 @@ public class RelationshipIT extends AbstractRestFunctionalDocTestBase
 
     private String getRelPropURI( Relationship loves, String propertyKey )
     {
-        return getRelationshipUri( loves ) + "/properties/" + propertyKey;
+        return new StringBuilder().append(getRelationshipUri( loves )).append("/properties/").append(propertyKey).toString();
     }
 
     @Test

@@ -79,11 +79,11 @@ public class TaskCoordinator implements Cancelable, Factory<TaskControl>
             @Override
             public void close()
             {
-                if ( !closed )
-                {
-                    closed = true;
-                    TASKS_UPDATER.decrementAndGet( TaskCoordinator.this );
-                }
+                if (closed) {
+					return;
+				}
+				closed = true;
+				TASKS_UPDATER.decrementAndGet( TaskCoordinator.this );
             }
 
             @Override

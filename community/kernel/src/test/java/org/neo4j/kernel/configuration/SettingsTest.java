@@ -66,7 +66,18 @@ import static org.neo4j.kernel.configuration.Settings.setting;
 
 class SettingsTest
 {
-    @Test
+    private static BiFunction<File,Function<String,String>,File> isFile = ( path, settings ) ->
+    {
+        if ( path.exists() && !path.isFile() )
+        {
+            throw new IllegalArgumentException(
+                    String.format( "%s must point to a file, not a directory", path.toString() ) );
+        }
+
+        return path;
+    };
+
+	@Test
     void parsesAbsolutePaths()
     {
         File absolutePath = new File( "some/path" ).getAbsoluteFile();
@@ -75,7 +86,7 @@ class SettingsTest
         assertEquals( absolutePath, thePath );
     }
 
-    @Test
+	@Test
     void doesntAllowRelativePaths()
     {
         File relativePath = new File( "some/path" );
@@ -83,7 +94,7 @@ class SettingsTest
         assertThrows( IllegalArgumentException.class, () -> Settings.PATH.apply( relativePath.toString() ) );
     }
 
-    @Test
+	@Test
     void pathSettingsProvideDefaultValues()
     {
         File theDefault = new File( "/some/path" ).getAbsoluteFile();
@@ -91,20 +102,20 @@ class SettingsTest
         assertThat( Config.defaults().get( setting ), is( theDefault ) );
     }
 
-    @Test
+	@Test
     void pathSettingsAreNullIfThereIsNoValueAndNoDefault()
     {
         Setting<File> setting = pathSetting( "some.setting", NO_DEFAULT );
         assertThat( Config.defaults().get( setting ), is( nullValue() ) );
     }
 
-    @Test
+	@Test
     void shouldHaveAUsefulToStringWhichIsUsedAsTheValidValuesInDocumentation()
     {
         assertThat( pathSetting( EMPTY, NO_DEFAULT ).toString(), containsString( "A filesystem path" ) );
     }
 
-    @Test
+	@Test
     void testInteger()
     {
         Setting<Integer> setting = setting( "foo", INTEGER, "3" );
@@ -116,7 +127,7 @@ class SettingsTest
         assertThrows( InvalidSettingException.class, () -> setting.apply( map( stringMap( "foo", "bar" ) ) ) );
     }
 
-    @Test
+	@Test
     void testList()
     {
         Setting<List<Integer>> setting = setting( "foo", list( ",", INTEGER ), "1,2,3,4" );
@@ -135,7 +146,7 @@ class SettingsTest
         assertThat( setting5.apply( map( stringMap() ) ).toString(), equalTo( "[1, 2, 3, 4]" ) );
     }
 
-    @Test
+	@Test
     void testStringList()
     {
         Setting<List<String>> setting1 = setting( "apa", STRING_LIST, "foo,bar,baz" );
@@ -148,7 +159,7 @@ class SettingsTest
         assertEquals( Collections.emptyList(), setting3.apply( map( stringMap() ) ) );
     }
 
-    @Test
+	@Test
     void testPowerOf2()
     {
         Setting<Long> setting = buildSetting( "foo", LONG, "2" ).constraint( powerOf2() ).build();
@@ -160,7 +171,7 @@ class SettingsTest
         assertThrows( InvalidSettingException.class, () -> setting.apply( map( stringMap( "foo", "255" ) ) ) );
     }
 
-    @Test
+	@Test
     void testMin()
     {
         Setting<Integer> setting = buildSetting( "foo", INTEGER, "3" ).constraint( min( 2 ) ).build();
@@ -172,7 +183,7 @@ class SettingsTest
         assertThrows( InvalidSettingException.class, () -> setting.apply( map( stringMap( "foo", "1" ) ) ) );
     }
 
-    @Test
+	@Test
     void exceptDoesNotAllowForbiddenValues()
     {
         Setting<String> restrictedSetting = buildSetting( "foo", STRING, "test" ).constraint( except( "a", "b", "c" ) ).build();
@@ -185,7 +196,7 @@ class SettingsTest
         assertThat( exception.getMessage(), containsString( "not allowed value is: c" ) );
     }
 
-    @Test
+	@Test
     void testMax()
     {
         Setting<Integer> setting = buildSetting( "foo", INTEGER, "3" ).constraint( max( 5 ) ).build();
@@ -197,7 +208,7 @@ class SettingsTest
         assertThrows( InvalidSettingException.class, () -> setting.apply( map( stringMap( "foo", "7" ) ) ) );
     }
 
-    @Test
+	@Test
     void testRange()
     {
         Setting<Integer> setting = buildSetting( "foo", INTEGER, "3" ).constraint( range( 2, 5 ) ).build();
@@ -210,7 +221,7 @@ class SettingsTest
         assertThrows( InvalidSettingException.class, () -> setting.apply( map( stringMap( "foo", "6" ) ) ) );
     }
 
-    @Test
+	@Test
     void testMatches()
     {
         Setting<String> setting = buildSetting( "foo", STRING, "abc" ).constraint(  matches( "a*b*c*" ) ).build();
@@ -222,7 +233,7 @@ class SettingsTest
         assertThrows( InvalidSettingException.class, () -> setting.apply( map( stringMap( "foo", "cba" ) ) ) );
     }
 
-    @Test
+	@Test
     void testDurationWithBrokenDefault()
     {
         // Notice that the default value is less that the minimum
@@ -230,21 +241,21 @@ class SettingsTest
         assertThrows( InvalidSettingException.class, () -> setting.apply( map( stringMap() ) ) );
     }
 
-    @Test
+	@Test
     void testDurationWithValueNotWithinConstraint()
     {
         Setting<Duration> setting = buildSetting( "foo.bar", DURATION, "3s" ).constraint( min( DURATION.apply( "3s" ) ) ).build();
         assertThrows( InvalidSettingException.class, () -> setting.apply( map( stringMap( "foo.bar", "2s" ) ) ) );
     }
 
-    @Test
+	@Test
     void testDuration()
     {
         Setting<Duration> setting = buildSetting( "foo.bar", DURATION, "3s").constraint( min( DURATION.apply( "3s" ) ) ).build();
         assertThat( setting.apply( map( stringMap( "foo.bar", "4s" ) ) ), equalTo( Duration.ofSeconds( 4 ) ) );
     }
 
-    @Test
+	@Test
     void badDurationMissingNumber()
     {
         Setting<Duration> setting = buildSetting( "foo.bar", DURATION ).build();
@@ -252,7 +263,7 @@ class SettingsTest
         assertThat( exception.getMessage(), containsString( "Missing numeric value" ) );
     }
 
-    @Test
+	@Test
     void badDurationInvalidUnit()
     {
         Setting<Duration> setting = buildSetting( "foo.bar", DURATION ).build();
@@ -261,7 +272,7 @@ class SettingsTest
         assertThat( exception.getMessage(), containsString( "Unrecognized unit 'gigaseconds'" ) );
     }
 
-    @Test
+	@Test
     void testDefault()
     {
         Setting<Integer> setting = setting( "foo", INTEGER, "3" );
@@ -270,7 +281,7 @@ class SettingsTest
         assertThat( setting.apply( map( stringMap() ) ), equalTo( 3 ) );
     }
 
-    @Test
+	@Test
     void testPaths()
     {
         File directory = new File( "myDirectory" );
@@ -280,7 +291,7 @@ class SettingsTest
                 equalTo( new File( directory, "config.properties" ).getAbsolutePath() ) );
     }
 
-    @Test
+	@Test
     void testInheritOneLevel()
     {
         Setting<Integer> root = setting( "root", INTEGER, "4" );
@@ -291,7 +302,7 @@ class SettingsTest
         assertThat( setting.apply( map( stringMap() ) ), equalTo( 4 ) );
     }
 
-    @Test
+	@Test
     void testInheritHierarchy()
     {
         // Test hierarchies
@@ -310,7 +321,7 @@ class SettingsTest
         assertThat( e.apply( map( stringMap() ) ), equalTo( "B" ) );
     }
 
-    @Test
+	@Test
     void testLogicalLogRotationThreshold()
     {
         // WHEN
@@ -325,7 +336,7 @@ class SettingsTest
         assertEquals( 10L * 1024 * 1024 * 1024, gigaValue );
     }
 
-    @Test
+	@Test
     void testNormalizedRelativeURI()
     {
         // Given
@@ -335,7 +346,7 @@ class SettingsTest
         assertThat( uri.apply( always -> null ).toString(), equalTo( "/db/data" ) );
     }
 
-    @Test
+	@Test
     void onlySingleInheritanceShouldBeAllowed()
     {
         Setting<String> a = setting( "A", STRING, "A" );
@@ -343,19 +354,8 @@ class SettingsTest
         assertThrows( AssertionError.class, () -> buildSetting( "C", STRING, "C" ).inherits( a ).inherits( b ).build() );
     }
 
-    private static <From, To> Function<From,To> map( final Map<From,To> map )
+	private static <From, To> Function<From,To> map( final Map<From,To> map )
     {
         return map::get;
     }
-
-    private static BiFunction<File,Function<String,String>,File> isFile = ( path, settings ) ->
-    {
-        if ( path.exists() && !path.isFile() )
-        {
-            throw new IllegalArgumentException(
-                    String.format( "%s must point to a file, not a directory", path.toString() ) );
-        }
-
-        return path;
-    };
 }

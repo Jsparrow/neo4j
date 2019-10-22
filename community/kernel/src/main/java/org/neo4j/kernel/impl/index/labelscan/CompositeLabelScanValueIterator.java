@@ -52,13 +52,7 @@ class CompositeLabelScanValueIterator extends PrimitiveLongBaseIterator implemen
     {
         this.toClose = iterators;
         this.atLeastNumberOfLabels = trueForAll ? iterators.size() : 1;
-        for ( LongIterator iterator : iterators )
-        {
-            if ( iterator.hasNext() )
-            {
-                sortedIterators.add( new IdAndSource( iterator.next(), iterator ) );
-            }
-        }
+        iterators.stream().filter(PrimitiveLongResourceIterator::hasNext).forEach(iterator -> sortedIterators.add(new IdAndSource(iterator.next(), iterator)));
     }
 
     @Override

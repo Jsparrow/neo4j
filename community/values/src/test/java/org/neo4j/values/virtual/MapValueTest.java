@@ -44,7 +44,7 @@ class MapValueTest
         MapValue base = mapValue( "k1", stringValue( "v1" ), "k2", stringValue( "v2" ), "k3", stringValue( "v3" ) );
 
         // When
-        MapValue filtered = base.filter( ( k, ignore ) -> k.equals( "k2" ) );
+        MapValue filtered = base.filter( ( k, ignore ) -> "k2".equals( k ) );
 
         // Then
         assertMapValueEquals( filtered, mapValue( "k2", stringValue( "v2" ) ) );
@@ -70,7 +70,7 @@ class MapValueTest
         MapValue base = mapValue( "k1", stringValue( "v1" ), "k2", stringValue( "v2" ), "k3", stringValue( "v3" ) );
 
         // When
-        MapValue filtered = base.filter( ( k, v ) -> k.equals( "k1" ) && v.equals( stringValue( "v2" ) ) );
+        MapValue filtered = base.filter( ( k, v ) -> "k1".equals( k ) && v.equals( stringValue( "v2" ) ) );
 
         // Then
         assertMapValueEquals( filtered, EMPTY_MAP );

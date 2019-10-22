@@ -59,7 +59,89 @@ public abstract class Command implements StorageCommand
     private long key;
     private Mode mode;
 
-    /*
+    protected final void setup( long key, Mode mode )
+    {
+        this.mode = mode;
+        this.keyHash = (int) ((key >>> 32) ^ key);
+        this.key = key;
+    }
+
+	@Override
+    public int hashCode()
+    {
+        return keyHash;
+    }
+
+	// Force implementors to implement toString
+    @Override
+    public abstract String toString();
+
+	public long getKey()
+    {
+        return key;
+    }
+
+	public Mode getMode()
+    {
+        return mode;
+    }
+
+	@Override
+    public boolean equals( Object o )
+    {
+        return o != null && o.getClass().equals( getClass() ) && getKey() == ((Command) o).getKey();
+    }
+
+	public abstract boolean handle( CommandVisitor handler ) throws IOException;
+
+	protected String beforeAndAfterToString( AbstractBaseRecord before, AbstractBaseRecord after )
+    {
+        return format( " -%s%n         +%s", before, after );
+    }
+
+	void writeDynamicRecords( WritableChannel channel, Collection<DynamicRecord> records ) throws IOException
+    {
+        writeDynamicRecords( channel, records, records.size() );
+    }
+
+	void writeDynamicRecords( WritableChannel channel, Iterable<DynamicRecord> records, int size ) throws IOException
+    {
+        channel.putInt( size ); // 4
+        for ( DynamicRecord record : records )
+        {
+            writeDynamicRecord( channel, record );
+        }
+    }
+
+	void writeDynamicRecord( WritableChannel channel, DynamicRecord record ) throws IOException
+    {
+        // id+type+in_use(byte)+nr_of_bytes(int)+next_block(long)
+        if ( record.inUse() )
+        {
+            byte inUse = Record.IN_USE.byteValue();
+            if ( record.isStartRecord() )
+            {
+                inUse |= Record.FIRST_IN_CHAIN.byteValue();
+            }
+            channel.putLong( record.getId() )
+                   .putInt( record.getTypeAsInt() )
+                   .put( inUse )
+                   .putInt( record.getLength() )
+                   .putLong( record.getNextBlock() );
+            byte[] data = record.getData();
+            assert data != null;
+            channel.put( data, data.length );
+        }
+        else
+        {
+            byte inUse = Record.NOT_IN_USE.byteValue();
+            channel.putLong( record.getId() )
+                   .putInt( record.getTypeAsInt() )
+                   .put( inUse );
+        }
+    }
+
+	/*
      * TODO: This is techdebt
      * This is used to control the order of how commands are applied, which is done because
      * we don't take read locks, and so the order or how we change things lowers the risk
@@ -91,89 +173,7 @@ public abstract class Command implements StorageCommand
         }
     }
 
-    protected final void setup( long key, Mode mode )
-    {
-        this.mode = mode;
-        this.keyHash = (int) ((key >>> 32) ^ key);
-        this.key = key;
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return keyHash;
-    }
-
-    // Force implementors to implement toString
-    @Override
-    public abstract String toString();
-
-    public long getKey()
-    {
-        return key;
-    }
-
-    public Mode getMode()
-    {
-        return mode;
-    }
-
-    @Override
-    public boolean equals( Object o )
-    {
-        return o != null && o.getClass().equals( getClass() ) && getKey() == ((Command) o).getKey();
-    }
-
-    public abstract boolean handle( CommandVisitor handler ) throws IOException;
-
-    protected String beforeAndAfterToString( AbstractBaseRecord before, AbstractBaseRecord after )
-    {
-        return format( " -%s%n         +%s", before, after );
-    }
-
-    void writeDynamicRecords( WritableChannel channel, Collection<DynamicRecord> records ) throws IOException
-    {
-        writeDynamicRecords( channel, records, records.size() );
-    }
-
-    void writeDynamicRecords( WritableChannel channel, Iterable<DynamicRecord> records, int size ) throws IOException
-    {
-        channel.putInt( size ); // 4
-        for ( DynamicRecord record : records )
-        {
-            writeDynamicRecord( channel, record );
-        }
-    }
-
-    void writeDynamicRecord( WritableChannel channel, DynamicRecord record ) throws IOException
-    {
-        // id+type+in_use(byte)+nr_of_bytes(int)+next_block(long)
-        if ( record.inUse() )
-        {
-            byte inUse = Record.IN_USE.byteValue();
-            if ( record.isStartRecord() )
-            {
-                inUse |= Record.FIRST_IN_CHAIN.byteValue();
-            }
-            channel.putLong( record.getId() )
-                   .putInt( record.getTypeAsInt() )
-                   .put( inUse )
-                   .putInt( record.getLength() )
-                   .putLong( record.getNextBlock() );
-            byte[] data = record.getData();
-            assert data != null;
-            channel.put( data, data.length );
-        }
-        else
-        {
-            byte inUse = Record.NOT_IN_USE.byteValue();
-            channel.putLong( record.getId() )
-                   .putInt( record.getTypeAsInt() )
-                   .put( inUse );
-        }
-    }
-
-    public abstract static class BaseCommand<RECORD extends AbstractBaseRecord> extends Command
+	public abstract static class BaseCommand<RECORD extends AbstractBaseRecord> extends Command
     {
         protected final RECORD before;
         protected final RECORD after;
@@ -636,7 +636,7 @@ public abstract class Command implements StorageCommand
         {
             if ( schemaRule != null )
             {
-                return getMode() + ":" + schemaRule.toString();
+                return new StringBuilder().append(getMode()).append(":").append(schemaRule.toString()).toString();
             }
             return "SchemaRule" + recordsAfter;
         }

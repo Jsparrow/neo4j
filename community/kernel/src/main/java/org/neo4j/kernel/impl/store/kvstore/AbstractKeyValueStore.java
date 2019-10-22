@@ -279,7 +279,14 @@ public abstract class AbstractKeyValueStore<Key> extends LifecycleAdapter
                 .collect( Collectors.toList() );
     }
 
-    private class RotationTask implements PreparedRotation, Runnable
+    private HeaderField<?>[] headerFieldsForFormat( ReadableBuffer formatSpecifier )
+    {
+        return format.defaultHeaderFieldsForFormat( formatSpecifier );
+    }
+
+	protected abstract long version( Headers headers );
+
+	private class RotationTask implements PreparedRotation, Runnable
     {
         private final RotationState<Key> rotation;
 
@@ -376,13 +383,6 @@ public abstract class AbstractKeyValueStore<Key> extends LifecycleAdapter
 
         protected abstract boolean visitKeyValuePair( Key key, ReadableBuffer value );
     }
-
-    private HeaderField<?>[] headerFieldsForFormat( ReadableBuffer formatSpecifier )
-    {
-        return format.defaultHeaderFieldsForFormat( formatSpecifier );
-    }
-
-    protected abstract long version( Headers headers );
 
     private final class Format extends ProgressiveFormat implements KeyFormat<Key>
     {

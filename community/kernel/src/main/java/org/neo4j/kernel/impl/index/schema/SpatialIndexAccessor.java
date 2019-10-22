@@ -283,16 +283,12 @@ class SpatialIndexAccessor extends SpatialIndexCache<SpatialIndexAccessor.PartAc
         public PartAccessor newSpatial( CoordinateReferenceSystem crs ) throws IOException
         {
             SpatialIndexFiles.SpatialFile spatialFile = spatialIndexFiles.forCrs( crs );
-            if ( !fs.fileExists( spatialFile.indexFile ) )
-            {
-                SpatialIndexFiles.SpatialFileLayout fileLayout = spatialFile.getLayoutForNewIndex();
-                createEmptyIndex( fileLayout );
-                return createPartAccessor( fileLayout );
-            }
-            else
-            {
-                return createPartAccessor( spatialFile.getLayoutForExistingIndex( pageCache ) );
-            }
+            if (fs.fileExists( spatialFile.indexFile )) {
+				return createPartAccessor( spatialFile.getLayoutForExistingIndex( pageCache ) );
+			}
+			SpatialIndexFiles.SpatialFileLayout fileLayout = spatialFile.getLayoutForNewIndex();
+			createEmptyIndex( fileLayout );
+			return createPartAccessor( fileLayout );
         }
 
         private PartAccessor createPartAccessor( SpatialIndexFiles.SpatialFileLayout fileLayout ) throws IOException

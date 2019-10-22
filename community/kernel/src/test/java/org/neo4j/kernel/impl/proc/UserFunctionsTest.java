@@ -118,9 +118,7 @@ public class UserFunctionsTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "There is no function with the name `org.myproc` registered for this " +
-                                 "database instance. Please ensure you've spelled the " +
-                                 "function name correctly and that the function is properly deployed." );
+        exception.expectMessage( new StringBuilder().append("There is no function with the name `org.myproc` registered for this ").append("database instance. Please ensure you've spelled the ").append("function name correctly and that the function is properly deployed.").toString() );
 
         // When
         procs.callFunction( new BasicContext(), signature.name(), new AnyValue[] {numberValue( 1337 )} );

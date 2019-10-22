@@ -40,7 +40,30 @@ public class NodeRecord extends PrimitiveRecord
         super( id );
     }
 
-    public NodeRecord initialize( boolean inUse, long nextProp, boolean dense, long nextRel, long labels )
+    @Deprecated
+    public NodeRecord( long id, boolean dense, long nextRel, long nextProp )
+    {
+        this( id, false, dense, nextRel, nextProp, 0 );
+    }
+
+	@Deprecated
+    public NodeRecord( long id, boolean inUse, boolean dense, long nextRel, long nextProp, long labels )
+    {
+        super( id, nextProp );
+        this.nextRel = nextRel;
+        this.dense = dense;
+        this.labels = labels;
+        setInUse( inUse );
+    }
+
+	@Deprecated
+    public NodeRecord( long id, boolean dense, long nextRel, long nextProp, boolean inUse )
+    {
+        this( id, dense, nextRel, nextProp );
+        setInUse( inUse );
+    }
+
+	public NodeRecord initialize( boolean inUse, long nextProp, boolean dense, long nextRel, long labels )
     {
         super.initialize( inUse, nextProp );
         this.nextRel = nextRel;
@@ -51,47 +74,24 @@ public class NodeRecord extends PrimitiveRecord
         return this;
     }
 
-    @Deprecated
-    public NodeRecord( long id, boolean dense, long nextRel, long nextProp )
-    {
-        this( id, false, dense, nextRel, nextProp, 0 );
-    }
-
-    @Deprecated
-    public NodeRecord( long id, boolean inUse, boolean dense, long nextRel, long nextProp, long labels )
-    {
-        super( id, nextProp );
-        this.nextRel = nextRel;
-        this.dense = dense;
-        this.labels = labels;
-        setInUse( inUse );
-    }
-
-    @Deprecated
-    public NodeRecord( long id, boolean dense, long nextRel, long nextProp, boolean inUse )
-    {
-        this( id, dense, nextRel, nextProp );
-        setInUse( inUse );
-    }
-
-    @Override
+	@Override
     public void clear()
     {
         initialize( false, Record.NO_NEXT_PROPERTY.intValue(), false,
                 Record.NO_NEXT_RELATIONSHIP.intValue(), Record.NO_LABELS_FIELD.intValue() );
     }
 
-    public long getNextRel()
+	public long getNextRel()
     {
         return nextRel;
     }
 
-    public void setNextRel( long nextRel )
+	public void setNextRel( long nextRel )
     {
         this.nextRel = nextRel;
     }
 
-    /**
+	/**
      * Sets the label field to a pointer to the first changed dynamic record. All changed
      * dynamic records by doing this are supplied here.
      *
@@ -109,60 +109,56 @@ public class NodeRecord extends PrimitiveRecord
         this.isLight = dynamicRecords.isEmpty();
     }
 
-    public long getLabelField()
+	public long getLabelField()
     {
         return this.labels;
     }
 
-    public boolean isLight()
+	public boolean isLight()
     {
         return isLight;
     }
 
-    public Collection<DynamicRecord> getDynamicLabelRecords()
+	public Collection<DynamicRecord> getDynamicLabelRecords()
     {
         return this.dynamicLabelRecords;
     }
 
-    public Iterable<DynamicRecord> getUsedDynamicLabelRecords()
+	public Iterable<DynamicRecord> getUsedDynamicLabelRecords()
     {
         return filter( AbstractBaseRecord::inUse, dynamicLabelRecords );
     }
 
-    public boolean isDense()
+	public boolean isDense()
     {
         return dense;
     }
 
-    public void setDense( boolean dense )
+	public void setDense( boolean dense )
     {
         this.dense = dense;
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        String denseInfo = (dense ? "group" : "rel") + "=" + nextRel;
+        String denseInfo = new StringBuilder().append(dense ? "group" : "rel").append("=").append(nextRel).toString();
         String lightHeavyInfo = isLight ? "light" :
                                 dynamicLabelRecords.isEmpty() ?
                                 "heavy" : "heavy,dynlabels=" + dynamicLabelRecords;
 
-        return "Node[" + getId() +
-               ",used=" + inUse() +
-               "," + denseInfo +
-               ",prop=" + getNextProp() +
-               ",labels=" + parseLabelsField( this ) +
-               "," + lightHeavyInfo +
-               ",secondaryUnitId=" + getSecondaryUnitId() + "]";
+        return new StringBuilder().append("Node[").append(getId()).append(",used=").append(inUse()).append(",").append(denseInfo)
+				.append(",prop=").append(getNextProp()).append(",labels=").append(parseLabelsField( this )).append(",").append(lightHeavyInfo).append(",secondaryUnitId=")
+				.append(getSecondaryUnitId()).append("]").toString();
     }
 
-    @Override
+	@Override
     public void setIdTo( PropertyRecord property )
     {
         property.setNodeId( getId() );
     }
 
-    @Override
+	@Override
     public NodeRecord clone()
     {
         NodeRecord clone = new NodeRecord( getId() ).initialize( inUse(), nextProp, dense, nextRel, labels );
@@ -171,10 +167,7 @@ public class NodeRecord extends PrimitiveRecord
         if ( dynamicLabelRecords.size() > 0 )
         {
             List<DynamicRecord> clonedLabelRecords = new ArrayList<>( dynamicLabelRecords.size() );
-            for ( DynamicRecord labelRecord : dynamicLabelRecords )
-            {
-                clonedLabelRecords.add( labelRecord.clone() );
-            }
+            dynamicLabelRecords.forEach(labelRecord -> clonedLabelRecords.add(labelRecord.clone()));
             clone.dynamicLabelRecords = clonedLabelRecords;
         }
         clone.setSecondaryUnitId( getSecondaryUnitId() );

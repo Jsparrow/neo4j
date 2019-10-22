@@ -83,7 +83,7 @@ public class SchemaLayouts implements LayoutBootstrapper
                 return layout;
             }
         }
-        throw new RuntimeException( "Layout with identifier \"" + targetLayout + "\" did not match meta " + meta );
+        throw new RuntimeException( new StringBuilder().append("Layout with identifier \"").append(targetLayout).append("\" did not match meta ").append(meta).toString() );
     }
 
     private static boolean matchingLayout( Meta meta, Layout layout )

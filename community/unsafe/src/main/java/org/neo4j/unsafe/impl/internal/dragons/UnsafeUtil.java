@@ -144,8 +144,8 @@ public final class UnsafeUtil
         // See java.nio.Bits.unaligned() and its uses.
         String alignmentProperty = System.getProperty( allowUnalignedMemoryAccessProperty );
         if ( alignmentProperty != null &&
-             (alignmentProperty.equalsIgnoreCase( "true" )
-              || alignmentProperty.equalsIgnoreCase( "false" )) )
+             ("true".equalsIgnoreCase( alignmentProperty )
+              || "false".equalsIgnoreCase( alignmentProperty )) )
         {
             allowUnalignedMemoryAccess = Boolean.parseBoolean( alignmentProperty );
         }
@@ -250,7 +250,7 @@ public final class UnsafeUtil
         }
         catch ( NoSuchFieldException e )
         {
-            String message = "Could not get offset of '" + field + "' field on type " + type;
+            String message = new StringBuilder().append("Could not get offset of '").append(field).append("' field on type ").append(type).toString();
             throw new LinkageError( message, e );
         }
     }
@@ -510,15 +510,12 @@ public final class UnsafeUtil
     {
         long boundary = pointer + size;
         Allocation allocation = lastUsedAllocation.get();
-        if ( allocation != null )
-        {
-            if ( compareUnsigned( allocation.pointer, pointer ) <= 0 &&
-                 compareUnsigned( allocation.boundary, boundary ) > 0 &&
-                 allocation.freeCounter == freeCounter.get() )
-            {
-                return;
-            }
-        }
+        boolean condition = allocation != null && compareUnsigned( allocation.pointer, pointer ) <= 0 &&
+		     compareUnsigned( allocation.boundary, boundary ) > 0 &&
+		     allocation.freeCounter == freeCounter.get();
+		if ( condition ) {
+		    return;
+		}
 
         Map.Entry<Long,Allocation> fentry = allocations.floorEntry( boundary );
         if ( fentry == null || compareUnsigned( fentry.getValue().boundary, boundary ) < 0 )
@@ -550,15 +547,12 @@ public final class UnsafeUtil
                                             .sorted()
                                             .collect( Collectors.toList() );
         AssertionError error = new AssertionError( format(
-                "Bad access to address 0x%x with size %s, nearest valid allocation is " +
-                "0x%x (%s bytes, off by %s bytes). " +
-                "Recent relevant frees (of %s) are attached as suppressed exceptions.",
+                new StringBuilder().append("Bad access to address 0x%x with size %s, nearest valid allocation is ").append("0x%x (%s bytes, off by %s bytes). ").append("Recent relevant frees (of %s) are attached as suppressed exceptions.").toString(),
                 pointer, size, naddr, nsize, noffset, freeCounter.get() ) );
-        for ( FreeTrace recentFree : recentFrees )
-        {
+        recentFrees.forEach(recentFree -> {
             recentFree.referenceTime = now;
             error.addSuppressed( recentFree );
-        }
+        });
         throw error;
     }
 
@@ -969,15 +963,14 @@ public final class UnsafeUtil
      */
     public static ByteBuffer newDirectByteBuffer( long addr, int cap ) throws Exception
     {
-        if ( directByteBufferCtor == null )
-        {
-            // Simulate the JNI NewDirectByteBuffer(void*, long) invocation.
-            Object dbb = unsafe.allocateInstance( directByteBufferClass );
-            initDirectByteBuffer( dbb, addr, cap );
-            return (ByteBuffer) dbb;
-        }
-        // Reflection based fallback code.
-        return (ByteBuffer) directByteBufferCtor.newInstance( addr, cap );
+        if (directByteBufferCtor != null) {
+			// Reflection based fallback code.
+			return (ByteBuffer) directByteBufferCtor.newInstance( addr, cap );
+		}
+		// Simulate the JNI NewDirectByteBuffer(void*, long) invocation.
+		Object dbb = unsafe.allocateInstance( directByteBufferClass );
+		initDirectByteBuffer( dbb, addr, cap );
+		return (ByteBuffer) dbb;
     }
 
     /**

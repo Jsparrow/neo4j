@@ -106,13 +106,8 @@ public class TransactionMetadataCache
         @Override
         public String toString()
         {
-            return "TransactionMetadata{" +
-                   "masterId=" + masterId +
-                   ", authorId=" + authorId +
-                   ", startPosition=" + startPosition +
-                   ", checksum=" + checksum +
-                   ", timeWritten=" + timeWritten +
-                   '}';
+            return new StringBuilder().append("TransactionMetadata{").append("masterId=").append(masterId).append(", authorId=").append(authorId).append(", startPosition=")
+					.append(startPosition).append(", checksum=").append(checksum).append(", timeWritten=").append(timeWritten).append('}').toString();
         }
 
         @Override

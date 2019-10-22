@@ -48,35 +48,40 @@ import static org.junit.Assert.fail;
 
 public abstract class TraversalTestBase extends AbstractNeo4jTestCase
 {
-    private Map<String, Node> nodes;
+    protected static final Representation<PropertyContainer> NAME_PROPERTY_REPRESENTATION = new PropertyRepresentation( "name" );
 
-    @Override
+	protected static final Representation<Relationship> RELATIONSHIP_TYPE_REPRESENTATION =
+            item -> item.getType().name();
+
+	private Map<String, Node> nodes;
+
+	@Override
     protected boolean restartGraphDbBetweenTests()
     {
         return true;
     }
 
-    protected Node node( String name )
+	protected Node node( String name )
     {
         return nodes.get( name );
     }
 
-    protected Node getNode( long id )
+	protected Node getNode( long id )
     {
         return getGraphDb().getNodeById( id );
     }
 
-    protected Transaction beginTx()
+	protected Transaction beginTx()
     {
         return getGraphDb().beginTx();
     }
 
-    protected void createGraph( String... description )
+	protected void createGraph( String... description )
     {
         nodes = createGraph( GraphDescription.create( description ) );
     }
 
-    private Map<String, Node> createGraph( GraphDefinition graph )
+	private Map<String, Node> createGraph( GraphDefinition graph )
     {
         try ( Transaction tx = beginTx() )
         {
@@ -86,7 +91,7 @@ public abstract class TraversalTestBase extends AbstractNeo4jTestCase
         }
     }
 
-    protected Node getNodeWithName( String name )
+	protected Node getNodeWithName( String name )
     {
         ResourceIterable<Node> allNodes = getGraphDb().getAllNodes();
         try ( ResourceIterator<Node> nodeIterator = allNodes.iterator() )
@@ -107,7 +112,7 @@ public abstract class TraversalTestBase extends AbstractNeo4jTestCase
         return null;
     }
 
-    protected void assertLevels( Traverser traverser, Stack<Set<String>> levels )
+	protected void assertLevels( Traverser traverser, Stack<Set<String>> levels )
     {
         Set<String> current = levels.pop();
 
@@ -118,8 +123,7 @@ public abstract class TraversalTestBase extends AbstractNeo4jTestCase
             {
                 current = levels.pop();
             }
-            assertTrue( "Should not contain node (" + nodeName
-                    + ") at level " + (3 - levels.size()),
+            assertTrue( new StringBuilder().append("Should not contain node (").append(nodeName).append(") at level ").append(3 - levels.size()).toString(),
                     current.remove( nodeName ) );
         }
 
@@ -127,12 +131,110 @@ public abstract class TraversalTestBase extends AbstractNeo4jTestCase
         assertTrue( "Should be empty", current.isEmpty() );
     }
 
-    protected static final Representation<PropertyContainer> NAME_PROPERTY_REPRESENTATION = new PropertyRepresentation( "name" );
+	protected <T> void expect( Iterable<? extends T> items,
+            Representation<T> representation, String... expected )
+    {
+        expect( items, representation, new HashSet<>( Arrays.asList( expected ) ) );
+    }
 
-    protected static final Representation<Relationship> RELATIONSHIP_TYPE_REPRESENTATION =
-            item -> item.getType().name();
+	protected <T> void expect( Iterable<? extends T> items,
+            Representation<T> representation, Set<String> expected )
+    {
+        Collection<String> encounteredItems = new ArrayList<>();
+        try ( Transaction tx = beginTx() )
+        {
+            for ( T item : items )
+            {
+                String repr = representation.represent( item );
+                assertTrue( repr + " not expected ", expected.remove( repr ) );
+                encounteredItems.add( repr );
+            }
+            tx.success();
+        }
 
-    protected interface Representation<T>
+        if ( !expected.isEmpty() )
+        {
+            fail( new StringBuilder().append("The expected elements ").append(expected).append(" were not returned. Returned were: ").append(encounteredItems).toString() );
+        }
+    }
+
+	protected void expectNodes( Traverser traverser, String... nodes )
+    {
+        expect( traverser.nodes(), NAME_PROPERTY_REPRESENTATION, nodes );
+    }
+
+	protected void expectRelationships( Traverser traverser,
+            String... relationships )
+    {
+        expect( traverser.relationships(), new RelationshipRepresentation(
+                NAME_PROPERTY_REPRESENTATION ), relationships );
+    }
+
+	protected void expectPaths( Traverser traverser, String... paths )
+    {
+        expectPaths( traverser, new HashSet<>( Arrays.asList( paths ) ) );
+    }
+
+	protected void expectPaths( Traverser traverser, Set<String> expected )
+    {
+        expect( traverser, new NodePathRepresentation(
+                NAME_PROPERTY_REPRESENTATION ), expected );
+    }
+
+	public static <E> void assertContains( Iterator<E> actual, E... expected )
+    {
+        assertContains( Iterators.asIterable( actual ), expected );
+    }
+
+	public static <E> void assertContains( Iterable<E> actual, E... expected )
+    {
+        Set<E> expectation = new HashSet<>( Arrays.asList( expected ) );
+        for ( E element : actual )
+        {
+            if ( !expectation.remove( element ) )
+            {
+                fail( new StringBuilder().append("unexpected element <").append(element).append(">").toString() );
+            }
+        }
+        if ( !expectation.isEmpty() )
+        {
+            fail( new StringBuilder().append("the expected elements <").append(expectation).append("> were not contained").toString() );
+        }
+    }
+
+	public static <T> void assertContainsInOrder( Collection<T> collection,
+            T... expectedItems )
+    {
+        String collectionString = join( ", ", collection.toArray() );
+        assertEquals( collectionString, expectedItems.length, collection.size() );
+        Iterator<T> itr = collection.iterator();
+        for ( int i = 0; itr.hasNext(); i++ )
+        {
+            assertEquals( expectedItems[i], itr.next() );
+        }
+    }
+
+	public static <T> void assertContainsInOrder( Iterable<T> collection,
+            T... expectedItems )
+    {
+        assertContainsInOrder( Iterables.asCollection( collection ), expectedItems );
+    }
+
+	public static <T> String join( String delimiter, T... items )
+    {
+        StringBuilder buffer = new StringBuilder();
+        for ( T item : items )
+        {
+            if ( buffer.length() > 0 )
+            {
+                buffer.append( delimiter );
+            }
+            buffer.append( item.toString() );
+        }
+        return buffer.toString();
+    }
+
+	protected interface Representation<T>
     {
         String represent( T item );
     }
@@ -140,14 +242,14 @@ public abstract class TraversalTestBase extends AbstractNeo4jTestCase
     protected static final class PropertyRepresentation implements
             Representation<PropertyContainer>
     {
-        public PropertyRepresentation( String key )
+        private final String key;
+
+		public PropertyRepresentation( String key )
         {
             this.key = key;
         }
 
-        private final String key;
-
-        @Override
+		@Override
         public String represent( PropertyContainer item )
         {
             return (String) item.getProperty( key );
@@ -175,9 +277,7 @@ public abstract class TraversalTestBase extends AbstractNeo4jTestCase
         @Override
         public String represent( Relationship item )
         {
-            return nodes.represent( item.getStartNode() ) + " "
-                   + rel.represent( item ) + " "
-                   + nodes.represent( item.getEndNode() );
+            return new StringBuilder().append(nodes.represent( item.getStartNode() )).append(" ").append(rel.represent( item )).append(" ").append(nodes.represent( item.getEndNode() )).toString();
         }
     }
 
@@ -203,109 +303,5 @@ public abstract class TraversalTestBase extends AbstractNeo4jTestCase
             }
             return builder.toString();
         }
-    }
-
-    protected <T> void expect( Iterable<? extends T> items,
-            Representation<T> representation, String... expected )
-    {
-        expect( items, representation, new HashSet<>( Arrays.asList( expected ) ) );
-    }
-
-    protected <T> void expect( Iterable<? extends T> items,
-            Representation<T> representation, Set<String> expected )
-    {
-        Collection<String> encounteredItems = new ArrayList<>();
-        try ( Transaction tx = beginTx() )
-        {
-            for ( T item : items )
-            {
-                String repr = representation.represent( item );
-                assertTrue( repr + " not expected ", expected.remove( repr ) );
-                encounteredItems.add( repr );
-            }
-            tx.success();
-        }
-
-        if ( !expected.isEmpty() )
-        {
-            fail( "The expected elements " + expected + " were not returned. Returned were: " + encounteredItems );
-        }
-    }
-
-    protected void expectNodes( Traverser traverser, String... nodes )
-    {
-        expect( traverser.nodes(), NAME_PROPERTY_REPRESENTATION, nodes );
-    }
-
-    protected void expectRelationships( Traverser traverser,
-            String... relationships )
-    {
-        expect( traverser.relationships(), new RelationshipRepresentation(
-                NAME_PROPERTY_REPRESENTATION ), relationships );
-    }
-
-    protected void expectPaths( Traverser traverser, String... paths )
-    {
-        expectPaths( traverser, new HashSet<>( Arrays.asList( paths ) ) );
-    }
-
-    protected void expectPaths( Traverser traverser, Set<String> expected )
-    {
-        expect( traverser, new NodePathRepresentation(
-                NAME_PROPERTY_REPRESENTATION ), expected );
-    }
-
-    public static <E> void assertContains( Iterator<E> actual, E... expected )
-    {
-        assertContains( Iterators.asIterable( actual ), expected );
-    }
-
-    public static <E> void assertContains( Iterable<E> actual, E... expected )
-    {
-        Set<E> expectation = new HashSet<>( Arrays.asList( expected ) );
-        for ( E element : actual )
-        {
-            if ( !expectation.remove( element ) )
-            {
-                fail( "unexpected element <" + element + ">" );
-            }
-        }
-        if ( !expectation.isEmpty() )
-        {
-            fail( "the expected elements <" + expectation
-                  + "> were not contained" );
-        }
-    }
-
-    public static <T> void assertContainsInOrder( Collection<T> collection,
-            T... expectedItems )
-    {
-        String collectionString = join( ", ", collection.toArray() );
-        assertEquals( collectionString, expectedItems.length, collection.size() );
-        Iterator<T> itr = collection.iterator();
-        for ( int i = 0; itr.hasNext(); i++ )
-        {
-            assertEquals( expectedItems[i], itr.next() );
-        }
-    }
-
-    public static <T> void assertContainsInOrder( Iterable<T> collection,
-            T... expectedItems )
-    {
-        assertContainsInOrder( Iterables.asCollection( collection ), expectedItems );
-    }
-
-    public static <T> String join( String delimiter, T... items )
-    {
-        StringBuilder buffer = new StringBuilder();
-        for ( T item : items )
-        {
-            if ( buffer.length() > 0 )
-            {
-                buffer.append( delimiter );
-            }
-            buffer.append( item.toString() );
-        }
-        return buffer.toString();
     }
 }

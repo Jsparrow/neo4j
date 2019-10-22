@@ -122,7 +122,7 @@ public abstract class AbstractDelegatingIndexProxy implements IndexProxy
     }
 
     @Override
-    public IndexPopulationFailure getPopulationFailure() throws IllegalStateException
+    public IndexPopulationFailure getPopulationFailure()
     {
         return getDelegate().getPopulationFailure();
     }

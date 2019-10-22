@@ -50,7 +50,7 @@ public abstract class KernelExtensionFactory<DEPENDENCIES> extends Service
     @Override
     public String toString()
     {
-        return "KernelExtension:" + getClass().getSimpleName() + getKeys();
+        return new StringBuilder().append("KernelExtension:").append(getClass().getSimpleName()).append(getKeys()).toString();
     }
 
     ExtensionType getExtensionType()

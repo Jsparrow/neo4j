@@ -174,17 +174,17 @@ public class StageExecution implements StageControl, AutoCloseable
     @Override
     public void assertHealthy()
     {
-        if ( panic != null )
-        {
-            throwIfUnchecked( panic );
-            throw new RuntimeException( panic );
-        }
+        if (panic == null) {
+			return;
+		}
+		throwIfUnchecked( panic );
+		throw new RuntimeException( panic );
     }
 
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[" + name() + "]";
+        return new StringBuilder().append(getClass().getSimpleName()).append("[").append(name()).append("]").toString();
     }
 
     @Override

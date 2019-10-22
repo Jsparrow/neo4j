@@ -71,6 +71,6 @@ public class RestrictedAccessMode extends WrappedAccessMode
     @Override
     public String name()
     {
-        return original.name() + " restricted to " + wrapping.name();
+        return new StringBuilder().append(original.name()).append(" restricted to ").append(wrapping.name()).toString();
     }
 }

@@ -174,12 +174,11 @@ class NumberArrayType extends AbstractArrayType<Number>
     {
         into.long1 = cursor.getByte(); // number type, like: byte, int, short a.s.o.
         ValueWriter.ArrayType numberType = numberArrayTypeOf( (byte) into.long1 );
-        if ( numberType == null )
-        {
-            setCursorException( cursor, "non-valid number type for array, " + into.long1 );
-            return false;
-        }
-        return readArray( cursor, numberType, numberArrayElementReader( into ), into );
+        if (numberType != null) {
+			return readArray( cursor, numberType, numberArrayElementReader( into ), into );
+		}
+		setCursorException( cursor, "non-valid number type for array, " + into.long1 );
+		return false;
     }
 
     @Override

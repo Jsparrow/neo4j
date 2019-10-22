@@ -145,7 +145,6 @@ class StringIndexKeyTest
 
         // Then that minimal splitter should have entity id shaved off
         assertEquals( NO_ENTITY_ID, minimalSplitter.getEntityId(),
-                "Expected minimal splitter to have entityId removed when constructed from keys with unique values: " +
-                        "left=" + leftValue + ", right=" + rightValue );
+                new StringBuilder().append("Expected minimal splitter to have entityId removed when constructed from keys with unique values: ").append("left=").append(leftValue).append(", right=").append(rightValue).toString() );
     }
 }

@@ -31,7 +31,11 @@ import static org.neo4j.collection.primitive.PrimitiveLongCollections.EMPTY_LONG
  */
 public class PrimitiveArrays
 {
-    /**
+    private PrimitiveArrays()
+    {   // No instances allowed
+    }
+
+	/**
      * Compute union of two sets of integers represented as sorted arrays.
      *
      * @param lhs a set of integers, represented as a sorted array.
@@ -111,7 +115,7 @@ public class PrimitiveArrays
         return merged;
     }
 
-    /**
+	/**
      * Compute the intersection of two sorted long array sets.
      *
      * @param left a sorted array set
@@ -164,7 +168,7 @@ public class PrimitiveArrays
         return intersect;
     }
 
-    /**
+	/**
      * Compute the symmetric difference (set XOR basically) of two sorted long array sets.
      *
      * @param left a sorted array set
@@ -224,7 +228,7 @@ public class PrimitiveArrays
         return difference;
     }
 
-    /**
+	/**
      * Copy PrimitiveLongCollection into new long array
      *
      * @param collection the collection to copy
@@ -242,7 +246,7 @@ public class PrimitiveArrays
         return result;
     }
 
-    /**
+	/**
      * Compute the number of unique values in two sorted long array sets
      *
      * @param left a sorted array set
@@ -278,40 +282,36 @@ public class PrimitiveArrays
         return intPair( uniqueInLeft, uniqueInRight );
     }
 
-    private static long intPair( int left, int right )
+	private static long intPair( int left, int right )
     {
         return (((long) left) << Integer.SIZE) | right;
     }
 
-    private static int left( long pair )
+	private static int left( long pair )
     {
         return (int) (pair >> Integer.SIZE);
     }
 
-    private static int right( long pair )
+	private static int right( long pair )
     {
         return (int) (pair & 0xFFFF_FFFFL);
     }
 
-    private static boolean isSortedSet( int[] set )
+	private static boolean isSortedSet( int[] set )
     {
         for ( int i = 0; i < set.length - 1; i++ )
         {
-            assert set[i] < set[i + 1] : "Array is not a sorted set: has " + set[i] + " before " + set[i + 1];
+            assert set[i] < set[i + 1] : new StringBuilder().append("Array is not a sorted set: has ").append(set[i]).append(" before ").append(set[i + 1]).toString();
         }
         return true;
     }
 
-    private static boolean isSortedSet( long[] set )
+	private static boolean isSortedSet( long[] set )
     {
         for ( int i = 0; i < set.length - 1; i++ )
         {
-            assert set[i] < set[i + 1] : "Array is not a sorted set: has " + set[i] + " before " + set[i + 1];
+            assert set[i] < set[i + 1] : new StringBuilder().append("Array is not a sorted set: has ").append(set[i]).append(" before ").append(set[i + 1]).toString();
         }
         return true;
-    }
-
-    private PrimitiveArrays()
-    {   // No instances allowed
     }
 }

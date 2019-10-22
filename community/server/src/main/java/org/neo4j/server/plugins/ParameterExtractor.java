@@ -47,7 +47,7 @@ class ParameterExtractor extends DataExtractor
         {
             return result;
         }
-        throw new IllegalArgumentException( "Mandatory argument \"" + name + "\" not supplied." );
+        throw new IllegalArgumentException( new StringBuilder().append("Mandatory argument \"").append(name).append("\" not supplied.").toString() );
     }
 
     @Override

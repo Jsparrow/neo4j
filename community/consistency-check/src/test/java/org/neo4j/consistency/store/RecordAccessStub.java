@@ -65,8 +65,40 @@ import static org.neo4j.helpers.collection.Iterables.resourceIterable;
 public class RecordAccessStub implements RecordAccess
 {
     public static final int SCHEMA_RECORD_TYPE = 255;
+	private final Queue<Runnable> deferredTasks = new LinkedList<>();
+	private final Map<Long, Delta<DynamicRecord>> schemata = new HashMap<>();
+	private final Map<Long, Delta<NodeRecord>> nodes = new HashMap<>();
+	private final Map<Long, Delta<RelationshipRecord>> relationships = new HashMap<>();
+	private final Map<Long, Delta<PropertyRecord>> properties = new HashMap<>();
+	private final Map<Long, Delta<DynamicRecord>> strings = new HashMap<>();
+	private final Map<Long, Delta<DynamicRecord>> arrays = new HashMap<>();
+	private final Map<Long, Delta<RelationshipTypeTokenRecord>> relationshipTypeTokens = new HashMap<>();
+	private final Map<Long, Delta<LabelTokenRecord>> labelTokens = new HashMap<>();
+	private final Map<Long, Delta<PropertyKeyTokenRecord>> propertyKeyTokens = new HashMap<>();
+	private final Map<Long, Delta<DynamicRecord>> relationshipTypeNames = new HashMap<>();
+	private final Map<Long, Delta<DynamicRecord>> nodeDynamicLabels = new HashMap<>();
+	private final Map<Long, Delta<DynamicRecord>> labelNames = new HashMap<>();
+	private final Map<Long, Delta<DynamicRecord>> propertyKeyNames = new HashMap<>();
+	private final Map<Long, Delta<RelationshipGroupRecord>> relationshipGroups = new HashMap<>();
+	private Delta<NeoStoreRecord> graph;
+	private final CacheAccess cacheAccess = new DefaultCacheAccess( Counts.NONE, 1 );
+	private final MultiPassStore[] storesToCheck;
 
-    public <RECORD extends AbstractBaseRecord, REPORT extends ConsistencyReport>
+	public RecordAccessStub()
+    {
+        this( Stage.SEQUENTIAL_FORWARD, MultiPassStore.values() );
+    }
+
+	public RecordAccessStub( Stage stage, MultiPassStore... storesToCheck )
+    {
+        this.storesToCheck = storesToCheck;
+        if ( stage.getCacheSlotSizes().length > 0 )
+        {
+            cacheAccess.setCacheSlotSizes( stage.getCacheSlotSizes() );
+        }
+    }
+
+	public <RECORD extends AbstractBaseRecord, REPORT extends ConsistencyReport>
     CheckerEngine<RECORD, REPORT> engine( final RECORD record, final REPORT report )
     {
         return new Engine<RECORD, REPORT>( report )
@@ -81,7 +113,7 @@ public class RecordAccessStub implements RecordAccess
         };
     }
 
-    public <RECORD extends AbstractBaseRecord, REPORT extends ConsistencyReport>
+	public <RECORD extends AbstractBaseRecord, REPORT extends ConsistencyReport>
     CheckerEngine<RECORD, REPORT> engine( final RECORD oldRecord, final RECORD newRecord, REPORT report )
     {
         return new Engine<RECORD, REPORT>( report )
@@ -94,6 +126,362 @@ public class RecordAccessStub implements RecordAccess
                 checker.checkReference( newRecord, newReference, this, RecordAccessStub.this );
             }
         };
+    }
+
+	public void checkDeferred()
+    {
+        for ( Runnable task; null != (task = deferredTasks.poll()); )
+        {
+            task.run();
+        }
+    }
+
+	public void populateCache()
+    {
+        CacheTask action = new CacheTask.CacheNextRel( CheckStage.Stage3_NS_NextRel, cacheAccess,
+                resourceIterable( new IterableWrapper<NodeRecord,Delta<NodeRecord>>( nodes.values() )
+        {
+            @Override
+            protected NodeRecord underlyingObjectToObject( Delta<NodeRecord> node )
+            {
+                return node.newRecord;
+            }
+        } ) );
+        action.run();
+    }
+
+	private static <R extends AbstractBaseRecord> R add( Map<Long, Delta<R>> records, R record )
+    {
+        records.put( record.getId(), new Delta<>( record ) );
+        return record;
+    }
+
+	private static <R extends AbstractBaseRecord> void add( Map<Long, Delta<R>> records, R oldRecord, R newRecord )
+    {
+        records.put( newRecord.getId(), new Delta<>( oldRecord, newRecord ) );
+    }
+
+	public DynamicRecord addSchema( DynamicRecord schema )
+    {
+        return add( schemata, schema);
+    }
+
+	public DynamicRecord addString( DynamicRecord string )
+    {
+        return add( strings, string );
+    }
+
+	public DynamicRecord addArray( DynamicRecord array )
+    {
+        return add( arrays, array );
+    }
+
+	public DynamicRecord addNodeDynamicLabels( DynamicRecord array )
+    {
+        return add( nodeDynamicLabels, array );
+    }
+
+	public DynamicRecord addPropertyKeyName( DynamicRecord name )
+    {
+        return add( propertyKeyNames, name );
+    }
+
+	public DynamicRecord addRelationshipTypeName( DynamicRecord name )
+    {
+        return add( relationshipTypeNames, name );
+    }
+
+	public DynamicRecord addLabelName( DynamicRecord name )
+    {
+        return add( labelNames, name );
+    }
+
+	public <R extends AbstractBaseRecord> R addChange( R oldRecord, R newRecord )
+    {
+        if ( newRecord instanceof NodeRecord )
+        {
+            add( nodes, (NodeRecord) oldRecord, (NodeRecord) newRecord );
+        }
+        else if ( newRecord instanceof RelationshipRecord )
+        {
+            add( relationships, (RelationshipRecord) oldRecord, (RelationshipRecord) newRecord );
+        }
+        else if ( newRecord instanceof PropertyRecord )
+        {
+            add( properties, (PropertyRecord) oldRecord, (PropertyRecord) newRecord );
+        }
+        else if ( newRecord instanceof DynamicRecord )
+        {
+            DynamicRecord dyn = (DynamicRecord) newRecord;
+            if ( dyn.getType() == PropertyType.STRING )
+            {
+                add( strings, (DynamicRecord) oldRecord, dyn );
+            }
+            else if ( dyn.getType() == PropertyType.ARRAY )
+            {
+                add( arrays, (DynamicRecord) oldRecord, dyn );
+            }
+            else if ( dyn.getTypeAsInt() == SCHEMA_RECORD_TYPE )
+            {
+                add( schemata, (DynamicRecord) oldRecord, dyn );
+            }
+            else
+            {
+                throw new IllegalArgumentException( "Invalid dynamic record type" );
+            }
+        }
+        else if ( newRecord instanceof RelationshipTypeTokenRecord )
+        {
+            add( relationshipTypeTokens, (RelationshipTypeTokenRecord) oldRecord, (RelationshipTypeTokenRecord) newRecord );
+        }
+        else if ( newRecord instanceof PropertyKeyTokenRecord )
+        {
+            add( propertyKeyTokens, (PropertyKeyTokenRecord) oldRecord, (PropertyKeyTokenRecord) newRecord );
+        }
+        else if ( newRecord instanceof NeoStoreRecord )
+        {
+            this.graph = new Delta<>( (NeoStoreRecord) oldRecord, (NeoStoreRecord) newRecord );
+        }
+        else
+        {
+            throw new IllegalArgumentException( "Invalid record type" );
+        }
+        return newRecord;
+    }
+
+	public <R extends AbstractBaseRecord> R add( R record )
+    {
+        if ( record instanceof NodeRecord )
+        {
+            add( nodes, (NodeRecord) record );
+        }
+        else if ( record instanceof RelationshipRecord )
+        {
+            add( relationships, (RelationshipRecord) record );
+        }
+        else if ( record instanceof PropertyRecord )
+        {
+            add( properties, (PropertyRecord) record );
+        }
+        else if ( record instanceof DynamicRecord )
+        {
+            DynamicRecord dyn = (DynamicRecord) record;
+            if ( dyn.getType() == PropertyType.STRING )
+            {
+                addString( dyn );
+            }
+            else if ( dyn.getType() == PropertyType.ARRAY )
+            {
+                addArray( dyn );
+            }
+            else if ( dyn.getTypeAsInt() == SCHEMA_RECORD_TYPE )
+            {
+                addSchema( dyn );
+            }
+            else
+            {
+                throw new IllegalArgumentException( "Invalid dynamic record type" );
+            }
+        }
+        else if ( record instanceof RelationshipTypeTokenRecord )
+        {
+            add( relationshipTypeTokens, (RelationshipTypeTokenRecord) record );
+        }
+        else if ( record instanceof PropertyKeyTokenRecord )
+        {
+            add( propertyKeyTokens, (PropertyKeyTokenRecord) record );
+        }
+        else if ( record instanceof LabelTokenRecord )
+        {
+            add( labelTokens, (LabelTokenRecord) record );
+        }
+        else if ( record instanceof NeoStoreRecord )
+        {
+            this.graph = new Delta<>( (NeoStoreRecord) record );
+        }
+        else if ( record instanceof RelationshipGroupRecord )
+        {
+            add( relationshipGroups, (RelationshipGroupRecord) record );
+        }
+        else
+        {
+            throw new IllegalArgumentException( "Invalid record type" );
+        }
+        return record;
+    }
+
+	private <R extends AbstractBaseRecord> DirectRecordReference<R> reference( Map<Long, Delta<R>> records,
+                                                                               long id, Version version )
+    {
+        return new DirectRecordReference<>( record( records, id, version ), this );
+    }
+
+	private static <R extends AbstractBaseRecord> R record( Map<Long, Delta<R>> records, long id,
+                                                            Version version )
+    {
+        Delta<R> delta = records.get( id );
+        if ( delta == null )
+        {
+            if ( version == Version.NEW )
+            {
+                return null;
+            }
+            throw new AssertionError( String.format( "Access to record with id=%d not expected.", id ) );
+        }
+        return version.get( delta );
+    }
+
+	@Override
+    public RecordReference<DynamicRecord> schema( long id )
+    {
+        return reference( schemata, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<NodeRecord> node( long id )
+    {
+        return reference( nodes, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<RelationshipRecord> relationship( long id )
+    {
+        return reference( relationships, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<PropertyRecord> property( long id )
+    {
+        return reference( properties, id, Version.LATEST );
+    }
+
+	@Override
+    public Iterator<PropertyRecord> rawPropertyChain( final long firstId )
+    {
+        return new PrefetchingIterator<PropertyRecord>()
+        {
+            private long next = firstId;
+
+            @Override
+            protected PropertyRecord fetchNextOrNull()
+            {
+                if ( Record.NO_NEXT_PROPERTY.is( next ) )
+                {
+                    return null;
+                }
+                PropertyRecord record = reference( properties, next, Version.LATEST ).record();
+                next = record.getNextProp();
+                return record;
+            }
+        };
+    }
+
+	@Override
+    public RecordReference<RelationshipTypeTokenRecord> relationshipType( int id )
+    {
+        return reference( relationshipTypeTokens, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<PropertyKeyTokenRecord> propertyKey( int id )
+    {
+        return reference( propertyKeyTokens, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<DynamicRecord> string( long id )
+    {
+        return reference( strings, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<DynamicRecord> array( long id )
+    {
+        return reference( arrays, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<DynamicRecord> relationshipTypeName( int id )
+    {
+        return reference( relationshipTypeNames, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<DynamicRecord> nodeLabels( long id )
+    {
+        return reference( nodeDynamicLabels, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<LabelTokenRecord> label( int id )
+    {
+        return reference( labelTokens, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<DynamicRecord> labelName( int id )
+    {
+        return reference( labelNames, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<DynamicRecord> propertyKeyName( int id )
+    {
+        return reference( propertyKeyNames, id, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<NeoStoreRecord> graph()
+    {
+        return reference( singletonMap( -1L, graph ), -1, Version.LATEST );
+    }
+
+	@Override
+    public RecordReference<RelationshipGroupRecord> relationshipGroup( long id )
+    {
+        return reference( relationshipGroups, id, Version.LATEST );
+    }
+
+	@Override
+    public boolean shouldCheck( long id, MultiPassStore store )
+    {
+        return ArrayUtil.contains( storesToCheck, store );
+    }
+
+	@Override
+    public CacheAccess cacheAccess()
+    {
+        return cacheAccess;
+    }
+
+	private enum Version
+    {
+        PREV
+        {
+            @Override
+            <R extends AbstractBaseRecord> R get( Delta<R> delta )
+            {
+                return delta.oldRecord == null ? delta.newRecord : delta.oldRecord;
+            }
+        },
+        LATEST
+        {
+            @Override
+            <R extends AbstractBaseRecord> R get( Delta<R> delta )
+            {
+                return delta.newRecord;
+            }
+        },
+        NEW
+        {
+            @Override
+            <R extends AbstractBaseRecord> R get( Delta<R> delta )
+            {
+                return delta.oldRecord == null ? null : delta.newRecord;
+            }
+        };
+
+        abstract <R extends AbstractBaseRecord> R get( Delta<R> delta );
     }
 
     private abstract class Engine<RECORD extends AbstractBaseRecord, REPORT extends ConsistencyReport>
@@ -165,62 +553,6 @@ public class RecordAccessStub implements RecordAccess
         }
     }
 
-    private final Queue<Runnable> deferredTasks = new LinkedList<>();
-
-    public void checkDeferred()
-    {
-        for ( Runnable task; null != (task = deferredTasks.poll()); )
-        {
-            task.run();
-        }
-    }
-
-    private final Map<Long, Delta<DynamicRecord>> schemata = new HashMap<>();
-    private final Map<Long, Delta<NodeRecord>> nodes = new HashMap<>();
-    private final Map<Long, Delta<RelationshipRecord>> relationships = new HashMap<>();
-    private final Map<Long, Delta<PropertyRecord>> properties = new HashMap<>();
-    private final Map<Long, Delta<DynamicRecord>> strings = new HashMap<>();
-    private final Map<Long, Delta<DynamicRecord>> arrays = new HashMap<>();
-    private final Map<Long, Delta<RelationshipTypeTokenRecord>> relationshipTypeTokens = new HashMap<>();
-    private final Map<Long, Delta<LabelTokenRecord>> labelTokens = new HashMap<>();
-    private final Map<Long, Delta<PropertyKeyTokenRecord>> propertyKeyTokens = new HashMap<>();
-    private final Map<Long, Delta<DynamicRecord>> relationshipTypeNames = new HashMap<>();
-    private final Map<Long, Delta<DynamicRecord>> nodeDynamicLabels = new HashMap<>();
-    private final Map<Long, Delta<DynamicRecord>> labelNames = new HashMap<>();
-    private final Map<Long, Delta<DynamicRecord>> propertyKeyNames = new HashMap<>();
-    private final Map<Long, Delta<RelationshipGroupRecord>> relationshipGroups = new HashMap<>();
-    private Delta<NeoStoreRecord> graph;
-    private final CacheAccess cacheAccess = new DefaultCacheAccess( Counts.NONE, 1 );
-    private final MultiPassStore[] storesToCheck;
-
-    public RecordAccessStub()
-    {
-        this( Stage.SEQUENTIAL_FORWARD, MultiPassStore.values() );
-    }
-
-    public RecordAccessStub( Stage stage, MultiPassStore... storesToCheck )
-    {
-        this.storesToCheck = storesToCheck;
-        if ( stage.getCacheSlotSizes().length > 0 )
-        {
-            cacheAccess.setCacheSlotSizes( stage.getCacheSlotSizes() );
-        }
-    }
-
-    public void populateCache()
-    {
-        CacheTask action = new CacheTask.CacheNextRel( CheckStage.Stage3_NS_NextRel, cacheAccess,
-                resourceIterable( new IterableWrapper<NodeRecord,Delta<NodeRecord>>( nodes.values() )
-        {
-            @Override
-            protected NodeRecord underlyingObjectToObject( Delta<NodeRecord> node )
-            {
-                return node.newRecord;
-            }
-        } ) );
-        action.run();
-    }
-
     private static class Delta<R extends AbstractBaseRecord>
     {
         final R oldRecord;
@@ -237,339 +569,5 @@ public class RecordAccessStub implements RecordAccess
             this.oldRecord = oldRecord;
             this.newRecord = newRecord;
         }
-    }
-
-    private enum Version
-    {
-        PREV
-        {
-            @Override
-            <R extends AbstractBaseRecord> R get( Delta<R> delta )
-            {
-                return delta.oldRecord == null ? delta.newRecord : delta.oldRecord;
-            }
-        },
-        LATEST
-        {
-            @Override
-            <R extends AbstractBaseRecord> R get( Delta<R> delta )
-            {
-                return delta.newRecord;
-            }
-        },
-        NEW
-        {
-            @Override
-            <R extends AbstractBaseRecord> R get( Delta<R> delta )
-            {
-                return delta.oldRecord == null ? null : delta.newRecord;
-            }
-        };
-
-        abstract <R extends AbstractBaseRecord> R get( Delta<R> delta );
-    }
-
-    private static <R extends AbstractBaseRecord> R add( Map<Long, Delta<R>> records, R record )
-    {
-        records.put( record.getId(), new Delta<>( record ) );
-        return record;
-    }
-
-    private static <R extends AbstractBaseRecord> void add( Map<Long, Delta<R>> records, R oldRecord, R newRecord )
-    {
-        records.put( newRecord.getId(), new Delta<>( oldRecord, newRecord ) );
-    }
-
-    public DynamicRecord addSchema( DynamicRecord schema )
-    {
-        return add( schemata, schema);
-    }
-
-    public DynamicRecord addString( DynamicRecord string )
-    {
-        return add( strings, string );
-    }
-
-    public DynamicRecord addArray( DynamicRecord array )
-    {
-        return add( arrays, array );
-    }
-
-    public DynamicRecord addNodeDynamicLabels( DynamicRecord array )
-    {
-        return add( nodeDynamicLabels, array );
-    }
-
-    public DynamicRecord addPropertyKeyName( DynamicRecord name )
-    {
-        return add( propertyKeyNames, name );
-    }
-
-    public DynamicRecord addRelationshipTypeName( DynamicRecord name )
-    {
-        return add( relationshipTypeNames, name );
-    }
-
-    public DynamicRecord addLabelName( DynamicRecord name )
-    {
-        return add( labelNames, name );
-    }
-
-    public <R extends AbstractBaseRecord> R addChange( R oldRecord, R newRecord )
-    {
-        if ( newRecord instanceof NodeRecord )
-        {
-            add( nodes, (NodeRecord) oldRecord, (NodeRecord) newRecord );
-        }
-        else if ( newRecord instanceof RelationshipRecord )
-        {
-            add( relationships, (RelationshipRecord) oldRecord, (RelationshipRecord) newRecord );
-        }
-        else if ( newRecord instanceof PropertyRecord )
-        {
-            add( properties, (PropertyRecord) oldRecord, (PropertyRecord) newRecord );
-        }
-        else if ( newRecord instanceof DynamicRecord )
-        {
-            DynamicRecord dyn = (DynamicRecord) newRecord;
-            if ( dyn.getType() == PropertyType.STRING )
-            {
-                add( strings, (DynamicRecord) oldRecord, dyn );
-            }
-            else if ( dyn.getType() == PropertyType.ARRAY )
-            {
-                add( arrays, (DynamicRecord) oldRecord, dyn );
-            }
-            else if ( dyn.getTypeAsInt() == SCHEMA_RECORD_TYPE )
-            {
-                add( schemata, (DynamicRecord) oldRecord, dyn );
-            }
-            else
-            {
-                throw new IllegalArgumentException( "Invalid dynamic record type" );
-            }
-        }
-        else if ( newRecord instanceof RelationshipTypeTokenRecord )
-        {
-            add( relationshipTypeTokens, (RelationshipTypeTokenRecord) oldRecord, (RelationshipTypeTokenRecord) newRecord );
-        }
-        else if ( newRecord instanceof PropertyKeyTokenRecord )
-        {
-            add( propertyKeyTokens, (PropertyKeyTokenRecord) oldRecord, (PropertyKeyTokenRecord) newRecord );
-        }
-        else if ( newRecord instanceof NeoStoreRecord )
-        {
-            this.graph = new Delta<>( (NeoStoreRecord) oldRecord, (NeoStoreRecord) newRecord );
-        }
-        else
-        {
-            throw new IllegalArgumentException( "Invalid record type" );
-        }
-        return newRecord;
-    }
-
-    public <R extends AbstractBaseRecord> R add( R record )
-    {
-        if ( record instanceof NodeRecord )
-        {
-            add( nodes, (NodeRecord) record );
-        }
-        else if ( record instanceof RelationshipRecord )
-        {
-            add( relationships, (RelationshipRecord) record );
-        }
-        else if ( record instanceof PropertyRecord )
-        {
-            add( properties, (PropertyRecord) record );
-        }
-        else if ( record instanceof DynamicRecord )
-        {
-            DynamicRecord dyn = (DynamicRecord) record;
-            if ( dyn.getType() == PropertyType.STRING )
-            {
-                addString( dyn );
-            }
-            else if ( dyn.getType() == PropertyType.ARRAY )
-            {
-                addArray( dyn );
-            }
-            else if ( dyn.getTypeAsInt() == SCHEMA_RECORD_TYPE )
-            {
-                addSchema( dyn );
-            }
-            else
-            {
-                throw new IllegalArgumentException( "Invalid dynamic record type" );
-            }
-        }
-        else if ( record instanceof RelationshipTypeTokenRecord )
-        {
-            add( relationshipTypeTokens, (RelationshipTypeTokenRecord) record );
-        }
-        else if ( record instanceof PropertyKeyTokenRecord )
-        {
-            add( propertyKeyTokens, (PropertyKeyTokenRecord) record );
-        }
-        else if ( record instanceof LabelTokenRecord )
-        {
-            add( labelTokens, (LabelTokenRecord) record );
-        }
-        else if ( record instanceof NeoStoreRecord )
-        {
-            this.graph = new Delta<>( (NeoStoreRecord) record );
-        }
-        else if ( record instanceof RelationshipGroupRecord )
-        {
-            add( relationshipGroups, (RelationshipGroupRecord) record );
-        }
-        else
-        {
-            throw new IllegalArgumentException( "Invalid record type" );
-        }
-        return record;
-    }
-
-    private <R extends AbstractBaseRecord> DirectRecordReference<R> reference( Map<Long, Delta<R>> records,
-                                                                               long id, Version version )
-    {
-        return new DirectRecordReference<>( record( records, id, version ), this );
-    }
-
-    private static <R extends AbstractBaseRecord> R record( Map<Long, Delta<R>> records, long id,
-                                                            Version version )
-    {
-        Delta<R> delta = records.get( id );
-        if ( delta == null )
-        {
-            if ( version == Version.NEW )
-            {
-                return null;
-            }
-            throw new AssertionError( String.format( "Access to record with id=%d not expected.", id ) );
-        }
-        return version.get( delta );
-    }
-
-    @Override
-    public RecordReference<DynamicRecord> schema( long id )
-    {
-        return reference( schemata, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<NodeRecord> node( long id )
-    {
-        return reference( nodes, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<RelationshipRecord> relationship( long id )
-    {
-        return reference( relationships, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<PropertyRecord> property( long id )
-    {
-        return reference( properties, id, Version.LATEST );
-    }
-
-    @Override
-    public Iterator<PropertyRecord> rawPropertyChain( final long firstId )
-    {
-        return new PrefetchingIterator<PropertyRecord>()
-        {
-            private long next = firstId;
-
-            @Override
-            protected PropertyRecord fetchNextOrNull()
-            {
-                if ( Record.NO_NEXT_PROPERTY.is( next ) )
-                {
-                    return null;
-                }
-                PropertyRecord record = reference( properties, next, Version.LATEST ).record();
-                next = record.getNextProp();
-                return record;
-            }
-        };
-    }
-
-    @Override
-    public RecordReference<RelationshipTypeTokenRecord> relationshipType( int id )
-    {
-        return reference( relationshipTypeTokens, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<PropertyKeyTokenRecord> propertyKey( int id )
-    {
-        return reference( propertyKeyTokens, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<DynamicRecord> string( long id )
-    {
-        return reference( strings, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<DynamicRecord> array( long id )
-    {
-        return reference( arrays, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<DynamicRecord> relationshipTypeName( int id )
-    {
-        return reference( relationshipTypeNames, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<DynamicRecord> nodeLabels( long id )
-    {
-        return reference( nodeDynamicLabels, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<LabelTokenRecord> label( int id )
-    {
-        return reference( labelTokens, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<DynamicRecord> labelName( int id )
-    {
-        return reference( labelNames, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<DynamicRecord> propertyKeyName( int id )
-    {
-        return reference( propertyKeyNames, id, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<NeoStoreRecord> graph()
-    {
-        return reference( singletonMap( -1L, graph ), -1, Version.LATEST );
-    }
-
-    @Override
-    public RecordReference<RelationshipGroupRecord> relationshipGroup( long id )
-    {
-        return reference( relationshipGroups, id, Version.LATEST );
-    }
-
-    @Override
-    public boolean shouldCheck( long id, MultiPassStore store )
-    {
-        return ArrayUtil.contains( storesToCheck, store );
-    }
-
-    @Override
-    public CacheAccess cacheAccess()
-    {
-        return cacheAccess;
     }
 }

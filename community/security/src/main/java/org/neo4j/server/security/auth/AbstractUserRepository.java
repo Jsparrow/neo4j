@@ -73,7 +73,7 @@ public abstract class AbstractUserRepository extends LifecycleAdapter implements
             {
                 if ( other.name().equals( user.name() ) )
                 {
-                    throw new InvalidArgumentsException( "The specified user '" + user.name() + "' already exists." );
+                    throw new InvalidArgumentsException( new StringBuilder().append("The specified user '").append(user.name()).append("' already exists.").toString() );
                 }
             }
 
@@ -100,10 +100,7 @@ public abstract class AbstractUserRepository extends LifecycleAdapter implements
 
             trimToList( usersByName, users, User::name );
 
-            for ( User user : users )
-            {
-                usersByName.put( user.name(), user );
-            }
+            users.forEach(user -> usersByName.put(user.name(), user));
         }
     }
 
@@ -114,8 +111,7 @@ public abstract class AbstractUserRepository extends LifecycleAdapter implements
         // Assert input is ok
         if ( !existingUser.name().equals( updatedUser.name() ) )
         {
-            throw new IllegalArgumentException( "The attempt to update the role from '" + existingUser.name() +
-                    "' to '" + updatedUser.name() + "' failed. Changing a roles name is not allowed." );
+            throw new IllegalArgumentException( new StringBuilder().append("The attempt to update the role from '").append(existingUser.name()).append("' to '").append(updatedUser.name()).append("' failed. Changing a roles name is not allowed.").toString() );
         }
 
         synchronized ( this )
@@ -190,8 +186,7 @@ public abstract class AbstractUserRepository extends LifecycleAdapter implements
         if ( !usernamePattern.matcher( username ).matches() )
         {
             throw new InvalidArgumentsException(
-                    "Username '" + username +
-                    "' contains illegal characters. Use ascii characters that are not ',', ':' or whitespaces." );
+                    new StringBuilder().append("Username '").append(username).append("' contains illegal characters. Use ascii characters that are not ',', ':' or whitespaces.").toString() );
         }
     }
 

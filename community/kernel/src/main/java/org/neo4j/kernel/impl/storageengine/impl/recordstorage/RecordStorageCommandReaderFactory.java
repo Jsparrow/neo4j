@@ -51,7 +51,7 @@ public class RecordStorageCommandReaderFactory implements CommandReaderFactory
             CommandReader versionReader = readers[abs( version.byteCode() )];
             if ( versionReader == null )
             {
-                throw new IllegalStateException( "Version " + version + " not handled" );
+                throw new IllegalStateException( new StringBuilder().append("Version ").append(version).append(" not handled").toString() );
             }
         }
     }

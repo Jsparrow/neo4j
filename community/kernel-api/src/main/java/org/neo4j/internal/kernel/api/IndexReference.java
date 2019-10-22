@@ -33,60 +33,7 @@ import org.neo4j.values.storable.ValueCategory;
 public interface IndexReference extends IndexCapability
 {
     String UNNAMED_INDEX = "Unnamed index";
-
-    /**
-     * Returns true if this index only allows one value per key.
-     */
-    boolean isUnique();
-
-    /**
-     * Returns the propertyKeyIds associated with this index.
-     */
-    int[] properties();
-
-    /**
-     * Returns the schema of this index.
-     */
-    SchemaDescriptor schema();
-
-    /**
-     * Returns the key (or name) of the index provider that backs this index.
-     */
-    String providerKey();
-
-    /**
-     * Returns the version of the index provider that backs this index.
-     */
-    String providerVersion();
-
-    /**
-     * The unique name for this index - either automatically generated or user supplied - or the {@link #UNNAMED_INDEX} constant.
-     */
-    String name();
-
-    /**
-     * @param tokenNameLookup used for looking up names for token ids.
-     * @return a user friendly description of what this index indexes.
-     */
-    String userDescription( TokenNameLookup tokenNameLookup );
-
-    /**
-     * Sorts indexes by type, returning first GENERAL indexes, followed by UNIQUE. Implementation is not suitable in
-     * hot path.
-     *
-     * @param indexes Indexes to sort
-     * @return sorted indexes
-     */
-    static Iterator<IndexReference> sortByType( Iterator<IndexReference> indexes )
-    {
-        List<IndexReference> materialized = Iterators.asList( indexes );
-        return Iterators.concat(
-                Iterators.filter( i -> !i.isUnique(), materialized.iterator() ),
-                Iterators.filter( IndexReference::isUnique, materialized.iterator() ) );
-
-    }
-
-    IndexReference NO_INDEX = new IndexReference()
+	IndexReference NO_INDEX = new IndexReference()
     {
         @Override
         public IndexOrder[] orderCapability( ValueCategory... valueCategories )
@@ -154,4 +101,56 @@ public interface IndexReference extends IndexCapability
             return SchemaDescriptor.NO_SCHEMA.userDescription( tokenNameLookup );
         }
     };
+
+	/**
+     * Returns true if this index only allows one value per key.
+     */
+    boolean isUnique();
+
+	/**
+     * Returns the propertyKeyIds associated with this index.
+     */
+    int[] properties();
+
+	/**
+     * Returns the schema of this index.
+     */
+    SchemaDescriptor schema();
+
+	/**
+     * Returns the key (or name) of the index provider that backs this index.
+     */
+    String providerKey();
+
+	/**
+     * Returns the version of the index provider that backs this index.
+     */
+    String providerVersion();
+
+	/**
+     * The unique name for this index - either automatically generated or user supplied - or the {@link #UNNAMED_INDEX} constant.
+     */
+    String name();
+
+	/**
+     * @param tokenNameLookup used for looking up names for token ids.
+     * @return a user friendly description of what this index indexes.
+     */
+    String userDescription( TokenNameLookup tokenNameLookup );
+
+	/**
+     * Sorts indexes by type, returning first GENERAL indexes, followed by UNIQUE. Implementation is not suitable in
+     * hot path.
+     *
+     * @param indexes Indexes to sort
+     * @return sorted indexes
+     */
+    static Iterator<IndexReference> sortByType( Iterator<IndexReference> indexes )
+    {
+        List<IndexReference> materialized = Iterators.asList( indexes );
+        return Iterators.concat(
+                Iterators.filter( i -> !i.isUnique(), materialized.iterator() ),
+                Iterators.filter( IndexReference::isUnique, materialized.iterator() ) );
+
+    }
 }

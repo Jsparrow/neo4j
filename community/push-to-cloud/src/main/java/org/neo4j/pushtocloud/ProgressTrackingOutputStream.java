@@ -88,11 +88,11 @@ class ProgressTrackingOutputStream extends OutputStream
         void add( int increment )
         {
             progress += increment;
-            if ( progress > highestReportedProgress )
-            {
-                uploadProgress.add( progress - highestReportedProgress );
-                highestReportedProgress = progress;
-            }
+            if (progress <= highestReportedProgress) {
+				return;
+			}
+			uploadProgress.add( progress - highestReportedProgress );
+			highestReportedProgress = progress;
         }
 
         void rewindTo( long absoluteProgress )

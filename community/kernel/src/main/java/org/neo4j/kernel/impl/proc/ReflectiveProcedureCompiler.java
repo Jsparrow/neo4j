@@ -320,9 +320,7 @@ class ReflectiveProcedureCompiler
     {
         String nameStr = name.toString();
         String description =
-                nameStr + " is unavailable because it is sandboxed and has dependencies outside of the sandbox. " +
-                "Sandboxing is controlled by the " + procedure_unrestricted.name() + " setting. " +
-                "Only unrestrict procedures you can trust with access to database internals.";
+                new StringBuilder().append(nameStr).append(" is unavailable because it is sandboxed and has dependencies outside of the sandbox. ").append("Sandboxing is controlled by the ").append(procedure_unrestricted.name()).append(" setting. ").append("Only unrestrict procedures you can trust with access to database internals.").toString();
         log.warn( description );
         return description;
     }
@@ -556,7 +554,30 @@ class ReflectiveProcedureCompiler
                 } );
     }
 
-    private abstract static class ReflectiveBase
+    private static void rejectEmptyNamespace( QualifiedName name ) throws ProcedureException
+    {
+        if ( name.namespace() == null || name.namespace().length == 0 )
+        {
+            throw new ProcedureException( Status.Procedure.ProcedureRegistrationFailed,
+                    "It is not allowed to define functions in the root namespace please use a namespace, " +
+                    "e.g. `@UserFunction(\"org.example.com.%s\")", name.name() );
+        }
+    }
+
+	private static int[] computeIndexesToMap( List<FieldSignature> inputSignature )
+    {
+        ArrayList<Integer> integers = new ArrayList<>();
+        for ( int i = 0; i < inputSignature.size(); i++ )
+        {
+            if ( inputSignature.get( i ).needsMapping() )
+            {
+                integers.add( i );
+            }
+        }
+        return integers.stream().mapToInt( i -> i ).toArray();
+    }
+
+	private abstract static class ReflectiveBase
     {
 
         final List<FieldInjections.FieldSetter> fieldSetters;
@@ -679,7 +700,28 @@ class ReflectiveProcedureCompiler
             }
         }
 
-        private class MappingIterator implements RawIterator<Object[],ProcedureException>, Resource
+        private ProcedureException newProcedureException( Throwable throwable )
+        {
+            // Unwrap the wrapped exception we get from invocation by reflection
+            if ( throwable instanceof InvocationTargetException )
+            {
+                throwable = throwable.getCause();
+            }
+
+            if ( throwable instanceof Status.HasStatus )
+            {
+                return new ProcedureException( ((Status.HasStatus) throwable).status(), throwable, throwable.getMessage() );
+            }
+            else
+            {
+                Throwable cause = ExceptionUtils.getRootCause( throwable );
+                return new ProcedureException( Status.Procedure.ProcedureCallFailed, throwable,
+                        "Failed to invoke procedure `%s`: %s", signature.name(),
+                        "Caused by: " + (cause != null ? cause : throwable) );
+            }
+        }
+
+		private class MappingIterator implements RawIterator<Object[],ProcedureException>, Resource
         {
             private final Iterator<?> out;
             private Resource closeableResource;
@@ -728,17 +770,16 @@ class ReflectiveProcedureCompiler
             @Override
             public void close()
             {
-                if ( closeableResource != null )
-                {
-                    // Make sure we reset closeableResource before doing anything which may throw an exception that may
-                    // result in a recursive call to this close-method
-                    Resource resourceToClose = closeableResource;
-                    closeableResource = null;
-
-                    IOUtils.close( ResourceCloseFailureException::new,
-                            () -> resourceTracker.unregisterCloseableResource( resourceToClose ),
-                            resourceToClose );
-                }
+                if (closeableResource == null) {
+					return;
+				}
+				// Make sure we reset closeableResource before doing anything which may throw an exception that may
+				// result in a recursive call to this close-method
+				Resource resourceToClose = closeableResource;
+				closeableResource = null;
+				IOUtils.close( ResourceCloseFailureException::new,
+				        () -> resourceTracker.unregisterCloseableResource( resourceToClose ),
+				        resourceToClose );
             }
 
             private ProcedureException closeAndCreateProcedureException( Throwable t )
@@ -760,27 +801,6 @@ class ReflectiveProcedureCompiler
                     }
                 }
                 return procedureException;
-            }
-        }
-
-        private ProcedureException newProcedureException( Throwable throwable )
-        {
-            // Unwrap the wrapped exception we get from invocation by reflection
-            if ( throwable instanceof InvocationTargetException )
-            {
-                throwable = throwable.getCause();
-            }
-
-            if ( throwable instanceof Status.HasStatus )
-            {
-                return new ProcedureException( ((Status.HasStatus) throwable).status(), throwable, throwable.getMessage() );
-            }
-            else
-            {
-                Throwable cause = ExceptionUtils.getRootCause( throwable );
-                return new ProcedureException( Status.Procedure.ProcedureCallFailed, throwable,
-                        "Failed to invoke procedure `%s`: %s", signature.name(),
-                        "Caused by: " + (cause != null ? cause : throwable) );
             }
         }
     }
@@ -979,28 +999,5 @@ class ReflectiveProcedureCompiler
                 }
             }
         }
-    }
-
-    private static void rejectEmptyNamespace( QualifiedName name ) throws ProcedureException
-    {
-        if ( name.namespace() == null || name.namespace().length == 0 )
-        {
-            throw new ProcedureException( Status.Procedure.ProcedureRegistrationFailed,
-                    "It is not allowed to define functions in the root namespace please use a namespace, " +
-                    "e.g. `@UserFunction(\"org.example.com.%s\")", name.name() );
-        }
-    }
-
-    private static int[] computeIndexesToMap( List<FieldSignature> inputSignature )
-    {
-        ArrayList<Integer> integers = new ArrayList<>();
-        for ( int i = 0; i < inputSignature.size(); i++ )
-        {
-            if ( inputSignature.get( i ).needsMapping() )
-            {
-                integers.add( i );
-            }
-        }
-        return integers.stream().mapToInt( i -> i ).toArray();
     }
 }

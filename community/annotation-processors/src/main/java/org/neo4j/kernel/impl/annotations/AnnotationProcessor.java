@@ -42,7 +42,9 @@ import javax.tools.StandardLocation;
 
 public abstract class AnnotationProcessor extends AbstractProcessor
 {
-    @Override
+    private static Pattern nl = Pattern.compile( "\n" );
+
+	@Override
     public boolean process( Set<? extends TypeElement> annotations, RoundEnvironment roundEnv )
     {
         for ( TypeElement type : annotations )
@@ -71,32 +73,30 @@ public abstract class AnnotationProcessor extends AbstractProcessor
         return false;
     }
 
-    protected final void warn( Element element, String message )
+	protected final void warn( Element element, String message )
     {
         processingEnv.getMessager().printMessage( Kind.WARNING, message, element );
     }
 
-    protected final void warn( Element element, AnnotationMirror annotation, String message )
+	protected final void warn( Element element, AnnotationMirror annotation, String message )
     {
         processingEnv.getMessager().printMessage( Kind.WARNING, message, element, annotation );
     }
 
-    protected final void error( Element element, String message )
+	protected final void error( Element element, String message )
     {
         processingEnv.getMessager().printMessage( Kind.ERROR, message, element );
     }
 
-    protected final void error( Element element, AnnotationMirror annotation, String message )
+	protected final void error( Element element, AnnotationMirror annotation, String message )
     {
         processingEnv.getMessager().printMessage( Kind.ERROR, message, element, annotation );
     }
 
-    protected abstract void process( TypeElement annotationType, Element annotated, AnnotationMirror annotation,
+	protected abstract void process( TypeElement annotationType, Element annotated, AnnotationMirror annotation,
             Map<? extends ExecutableElement, ? extends AnnotationValue> values ) throws IOException;
 
-    private static Pattern nl = Pattern.compile( "\n" );
-
-    void addTo( String line, String... path ) throws IOException
+	void addTo( String line, String... path ) throws IOException
     {
         FileObject fo = processingEnv.getFiler().getResource( StandardLocation.CLASS_OUTPUT, "", path( path ) );
         URI uri = fo.toUri();
@@ -130,7 +130,7 @@ public abstract class AnnotationProcessor extends AbstractProcessor
         }
     }
 
-    private String path( String[] path )
+	private String path( String[] path )
     {
         StringBuilder filename = new StringBuilder();
         String sep = "";

@@ -374,7 +374,134 @@ public class KeyValueDatabaseStoreFormatTest
         return Pair.of( result, values );
     }
 
-    static class Bytes
+    private static byte[] bytes( int... data )
+    {
+        if ( data.length > 4 )
+        {
+            throw new AssertionError( "Invalid usage; should have <= 4 data items, got: " + data.length );
+        }
+        byte[] result = new byte[16];
+        for ( int d = data.length, r = result.length - 4; d-- > 0; r -= 4 )
+        {
+            int value = data[d];
+            for ( int i = 4; i-- > 0; )
+            {
+                result[r + i] = (byte) (value & 0xFF);
+                value >>>= 8;
+            }
+        }
+        return result;
+    }
+
+	private void assertDeepEquals( Map<String,byte[]> expected, Headers actual )
+    {
+        try
+        {
+            int size = 0;
+            for ( HeaderField<?> field : actual.fields() )
+            {
+                assertArrayEquals( field.toString(), expected.get( field.toString() ), (byte[]) actual.get( field ) );
+                size++;
+            }
+            assertEquals( "number of headers", expected.size(), size );
+        }
+        catch ( AssertionError e )
+        {
+            System.out.println( actual );
+            throw e;
+        }
+    }
+
+	static void assertEntries( final int expected, KeyValueStoreFile file ) throws IOException
+    {
+        class Visitor implements KeyValueVisitor
+        {
+            int visited;
+
+            @Override
+            public boolean visit( ReadableBuffer key, ReadableBuffer value )
+            {
+                if ( ++visited > expected )
+                {
+                    fail( new StringBuilder().append("should not have more than ").append(expected).append(" data entries").toString() );
+                }
+                return true;
+            }
+
+            void done()
+            {
+                assertEquals( "number of entries", expected, visited );
+            }
+        }
+        Visitor visitor = new Visitor();
+        file.scan( visitor );
+        visitor.done();
+    }
+
+	static KeyValueVisitor expectData( final Data expected )
+    {
+        expected.index = 0; // reset the visitor
+        return ( key, value ) ->
+        {
+            byte[] expectedKey = new byte[key.size()];
+            byte[] expectedValue = new byte[value.size()];
+            if ( !expected.visit( new BigEndianByteArrayBuffer( expectedKey ),
+                    new BigEndianByteArrayBuffer( expectedValue ) ) )
+            {
+                return false;
+            }
+            assertEqualContent( expectedKey, key );
+            return true;
+        };
+    }
+
+	static void assertEqualContent( byte[] expected, ReadableBuffer actual )
+    {
+        for ( int i = 0; i < expected.length; i++ )
+        {
+            if ( expected[i] != actual.getByte( i ) )
+            {
+                fail( new StringBuilder().append("expected <").append(Arrays.toString( expected )).append("> but was <").append(actual).append(">").toString() );
+            }
+        }
+    }
+
+	private File getStoreFile()
+    {
+        return directory.createFile( "storeFile" );
+    }
+
+	static void write( byte[] source, WritableBuffer target )
+    {
+        for ( int i = 0; i < source.length; i++ )
+        {
+            target.putByte( i, source[i] );
+        }
+    }
+
+	static DataProvider noData()
+    {
+        return new DataProvider()
+        {
+            @Override
+            public boolean visit( WritableBuffer key, WritableBuffer value )
+            {
+                return false;
+            }
+
+            @Override
+            public void close()
+            {
+            }
+        };
+    }
+
+	static Map<String,byte[]> noHeaders()
+    {
+        return Collections.emptyMap();
+    }
+
+	static class Bytes
     {
         final byte[] bytes;
 
@@ -404,98 +531,6 @@ public class KeyValueDatabaseStoreFormatTest
         public int hashCode()
         {
             return Arrays.hashCode( bytes );
-        }
-    }
-
-    private static byte[] bytes( int... data )
-    {
-        if ( data.length > 4 )
-        {
-            throw new AssertionError( "Invalid usage; should have <= 4 data items, got: " + data.length );
-        }
-        byte[] result = new byte[16];
-        for ( int d = data.length, r = result.length - 4; d-- > 0; r -= 4 )
-        {
-            int value = data[d];
-            for ( int i = 4; i-- > 0; )
-            {
-                result[r + i] = (byte) (value & 0xFF);
-                value >>>= 8;
-            }
-        }
-        return result;
-    }
-
-    private void assertDeepEquals( Map<String,byte[]> expected, Headers actual )
-    {
-        try
-        {
-            int size = 0;
-            for ( HeaderField<?> field : actual.fields() )
-            {
-                assertArrayEquals( field.toString(), expected.get( field.toString() ), (byte[]) actual.get( field ) );
-                size++;
-            }
-            assertEquals( "number of headers", expected.size(), size );
-        }
-        catch ( AssertionError e )
-        {
-            System.out.println( actual );
-            throw e;
-        }
-    }
-
-    static void assertEntries( final int expected, KeyValueStoreFile file ) throws IOException
-    {
-        class Visitor implements KeyValueVisitor
-        {
-            int visited;
-
-            @Override
-            public boolean visit( ReadableBuffer key, ReadableBuffer value )
-            {
-                if ( ++visited > expected )
-                {
-                    fail( "should not have more than " + expected + " data entries" );
-                }
-                return true;
-            }
-
-            void done()
-            {
-                assertEquals( "number of entries", expected, visited );
-            }
-        }
-        Visitor visitor = new Visitor();
-        file.scan( visitor );
-        visitor.done();
-    }
-
-    static KeyValueVisitor expectData( final Data expected )
-    {
-        expected.index = 0; // reset the visitor
-        return ( key, value ) ->
-        {
-            byte[] expectedKey = new byte[key.size()];
-            byte[] expectedValue = new byte[value.size()];
-            if ( !expected.visit( new BigEndianByteArrayBuffer( expectedKey ),
-                    new BigEndianByteArrayBuffer( expectedValue ) ) )
-            {
-                return false;
-            }
-            assertEqualContent( expectedKey, key );
-            return true;
-        };
-    }
-
-    static void assertEqualContent( byte[] expected, ReadableBuffer actual )
-    {
-        for ( int i = 0; i < expected.length; i++ )
-        {
-            if ( expected[i] != actual.getByte( i ) )
-            {
-                fail( "expected <" + Arrays.toString( expected ) + "> but was <" + actual + ">" );
-            }
         }
     }
 
@@ -543,10 +578,7 @@ public class KeyValueDatabaseStoreFormatTest
         private Headers headers( Map<String,byte[]> headers )
         {
             Headers.Builder builder = Headers.headersBuilder();
-            for ( Map.Entry<String,byte[]> entry : headers.entrySet() )
-            {
-                builder.put( headerFields.get( entry.getKey() ), entry.getValue() );
-            }
+            headers.entrySet().forEach(entry -> builder.put(headerFields.get(entry.getKey()), entry.getValue()));
             return builder.headers();
         }
 
@@ -565,89 +597,53 @@ public class KeyValueDatabaseStoreFormatTest
         }
     }
 
-    private File getStoreFile()
-    {
-        return directory.createFile( "storeFile" );
-    }
-
     static class Data implements DataProvider
     {
-        static Data data( final DataEntry... data )
-        {
-            return new Data( data );
-        }
-
         private final DataEntry[] data;
-        private int index;
+		private int index;
 
-        private Data( DataEntry[] data )
+		private Data( DataEntry[] data )
         {
             this.data = data;
         }
 
-        @Override
-        public boolean visit( WritableBuffer key, WritableBuffer value )
+		static Data data( final DataEntry... data )
         {
-            if ( index < data.length )
-            {
-                DataEntry entry = data[index++];
-                write( entry.key, key );
-                write( entry.value, value );
-                return true;
-            }
-            return false;
+            return new Data( data );
         }
 
-        @Override
+		@Override
+        public boolean visit( WritableBuffer key, WritableBuffer value )
+        {
+            if (index >= data.length) {
+				return false;
+			}
+			DataEntry entry = data[index++];
+			write( entry.key, key );
+			write( entry.value, value );
+			return true;
+        }
+
+		@Override
         public void close()
         {
         }
     }
 
-    static void write( byte[] source, WritableBuffer target )
-    {
-        for ( int i = 0; i < source.length; i++ )
-        {
-            target.putByte( i, source[i] );
-        }
-    }
-
-    static DataProvider noData()
-    {
-        return new DataProvider()
-        {
-            @Override
-            public boolean visit( WritableBuffer key, WritableBuffer value )
-            {
-                return false;
-            }
-
-            @Override
-            public void close()
-            {
-            }
-        };
-    }
-
     static class DataEntry
     {
-        static DataEntry entry( byte[] key, byte[] value )
-        {
-            return new DataEntry( key, value );
-        }
-
         final byte[] key;
-        byte[] value;
+		byte[] value;
 
-        DataEntry( byte[] key, byte[] value )
+		DataEntry( byte[] key, byte[] value )
         {
             this.key = key;
             this.value = value;
         }
-    }
 
-    static Map<String,byte[]> noHeaders()
-    {
-        return Collections.emptyMap();
+		static DataEntry entry( byte[] key, byte[] value )
+        {
+            return new DataEntry( key, value );
+        }
     }
 }

@@ -211,7 +211,67 @@ public class GBPTreeLockTest
                 message, c1State.first(), c1State.other(), c2State.first(), c2State.other() );
     }
 
-    private static class LockContestant implements Runnable
+    private void assertThrow( Runnable unlock )
+    {
+        try
+        {
+            unlock.run();
+            fail( "Should have failed" );
+        }
+        catch ( IllegalStateException e )
+        {
+            // good
+        }
+    }
+
+	private void assertBlock( Runnable runLock, Runnable runUnlock ) throws Exception
+    {
+        Future<Object> future = executor.execute( state ->
+        {
+            runLock.run();
+            return null;
+        } );
+        executor.get().waitUntilWaiting( details -> details.isAt( GBPTreeLock.class, "doLock" ) );
+        runUnlock.run();
+        future.get();
+    }
+
+	private void assertUU()
+    {
+        assertThrow( lock::writerUnlock );
+        assertThrow( lock::cleanerUnlock );
+        assertThrow( lock::writerAndCleanerUnlock );
+    }
+
+	private void assertUL() throws Exception
+    {
+        assertThrow( lock::writerUnlock );
+        assertThrow( lock::writerAndCleanerUnlock );
+        copy = lock.copy();
+        assertBlock( copy::cleanerLock, copy::cleanerUnlock );
+        copy = lock.copy();
+        assertBlock( copy::writerAndCleanerLock, copy::cleanerUnlock );
+    }
+
+	private void assertLU() throws Exception
+    {
+        assertThrow( lock::cleanerUnlock );
+        assertThrow( lock::writerAndCleanerUnlock );
+        copy = lock.copy();
+        assertBlock( copy::writerLock, copy::writerUnlock );
+    }
+
+	private void assertLL() throws Exception
+    {
+        copy = lock.copy();
+        assertBlock( copy::writerLock, copy::writerUnlock );
+        copy = lock.copy();
+        assertBlock( copy::cleanerLock, copy::cleanerUnlock );
+        copy = lock.copy();
+        assertBlock( copy::writerAndCleanerLock, copy::writerAndCleanerUnlock );
+    }
+
+	private static class LockContestant implements Runnable
     {
         private final Runnable lockAction;
         private final AtomicBoolean lockAcquired = new AtomicBoolean();
@@ -244,65 +304,5 @@ public class GBPTreeLockTest
         {
             return started.get();
         }
-    }
-
-    private void assertThrow( Runnable unlock )
-    {
-        try
-        {
-            unlock.run();
-            fail( "Should have failed" );
-        }
-        catch ( IllegalStateException e )
-        {
-            // good
-        }
-    }
-
-    private void assertBlock( Runnable runLock, Runnable runUnlock ) throws Exception
-    {
-        Future<Object> future = executor.execute( state ->
-        {
-            runLock.run();
-            return null;
-        } );
-        executor.get().waitUntilWaiting( details -> details.isAt( GBPTreeLock.class, "doLock" ) );
-        runUnlock.run();
-        future.get();
-    }
-
-    private void assertUU()
-    {
-        assertThrow( lock::writerUnlock );
-        assertThrow( lock::cleanerUnlock );
-        assertThrow( lock::writerAndCleanerUnlock );
-    }
-
-    private void assertUL() throws Exception
-    {
-        assertThrow( lock::writerUnlock );
-        assertThrow( lock::writerAndCleanerUnlock );
-        copy = lock.copy();
-        assertBlock( copy::cleanerLock, copy::cleanerUnlock );
-        copy = lock.copy();
-        assertBlock( copy::writerAndCleanerLock, copy::cleanerUnlock );
-    }
-
-    private void assertLU() throws Exception
-    {
-        assertThrow( lock::cleanerUnlock );
-        assertThrow( lock::writerAndCleanerUnlock );
-        copy = lock.copy();
-        assertBlock( copy::writerLock, copy::writerUnlock );
-    }
-
-    private void assertLL() throws Exception
-    {
-        copy = lock.copy();
-        assertBlock( copy::writerLock, copy::writerUnlock );
-        copy = lock.copy();
-        assertBlock( copy::cleanerLock, copy::cleanerUnlock );
-        copy = lock.copy();
-        assertBlock( copy::writerAndCleanerLock, copy::writerAndCleanerUnlock );
     }
 }

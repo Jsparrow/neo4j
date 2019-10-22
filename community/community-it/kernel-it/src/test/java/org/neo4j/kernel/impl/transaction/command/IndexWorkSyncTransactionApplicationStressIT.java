@@ -139,7 +139,7 @@ public class IndexWorkSyncTransactionApplicationStressIT
 
     private static Value propertyValue( int id, int progress )
     {
-        return Values.of( id + "_" + progress );
+        return Values.of( new StringBuilder().append(id).append("_").append(progress).toString() );
     }
 
     private static TransactionToApply tx( Collection<StorageCommand> commands )
@@ -230,7 +230,7 @@ public class IndexWorkSyncTransactionApplicationStressIT
                     Value propertyValue = propertyValue( id, base + i );
                     IndexQuery.ExactPredicate query = IndexQuery.exact( descriptor.getPropertyId(), propertyValue );
                     LongIterator hits = reader.query( query );
-                    assertEquals( "Index doesn't contain " + visitor.nodeId + " " + propertyValue, visitor.nodeId, hits.next() );
+                    assertEquals( new StringBuilder().append("Index doesn't contain ").append(visitor.nodeId).append(" ").append(propertyValue).toString(), visitor.nodeId, hits.next() );
                     assertFalse( hits.hasNext() );
                     tx = tx.next();
                 }

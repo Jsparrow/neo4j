@@ -43,7 +43,14 @@ import static org.neo4j.values.storable.ValueWriter.ArrayType.STRING;
 public class ValueWriteToTest
 {
 
-    @Parameterized.Parameters( name = "{0}" )
+    private WriteTest currentTest;
+
+	public ValueWriteToTest( WriteTest currentTest )
+    {
+        this.currentTest = currentTest;
+    }
+
+	@Parameterized.Parameters( name = "{0}" )
     public static Iterable<WriteTest> data()
     {
         return Arrays.asList(
@@ -83,30 +90,23 @@ public class ValueWriteToTest
         );
     }
 
-    private WriteTest currentTest;
-
-    public ValueWriteToTest( WriteTest currentTest )
-    {
-        this.currentTest = currentTest;
-    }
-
-    private static WriteTest shouldWrite( Object value, Object... expected )
+	private static WriteTest shouldWrite( Object value, Object... expected )
     {
         return new WriteTest( Values.of( value ), expected );
     }
 
-    private static WriteTest shouldWrite( Value value, Object... expected )
+	private static WriteTest shouldWrite( Value value, Object... expected )
     {
         return new WriteTest( value, expected );
     }
 
-    @org.junit.Test
+	@org.junit.Test
     public void runTest()
     {
         currentTest.verifyWriteTo();
     }
 
-    private static class WriteTest
+	private static class WriteTest
     {
         private final Value value;
         private final Object[] expected;

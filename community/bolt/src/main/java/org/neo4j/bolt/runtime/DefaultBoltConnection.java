@@ -289,17 +289,16 @@ public class DefaultBoltConnection implements BoltConnection
     @Override
     public void stop()
     {
-        if ( shouldClose.compareAndSet( false, true ) )
-        {
-            machine.markForTermination();
+        if (!shouldClose.compareAndSet( false, true )) {
+			return;
+		}
+		machine.markForTermination();
+		// Enqueue an empty job for close to be handled linearly
+		// This is for already executing connections
+		enqueueInternal( ignore ->
+		{
 
-            // Enqueue an empty job for close to be handled linearly
-            // This is for already executing connections
-            enqueueInternal( ignore ->
-            {
-
-            } );
-        }
+		} );
     }
 
     private boolean willClose()
@@ -309,30 +308,29 @@ public class DefaultBoltConnection implements BoltConnection
 
     private void close()
     {
-        if ( closed.compareAndSet( false, true ) )
-        {
-            try
-            {
-                output.close();
-            }
-            catch ( Throwable t )
-            {
-                log.error( String.format( "Unable to close pack output of bolt session '%s'.", id() ), t );
-            }
-
-            try
-            {
-                machine.close();
-            }
-            catch ( Throwable t )
-            {
-                log.error( String.format( "Unable to close state machine of bolt session '%s'.", id() ), t );
-            }
-            finally
-            {
-                notifyDestroyed();
-            }
-        }
+        if (!closed.compareAndSet( false, true )) {
+			return;
+		}
+		try
+		{
+		    output.close();
+		}
+		catch ( Throwable t )
+		{
+		    log.error( String.format( "Unable to close pack output of bolt session '%s'.", id() ), t );
+		}
+		try
+		{
+		    machine.close();
+		}
+		catch ( Throwable t )
+		{
+		    log.error( String.format( "Unable to close state machine of bolt session '%s'.", id() ), t );
+		}
+		finally
+		{
+		    notifyDestroyed();
+		}
     }
 
     private void enqueueInternal( Job job )

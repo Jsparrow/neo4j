@@ -75,7 +75,12 @@ public class CompositeIndexingIT
     private final IndexDescriptor index;
     private GraphDatabaseAPI graphDatabaseAPI;
 
-    @Before
+    public CompositeIndexingIT( IndexDescriptor nodeDescriptor )
+    {
+        this.index = nodeDescriptor;
+    }
+
+	@Before
     public void setup() throws Exception
     {
         graphDatabaseAPI = dbRule.getGraphDatabaseAPI();
@@ -104,7 +109,7 @@ public class CompositeIndexingIT
         }
     }
 
-    @After
+	@After
     public void clean() throws Exception
     {
         try ( Transaction tx = graphDatabaseAPI.beginTx() )
@@ -132,7 +137,7 @@ public class CompositeIndexingIT
         }
     }
 
-    @Parameterized.Parameters( name = "Index: {0}" )
+	@Parameterized.Parameters( name = "Index: {0}" )
     public static Iterable<Object[]> parameterValues()
     {
         return Arrays.asList( Iterators.array( TestIndexDescriptorFactory.forLabel( LABEL_ID, 1 ) ),
@@ -145,12 +150,7 @@ public class CompositeIndexingIT
         );
     }
 
-    public CompositeIndexingIT( IndexDescriptor nodeDescriptor )
-    {
-        this.index = nodeDescriptor;
-    }
-
-    @Test
+	@Test
     public void shouldSeeNodeAddedByPropertyToIndexInTranslation() throws Exception
     {
         try ( Transaction ignore = graphDatabaseAPI.beginTx() )
@@ -172,7 +172,7 @@ public class CompositeIndexingIT
         }
     }
 
-    @Test
+	@Test
     public void shouldSeeNodeAddedToByLabelIndexInTransaction() throws Exception
     {
         try ( Transaction ignore = graphDatabaseAPI.beginTx() )
@@ -194,7 +194,7 @@ public class CompositeIndexingIT
         }
     }
 
-    @Test
+	@Test
     public void shouldNotSeeNodeThatWasDeletedInTransaction() throws Exception
     {
         long nodeID = createNode();
@@ -209,7 +209,7 @@ public class CompositeIndexingIT
         }
     }
 
-    @Test
+	@Test
     public void shouldNotSeeNodeThatHasItsLabelRemovedInTransaction() throws Exception
     {
         long nodeID = createNode();
@@ -224,7 +224,7 @@ public class CompositeIndexingIT
         }
     }
 
-    @Test
+	@Test
     public void shouldNotSeeNodeThatHasAPropertyRemovedInTransaction() throws Exception
     {
         long nodeID = createNode();
@@ -239,7 +239,7 @@ public class CompositeIndexingIT
         }
     }
 
-    @Test
+	@Test
     public void shouldSeeAllNodesAddedInTransaction() throws Exception
     {
         if ( index.type() != UNIQUE ) // this test does not make any sense for UNIQUE indexes
@@ -263,31 +263,32 @@ public class CompositeIndexingIT
         }
     }
 
-    @Test
+	@Test
     public void shouldSeeAllNodesAddedBeforeTransaction() throws Exception
     {
-        if ( index.type() != UNIQUE ) // this test does not make any sense for UNIQUE indexes
-        {
-            long nodeID1 = createNode();
-            long nodeID2 = createNode();
-            long nodeID3 = createNode();
-            try ( Transaction ignore = graphDatabaseAPI.beginTx() )
-            {
-                KernelTransaction ktx = ktx();
-                Set<Long> result = new HashSet<>(  );
-                try ( NodeValueIndexCursor cursor = seek( ktx ) )
-                {
-                    while ( cursor.next() )
-                    {
-                        result.add( cursor.nodeReference() );
-                    }
-                }
-                assertThat( result, containsInAnyOrder( nodeID1, nodeID2, nodeID3 ) );
-            }
-        }
+        // this test does not make any sense for UNIQUE indexes
+		if (index.type() == UNIQUE) {
+			return;
+		}
+		long nodeID1 = createNode();
+		long nodeID2 = createNode();
+		long nodeID3 = createNode();
+		try ( Transaction ignore = graphDatabaseAPI.beginTx() )
+		{
+		    KernelTransaction ktx = ktx();
+		    Set<Long> result = new HashSet<>(  );
+		    try ( NodeValueIndexCursor cursor = seek( ktx ) )
+		    {
+		        while ( cursor.next() )
+		        {
+		            result.add( cursor.nodeReference() );
+		        }
+		    }
+		    assertThat( result, containsInAnyOrder( nodeID1, nodeID2, nodeID3 ) );
+		}
     }
 
-    @Test
+	@Test
     public void shouldNotSeeNodesLackingOneProperty() throws Exception
     {
         long nodeID1 = createNode();
@@ -315,7 +316,7 @@ public class CompositeIndexingIT
         }
     }
 
-    private long createNode()
+	private long createNode()
             throws KernelException
     {
         long nodeID;
@@ -334,14 +335,14 @@ public class CompositeIndexingIT
         return nodeID;
     }
 
-    private NodeValueIndexCursor seek( KernelTransaction transaction ) throws KernelException
+	private NodeValueIndexCursor seek( KernelTransaction transaction ) throws KernelException
     {
         NodeValueIndexCursor cursor = transaction.cursors().allocateNodeValueIndexCursor();
         transaction.dataRead().nodeIndexSeek( index, cursor, IndexOrder.NONE, false, exactQuery() );
         return cursor;
     }
 
-    private IndexQuery[] exactQuery()
+	private IndexQuery[] exactQuery()
     {
         int[] propertyIds = index.schema().getPropertyIds();
         IndexQuery[] query = new IndexQuery[propertyIds.length];
@@ -353,7 +354,7 @@ public class CompositeIndexingIT
         return query;
     }
 
-    private KernelTransaction ktx()
+	private KernelTransaction ktx()
     {
         return graphDatabaseAPI.getDependencyResolver().resolveDependency( ThreadToStatementContextBridge.class ).getKernelTransactionBoundToThisThread( true );
     }

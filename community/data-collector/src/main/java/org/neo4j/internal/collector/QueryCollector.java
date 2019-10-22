@@ -109,17 +109,17 @@ class QueryCollector extends CollectorStateMachine<Iterator<TruncatedQuerySnapsh
     @Override
     public void endSuccess( ExecutingQuery query )
     {
-        if ( isCollecting )
-        {
-            QuerySnapshot snapshot = query.snapshot();
-            queries.produce(
-                    new TruncatedQuerySnapshot( snapshot.queryText(),
-                                                snapshot.queryPlanSupplier(),
-                                                snapshot.queryParameters(),
-                                                snapshot.elapsedTimeMicros(),
-                                                snapshot.compilationTimeMicros(),
-                                                snapshot.startTimestampMillis(),
-                                                maxQueryTextSize ) );
-        }
+        if (!isCollecting) {
+			return;
+		}
+		QuerySnapshot snapshot = query.snapshot();
+		queries.produce(
+		        new TruncatedQuerySnapshot( snapshot.queryText(),
+		                                    snapshot.queryPlanSupplier(),
+		                                    snapshot.queryParameters(),
+		                                    snapshot.elapsedTimeMicros(),
+		                                    snapshot.compilationTimeMicros(),
+		                                    snapshot.startTimestampMillis(),
+		                                    maxQueryTextSize ) );
     }
 }

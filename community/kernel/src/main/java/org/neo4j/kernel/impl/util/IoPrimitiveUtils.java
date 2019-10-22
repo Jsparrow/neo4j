@@ -156,13 +156,12 @@ public abstract class IoPrimitiveUtils
             ByteBuffer buffer ) throws IOException
     {
         Integer length = readInt( channel, buffer );
-        if ( length != null )
-        {
-            char[] chars = new char[length];
-            chars = readCharArray( channel, buffer, chars );
-            return chars == null ? null : new String( chars );
-        }
-        return null;
+        if (length == null) {
+			return null;
+		}
+		char[] chars = new char[length];
+		chars = readCharArray( channel, buffer, chars );
+		return chars == null ? null : new String( chars );
     }
 
     public static void writeLengthAndString( StoreChannel channel, ByteBuffer buffer, String value )
@@ -211,16 +210,15 @@ public abstract class IoPrimitiveUtils
 
     public static Object[] asArray( Object propertyValue )
     {
-        if ( propertyValue.getClass().isArray() )
-        {
-            int length = Array.getLength( propertyValue );
-            Object[] result = new Object[ length ];
-            for ( int i = 0; i < length; i++ )
-            {
-                result[ i ] = Array.get( propertyValue, i );
-            }
-            return result;
-        }
-        return new Object[] { propertyValue };
+        if (!propertyValue.getClass().isArray()) {
+			return new Object[] { propertyValue };
+		}
+		int length = Array.getLength( propertyValue );
+		Object[] result = new Object[ length ];
+		for ( int i = 0; i < length; i++ )
+		{
+		    result[ i ] = Array.get( propertyValue, i );
+		}
+		return result;
     }
 }

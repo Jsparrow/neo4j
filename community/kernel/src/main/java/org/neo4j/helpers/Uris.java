@@ -28,7 +28,11 @@ import java.util.function.Function;
 @Deprecated
 public final class Uris
 {
-    /**
+    private Uris()
+    {
+    }
+
+	/**
      * Extract a named parameter from the query of a URI. If a parameter is set but no value defined,
      * then "true" is returned
      *
@@ -67,9 +71,5 @@ public final class Uris
             }
             return null;
         };
-    }
-
-    private Uris()
-    {
     }
 }

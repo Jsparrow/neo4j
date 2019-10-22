@@ -31,37 +31,6 @@ import org.neo4j.kernel.api.exceptions.Status;
  */
 public class RetryACoupleOfTimesHandler implements RetryHandler
 {
-    private final Predicate<Throwable> retriable;
-    private final int maxRetryCount;
-    private final long timeBetweenTries;
-    private final TimeUnit unit;
-    private int retries;
-
-    public RetryACoupleOfTimesHandler( Predicate<Throwable> retriable )
-    {
-        this( retriable, 5, 1, TimeUnit.SECONDS );
-    }
-
-    public RetryACoupleOfTimesHandler( Predicate<Throwable> retriable,
-            int maxRetryCount, long timeBetweenTries, TimeUnit unit )
-    {
-        this.retriable = retriable;
-        this.maxRetryCount = maxRetryCount;
-        this.timeBetweenTries = timeBetweenTries;
-        this.unit = unit;
-    }
-
-    @Override
-    public boolean retryOn( Throwable t )
-    {
-        if ( retriable.test( t ) )
-        {
-            LockSupport.parkNanos( unit.toNanos( timeBetweenTries ) );
-            return retries++ < maxRetryCount;
-        }
-        return false;
-    }
-
     /**
      * Retries on {@link TransientFailureException} and any {@link Throwable} implementing
      * {@link org.neo4j.kernel.api.exceptions.Status.HasStatus} with
@@ -84,21 +53,47 @@ public class RetryACoupleOfTimesHandler implements RetryHandler
         }
         return false;
     };
-
-    /**
+	/**
      * Retries on any {@link Exception}, i.e. not {@link OutOfMemoryError} or similar.
      */
     public static final Predicate<Throwable> ANY_EXCEPTION = t ->
-    {
-        return t instanceof Exception; // i.e. excluding OutOfMemory and more sever errors.
-    };
+    t instanceof Exception;
+	private final Predicate<Throwable> retriable;
+	private final int maxRetryCount;
+	private final long timeBetweenTries;
+	private final TimeUnit unit;
+	private int retries;
 
-    public static RetryHandler retryACoupleOfTimesOn( Predicate<Throwable> retriable )
+	public RetryACoupleOfTimesHandler( Predicate<Throwable> retriable )
+    {
+        this( retriable, 5, 1, TimeUnit.SECONDS );
+    }
+
+	public RetryACoupleOfTimesHandler( Predicate<Throwable> retriable,
+            int maxRetryCount, long timeBetweenTries, TimeUnit unit )
+    {
+        this.retriable = retriable;
+        this.maxRetryCount = maxRetryCount;
+        this.timeBetweenTries = timeBetweenTries;
+        this.unit = unit;
+    }
+
+	@Override
+    public boolean retryOn( Throwable t )
+    {
+        if (!retriable.test( t )) {
+			return false;
+		}
+		LockSupport.parkNanos( unit.toNanos( timeBetweenTries ) );
+		return retries++ < maxRetryCount;
+    }
+
+	public static RetryHandler retryACoupleOfTimesOn( Predicate<Throwable> retriable )
     {
         return new RetryACoupleOfTimesHandler( retriable );
     }
 
-    public static RetryHandler retryACoupleOfTimesOn( Predicate<Throwable> retriable,
+	public static RetryHandler retryACoupleOfTimesOn( Predicate<Throwable> retriable,
             int maxRetryCount, long timeBetweenTries, TimeUnit unit )
     {
         return new RetryACoupleOfTimesHandler( retriable, maxRetryCount, timeBetweenTries, unit );

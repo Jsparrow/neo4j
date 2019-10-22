@@ -210,13 +210,12 @@ abstract class AbstractArrayType<T> extends Type
     static boolean setArrayLengthWhenReading( GenericKey state, PageCursor cursor, short arrayLength )
     {
         state.arrayLength = arrayLength;
-        if ( state.arrayLength < 0 || state.arrayLength > BIGGEST_REASONABLE_ARRAY_LENGTH )
-        {
-            setCursorException( cursor, "non-valid array length, " + state.arrayLength );
-            state.arrayLength = 0;
-            return false;
-        }
-        return true;
+        if (!(state.arrayLength < 0 || state.arrayLength > BIGGEST_REASONABLE_ARRAY_LENGTH)) {
+			return true;
+		}
+		setCursorException( cursor, "non-valid array length, " + state.arrayLength );
+		state.arrayLength = 0;
+		return false;
     }
 
     @Override

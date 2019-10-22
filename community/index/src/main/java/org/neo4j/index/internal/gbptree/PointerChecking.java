@@ -27,9 +27,7 @@ import org.neo4j.io.pagecache.PageCursor;
 class PointerChecking
 {
     static final String WRITER_TRAVERSE_OLD_STATE_MESSAGE =
-                    "Writer traversed to a tree node that has a valid successor, " +
-                    "This is most likely due to failure to checkpoint the tree before shutdown and/or tree state " +
-                    "being out of date.";
+                    new StringBuilder().append("Writer traversed to a tree node that has a valid successor, ").append("This is most likely due to failure to checkpoint the tree before shutdown and/or tree state ").append("being out of date.").toString();
 
     private PointerChecking()
     {
@@ -52,8 +50,7 @@ class PointerChecking
         }
         if ( result < IdSpace.MIN_TREE_NODE_ID )
         {
-            throw new TreeInconsistencyException( "Pointer to id " + result + " not allowed. Minimum node id allowed is " +
-                    IdSpace.MIN_TREE_NODE_ID );
+            throw new TreeInconsistencyException( new StringBuilder().append("Pointer to id ").append(result).append(" not allowed. Minimum node id allowed is ").append(IdSpace.MIN_TREE_NODE_ID).toString() );
         }
     }
 

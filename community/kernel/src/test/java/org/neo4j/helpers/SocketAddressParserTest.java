@@ -60,7 +60,7 @@ class SocketAddressParserTest
     @Test
     void shouldFailToCreateSocketAddressWithMixedInWhitespace()
     {
-        String addressString = "localhost" + whitespace( 1 ) + ":9999";
+        String addressString = new StringBuilder().append("localhost").append(whitespace( 1 )).append(":9999").toString();
         assertThrows( IllegalArgumentException.class, () -> SocketAddressParser.socketAddress( addressString, SocketAddress::new ) );
     }
 

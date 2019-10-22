@@ -48,45 +48,40 @@ import static org.neo4j.io.file.Files.createOrOpenAsOutputStream;
  */
 public class RotatingFileOutputStreamSupplier implements Supplier<OutputStream>, Closeable
 {
-    /**
-     * A listener for the rotation process
-     */
-    public static class RotationListener
-    {
-        public void outputFileCreated( OutputStream out )
-        {
-        }
-
-        public void rotationCompleted( OutputStream out )
-        {
-        }
-
-        public void rotationError( Exception e, OutputStream out )
-        {
-        }
-    }
-
     private static final LongSupplier DEFAULT_CURRENT_TIME_SUPPLIER = System::currentTimeMillis;
 
-    // Used only in case no new output file can be created during rotation
+	// Used only in case no new output file can be created during rotation
     private static final OutputStream nullStream = NullOutputStream.NULL_OUTPUT_STREAM;
 
-    private final LongSupplier currentTimeSupplier;
-    private final FileSystemAbstraction fileSystem;
-    private final File outputFile;
-    private final long rotationThresholdBytes;
-    private final long rotationDelay;
-    private final int maxArchives;
-    private final RotationListener rotationListener;
-    private final Executor rotationExecutor;
-    private final ReadWriteLock logFileLock = new ReentrantReadWriteLock( true );
-    private final OutputStream streamWrapper;
-    private final AtomicBoolean closed = new AtomicBoolean( false );
-    private final AtomicBoolean rotating = new AtomicBoolean( false );
-    private final AtomicLong earliestRotationTimeRef = new AtomicLong( 0 );
-    private OutputStream outRef = nullStream;
+	private final LongSupplier currentTimeSupplier;
 
-    /**
+	private final FileSystemAbstraction fileSystem;
+
+	private final File outputFile;
+
+	private final long rotationThresholdBytes;
+
+	private final long rotationDelay;
+
+	private final int maxArchives;
+
+	private final RotationListener rotationListener;
+
+	private final Executor rotationExecutor;
+
+	private final ReadWriteLock logFileLock = new ReentrantReadWriteLock( true );
+
+	private final OutputStream streamWrapper;
+
+	private final AtomicBoolean closed = new AtomicBoolean( false );
+
+	private final AtomicBoolean rotating = new AtomicBoolean( false );
+
+	private final AtomicLong earliestRotationTimeRef = new AtomicLong( 0 );
+
+	private OutputStream outRef = nullStream;
+
+	/**
      * @param fileSystem The filesystem to use
      * @param outputFile The file that the latest {@link OutputStream} should output to
      * @param rotationThresholdBytes The size above which the file should be rotated
@@ -103,7 +98,7 @@ public class RotatingFileOutputStreamSupplier implements Supplier<OutputStream>,
                 new RotationListener() );
     }
 
-    /**
+	/**
      * @param fileSystem The filesystem to use
      * @param outputFile The file that the latest {@link OutputStream} should output to
      * @param rotationThresholdBytes The size above which the file should be rotated
@@ -122,7 +117,7 @@ public class RotatingFileOutputStreamSupplier implements Supplier<OutputStream>,
                 maxArchives, rotationExecutor, rotationListener );
     }
 
-    RotatingFileOutputStreamSupplier( LongSupplier currentTimeSupplier, FileSystemAbstraction fileSystem,
+	RotatingFileOutputStreamSupplier( LongSupplier currentTimeSupplier, FileSystemAbstraction fileSystem,
             File outputFile, long rotationThresholdBytes, long rotationDelay, int maxArchives,
             Executor rotationExecutor, RotationListener rotationListener ) throws IOException
     {
@@ -196,25 +191,22 @@ public class RotatingFileOutputStreamSupplier implements Supplier<OutputStream>,
         };
     }
 
-    /**
+	/**
      * @return A stream outputting to the latest output file
      */
     @Override
     public OutputStream get()
     {
-        if ( !closed.get() && !rotating.get() )
-        {
-            // In case output file doesn't exist, call rotate so that it gets created
-            if ( rotationDelayExceeded() && rotationThresholdExceeded() ||
-                    !fileSystem.fileExists( outputFile ) )
-            {
-                rotate();
-            }
-        }
+        boolean condition = !closed.get() && !rotating.get() && (rotationDelayExceeded() && rotationThresholdExceeded() ||
+		        !fileSystem.fileExists( outputFile ));
+		// In case output file doesn't exist, call rotate so that it gets created
+		if ( condition ) {
+		    rotate();
+		}
         return this.streamWrapper;
     }
 
-    @Override
+	@Override
     public void close() throws IOException
     {
         logFileLock.writeLock().lock();
@@ -230,18 +222,18 @@ public class RotatingFileOutputStreamSupplier implements Supplier<OutputStream>,
         }
     }
 
-    private boolean rotationThresholdExceeded()
+	private boolean rotationThresholdExceeded()
     {
         return fileSystem.fileExists( outputFile ) && rotationThresholdBytes > 0 &&
                 fileSystem.getFileSize( outputFile ) >= rotationThresholdBytes;
     }
 
-    private boolean rotationDelayExceeded()
+	private boolean rotationDelayExceeded()
     {
         return earliestRotationTimeRef.get() <= currentTimeSupplier.getAsLong();
     }
 
-    void rotate()
+	void rotate()
     {
         if ( rotating.getAndSet( true ) )
         {
@@ -333,12 +325,12 @@ public class RotatingFileOutputStreamSupplier implements Supplier<OutputStream>,
         }
     }
 
-    private OutputStream openOutputFile() throws IOException
+	private OutputStream openOutputFile() throws IOException
     {
         return createOrOpenAsOutputStream( fileSystem, outputFile, true );
     }
 
-    private void shiftArchivedOutputFiles() throws IOException
+	private void shiftArchivedOutputFiles() throws IOException
     {
         for ( int i = lastArchivedOutputFileNumber( fileSystem, outputFile ); i > 0; --i )
         {
@@ -354,7 +346,7 @@ public class RotatingFileOutputStreamSupplier implements Supplier<OutputStream>,
         }
     }
 
-    private static int lastArchivedOutputFileNumber( FileSystemAbstraction fileSystem, File outputFile )
+	private static int lastArchivedOutputFileNumber( FileSystemAbstraction fileSystem, File outputFile )
     {
         int i = 1;
         while ( fileSystem.fileExists( archivedOutputFile( outputFile, i ) ) )
@@ -364,12 +356,12 @@ public class RotatingFileOutputStreamSupplier implements Supplier<OutputStream>,
         return i - 1;
     }
 
-    private static File archivedOutputFile( File outputFile, int archiveNumber )
+	private static File archivedOutputFile( File outputFile, int archiveNumber )
     {
         return new File( String.format( "%s.%d", outputFile.getPath(), archiveNumber ) );
     }
 
-    /**
+	/**
      * Exposes the algorithm for collecting existing rotated log files.
      */
     public static List<File> getAllArchives( FileSystemAbstraction fileSystem,  File outputFile )
@@ -387,5 +379,23 @@ public class RotatingFileOutputStreamSupplier implements Supplier<OutputStream>,
             i++;
         }
         return ret;
+    }
+
+	/**
+     * A listener for the rotation process
+     */
+    public static class RotationListener
+    {
+        public void outputFileCreated( OutputStream out )
+        {
+        }
+
+        public void rotationCompleted( OutputStream out )
+        {
+        }
+
+        public void rotationError( Exception e, OutputStream out )
+        {
+        }
     }
 }

@@ -126,23 +126,23 @@ class ExpectedTransactionData
     void assignedProperty( Node node, String key, Object value, Object valueBeforeTx )
     {
         valueBeforeTx = removeProperty( expectedRemovedNodeProperties, node, key, valueBeforeTx );
-        if ( !value.equals( valueBeforeTx ) )
-        {
-            Map<String,PropertyEntryImpl<Node>> map = expectedAssignedNodeProperties.get( node );
-            PropertyEntryImpl<Node> prev = map.get( key );
-            map.put( key, property( node, key, value, prev != null ? prev.previouslyCommitedValue() : valueBeforeTx ) );
-        }
+        if (value.equals( valueBeforeTx )) {
+			return;
+		}
+		Map<String,PropertyEntryImpl<Node>> map = expectedAssignedNodeProperties.get( node );
+		PropertyEntryImpl<Node> prev = map.get( key );
+		map.put( key, property( node, key, value, prev != null ? prev.previouslyCommitedValue() : valueBeforeTx ) );
     }
 
     void assignedProperty( Relationship rel, String key, Object value, Object valueBeforeTx )
     {
         valueBeforeTx = removeProperty( expectedRemovedRelationshipProperties, rel, key, valueBeforeTx );
-        if ( !value.equals( valueBeforeTx ) )
-        {
-            Map<String,PropertyEntryImpl<Relationship>> map = expectedAssignedRelationshipProperties.get( rel );
-            PropertyEntryImpl<Relationship> prev = map.get( key );
-            map.put( key, property( rel, key, value, prev != null ? prev.previouslyCommitedValue() : valueBeforeTx ) );
-        }
+        if (value.equals( valueBeforeTx )) {
+			return;
+		}
+		Map<String,PropertyEntryImpl<Relationship>> map = expectedAssignedRelationshipProperties.get( rel );
+		PropertyEntryImpl<Relationship> prev = map.get( key );
+		map.put( key, property( rel, key, value, prev != null ? prev.previouslyCommitedValue() : valueBeforeTx ) );
     }
 
     void assignedLabel( Node node, Label label )
@@ -203,26 +203,24 @@ class ExpectedTransactionData
     private <E extends PropertyContainer> Object removeProperty( Map<E,Map<String,PropertyEntryImpl<E>>> map,
             E entity, String key, Object valueBeforeTx )
     {
-        if ( map.containsKey( entity ) )
-        {
-            Map<String,PropertyEntryImpl<E>> inner = map.get( entity );
-            PropertyEntryImpl<E> entry = inner.remove( key );
-            if ( entry == null )
-            {   // this means that we've been called to remove an existing property
-                return valueBeforeTx;
-            }
-
-            if ( inner.isEmpty() )
-            {
-                map.remove( entity );
-            }
-            if ( entry.previouslyCommitedValue() != null )
-            {   // this means that we're removing a previously changed property, i.e. there's a value to remove
-                return entry.previouslyCommitedValue();
-            }
-            return null;
-        }
-        return valueBeforeTx;
+        if (!map.containsKey( entity )) {
+			return valueBeforeTx;
+		}
+		Map<String,PropertyEntryImpl<E>> inner = map.get( entity );
+		PropertyEntryImpl<E> entry = inner.remove( key );
+		if ( entry == null )
+		{   // this means that we've been called to remove an existing property
+		    return valueBeforeTx;
+		}
+		if ( inner.isEmpty() )
+		{
+		    map.remove( entity );
+		}
+		if ( entry.previouslyCommitedValue() != null )
+		{   // this means that we're removing a previously changed property, i.e. there's a value to remove
+		    return entry.previouslyCommitedValue();
+		}
+		return null;
     }
 
     private <E extends PropertyContainer> PropertyEntryImpl<E> property( E entity, String key, Object value,
@@ -327,10 +325,7 @@ class ExpectedTransactionData
     private Map<Node,Set<String>> cloneLabelData( Map<Node,Set<String>> map )
     {
         Map<Node,Set<String>> clone = new HashMap<>();
-        for ( Map.Entry<Node,Set<String>> entry : map.entrySet() )
-        {
-            clone.put( entry.getKey(), new HashSet<>( entry.getValue() ) );
-        }
+        map.entrySet().forEach(entry -> clone.put(entry.getKey(), new HashSet<>(entry.getValue())));
         return clone;
     }
 
@@ -350,7 +345,7 @@ class ExpectedTransactionData
         {
             return;
         }
-        assertTrue( "Unexpected label " + labelName + " for " + node, hasLabel );
+        assertTrue( new StringBuilder().append("Unexpected label ").append(labelName).append(" for ").append(node).toString(), hasLabel );
         if ( labels.isEmpty() )
         {
             expected.remove( node );
@@ -361,10 +356,7 @@ class ExpectedTransactionData
             Map<KEY, Map<String, PropertyEntryImpl<KEY>>> map )
     {
         Map<KEY, Map<String, PropertyEntryImpl<KEY>>> result = new HashMap<>();
-        for ( KEY key : map.keySet() )
-        {
-            result.put( key, new HashMap<>( map.get( key ) ) );
-        }
+        map.keySet().forEach(key -> result.put(key, new HashMap<>(map.get(key))));
         return result;
     }
 

@@ -30,23 +30,36 @@ import static java.util.Objects.requireNonNull;
 /** Represents a type and a name for a field in a record, used to define input and output record signatures. */
 public class FieldSignature
 {
-    public static FieldSignature inputField( String name, Neo4jTypes.AnyType type )
+    private final String name;
+	private final Neo4jTypes.AnyType type;
+	private final DefaultParameterValue defaultValue;
+	private final boolean deprecated;
+
+	private FieldSignature( String name, Neo4jTypes.AnyType type, DefaultParameterValue defaultValue, boolean deprecated )
+    {
+        this.name = requireNonNull( name, "name" );
+        this.type = requireNonNull( type, "type" );
+        this.defaultValue = defaultValue;
+        this.deprecated = deprecated;
+        boolean condition = defaultValue != null && !type.equals( defaultValue.neo4jType() );
+		if ( condition ) {
+		    throw new IllegalArgumentException( String.format(
+		            "Default value does not have a valid type, field type was %s, but value type was %s.",
+		            type.toString(), defaultValue.neo4jType().toString() ) );
+		}
+    }
+
+	public static FieldSignature inputField( String name, Neo4jTypes.AnyType type )
     {
         return new FieldSignature( name, type, null, false );
     }
 
-    public static FieldSignature inputField( String name, Neo4jTypes.AnyType type, DefaultParameterValue defaultValue )
+	public static FieldSignature inputField( String name, Neo4jTypes.AnyType type, DefaultParameterValue defaultValue )
     {
         return new FieldSignature( name, type, requireNonNull( defaultValue, "defaultValue" ), false );
     }
 
-    public interface InputMapper
-    {
-        Object map( Object input );
-        AnyValue map( AnyValue input );
-    }
-
-    public static FieldSignature inputField( String name, Neo4jTypes.AnyType type, InputMapper mapper )
+	public static FieldSignature inputField( String name, Neo4jTypes.AnyType type, InputMapper mapper )
     {
         return new FieldSignature( name, type, null, false )
         {
@@ -70,7 +83,7 @@ public class FieldSignature
         };
     }
 
-    public static FieldSignature inputField( String name, Neo4jTypes.AnyType type, DefaultParameterValue defaultValue, InputMapper mapper )
+	public static FieldSignature inputField( String name, Neo4jTypes.AnyType type, DefaultParameterValue defaultValue, InputMapper mapper )
     {
         return new FieldSignature( name, type, requireNonNull( defaultValue, "defaultValue" ), false )
         {
@@ -94,75 +107,53 @@ public class FieldSignature
         };
     }
 
-    public static FieldSignature outputField( String name, Neo4jTypes.AnyType type )
+	public static FieldSignature outputField( String name, Neo4jTypes.AnyType type )
     {
         return outputField( name, type, false );
     }
 
-    public static FieldSignature outputField( String name, Neo4jTypes.AnyType type, boolean deprecated )
+	public static FieldSignature outputField( String name, Neo4jTypes.AnyType type, boolean deprecated )
     {
         return new FieldSignature( name, type, null, deprecated );
     }
 
-    private final String name;
-    private final Neo4jTypes.AnyType type;
-    private final DefaultParameterValue defaultValue;
-    private final boolean deprecated;
-
-    private FieldSignature( String name, Neo4jTypes.AnyType type, DefaultParameterValue defaultValue, boolean deprecated )
-    {
-        this.name = requireNonNull( name, "name" );
-        this.type = requireNonNull( type, "type" );
-        this.defaultValue = defaultValue;
-        this.deprecated = deprecated;
-        if ( defaultValue != null )
-        {
-            if ( !type.equals( defaultValue.neo4jType() ) )
-            {
-                throw new IllegalArgumentException( String.format(
-                        "Default value does not have a valid type, field type was %s, but value type was %s.",
-                        type.toString(), defaultValue.neo4jType().toString() ) );
-            }
-        }
-    }
-
-    public boolean needsMapping()
+	public boolean needsMapping()
     {
         return false;
     }
 
-    /** Fields that are not supported full stack (ie. by Cypher) need to be mapped from Cypher to internal types */
+	/** Fields that are not supported full stack (ie. by Cypher) need to be mapped from Cypher to internal types */
     public Object map( Object input )
     {
         return input;
     }
 
-    public Object map( AnyValue input, ValueMapper<Object> mapper )
+	public Object map( AnyValue input, ValueMapper<Object> mapper )
     {
         return input.map( mapper );
     }
 
-    public String name()
+	public String name()
     {
         return name;
     }
 
-    public Neo4jTypes.AnyType neo4jType()
+	public Neo4jTypes.AnyType neo4jType()
     {
         return type;
     }
 
-    public Optional<DefaultParameterValue> defaultValue()
+	public Optional<DefaultParameterValue> defaultValue()
     {
         return Optional.ofNullable( defaultValue );
     }
 
-    public boolean isDeprecated()
+	public boolean isDeprecated()
     {
         return deprecated;
     }
 
-    @Override
+	@Override
     public String toString()
     {
         StringBuilder result = new StringBuilder();
@@ -174,7 +165,7 @@ public class FieldSignature
         return result.append( " :: " ).append( type ).toString();
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -192,11 +183,17 @@ public class FieldSignature
                 this.deprecated == that.deprecated;
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         int result = name.hashCode();
         result = 31 * result + type.hashCode();
         return result;
+    }
+
+	public interface InputMapper
+    {
+        Object map( Object input );
+        AnyValue map( AnyValue input );
     }
 }

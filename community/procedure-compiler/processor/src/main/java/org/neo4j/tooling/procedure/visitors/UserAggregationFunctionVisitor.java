@@ -150,7 +150,7 @@ public class UserAggregationFunctionVisitor extends SimpleElementVisitor8<Stream
     {
         // note: parameters are checked subsequently
         return isPublicNonStatic( updateMethod.getModifiers() ) &&
-                updateMethod.getReturnType().getKind().equals( VOID );
+                updateMethod.getReturnType().getKind() == VOID;
     }
 
     private boolean isValidAggregationSignature( ExecutableElement resultMethod )

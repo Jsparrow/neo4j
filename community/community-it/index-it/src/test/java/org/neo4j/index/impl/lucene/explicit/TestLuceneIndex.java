@@ -672,8 +672,8 @@ public class TestLuceneIndex extends AbstractLuceneIndexTest
         index.add( entity1, name, mattias );
         assertThat( index.get( name, mattias ), Contains.contains( entity1 ) );
 
-        assertContains( index.query( name, "\"" + mattias + "\"" ), entity1 );
-        assertContains( index.query( "name:\"" + mattias + "\"" ), entity1 );
+        assertContains( index.query( name, new StringBuilder().append("\"").append(mattias).append("\"").toString() ), entity1 );
+        assertContains( index.query( new StringBuilder().append("name:\"").append(mattias).append("\"").toString() ), entity1 );
 
         assertEquals( entity1, index.get( name, mattias ).getSingle() );
 
@@ -683,8 +683,8 @@ public class TestLuceneIndex extends AbstractLuceneIndexTest
 
         beginTx();
         assertThat( index.get( name, mattias ), Contains.contains( entity1 ) );
-        assertThat( index.query( name, "\"" + mattias + "\"" ), Contains.contains( entity1 ) );
-        assertThat( index.query( "name:\"" + mattias + "\"" ), Contains.contains( entity1 ) );
+        assertThat( index.query( name, new StringBuilder().append("\"").append(mattias).append("\"").toString() ), Contains.contains( entity1 ) );
+        assertThat( index.query( new StringBuilder().append("name:\"").append(mattias).append("\"").toString() ), Contains.contains( entity1 ) );
         assertEquals( entity1, index.get( name, mattias ).getSingle() );
         assertThat( index.query( "name", "Mattias*" ), Contains.contains( entity1 ) );
         commitTx();
@@ -695,18 +695,16 @@ public class TestLuceneIndex extends AbstractLuceneIndexTest
         assertThat( index.get( name, mattias ), Contains.contains( entity1 ) );
         assertThat( index.get( title, hacker ), Contains.contains( entity1, entity2 ) );
 
-        assertContains( index.query( "name:\"" + mattias + "\" OR title:\"" +
-                hacker + "\"" ), entity1, entity2 );
+        assertContains( index.query( new StringBuilder().append("name:\"").append(mattias).append("\" OR title:\"").append(hacker).append("\"").toString() ), entity1, entity2 );
 
         commitTx();
 
         beginTx();
         assertThat( index.get( name, mattias ), Contains.contains( entity1 ) );
         assertThat( index.get( title, hacker ), Contains.contains( entity1, entity2 ) );
-        assertThat( index.query( "name:\"" + mattias + "\" OR title:\"" + hacker + "\"" ), Contains
+        assertThat( index.query( new StringBuilder().append("name:\"").append(mattias).append("\" OR title:\"").append(hacker).append("\"").toString() ), Contains
                 .contains( entity1, entity2 ) );
-        assertThat( index.query( "name:\"" + mattias + "\" AND title:\"" +
-                hacker + "\"" ), Contains.contains( entity1 ) );
+        assertThat( index.query( new StringBuilder().append("name:\"").append(mattias).append("\" AND title:\"").append(hacker).append("\"").toString() ), Contains.contains( entity1 ) );
         commitTx();
 
         beginTx();
@@ -714,16 +712,14 @@ public class TestLuceneIndex extends AbstractLuceneIndexTest
         assertThat( index.get( name, mattias ), Contains.contains( entity1 ) );
         assertThat( index.get( title, hacker ), Contains.contains( entity1 ) );
 
-        assertContains( index.query( "name:\"" + mattias + "\" OR title:\"" +
-                hacker + "\"" ), entity1 );
+        assertContains( index.query( new StringBuilder().append("name:\"").append(mattias).append("\" OR title:\"").append(hacker).append("\"").toString() ), entity1 );
 
         commitTx();
 
         beginTx();
         assertThat( index.get( name, mattias ), Contains.contains( entity1 ) );
         assertThat( index.get( title, hacker ), Contains.contains( entity1 ) );
-        assertThat( index.query( "name:\"" + mattias + "\" OR title:\"" +
-                hacker + "\"" ), Contains.contains( entity1 ) );
+        assertThat( index.query( new StringBuilder().append("name:\"").append(mattias).append("\" OR title:\"").append(hacker).append("\"").toString() ), Contains.contains( entity1 ) );
         commitTx();
 
         beginTx();
@@ -1301,7 +1297,7 @@ public class TestLuceneIndex extends AbstractLuceneIndexTest
             float score2 = hits.currentScore();
             assertEquals( node2, hit1 );
             assertEquals( node1, hit2 );
-            assertTrue( "Score 1 (" + score1 + ") should have been higher than score 2 (" + score2 + ")",
+            assertTrue( new StringBuilder().append("Score 1 (").append(score1).append(") should have been higher than score 2 (").append(score2).append(")").toString(),
                     score1 > score2 );
         }
     }
@@ -2021,7 +2017,7 @@ public class TestLuceneIndex extends AbstractLuceneIndexTest
         }
 
         // THEN - assert that there's no index config about this index left behind
-        assertFalse( "There should be no index config for index '" + currentIndexName() + "' left behind",
+        assertFalse( new StringBuilder().append("There should be no index config for index '").append(currentIndexName()).append("' left behind").toString(),
                 ((GraphDatabaseAPI)graphDb).getDependencyResolver().resolveDependency( IndexConfigStore.class ).has(
                         Node.class, currentIndexName() ) );
     }

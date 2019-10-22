@@ -199,9 +199,7 @@ public class StoreLockerTest
         }
         catch ( StoreLockException e )
         {
-            String msg = format( "Unable to create path for store dir: %s. " +
-                    "Please ensure no other process is using this database, and that " +
-                    "the directory is writable (required even for read-only access)", storeLayout );
+            String msg = format( new StringBuilder().append("Unable to create path for store dir: %s. ").append("Please ensure no other process is using this database, and that ").append("the directory is writable (required even for read-only access)").toString(), storeLayout );
             assertThat( e.getMessage(), is( msg ) );
         }
     }
@@ -233,9 +231,7 @@ public class StoreLockerTest
         }
         catch ( StoreLockException e )
         {
-            String msg = format( "Unable to obtain lock on store lock file: %s. " +
-                            "Please ensure no other process is using this database, and that the " +
-                            "directory is writable (required even for read-only access)",
+            String msg = format( new StringBuilder().append("Unable to obtain lock on store lock file: %s. ").append("Please ensure no other process is using this database, and that the ").append("directory is writable (required even for read-only access)").toString(),
                     storeLayout.storeLockFile() );
             assertThat( e.getMessage(), is( msg ) );
         }

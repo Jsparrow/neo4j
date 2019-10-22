@@ -79,7 +79,7 @@ public class FailureMessage implements ResponseMessage
     @Override
     public String toString()
     {
-        return "FAILURE " + status + " " + message;
+        return new StringBuilder().append("FAILURE ").append(status).append(" ").append(message).toString();
     }
 
 }

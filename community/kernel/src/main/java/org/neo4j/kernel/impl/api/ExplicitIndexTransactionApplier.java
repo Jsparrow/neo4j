@@ -153,11 +153,11 @@ public class ExplicitIndexTransactionApplier extends TransactionApplier.Adapter
 
     private void notifyExplicitIndexOperationQueue()
     {
-        if ( transactionId != -1 )
-        {
-            transactionOrdering.removeChecked( transactionId );
-            transactionId = -1;
-        }
+        if (!(transactionId != -1)) {
+			return;
+		}
+		transactionOrdering.removeChecked( transactionId );
+		transactionId = -1;
     }
 
     @Override

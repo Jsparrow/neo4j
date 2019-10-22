@@ -80,7 +80,7 @@ class StringIndexReader extends NativeIndexReader<StringIndexKey,NativeIndexValu
             treeKeyTo.initValueAsHighest( ValueGroup.TEXT );
             return true;
         default:
-            throw new IllegalArgumentException( "IndexQuery of type " + predicate.type() + " is not supported." );
+            throw new IllegalArgumentException( new StringBuilder().append("IndexQuery of type ").append(predicate.type()).append(" is not supported.").toString() );
         }
     }
 

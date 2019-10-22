@@ -80,12 +80,12 @@ public class NativeHitIterator<KEY extends NativeIndexKey<KEY>, VALUE extends Na
 
     private void ensureCursorClosed() throws IOException
     {
-        if ( !closed )
-        {
-            seeker.close();
-            toRemoveFromWhenExhausted.remove( seeker );
-            closed = true;
-        }
+        if (closed) {
+			return;
+		}
+		seeker.close();
+		toRemoveFromWhenExhausted.remove( seeker );
+		closed = true;
     }
 
     @Override

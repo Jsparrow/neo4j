@@ -94,7 +94,7 @@ public class TopLevelTransaction implements InternalTransaction
             if ( statusCode.classification() == Classification.TransientError )
             {
                 throw new TransientTransactionFailureException(
-                        closeFailureMessage() + ": " + statusCode.description(), e );
+                        new StringBuilder().append(closeFailureMessage()).append(": ").append(statusCode.description()).toString(), e );
             }
             throw new TransactionFailureException( closeFailureMessage(), e );
         }

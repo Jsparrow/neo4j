@@ -105,14 +105,14 @@ public class FreeIdKeeper implements Closeable
         freeIds.enqueue( id );
         freeIdCount++;
 
-        if ( freeIds.size() >= batchSize )
-        {
-            long endPosition = flushFreeIds( ByteBuffer.allocate( batchSize * ID_ENTRY_SIZE ) );
-            if ( aggressiveMode )
-            {
-                stackPosition = endPosition;
-            }
-        }
+        if (freeIds.size() < batchSize) {
+			return;
+		}
+		long endPosition = flushFreeIds( ByteBuffer.allocate( batchSize * ID_ENTRY_SIZE ) );
+		if ( aggressiveMode )
+		{
+		    stackPosition = endPosition;
+		}
     }
 
     private void truncate( long position )

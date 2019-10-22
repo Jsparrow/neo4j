@@ -38,13 +38,12 @@ public interface FileRepository
     static void assertNotMigrated( File file, FileSystemAbstraction fileSystem, Log log )
     {
         File migratedFile = getMigratedFile( file );
-        if ( fileSystem.fileExists( migratedFile ) )
-        {
-            String message = "The repository file '" + file.getAbsolutePath() + "' has been marked as migrated. " +
-                    "If you are sure that you want use this repository you need to manually rename the file '" +
-                    migratedFile.getAbsolutePath() + "' to '" + file.getName() + "'";
-            log.error( message );
-            throw new IllegalStateException( message );
-        }
+        if (!fileSystem.fileExists( migratedFile )) {
+			return;
+		}
+		String message = new StringBuilder().append("The repository file '").append(file.getAbsolutePath()).append("' has been marked as migrated. ").append("If you are sure that you want use this repository you need to manually rename the file '").append(migratedFile.getAbsolutePath()).append("' to '")
+				.append(file.getName()).append("'").toString();
+		log.error( message );
+		throw new IllegalStateException( message );
     }
 }

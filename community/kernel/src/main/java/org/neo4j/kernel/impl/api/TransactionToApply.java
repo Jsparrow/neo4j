@@ -177,16 +177,10 @@ public class TransactionToApply implements CommandsToApply, AutoCloseable
     public String toString()
     {
         TransactionRepresentation tr = this.transactionRepresentation;
-        return "Transaction #" + transactionId +
-               (logPosition != null ? " at log position " + logPosition : " (no log position)") +
-               " {started " + date( tr.getTimeStarted() ) +
-               ", committed " + date( tr.getTimeCommitted() ) +
-               ", with " + countCommands() + " commands in this transaction" +
-               ", authored by " + tr.getAuthorId() +
-               ", with master id " + tr.getMasterId() +
-               ", lock session " + tr.getLockSessionId() +
-               ", latest committed transaction id when started was " + tr.getLatestCommittedTxWhenStarted() +
-               ", additional header bytes: " + HexPrinter.hex( tr.additionalHeader(), Integer.MAX_VALUE, "" ) + "}";
+        return new StringBuilder().append("Transaction #").append(transactionId).append(logPosition != null ? " at log position " + logPosition : " (no log position)").append(" {started ").append(date( tr.getTimeStarted() ))
+				.append(", committed ").append(date( tr.getTimeCommitted() )).append(", with ").append(countCommands()).append(" commands in this transaction").append(", authored by ").append(tr.getAuthorId())
+				.append(", with master id ").append(tr.getMasterId()).append(", lock session ").append(tr.getLockSessionId()).append(", latest committed transaction id when started was ").append(tr.getLatestCommittedTxWhenStarted()).append(", additional header bytes: ")
+				.append(HexPrinter.hex( tr.additionalHeader(), Integer.MAX_VALUE, "" )).append("}").toString();
     }
 
     private String countCommands()
@@ -210,7 +204,7 @@ public class TransactionToApply implements CommandsToApply, AutoCloseable
         }
         catch ( Throwable e )
         {
-            return "(unable to count: " + e.getMessage() + ")";
+            return new StringBuilder().append("(unable to count: ").append(e.getMessage()).append(")").toString();
         }
     }
 

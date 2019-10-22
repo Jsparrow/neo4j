@@ -42,23 +42,14 @@ public class ProcedureConfig
     private static final String SETTING_DELIMITER = ";";
     private static final String MAPPING_DELIMITER = ":";
     private static final String PROCEDURE_DELIMITER = ",";
+	static final ProcedureConfig DEFAULT = new ProcedureConfig();
+	private final String defaultValue;
+	private final List<ProcMatcher> matchers;
+	private final List<Pattern> accessPatterns;
+	private final List<Pattern> whiteList;
+	private final ZoneId defaultTemporalTimeZone;
 
-    private final String defaultValue;
-    private final List<ProcMatcher> matchers;
-    private final List<Pattern> accessPatterns;
-    private final List<Pattern> whiteList;
-    private final ZoneId defaultTemporalTimeZone;
-
-    private ProcedureConfig()
-    {
-        this.defaultValue = "";
-        this.matchers = Collections.emptyList();
-        this.accessPatterns = Collections.emptyList();
-        this.whiteList = Collections.singletonList( compilePattern( "*" ) );
-        this.defaultTemporalTimeZone = UTC;
-    }
-
-    public ProcedureConfig( Config config )
+	public ProcedureConfig( Config config )
     {
         this.defaultValue = config.getValue( PROC_ALLOWED_SETTING_DEFAULT_NAME )
                 .map( Object::toString )
@@ -85,7 +76,16 @@ public class ProcedureConfig
         this.defaultTemporalTimeZone = config.get( GraphDatabaseSettings.db_temporal_timezone );
     }
 
-    private <T> List<T> parseMatchers( String configName, Config config, String delimiter, Function<String,T>
+	private ProcedureConfig()
+    {
+        this.defaultValue = "";
+        this.matchers = Collections.emptyList();
+        this.accessPatterns = Collections.emptyList();
+        this.whiteList = Collections.singletonList( compilePattern( "*" ) );
+        this.defaultTemporalTimeZone = UTC;
+    }
+
+	private <T> List<T> parseMatchers( String configName, Config config, String delimiter, Function<String,T>
             matchFunc )
     {
         String fullAccessProcedures = config.getValue( configName ).map( Object::toString ).orElse( "" );
@@ -100,7 +100,7 @@ public class ProcedureConfig
         }
     }
 
-    String[] rolesFor( String procedureName )
+	String[] rolesFor( String procedureName )
     {
         String[] wildCardRoles = matchers.stream().filter( matcher -> matcher.matches( procedureName ) )
                 .map( ProcMatcher::roles ).reduce( new String[0],
@@ -115,30 +115,28 @@ public class ProcedureConfig
         }
     }
 
-    boolean fullAccessFor( String procedureName )
+	boolean fullAccessFor( String procedureName )
     {
         return accessPatterns.stream().anyMatch( pattern -> pattern.matcher( procedureName ).matches() );
     }
 
-    boolean isWhitelisted( String procedureName )
+	boolean isWhitelisted( String procedureName )
     {
         return whiteList.stream().anyMatch( pattern -> pattern.matcher( procedureName ).matches() );
     }
 
-    private static Pattern compilePattern( String procedure )
+	private static Pattern compilePattern( String procedure )
     {
         procedure = procedure.trim().replaceAll( "([\\[\\]\\\\?()^${}+|.])", "\\\\$1" );
         return Pattern.compile( procedure.replaceAll( "\\*", ".*" ) );
     }
 
-    private String[] getDefaultValue()
+	private String[] getDefaultValue()
     {
         return defaultValue == null || defaultValue.isEmpty() ? new String[0] : new String[]{defaultValue};
     }
 
-    static final ProcedureConfig DEFAULT = new ProcedureConfig();
-
-    public ZoneId getDefaultTemporalTimeZone()
+	public ZoneId getDefaultTemporalTimeZone()
     {
         return defaultTemporalTimeZone;
     }

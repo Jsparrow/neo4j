@@ -28,39 +28,39 @@ import static java.util.concurrent.atomic.AtomicLongFieldUpdater.newUpdater;
 
 final class Aggregator
 {
-    private final Map<ProgressListener, ProgressListener.MultiPartProgressListener.State> states = new HashMap<>();
-    private final Indicator indicator;
-    @SuppressWarnings( "unused"/*accessed through updater*/ )
-    private volatile long progress;
-    @SuppressWarnings( "unused"/*accessed through updater*/ )
-    private volatile int last;
     private static final AtomicLongFieldUpdater<Aggregator> PROGRESS_UPDATER = newUpdater( Aggregator.class, "progress" );
-    private static final AtomicIntegerFieldUpdater<Aggregator> LAST_UPDATER =
+	private static final AtomicIntegerFieldUpdater<Aggregator> LAST_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater( Aggregator.class, "last" );
-    private long totalCount;
+	private final Map<ProgressListener, ProgressListener.MultiPartProgressListener.State> states = new HashMap<>();
+	private final Indicator indicator;
+	@SuppressWarnings( "unused"/*accessed through updater*/ )
+    private volatile long progress;
+	@SuppressWarnings( "unused"/*accessed through updater*/ )
+    private volatile int last;
+	private long totalCount;
 
-    Aggregator( Indicator indicator )
+	Aggregator( Indicator indicator )
     {
         this.indicator = indicator;
     }
 
-    synchronized void add( ProgressListener progress, long totalCount )
+	synchronized void add( ProgressListener progress, long totalCount )
     {
         states.put( progress, ProgressListener.MultiPartProgressListener.State.INIT );
         this.totalCount += totalCount;
     }
 
-    synchronized void initialize()
+	synchronized void initialize()
     {
         indicator.startProcess( totalCount );
-        if ( states.isEmpty() )
-        {
-            indicator.progress( 0, indicator.reportResolution() );
-            indicator.completeProcess();
-        }
+        if (!states.isEmpty()) {
+			return;
+		}
+		indicator.progress( 0, indicator.reportResolution() );
+		indicator.completeProcess();
     }
 
-    void update( long delta )
+	void update( long delta )
     {
         long progress = PROGRESS_UPDATER.addAndGet( this, delta );
         int current = (int) ((progress * indicator.reportResolution()) / totalCount);
@@ -76,7 +76,7 @@ final class Aggregator
         }
     }
 
-    synchronized void start( ProgressListener.MultiPartProgressListener part )
+	synchronized void start( ProgressListener.MultiPartProgressListener part )
     {
         if ( states.put( part, ProgressListener.MultiPartProgressListener.State.LIVE ) == ProgressListener.MultiPartProgressListener.State.INIT )
         {
@@ -84,19 +84,19 @@ final class Aggregator
         }
     }
 
-    synchronized void complete( ProgressListener.MultiPartProgressListener part )
+	synchronized void complete( ProgressListener.MultiPartProgressListener part )
     {
-        if ( states.remove( part ) != null )
-        {
-            indicator.completePart( part.part );
-            if ( states.isEmpty() )
-            {
-                indicator.completeProcess();
-            }
-        }
+        if (states.remove( part ) == null) {
+			return;
+		}
+		indicator.completePart( part.part );
+		if ( states.isEmpty() )
+		{
+		    indicator.completeProcess();
+		}
     }
 
-    synchronized void signalFailure( Throwable e )
+	synchronized void signalFailure( Throwable e )
     {
         indicator.failure( e );
     }

@@ -93,7 +93,16 @@ class AdminCommandSectionTest
         assertEquals( "General-AnotherTest", map.get( testAnotherGeneralSection ) );
     }
 
-    private static class TestGeneralSection extends AdminCommandSection
+    private static AdminCommand.Provider mockCommand( String name, String summary )
+    {
+        AdminCommand.Provider commandProvider = mock( AdminCommand.Provider.class );
+        when( commandProvider.name() ).thenReturn( name );
+        when( commandProvider.summary() ).thenReturn( summary );
+        when( commandProvider.commandSection() ).thenReturn( AdminCommandSection.general() );
+        return commandProvider;
+    }
+
+	private static class TestGeneralSection extends AdminCommandSection
     {
         @Override
         @Nonnull
@@ -111,14 +120,5 @@ class AdminCommandSectionTest
         {
             return "Another Section";
         }
-    }
-
-    private static AdminCommand.Provider mockCommand( String name, String summary )
-    {
-        AdminCommand.Provider commandProvider = mock( AdminCommand.Provider.class );
-        when( commandProvider.name() ).thenReturn( name );
-        when( commandProvider.summary() ).thenReturn( summary );
-        when( commandProvider.commandSection() ).thenReturn( AdminCommandSection.general() );
-        return commandProvider;
     }
 }

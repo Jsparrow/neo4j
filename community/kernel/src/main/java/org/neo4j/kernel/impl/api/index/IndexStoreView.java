@@ -37,55 +37,6 @@ import org.neo4j.values.storable.Values;
 /** The indexing services view of the universe. */
 public interface IndexStoreView extends NodePropertyAccessor, PropertyLoader
 {
-    /**
-     * Retrieve all nodes in the database which has got one or more of the given labels AND
-     * one or more of the given property key ids. This scan additionally accepts a visitor
-     * for label updates for a joint scan.
-     *
-     * @param labelIds array of label ids to generate updates for. Empty array means all.
-     * @param propertyKeyIdFilter property key ids to generate updates for.
-     * @param propertyUpdateVisitor visitor which will see all generated {@link EntityUpdates}.
-     * @param labelUpdateVisitor visitor which will see all generated {@link NodeLabelUpdate}.
-     * @param forceStoreScan overrides decision about which source to scan from. If {@code true}
-     * then store scan will be used, otherwise if {@code false} then the best suited will be used.
-     * @return a {@link StoreScan} to start and to stop the scan.
-     */
-    <FAILURE extends Exception> StoreScan<FAILURE> visitNodes(
-            int[] labelIds, IntPredicate propertyKeyIdFilter,
-            Visitor<EntityUpdates, FAILURE> propertyUpdateVisitor,
-            Visitor<NodeLabelUpdate, FAILURE> labelUpdateVisitor,
-            boolean forceStoreScan );
-
-    /**
-     * Retrieve all relationships in the database which has any of the the given relationship types AND
-     * one or more of the given property key ids.
-     *
-     * @param relationshipTypeIds array of relationsip type ids to generate updates for. Empty array means all.
-     * @param propertyKeyIdFilter property key ids to generate updates for.
-     * @param propertyUpdateVisitor visitor which will see all generated {@link EntityUpdates}
-     * @return a {@link StoreScan} to start and to stop the scan.
-     */
-    <FAILURE extends Exception> StoreScan<FAILURE> visitRelationships( int[] relationshipTypeIds, IntPredicate propertyKeyIdFilter,
-            Visitor<EntityUpdates,FAILURE> propertyUpdateVisitor );
-
-    /**
-     * Produces {@link EntityUpdates} objects from reading node {@code entityId}, its labels and properties
-     * and puts those updates into node updates container.
-     *
-     * @param entityId id of entity to load.
-     * @return node updates container
-     */
-    @VisibleForTesting
-    EntityUpdates nodeAsUpdates( long entityId );
-
-    DoubleLongRegister indexUpdatesAndSize( long indexId, DoubleLongRegister output );
-
-    DoubleLongRegister indexSample( long indexId, DoubleLongRegister output );
-
-    void replaceIndexCounts( long indexId, long uniqueElements, long maxUniqueElements, long indexSize );
-
-    void incrementIndexUpdates( long indexId, long updatesDelta );
-
     @SuppressWarnings( "rawtypes" )
     StoreScan EMPTY_SCAN = new StoreScan()
     {
@@ -112,9 +63,58 @@ public interface IndexStoreView extends NodePropertyAccessor, PropertyLoader
         }
     };
 
-    IndexStoreView EMPTY = new Adaptor();
+	IndexStoreView EMPTY = new Adaptor();
 
-    class Adaptor implements IndexStoreView
+	/**
+     * Retrieve all nodes in the database which has got one or more of the given labels AND
+     * one or more of the given property key ids. This scan additionally accepts a visitor
+     * for label updates for a joint scan.
+     *
+     * @param labelIds array of label ids to generate updates for. Empty array means all.
+     * @param propertyKeyIdFilter property key ids to generate updates for.
+     * @param propertyUpdateVisitor visitor which will see all generated {@link EntityUpdates}.
+     * @param labelUpdateVisitor visitor which will see all generated {@link NodeLabelUpdate}.
+     * @param forceStoreScan overrides decision about which source to scan from. If {@code true}
+     * then store scan will be used, otherwise if {@code false} then the best suited will be used.
+     * @return a {@link StoreScan} to start and to stop the scan.
+     */
+    <FAILURE extends Exception> StoreScan<FAILURE> visitNodes(
+            int[] labelIds, IntPredicate propertyKeyIdFilter,
+            Visitor<EntityUpdates, FAILURE> propertyUpdateVisitor,
+            Visitor<NodeLabelUpdate, FAILURE> labelUpdateVisitor,
+            boolean forceStoreScan );
+
+	/**
+     * Retrieve all relationships in the database which has any of the the given relationship types AND
+     * one or more of the given property key ids.
+     *
+     * @param relationshipTypeIds array of relationsip type ids to generate updates for. Empty array means all.
+     * @param propertyKeyIdFilter property key ids to generate updates for.
+     * @param propertyUpdateVisitor visitor which will see all generated {@link EntityUpdates}
+     * @return a {@link StoreScan} to start and to stop the scan.
+     */
+    <FAILURE extends Exception> StoreScan<FAILURE> visitRelationships( int[] relationshipTypeIds, IntPredicate propertyKeyIdFilter,
+            Visitor<EntityUpdates,FAILURE> propertyUpdateVisitor );
+
+	/**
+     * Produces {@link EntityUpdates} objects from reading node {@code entityId}, its labels and properties
+     * and puts those updates into node updates container.
+     *
+     * @param entityId id of entity to load.
+     * @return node updates container
+     */
+    @VisibleForTesting
+    EntityUpdates nodeAsUpdates( long entityId );
+
+	DoubleLongRegister indexUpdatesAndSize( long indexId, DoubleLongRegister output );
+
+	DoubleLongRegister indexSample( long indexId, DoubleLongRegister output );
+
+	void replaceIndexCounts( long indexId, long uniqueElements, long maxUniqueElements, long indexSize );
+
+	void incrementIndexUpdates( long indexId, long updatesDelta );
+
+	class Adaptor implements IndexStoreView
     {
         @Override
         public void loadProperties( long nodeId, EntityType type, MutableIntSet propertyIds, PropertyLoadSink sink )

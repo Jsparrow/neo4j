@@ -64,7 +64,7 @@ class FileManager extends ForwardingJavaFileManager<StandardJavaFileManager>
 
         protected ClassFile( String className )
         {
-            super( URI.create( "classes:/" + className.replace( '.', '/' ) + Kind.CLASS.extension ), Kind.CLASS );
+            super( URI.create( new StringBuilder().append("classes:/").append(className.replace( '.', '/' )).append(Kind.CLASS.extension).toString() ), Kind.CLASS );
             this.className = className;
         }
 

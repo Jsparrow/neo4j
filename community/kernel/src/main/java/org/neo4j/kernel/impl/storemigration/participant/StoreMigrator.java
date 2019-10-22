@@ -149,7 +149,7 @@ public class StoreMigrator extends AbstractStoreMigrationParticipant
         writeLastTxInformation( migrationLayout, lastTxInfo );
         writeLastTxLogPosition( migrationLayout, lastTxLogPosition );
 
-        if ( versionToMigrateFrom.equals( "vE.H.0" ) )
+        if ( "vE.H.0".equals( versionToMigrateFrom ) )
         {
             // NOTE for 3.0 here is a special case for vE.H.0 "from" record format.
             // Legend has it that 3.0.5 enterprise changed store format without changing store version.
@@ -234,8 +234,7 @@ public class StoreMigrator extends AbstractStoreMigrationParticipant
             String[] split = StringUtils.split( line, TX_LOG_COUNTERS_SEPARATOR );
             if ( split.length != numberOfCounters )
             {
-                throw new IllegalArgumentException( "Unexpected number of tx counters '" + numberOfCounters +
-                                                    "', file contains: '" + line + "'" );
+                throw new IllegalArgumentException( new StringBuilder().append("Unexpected number of tx counters '").append(numberOfCounters).append("', file contains: '").append(line).append("'").toString() );
             }
             long[] counters = new long[numberOfCounters];
             for ( int i = 0; i < split.length; i++ )

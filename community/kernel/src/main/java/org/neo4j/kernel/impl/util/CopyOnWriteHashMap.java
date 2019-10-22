@@ -120,34 +120,6 @@ public class CopyOnWriteHashMap<K, V> implements Map<K, V>
         actual = new HashMap<>();
     }
 
-    private static class UnsupportedRemoveIterator<T> implements Iterator<T>
-    {
-        private final Iterator<T> actual;
-
-        UnsupportedRemoveIterator( Iterator<T> actual )
-        {
-            this.actual = actual;
-        }
-
-        @Override
-        public boolean hasNext()
-        {
-            return actual.hasNext();
-        }
-
-        @Override
-        public T next()
-        {
-            return actual.next();
-        }
-
-        @Override
-        public void remove()
-        {
-            throw new UnsupportedOperationException();
-        }
-    }
-
     @Nonnull
     @Override
     public Set<K> keySet()
@@ -175,7 +147,7 @@ public class CopyOnWriteHashMap<K, V> implements Map<K, V>
         };
     }
 
-    @Nonnull
+	@Nonnull
     @Override
     public Collection<V> values()
     {
@@ -196,7 +168,7 @@ public class CopyOnWriteHashMap<K, V> implements Map<K, V>
         };
     }
 
-    @Nonnull
+	@Nonnull
     @Override
     public Set<Entry<K, V>> entrySet()
     {
@@ -260,5 +232,33 @@ public class CopyOnWriteHashMap<K, V> implements Map<K, V>
                 return actual.size();
             }
         };
+    }
+
+	private static class UnsupportedRemoveIterator<T> implements Iterator<T>
+    {
+        private final Iterator<T> actual;
+
+        UnsupportedRemoveIterator( Iterator<T> actual )
+        {
+            this.actual = actual;
+        }
+
+        @Override
+        public boolean hasNext()
+        {
+            return actual.hasNext();
+        }
+
+        @Override
+        public T next()
+        {
+            return actual.next();
+        }
+
+        @Override
+        public void remove()
+        {
+            throw new UnsupportedOperationException();
+        }
     }
 }

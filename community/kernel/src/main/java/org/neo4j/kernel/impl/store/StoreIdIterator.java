@@ -58,17 +58,15 @@ public class StoreIdIterator implements LongIterator
     @Override
     public boolean hasNext()
     {
-        if ( forward )
-        {
-            if ( id < targetId )
-            {
-                return true;
-            }
-            targetId = store.getHighId();
-            return id < targetId;
-        }
-
-        return id > 0;
+        if (!forward) {
+			return id > 0;
+		}
+		if ( id < targetId )
+		{
+		    return true;
+		}
+		targetId = store.getHighId();
+		return id < targetId;
     }
 
     @Override

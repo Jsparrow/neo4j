@@ -28,12 +28,12 @@ public interface MemoryStatsVisitor
     {   // report no memory
     };
 
-    interface Visitable
+    void heapUsage( long bytes );
+
+	void offHeapUsage( long bytes );
+
+	interface Visitable
     {
         void acceptMemoryStatsVisitor( MemoryStatsVisitor visitor );
     }
-
-    void heapUsage( long bytes );
-
-    void offHeapUsage( long bytes );
 }

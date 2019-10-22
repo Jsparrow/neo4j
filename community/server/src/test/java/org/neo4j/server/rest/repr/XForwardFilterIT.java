@@ -41,24 +41,23 @@ public class XForwardFilterIT extends AbstractRestFunctionalTestBase
 
     public static final String X_FORWARDED_HOST = "X-Forwarded-Host";
     public static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";
-    private Client client = Client.create();
+	private static GraphDbHelper helper;
+	private Client client = Client.create();
 
-    private static GraphDbHelper helper;
-
-    @BeforeClass
+	@BeforeClass
     public static void setupServer()
     {
         FunctionalTestHelper functionalTestHelper = new FunctionalTestHelper( server() );
         helper = functionalTestHelper.getGraphDbHelper();
     }
 
-    @Before
+	@Before
     public void setupTheDatabase()
     {
         helper.createRelationship( "RELATES_TO", helper.createNode(), helper.createNode() );
     }
 
-    @Test
+	@Test
     public void shouldUseXForwardedHostHeaderWhenPresent()
     {
         // when
@@ -73,7 +72,7 @@ public class XForwardFilterIT extends AbstractRestFunctionalTestBase
         assertFalse( entity.contains( "http://localhost" ) );
     }
 
-    @Test
+	@Test
     public void shouldUseXForwardedProtoHeaderWhenPresent()
     {
         // when
@@ -88,7 +87,7 @@ public class XForwardFilterIT extends AbstractRestFunctionalTestBase
         assertFalse( entity.contains( "http://localhost" ) );
     }
 
-    @Test
+	@Test
     public void shouldPickFirstXForwardedHostHeaderValueFromCommaOrCommaAndSpaceSeparatedList()
     {
         // when
@@ -103,7 +102,7 @@ public class XForwardFilterIT extends AbstractRestFunctionalTestBase
         assertFalse( entity.contains( "http://localhost" ) );
     }
 
-    @Test
+	@Test
     public void shouldUseBaseUriOnBadXForwardedHostHeader()
     {
         // when
@@ -117,7 +116,7 @@ public class XForwardFilterIT extends AbstractRestFunctionalTestBase
         assertTrue( entity.contains( getServerUri() ) );
     }
 
-    @Test
+	@Test
     public void shouldUseBaseUriIfFirstAddressInXForwardedHostHeaderIsBad()
     {
         // when
@@ -131,7 +130,7 @@ public class XForwardFilterIT extends AbstractRestFunctionalTestBase
         assertTrue( entity.contains( getServerUri() ) );
     }
 
-    @Test
+	@Test
     public void shouldUseBaseUriOnBadXForwardedProtoHeader()
     {
         // when
@@ -145,7 +144,7 @@ public class XForwardFilterIT extends AbstractRestFunctionalTestBase
         assertTrue( entity.contains( getServerUri() ) );
     }
 
-    @Test
+	@Test
     public void shouldUseXForwardedHostAndXForwardedProtoHeadersWhenPresent()
     {
         // when
@@ -161,7 +160,7 @@ public class XForwardFilterIT extends AbstractRestFunctionalTestBase
         assertFalse( entity.contains( getServerUri() ) );
     }
 
-    @Test
+	@Test
     public void shouldUseXForwardedHostAndXForwardedProtoHeadersInCypherResponseRepresentations()
     {
         // when
@@ -181,12 +180,12 @@ public class XForwardFilterIT extends AbstractRestFunctionalTestBase
         assertFalse( entity.contains( getServerUri() ) );
     }
 
-    private String getManageUri()
+	private String getManageUri()
     {
         return getServerUri() + "db/manage";
     }
 
-    private String getServerUri()
+	private String getServerUri()
     {
         return server().baseUri().toString();
     }

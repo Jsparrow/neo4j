@@ -30,24 +30,6 @@ import static org.neo4j.unsafe.impl.batchimport.staging.HumanUnderstandableExecu
  */
 public class ExecutionMonitors
 {
-    private ExecutionMonitors()
-    {
-        throw new AssertionError( "No instances allowed" );
-    }
-
-    public static ExecutionMonitor defaultVisible( JobScheduler jobScheduler )
-    {
-        return defaultVisible( System.in, jobScheduler );
-    }
-
-    public static ExecutionMonitor defaultVisible( InputStream in, JobScheduler jobScheduler )
-    {
-        ProgressRestoringMonitor monitor = new ProgressRestoringMonitor();
-        return new MultiExecutionMonitor(
-                new HumanUnderstandableExecutionMonitor( NO_MONITOR, monitor ),
-                new OnDemandDetailsExecutionMonitor( System.out, in, monitor, jobScheduler ) );
-    }
-
     private static final ExecutionMonitor INVISIBLE = new ExecutionMonitor()
     {
         @Override
@@ -77,7 +59,25 @@ public class ExecutionMonitors
         }
     };
 
-    public static ExecutionMonitor invisible()
+	private ExecutionMonitors()
+    {
+        throw new AssertionError( "No instances allowed" );
+    }
+
+	public static ExecutionMonitor defaultVisible( JobScheduler jobScheduler )
+    {
+        return defaultVisible( System.in, jobScheduler );
+    }
+
+	public static ExecutionMonitor defaultVisible( InputStream in, JobScheduler jobScheduler )
+    {
+        ProgressRestoringMonitor monitor = new ProgressRestoringMonitor();
+        return new MultiExecutionMonitor(
+                new HumanUnderstandableExecutionMonitor( NO_MONITOR, monitor ),
+                new OnDemandDetailsExecutionMonitor( System.out, in, monitor, jobScheduler ) );
+    }
+
+	public static ExecutionMonitor invisible()
     {
         return INVISIBLE;
     }

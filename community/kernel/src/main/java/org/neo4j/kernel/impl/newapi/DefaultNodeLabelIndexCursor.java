@@ -55,12 +55,12 @@ class DefaultNodeLabelIndexCursor extends IndexCursor<IndexProgressor>
     public void scan( IndexProgressor progressor, boolean providesLabels, int label )
     {
         super.initialize( progressor );
-        if ( read.hasTxStateWithChanges() )
-        {
-            final LongDiffSets changes = read.txState().nodesWithLabelChanged( label );
-            added = changes.augment( ImmutableEmptyLongIterator.INSTANCE );
-            removed = mergeToSet( read.txState().addedAndRemovedNodes().getRemoved(), changes.getRemoved() );
-        }
+        if (!read.hasTxStateWithChanges()) {
+			return;
+		}
+		final LongDiffSets changes = read.txState().nodesWithLabelChanged( label );
+		added = changes.augment( ImmutableEmptyLongIterator.INSTANCE );
+		removed = mergeToSet( read.txState().addedAndRemovedNodes().getRemoved(), changes.getRemoved() );
     }
 
     @Override
@@ -141,16 +141,15 @@ class DefaultNodeLabelIndexCursor extends IndexCursor<IndexProgressor>
     @Override
     public void close()
     {
-        if ( !isClosed() )
-        {
-            super.close();
-            node = NO_ID;
-            labels = null;
-            read = null;
-            removed = null;
-
-            pool.accept( this );
-        }
+        if (isClosed()) {
+			return;
+		}
+		super.close();
+		node = NO_ID;
+		labels = null;
+		read = null;
+		removed = null;
+		pool.accept( this );
     }
 
     @Override
@@ -168,8 +167,8 @@ class DefaultNodeLabelIndexCursor extends IndexCursor<IndexProgressor>
         }
         else
         {
-            return "NodeLabelIndexCursor[node=" + node + ", labels= " + labels +
-                    ", underlying record=" + super.toString() + "]";
+            return new StringBuilder().append("NodeLabelIndexCursor[node=").append(node).append(", labels= ").append(labels).append(", underlying record=").append(super.toString())
+					.append("]").toString();
         }
     }
 

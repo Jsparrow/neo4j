@@ -69,16 +69,18 @@ import static org.neo4j.consistency.RecordType.STRING_PROPERTY;
 
 class OwnerCheck implements CheckDecorator
 {
-    private final ConcurrentMap<Long, PropertyOwner> owners;
-    private final Map<RecordType, ConcurrentMap<Long, DynamicOwner>> dynamics;
+    private static final ComparativeRecordChecker<PropertyRecord, PrimitiveRecord, PropertyConsistencyReport> ORPHAN_CHECKER =
+            ( record, primitiveRecord, engine, records ) -> engine.report().orphanPropertyChain();
+	private final ConcurrentMap<Long, PropertyOwner> owners;
+	private final Map<RecordType, ConcurrentMap<Long, DynamicOwner>> dynamics;
 
-    OwnerCheck( boolean active, DynamicStore... stores )
+	OwnerCheck( boolean active, DynamicStore... stores )
     {
         this.owners = active ? new ConcurrentHashMap<>( 16, 0.75f, 4 ) : null;
         this.dynamics = active ? initialize( stores ) : null;
     }
 
-    private static Map<RecordType, ConcurrentMap<Long, DynamicOwner>> initialize( DynamicStore[] stores )
+	private static Map<RecordType, ConcurrentMap<Long, DynamicOwner>> initialize( DynamicStore[] stores )
     {
         EnumMap<RecordType, ConcurrentMap<Long, DynamicOwner>> map =
                 new EnumMap<>( RecordType.class );
@@ -89,7 +91,7 @@ class OwnerCheck implements CheckDecorator
         return unmodifiableMap( map );
     }
 
-    void scanForOrphanChains( ProgressMonitorFactory progressFactory )
+	void scanForOrphanChains( ProgressMonitorFactory progressFactory )
     {
         List<Runnable> tasks = new ArrayList<>();
         ProgressMonitorFactory.MultiPartBuilder progress = progressFactory
@@ -105,43 +107,15 @@ class OwnerCheck implements CheckDecorator
                 tasks.add( new OrphanCheck( entry.getKey(), entry.getValue(), progress ) );
             }
         }
-        for ( Runnable task : tasks )
-        {
-            task.run();
-        }
+        tasks.forEach(Runnable::run);
     }
 
-    private static class OrphanCheck implements Runnable
-    {
-        private final ConcurrentMap<Long, ? extends Owner> owners;
-        private final ProgressListener progress;
-
-        OrphanCheck( RecordType property, ConcurrentMap<Long, ? extends Owner> owners,
-                     ProgressMonitorFactory.MultiPartBuilder progress )
-        {
-            this.owners = owners;
-            this.progress = progress.progressForPart( "Checking for orphan " + property.name() + " chains",
-                                                      owners.size() );
-        }
-
-        @Override
-        public void run()
-        {
-            for ( Owner owner : owners.values() )
-            {
-                owner.checkOrphanage();
-                progress.add( 1 );
-            }
-            progress.done();
-        }
-    }
-
-    @Override
+	@Override
     public void prepare()
     {
     }
 
-    @Override
+	@Override
     public OwningRecordCheck<NeoStoreRecord, NeoStoreConsistencyReport> decorateNeoStoreChecker(
             OwningRecordCheck<NeoStoreRecord, NeoStoreConsistencyReport> checker )
     {
@@ -159,7 +133,7 @@ class OwnerCheck implements CheckDecorator
         };
     }
 
-    @Override
+	@Override
     public OwningRecordCheck<NodeRecord, NodeConsistencyReport> decorateNodeChecker(
             OwningRecordCheck<NodeRecord, NodeConsistencyReport> checker )
     {
@@ -177,7 +151,7 @@ class OwnerCheck implements CheckDecorator
         };
     }
 
-    @Override
+	@Override
     public OwningRecordCheck<RelationshipRecord, RelationshipConsistencyReport> decorateRelationshipChecker(
             OwningRecordCheck<RelationshipRecord, RelationshipConsistencyReport> checker )
     {
@@ -196,7 +170,7 @@ class OwnerCheck implements CheckDecorator
         };
     }
 
-    @Override
+	@Override
     public RecordCheck<PropertyRecord, PropertyConsistencyReport> decoratePropertyChecker(
             final RecordCheck<PropertyRecord, PropertyConsistencyReport> checker )
     {
@@ -243,7 +217,7 @@ class OwnerCheck implements CheckDecorator
         };
     }
 
-    private RecordType recordType( PropertyType type )
+	private RecordType recordType( PropertyType type )
     {
         if ( type == null )
         {
@@ -261,7 +235,7 @@ class OwnerCheck implements CheckDecorator
         }
     }
 
-    @Override
+	@Override
     public RecordCheck<PropertyKeyTokenRecord, PropertyKeyTokenConsistencyReport> decoratePropertyKeyTokenChecker(
             RecordCheck<PropertyKeyTokenRecord, PropertyKeyTokenConsistencyReport> checker )
     {
@@ -281,7 +255,7 @@ class OwnerCheck implements CheckDecorator
         };
     }
 
-    @Override
+	@Override
     public RecordCheck<RelationshipTypeTokenRecord,RelationshipTypeConsistencyReport> decorateRelationshipTypeTokenChecker(
             RecordCheck<RelationshipTypeTokenRecord,RelationshipTypeConsistencyReport> checker )
     {
@@ -301,7 +275,7 @@ class OwnerCheck implements CheckDecorator
         };
     }
 
-    @Override
+	@Override
     public RecordCheck<LabelTokenRecord, LabelTokenConsistencyReport> decorateLabelTokenChecker(
             RecordCheck<LabelTokenRecord, LabelTokenConsistencyReport> checker )
     {
@@ -320,7 +294,7 @@ class OwnerCheck implements CheckDecorator
         };
     }
 
-    RecordCheck<DynamicRecord, DynamicConsistencyReport> decorateDynamicChecker(
+	RecordCheck<DynamicRecord, DynamicConsistencyReport> decorateDynamicChecker(
             final RecordType type, final RecordCheck<DynamicRecord, DynamicConsistencyReport> checker )
     {
         final ConcurrentMap<Long, DynamicOwner> dynamicOwners = dynamicOwners( type );
@@ -352,16 +326,40 @@ class OwnerCheck implements CheckDecorator
         };
     }
 
-    @Override
+	@Override
     public RecordCheck<RelationshipGroupRecord, RelationshipGroupConsistencyReport> decorateRelationshipGroupChecker(
             RecordCheck<RelationshipGroupRecord, RelationshipGroupConsistencyReport> checker )
     {
         return checker;
     }
 
-    private ConcurrentMap<Long, DynamicOwner> dynamicOwners( RecordType type )
+	private ConcurrentMap<Long, DynamicOwner> dynamicOwners( RecordType type )
     {
         return dynamics == null ? null : dynamics.get( type );
+    }
+
+	private static class OrphanCheck implements Runnable
+    {
+        private final ConcurrentMap<Long, ? extends Owner> owners;
+        private final ProgressListener progress;
+
+        OrphanCheck( RecordType property, ConcurrentMap<Long, ? extends Owner> owners,
+                     ProgressMonitorFactory.MultiPartBuilder progress )
+        {
+            this.owners = owners;
+            this.progress = progress.progressForPart( new StringBuilder().append("Checking for orphan ").append(property.name()).append(" chains").toString(),
+                                                      owners.size() );
+        }
+
+        @Override
+        public void run()
+        {
+            owners.values().forEach(owner -> {
+                owner.checkOrphanage();
+                progress.add( 1 );
+            });
+            progress.done();
+        }
     }
 
     private abstract class PrimitiveCheckerDecorator<RECORD extends PrimitiveRecord,
@@ -434,7 +432,4 @@ class OwnerCheck implements CheckDecorator
 
         abstract DynamicOwner.NameOwner owner( RECORD record );
     }
-
-    private static final ComparativeRecordChecker<PropertyRecord, PrimitiveRecord, PropertyConsistencyReport> ORPHAN_CHECKER =
-            ( record, primitiveRecord, engine, records ) -> engine.report().orphanPropertyChain();
 }

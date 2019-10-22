@@ -98,7 +98,7 @@ public class BoltIT extends ExclusiveServerTestBase
 
         // Then
         Map<String,Object> map = JsonHelper.jsonToMap( response.getEntity() );
-        assertThat( String.valueOf( map.get( "bolt" ) ), containsString( "bolt://" + host + ":" + 9999 ) );
+        assertThat( String.valueOf( map.get( "bolt" ) ), containsString( new StringBuilder().append("bolt://").append(host).append(":").append(9999).toString() ) );
     }
 
     private void startServerWithBoltEnabled() throws IOException
@@ -113,9 +113,8 @@ public class BoltIT extends ExclusiveServerTestBase
                 .withProperty( new BoltConnector( "bolt" ).type.name(), "BOLT" )
                 .withProperty( new BoltConnector( "bolt" ).enabled.name(), "true" )
                 .withProperty( new BoltConnector( "bolt" ).encryption_level.name(), "REQUIRED" )
-                .withProperty( new BoltConnector( "bolt" ).advertised_address.name(), advertisedHost + ":" +
-                        advertisedPort )
-                .withProperty( new BoltConnector( "bolt" ).listen_address.name(), listenHost + ":" + listenPort )
+                .withProperty( new BoltConnector( "bolt" ).advertised_address.name(), new StringBuilder().append(advertisedHost).append(":").append(advertisedPort).toString() )
+                .withProperty( new BoltConnector( "bolt" ).listen_address.name(), new StringBuilder().append(listenHost).append(":").append(listenPort).toString() )
                 .usingDataDir( tmpDir.getRoot().getAbsolutePath() ).build();
         server.start();
     }

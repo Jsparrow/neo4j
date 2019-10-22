@@ -131,28 +131,27 @@ public class LuceneDocumentStructure
         TermRangeQuery termRangeQuery = TermRangeQuery.newStringRange( ValueEncoding.String.key( 0 ), lower, upper,
                 includeLowerBoundary, includeUpperBoundary );
 
-        if ( (includeLowerBoundary != includeLower) || (includeUpperBoundary != includeUpper) )
-        {
-            BooleanQuery.Builder builder = new BooleanQuery.Builder();
-            builder.setDisableCoord(true);
-            if ( includeLowerBoundary != includeLower )
-            {
-                builder.add( new TermQuery( new Term( ValueEncoding.String.key( 0 ), lower ) ), BooleanClause.Occur.MUST_NOT );
-            }
-            if ( includeUpperBoundary != includeUpper )
-            {
-                builder.add( new TermQuery( new Term( ValueEncoding.String.key( 0 ), upper ) ), BooleanClause.Occur.MUST_NOT );
-            }
-            builder.add( termRangeQuery, BooleanClause.Occur.FILTER );
-            return new ConstantScoreQuery( builder.build() );
-        }
-        return termRangeQuery;
+        if (!((includeLowerBoundary != includeLower) || (includeUpperBoundary != includeUpper))) {
+			return termRangeQuery;
+		}
+		BooleanQuery.Builder builder = new BooleanQuery.Builder();
+		builder.setDisableCoord(true);
+		if ( includeLowerBoundary != includeLower )
+		{
+		    builder.add( new TermQuery( new Term( ValueEncoding.String.key( 0 ), lower ) ), BooleanClause.Occur.MUST_NOT );
+		}
+		if ( includeUpperBoundary != includeUpper )
+		{
+		    builder.add( new TermQuery( new Term( ValueEncoding.String.key( 0 ), upper ) ), BooleanClause.Occur.MUST_NOT );
+		}
+		builder.add( termRangeQuery, BooleanClause.Occur.FILTER );
+		return new ConstantScoreQuery( builder.build() );
     }
 
     public static Query newWildCardStringQuery( String searchFor )
     {
         String searchTerm = QueryParser.escape( searchFor );
-        Term term = new Term( ValueEncoding.String.key( 0 ), "*" + searchTerm + "*" );
+        Term term = new Term( ValueEncoding.String.key( 0 ), new StringBuilder().append("*").append(searchTerm).append("*").toString() );
 
         return new WildcardQuery( term );
     }
@@ -174,7 +173,7 @@ public class LuceneDocumentStructure
 
     public static Term newTermForChangeOrRemove( long nodeId )
     {
-        return new Term( NODE_ID_KEY, "" + nodeId );
+        return new Term( NODE_ID_KEY, Long.toString(nodeId) );
     }
 
     public static long getNodeId( Document from )
@@ -205,7 +204,19 @@ public class LuceneDocumentStructure
                : termsEnum;
     }
 
-    /**
+    public static Field encodeValueField( Value value )
+    {
+        ValueEncoding encoding = ValueEncoding.forValue( value );
+        return encoding.encodeField( encoding.key(), value );
+    }
+
+	public static boolean useFieldForUniquenessVerification( String fieldName )
+    {
+        return !LuceneDocumentStructure.NODE_ID_KEY.equals( fieldName ) &&
+                ValueEncoding.fieldPropertyNumber( fieldName ) == 0;
+    }
+
+	/**
      * Simple implementation of prefix query that mimics old lucene way of handling prefix queries.
      * According to benchmarks this implementation is faster then
      * {@link org.apache.lucene.search.PrefixQuery} because we do not construct automaton  which is
@@ -230,7 +241,7 @@ public class LuceneDocumentStructure
         @Override
         public String toString( String field )
         {
-            return getClass().getSimpleName() + ", term:" + term + ", field:" + field;
+            return new StringBuilder().append(getClass().getSimpleName()).append(", term:").append(term).append(", field:").append(field).toString();
         }
 
         private static class PrefixTermsEnum extends FilteredTermsEnum
@@ -250,18 +261,6 @@ public class LuceneDocumentStructure
                 return StringHelper.startsWith( term, prefix ) ? AcceptStatus.YES : AcceptStatus.END;
             }
         }
-    }
-
-    public static Field encodeValueField( Value value )
-    {
-        ValueEncoding encoding = ValueEncoding.forValue( value );
-        return encoding.encodeField( encoding.key(), value );
-    }
-
-    public static boolean useFieldForUniquenessVerification( String fieldName )
-    {
-        return !LuceneDocumentStructure.NODE_ID_KEY.equals( fieldName ) &&
-                ValueEncoding.fieldPropertyNumber( fieldName ) == 0;
     }
 
     private static class DocWithId

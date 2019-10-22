@@ -81,60 +81,60 @@ public final class Values
     public static final ArrayValue EMPTY_FLOAT_ARRAY = Values.floatArray( new float[0] );
     public static final ArrayValue EMPTY_DOUBLE_ARRAY = Values.doubleArray( new double[0] );
     public static final TextArray EMPTY_TEXT_ARRAY = Values.stringArray();
-
-    private Values()
-    {
-    }
-
-    /**
+	/**
      * Default value comparator. Will correctly compare all storable values and order the value groups according the
      * to orderability group.
      *
      * To get Comparability semantics, use .ternaryCompare
      */
     public static final ValueComparator COMPARATOR = new ValueComparator( ValueGroup::compareTo );
+	public static final Value NO_VALUE = NoValue.NO_VALUE;
 
-    public static boolean isNumberValue( Object value )
+	private Values()
+    {
+    }
+
+	public static boolean isNumberValue( Object value )
     {
         return value instanceof NumberValue;
     }
 
-    public static boolean isBooleanValue( Object value )
+	public static boolean isBooleanValue( Object value )
     {
         return value instanceof BooleanValue;
     }
 
-    public static boolean isTextValue( Object value )
+	public static boolean isTextValue( Object value )
     {
         return value instanceof TextValue;
     }
 
-    public static boolean isArrayValue( Value value )
+	public static boolean isArrayValue( Value value )
     {
         return value instanceof ArrayValue;
     }
 
-    public static boolean isGeometryValue( Value value )
+	public static boolean isGeometryValue( Value value )
     {
         return value instanceof PointValue;
     }
 
-    public static boolean isGeometryArray( Value value )
+	public static boolean isGeometryArray( Value value )
     {
         return value instanceof PointArray;
     }
 
-    public static boolean isTemporalValue( Value value )
+	public static boolean isTemporalValue( Value value )
     {
         return value instanceof TemporalValue || value instanceof DurationValue;
     }
 
-    public static boolean isTemporalArray( Value value )
+	public static boolean isTemporalArray( Value value )
     {
         return value instanceof TemporalArray || value instanceof DurationArray;
     }
 
-    public static double coerceToDouble( Value value )
+	public static double coerceToDouble( Value value )
     {
         if ( value instanceof IntegralValue )
         {
@@ -147,11 +147,7 @@ public final class Values
         throw new UnsupportedOperationException( format( "Cannot coerce %s to double", value ) );
     }
 
-    // DIRECT FACTORY METHODS
-
-    public static final Value NO_VALUE = NoValue.NO_VALUE;
-
-    public static TextValue utf8Value( byte[] bytes )
+	public static TextValue utf8Value( byte[] bytes )
     {
         if ( bytes.length == 0 )
         {
@@ -161,7 +157,7 @@ public final class Values
         return utf8Value( bytes, 0, bytes.length );
     }
 
-    public static TextValue utf8Value( byte[] bytes, int offset, int length )
+	public static TextValue utf8Value( byte[] bytes, int offset, int length )
     {
         if ( length == 0 )
         {
@@ -171,7 +167,7 @@ public final class Values
         return new UTF8StringValue( bytes, offset, length );
     }
 
-    public static TextValue stringValue( String value )
+	public static TextValue stringValue( String value )
     {
         if ( value.isEmpty() )
         {
@@ -180,7 +176,7 @@ public final class Values
         return new StringWrappingStringValue( value );
     }
 
-    public static Value stringOrNoValue( String value )
+	public static Value stringOrNoValue( String value )
     {
         if ( value == null )
         {
@@ -192,7 +188,7 @@ public final class Values
         }
     }
 
-    public static NumberValue numberValue( Number number )
+	public static NumberValue numberValue( Number number )
     {
         if ( number instanceof Long )
         {
@@ -222,92 +218,92 @@ public final class Values
         throw new UnsupportedOperationException( "Unsupported type of Number " + number.toString() );
     }
 
-    public static LongValue longValue( long value )
+	public static LongValue longValue( long value )
     {
         return new LongValue( value );
     }
 
-    public static IntValue intValue( int value )
+	public static IntValue intValue( int value )
     {
         return new IntValue( value );
     }
 
-    public static ShortValue shortValue( short value )
+	public static ShortValue shortValue( short value )
     {
         return new ShortValue( value );
     }
 
-    public static ByteValue byteValue( byte value )
+	public static ByteValue byteValue( byte value )
     {
         return new ByteValue( value );
     }
 
-    public static BooleanValue booleanValue( boolean value )
+	public static BooleanValue booleanValue( boolean value )
     {
         return value ? BooleanValue.TRUE : BooleanValue.FALSE;
     }
 
-    public static CharValue charValue( char value )
+	public static CharValue charValue( char value )
     {
         return new CharValue( value );
     }
 
-    public static DoubleValue doubleValue( double value )
+	public static DoubleValue doubleValue( double value )
     {
         return new DoubleValue( value );
     }
 
-    public static FloatValue floatValue( float value )
+	public static FloatValue floatValue( float value )
     {
         return new FloatValue( value );
     }
 
-    public static TextArray stringArray( String... value )
+	public static TextArray stringArray( String... value )
     {
         return new StringArray( value );
     }
 
-    public static ByteArray byteArray( byte[] value )
+	public static ByteArray byteArray( byte[] value )
     {
         return new ByteArray( value );
     }
 
-    public static LongArray longArray( long[] value )
+	public static LongArray longArray( long[] value )
     {
         return new LongArray( value );
     }
 
-    public static IntArray intArray( int[] value )
+	public static IntArray intArray( int[] value )
     {
         return new IntArray( value );
     }
 
-    public static DoubleArray doubleArray( double[] value )
+	public static DoubleArray doubleArray( double[] value )
     {
         return new DoubleArray( value );
     }
 
-    public static FloatArray floatArray( float[] value )
+	public static FloatArray floatArray( float[] value )
     {
         return new FloatArray( value );
     }
 
-    public static BooleanArray booleanArray( boolean[] value )
+	public static BooleanArray booleanArray( boolean[] value )
     {
         return new BooleanArray( value );
     }
 
-    public static CharArray charArray( char[] value )
+	public static CharArray charArray( char[] value )
     {
         return new CharArray( value );
     }
 
-    public static ShortArray shortArray( short[] value )
+	public static ShortArray shortArray( short[] value )
     {
         return new ShortArray( value );
     }
 
-    /**
+	/**
      * Unlike pointValue(), this method does not enforce consistency between the CRS and coordinate dimensions.
      * This can be useful for testing.
      */
@@ -316,7 +312,7 @@ public final class Values
         return new PointValue( crs, coordinate );
     }
 
-    /**
+	/**
      * Creates a PointValue, and enforces consistency between the CRS and coordinate dimensions.
      */
     public static PointValue pointValue( CoordinateReferenceSystem crs, double... coordinate )
@@ -330,7 +326,7 @@ public final class Values
         return new PointValue( crs, coordinate );
     }
 
-    public static PointValue point( Point point )
+	public static PointValue point( Point point )
     {
         // An optimization could be to do an instanceof PointValue check here
         // and in that case just return the casted argument.
@@ -343,21 +339,21 @@ public final class Values
         return new PointValue( crs( point.getCRS() ), coords );
     }
 
-    public static PointValue minPointValue( PointValue reference )
+	public static PointValue minPointValue( PointValue reference )
     {
         double[] coordinates = new double[reference.coordinate().length];
         Arrays.fill( coordinates, -Double.MAX_VALUE );
         return pointValue( reference.getCoordinateReferenceSystem(), coordinates );
     }
 
-    public static PointValue maxPointValue( PointValue reference )
+	public static PointValue maxPointValue( PointValue reference )
     {
         double[] coordinates = new double[reference.coordinate().length];
         Arrays.fill( coordinates, Double.MAX_VALUE );
         return pointValue( reference.getCoordinateReferenceSystem(), coordinates );
     }
 
-    public static PointArray pointArray( Point[] points )
+	public static PointArray pointArray( Point[] points )
     {
         PointValue[] values = new PointValue[points.length];
         for ( int i = 0; i < points.length; i++ )
@@ -367,7 +363,7 @@ public final class Values
         return new PointArray( values );
     }
 
-    public static PointArray pointArray( Value[] maybePoints )
+	public static PointArray pointArray( Value[] maybePoints )
     {
         PointValue[] values = new PointValue[maybePoints.length];
         for ( int i = 0; i < maybePoints.length; i++ )
@@ -382,17 +378,17 @@ public final class Values
         return pointArray( values );
     }
 
-    public static PointArray pointArray( PointValue[] points )
+	public static PointArray pointArray( PointValue[] points )
     {
         return new PointArray( points );
     }
 
-    public static CoordinateReferenceSystem crs( CRS crs )
+	public static CoordinateReferenceSystem crs( CRS crs )
     {
         return CoordinateReferenceSystem.get( crs );
     }
 
-    public static Value temporalValue( Temporal value )
+	public static Value temporalValue( Temporal value )
     {
         if ( value instanceof ZonedDateTime )
         {
@@ -430,7 +426,7 @@ public final class Values
         throw new UnsupportedOperationException( "Unsupported type of Temporal " + value.toString() );
     }
 
-    public static DurationValue durationValue( TemporalAmount value )
+	public static DurationValue durationValue( TemporalAmount value )
     {
         if ( value instanceof Duration )
         {
@@ -452,37 +448,37 @@ public final class Values
         return duration;
     }
 
-    public static DateTimeArray dateTimeArray( ZonedDateTime[] values )
+	public static DateTimeArray dateTimeArray( ZonedDateTime[] values )
     {
         return new DateTimeArray( values );
     }
 
-    public static LocalDateTimeArray localDateTimeArray( LocalDateTime[] values )
+	public static LocalDateTimeArray localDateTimeArray( LocalDateTime[] values )
     {
         return new LocalDateTimeArray( values );
     }
 
-    public static LocalTimeArray localTimeArray( LocalTime[] values )
+	public static LocalTimeArray localTimeArray( LocalTime[] values )
     {
         return new LocalTimeArray( values );
     }
 
-    public static TimeArray timeArray( OffsetTime[] values )
+	public static TimeArray timeArray( OffsetTime[] values )
     {
         return new TimeArray( values );
     }
 
-    public static DateArray dateArray( LocalDate[] values )
+	public static DateArray dateArray( LocalDate[] values )
     {
         return new DateArray( values );
     }
 
-    public static DurationArray durationArray( DurationValue[] values )
+	public static DurationArray durationArray( DurationValue[] values )
     {
         return new DurationArray( values );
     }
 
-    public static DurationArray durationArray( TemporalAmount[] values )
+	public static DurationArray durationArray( TemporalAmount[] values )
     {
         DurationValue[] durations = new DurationValue[values.length];
         for ( int i = 0; i < values.length; i++ )
@@ -492,9 +488,7 @@ public final class Values
         return new DurationArray( durations );
     }
 
-    // BOXED FACTORY METHODS
-
-    /**
+	/**
      * Generic value factory method.
      * <p>
      * Beware, this method is intended for converting externally supplied values to the internal Value type, and to
@@ -511,7 +505,7 @@ public final class Values
         return of( value, true );
     }
 
-    public static Value of( Object value, boolean allowNull )
+	public static Value of( Object value, boolean allowNull )
     {
         Value of = unsafeOf( value, allowNull );
         if ( of != null )
@@ -523,7 +517,7 @@ public final class Values
                 format( "[%s:%s] is not a supported property value", value, value.getClass().getName() ) );
     }
 
-    public static Value unsafeOf( Object value, boolean allowNull )
+	public static Value unsafeOf( Object value, boolean allowNull )
     {
         if ( value instanceof String )
         {
@@ -607,7 +601,7 @@ public final class Values
        return null;
     }
 
-    /**
+	/**
      * Generic value factory method.
      * <p>
      * Converts an array of object values to the internal Value type. See {@link Values#of}.
@@ -619,13 +613,13 @@ public final class Values
                 .toArray( Value[]::new );
     }
 
-    @Deprecated
+	@Deprecated
     public static Object asObject( Value value )
     {
         return value == null ? null : value.asObject();
     }
 
-    public static Object[] asObjects( Value[] propertyValues )
+	public static Object[] asObjects( Value[] propertyValues )
     {
         Object[] legacy = new Object[propertyValues.length];
 
@@ -637,7 +631,7 @@ public final class Values
         return legacy;
     }
 
-    private static Value arrayValue( Object[] value )
+	private static Value arrayValue( Object[] value )
     {
         if ( value instanceof String[] )
         {
@@ -712,7 +706,7 @@ public final class Values
         return null;
     }
 
-    private static <T> T copy( Object[] value, T target )
+	private static <T> T copy( Object[] value, T target )
     {
         for ( int i = 0; i < value.length; i++ )
         {
@@ -725,7 +719,7 @@ public final class Values
         return target;
     }
 
-    public static Value minValue( ValueGroup valueGroup, Value value )
+	public static Value minValue( ValueGroup valueGroup, Value value )
     {
         switch ( valueGroup )
         {
@@ -742,7 +736,7 @@ public final class Values
         }
     }
 
-    public static Value maxValue( ValueGroup valueGroup, Value value )
+	public static Value maxValue( ValueGroup valueGroup, Value value )
     {
         switch ( valueGroup )
         {
@@ -758,4 +752,10 @@ public final class Values
                 format( "The maxValue for valueGroup %s is not defined yet", valueGroup ) );
         }
     }
+
+    // DIRECT FACTORY METHODS
+
+
+    // BOXED FACTORY METHODS
+
 }

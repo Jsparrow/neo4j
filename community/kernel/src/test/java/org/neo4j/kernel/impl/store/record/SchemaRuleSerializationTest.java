@@ -184,7 +184,7 @@ public class SchemaRuleSerializationTest extends SchemaRuleTestBase
     public void indexRuleNameMustNotBeTheEmptyString()
     {
         //noinspection RedundantStringConstructorCall
-        String name = new String( "" );
+        String name = "";
         namedForLabel( name, LABEL_ID, PROPERTY_ID_1 ).withId( RULE_ID );
     }
 
@@ -199,7 +199,7 @@ public class SchemaRuleSerializationTest extends SchemaRuleTestBase
     public void constraintIndexRuleNameMustNotBeTheEmptyString()
     {
         //noinspection RedundantStringConstructorCall
-        String name = new String( "" );
+        String name = "";
         namedUniqueForLabel( name, LABEL_ID, PROPERTY_ID_1 ).withIds( RULE_ID, RULE_ID_2 );
     }
 
@@ -215,7 +215,7 @@ public class SchemaRuleSerializationTest extends SchemaRuleTestBase
     public void constraintRuleNameMustNotBeTheEmptyString()
     {
         //noinspection RedundantStringConstructorCall
-        String name = new String( "" );
+        String name = "";
         ConstraintRule.constraintRule( RULE_ID,
                 ConstraintDescriptorFactory.existsForLabel( LABEL_ID, PROPERTY_ID_1 ), name );
     }
@@ -232,7 +232,7 @@ public class SchemaRuleSerializationTest extends SchemaRuleTestBase
     public void uniquenessConstraintRuleNameMustNotBeTheEmptyString()
     {
         //noinspection RedundantStringConstructorCall
-        String name = new String( "" );
+        String name = "";
         ConstraintRule.constraintRule( RULE_ID,
                 ConstraintDescriptorFactory.uniqueForLabel( LABEL_ID, PROPERTY_ID_1 ), RULE_ID_2, name );
     }
@@ -249,7 +249,7 @@ public class SchemaRuleSerializationTest extends SchemaRuleTestBase
     public void nodeKeyConstraintRuleNameMustNotBeTheEmptyString()
     {
         //noinspection RedundantStringConstructorCall
-        String name = new String( "" );
+        String name = "";
         ConstraintRule.constraintRule( RULE_ID,
                 ConstraintDescriptorFactory.nodeKeyForLabel( LABEL_ID, PROPERTY_ID_1 ), RULE_ID_2, name );
     }

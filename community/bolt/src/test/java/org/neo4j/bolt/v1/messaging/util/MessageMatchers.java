@@ -84,28 +84,6 @@ public class MessageMatchers
         return map;
     }
 
-    private static class Deserializer extends BaseToObjectValueWriter<RuntimeException>
-    {
-
-        @Override
-        protected Node newNodeProxyById( long id )
-        {
-            return null;
-        }
-
-        @Override
-        protected Relationship newRelationshipProxyById( long id )
-        {
-            return null;
-        }
-
-        @Override
-        protected Point newPoint( CoordinateReferenceSystem crs, double[] coordinate )
-        {
-            return null;
-        }
-    }
-
     public static Matcher<List<ResponseMessage>> equalsMessages( final Matcher<ResponseMessage>... messageMatchers )
     {
         return new TypeSafeMatcher<List<ResponseMessage>>()
@@ -136,7 +114,7 @@ public class MessageMatchers
         };
     }
 
-    public static Matcher<ResponseMessage> hasNotification( Notification notification )
+	public static Matcher<ResponseMessage> hasNotification( Notification notification )
     {
         return new TypeSafeMatcher<ResponseMessage>()
         {
@@ -165,7 +143,7 @@ public class MessageMatchers
         };
     }
 
-    public static Matcher<ResponseMessage> msgSuccess( final Map<String,Object> metadata )
+	public static Matcher<ResponseMessage> msgSuccess( final Map<String,Object> metadata )
     {
         return new TypeSafeMatcher<ResponseMessage>()
         {
@@ -185,7 +163,7 @@ public class MessageMatchers
         };
     }
 
-    public static Matcher<ResponseMessage> msgSuccess( final Matcher<Map<String,?>> matcher )
+	public static Matcher<ResponseMessage> msgSuccess( final Matcher<Map<String,?>> matcher )
     {
         return new TypeSafeMatcher<ResponseMessage>()
         {
@@ -206,7 +184,7 @@ public class MessageMatchers
         };
     }
 
-    public static Matcher<ResponseMessage> msgSuccess()
+	public static Matcher<ResponseMessage> msgSuccess()
     {
         return new TypeSafeMatcher<ResponseMessage>()
         {
@@ -225,7 +203,7 @@ public class MessageMatchers
         };
     }
 
-    public static Matcher<ResponseMessage> msgIgnored()
+	public static Matcher<ResponseMessage> msgIgnored()
     {
         return new TypeSafeMatcher<ResponseMessage>()
         {
@@ -244,7 +222,7 @@ public class MessageMatchers
         };
     }
 
-    public static Matcher<ResponseMessage> msgFailure( final Status status, final String message )
+	public static Matcher<ResponseMessage> msgFailure( final Status status, final String message )
     {
         return new TypeSafeMatcher<ResponseMessage>()
         {
@@ -266,7 +244,7 @@ public class MessageMatchers
         };
     }
 
-    public static Matcher<ResponseMessage> msgRecord( final Matcher<QueryResult.Record> matcher )
+	public static Matcher<ResponseMessage> msgRecord( final Matcher<QueryResult.Record> matcher )
     {
         return new TypeSafeMatcher<ResponseMessage>()
         {
@@ -289,7 +267,7 @@ public class MessageMatchers
         };
     }
 
-    public static byte[] serialize( Neo4jPack neo4jPack, RequestMessage... messages ) throws IOException
+	public static byte[] serialize( Neo4jPack neo4jPack, RequestMessage... messages ) throws IOException
     {
         RecordingByteChannel rawData = new RecordingByteChannel();
         Neo4jPack.Packer packer = neo4jPack.newPacker( new BufferedChannelOutput( rawData ) );
@@ -304,7 +282,7 @@ public class MessageMatchers
         return rawData.getBytes();
     }
 
-    public static byte[] serialize( Neo4jPack neo4jPack, ResponseMessage... messages ) throws IOException
+	public static byte[] serialize( Neo4jPack neo4jPack, ResponseMessage... messages ) throws IOException
     {
         RecordingByteChannel rawData = new RecordingByteChannel();
         BufferedChannelOutput output = new BufferedChannelOutput( rawData );
@@ -319,7 +297,7 @@ public class MessageMatchers
         return rawData.getBytes();
     }
 
-    public static ResponseMessage responseMessage( Neo4jPack neo4jPack, byte[] bytes ) throws IOException
+	public static ResponseMessage responseMessage( Neo4jPack neo4jPack, byte[] bytes ) throws IOException
     {
         BoltResponseMessageReader unpacker = responseReader( neo4jPack, bytes );
         BoltResponseMessageRecorder consumer = new BoltResponseMessageRecorder();
@@ -331,16 +309,37 @@ public class MessageMatchers
         }
         catch ( Throwable e )
         {
-            throw new IOException( "Failed to deserialize response, '" + e.getMessage() + "'.\n" +
-                                   "Raw data: \n" + HexPrinter.hex( bytes ), e );
+            throw new IOException( new StringBuilder().append("Failed to deserialize response, '").append(e.getMessage()).append("'.\n").append("Raw data: \n").append(HexPrinter.hex( bytes )).toString(), e );
         }
     }
 
-    private static BoltResponseMessageReader responseReader( Neo4jPack neo4jPack, byte[] bytes )
+	private static BoltResponseMessageReader responseReader( Neo4jPack neo4jPack, byte[] bytes )
     {
         BufferedChannelInput input = new BufferedChannelInput( 128 );
         input.reset( new ArrayByteChannel( bytes ) );
         return new BoltResponseMessageReader( neo4jPack.newUnpacker( input ) );
+    }
+
+	private static class Deserializer extends BaseToObjectValueWriter<RuntimeException>
+    {
+
+        @Override
+        protected Node newNodeProxyById( long id )
+        {
+            return null;
+        }
+
+        @Override
+        protected Relationship newRelationshipProxyById( long id )
+        {
+            return null;
+        }
+
+        @Override
+        protected Point newPoint( CoordinateReferenceSystem crs, double[] coordinate )
+        {
+            return null;
+        }
     }
 
 }

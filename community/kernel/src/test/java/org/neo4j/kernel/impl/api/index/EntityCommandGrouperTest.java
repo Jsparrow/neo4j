@@ -187,7 +187,29 @@ class EntityCommandGrouperTest
         return new Command.PropertyCommand( new PropertyRecord( propertyId, owner ), new PropertyRecord( propertyId, owner ) );
     }
 
-    private static class Group
+    private enum Factory
+    {
+        NODE
+                {
+                    @Override
+                    NodeCommand command( long value )
+                    {
+                        return new NodeCommand( new NodeRecord( value ), new NodeRecord( value ) );
+                    }
+                },
+        RELATIONSHIP
+                {
+                    @Override
+                    RelationshipCommand command( long value )
+                    {
+                        return new RelationshipCommand( new RelationshipRecord( value ), new RelationshipRecord( value ) );
+                    }
+                };
+
+        abstract BaseCommand<? extends PrimitiveRecord> command( long id );
+    }
+
+	private static class Group
     {
         private final long entityId;
         private final Command entityCommand;
@@ -226,27 +248,5 @@ class EntityCommandGrouperTest
         {
             return entityCommand == null && properties.isEmpty();
         }
-    }
-
-    private enum Factory
-    {
-        NODE
-                {
-                    @Override
-                    NodeCommand command( long value )
-                    {
-                        return new NodeCommand( new NodeRecord( value ), new NodeRecord( value ) );
-                    }
-                },
-        RELATIONSHIP
-                {
-                    @Override
-                    RelationshipCommand command( long value )
-                    {
-                        return new RelationshipCommand( new RelationshipRecord( value ), new RelationshipRecord( value ) );
-                    }
-                };
-
-        abstract BaseCommand<? extends PrimitiveRecord> command( long id );
     }
 }

@@ -28,29 +28,29 @@ public interface RecordReference<RECORD extends AbstractBaseRecord>
 
     class SkippingReference<RECORD extends AbstractBaseRecord> implements RecordReference<RECORD>
     {
-        @SuppressWarnings( "unchecked" )
+        private static final SkippingReference INSTANCE = new SkippingReference();
+
+		private SkippingReference()
+        {
+            // singleton
+        }
+
+		@SuppressWarnings( "unchecked" )
         public static <RECORD extends AbstractBaseRecord> SkippingReference<RECORD> skipReference()
         {
             return INSTANCE;
         }
 
-        @Override
+		@Override
         public void dispatch( PendingReferenceCheck<RECORD> reporter )
         {
             reporter.skip();
         }
 
-        @Override
+		@Override
         public String toString()
         {
             return "SkipReference";
-        }
-
-        private static final SkippingReference INSTANCE = new SkippingReference();
-
-        private SkippingReference()
-        {
-            // singleton
         }
     }
 }

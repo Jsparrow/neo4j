@@ -126,10 +126,7 @@ class FusionIndexTestHelp
     static Value[] allValues()
     {
         List<Value> values = new ArrayList<>();
-        for ( Value[] group : valuesByGroup().values() )
-        {
-            values.addAll( Arrays.asList( group ) );
-        }
+        valuesByGroup().values().forEach(group -> values.addAll(Arrays.asList(group)));
         return values.toArray( new Value[0] );
     }
 

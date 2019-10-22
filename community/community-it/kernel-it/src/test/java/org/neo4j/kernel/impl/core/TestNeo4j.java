@@ -178,46 +178,44 @@ public class TestNeo4j extends AbstractNeo4jTestCase
     public void testGetAllNodes()
     {
         long highId = getIdGenerator( IdType.NODE ).getHighestPossibleIdInUse();
-        if ( highId >= 0 && highId < 10000 )
-        {
-            long count = Iterables.count( getGraphDb().getAllNodes() );
-            boolean found = false;
-            Node newNode = getGraphDb().createNode();
-            newTransaction();
-            long oldCount = count;
-            count = 0;
-            for ( Node node : getGraphDb().getAllNodes() )
-            {
-                count++;
-                if ( node.equals( newNode ) )
-                {
-                    found = true;
-                }
-            }
-            assertTrue( found );
-            assertEquals( count, oldCount + 1 );
-
-            // Tests a bug in the "all nodes" iterator
-            ResourceIterator<Node> allNodesIterator = getGraphDb().getAllNodes().iterator();
-            assertNotNull( allNodesIterator.next() );
-            allNodesIterator.close();
-
-            newNode.delete();
-            newTransaction();
-            found = false;
-            count = 0;
-            for ( Node node : getGraphDb().getAllNodes() )
-            {
-                count++;
-                if ( node.equals( newNode ) )
-                {
-                    found = true;
-                }
-            }
-            assertTrue( !found );
-            assertEquals( count, oldCount );
-        }
         // else we skip test, takes too long
+		if (!(highId >= 0 && highId < 10000)) {
+			return;
+		}
+		long count = Iterables.count( getGraphDb().getAllNodes() );
+		boolean found = false;
+		Node newNode = getGraphDb().createNode();
+		newTransaction();
+		long oldCount = count;
+		count = 0;
+		for ( Node node : getGraphDb().getAllNodes() )
+		{
+		    count++;
+		    if ( node.equals( newNode ) )
+		    {
+		        found = true;
+		    }
+		}
+		assertTrue( found );
+		assertEquals( count, oldCount + 1 );
+		// Tests a bug in the "all nodes" iterator
+		ResourceIterator<Node> allNodesIterator = getGraphDb().getAllNodes().iterator();
+		assertNotNull( allNodesIterator.next() );
+		allNodesIterator.close();
+		newNode.delete();
+		newTransaction();
+		found = false;
+		count = 0;
+		for ( Node node : getGraphDb().getAllNodes() )
+		{
+		    count++;
+		    if ( node.equals( newNode ) )
+		    {
+		        found = true;
+		    }
+		}
+		assertTrue( !found );
+		assertEquals( count, oldCount );
     }
 
     @Test

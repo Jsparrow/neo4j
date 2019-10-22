@@ -77,19 +77,21 @@ import static org.neo4j.kernel.impl.storemigration.MigrationTestUtils.checkNeoSt
 @RunWith( Parameterized.class )
 public class StoreUpgraderInterruptionTestIT
 {
-    private final TestDirectory directory = TestDirectory.testDirectory();
-    private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
-    private final PageCacheRule pageCacheRule = new PageCacheRule();
-
-    @Rule
+    private static final Config CONFIG = Config.defaults( GraphDatabaseSettings.pagecache_memory, "8m" );
+	private final TestDirectory directory = TestDirectory.testDirectory();
+	private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	private final PageCacheRule pageCacheRule = new PageCacheRule();
+	@Rule
     public RuleChain ruleChain = RuleChain.outerRule( directory )
                                           .around( fileSystemRule ).around( pageCacheRule );
-
-    @Parameterized.Parameter
+	@Parameterized.Parameter
     public String version;
-    private static final Config CONFIG = Config.defaults( GraphDatabaseSettings.pagecache_memory, "8m" );
+	private final FileSystemAbstraction fs = fileSystemRule.get();
+	private JobScheduler jobScheduler;
+	private DatabaseLayout workingDatabaseLayout;
+	private File prepareDirectory;
 
-    @Parameters( name = "{0}" )
+	@Parameters( name = "{0}" )
     public static Collection<String> versions()
     {
         return Collections.singletonList(
@@ -97,12 +99,7 @@ public class StoreUpgraderInterruptionTestIT
         );
     }
 
-    private final FileSystemAbstraction fs = fileSystemRule.get();
-    private JobScheduler jobScheduler;
-    private DatabaseLayout workingDatabaseLayout;
-    private File prepareDirectory;
-
-    @Before
+	@Before
     public void setUpLabelScanStore()
     {
         jobScheduler = new ThreadPoolJobScheduler();
@@ -111,13 +108,13 @@ public class StoreUpgraderInterruptionTestIT
 
     }
 
-    @After
+	@After
     public void tearDown() throws Exception
     {
         jobScheduler.close();
     }
 
-    @Test
+	@Test
     public void shouldSucceedWithUpgradeAfterPreviousAttemptDiedDuringMigration()
             throws IOException, ConsistencyCheckIncompleteException
     {
@@ -163,7 +160,7 @@ public class StoreUpgraderInterruptionTestIT
         assertConsistentStore( workingDatabaseLayout );
     }
 
-    private UpgradableDatabase getUpgradableDatabase( StoreVersionCheck check ) throws IOException
+	private UpgradableDatabase getUpgradableDatabase( StoreVersionCheck check ) throws IOException
     {
         VersionAwareLogEntryReader<ReadableClosablePositionAwareChannel> logEntryReader = new VersionAwareLogEntryReader<>();
         LogFiles logFiles = LogFilesBuilder.logFilesBasedOnlyBuilder( workingDatabaseLayout.databaseDirectory(), fs ).build();
@@ -171,12 +168,12 @@ public class StoreUpgraderInterruptionTestIT
         return new UpgradableDatabase( check, Standard.LATEST_RECORD_FORMATS, tailScanner );
     }
 
-    private SchemaIndexMigrator createIndexMigrator()
+	private SchemaIndexMigrator createIndexMigrator()
     {
         return new SchemaIndexMigrator( fs, IndexProvider.EMPTY );
     }
 
-    @Test
+	@Test
     public void shouldSucceedWithUpgradeAfterPreviousAttemptDiedDuringMovingFiles()
             throws IOException, ConsistencyCheckIncompleteException
     {
@@ -224,7 +221,7 @@ public class StoreUpgraderInterruptionTestIT
         assertConsistentStore( workingDatabaseLayout );
     }
 
-    private StoreUpgrader newUpgrader( UpgradableDatabase upgradableDatabase, PageCache pageCache,
+	private StoreUpgrader newUpgrader( UpgradableDatabase upgradableDatabase, PageCache pageCache,
             MigrationProgressMonitor progressMonitor, SchemaIndexMigrator indexMigrator, StoreMigrator migrator )
     {
         Config allowUpgrade = Config.defaults( GraphDatabaseSettings.allow_upgrade, "true" );
@@ -236,7 +233,7 @@ public class StoreUpgraderInterruptionTestIT
         return upgrader;
     }
 
-    private static void startStopDatabase( File storeDir )
+	private static void startStopDatabase( File storeDir )
     {
         GraphDatabaseService databaseService = new TestGraphDatabaseFactory().newEmbeddedDatabaseBuilder( storeDir )
                         .setConfig( GraphDatabaseSettings.allow_upgrade, "true" ).newGraphDatabase();

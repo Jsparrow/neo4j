@@ -533,13 +533,9 @@ public class AllStoreHolder extends Read
     PopulationProgress indexGetPopulationProgress( StorageSchemaReader reader, IndexReference index )
             throws IndexNotFoundKernelException
     {
-        if ( ktx.hasTxStateWithChanges() )
-        {
-            if ( checkIndexState( (IndexDescriptor) index, ktx.txState().indexDiffSetsBySchema( index.schema() ) ) )
-            {
-                return PopulationProgress.NONE;
-            }
-        }
+        if ( ktx.hasTxStateWithChanges() && checkIndexState( (IndexDescriptor) index, ktx.txState().indexDiffSetsBySchema( index.schema() ) ) ) {
+		    return PopulationProgress.NONE;
+		}
 
         return reader.indexGetPopulationProgress( index.schema() );
     }
@@ -665,14 +661,10 @@ public class AllStoreHolder extends Read
     InternalIndexState indexGetState( StorageSchemaReader reader, IndexDescriptor descriptor ) throws IndexNotFoundKernelException
     {
         // If index is in our state, then return populating
-        if ( ktx.hasTxStateWithChanges() )
-        {
-            if ( checkIndexState( descriptor,
-                    ktx.txState().indexDiffSetsBySchema( descriptor.schema() ) ) )
-            {
-                return InternalIndexState.POPULATING;
-            }
-        }
+        if ( ktx.hasTxStateWithChanges() && checkIndexState( descriptor,
+		        ktx.txState().indexDiffSetsBySchema( descriptor.schema() ) ) ) {
+		    return InternalIndexState.POPULATING;
+		}
 
         return reader.indexGetState( descriptor );
     }
@@ -730,14 +722,12 @@ public class AllStoreHolder extends Read
         acquireSharedSchemaLock( schema );
         ktx.assertOpen();
         boolean inStore = storageReader.constraintExists( descriptor );
-        if ( ktx.hasTxStateWithChanges() )
-        {
-            DiffSets<ConstraintDescriptor> diffSet =
-                    ktx.txState().constraintsChangesForSchema( descriptor.schema() );
-            return diffSet.isAdded( descriptor ) || (inStore && !diffSet.isRemoved( descriptor ));
-        }
-
-        return inStore;
+        if (!ktx.hasTxStateWithChanges()) {
+			return inStore;
+		}
+		DiffSets<ConstraintDescriptor> diffSet =
+		        ktx.txState().constraintsChangesForSchema( descriptor.schema() );
+		return diffSet.isAdded( descriptor ) || (inStore && !diffSet.isRemoved( descriptor ));
     }
 
     @Override

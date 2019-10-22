@@ -93,7 +93,7 @@ public class PropertySettingStrategy
     {
         if ( value instanceof Collection )
         {
-            if ( ((Collection<?>) value).size() == 0 )
+            if ( ((Collection<?>) value).isEmpty() )
             {
                 // Special case: Trying to set an empty array property. We cannot determine the type
                 // of the collection now, so we fall back to checking if there already is a collection
@@ -111,10 +111,8 @@ public class PropertySettingStrategy
                 }
                 else
                 {
-                    throw new PropertyValueException( "Unable to set property '" + key + "' to an empty array, " +
-                            "because, since there are no values of any type in it, " +
-                            "and no pre-existing collection to infer type from, it is not possible " +
-                            "to determine what type of array to store." );
+                    throw new PropertyValueException( new StringBuilder().append("Unable to set property '").append(key).append("' to an empty array, ").append("because, since there are no values of any type in it, ").append("and no pre-existing collection to infer type from, it is not possible ").append("to determine what type of array to store.")
+							.toString() );
                 }
             }
             else
@@ -131,7 +129,7 @@ public class PropertySettingStrategy
         }
         catch ( IllegalArgumentException e )
         {
-            throw new PropertyValueException( "Could not set property \"" + key + "\", unsupported type: " + value );
+            throw new PropertyValueException( new StringBuilder().append("Could not set property \"").append(key).append("\", unsupported type: ").append(value).toString() );
         }
     }
 
@@ -142,13 +140,11 @@ public class PropertySettingStrategy
             return value;
         }
 
-        if ( ((Collection<?>) value).size() == 0 )
+        if ( ((Collection<?>) value).isEmpty() )
         {
             throw new PropertyValueException(
-                    "Unable to convert '" + value + "' to an empty array, " +
-                            "because, since there are no values of any type in it, " +
-                            "and no pre-existing collection to infer type from, it is not possible " +
-                            "to determine what type of array to store." );
+                    new StringBuilder().append("Unable to convert '").append(value).append("' to an empty array, ").append("because, since there are no values of any type in it, ").append("and no pre-existing collection to infer type from, it is not possible ").append("to determine what type of array to store.")
+							.toString() );
         }
 
         return convertToNativeArray( (Collection<?>) value );

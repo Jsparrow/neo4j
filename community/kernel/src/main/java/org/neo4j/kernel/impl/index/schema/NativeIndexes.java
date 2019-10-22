@@ -84,7 +84,7 @@ public class NativeIndexes
         if ( archiveIfExists && fs.isDirectory( rootIndexDirectory ) && fs.fileExists( rootIndexDirectory ) && fs.listFiles( rootIndexDirectory ).length > 0 )
         {
             ZipUtils.zip( fs, rootIndexDirectory,
-                    new File( rootIndexDirectory.getParent(), "archive-" + rootIndexDirectory.getName() + "-" + System.currentTimeMillis() + ".zip" ) );
+                    new File( rootIndexDirectory.getParent(), new StringBuilder().append("archive-").append(rootIndexDirectory.getName()).append("-").append(System.currentTimeMillis()).append(".zip").toString() ) );
             return true;
         }
         int attempt = 0;

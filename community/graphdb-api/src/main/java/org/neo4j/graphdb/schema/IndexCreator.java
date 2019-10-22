@@ -61,5 +61,5 @@ public interface IndexCreator
      * @return the created {@link IndexDefinition index}.
      * @throws ConstraintViolationException if creating this index would violate one or more constraints.
      */
-    IndexDefinition create() throws ConstraintViolationException;
+    IndexDefinition create();
 }

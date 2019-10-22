@@ -59,7 +59,26 @@ public abstract class CodeGenerationStrategy<Configuration> implements CodeGener
 
     protected abstract String name();
 
-    private static class Choice implements ByteCodeVisitor.Configurable
+    private static <Target> Target applyTo( Target target, CodeGeneratorOption[] options )
+    {
+        if ( target instanceof Object[] )
+        {
+            for ( Object object : (Object[]) target )
+            {
+                applyTo( object, options );
+            }
+        }
+        else
+        {
+            for ( CodeGeneratorOption option : options )
+            {
+                option.applyTo( target );
+            }
+        }
+        return target;
+    }
+
+	private static class Choice implements ByteCodeVisitor.Configurable
     {
         private CodeGenerationStrategy<?> strategy;
         private List<ByteCodeVisitor> visitors;
@@ -102,24 +121,5 @@ public abstract class CodeGenerationStrategy<Configuration> implements CodeGener
             }
             return generator;
         }
-    }
-
-    private static <Target> Target applyTo( Target target, CodeGeneratorOption[] options )
-    {
-        if ( target instanceof Object[] )
-        {
-            for ( Object object : (Object[]) target )
-            {
-                applyTo( object, options );
-            }
-        }
-        else
-        {
-            for ( CodeGeneratorOption option : options )
-            {
-                option.applyTo( target );
-            }
-        }
-        return target;
     }
 }

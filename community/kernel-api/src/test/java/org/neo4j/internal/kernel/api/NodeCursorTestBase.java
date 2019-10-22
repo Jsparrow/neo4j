@@ -36,8 +36,13 @@ import static org.neo4j.graphdb.Label.label;
 
 public abstract class NodeCursorTestBase<G extends KernelAPIReadTestSupport> extends KernelAPIReadTestBase<G>
 {
-    private static List<Long> NODE_IDS;
-    private static long foo, bar, baz, barbaz, bare, gone;
+    private static List<Long> nodeIds;
+    private static long foo;
+	private static long bar;
+	private static long baz;
+	private static long barbaz;
+	private static long bare;
+	private static long gone;
 
     @Override
     public void createTestGraph( GraphDatabaseService graphDb )
@@ -64,10 +69,10 @@ public abstract class NodeCursorTestBase<G extends KernelAPIReadTestSupport> ext
 
         try ( Transaction tx = graphDb.beginTx() )
         {
-            NODE_IDS = new ArrayList<>();
+            nodeIds = new ArrayList<>();
             for ( Node node : graphDb.getAllNodes() )
             {
-                NODE_IDS.add( node.getId() );
+                nodeIds.add( node.getId() );
             }
             tx.success();
         }
@@ -89,7 +94,7 @@ public abstract class NodeCursorTestBase<G extends KernelAPIReadTestSupport> ext
         }
 
         // then
-        assertEquals( NODE_IDS, ids );
+        assertEquals( nodeIds, ids );
     }
 
     @Test
@@ -98,8 +103,7 @@ public abstract class NodeCursorTestBase<G extends KernelAPIReadTestSupport> ext
         // given
         try ( NodeCursor nodes = cursors.allocateNodeCursor() )
         {
-            for ( long id : NODE_IDS )
-            {
+            nodeIds.stream().mapToLong(Long::valueOf).forEach(id -> {
                 // when
                 read.singleNode( id, nodes  );
 
@@ -107,7 +111,7 @@ public abstract class NodeCursorTestBase<G extends KernelAPIReadTestSupport> ext
                 assertTrue( "should access defined node", nodes.next() );
                 assertEquals( "should access the correct node", id, nodes.nodeReference() );
                 assertFalse( "should only access a single node", nodes.next() );
-            }
+            });
         }
     }
 

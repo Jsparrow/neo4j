@@ -306,11 +306,6 @@ public class ContractCheckingIndexProxyTest
         actionThread.join();
     }
 
-    private interface ThrowingRunnable
-    {
-        void run() throws IOException;
-    }
-
     private Thread runInSeparateThread( final ThrowingRunnable action )
     {
         Thread thread = createActionThread( action );
@@ -318,7 +313,7 @@ public class ContractCheckingIndexProxyTest
         return thread;
     }
 
-    private Thread createActionThread( ThrowingRunnable action )
+	private Thread createActionThread( ThrowingRunnable action )
     {
         return new Thread( () ->
         {
@@ -333,8 +328,13 @@ public class ContractCheckingIndexProxyTest
         } );
     }
 
-    private ContractCheckingIndexProxy newContractCheckingIndexProxy( IndexProxy inner )
+	private ContractCheckingIndexProxy newContractCheckingIndexProxy( IndexProxy inner )
     {
         return new ContractCheckingIndexProxy( inner, false );
+    }
+
+	private interface ThrowingRunnable
+    {
+        void run() throws IOException;
     }
 }

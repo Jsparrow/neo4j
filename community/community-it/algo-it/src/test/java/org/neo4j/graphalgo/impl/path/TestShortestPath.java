@@ -61,6 +61,7 @@ import static org.neo4j.graphdb.Direction.INCOMING;
 import static org.neo4j.graphdb.Direction.OUTGOING;
 import static org.neo4j.graphdb.PathExpanders.allTypesAndDirections;
 import static org.neo4j.helpers.collection.Iterables.count;
+import java.util.Collections;
 
 public class TestShortestPath extends Neo4jAlgoTestCase
 {
@@ -151,7 +152,7 @@ public class TestShortestPath extends Neo4jAlgoTestCase
         {
             final Iterable<Path> paths = finder.findAllPaths( graph.getNode( "s" ), graph.getNode( "t" ) );
             assertPaths( paths, "s,t", "s,t" );
-            assertPaths( asList( finder.findSinglePath( graph.getNode( "s" ), graph.getNode( "t" ) ) ), "s,t" );
+            assertPaths( Collections.singletonList( finder.findSinglePath( graph.getNode( "s" ), graph.getNode( "t" ) ) ), "s,t" );
         }, PathExpanders.forTypeAndDirection( R1, BOTH ), 1 );
     }
 
@@ -502,10 +503,7 @@ public class TestShortestPath extends Neo4jAlgoTestCase
                                             : shortestPath( lengthChecker, maxDepth ) );
         finders.add( maxResultCount != null ? new TraversalShortestPath( lengthChecker, maxDepth, maxResultCount )
                                             : new TraversalShortestPath( lengthChecker, maxDepth ) );
-        for ( final PathFinder<Path> finder : finders )
-        {
-            tester.test( finder );
-        }
+        finders.forEach(tester::test);
     }
 
     private interface PathFinderTester

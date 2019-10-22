@@ -144,12 +144,12 @@ public class KernelDiagnosticsIT
         @Override
         public void log( @Nonnull String message )
         {
-            if ( message.contains( "Total size of mapped files" ) )
-            {
-                int beginPos = message.lastIndexOf( ": " );
-                assertTrue( beginPos != -1 );
-                size = message.substring( beginPos + 2 );
-            }
+            if (!message.contains( "Total size of mapped files" )) {
+				return;
+			}
+			int beginPos = message.lastIndexOf( ": " );
+			assertTrue( beginPos != -1 );
+			size = message.substring( beginPos + 2 );
         }
 
         @Override

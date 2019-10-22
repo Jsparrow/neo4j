@@ -61,6 +61,6 @@ public class LocalIntCounter extends IntCounter
     @Override
     public String toString()
     {
-        return "local:" + super.toString() + ",global:" + global.toString();
+        return new StringBuilder().append("local:").append(super.toString()).append(",global:").append(global.toString()).toString();
     }
 }

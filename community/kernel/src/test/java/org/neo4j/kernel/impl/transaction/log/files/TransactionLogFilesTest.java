@@ -162,7 +162,7 @@ public class TransactionLogFilesTest
         }
         catch ( RuntimeException ex )
         {
-            assertEquals( "Invalid log file '" + file.getName() + "'", ex.getMessage() );
+            assertEquals( new StringBuilder().append("Invalid log file '").append(file.getName()).append("'").toString(), ex.getMessage() );
         }
     }
 
@@ -208,6 +208,6 @@ public class TransactionLogFilesTest
 
     private String getVersionedLogFileName( String filename, String version )
     {
-        return filename + "." + version;
+        return new StringBuilder().append(filename).append(".").append(version).toString();
     }
 }

@@ -332,7 +332,22 @@ public class TestGraphProperties
         database.shutdown();
     }
 
-    private static class State
+    private EphemeralFileSystemAbstraction produceUncleanStore( EphemeralFileSystemAbstraction fileSystem,
+            File storeDir )
+    {
+        GraphDatabaseService db = new TestGraphDatabaseFactory().setFileSystem( fileSystem ).newImpermanentDatabase( storeDir );
+        Transaction tx = db.beginTx();
+        Node node = db.createNode();
+        node.setProperty( "name", "Something" );
+        properties( (GraphDatabaseAPI) db ).setProperty( "prop", "Some value" );
+        tx.success();
+        tx.close();
+        EphemeralFileSystemAbstraction snapshot = fileSystem.snapshot();
+        db.shutdown();
+        return snapshot;
+    }
+
+	private static class State
     {
         private final GraphDatabaseAPI db;
         private final PropertyContainer properties;
@@ -384,20 +399,5 @@ public class TestGraphProperties
                 return null;
             } );
         }
-    }
-
-    private EphemeralFileSystemAbstraction produceUncleanStore( EphemeralFileSystemAbstraction fileSystem,
-            File storeDir )
-    {
-        GraphDatabaseService db = new TestGraphDatabaseFactory().setFileSystem( fileSystem ).newImpermanentDatabase( storeDir );
-        Transaction tx = db.beginTx();
-        Node node = db.createNode();
-        node.setProperty( "name", "Something" );
-        properties( (GraphDatabaseAPI) db ).setProperty( "prop", "Some value" );
-        tx.success();
-        tx.close();
-        EphemeralFileSystemAbstraction snapshot = fileSystem.snapshot();
-        db.shutdown();
-        return snapshot;
     }
 }

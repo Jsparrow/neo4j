@@ -40,6 +40,173 @@ import static org.neo4j.logging.FormattedLog.OUTPUT_STREAM_CONVERTER;
 public class FormattedLogProvider extends AbstractLogProvider<FormattedLog>
 {
     private static final Pattern PACKAGE_PATTERN = Pattern.compile( "(\\w)\\w+\\." );
+	private final Supplier<PrintWriter> writerSupplier;
+	private final ZoneId zoneId;
+	private final boolean renderContext;
+	private final Map<String, Level> levels;
+	private final Level defaultLevel;
+	private final boolean autoFlush;
+
+	FormattedLogProvider( Supplier<PrintWriter> writerSupplier,
+                          ZoneId zoneId, boolean renderContext,
+                          Map<String, Level> levels, Level defaultLevel, boolean autoFlush )
+    {
+        this.writerSupplier = writerSupplier;
+        this.zoneId = zoneId;
+        this.renderContext = renderContext;
+        this.levels = new HashMap<>( levels );
+        this.defaultLevel = defaultLevel;
+        this.autoFlush = autoFlush;
+    }
+
+	/**
+     * Start creating a {@link FormattedLogProvider} which will not render the context (the class name or log name) in each output line.
+     * Use {@link Builder#toOutputStream} to complete.
+     *
+     * @return a builder for a {@link FormattedLogProvider}
+     */
+    public static Builder withoutRenderingContext()
+    {
+        return new Builder().withoutRenderingContext();
+    }
+
+	/**
+     * Start creating a {@link FormattedLogProvider} with UTC timezone for datestamps in the log
+     *
+     * @return a builder for a {@link FormattedLogProvider}
+     */
+    public static Builder withUTCTimeZone()
+    {
+        return new Builder().withUTCZoneId();
+    }
+
+	/**
+     * Start creating a {@link FormattedLogProvider} with the specified zoneId for datestamps in the log
+     *
+     * @return a builder for a {@link FormattedLogProvider}
+     * @param zoneId to use
+     */
+    public static Builder withZoneId( ZoneId zoneId )
+    {
+        return new Builder().withZoneId( zoneId );
+    }
+
+	/**
+     * Start creating a {@link FormattedLogProvider} with the specified zoneId from timezone for datestamps in the log
+     *
+     * @param timeZone to use
+     * @return a builder for a {@link FormattedLogProvider}
+     * @deprecated use {@link #withZoneId(ZoneId)}
+     */
+    @Deprecated
+    public static Builder withTimeZone( TimeZone timeZone )
+    {
+        return new Builder().withZoneId( timeZone.toZoneId() );
+    }
+
+	/**
+     * Start creating a {@link FormattedLogProvider} with the specified log {@link Level} for all {@link Log}s by default.
+     * Use {@link Builder#toOutputStream} to complete.
+     *
+     * @param level the log level to use as a default
+     * @return a builder for a {@link FormattedLogProvider}
+     */
+    public static Builder withDefaultLogLevel( Level level )
+    {
+        return new Builder().withDefaultLogLevel( level );
+    }
+
+	/**
+     * Start creating a {@link FormattedLogProvider} without auto flushing.
+     * Use {@link Builder#toOutputStream} to complete.
+     *
+     * @return a builder for a {@link FormattedLogProvider}
+     */
+    public static Builder withoutAutoFlush()
+    {
+        return new Builder().withoutAutoFlush();
+    }
+
+	/**
+     * Creates a {@link FormattedLogProvider} instance that writes messages to an {@link OutputStream}.
+     *
+     * @param out An {@link OutputStream} to write to
+     * @return A {@link FormattedLogProvider} instance that writes to the specified OutputStream
+     */
+    public static FormattedLogProvider toOutputStream( OutputStream out )
+    {
+        return new Builder().toOutputStream( out );
+    }
+
+	/**
+     * Creates a {@link FormattedLogProvider} instance that writes messages to {@link OutputStream}s obtained from the specified
+     * {@link Supplier}. The OutputStream is obtained from the Supplier before every log message is written.
+     *
+     * @param outSupplier A supplier for an output stream to write to
+     * @return A {@link FormattedLogProvider} instance
+     */
+    public static FormattedLogProvider toOutputStream( Supplier<OutputStream> outSupplier )
+    {
+        return new Builder().toOutputStream( outSupplier );
+    }
+
+	/**
+     * Creates a {@link FormattedLogProvider} instance that writes messages to a {@link Writer}.
+     *
+     * @param writer A {@link Writer} to write to
+     * @return A {@link FormattedLogProvider} instance that writes to the specified Writer
+     */
+    public static FormattedLogProvider toWriter( Writer writer )
+    {
+        return new Builder().toWriter( writer );
+    }
+
+	/**
+     * Creates a {@link FormattedLogProvider} instance that writes messages to a {@link PrintWriter}.
+     *
+     * @param writer A {@link PrintWriter} to write to
+     * @return A {@link FormattedLogProvider} instance that writes to the specified PrintWriter
+     */
+    public static FormattedLogProvider toPrintWriter( PrintWriter writer )
+    {
+        return new Builder().toPrintWriter( writer );
+    }
+
+	/**
+     * Creates a {@link FormattedLogProvider} instance that writes messages to {@link PrintWriter}s obtained from the specified
+     * {@link Supplier}. The PrintWriter is obtained from the Supplier before every log message is written.
+     *
+     * @param writerSupplier A supplier for a {@link PrintWriter} to write to
+     * @return A {@link FormattedLogProvider} instance that writes to the specified PrintWriter
+     */
+    public static FormattedLogProvider toPrintWriter( Supplier<PrintWriter> writerSupplier )
+    {
+        return new Builder().toPrintWriter( writerSupplier );
+    }
+
+	@Override
+    protected FormattedLog buildLog( Class loggingClass )
+    {
+        String className = loggingClass.getName();
+        String shortenedClassName = PACKAGE_PATTERN.matcher( className ).replaceAll( "$1." );
+        return buildLog( shortenedClassName, levelForContext( className ) );
+    }
+
+	@Override
+    protected FormattedLog buildLog( String name )
+    {
+        return buildLog( name, levelForContext( name ) );
+    }
+
+	private FormattedLog buildLog( String context, Level level )
+    {
+        return new FormattedLog( writerSupplier, zoneId, this, renderContext ? context : null, level, autoFlush );
+    }
+
+	private Level levelForContext( String context )
+    {
+        return levels.entrySet().stream().filter(entry -> context.startsWith( entry.getKey() )).findFirst().map(Map.Entry::getValue).orElse(defaultLevel);
+    }
 
     /**
      * A Builder for a {@link FormattedLogProvider}
@@ -209,180 +376,5 @@ public class FormattedLogProvider extends AbstractLogProvider<FormattedLog>
         {
             return new FormattedLogProvider( writerSupplier, zoneId, renderContext, levels, defaultLevel, autoFlush );
         }
-    }
-
-    private final Supplier<PrintWriter> writerSupplier;
-    private final ZoneId zoneId;
-    private final boolean renderContext;
-    private final Map<String, Level> levels;
-    private final Level defaultLevel;
-    private final boolean autoFlush;
-
-    /**
-     * Start creating a {@link FormattedLogProvider} which will not render the context (the class name or log name) in each output line.
-     * Use {@link Builder#toOutputStream} to complete.
-     *
-     * @return a builder for a {@link FormattedLogProvider}
-     */
-    public static Builder withoutRenderingContext()
-    {
-        return new Builder().withoutRenderingContext();
-    }
-
-    /**
-     * Start creating a {@link FormattedLogProvider} with UTC timezone for datestamps in the log
-     *
-     * @return a builder for a {@link FormattedLogProvider}
-     */
-    public static Builder withUTCTimeZone()
-    {
-        return new Builder().withUTCZoneId();
-    }
-
-    /**
-     * Start creating a {@link FormattedLogProvider} with the specified zoneId for datestamps in the log
-     *
-     * @return a builder for a {@link FormattedLogProvider}
-     * @param zoneId to use
-     */
-    public static Builder withZoneId( ZoneId zoneId )
-    {
-        return new Builder().withZoneId( zoneId );
-    }
-
-    /**
-     * Start creating a {@link FormattedLogProvider} with the specified zoneId from timezone for datestamps in the log
-     *
-     * @param timeZone to use
-     * @return a builder for a {@link FormattedLogProvider}
-     * @deprecated use {@link #withZoneId(ZoneId)}
-     */
-    @Deprecated
-    public static Builder withTimeZone( TimeZone timeZone )
-    {
-        return new Builder().withZoneId( timeZone.toZoneId() );
-    }
-
-    /**
-     * Start creating a {@link FormattedLogProvider} with the specified log {@link Level} for all {@link Log}s by default.
-     * Use {@link Builder#toOutputStream} to complete.
-     *
-     * @param level the log level to use as a default
-     * @return a builder for a {@link FormattedLogProvider}
-     */
-    public static Builder withDefaultLogLevel( Level level )
-    {
-        return new Builder().withDefaultLogLevel( level );
-    }
-
-    /**
-     * Start creating a {@link FormattedLogProvider} without auto flushing.
-     * Use {@link Builder#toOutputStream} to complete.
-     *
-     * @return a builder for a {@link FormattedLogProvider}
-     */
-    public static Builder withoutAutoFlush()
-    {
-        return new Builder().withoutAutoFlush();
-    }
-
-    /**
-     * Creates a {@link FormattedLogProvider} instance that writes messages to an {@link OutputStream}.
-     *
-     * @param out An {@link OutputStream} to write to
-     * @return A {@link FormattedLogProvider} instance that writes to the specified OutputStream
-     */
-    public static FormattedLogProvider toOutputStream( OutputStream out )
-    {
-        return new Builder().toOutputStream( out );
-    }
-
-    /**
-     * Creates a {@link FormattedLogProvider} instance that writes messages to {@link OutputStream}s obtained from the specified
-     * {@link Supplier}. The OutputStream is obtained from the Supplier before every log message is written.
-     *
-     * @param outSupplier A supplier for an output stream to write to
-     * @return A {@link FormattedLogProvider} instance
-     */
-    public static FormattedLogProvider toOutputStream( Supplier<OutputStream> outSupplier )
-    {
-        return new Builder().toOutputStream( outSupplier );
-    }
-
-    /**
-     * Creates a {@link FormattedLogProvider} instance that writes messages to a {@link Writer}.
-     *
-     * @param writer A {@link Writer} to write to
-     * @return A {@link FormattedLogProvider} instance that writes to the specified Writer
-     */
-    public static FormattedLogProvider toWriter( Writer writer )
-    {
-        return new Builder().toWriter( writer );
-    }
-
-    /**
-     * Creates a {@link FormattedLogProvider} instance that writes messages to a {@link PrintWriter}.
-     *
-     * @param writer A {@link PrintWriter} to write to
-     * @return A {@link FormattedLogProvider} instance that writes to the specified PrintWriter
-     */
-    public static FormattedLogProvider toPrintWriter( PrintWriter writer )
-    {
-        return new Builder().toPrintWriter( writer );
-    }
-
-    /**
-     * Creates a {@link FormattedLogProvider} instance that writes messages to {@link PrintWriter}s obtained from the specified
-     * {@link Supplier}. The PrintWriter is obtained from the Supplier before every log message is written.
-     *
-     * @param writerSupplier A supplier for a {@link PrintWriter} to write to
-     * @return A {@link FormattedLogProvider} instance that writes to the specified PrintWriter
-     */
-    public static FormattedLogProvider toPrintWriter( Supplier<PrintWriter> writerSupplier )
-    {
-        return new Builder().toPrintWriter( writerSupplier );
-    }
-
-    FormattedLogProvider( Supplier<PrintWriter> writerSupplier,
-                          ZoneId zoneId, boolean renderContext,
-                          Map<String, Level> levels, Level defaultLevel, boolean autoFlush )
-    {
-        this.writerSupplier = writerSupplier;
-        this.zoneId = zoneId;
-        this.renderContext = renderContext;
-        this.levels = new HashMap<>( levels );
-        this.defaultLevel = defaultLevel;
-        this.autoFlush = autoFlush;
-    }
-
-    @Override
-    protected FormattedLog buildLog( Class loggingClass )
-    {
-        String className = loggingClass.getName();
-        String shortenedClassName = PACKAGE_PATTERN.matcher( className ).replaceAll( "$1." );
-        return buildLog( shortenedClassName, levelForContext( className ) );
-    }
-
-    @Override
-    protected FormattedLog buildLog( String name )
-    {
-        return buildLog( name, levelForContext( name ) );
-    }
-
-    private FormattedLog buildLog( String context, Level level )
-    {
-        return new FormattedLog( writerSupplier, zoneId, this, renderContext ? context : null, level, autoFlush );
-    }
-
-    private Level levelForContext( String context )
-    {
-        for ( Map.Entry<String, Level> entry : levels.entrySet() )
-        {
-            if ( context.startsWith( entry.getKey() ) )
-            {
-                return entry.getValue();
-            }
-        }
-        return defaultLevel;
     }
 }

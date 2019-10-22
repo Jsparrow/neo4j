@@ -41,7 +41,57 @@ public class MethodSignatureCompilerTest
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
-    public static class MyOutputRecord
+    @Test
+    public void shouldMapSimpleRecordWithString() throws Throwable
+    {
+        // When
+        Method echo = ClassWithProcedureWithSimpleArgs.class.getMethod( "echo", String.class );
+        List<FieldSignature> signature = new MethodSignatureCompiler( new TypeMappers() ).signatureFor( echo );
+
+        // THen
+        assertThat(signature, contains( FieldSignature.inputField( "name", Neo4jTypes.NTString ) ));
+    }
+
+	@Test
+    public void shouldMapSimpleFunctionWithString() throws Throwable
+    {
+        // When
+        Method echo = ClassWithProcedureWithSimpleArgs.class.getMethod( "echo", String.class );
+        List<Neo4jTypes.AnyType> signature = new MethodSignatureCompiler( new TypeMappers() ).inputTypesFor( echo );
+
+        // THen
+        assertThat(signature, contains( Neo4jTypes.NTString));
+    }
+
+	@Test
+    public void shouldGiveHelpfulErrorOnUnmappable() throws Throwable
+    {
+        // Given
+        Method echo = ClassWithProcedureWithSimpleArgs.class.getMethod( "echoWithInvalidType", UnmappableRecord.class );
+
+        // Expect
+        exception.expect( ProcedureException.class );
+        exception.expectMessage( String.format(new StringBuilder().append("Argument `name` at position 0 in `echoWithInvalidType` with%n").append("type `UnmappableRecord` cannot be converted to a Neo4j type: Don't know how to map ").append("`org.neo4j.kernel.impl.proc.MethodSignatureCompilerTest$UnmappableRecord` to ").append("the Neo4j Type System.%n").append("Please refer to to the documentation for full details.%n").append("For your reference, known types are:").toString() ));
+
+        // When
+        new MethodSignatureCompiler( new TypeMappers() ).signatureFor( echo );
+    }
+
+	@Test
+    public void shouldGiveHelpfulErrorOnMissingAnnotations() throws Throwable
+    {
+        // Given
+        Method echo = ClassWithProcedureWithSimpleArgs.class.getMethod( "echoWithoutAnnotations", String.class, String.class);
+
+        // Expect
+        exception.expect( ProcedureException.class );
+        exception.expectMessage( String.format(new StringBuilder().append("Argument at position 1 in method `echoWithoutAnnotations` is missing an `@Name` ").append("annotation.%n").append("Please add the annotation, recompile the class and try again.").toString() ));
+
+        // When
+        new MethodSignatureCompiler( new TypeMappers() ).signatureFor( echo );
+    }
+
+	public static class MyOutputRecord
     {
         public String name;
 
@@ -75,62 +125,5 @@ public class MethodSignatureCompilerTest
         {
             return Stream.of( new MyOutputRecord( "echo" ));
         }
-    }
-
-    @Test
-    public void shouldMapSimpleRecordWithString() throws Throwable
-    {
-        // When
-        Method echo = ClassWithProcedureWithSimpleArgs.class.getMethod( "echo", String.class );
-        List<FieldSignature> signature = new MethodSignatureCompiler( new TypeMappers() ).signatureFor( echo );
-
-        // THen
-        assertThat(signature, contains( FieldSignature.inputField( "name", Neo4jTypes.NTString ) ));
-    }
-
-    @Test
-    public void shouldMapSimpleFunctionWithString() throws Throwable
-    {
-        // When
-        Method echo = ClassWithProcedureWithSimpleArgs.class.getMethod( "echo", String.class );
-        List<Neo4jTypes.AnyType> signature = new MethodSignatureCompiler( new TypeMappers() ).inputTypesFor( echo );
-
-        // THen
-        assertThat(signature, contains( Neo4jTypes.NTString));
-    }
-
-    @Test
-    public void shouldGiveHelpfulErrorOnUnmappable() throws Throwable
-    {
-        // Given
-        Method echo = ClassWithProcedureWithSimpleArgs.class.getMethod( "echoWithInvalidType", UnmappableRecord.class );
-
-        // Expect
-        exception.expect( ProcedureException.class );
-        exception.expectMessage( String.format("Argument `name` at position 0 in `echoWithInvalidType` with%n" +
-                                 "type `UnmappableRecord` cannot be converted to a Neo4j type: Don't know how to map " +
-                                 "`org.neo4j.kernel.impl.proc.MethodSignatureCompilerTest$UnmappableRecord` to " +
-                                 "the Neo4j Type System.%n" +
-                                 "Please refer to to the documentation for full details.%n" +
-                                 "For your reference, known types are:" ));
-
-        // When
-        new MethodSignatureCompiler( new TypeMappers() ).signatureFor( echo );
-    }
-
-    @Test
-    public void shouldGiveHelpfulErrorOnMissingAnnotations() throws Throwable
-    {
-        // Given
-        Method echo = ClassWithProcedureWithSimpleArgs.class.getMethod( "echoWithoutAnnotations", String.class, String.class);
-
-        // Expect
-        exception.expect( ProcedureException.class );
-        exception.expectMessage( String.format("Argument at position 1 in method `echoWithoutAnnotations` is missing an `@Name` " +
-                                 "annotation.%n" +
-                                 "Please add the annotation, recompile the class and try again." ));
-
-        // When
-        new MethodSignatureCompiler( new TypeMappers() ).signatureFor( echo );
     }
 }

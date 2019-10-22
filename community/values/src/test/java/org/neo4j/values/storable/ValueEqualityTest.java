@@ -33,7 +33,14 @@ import static org.neo4j.values.utils.AnyValueTestUtil.assertNotEqual;
 @RunWith( value = Parameterized.class )
 public class ValueEqualityTest
 {
-    @Parameterized.Parameters( name = "{0}" )
+    private Test currentTest;
+
+	public ValueEqualityTest( Test currentTest )
+    {
+        this.currentTest = currentTest;
+    }
+
+	@Parameterized.Parameters( name = "{0}" )
     public static Iterable<Test> data()
     {
         return Arrays.asList(
@@ -142,125 +149,118 @@ public class ValueEqualityTest
         );
     }
 
-    private Test currentTest;
-
-    public ValueEqualityTest( Test currentTest )
-    {
-        this.currentTest = currentTest;
-    }
-
-    @org.junit.Test
+	@org.junit.Test
     public void runTest()
     {
         currentTest.checkAssertion();
     }
 
-    private static Test shouldMatch( boolean propertyValue, Object value )
+	private static Test shouldMatch( boolean propertyValue, Object value )
     {
         return new Test( Values.booleanValue( propertyValue ), value, true );
     }
 
-    private static Test shouldNotMatch( boolean propertyValue, Object value )
+	private static Test shouldNotMatch( boolean propertyValue, Object value )
     {
         return new Test( Values.booleanValue( propertyValue ), value, false );
     }
 
-    private static Test shouldMatch( byte propertyValue, Object value )
+	private static Test shouldMatch( byte propertyValue, Object value )
     {
         return new Test( Values.byteValue( propertyValue ), value, true );
     }
 
-    private static Test shouldNotMatch( byte propertyValue, Object value )
+	private static Test shouldNotMatch( byte propertyValue, Object value )
     {
         return new Test( Values.byteValue( propertyValue ), value, false );
     }
 
-    private static Test shouldMatch( short propertyValue, Object value )
+	private static Test shouldMatch( short propertyValue, Object value )
     {
         return new Test( Values.shortValue( propertyValue ), value, true );
     }
 
-    private static Test shouldNotMatch( short propertyValue, Object value )
+	private static Test shouldNotMatch( short propertyValue, Object value )
     {
         return new Test( Values.shortValue( propertyValue ), value, false );
     }
 
-    private static Test shouldMatch( float propertyValue, Object value )
+	private static Test shouldMatch( float propertyValue, Object value )
     {
         return new Test( Values.floatValue( propertyValue ), value, true );
     }
 
-    private static Test shouldNotMatch( float propertyValue, Object value )
+	private static Test shouldNotMatch( float propertyValue, Object value )
     {
         return new Test( Values.floatValue( propertyValue ), value, false );
     }
 
-    private static Test shouldMatch( long propertyValue, Object value )
+	private static Test shouldMatch( long propertyValue, Object value )
     {
         return new Test( Values.longValue( propertyValue ), value, true );
     }
 
-    private static Test shouldNotMatch( long propertyValue, Object value )
+	private static Test shouldNotMatch( long propertyValue, Object value )
     {
         return new Test( Values.longValue( propertyValue ), value, false );
     }
 
-    private static Test shouldMatch( double propertyValue, Object value )
+	private static Test shouldMatch( double propertyValue, Object value )
     {
         return new Test( Values.doubleValue( propertyValue ), value, true );
     }
 
-    private static Test shouldNotMatch( double propertyValue, Object value )
+	private static Test shouldNotMatch( double propertyValue, Object value )
     {
         return new Test( Values.doubleValue( propertyValue ), value, false );
     }
 
-    private static Test shouldMatch( String propertyValue, Object value )
+	private static Test shouldMatch( String propertyValue, Object value )
     {
         return new Test( Values.stringValue( propertyValue ), value, true );
     }
 
-    private static Test shouldNotMatch( String propertyValue, Object value )
+	private static Test shouldNotMatch( String propertyValue, Object value )
     {
         return new Test( Values.stringValue( propertyValue ), value, false );
     }
 
-    private static Test shouldMatch( char propertyValue, Object value )
+	private static Test shouldMatch( char propertyValue, Object value )
     {
         return new Test( Values.charValue( propertyValue ), value, true );
     }
 
-    private static Test shouldNotMatch( char propertyValue, Object value )
+	private static Test shouldNotMatch( char propertyValue, Object value )
     {
         return new Test( Values.charValue( propertyValue ), value, false );
     }
 
-    private static Test shouldMatch( int[] propertyValue, Object value )
+	private static Test shouldMatch( int[] propertyValue, Object value )
     {
         return new Test( Values.intArray( propertyValue ), value, true );
     }
 
-    public static Test shouldNotMatch( int[] propertyValue, Object value )
+	public static Test shouldNotMatch( int[] propertyValue, Object value )
     {
         return new Test( Values.intArray( propertyValue ), value, false );
     }
 
-    private static Test shouldMatch( char[] propertyValue, Object value )
+	private static Test shouldMatch( char[] propertyValue, Object value )
     {
         return new Test( Values.charArray( propertyValue ), value, true );
     }
 
-    public static Test shouldNotMatch( char[] propertyValue, Object value )
+	public static Test shouldNotMatch( char[] propertyValue, Object value )
     {
         return new Test( Values.charArray( propertyValue ), value, false );
     }
 
-    private static Test shouldMatch( String[] propertyValue, Object value )
+	private static Test shouldMatch( String[] propertyValue, Object value )
     {
         return new Test( Values.stringArray( propertyValue ), value, true );
     }
 
-    private static class Test
+	private static class Test
     {
         final Value a;
         final Value b;

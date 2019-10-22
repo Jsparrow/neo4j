@@ -273,13 +273,10 @@ public abstract class ServerBootstrapper implements Bootstrapper
 
     private void removeShutdownHook()
     {
-        if ( shutdownHook != null )
-        {
-            if ( !Runtime.getRuntime().removeShutdownHook( shutdownHook ) )
-            {
-                log.warn( "Unable to remove shutdown hook" );
-            }
-        }
+        boolean condition = shutdownHook != null && !Runtime.getRuntime().removeShutdownHook( shutdownHook );
+		if ( condition ) {
+		    log.warn( "Unable to remove shutdown hook" );
+		}
     }
 
     private LogProvider createFileSystemUserLogProvider( Config config, FormattedLogProvider.Builder builder )

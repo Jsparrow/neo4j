@@ -102,12 +102,11 @@ class CombinedPartSeekerTest
         @Override
         public boolean next()
         {
-            if ( data.hasNext() )
-            {
-                current = data.next();
-                return true;
-            }
-            return false;
+            if (!data.hasNext()) {
+				return false;
+			}
+			current = data.next();
+			return true;
         }
 
         @Override

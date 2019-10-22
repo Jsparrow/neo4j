@@ -70,7 +70,23 @@ import static org.neo4j.unsafe.impl.batchimport.input.Group.GLOBAL;
 @RunWith( Parameterized.class )
 public class EncodingIdMapperTest
 {
-    @Parameters( name = "processors:{0}" )
+    private static final TrackerFactory RANDOM_TRACKER_FACTORY =
+            ( arrayFactory, size ) -> System.currentTimeMillis() % 2 == 0
+                    ? new IntTracker( arrayFactory.newIntArray( size, IntTracker.DEFAULT_VALUE ) )
+                    : new BigIdTracker( arrayFactory.newByteArray( size, BigIdTracker.DEFAULT_VALUE ) );
+	private final int processors;
+	private final Groups groups = new Groups();
+	@Rule
+    public final RandomRule random = new RandomRule();
+	@Rule
+    public final RepeatRule repeater = new RepeatRule();
+
+	public EncodingIdMapperTest( int processors )
+    {
+        this.processors = processors;
+    }
+
+	@Parameters( name = "processors:{0}" )
     public static Collection<Object[]> data()
     {
         Collection<Object[]> data = new ArrayList<>();
@@ -84,15 +100,7 @@ public class EncodingIdMapperTest
         return data;
     }
 
-    private final int processors;
-    private final Groups groups = new Groups();
-
-    public EncodingIdMapperTest( int processors )
-    {
-        this.processors = processors;
-    }
-
-    @Test
+	@Test
     public void shouldHandleGreatAmountsOfStuff()
     {
         // GIVEN
@@ -114,12 +122,12 @@ public class EncodingIdMapperTest
             Object id = inputIdLookup.apply( nodeId );
             if ( idMapper.get( id, GLOBAL ) == ID_NOT_FOUND )
             {
-                fail( "Couldn't find " + id + " even though I added it just previously" );
+                fail( new StringBuilder().append("Couldn't find ").append(id).append(" even though I added it just previously").toString() );
             }
         }
     }
 
-    @Test
+	@Test
     public void shouldReturnExpectedValueForNotFound()
     {
         // GIVEN
@@ -133,7 +141,7 @@ public class EncodingIdMapperTest
         assertEquals( ID_NOT_FOUND, id );
     }
 
-    @Test
+	@Test
     public void shouldReportyProgressForSortAndDetect()
     {
         // GIVEN
@@ -150,7 +158,7 @@ public class EncodingIdMapperTest
         verify( progress, times( 3 ) ).done();
     }
 
-    @Test
+	@Test
     public void shouldEncodeShortStrings()
     {
         // GIVEN
@@ -166,7 +174,7 @@ public class EncodingIdMapperTest
         assertEquals( 0L, mapper.get( "123", GLOBAL ) );
     }
 
-    @Test
+	@Test
     public void shouldEncodeSmallSetOfRandomData()
     {
         // GIVEN
@@ -186,11 +194,11 @@ public class EncodingIdMapperTest
         for ( int nodeId = 0; nodeId < size; nodeId++ )
         {
             Object value = values.values.get( nodeId );
-            assertEquals( "Expected " + value + " to map to " + nodeId, nodeId, mapper.get( value, GLOBAL ) );
+            assertEquals( new StringBuilder().append("Expected ").append(value).append(" to map to ").append(nodeId).toString(), nodeId, mapper.get( value, GLOBAL ) );
         }
     }
 
-    @Test
+	@Test
     public void shouldReportCollisionsForSameInputId()
     {
         // GIVEN
@@ -210,12 +218,12 @@ public class EncodingIdMapperTest
         verifyNoMoreInteractions( collector );
     }
 
-    private static LongFunction<Object> wrap( List<Object> ids )
+	private static LongFunction<Object> wrap( List<Object> ids )
     {
         return nodeId -> ids.get( toIntExact( nodeId ) );
     }
 
-    @Test
+	@Test
     public void shouldCopeWithCollisionsBasedOnDifferentInputIds()
     {
         // GIVEN
@@ -244,19 +252,19 @@ public class EncodingIdMapperTest
         verify( progress, times( 7 ) ).done();
     }
 
-    @Test
+	@Test
     public void shouldCopeWithMixedActualAndAccidentalCollisions()
     {
         // GIVEN
         Monitor monitor = mock( Monitor.class );
         Encoder encoder = mock( Encoder.class );
         // Create these explicit instances so that we can use them in mock, even for same values
-        String a = new String( "a" );
-        String b = new String( "b" );
-        String c = new String( "c" );
-        String a2 = new String( "a" );
-        String e = new String( "e" );
-        String f = new String( "f" );
+        String a = "a";
+        String b = "b";
+        String c = "c";
+        String a2 = "a";
+        String e = "e";
+        String f = "f";
         when( encoder.encode( a ) ).thenReturn( 1L );
         when( encoder.encode( b ) ).thenReturn( 1L );
         when( encoder.encode( c ) ).thenReturn( 3L );
@@ -294,7 +302,7 @@ public class EncodingIdMapperTest
         assertEquals( 5L, mapper.get( f, groupB ) );
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToHaveDuplicateInputIdButInDifferentGroups()
     {
         // GIVEN
@@ -321,7 +329,7 @@ public class EncodingIdMapperTest
         assertFalse( mapper.leftOverDuplicateNodesIds().hasNext() );
     }
 
-    @Test
+	@Test
     public void shouldOnlyFindInputIdsInSpecificGroup()
     {
         // GIVEN
@@ -350,21 +358,21 @@ public class EncodingIdMapperTest
         assertEquals( 2L, mapper.get( "10", thirdGroup ) );
     }
 
-    @Test
+	@Test
     public void shouldHandleManyGroups()
     {
         // GIVEN
         int size = 256; // which results in GLOBAL (0) + 1-256 = 257 groups, i.e. requiring two bytes
         for ( int i = 0; i < size; i++ )
         {
-            groups.getOrCreate( "" + i );
+            groups.getOrCreate( Integer.toString(i) );
         }
         IdMapper mapper = mapper( new LongEncoder(), Radix.LONG, NO_MONITOR );
 
         // WHEN
         for ( int i = 0; i < size; i++ )
         {
-            mapper.put( i, i, groups.get( "" + i ) );
+            mapper.put( i, i, groups.get( Integer.toString(i) ) );
         }
         // null since this test should have been set up to not run into collisions
         mapper.prepare( null, mock( Collector.class ), NONE );
@@ -372,11 +380,11 @@ public class EncodingIdMapperTest
         // THEN
         for ( int i = 0; i < size; i++ )
         {
-            assertEquals( i, mapper.get( i, groups.get( "" + i ) ) );
+            assertEquals( i, mapper.get( i, groups.get( Integer.toString(i) ) ) );
         }
     }
 
-    @Test
+	@Test
     public void shouldDetectCorrectDuplicateInputIdsWhereManyAccidentalInManyGroups()
     {
         // GIVEN
@@ -433,7 +441,7 @@ public class EncodingIdMapperTest
         assertFalse( mapper.leftOverDuplicateNodesIds().hasNext() );
     }
 
-    @Test
+	@Test
     public void shouldHandleHolesInIdSequence()
     {
         // GIVEN
@@ -457,13 +465,10 @@ public class EncodingIdMapperTest
         mapper.prepare( values( ids.toArray() ), mock( Collector.class ), NONE );
 
         // THEN
-        for ( Object id : ids )
-        {
-            assertEquals( ((Long)id).longValue(), mapper.get( id, GLOBAL ) );
-        }
+		ids.forEach(id -> assertEquals(((Long) id).longValue(), mapper.get(id, GLOBAL)));
     }
 
-    @Test
+	@Test
     public void shouldHandleLargeAmountsOfDuplicateNodeIds()
     {
         // GIVEN
@@ -495,7 +500,7 @@ public class EncodingIdMapperTest
         assertEquals( high, count( mapper.leftOverDuplicateNodesIds() ) );
     }
 
-    @Test
+	@Test
     public void shouldDetectLargeAmountsOfCollisions()
     {
         // GIVEN
@@ -523,7 +528,7 @@ public class EncodingIdMapperTest
         assertEquals( count, collector.count );
     }
 
-    @Test
+	@Test
     public void shouldPutFromMultipleThreads() throws Throwable
     {
         // GIVEN
@@ -571,29 +576,29 @@ public class EncodingIdMapperTest
         assertEquals( count, correctHits );
     }
 
-    private LongFunction<Object> values( Object... values )
+	private LongFunction<Object> values( Object... values )
     {
         return value -> values[toIntExact( value )];
     }
 
-    private IdMapper mapper( Encoder encoder, Factory<Radix> radix, Monitor monitor )
+	private IdMapper mapper( Encoder encoder, Factory<Radix> radix, Monitor monitor )
     {
         return mapper( encoder, radix, monitor, ParallelSort.DEFAULT );
     }
 
-    private IdMapper mapper( Encoder encoder, Factory<Radix> radix, Monitor monitor, Comparator comparator )
+	private IdMapper mapper( Encoder encoder, Factory<Radix> radix, Monitor monitor, Comparator comparator )
     {
         return mapper( encoder, radix, monitor, comparator, autoDetect( encoder ) );
     }
 
-    private IdMapper mapper( Encoder encoder, Factory<Radix> radix, Monitor monitor, Comparator comparator,
+	private IdMapper mapper( Encoder encoder, Factory<Radix> radix, Monitor monitor, Comparator comparator,
             LongFunction<CollisionValues> collisionValuesFactory )
     {
         return new EncodingIdMapper( NumberArrayFactory.HEAP, encoder, radix, monitor, RANDOM_TRACKER_FACTORY, groups,
                 collisionValuesFactory, 1_000, processors, comparator );
     }
 
-    private LongFunction<CollisionValues> autoDetect( Encoder encoder )
+	private LongFunction<CollisionValues> autoDetect( Encoder encoder )
     {
         return numberOfCollisions -> encoder instanceof LongEncoder
                 ? new LongCollisionValues( NumberArrayFactory.HEAP, numberOfCollisions )
@@ -601,38 +606,7 @@ public class EncodingIdMapperTest
 
     }
 
-    private static final TrackerFactory RANDOM_TRACKER_FACTORY =
-            ( arrayFactory, size ) -> System.currentTimeMillis() % 2 == 0
-                    ? new IntTracker( arrayFactory.newIntArray( size, IntTracker.DEFAULT_VALUE ) )
-                    : new BigIdTracker( arrayFactory.newByteArray( size, BigIdTracker.DEFAULT_VALUE ) );
-
-    private class ValueGenerator implements LongFunction<Object>
-    {
-        private final Factory<Object> generator;
-        private final List<Object> values = new ArrayList<>();
-        private final Set<Object> deduper = new HashSet<>();
-
-        ValueGenerator( Factory<Object> generator )
-        {
-            this.generator = generator;
-        }
-
-        @Override
-        public Object apply( long nodeId )
-        {
-            while ( true )
-            {
-                Object value = generator.newInstance();
-                if ( deduper.add( value ) )
-                {
-                    values.add( value );
-                    return value;
-                }
-            }
-        }
-    }
-
-    private enum ValueType
+	private enum ValueType
     {
         LONGS
         {
@@ -746,10 +720,31 @@ public class EncodingIdMapperTest
         abstract Factory<Object> data( Random random );
     }
 
-    @Rule
-    public final RandomRule random = new RandomRule();
-    @Rule
-    public final RepeatRule repeater = new RepeatRule();
+	private class ValueGenerator implements LongFunction<Object>
+    {
+        private final Factory<Object> generator;
+        private final List<Object> values = new ArrayList<>();
+        private final Set<Object> deduper = new HashSet<>();
+
+        ValueGenerator( Factory<Object> generator )
+        {
+            this.generator = generator;
+        }
+
+        @Override
+        public Object apply( long nodeId )
+        {
+            while ( true )
+            {
+                Object value = generator.newInstance();
+                if ( deduper.add( value ) )
+                {
+                    values.add( value );
+                    return value;
+                }
+            }
+        }
+    }
 
     private static class CountingCollector implements Collector
     {

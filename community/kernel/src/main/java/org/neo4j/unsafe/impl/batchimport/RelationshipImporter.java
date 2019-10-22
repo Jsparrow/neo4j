@@ -129,13 +129,11 @@ public class RelationshipImporter extends EntityImporter
     private long nodeId( Object id, Group group )
     {
         long nodeId = idMapper.get( id, group );
-        if ( nodeId == ID_NOT_FOUND )
-        {
-            relationshipRecord.setInUse( false );
-            return ID_NOT_FOUND;
-        }
-
-        return nodeId;
+        if (nodeId != ID_NOT_FOUND) {
+			return nodeId;
+		}
+		relationshipRecord.setInUse( false );
+		return ID_NOT_FOUND;
     }
 
     @Override
@@ -186,7 +184,8 @@ public class RelationshipImporter extends EntityImporter
                 if ( relationshipRecord.getType() == -1 )
                 {
                     throw new MissingRelationshipDataException( Type.TYPE,
-                            relationshipDataString() + " is missing " + Type.TYPE + " field" );
+                            new StringBuilder().append(relationshipDataString()).append(" is missing ").append(Type.TYPE).append(" field")
+									.toString() );
                 }
             }
             badCollector.collectBadRelationship( startId, group( startIdGroup ).name(), type, endId, group( endIdGroup ).name(),
@@ -213,8 +212,7 @@ public class RelationshipImporter extends EntityImporter
     {
         if ( id == null )
         {
-            throw new MissingRelationshipDataException( fieldType, relationshipDataString() +
-                    " is missing " + fieldType + " field" );
+            throw new MissingRelationshipDataException( fieldType, new StringBuilder().append(relationshipDataString()).append(" is missing ").append(fieldType).append(" field").toString() );
         }
     }
 

@@ -41,7 +41,11 @@ import static org.junit.Assert.assertTrue;
  */
 public class TestTopFetchingWeightedPathIterator extends Neo4jAlgoTestCase
 {
-    @Test
+    private final double epsilon = NoneStrictMath.EPSILON;
+	private final String length = "length";
+	private CostEvaluator evaluator = CommonEvaluators.doubleCostEvaluator( length );
+	private TopFetchingWeightedPathIterator topFetcher;
+	@Test
     public void shouldHandleEmptySource()
     {
         topFetcher = new TopFetchingWeightedPathIterator(
@@ -51,7 +55,7 @@ public class TestTopFetchingWeightedPathIterator extends Neo4jAlgoTestCase
         assertNull( "Expected null after report has no next", topFetcher.fetchNextOrNull() );
     }
 
-    @Test
+	@Test
     public void shouldHandleSinglePath()
     {
         Path a = graph.makePathWithRelProperty( length, "a1-1-a2" );
@@ -66,7 +70,7 @@ public class TestTopFetchingWeightedPathIterator extends Neo4jAlgoTestCase
         assertNull( "Expected null after report has no next", topFetcher.fetchNextOrNull() );
     }
 
-    @Test
+	@Test
     public void shouldHandleMultipleShortest()
     {
         Path a = graph.makePathWithRelProperty(  length, "a1-1-a2" );
@@ -85,7 +89,7 @@ public class TestTopFetchingWeightedPathIterator extends Neo4jAlgoTestCase
         assertPathsWithPaths( result, a, b );
     }
 
-    @Test
+	@Test
     public void shouldHandleUnsortedSource()
     {
         Path a = graph.makePathWithRelProperty( length, "a1-1-a2-2-a3" );             // 3
@@ -106,9 +110,4 @@ public class TestTopFetchingWeightedPathIterator extends Neo4jAlgoTestCase
 
         assertPathsWithPaths( result, c, e );
     }
-
-    private final double epsilon = NoneStrictMath.EPSILON;
-    private final String length = "length";
-    private CostEvaluator evaluator = CommonEvaluators.doubleCostEvaluator( length );
-    private TopFetchingWeightedPathIterator topFetcher;
 }

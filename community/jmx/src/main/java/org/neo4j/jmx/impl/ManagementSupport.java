@@ -67,10 +67,7 @@ public class ManagementSupport
     {
         Collection<T> result = new ArrayList<>();
         ObjectName query = createObjectNameQuery( kernel.getInstanceId(), beanInterface );
-        for ( ObjectName name : getMBeanServer().queryNames( query, null ) )
-        {
-            result.add( makeProxy( kernel, name, beanInterface ) );
-        }
+        getMBeanServer().queryNames( query, null ).forEach(name -> result.add(makeProxy(kernel, name, beanInterface)));
         return result;
     }
 

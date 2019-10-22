@@ -155,7 +155,17 @@ final class CountsUpdater implements CountsAccessor.Updater, CountsAccessor.Inde
         updater.close();
     }
 
-    private static class Write implements ValueUpdate
+    private static IncrementLong incrementFirstBy( long delta )
+    {
+        return new IncrementLong( 0, delta );
+    }
+
+	private static IncrementLong incrementSecondBy( long delta )
+    {
+        return new IncrementLong( 8, delta );
+    }
+
+	private static class Write implements ValueUpdate
     {
         private final long first;
         private final long second;
@@ -172,16 +182,6 @@ final class CountsUpdater implements CountsAccessor.Updater, CountsAccessor.Inde
             target.putLong( 0, first );
             target.putLong( 8, second );
         }
-    }
-
-    private static IncrementLong incrementFirstBy( long delta )
-    {
-        return new IncrementLong( 0, delta );
-    }
-
-    private static IncrementLong incrementSecondBy( long delta )
-    {
-        return new IncrementLong( 8, delta );
     }
 
     private static class IncrementLong implements ValueUpdate

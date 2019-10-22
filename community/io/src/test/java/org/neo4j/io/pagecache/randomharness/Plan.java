@@ -62,12 +62,11 @@ class Plan
     {
         startLatch.await();
         int index = actionCounter.getAndIncrement();
-        if ( index < plan.length )
-        {
-            executedByThread[index] = Thread.currentThread().getId();
-            return plan[index];
-        }
-        return null;
+        if (index >= plan.length) {
+			return null;
+		}
+		executedByThread[index] = Thread.currentThread().getId();
+		return plan[index];
     }
 
     public void close() throws IOException

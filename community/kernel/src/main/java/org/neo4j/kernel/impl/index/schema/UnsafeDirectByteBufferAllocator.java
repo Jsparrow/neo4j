@@ -80,11 +80,11 @@ public class UnsafeDirectByteBufferAllocator implements ByteBufferFactory.Alloca
     public synchronized void close()
     {
         // Idempotent close due to the way the population lifecycle works sometimes
-        if ( !closed )
-        {
-            allocations.forEach( allocation -> UnsafeUtil.free( allocation.address, allocation.bytes, memoryAllocationTracker ) );
-            closed = true;
-        }
+		if (closed) {
+			return;
+		}
+		allocations.forEach( allocation -> UnsafeUtil.free( allocation.address, allocation.bytes, memoryAllocationTracker ) );
+		closed = true;
     }
 
     private void assertOpen()

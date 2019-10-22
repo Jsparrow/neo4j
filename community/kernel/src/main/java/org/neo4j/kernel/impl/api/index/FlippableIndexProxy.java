@@ -365,7 +365,7 @@ public class FlippableIndexProxy implements IndexProxy
     }
 
     @Override
-    public IndexPopulationFailure getPopulationFailure() throws IllegalStateException
+    public IndexPopulationFailure getPopulationFailure()
     {
         lock.readLock().lock();
         try
@@ -451,7 +451,8 @@ public class FlippableIndexProxy implements IndexProxy
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + " -> " + delegate + "[target:" + flipTarget + "]";
+        return new StringBuilder().append(getClass().getSimpleName()).append(" -> ").append(delegate).append("[target:").append(flipTarget).append("]")
+				.toString();
     }
 
     private void assertOpen() throws IndexProxyAlreadyClosedKernelException

@@ -121,7 +121,7 @@ public class ThreadPoolJobScheduler extends LifecycleAdapter implements JobSched
         }
 
         @Override
-        public void waitTermination() throws InterruptedException, ExecutionException, CancellationException
+        public void waitTermination() throws InterruptedException, ExecutionException
         {
             future.get();
         }

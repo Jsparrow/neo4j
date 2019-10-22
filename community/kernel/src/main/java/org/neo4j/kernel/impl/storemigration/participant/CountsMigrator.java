@@ -91,27 +91,27 @@ public class CountsMigrator extends AbstractStoreMigrationParticipant
     public void migrate( DatabaseLayout directoryLayout, DatabaseLayout migrationLayout, ProgressReporter progressMonitor,
             String versionToMigrateFrom, String versionToMigrateTo ) throws IOException
     {
-        if ( countStoreRebuildRequired( versionToMigrateFrom ) )
-        {
-            // create counters from scratch
-            fileOperation( DELETE, fileSystem, migrationLayout, migrationLayout, COUNTS_STORE_FILES, true, null );
-            File neoStore = directoryLayout.metadataStore();
-            long lastTxId = MetaDataStore.getRecord( pageCache, neoStore, Position.LAST_TRANSACTION_ID );
-            try
-            {
-                rebuildCountsFromScratch( directoryLayout, migrationLayout, lastTxId, progressMonitor, versionToMigrateTo,
-                        pageCache, NullLogProvider.getInstance() );
-            }
-            catch ( StoreFailureException e )
-            {
-                //This means that we did not perform a full migration, as the formats had the same capabilities. Thus
-                // we should use the store directory for information when rebuilding the count store. Note that we
-                // still put the new count store in the migration directory.
-                rebuildCountsFromScratch( directoryLayout, migrationLayout, lastTxId, progressMonitor, versionToMigrateFrom,
-                        pageCache, NullLogProvider.getInstance() );
-            }
-            migrated = true;
-        }
+        if (!countStoreRebuildRequired( versionToMigrateFrom )) {
+			return;
+		}
+		// create counters from scratch
+		fileOperation( DELETE, fileSystem, migrationLayout, migrationLayout, COUNTS_STORE_FILES, true, null );
+		File neoStore = directoryLayout.metadataStore();
+		long lastTxId = MetaDataStore.getRecord( pageCache, neoStore, Position.LAST_TRANSACTION_ID );
+		try
+		{
+		    rebuildCountsFromScratch( directoryLayout, migrationLayout, lastTxId, progressMonitor, versionToMigrateTo,
+		            pageCache, NullLogProvider.getInstance() );
+		}
+		catch ( StoreFailureException e )
+		{
+		    //This means that we did not perform a full migration, as the formats had the same capabilities. Thus
+		    // we should use the store directory for information when rebuilding the count store. Note that we
+		    // still put the new count store in the migration directory.
+		    rebuildCountsFromScratch( directoryLayout, migrationLayout, lastTxId, progressMonitor, versionToMigrateFrom,
+		            pageCache, NullLogProvider.getInstance() );
+		}
+		migrated = true;
     }
 
     @Override
@@ -119,16 +119,16 @@ public class CountsMigrator extends AbstractStoreMigrationParticipant
             String versionToUpgradeTo ) throws IOException
     {
 
-        if ( migrated )
-        {
-            // Delete any current count files in the store directory.
-            fileOperation( DELETE, fileSystem, directoryLayout, directoryLayout, COUNTS_STORE_FILES, true, null );
-            // Move the migrated ones into the store directory
-            fileOperation( MOVE, fileSystem, migrationLayout, directoryLayout, COUNTS_STORE_FILES, true,
-                    // allow to skip non existent source files
-                    ExistingTargetStrategy.OVERWRITE );
-            // We do not need to move files with the page cache, as the count files always reside on the normal file system.
-        }
+        if (!migrated) {
+			return;
+		}
+		// Delete any current count files in the store directory.
+		fileOperation( DELETE, fileSystem, directoryLayout, directoryLayout, COUNTS_STORE_FILES, true, null );
+		// Move the migrated ones into the store directory
+		fileOperation( MOVE, fileSystem, migrationLayout, directoryLayout, COUNTS_STORE_FILES, true,
+		        // allow to skip non existent source files
+		        ExistingTargetStrategy.OVERWRITE );
+		// We do not need to move files with the page cache, as the count files always reside on the normal file system.
     }
 
     @Override

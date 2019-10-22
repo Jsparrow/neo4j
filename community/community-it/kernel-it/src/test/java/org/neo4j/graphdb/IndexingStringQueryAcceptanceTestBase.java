@@ -52,7 +52,7 @@ public abstract class IndexingStringQueryAcceptanceTestBase
     private final boolean withIndex;
 
     private Label LABEL;
-    private String KEY = "name";
+    private String key = "name";
     private GraphDatabaseService db;
 
     IndexingStringQueryAcceptanceTestBase( String template, String[] matching,
@@ -70,20 +70,19 @@ public abstract class IndexingStringQueryAcceptanceTestBase
     {
         LABEL = Label.label( "LABEL1-" + testName.getMethodName() );
         db = dbRule.getGraphDatabaseAPI();
-        if ( withIndex )
-        {
-            try ( org.neo4j.graphdb.Transaction tx = db.beginTx() )
-            {
-                db.schema().indexFor( LABEL ).on( KEY ).create();
-                tx.success();
-            }
-
-            try ( org.neo4j.graphdb.Transaction tx = db.beginTx() )
-            {
-                db.schema().awaitIndexesOnline( 5, TimeUnit.MINUTES );
-                tx.success();
-            }
-        }
+        if (!withIndex) {
+			return;
+		}
+		try ( org.neo4j.graphdb.Transaction tx = db.beginTx() )
+		{
+		    db.schema().indexFor( LABEL ).on( key ).create();
+		    tx.success();
+		}
+		try ( org.neo4j.graphdb.Transaction tx = db.beginTx() )
+		{
+		    db.schema().awaitIndexesOnline( 5, TimeUnit.MINUTES );
+		    tx.success();
+		}
     }
 
     @Test
@@ -97,7 +96,7 @@ public abstract class IndexingStringQueryAcceptanceTestBase
         MutableLongSet found = new LongHashSet();
         try ( Transaction tx = db.beginTx() )
         {
-            collectNodes( found, db.findNodes( LABEL, KEY, template, searchMode ) );
+            collectNodes( found, db.findNodes( LABEL, key, template, searchMode ) );
         }
 
         // THEN
@@ -114,10 +113,10 @@ public abstract class IndexingStringQueryAcceptanceTestBase
         MutableLongSet found = new LongHashSet();
         try ( Transaction tx = db.beginTx() )
         {
-            expected.add( createNode( db, map( KEY, matching[2] ), LABEL ).getId() );
-            createNode( db, map( KEY, nonMatching[2] ), LABEL );
+            expected.add( createNode( db, map( key, matching[2] ), LABEL ).getId() );
+            createNode( db, map( key, nonMatching[2] ), LABEL );
 
-            collectNodes( found, db.findNodes( LABEL, KEY, template, searchMode ) );
+            collectNodes( found, db.findNodes( LABEL, key, template, searchMode ) );
         }
         // THEN
         assertThat( found, equalTo( expected ) );
@@ -142,7 +141,7 @@ public abstract class IndexingStringQueryAcceptanceTestBase
                 expected.remove( id );
             }
 
-            collectNodes( found, db.findNodes( LABEL, KEY, template, searchMode ) );
+            collectNodes( found, db.findNodes( LABEL, key, template, searchMode ) );
         }
         // THEN
         assertThat( found, equalTo( expected ) );
@@ -164,24 +163,57 @@ public abstract class IndexingStringQueryAcceptanceTestBase
             while ( toMatching.hasNext() )
             {
                 long id = toMatching.next();
-                db.getNodeById( id ).setProperty( KEY, matching[2] );
+                db.getNodeById( id ).setProperty( key, matching[2] );
                 expected.add( id );
             }
             LongIterator toNotMatching = toChangeToNotMatch.longIterator();
             while ( toNotMatching.hasNext() )
             {
                 long id = toNotMatching.next();
-                db.getNodeById( id ).setProperty( KEY, nonMatching[2] );
+                db.getNodeById( id ).setProperty( key, nonMatching[2] );
                 expected.remove( id );
             }
 
-            collectNodes( found, db.findNodes( LABEL, KEY, template, searchMode ) );
+            collectNodes( found, db.findNodes( LABEL, key, template, searchMode ) );
         }
         // THEN
         assertThat( found, equalTo( expected ) );
     }
 
-    public abstract static class EXACT extends IndexingStringQueryAcceptanceTestBase
+    private MutableLongSet createNodes( GraphDatabaseService db, Label label, String... propertyValues )
+    {
+        MutableLongSet expected = new LongHashSet();
+        try ( Transaction tx = db.beginTx() )
+        {
+            for ( String value : propertyValues )
+            {
+                expected.add( createNode( db, map( key, value ), label ).getId() );
+            }
+            tx.success();
+        }
+        return expected;
+    }
+
+	private void collectNodes( MutableLongSet bucket, ResourceIterator<Node> toCollect )
+    {
+        while ( toCollect.hasNext() )
+        {
+            bucket.add( toCollect.next().getId() );
+        }
+    }
+
+	private Node createNode( GraphDatabaseService beansAPI, Map<String, Object> properties, Label... labels )
+    {
+        try ( Transaction tx = beansAPI.beginTx() )
+        {
+            Node node = beansAPI.createNode( labels );
+            properties.entrySet().forEach(property -> node.setProperty(property.getKey(), property.getValue()));
+            tx.success();
+            return node;
+        }
+    }
+
+	public abstract static class EXACT extends IndexingStringQueryAcceptanceTestBase
     {
         static String[] matching = {"Johan", "Johan", "Johan"};
         static String[] nonMatching = {"Johanna", "Olivia", "InteJohan"};
@@ -286,42 +318,6 @@ public abstract class IndexingStringQueryAcceptanceTestBase
         public CONTAINS_WITHOUT_INDEX()
         {
             super( false );
-        }
-    }
-
-    private MutableLongSet createNodes( GraphDatabaseService db, Label label, String... propertyValues )
-    {
-        MutableLongSet expected = new LongHashSet();
-        try ( Transaction tx = db.beginTx() )
-        {
-            for ( String value : propertyValues )
-            {
-                expected.add( createNode( db, map( KEY, value ), label ).getId() );
-            }
-            tx.success();
-        }
-        return expected;
-    }
-
-    private void collectNodes( MutableLongSet bucket, ResourceIterator<Node> toCollect )
-    {
-        while ( toCollect.hasNext() )
-        {
-            bucket.add( toCollect.next().getId() );
-        }
-    }
-
-    private Node createNode( GraphDatabaseService beansAPI, Map<String, Object> properties, Label... labels )
-    {
-        try ( Transaction tx = beansAPI.beginTx() )
-        {
-            Node node = beansAPI.createNode( labels );
-            for ( Map.Entry<String,Object> property : properties.entrySet() )
-            {
-                node.setProperty( property.getKey(), property.getValue() );
-            }
-            tx.success();
-            return node;
         }
     }
 }

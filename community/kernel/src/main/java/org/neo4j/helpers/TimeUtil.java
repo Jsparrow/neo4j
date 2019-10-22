@@ -76,11 +76,16 @@ public final class TimeUtil
         case "h":
             return TimeUnit.HOURS.toMillis( amount );
         default:
-            throw new IllegalArgumentException( "Unrecognized unit '" + unit + "'. " + VALID_TIME_DESCRIPTION );
+            throw new IllegalArgumentException( new StringBuilder().append("Unrecognized unit '").append(unit).append("'. ").append(VALID_TIME_DESCRIPTION).toString() );
         }
     };
 
-    @Deprecated
+    private TimeUtil()
+    {
+        throw new AssertionError(); // no instances
+    }
+
+	@Deprecated
     public static String nanosToString( long nanos )
     {
         assert nanos >= 0;
@@ -128,10 +133,5 @@ public final class TimeUtil
             timeString.append( nanoSeconds ).append( "ns" );
         }
         return timeString.toString();
-    }
-
-    private TimeUtil()
-    {
-        throw new AssertionError(); // no instances
     }
 }

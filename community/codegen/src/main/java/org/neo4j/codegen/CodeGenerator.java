@@ -33,61 +33,61 @@ public abstract class CodeGenerator
     private long classes;
     private ByteCodeVisitor byteCodeVisitor = DO_NOTHING;
 
-    public static CodeGenerator generateCode( CodeGenerationStrategy<?> strategy, CodeGeneratorOption... options )
-            throws CodeGenerationNotSupportedException
-    {
-        return generateCode( Thread.currentThread().getContextClassLoader(), strategy, options );
-    }
-
-    public static CodeGenerator generateCode( ClassLoader loader, CodeGenerationStrategy<?> strategy, CodeGeneratorOption... options )
-            throws CodeGenerationNotSupportedException
-    {
-        return codeGenerator( requireNonNull( loader, "ClassLoader" ), strategy, options );
-    }
-
     public CodeGenerator( ClassLoader loader )
     {
         this.loader = new CodeLoader( loader );
     }
 
-    public ClassGenerator generateClass( String packageName, String name, Class<?> firstInterface, Class<?>... more )
+	public static CodeGenerator generateCode( CodeGenerationStrategy<?> strategy, CodeGeneratorOption... options )
+            throws CodeGenerationNotSupportedException
+    {
+        return generateCode( Thread.currentThread().getContextClassLoader(), strategy, options );
+    }
+
+	public static CodeGenerator generateCode( ClassLoader loader, CodeGenerationStrategy<?> strategy, CodeGeneratorOption... options )
+            throws CodeGenerationNotSupportedException
+    {
+        return codeGenerator( requireNonNull( loader, "ClassLoader" ), strategy, options );
+    }
+
+	public ClassGenerator generateClass( String packageName, String name, Class<?> firstInterface, Class<?>... more )
     {
         return generateClass( packageName, name, typeReferences( firstInterface, more ) );
     }
 
-    public ClassGenerator generateClass( Class<?> base, String packageName, String name, Class<?>... interfaces )
+	public ClassGenerator generateClass( Class<?> base, String packageName, String name, Class<?>... interfaces )
     {
         return generateClass( typeReference( base ), packageName, name, typeReferences( interfaces ) );
     }
 
-    public ClassGenerator generateClass( String packageName, String name, TypeReference... interfaces )
+	public ClassGenerator generateClass( String packageName, String name, TypeReference... interfaces )
     {
         return generateClass( OBJECT, packageName, name, interfaces );
     }
 
-    public ClassGenerator generateClass( TypeReference base, String packageName, String name,
+	public ClassGenerator generateClass( TypeReference base, String packageName, String name,
             TypeReference... interfaces )
     {
         return generateClass( makeHandle( packageName, name, base ), base, interfaces );
     }
 
-    private synchronized ClassHandle makeHandle( String packageName, String name, TypeReference parent )
+	private synchronized ClassHandle makeHandle( String packageName, String name, TypeReference parent )
     {
         classes++;
         return new ClassHandle( packageName, name, parent, this, generation );
     }
 
-    private ClassGenerator generateClass( ClassHandle handle, TypeReference base, TypeReference... interfaces )
+	private ClassGenerator generateClass( ClassHandle handle, TypeReference base, TypeReference... interfaces )
     {
         return new ClassGenerator( handle, generate( handle, base, interfaces ) );
     }
 
-    protected abstract ClassEmitter generate( TypeReference type, TypeReference base, TypeReference... interfaces );
+	protected abstract ClassEmitter generate( TypeReference type, TypeReference base, TypeReference... interfaces );
 
-    protected abstract Iterable<? extends ByteCodes> compile( ClassLoader classpathLoader )
+	protected abstract Iterable<? extends ByteCodes> compile( ClassLoader classpathLoader )
             throws CompilationFailureException;
 
-    synchronized Class<?> loadClass( String name, long generation ) throws CompilationFailureException
+	synchronized Class<?> loadClass( String name, long generation ) throws CompilationFailureException
     {
         if ( generation == this.generation )
         {
@@ -108,12 +108,12 @@ public abstract class CodeGenerator
         }
     }
 
-    synchronized void closeClass()
+	synchronized void closeClass()
     {
         classes--;
     }
 
-    void setByteCodeVisitor( ByteCodeVisitor visitor )
+	void setByteCodeVisitor( ByteCodeVisitor visitor )
     {
         this.byteCodeVisitor = visitor;
     }

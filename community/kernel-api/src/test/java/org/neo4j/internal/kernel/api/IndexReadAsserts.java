@@ -32,10 +32,10 @@ public class IndexReadAsserts
         uniqueIds.clear();
         for ( long count : expected )
         {
-            assertTrue( "at least " + expected.length + " nodes", node.next() );
+            assertTrue( new StringBuilder().append("at least ").append(expected.length).append(" nodes").toString(), node.next() );
             assertTrue( uniqueIds.add( node.nodeReference() ) );
         }
-        assertFalse( "no more than " + expected.length + " nodes", node.next() );
+        assertFalse( new StringBuilder().append("no more than ").append(expected.length).append(" nodes").toString(), node.next() );
         assertEquals( "all nodes are unique", expected.length, uniqueIds.size() );
         for ( long expectedNode : expected )
         {
@@ -48,19 +48,19 @@ public class IndexReadAsserts
         uniqueIds.clear();
         for ( int i = 0; i < expectedCount; i++ )
         {
-            assertTrue( "at least " + expectedCount + " nodes", node.next() );
+            assertTrue( new StringBuilder().append("at least ").append(expectedCount).append(" nodes").toString(), node.next() );
             assertTrue( uniqueIds.add( node.nodeReference() ) );
         }
-        assertFalse( "no more than " + expectedCount + " nodes", node.next() );
+        assertFalse( new StringBuilder().append("no more than ").append(expectedCount).append(" nodes").toString(), node.next() );
     }
 
     static void assertFoundRelationships( RelationshipIndexCursor edge, int edges, MutableLongSet uniqueIds )
     {
         for ( int i = 0; i < edges; i++ )
         {
-            assertTrue( "at least " + edges + " relationships", edge.next() );
+            assertTrue( new StringBuilder().append("at least ").append(edges).append(" relationships").toString(), edge.next() );
             assertTrue( uniqueIds.add( edge.relationshipReference() ) );
         }
-        assertFalse( "no more than " + edges + " relationships", edge.next() );
+        assertFalse( new StringBuilder().append("no more than ").append(edges).append(" relationships").toString(), edge.next() );
     }
 }

@@ -65,29 +65,37 @@ import static org.neo4j.storageengine.api.schema.IndexDescriptorFactory.forSchem
 
 public class LuceneIndexSamplerReleaseTaskControlUnderFusion
 {
-    @Rule
+    private static final int indexId = 1;
+
+	private static final StoreIndexDescriptor storeIndexDescriptor = forSchema( forLabel( 1, 1 ) ).withId( indexId );
+
+	private static final CapableIndexDescriptor capableIndexDescriptor = new CapableIndexDescriptor( storeIndexDescriptor, NO_CAPABILITY );
+
+	private static final IndexProviderDescriptor providerDescriptor = IndexProviderDescriptor.UNDECIDED;
+
+	private static final DirectoryFactory.InMemoryDirectoryFactory luceneDirectoryFactory = new DirectoryFactory.InMemoryDirectoryFactory();
+
+	private static final Config config = Config.defaults();
+
+	private static final IndexSamplingConfig samplingConfig = new IndexSamplingConfig( config );
+
+	private static final RuntimeException sampleException = new RuntimeException( "Killroy messed with your index sample." );
+
+	@Rule
     public FileSystemRule fs = new EphemeralFileSystemRule();
 
-    @Rule
+	@Rule
     public TestDirectory dir = TestDirectory.testDirectory( fs.get() );
 
-    private static final int indexId = 1;
-    private static final StoreIndexDescriptor storeIndexDescriptor = forSchema( forLabel( 1, 1 ) ).withId( indexId );
-    private static final CapableIndexDescriptor capableIndexDescriptor = new CapableIndexDescriptor( storeIndexDescriptor, NO_CAPABILITY );
-    private static final IndexProviderDescriptor providerDescriptor = IndexProviderDescriptor.UNDECIDED;
-    private static final DirectoryFactory.InMemoryDirectoryFactory luceneDirectoryFactory = new DirectoryFactory.InMemoryDirectoryFactory();
-    private static final Config config = Config.defaults();
-    private static final IndexSamplingConfig samplingConfig = new IndexSamplingConfig( config );
-    private static final RuntimeException sampleException = new RuntimeException( "Killroy messed with your index sample." );
-    private IndexDirectoryStructure.Factory directoryFactory;
+	private IndexDirectoryStructure.Factory directoryFactory;
 
-    @Before
+	@Before
     public void setup()
     {
         directoryFactory = defaultDirectoryStructure( dir.storeDir() );
     }
 
-    /**
+	/**
      * This test come from a support case where dropping an index would block forever after index sampling failed.
      * <p>
      * A fusion index has multiple {@link IndexSampler index samplers} that are called sequentially. If one fails, then the other will never be invoked.
@@ -128,7 +136,7 @@ public class LuceneIndexSamplerReleaseTaskControlUnderFusion
         }
     }
 
-    private void makeSureIndexHasSomeData( IndexProvider provider ) throws IOException, IndexEntryConflictException
+	private void makeSureIndexHasSomeData( IndexProvider provider ) throws IOException, IndexEntryConflictException
     {
         try ( IndexAccessor accessor = provider.getOnlineAccessor(storeIndexDescriptor, samplingConfig );
               IndexUpdater updater = accessor.newUpdater( IndexUpdateMode.ONLINE ) )
@@ -137,14 +145,14 @@ public class LuceneIndexSamplerReleaseTaskControlUnderFusion
         }
     }
 
-    private FusionIndexProvider createFusionProvider( LuceneIndexProvider luceneProvider, IndexProvider failingProvider )
+	private FusionIndexProvider createFusionProvider( LuceneIndexProvider luceneProvider, IndexProvider failingProvider )
     {
         SlotSelector slotSelector = SlotSelector.nullInstance;
         return new FusionIndexProvider( failingProvider, EMPTY, EMPTY, EMPTY, luceneProvider, slotSelector, providerDescriptor, directoryFactory, fs.get(),
                 false );
     }
 
-    private IndexSamplingJob createIndexSamplingJob( IndexAccessor fusionAccessor )
+	private IndexSamplingJob createIndexSamplingJob( IndexAccessor fusionAccessor )
     {
         IndexStoreView storeView = IndexStoreView.EMPTY;
         IndexProxyAdapter indexProxy = new IndexProxyAdapter()
@@ -166,12 +174,12 @@ public class LuceneIndexSamplerReleaseTaskControlUnderFusion
         return onlineIndexSamplingJobFactory.create( 1, indexProxy );
     }
 
-    private LuceneIndexProvider luceneProvider()
+	private LuceneIndexProvider luceneProvider()
     {
         return new LuceneIndexProvider( fs.get(), luceneDirectoryFactory, directoryFactory, IndexProvider.Monitor.EMPTY, config, OperationalMode.single );
     }
 
-    /**
+	/**
      * @return an {@link IndexProvider} that create an {@link IndexAccessor} that create an {@link IndexReader} that create an {@link IndexSampler} that
      * throws exception... yeah.
      */
@@ -187,7 +195,7 @@ public class LuceneIndexSamplerReleaseTaskControlUnderFusion
         };
     }
 
-    private IndexAccessor failingIndexAccessor()
+	private IndexAccessor failingIndexAccessor()
     {
         return new IndexAccessor.Adapter()
         {

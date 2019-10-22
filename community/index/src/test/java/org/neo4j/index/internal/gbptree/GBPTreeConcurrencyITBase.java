@@ -198,7 +198,90 @@ public abstract class GBPTreeConcurrencyITBase<KEY,VALUE>
         }
     }
 
-    private class TestCoordinator implements Supplier<ReaderInstruction>
+    private void write( TestCoordinator testCoordinator, CountDownLatch readerReadySignal,
+            CountDownLatch readerStartSignal,
+            AtomicBoolean endSignal, AtomicBoolean failHalt ) throws InterruptedException, IOException
+    {
+        assertTrue( readerReadySignal.await( 10, SECONDS ) ); // Ready, set...
+        readerStartSignal.countDown(); // GO!
+
+        while ( !failHalt.get() && !endSignal.get() )
+        {
+            writeOneIteration( testCoordinator, failHalt );
+            testCoordinator.iterationFinished();
+        }
+    }
+
+	private void writeOneIteration( TestCoordinator testCoordinator,
+            AtomicBoolean failHalt ) throws IOException, InterruptedException
+    {
+        int batchSize = testCoordinator.writeBatchSize();
+        Iterable<UpdateOperation> toWrite = testCoordinator.nextToWrite();
+        Iterator<UpdateOperation> toWriteIterator = toWrite.iterator();
+        while ( toWriteIterator.hasNext() )
+        {
+            try ( Writer<KEY,VALUE> writer = index.writer() )
+            {
+                int inBatch = 0;
+                while ( toWriteIterator.hasNext() && inBatch < batchSize )
+                {
+                    UpdateOperation operation = toWriteIterator.next();
+                    operation.apply( writer );
+                    if ( failHalt.get() )
+                    {
+                        break;
+                    }
+                    inBatch++;
+                }
+            }
+            // Sleep to allow checkpointer to step in
+            MILLISECONDS.sleep( 1 );
+        }
+    }
+
+	private Runnable checkpointThread( AtomicBoolean endSignal, AtomicReference<Throwable> readerError,
+            AtomicBoolean failHalt )
+    {
+        return () ->
+        {
+            while ( !endSignal.get() )
+            {
+                try
+                {
+                    index.checkpoint( IOLimiter.UNLIMITED );
+                    // Sleep a little in between checkpoints
+                    MILLISECONDS.sleep( 20L );
+                }
+                catch ( Throwable e )
+                {
+                    readerError.set( e );
+                    failHalt.set( true );
+                }
+            }
+        };
+    }
+
+	private KEY key( long seed )
+    {
+        return layout.key( seed );
+    }
+
+	private VALUE value( long seed )
+    {
+        return layout.value( seed );
+    }
+
+	private long keySeed( KEY key )
+    {
+        return layout.keySeed( key );
+    }
+
+	private long valueSeed( VALUE value )
+    {
+        return layout.valueSeed( value );
+    }
+
+	private class TestCoordinator implements Supplier<ReaderInstruction>
     {
         private final Random random;
 
@@ -255,8 +338,7 @@ public abstract class GBPTreeConcurrencyITBase<KEY,VALUE>
             List<Long> rangeOutOfOrder = shuffleToNewList( fullRange, random );
             try ( Writer<KEY,VALUE> writer = index.writer() )
             {
-                for ( Long key : rangeOutOfOrder )
-                {
+                rangeOutOfOrder.forEach(key -> {
                     boolean addForRemoval = random.nextDouble() > writePercentage;
                     if ( addForRemoval )
                     {
@@ -268,7 +350,7 @@ public abstract class GBPTreeConcurrencyITBase<KEY,VALUE>
                     {
                         toAdd.add( key );
                     }
-                }
+                });
             }
         }
 
@@ -435,47 +517,6 @@ public abstract class GBPTreeConcurrencyITBase<KEY,VALUE>
         }
     }
 
-    private void write( TestCoordinator testCoordinator, CountDownLatch readerReadySignal,
-            CountDownLatch readerStartSignal,
-            AtomicBoolean endSignal, AtomicBoolean failHalt ) throws InterruptedException, IOException
-    {
-        assertTrue( readerReadySignal.await( 10, SECONDS ) ); // Ready, set...
-        readerStartSignal.countDown(); // GO!
-
-        while ( !failHalt.get() && !endSignal.get() )
-        {
-            writeOneIteration( testCoordinator, failHalt );
-            testCoordinator.iterationFinished();
-        }
-    }
-
-    private void writeOneIteration( TestCoordinator testCoordinator,
-            AtomicBoolean failHalt ) throws IOException, InterruptedException
-    {
-        int batchSize = testCoordinator.writeBatchSize();
-        Iterable<UpdateOperation> toWrite = testCoordinator.nextToWrite();
-        Iterator<UpdateOperation> toWriteIterator = toWrite.iterator();
-        while ( toWriteIterator.hasNext() )
-        {
-            try ( Writer<KEY,VALUE> writer = index.writer() )
-            {
-                int inBatch = 0;
-                while ( toWriteIterator.hasNext() && inBatch < batchSize )
-                {
-                    UpdateOperation operation = toWriteIterator.next();
-                    operation.apply( writer );
-                    if ( failHalt.get() )
-                    {
-                        break;
-                    }
-                    inBatch++;
-                }
-            }
-            // Sleep to allow checkpointer to step in
-            MILLISECONDS.sleep( 1 );
-        }
-    }
-
     private class RunnableReader implements Runnable
     {
         private final CountDownLatch readerReadySignal;
@@ -575,28 +616,6 @@ public abstract class GBPTreeConcurrencyITBase<KEY,VALUE>
         }
     }
 
-    private Runnable checkpointThread( AtomicBoolean endSignal, AtomicReference<Throwable> readerError,
-            AtomicBoolean failHalt )
-    {
-        return () ->
-        {
-            while ( !endSignal.get() )
-            {
-                try
-                {
-                    index.checkpoint( IOLimiter.UNLIMITED );
-                    // Sleep a little in between checkpoints
-                    MILLISECONDS.sleep( 20L );
-                }
-                catch ( Throwable e )
-                {
-                    readerError.set( e );
-                    failHalt.set( true );
-                }
-            }
-        };
-    }
-
     private static class ReaderInstruction
     {
         private final long startRange;
@@ -624,25 +643,5 @@ public abstract class GBPTreeConcurrencyITBase<KEY,VALUE>
         {
             return expectToSee;
         }
-    }
-
-    private KEY key( long seed )
-    {
-        return layout.key( seed );
-    }
-
-    private VALUE value( long seed )
-    {
-        return layout.value( seed );
-    }
-
-    private long keySeed( KEY key )
-    {
-        return layout.keySeed( key );
-    }
-
-    private long valueSeed( VALUE value )
-    {
-        return layout.valueSeed( value );
     }
 }

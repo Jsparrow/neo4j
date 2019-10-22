@@ -26,14 +26,16 @@ import org.neo4j.storageengine.api.RelationshipVisitor;
 
 public interface RelationshipIterator extends RelationshipVisitor.Home, LongIterator
 {
-    /**
+    RelationshipIterator EMPTY = new Empty();
+
+	/**
      * Can be called to visit the data about the most recent id returned from {@link #next()}.
      */
     @Override
     <EXCEPTION extends Exception> boolean relationshipVisit( long relationshipId,
             RelationshipVisitor<EXCEPTION> visitor ) throws EXCEPTION;
 
-    class Empty extends PrimitiveLongCollections.PrimitiveLongBaseIterator implements RelationshipIterator
+	class Empty extends PrimitiveLongCollections.PrimitiveLongBaseIterator implements RelationshipIterator
     {
         @Override
         public <EXCEPTION extends Exception> boolean relationshipVisit( long relationshipId,
@@ -48,6 +50,4 @@ public interface RelationshipIterator extends RelationshipVisitor.Home, LongIter
             return false;
         }
     }
-
-    RelationshipIterator EMPTY = new Empty();
 }

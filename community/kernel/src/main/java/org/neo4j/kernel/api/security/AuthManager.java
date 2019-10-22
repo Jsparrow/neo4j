@@ -31,17 +31,6 @@ import org.neo4j.kernel.lifecycle.Lifecycle;
 public interface AuthManager extends Lifecycle
 {
     /**
-     * Log in using the provided authentication token
-     *
-     * NOTE: The authToken will be cleared of any credentials
-     *
-     * @param authToken The authentication token to login with. Typically contains principals and credentials.
-     * @return An AuthSubject representing the newly logged-in user
-     * @throws InvalidAuthTokenException if the authentication token is malformed
-     */
-    LoginContext login( Map<String,Object> authToken ) throws InvalidAuthTokenException;
-
-    /**
      * Implementation that does no authentication.
      */
     AuthManager NO_AUTH = new AuthManager()
@@ -73,4 +62,15 @@ public interface AuthManager extends Lifecycle
             return LoginContext.AUTH_DISABLED;
         }
     };
+
+	/**
+     * Log in using the provided authentication token
+     *
+     * NOTE: The authToken will be cleared of any credentials
+     *
+     * @param authToken The authentication token to login with. Typically contains principals and credentials.
+     * @return An AuthSubject representing the newly logged-in user
+     * @throws InvalidAuthTokenException if the authentication token is malformed
+     */
+    LoginContext login( Map<String,Object> authToken ) throws InvalidAuthTokenException;
 }

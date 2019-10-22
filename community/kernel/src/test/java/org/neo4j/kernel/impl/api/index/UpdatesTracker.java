@@ -122,16 +122,8 @@ public class UpdatesTracker
     @Override
     public String toString()
     {
-        return "UpdatesTracker{" +
-               "created=" + created +
-               ", deleted=" + deleted +
-               ", createdDuringPopulation=" + createdDuringPopulation +
-               ", updatedDuringPopulation=" + updatedDuringPopulation +
-               ", deletedDuringPopulation=" + deletedDuringPopulation +
-               ", createdAfterPopulation=" + createdAfterPopulation() +
-               ", updatedAfterPopulation=" + updatedAfterPopulation() +
-               ", deletedAfterPopulation=" + deletedAfterPopulation() +
-               ", populationCompleted=" + populationCompleted +
-               '}';
+        return new StringBuilder().append("UpdatesTracker{").append("created=").append(created).append(", deleted=").append(deleted).append(", createdDuringPopulation=").append(createdDuringPopulation)
+				.append(", updatedDuringPopulation=").append(updatedDuringPopulation).append(", deletedDuringPopulation=").append(deletedDuringPopulation).append(", createdAfterPopulation=").append(createdAfterPopulation()).append(", updatedAfterPopulation=")
+				.append(updatedAfterPopulation()).append(", deletedAfterPopulation=").append(deletedAfterPopulation()).append(", populationCompleted=").append(populationCompleted).append('}').toString();
     }
 }

@@ -145,31 +145,14 @@ public class SchemaProcedure
                                 }
                             }
 
-                            for ( VirtualNodeHack startNode : startNodes )
-                            {
-                                for ( VirtualNodeHack endNode : endNodes )
-                                {
-                                            addRelationship( startNode, endNode, relationshipTypeGetName, relationships );
-                                }
-                            }
+                            startNodes.forEach(startNode -> endNodes.forEach(endNode -> addRelationship(startNode, endNode, relationshipTypeGetName,
+									relationships)));
                         }
                     }
                 }
                 transaction.success();
                 return getGraphResult( nodes, relationships );
             }
-        }
-    }
-
-    public static class GraphResult
-    {
-        public final List<Node> nodes;
-        public final List<Relationship> relationships;
-
-        public GraphResult( List<Node> nodes, List<Relationship> relationships )
-        {
-            this.nodes = nodes;
-            this.relationships = relationships;
         }
     }
 
@@ -185,7 +168,7 @@ public class SchemaProcedure
         return node;
     }
 
-    private void addRelationship( VirtualNodeHack startNode, VirtualNodeHack endNode, String relType,
+	private void addRelationship( VirtualNodeHack startNode, VirtualNodeHack endNode, String relType,
             final Map<String,Set<VirtualRelationshipHack>> relationshipMap )
     {
         Set<VirtualRelationshipHack> relationshipsForType;
@@ -205,14 +188,11 @@ public class SchemaProcedure
         }
     }
 
-    private GraphResult getGraphResult( final Map<String,VirtualNodeHack> nodeMap,
+	private GraphResult getGraphResult( final Map<String,VirtualNodeHack> nodeMap,
             final Map<String,Set<VirtualRelationshipHack>> relationshipMap )
     {
         List<Relationship> relationships = new LinkedList<>();
-        for ( Set<VirtualRelationshipHack> relationship : relationshipMap.values() )
-        {
-            relationships.addAll( relationship );
-        }
+        relationshipMap.values().forEach(relationships::addAll);
 
         GraphResult graphResult;
         graphResult = new GraphResult( new ArrayList<>( nodeMap.values() ), relationships );
@@ -220,10 +200,22 @@ public class SchemaProcedure
         return graphResult;
     }
 
+	public static class GraphResult
+    {
+        public final List<Node> nodes;
+        public final List<Relationship> relationships;
+
+        public GraphResult( List<Node> nodes, List<Relationship> relationships )
+        {
+            this.nodes = nodes;
+            this.relationships = relationships;
+        }
+    }
+
     private static class VirtualRelationshipHack implements Relationship
     {
 
-        private static AtomicLong MIN_ID = new AtomicLong( -1 );
+        private static AtomicLong minId = new AtomicLong( -1 );
 
         private final long id;
         private final Node startNode;
@@ -232,7 +224,7 @@ public class SchemaProcedure
 
         VirtualRelationshipHack( final VirtualNodeHack startNode, final VirtualNodeHack endNode, final String type )
         {
-            this.id = MIN_ID.getAndDecrement();
+            this.id = minId.getAndDecrement();
             this.startNode = startNode;
             this.endNode = endNode;
             relationshipType = () -> type;
@@ -350,13 +342,15 @@ public class SchemaProcedure
     private static class VirtualNodeHack implements Node
     {
 
-        private final HashMap<String,Object> propertyMap = new HashMap<>();
-
         private static AtomicLong MIN_ID = new AtomicLong( -1 );
-        private final long id;
-        private final Label label;
 
-        VirtualNodeHack( final String label, Map<String,Object> properties )
+		private final HashMap<String,Object> propertyMap = new HashMap<>();
+
+		private final long id;
+
+		private final Label label;
+
+		VirtualNodeHack( final String label, Map<String,Object> properties )
         {
             this.id = MIN_ID.getAndDecrement();
             this.label = Label.label( label );
@@ -364,199 +358,199 @@ public class SchemaProcedure
             propertyMap.put( "name", label );
         }
 
-        @Override
+		@Override
         public long getId()
         {
             return id;
         }
 
-        @Override
+		@Override
         public Map<String,Object> getAllProperties()
         {
             return propertyMap;
         }
 
-        @Override
+		@Override
         public Iterable<Label> getLabels()
         {
             return Collections.singletonList( label );
         }
 
-        @Override
+		@Override
         public void delete()
         {
 
         }
 
-        @Override
+		@Override
         public Iterable<Relationship> getRelationships()
         {
             return null;
         }
 
-        @Override
+		@Override
         public boolean hasRelationship()
         {
             return false;
         }
 
-        @Override
+		@Override
         public Iterable<Relationship> getRelationships( RelationshipType... types )
         {
             return null;
         }
 
-        @Override
+		@Override
         public Iterable<Relationship> getRelationships( Direction direction, RelationshipType... types )
         {
             return null;
         }
 
-        @Override
+		@Override
         public Iterable<Relationship> getRelationships( RelationshipType type, Direction direction )
         {
             return null;
         }
 
-        @Override
+		@Override
         public Iterable<Relationship> getRelationships( Direction direction )
         {
             return null;
         }
 
-        @Override
+		@Override
         public boolean hasRelationship( RelationshipType... types )
         {
             return false;
         }
 
-        @Override
+		@Override
         public boolean hasRelationship( Direction direction, RelationshipType... types )
         {
             return false;
         }
 
-        @Override
+		@Override
         public boolean hasRelationship( RelationshipType type, Direction direction )
         {
             return false;
         }
 
-        @Override
+		@Override
         public boolean hasRelationship( Direction direction )
         {
             return false;
         }
 
-        @Override
+		@Override
         public Relationship getSingleRelationship( RelationshipType type, Direction dir )
         {
             return null;
         }
 
-        @Override
+		@Override
         public Relationship createRelationshipTo( Node otherNode, RelationshipType type )
         {
             return null;
         }
 
-        @Override
+		@Override
         public Iterable<RelationshipType> getRelationshipTypes()
         {
             return null;
         }
 
-        @Override
+		@Override
         public int getDegree()
         {
             return 0;
         }
 
-        @Override
+		@Override
         public int getDegree( RelationshipType type )
         {
             return 0;
         }
 
-        @Override
+		@Override
         public int getDegree( RelationshipType type, Direction direction )
         {
             return 0;
         }
 
-        @Override
+		@Override
         public int getDegree( Direction direction )
         {
             return 0;
         }
 
-        @Override
+		@Override
         public void addLabel( Label label )
         {
 
         }
 
-        @Override
+		@Override
         public void removeLabel( Label label )
         {
 
         }
 
-        @Override
+		@Override
         public boolean hasLabel( Label label )
         {
             return false;
         }
 
-        @Override
+		@Override
         public GraphDatabaseService getGraphDatabase()
         {
             return null;
         }
 
-        @Override
+		@Override
         public boolean hasProperty( String key )
         {
             return false;
         }
 
-        @Override
+		@Override
         public Object getProperty( String key )
         {
             return null;
         }
 
-        @Override
+		@Override
         public Object getProperty( String key, Object defaultValue )
         {
             return null;
         }
 
-        @Override
+		@Override
         public void setProperty( String key, Object value )
         {
 
         }
 
-        @Override
+		@Override
         public Object removeProperty( String key )
         {
             return null;
         }
 
-        @Override
+		@Override
         public Iterable<String> getPropertyKeys()
         {
             return null;
         }
 
-        @Override
+		@Override
         public Map<String,Object> getProperties( String... keys )
         {
             return null;
         }
 
-        @Override
+		@Override
         public String toString()
         {
             return String.format( "VirtualNodeHack[%s]", id );

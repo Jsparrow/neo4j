@@ -34,54 +34,13 @@ import static java.util.Collections.unmodifiableSet;
 
 public class TimeZones
 {
-    /**
-     * Prevent instance creation.
-     */
-    private TimeZones()
-    {
-    }
-
     private static final List<String> TIME_ZONE_SHORT_TO_STRING = new ArrayList<>( 1024 );
-    private static final Map<String,Short> TIME_ZONE_STRING_TO_SHORT = new HashMap<>( 1024 );
+	private static final Map<String,Short> TIME_ZONE_STRING_TO_SHORT = new HashMap<>( 1024 );
+	private static final long MIN_ZONE_OFFSET_SECONDS = -18 * 3600;
+	private static final long MAX_ZONE_OFFSET_SECONDS = 18 * 3600;
+	public static final String LATEST_SUPPORTED_IANA_VERSION;
 
-    private static final long MIN_ZONE_OFFSET_SECONDS = -18 * 3600;
-    private static final long MAX_ZONE_OFFSET_SECONDS = 18 * 3600;
-
-    public static boolean validZoneOffset( int zoneOffsetSeconds )
-    {
-        return zoneOffsetSeconds >= MIN_ZONE_OFFSET_SECONDS && zoneOffsetSeconds <= MAX_ZONE_OFFSET_SECONDS;
-    }
-
-    public static boolean validZoneId( short zoneId )
-    {
-        return zoneId >= 0 && zoneId < TIME_ZONE_SHORT_TO_STRING.size();
-    }
-
-    public static final String LATEST_SUPPORTED_IANA_VERSION;
-
-    /**
-     * @throws IllegalArgumentException if tzid is not in the file
-     */
-    public static short map( String tzid )
-    {
-        if ( !TIME_ZONE_STRING_TO_SHORT.containsKey( tzid ) )
-        {
-            throw new IllegalArgumentException( "tzid" );
-        }
-        return TIME_ZONE_STRING_TO_SHORT.get( tzid );
-    }
-
-    public static String map( short offset )
-    {
-        return TIME_ZONE_SHORT_TO_STRING.get( offset );
-    }
-
-    public static Set<String> supportedTimeZones()
-    {
-        return unmodifiableSet( TIME_ZONE_STRING_TO_SHORT.keySet() );
-    }
-
-    static
+	static
     {
         String latestVersion = "";
         Pattern version = Pattern.compile( "# tzdata([0-9]{4}[a-z])" );
@@ -125,12 +84,50 @@ public class TimeZones
             throw new RuntimeException( "Failed to read time zone id file." );
         }
 
-        for ( Map.Entry<String,String> entry : oldToNewName.entrySet() )
-        {
+        oldToNewName.entrySet().forEach(entry -> {
             String oldName = entry.getKey();
             String newName = entry.getValue();
             Short newNameId = TIME_ZONE_STRING_TO_SHORT.get( newName );
             TIME_ZONE_STRING_TO_SHORT.put( oldName, newNameId );
+        });
+    }
+
+	/**
+     * Prevent instance creation.
+     */
+    private TimeZones()
+    {
+    }
+
+	public static boolean validZoneOffset( int zoneOffsetSeconds )
+    {
+        return zoneOffsetSeconds >= MIN_ZONE_OFFSET_SECONDS && zoneOffsetSeconds <= MAX_ZONE_OFFSET_SECONDS;
+    }
+
+	public static boolean validZoneId( short zoneId )
+    {
+        return zoneId >= 0 && zoneId < TIME_ZONE_SHORT_TO_STRING.size();
+    }
+
+	/**
+     * @throws IllegalArgumentException if tzid is not in the file
+     */
+    public static short map( String tzid )
+    {
+        if ( !TIME_ZONE_STRING_TO_SHORT.containsKey( tzid ) )
+        {
+            throw new IllegalArgumentException( "tzid" );
         }
+        return TIME_ZONE_STRING_TO_SHORT.get( tzid );
+    }
+
+	public static String map( short offset )
+    {
+        return TIME_ZONE_SHORT_TO_STRING.get( offset );
+    }
+
+	public static Set<String> supportedTimeZones()
+    {
+        return unmodifiableSet( TIME_ZONE_STRING_TO_SHORT.keySet() );
     }
 }

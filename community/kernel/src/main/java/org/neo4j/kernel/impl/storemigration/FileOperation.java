@@ -48,14 +48,14 @@ public enum FileOperation
                 throws IOException
         {
             File fromFile = fromFile( fs, fromDirectory, fileName, skipNonExistentFromFile );
-            if ( fromFile != null )
-            {
-                File toFile = toFile( fs, toDirectory, fileName, existingTargetStrategy );
-                if ( toFile != null )
-                {
-                    fs.copyFile( fromFile, toFile );
-                }
-            }
+            if (fromFile == null) {
+				return;
+			}
+			File toFile = toFile( fs, toDirectory, fileName, existingTargetStrategy );
+			if ( toFile != null )
+			{
+			    fs.copyFile( fromFile, toFile );
+			}
         }
     },
     MOVE
@@ -76,13 +76,10 @@ public enum FileOperation
                 throws IOException
         {
             File fromFile = fromFile( fs, fromDirectory, fileName, skipNonExistentFromFile );
-            if ( fromFile != null )
-            {
-                if ( toFile( fs, toDirectory, fileName, existingTargetStrategy ) != null )
-                {
-                    fs.moveToDirectory( fromFile, toDirectory );
-                }
-            }
+            boolean condition = fromFile != null && toFile( fs, toDirectory, fileName, existingTargetStrategy ) != null;
+			if ( condition ) {
+			    fs.moveToDirectory( fromFile, toDirectory );
+			}
         }
     },
     DELETE

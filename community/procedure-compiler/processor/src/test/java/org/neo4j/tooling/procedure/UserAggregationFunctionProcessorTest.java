@@ -77,14 +77,10 @@ public class UserAggregationFunctionProcessorTest extends ExtensionTestBase
                         .withErrorCount( 2 );
 
         unsuccessfulCompilationClause
-                .withErrorContaining( "@UserAggregationUpdate usage error: expected aggregation type " +
-                "<org.neo4j.tooling.procedure.procedures.invalid.aggregation.FunctionWithoutAggregationMethods.MyAggregation> " +
-                "to define exactly 1 method with this annotation. Found none." )
+                .withErrorContaining( new StringBuilder().append("@UserAggregationUpdate usage error: expected aggregation type ").append("<org.neo4j.tooling.procedure.procedures.invalid.aggregation.FunctionWithoutAggregationMethods.MyAggregation> ").append("to define exactly 1 method with this annotation. Found none.").toString() )
                 .in( function ).onLine( 31 );
         unsuccessfulCompilationClause
-                .withErrorContaining( "@UserAggregationResult usage error: expected aggregation type " +
-                "<org.neo4j.tooling.procedure.procedures.invalid.aggregation.FunctionWithoutAggregationMethods.MyAggregation> " +
-                "to define exactly 1 method with this annotation. Found none." )
+                .withErrorContaining( new StringBuilder().append("@UserAggregationResult usage error: expected aggregation type ").append("<org.neo4j.tooling.procedure.procedures.invalid.aggregation.FunctionWithoutAggregationMethods.MyAggregation> ").append("to define exactly 1 method with this annotation. Found none.").toString() )
                 .in( function ).onLine( 31 );
     }
 

@@ -70,7 +70,7 @@ public class RelationshipGroupGetter
         RecordProxy<RelationshipGroupRecord, Integer> change = existingGroup.group();
         if ( change == null )
         {
-            assert node.isDense() : "Node " + node + " should have been dense at this point";
+            assert node.isDense() : new StringBuilder().append("Node ").append(node).append(" should have been dense at this point").toString();
             long id = idGenerator.nextId();
             change = relGroupRecords.create( id, type );
             RelationshipGroupRecord record = change.forChangingData();

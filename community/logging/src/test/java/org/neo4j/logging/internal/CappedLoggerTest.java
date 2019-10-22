@@ -43,13 +43,18 @@ import static org.neo4j.logging.AssertableLogProvider.inLog;
 public class CappedLoggerTest
 {
 
-    public interface LogMethod
+    private final String logName;
+	private final LogMethod logMethod;
+	private AssertableLogProvider logProvider;
+	private CappedLogger logger;
+
+	public CappedLoggerTest( String logName, LogMethod logMethod )
     {
-        void log( @Nonnull CappedLogger logger, @Nonnull String msg );
-        void log( @Nonnull CappedLogger logger, @Nonnull String msg, @Nonnull Throwable cause );
+        this.logName = logName;
+        this.logMethod = logMethod;
     }
 
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static Iterable<Object[]> parameters()
     {
         LogMethod debug = new LogMethod()
@@ -116,6 +121,352 @@ public class CappedLoggerTest
         );
     }
 
+	public String[] logLines( int lineCount )
+    {
+        return logLines( lineCount, 0 );
+    }
+
+	public String[] logLines( int lineCount, int startAt )
+    {
+        String[] lines = new String[lineCount];
+        for ( int i = 0; i < lineCount; i++ )
+        {
+            String msg = String.format( "### %04d ###", startAt + i );
+            lines[i] = msg;
+            logMethod.log( logger, msg );
+        }
+        return lines;
+    }
+
+	public void assertLoggedLines( String[] lines, int count )
+    {
+        assertLoggedLines( lines, count, 0 );
+    }
+
+	public void assertLoggedLines( String[] lines, int count, int skip )
+    {
+        Matcher<String>[] matchers = new Matcher[count];
+        int i;
+        for ( i = 0; i < skip; i++ )
+        {
+            matchers[i] = any( String.class );
+        }
+        for (; i < count; i++ )
+        {
+            String line = lines[i];
+            matchers[i] = containsString( line );
+        }
+
+        logProvider.rawMessageMatcher().assertContains( skip, matchers );
+    }
+
+	@Before
+    public void setUp()
+    {
+        logProvider = new AssertableLogProvider();
+        logger = new CappedLogger( logProvider.getLog( CappedLogger.class ) );
+    }
+
+	@Test( expected = IllegalArgumentException.class )
+    public void mustThrowIfDelegateIsNull()
+    {
+        new CappedLogger( null );
+    }
+
+	@Test
+    public void mustLogWithoutLimitConfiguration()
+    {
+        int lineCount = 1000;
+        String[] lines = logLines( lineCount );
+        assertLoggedLines( lines, lineCount );
+    }
+
+	@Test
+    public void mustLogExceptions()
+    {
+        logMethod.log( logger, "MESSAGE", new ArithmeticException( "EXCEPTION" ) );
+        AssertableLogProvider.MessageMatcher matcher = logProvider.internalToStringMessageMatcher();
+        matcher.assertContains( "MESSAGE" );
+        matcher.assertContains( "ArithmeticException" );
+        matcher.assertContains( "EXCEPTION" );
+    }
+
+	@Test( expected = IllegalArgumentException.class )
+    public void mustThrowOnSettingZeroCountLimit()
+    {
+        logger.setCountLimit( 0 );
+    }
+
+	@Test( expected = IllegalArgumentException.class )
+    public void mustThrowOnSettingNegativeCountLimit()
+    {
+        logger.setCountLimit( -1 );
+    }
+
+	@Test( expected = IllegalArgumentException.class )
+    public void mustThrowOnZeroTimeLimit()
+    {
+        logger.setTimeLimit( 0, MILLISECONDS, Clocks.systemClock() );
+    }
+
+	@Test( expected = IllegalArgumentException.class )
+    public void mustThrowOnNegativeTimeLimit()
+    {
+        logger.setTimeLimit( -1, MILLISECONDS, Clocks.systemClock() );
+    }
+
+	@Test( expected = IllegalArgumentException.class )
+    public void mustThrowOnNullTimeUnit()
+    {
+        logger.setTimeLimit( 10, null, Clocks.systemClock() );
+    }
+
+	@Test( expected = IllegalArgumentException.class )
+    public void mustThrowOnNullClock()
+    {
+        logger.setTimeLimit( 10, TimeUnit.MILLISECONDS, null );
+    }
+
+	@Test
+    public void mustAllowConfigurationChaining()
+    {
+        logger.setCountLimit( 1 )
+              .setTimeLimit( 10, MILLISECONDS, Clocks.systemClock() )
+              .setDuplicateFilterEnabled( true )
+              .unsetCountLimit()
+              .unsetTimeLimit()
+              .setCountLimit( 1 );
+    }
+
+	@Test
+    public void mustLimitByConfiguredCount()
+    {
+        int limit = 10;
+        logger.setCountLimit( limit );
+        String[] lines = logLines( limit + 1 );
+        assertLoggedLines( lines, limit );
+        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( lines[limit] ) ) );
+    }
+
+	@Test
+    public void mustLogAfterResetWithCountLimit()
+    {
+        int limit = 10;
+        logger.setCountLimit( limit );
+        String[] lines = logLines( limit + 1 );
+        logger.reset();
+        String[] moreLines = logLines( 1, limit + 1 );
+        assertLoggedLines( ArrayUtils.addAll( ArrayUtils.subarray( lines, 0, limit ), moreLines ), 1 + limit );
+        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( lines[limit] ) ) );
+        logProvider.rawMessageMatcher().assertContains( containsString( moreLines[0] ) );
+    }
+
+	@Test
+    public void unsettingCountLimitMustLetMessagesThrough()
+    {
+        int limit = 10;
+        logger.setCountLimit( limit );
+        String[] lines = logLines( limit + 1 );
+        logger.unsetCountLimit();
+        int moreLineCount = 1000;
+        String[] moreLines = logLines( moreLineCount, limit + 1 );
+        assertLoggedLines( ArrayUtils.addAll( ArrayUtils.subarray( lines, 0, limit ), moreLines ),
+                moreLineCount + limit );
+        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( lines[limit] ) ) );
+        assertLoggedLines( moreLines, moreLineCount, limit );
+    }
+
+	@Test
+    public void mustNotLogMessagesWithinConfiguredTimeLimit()
+    {
+        FakeClock clock = getDefaultFakeClock();
+        logger.setTimeLimit( 1, TimeUnit.MILLISECONDS, clock );
+        logMethod.log( logger, "### AAA ###" );
+        logMethod.log( logger, "### BBB ###" );
+        clock.forward( 1, TimeUnit.MILLISECONDS );
+        logMethod.log( logger, "### CCC ###" );
+
+        logProvider.rawMessageMatcher().assertContains( containsString( "### AAA ###" ) );
+        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### BBB ###" ) ) );
+        logProvider.rawMessageMatcher().assertContains( containsString( "### CCC ###" ) );
+    }
+
+	@Test
+    public void unsettingTimeLimitMustLetMessagesThrough()
+    {
+        FakeClock clock = getDefaultFakeClock();
+        logger.setTimeLimit( 1, TimeUnit.MILLISECONDS, clock );
+        logMethod.log( logger, "### AAA ###" );
+        logMethod.log( logger, "### BBB ###" );
+        clock.forward( 1, TimeUnit.MILLISECONDS );
+        logMethod.log( logger, "### CCC ###" );
+        logMethod.log( logger, "### DDD ###" );
+        logger.unsetTimeLimit(); // Note that we are not advancing the clock!
+        logMethod.log( logger, "### EEE ###" );
+
+        logProvider.rawMessageMatcher().assertContains( containsString( "### AAA ###" ) );
+        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### BBB ###" ) ) );
+        logProvider.rawMessageMatcher().assertContains( containsString( "### CCC ###" ) );
+        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### DDD ###" ) ) );
+        logProvider.rawMessageMatcher().assertContains( containsString( "### EEE ###" ) );
+    }
+
+	@Test
+    public void mustLogAfterResetWithTimeLimit()
+    {
+        FakeClock clock = getDefaultFakeClock();
+        logger.setTimeLimit( 1, TimeUnit.MILLISECONDS, clock );
+        logMethod.log( logger, "### AAA ###" );
+        logMethod.log( logger, "### BBB ###" );
+        logger.reset();
+        logMethod.log( logger, "### CCC ###" );
+
+        logProvider.rawMessageMatcher().assertContains( containsString( "### AAA ###" ) );
+        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### BBB ###" ) ) );
+        logProvider.rawMessageMatcher().assertContains( containsString( "### CCC ###" ) );
+    }
+
+	@Test
+    public void mustOnlyLogMessagesThatPassBothLimits()
+    {
+        FakeClock clock = getDefaultFakeClock();
+        logger.setCountLimit( 2 );
+        logger.setTimeLimit( 1, TimeUnit.MILLISECONDS, clock );
+        logMethod.log( logger, "### AAA ###" );
+        logMethod.log( logger, "### BBB ###" ); // Filtered by the time limit
+        clock.forward( 1, TimeUnit.MILLISECONDS );
+        logMethod.log( logger, "### CCC ###" ); // Filtered by the count limit
+        logger.reset();
+        logMethod.log( logger, "### DDD ###" );
+
+        logProvider.rawMessageMatcher().assertContains( containsString( "### AAA ###" ) );
+        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### BBB ###" ) ) );
+        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### CCC ###" ) ) );
+        logProvider.rawMessageMatcher().assertContains( containsString( "### DDD ###" ) );
+    }
+
+	@Test
+    public void mustFilterDuplicateMessageAndNullException()
+    {
+        logger.setDuplicateFilterEnabled( true );
+        logMethod.log( logger, "### AAA ###" );
+        logMethod.log( logger, "### AAA ###" ); // duplicate
+        logMethod.log( logger, "### BBB ###" );
+        String[] lines = new String[]{"### AAA ###", "### BBB ###"};
+        assertLoggedLines( lines, lines.length );
+    }
+
+	@Test
+    public void mustFilterDuplicateMessageAndException()
+    {
+        logger.setDuplicateFilterEnabled( true );
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "exc_aaa" ) );
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "exc_aaa" ) ); // duplicate
+        logMethod.log( logger, "### BBB ###", new ExceptionWithoutStackTrace( "exc_bbb" ) );
+
+        String[] messages = new String[]{"### AAA ###", "### BBB ###"};
+        assertLoggedLines( messages, messages.length );
+    }
+
+	@Test
+    public void mustLogSameMessageAndDifferentExceptionWithDuplicateLimit()
+    {
+        logger.setDuplicateFilterEnabled( true );
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "exc_aaa" ) );
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "exc_bbb" ) ); // Different message
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace2( "exc_bbb" ) ); // Different type
+
+        String[] messages = new String[]{"### AAA ###", "### AAA ###", "### AAA ###"};
+        assertLoggedLines( messages, messages.length );
+    }
+
+	@Test
+    public void mustLogSameMessageAndNonNullExceptionWithDuplicateLimit()
+    {
+        logger.setDuplicateFilterEnabled( true );
+        logMethod.log( logger, "### AAA ###" );
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( null ) ); // Different message
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace2( null ) ); // Different type
+
+        String[] messages = new String[]{"### AAA ###", "### AAA ###", "### AAA ###"};
+        assertLoggedLines( messages, messages.length );
+    }
+
+	@Test
+    public void mustFilterSameMessageAndExceptionWithNullMessage()
+    {
+        logger.setDuplicateFilterEnabled( true );
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( null ) );
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( null ) );
+        logMethod.log( logger, "### BBB ###" );
+
+        String[] messages = new String[]{"### AAA ###", "### BBB ###"};
+        assertLoggedLines( messages, messages.length );
+    }
+
+	@Test
+    public void mustLogDifferentMessageAndSameExceptionWithDuplicateLimit()
+    {
+        logger.setDuplicateFilterEnabled( true );
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "xyz" ) );
+        logMethod.log( logger, "### BBB ###", new ExceptionWithoutStackTrace( "xyz" ) );
+
+        String[] messages = new String[]{"### AAA ###", "### BBB ###"};
+        assertLoggedLines( messages, messages.length );
+    }
+
+	@Test
+    public void mustLogDifferentMessageAndDifferentExceptionWithDuplicateLimit()
+    {
+        logger.setDuplicateFilterEnabled( true );
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "foo" ) );
+        logMethod.log( logger, "### BBB ###", new ExceptionWithoutStackTrace( "bar" ) );
+
+        String[] messages = new String[]{"### AAA ###", "### BBB ###"};
+        assertLoggedLines( messages, messages.length );
+    }
+
+	@Test
+    public void mustLogSameMessageAndExceptionAfterResetWithDuplicateFilter()
+    {
+        logger.setDuplicateFilterEnabled( true );
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "xyz" ) );
+        logger.reset();
+        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "xyz" ) );
+
+        String[] messages = new String[]{"### AAA ###", "### AAA ###"};
+        assertLoggedLines( messages, messages.length );
+    }
+
+	private AssertableLogProvider.LogMatcher currentLog( AssertableLogProvider.LogMatcherBuilder logMatcherBuilder,
+            Matcher<String> stringMatcher )
+    {
+        switch ( logName )
+        {
+        case "debug":
+            return logMatcherBuilder.debug( stringMatcher );
+        case "info":
+            return logMatcherBuilder.info( stringMatcher );
+        case "warn":
+            return logMatcherBuilder.warn( stringMatcher );
+        case "error":
+            return logMatcherBuilder.error( stringMatcher );
+        default:
+            throw new RuntimeException( "Unknown log name" );
+        }
+    }
+
+	private FakeClock getDefaultFakeClock()
+    {
+        return Clocks.fakeClock( 1000, TimeUnit.MILLISECONDS );
+    }
+
+	public interface LogMethod
+    {
+        void log( @Nonnull CappedLogger logger, @Nonnull String msg );
+        void log( @Nonnull CappedLogger logger, @Nonnull String msg, @Nonnull Throwable cause );
+    }
+
     private static class ExceptionWithoutStackTrace extends Exception
     {
         ExceptionWithoutStackTrace( String message )
@@ -142,357 +493,5 @@ public class CappedLoggerTest
         {
             return this;
         }
-    }
-
-    private final String logName;
-    private final LogMethod logMethod;
-
-    private AssertableLogProvider logProvider;
-    private CappedLogger logger;
-
-    public CappedLoggerTest( String logName, LogMethod logMethod )
-    {
-        this.logName = logName;
-        this.logMethod = logMethod;
-    }
-
-    public String[] logLines( int lineCount )
-    {
-        return logLines( lineCount, 0 );
-    }
-
-    public String[] logLines( int lineCount, int startAt )
-    {
-        String[] lines = new String[lineCount];
-        for ( int i = 0; i < lineCount; i++ )
-        {
-            String msg = String.format( "### %04d ###", startAt + i );
-            lines[i] = msg;
-            logMethod.log( logger, msg );
-        }
-        return lines;
-    }
-
-    public void assertLoggedLines( String[] lines, int count )
-    {
-        assertLoggedLines( lines, count, 0 );
-    }
-
-    public void assertLoggedLines( String[] lines, int count, int skip )
-    {
-        Matcher<String>[] matchers = new Matcher[count];
-        int i;
-        for ( i = 0; i < skip; i++ )
-        {
-            matchers[i] = any( String.class );
-        }
-        for (; i < count; i++ )
-        {
-            String line = lines[i];
-            matchers[i] = containsString( line );
-        }
-
-        logProvider.rawMessageMatcher().assertContains( skip, matchers );
-    }
-
-    @Before
-    public void setUp()
-    {
-        logProvider = new AssertableLogProvider();
-        logger = new CappedLogger( logProvider.getLog( CappedLogger.class ) );
-    }
-
-    @Test( expected = IllegalArgumentException.class )
-    public void mustThrowIfDelegateIsNull()
-    {
-        new CappedLogger( null );
-    }
-
-    @Test
-    public void mustLogWithoutLimitConfiguration()
-    {
-        int lineCount = 1000;
-        String[] lines = logLines( lineCount );
-        assertLoggedLines( lines, lineCount );
-    }
-
-    @Test
-    public void mustLogExceptions()
-    {
-        logMethod.log( logger, "MESSAGE", new ArithmeticException( "EXCEPTION" ) );
-        AssertableLogProvider.MessageMatcher matcher = logProvider.internalToStringMessageMatcher();
-        matcher.assertContains( "MESSAGE" );
-        matcher.assertContains( "ArithmeticException" );
-        matcher.assertContains( "EXCEPTION" );
-    }
-
-    @Test( expected = IllegalArgumentException.class )
-    public void mustThrowOnSettingZeroCountLimit()
-    {
-        logger.setCountLimit( 0 );
-    }
-
-    @Test( expected = IllegalArgumentException.class )
-    public void mustThrowOnSettingNegativeCountLimit()
-    {
-        logger.setCountLimit( -1 );
-    }
-
-    @Test( expected = IllegalArgumentException.class )
-    public void mustThrowOnZeroTimeLimit()
-    {
-        logger.setTimeLimit( 0, MILLISECONDS, Clocks.systemClock() );
-    }
-
-    @Test( expected = IllegalArgumentException.class )
-    public void mustThrowOnNegativeTimeLimit()
-    {
-        logger.setTimeLimit( -1, MILLISECONDS, Clocks.systemClock() );
-    }
-
-    @Test( expected = IllegalArgumentException.class )
-    public void mustThrowOnNullTimeUnit()
-    {
-        logger.setTimeLimit( 10, null, Clocks.systemClock() );
-    }
-
-    @Test( expected = IllegalArgumentException.class )
-    public void mustThrowOnNullClock()
-    {
-        logger.setTimeLimit( 10, TimeUnit.MILLISECONDS, null );
-    }
-
-    @Test
-    public void mustAllowConfigurationChaining()
-    {
-        logger.setCountLimit( 1 )
-              .setTimeLimit( 10, MILLISECONDS, Clocks.systemClock() )
-              .setDuplicateFilterEnabled( true )
-              .unsetCountLimit()
-              .unsetTimeLimit()
-              .setCountLimit( 1 );
-    }
-
-    @Test
-    public void mustLimitByConfiguredCount()
-    {
-        int limit = 10;
-        logger.setCountLimit( limit );
-        String[] lines = logLines( limit + 1 );
-        assertLoggedLines( lines, limit );
-        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( lines[limit] ) ) );
-    }
-
-    @Test
-    public void mustLogAfterResetWithCountLimit()
-    {
-        int limit = 10;
-        logger.setCountLimit( limit );
-        String[] lines = logLines( limit + 1 );
-        logger.reset();
-        String[] moreLines = logLines( 1, limit + 1 );
-        assertLoggedLines( ArrayUtils.addAll( ArrayUtils.subarray( lines, 0, limit ), moreLines ), 1 + limit );
-        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( lines[limit] ) ) );
-        logProvider.rawMessageMatcher().assertContains( containsString( moreLines[0] ) );
-    }
-
-    @Test
-    public void unsettingCountLimitMustLetMessagesThrough()
-    {
-        int limit = 10;
-        logger.setCountLimit( limit );
-        String[] lines = logLines( limit + 1 );
-        logger.unsetCountLimit();
-        int moreLineCount = 1000;
-        String[] moreLines = logLines( moreLineCount, limit + 1 );
-        assertLoggedLines( ArrayUtils.addAll( ArrayUtils.subarray( lines, 0, limit ), moreLines ),
-                moreLineCount + limit );
-        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( lines[limit] ) ) );
-        assertLoggedLines( moreLines, moreLineCount, limit );
-    }
-
-    @Test
-    public void mustNotLogMessagesWithinConfiguredTimeLimit()
-    {
-        FakeClock clock = getDefaultFakeClock();
-        logger.setTimeLimit( 1, TimeUnit.MILLISECONDS, clock );
-        logMethod.log( logger, "### AAA ###" );
-        logMethod.log( logger, "### BBB ###" );
-        clock.forward( 1, TimeUnit.MILLISECONDS );
-        logMethod.log( logger, "### CCC ###" );
-
-        logProvider.rawMessageMatcher().assertContains( containsString( "### AAA ###" ) );
-        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### BBB ###" ) ) );
-        logProvider.rawMessageMatcher().assertContains( containsString( "### CCC ###" ) );
-    }
-
-    @Test
-    public void unsettingTimeLimitMustLetMessagesThrough()
-    {
-        FakeClock clock = getDefaultFakeClock();
-        logger.setTimeLimit( 1, TimeUnit.MILLISECONDS, clock );
-        logMethod.log( logger, "### AAA ###" );
-        logMethod.log( logger, "### BBB ###" );
-        clock.forward( 1, TimeUnit.MILLISECONDS );
-        logMethod.log( logger, "### CCC ###" );
-        logMethod.log( logger, "### DDD ###" );
-        logger.unsetTimeLimit(); // Note that we are not advancing the clock!
-        logMethod.log( logger, "### EEE ###" );
-
-        logProvider.rawMessageMatcher().assertContains( containsString( "### AAA ###" ) );
-        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### BBB ###" ) ) );
-        logProvider.rawMessageMatcher().assertContains( containsString( "### CCC ###" ) );
-        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### DDD ###" ) ) );
-        logProvider.rawMessageMatcher().assertContains( containsString( "### EEE ###" ) );
-    }
-
-    @Test
-    public void mustLogAfterResetWithTimeLimit()
-    {
-        FakeClock clock = getDefaultFakeClock();
-        logger.setTimeLimit( 1, TimeUnit.MILLISECONDS, clock );
-        logMethod.log( logger, "### AAA ###" );
-        logMethod.log( logger, "### BBB ###" );
-        logger.reset();
-        logMethod.log( logger, "### CCC ###" );
-
-        logProvider.rawMessageMatcher().assertContains( containsString( "### AAA ###" ) );
-        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### BBB ###" ) ) );
-        logProvider.rawMessageMatcher().assertContains( containsString( "### CCC ###" ) );
-    }
-
-    @Test
-    public void mustOnlyLogMessagesThatPassBothLimits()
-    {
-        FakeClock clock = getDefaultFakeClock();
-        logger.setCountLimit( 2 );
-        logger.setTimeLimit( 1, TimeUnit.MILLISECONDS, clock );
-        logMethod.log( logger, "### AAA ###" );
-        logMethod.log( logger, "### BBB ###" ); // Filtered by the time limit
-        clock.forward( 1, TimeUnit.MILLISECONDS );
-        logMethod.log( logger, "### CCC ###" ); // Filtered by the count limit
-        logger.reset();
-        logMethod.log( logger, "### DDD ###" );
-
-        logProvider.rawMessageMatcher().assertContains( containsString( "### AAA ###" ) );
-        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### BBB ###" ) ) );
-        logProvider.assertNone( currentLog( inLog( CappedLogger.class ), containsString( "### CCC ###" ) ) );
-        logProvider.rawMessageMatcher().assertContains( containsString( "### DDD ###" ) );
-    }
-
-    @Test
-    public void mustFilterDuplicateMessageAndNullException()
-    {
-        logger.setDuplicateFilterEnabled( true );
-        logMethod.log( logger, "### AAA ###" );
-        logMethod.log( logger, "### AAA ###" ); // duplicate
-        logMethod.log( logger, "### BBB ###" );
-        String[] lines = new String[]{"### AAA ###", "### BBB ###"};
-        assertLoggedLines( lines, lines.length );
-    }
-
-    @Test
-    public void mustFilterDuplicateMessageAndException()
-    {
-        logger.setDuplicateFilterEnabled( true );
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "exc_aaa" ) );
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "exc_aaa" ) ); // duplicate
-        logMethod.log( logger, "### BBB ###", new ExceptionWithoutStackTrace( "exc_bbb" ) );
-
-        String[] messages = new String[]{"### AAA ###", "### BBB ###"};
-        assertLoggedLines( messages, messages.length );
-    }
-
-    @Test
-    public void mustLogSameMessageAndDifferentExceptionWithDuplicateLimit()
-    {
-        logger.setDuplicateFilterEnabled( true );
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "exc_aaa" ) );
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "exc_bbb" ) ); // Different message
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace2( "exc_bbb" ) ); // Different type
-
-        String[] messages = new String[]{"### AAA ###", "### AAA ###", "### AAA ###"};
-        assertLoggedLines( messages, messages.length );
-    }
-
-    @Test
-    public void mustLogSameMessageAndNonNullExceptionWithDuplicateLimit()
-    {
-        logger.setDuplicateFilterEnabled( true );
-        logMethod.log( logger, "### AAA ###" );
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( null ) ); // Different message
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace2( null ) ); // Different type
-
-        String[] messages = new String[]{"### AAA ###", "### AAA ###", "### AAA ###"};
-        assertLoggedLines( messages, messages.length );
-    }
-
-    @Test
-    public void mustFilterSameMessageAndExceptionWithNullMessage()
-    {
-        logger.setDuplicateFilterEnabled( true );
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( null ) );
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( null ) );
-        logMethod.log( logger, "### BBB ###" );
-
-        String[] messages = new String[]{"### AAA ###", "### BBB ###"};
-        assertLoggedLines( messages, messages.length );
-    }
-
-    @Test
-    public void mustLogDifferentMessageAndSameExceptionWithDuplicateLimit()
-    {
-        logger.setDuplicateFilterEnabled( true );
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "xyz" ) );
-        logMethod.log( logger, "### BBB ###", new ExceptionWithoutStackTrace( "xyz" ) );
-
-        String[] messages = new String[]{"### AAA ###", "### BBB ###"};
-        assertLoggedLines( messages, messages.length );
-    }
-
-    @Test
-    public void mustLogDifferentMessageAndDifferentExceptionWithDuplicateLimit()
-    {
-        logger.setDuplicateFilterEnabled( true );
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "foo" ) );
-        logMethod.log( logger, "### BBB ###", new ExceptionWithoutStackTrace( "bar" ) );
-
-        String[] messages = new String[]{"### AAA ###", "### BBB ###"};
-        assertLoggedLines( messages, messages.length );
-    }
-
-    @Test
-    public void mustLogSameMessageAndExceptionAfterResetWithDuplicateFilter()
-    {
-        logger.setDuplicateFilterEnabled( true );
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "xyz" ) );
-        logger.reset();
-        logMethod.log( logger, "### AAA ###", new ExceptionWithoutStackTrace( "xyz" ) );
-
-        String[] messages = new String[]{"### AAA ###", "### AAA ###"};
-        assertLoggedLines( messages, messages.length );
-    }
-
-    private AssertableLogProvider.LogMatcher currentLog( AssertableLogProvider.LogMatcherBuilder logMatcherBuilder,
-            Matcher<String> stringMatcher )
-    {
-        switch ( logName )
-        {
-        case "debug":
-            return logMatcherBuilder.debug( stringMatcher );
-        case "info":
-            return logMatcherBuilder.info( stringMatcher );
-        case "warn":
-            return logMatcherBuilder.warn( stringMatcher );
-        case "error":
-            return logMatcherBuilder.error( stringMatcher );
-        default:
-            throw new RuntimeException( "Unknown log name" );
-        }
-    }
-
-    private FakeClock getDefaultFakeClock()
-    {
-        return Clocks.fakeClock( 1000, TimeUnit.MILLISECONDS );
     }
 }

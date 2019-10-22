@@ -104,7 +104,7 @@ public class TestOrderByTypeExpander extends TraversalTestBase
             for ( String name : names )
             {
                 Node node = itr.next();
-                assertEquals( "expected " + name + ", was " + node.getProperty( "name" ),
+                assertEquals( new StringBuilder().append("expected ").append(name).append(", was ").append(node.getProperty( "name" )).toString(),
                         getNodeWithName( name ), node );
             }
             assertFalse( itr.hasNext() );

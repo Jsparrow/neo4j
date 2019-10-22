@@ -43,10 +43,7 @@ public class KernelEventHandlers extends LifecycleAdapter
     @Override
     public void shutdown()
     {
-        for ( KernelEventHandler kernelEventHandler : kernelEventHandlers )
-        {
-            kernelEventHandler.beforeShutdown();
-        }
+        kernelEventHandlers.forEach(KernelEventHandler::beforeShutdown);
     }
 
     public KernelEventHandler registerKernelEventHandler( KernelEventHandler handler )
@@ -88,8 +85,7 @@ public class KernelEventHandlers extends LifecycleAdapter
 
     public void kernelPanic( ErrorState error, Throwable cause )
     {
-        for ( KernelEventHandler handler : kernelEventHandlers )
-        {
+        kernelEventHandlers.forEach(handler -> {
             try
             {
                 handler.kernelPanic( error );
@@ -102,6 +98,6 @@ public class KernelEventHandlers extends LifecycleAdapter
                 }
                 log.error( "FATAL: Error while handling kernel panic.", e );
             }
-        }
+        });
     }
 }

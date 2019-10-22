@@ -23,12 +23,12 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.neo4j.kernel.impl.store.kvstore.KeyValueMergerTest.Pair.pair;
+import java.util.Collections;
 
 public class KeyValueMergerTest
 {
@@ -42,7 +42,7 @@ public class KeyValueMergerTest
         List<Integer> data = extract( merger );
 
         // then
-        assertEquals( Arrays.<Integer>asList(), data );
+        assertEquals( Collections.<Integer>emptyList(), data );
     }
 
     @Test
@@ -138,12 +138,11 @@ public class KeyValueMergerTest
             @Override
             public boolean visit( WritableBuffer key, WritableBuffer value )
             {
-                if ( i < data.length )
-                {
-                    data[i++].visit( key, value );
-                    return true;
-                }
-                return false;
+                if (i >= data.length) {
+					return false;
+				}
+				data[i++].visit( key, value );
+				return true;
             }
 
             @Override
@@ -155,21 +154,21 @@ public class KeyValueMergerTest
 
     static class Pair
     {
-        static Pair pair( int key, int value )
-        {
-            return new Pair( key, value );
-        }
-
         final int key;
-        int value;
+		int value;
 
-        Pair( int key, int value )
+		Pair( int key, int value )
         {
             this.key = key;
             this.value = value;
         }
 
-        void visit( WritableBuffer key, WritableBuffer value )
+		static Pair pair( int key, int value )
+        {
+            return new Pair( key, value );
+        }
+
+		void visit( WritableBuffer key, WritableBuffer value )
         {
             key.putInt( 0, this.key );
             value.putInt( 0, this.value );

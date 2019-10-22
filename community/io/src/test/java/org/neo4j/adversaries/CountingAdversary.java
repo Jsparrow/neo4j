@@ -54,18 +54,18 @@ public class CountingAdversary extends AbstractAdversary
             reset();
         }
 
-        if ( newCount == 0 )
-        {
-            try
-            {
-                Thread.sleep( 10 );
-            }
-            catch ( InterruptedException e )
-            {
-                e.printStackTrace();
-            }
-            throwOneOf( failureTypes );
-        }
+        if (newCount != 0) {
+			return;
+		}
+		try
+		{
+		    Thread.sleep( 10 );
+		}
+		catch ( InterruptedException e )
+		{
+		    e.printStackTrace();
+		}
+		throwOneOf( failureTypes );
     }
 
     @Override

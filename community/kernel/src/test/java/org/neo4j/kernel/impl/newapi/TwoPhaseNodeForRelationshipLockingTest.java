@@ -49,12 +49,12 @@ import static org.neo4j.storageengine.api.lock.LockTracer.NONE;
 
 public class TwoPhaseNodeForRelationshipLockingTest
 {
-    private final Transaction transaction = mock( Transaction.class );
-    private final Locks.Client locks = mock( Locks.Client.class );
-    private final long nodeId = 42L;
-    private static int TYPE = 77;
+    private static int type = 77;
+	private final Transaction transaction = mock( Transaction.class );
+	private final Locks.Client locks = mock( Locks.Client.class );
+	private final long nodeId = 42L;
 
-    @Test
+	@Test
     public void shouldLockNodesInOrderAndConsumeTheRelationships() throws Throwable
     {
         // given
@@ -65,11 +65,11 @@ public class TwoPhaseNodeForRelationshipLockingTest
         returnRelationships(
                 transaction, false,
                 new TestRelationshipChain( nodeId ).outgoing( 21L, 43L, 0 )
-                        .incoming( 22L, 40L, TYPE )
-                        .outgoing( 23L, 41L, TYPE )
-                        .outgoing( 2L, 3L, TYPE )
-                        .incoming( 3L, 49L, TYPE )
-                        .outgoing( 50L, 41L, TYPE ) );
+                        .incoming( 22L, 40L, type )
+                        .outgoing( 23L, 41L, type )
+                        .outgoing( 2L, 3L, type )
+                        .incoming( 3L, 49L, type )
+                        .outgoing( 50L, 41L, type ) );
         InOrder inOrder = inOrder( locks );
 
         // when
@@ -80,7 +80,7 @@ public class TwoPhaseNodeForRelationshipLockingTest
         assertEquals( set( 21L, 22L, 23L, 2L, 3L, 50L ), collector.set );
     }
 
-    @Test
+	@Test
     public void shouldLockNodesInOrderAndConsumeTheRelationshipsAndRetryIfTheNewRelationshipsAreCreated()
             throws Throwable
     {
@@ -89,9 +89,9 @@ public class TwoPhaseNodeForRelationshipLockingTest
         TwoPhaseNodeForRelationshipLocking locking = new TwoPhaseNodeForRelationshipLocking( collector, locks, NONE );
 
         TestRelationshipChain chain = new TestRelationshipChain( nodeId )
-                .outgoing( 21L, 43L, TYPE )
-                .incoming( 22L, 40, TYPE )
-                .outgoing( 23L, 41L, TYPE );
+                .outgoing( 21L, 43L, type )
+                .incoming( 22L, 40, type )
+                .outgoing( 23L, 41L, type );
         returnRelationships( transaction, true, chain );
 
         InOrder inOrder = inOrder( locks );
@@ -108,7 +108,7 @@ public class TwoPhaseNodeForRelationshipLockingTest
         assertEquals( set( 21L, 22L, 23L ), collector.set );
     }
 
-    @Test
+	@Test
     public void lockNodeWithoutRelationships() throws Exception
     {
         Collector collector = new Collector();
@@ -121,7 +121,7 @@ public class TwoPhaseNodeForRelationshipLockingTest
         verifyNoMoreInteractions( locks );
     }
 
-    static void returnRelationships( Transaction transaction,
+	static void returnRelationships( Transaction transaction,
             final boolean skipFirst, final TestRelationshipChain relIds ) throws EntityNotFoundException
     {
 
@@ -141,7 +141,7 @@ public class TwoPhaseNodeForRelationshipLockingTest
         when( transaction.cursors() ).thenReturn( cursorFactory );
     }
 
-    private static class Collector implements ThrowingConsumer<Long,KernelException>
+	private static class Collector implements ThrowingConsumer<Long,KernelException>
     {
         public final Set<Long> set = new HashSet<>();
 

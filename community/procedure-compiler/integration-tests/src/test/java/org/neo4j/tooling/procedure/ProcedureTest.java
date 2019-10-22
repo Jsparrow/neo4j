@@ -55,7 +55,7 @@ public class ProcedureTest
                 Session session = driver.session() )
         {
 
-            StatementResult result = session.run( "CALL " + procedureNamespace + ".theAnswer()" );
+            StatementResult result = session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".theAnswer()").toString() );
 
             assertThat( result.single().get( "value" ).asLong() ).isEqualTo( 42L );
         }
@@ -68,17 +68,17 @@ public class ProcedureTest
                 Session session = driver.session() )
         {
 
-            session.run( "CALL " + procedureNamespace + ".simpleInput00()" );
-            session.run( "CALL " + procedureNamespace + ".simpleInput01('string')" );
-            session.run( "CALL " + procedureNamespace + ".simpleInput02(42)" );
-            session.run( "CALL " + procedureNamespace + ".simpleInput03(42)" );
-            session.run( "CALL " + procedureNamespace + ".simpleInput04(4.2)" );
-            session.run( "CALL " + procedureNamespace + ".simpleInput05(true)" );
-            session.run( "CALL " + procedureNamespace + ".simpleInput06(false)" );
-            session.run( "CALL " + procedureNamespace + ".simpleInput07({foo:'bar'})" );
-            session.run( "MATCH (n)            CALL " + procedureNamespace + ".simpleInput08(n) RETURN n" );
-            session.run( "MATCH p=(()-[r]->()) CALL " + procedureNamespace + ".simpleInput09(p) RETURN p" );
-            session.run( "MATCH ()-[r]->()     CALL " + procedureNamespace + ".simpleInput10(r) RETURN r" );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput00()").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput01('string')").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput02(42)").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput03(42)").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput04(4.2)").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput05(true)").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput06(false)").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput07({foo:'bar'})").toString() );
+            session.run( new StringBuilder().append("MATCH (n)            CALL ").append(procedureNamespace).append(".simpleInput08(n) RETURN n").toString() );
+            session.run( new StringBuilder().append("MATCH p=(()-[r]->()) CALL ").append(procedureNamespace).append(".simpleInput09(p) RETURN p").toString() );
+            session.run( new StringBuilder().append("MATCH ()-[r]->()     CALL ").append(procedureNamespace).append(".simpleInput10(r) RETURN r").toString() );
         }
     }
 
@@ -88,12 +88,12 @@ public class ProcedureTest
         try ( Driver driver = GraphDatabase.driver( graphDb.boltURI(), configuration() );
                 Session session = driver.session() )
         {
-            session.run( "CALL " + procedureNamespace + ".performsWrites()" );
-            session.run( "CALL " + procedureNamespace + ".defaultMode()" );
-            session.run( "CALL " + procedureNamespace + ".readMode()" );
-            session.run( "CALL " + procedureNamespace + ".writeMode()" );
-            session.run( "CALL " + procedureNamespace + ".schemaMode()" );
-            session.run( "CALL " + procedureNamespace + ".dbmsMode()" );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".performsWrites()").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".defaultMode()").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".readMode()").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".writeMode()").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".schemaMode()").toString() );
+            session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".dbmsMode()").toString() );
         }
     }
 
@@ -104,15 +104,15 @@ public class ProcedureTest
                 Session session = driver.session() )
         {
 
-            assertThat( session.run( "CALL " + procedureNamespace + ".simpleInput11('string') YIELD field04 AS p RETURN p" ).single() ).isNotNull();
-            assertThat( session.run( "CALL " + procedureNamespace + ".simpleInput12(42)" ).single() ).isNotNull();
-            assertThat( session.run( "CALL " + procedureNamespace + ".simpleInput13(42)" ).single() ).isNotNull();
-            assertThat( session.run( "CALL " + procedureNamespace + ".simpleInput14(4.2)" ).single() ).isNotNull();
-            assertThat( session.run( "CALL " + procedureNamespace + ".simpleInput15(true)" ).single() ).isNotNull();
-            assertThat( session.run( "CALL " + procedureNamespace + ".simpleInput16(false)" ).single() ).isNotNull();
-            assertThat( session.run( "CALL " + procedureNamespace + ".simpleInput17({foo:'bar'})" ).single() )
+            assertThat( session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput11('string') YIELD field04 AS p RETURN p").toString() ).single() ).isNotNull();
+            assertThat( session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput12(42)").toString() ).single() ).isNotNull();
+            assertThat( session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput13(42)").toString() ).single() ).isNotNull();
+            assertThat( session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput14(4.2)").toString() ).single() ).isNotNull();
+            assertThat( session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput15(true)").toString() ).single() ).isNotNull();
+            assertThat( session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput16(false)").toString() ).single() ).isNotNull();
+            assertThat( session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput17({foo:'bar'})").toString() ).single() )
                     .isNotNull();
-            assertThat( session.run( "CALL " + procedureNamespace + ".simpleInput21()" ).single() ).isNotNull();
+            assertThat( session.run( new StringBuilder().append("CALL ").append(procedureNamespace).append(".simpleInput21()").toString() ).single() ).isNotNull();
         }
 
     }

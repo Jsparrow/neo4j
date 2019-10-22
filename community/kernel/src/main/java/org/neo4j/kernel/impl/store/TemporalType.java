@@ -106,8 +106,7 @@ public enum TemporalType
                     }
                     else
                     {
-                        throw new InvalidRecordException( "Array with unexpected type. Actual:"
-                                + dataValue.getClass().getSimpleName() + ". Expected: LongArray." );
+                        throw new InvalidRecordException( new StringBuilder().append("Array with unexpected type. Actual:").append(dataValue.getClass().getSimpleName()).append(". Expected: LongArray.").toString() );
                     }
                 }
 
@@ -150,8 +149,7 @@ public enum TemporalType
                     }
                     else
                     {
-                        throw new InvalidRecordException( "Array with unexpected type. Actual:"
-                                + dataValue.getClass().getSimpleName() + ". Expected: LongArray." );
+                        throw new InvalidRecordException( new StringBuilder().append("Array with unexpected type. Actual:").append(dataValue.getClass().getSimpleName()).append(". Expected: LongArray.").toString() );
                     }
                 }
 
@@ -198,8 +196,7 @@ public enum TemporalType
                     }
                     else
                     {
-                        throw new InvalidRecordException( "Array with unexpected type. Actual:"
-                                + dataValue.getClass().getSimpleName() + ". Expected: LongArray." );
+                        throw new InvalidRecordException( new StringBuilder().append("Array with unexpected type. Actual:").append(dataValue.getClass().getSimpleName()).append(". Expected: LongArray.").toString() );
                     }
                 }
             },
@@ -238,8 +235,7 @@ public enum TemporalType
                     }
                     else
                     {
-                        throw new InvalidRecordException( "Array with unexpected type. Actual:"
-                                + dataValue.getClass().getSimpleName() + ". Expected: LongArray." );
+                        throw new InvalidRecordException( new StringBuilder().append("Array with unexpected type. Actual:").append(dataValue.getClass().getSimpleName()).append(". Expected: LongArray.").toString() );
                     }
                 }
             },
@@ -305,7 +301,7 @@ public enum TemporalType
                     else
                     {
                         throw new InvalidRecordException(
-                                "LocalTime array with unexpected type. Actual:" + dataValue.getClass().getSimpleName() + ". Expected: LongArray." );
+                                new StringBuilder().append("LocalTime array with unexpected type. Actual:").append(dataValue.getClass().getSimpleName()).append(". Expected: LongArray.").toString() );
                     }
                 }
 
@@ -349,7 +345,7 @@ public enum TemporalType
                 }
                 else
                 {
-                    throw new InvalidRecordException( "Array with unexpected type. Actual:" + dataValue.getClass().getSimpleName() + ". Expected: LongArray." );
+                    throw new InvalidRecordException( new StringBuilder().append("Array with unexpected type. Actual:").append(dataValue.getClass().getSimpleName()).append(". Expected: LongArray.").toString() );
                 }
             }
         };

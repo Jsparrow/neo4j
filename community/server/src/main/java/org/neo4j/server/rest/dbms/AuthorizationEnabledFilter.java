@@ -59,18 +59,56 @@ public class AuthorizationEnabledFilter extends AuthorizationFilter
 {
     private static final Pattern PASSWORD_CHANGE_WHITELIST = Pattern.compile( "/user/.*" );
 
-    private final Supplier<AuthManager> authManagerSupplier;
-    private final Log log;
-    private final Pattern[] uriWhitelist;
+	private static final ThrowingConsumer<HttpServletResponse, IOException> noHeader =
+            error(  401,
+                    map( "errors", singletonList( map(
+                            "code", Status.Security.Unauthorized.code().serialize(),
+                            "message", "No authentication header supplied." ) ) ) );
 
-    public AuthorizationEnabledFilter( Supplier<AuthManager> authManager, LogProvider logProvider, Pattern... uriWhitelist )
+	private static final ThrowingConsumer<HttpServletResponse, IOException> badHeader =
+            error(  400,
+                    map( "errors", singletonList( map(
+                            "code", Status.Request.InvalidFormat.code().serialize(),
+                            "message", "Invalid authentication header." ) ) ) );
+
+	private static final ThrowingConsumer<HttpServletResponse, IOException> invalidCredential =
+            error(  401,
+                    map( "errors", singletonList( map(
+                            "code", Status.Security.Unauthorized.code().serialize(),
+                            "message", "Invalid username or password." ) ) ) );
+
+	private static final ThrowingConsumer<HttpServletResponse, IOException> tooManyAttempts =
+            error(  429,
+                    map( "errors", singletonList( map(
+                            "code", Status.Security.AuthenticationRateLimit.code().serialize(),
+                            "message", "Too many failed authentication requests. Please wait 5 seconds and try again." ) ) ) );
+
+	private static final ThrowingConsumer<HttpServletResponse, IOException> authProviderFailed =
+            error(  502,
+                    map( "errors", singletonList( map(
+                            "code", Status.Security.AuthProviderFailed.code().serialize(),
+                            "message", "An auth provider request failed." ) ) ) );
+
+	private static final ThrowingConsumer<HttpServletResponse, IOException> authProviderTimeout =
+            error(  504,
+                    map( "errors", singletonList( map(
+                            "code", Status.Security.AuthProviderTimeout.code().serialize(),
+                            "message", "An auth provider request timed out." ) ) ) );
+
+	private final Supplier<AuthManager> authManagerSupplier;
+
+	private final Log log;
+
+	private final Pattern[] uriWhitelist;
+
+	public AuthorizationEnabledFilter( Supplier<AuthManager> authManager, LogProvider logProvider, Pattern... uriWhitelist )
     {
         this.authManagerSupplier = authManager;
         this.log = logProvider.getLog( getClass() );
         this.uriWhitelist = uriWhitelist;
     }
 
-    @Override
+	@Override
     public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain )
             throws IOException, ServletException
     {
@@ -86,7 +124,7 @@ public class AuthorizationEnabledFilter extends AuthorizationFilter
 
         final String path = request.getContextPath() + ( request.getPathInfo() == null ? "" : request.getPathInfo() );
 
-        if ( request.getMethod().equals( "OPTIONS" ) || whitelisted( path ) )
+        if ( "OPTIONS".equals( request.getMethod() ) || whitelisted( path ) )
         {
             // NOTE: If starting transactions with access mode on whitelisted uris should be possible we need to
             //       wrap servletRequest in an AuthorizedRequestWrapper here
@@ -159,50 +197,14 @@ public class AuthorizationEnabledFilter extends AuthorizationFilter
         }
     }
 
-    private LoginContext authenticate( String username, String password ) throws InvalidAuthTokenException
+	private LoginContext authenticate( String username, String password ) throws InvalidAuthTokenException
     {
         AuthManager authManager = authManagerSupplier.get();
         Map<String,Object> authToken = newBasicAuthToken( username, password != null ? UTF8.encode( password ) : null );
         return authManager.login( authToken );
     }
 
-    private static final ThrowingConsumer<HttpServletResponse, IOException> noHeader =
-            error(  401,
-                    map( "errors", singletonList( map(
-                            "code", Status.Security.Unauthorized.code().serialize(),
-                            "message", "No authentication header supplied." ) ) ) );
-
-    private static final ThrowingConsumer<HttpServletResponse, IOException> badHeader =
-            error(  400,
-                    map( "errors", singletonList( map(
-                            "code", Status.Request.InvalidFormat.code().serialize(),
-                            "message", "Invalid authentication header." ) ) ) );
-
-    private static final ThrowingConsumer<HttpServletResponse, IOException> invalidCredential =
-            error(  401,
-                    map( "errors", singletonList( map(
-                            "code", Status.Security.Unauthorized.code().serialize(),
-                            "message", "Invalid username or password." ) ) ) );
-
-    private static final ThrowingConsumer<HttpServletResponse, IOException> tooManyAttempts =
-            error(  429,
-                    map( "errors", singletonList( map(
-                            "code", Status.Security.AuthenticationRateLimit.code().serialize(),
-                            "message", "Too many failed authentication requests. Please wait 5 seconds and try again." ) ) ) );
-
-    private static final ThrowingConsumer<HttpServletResponse, IOException> authProviderFailed =
-            error(  502,
-                    map( "errors", singletonList( map(
-                            "code", Status.Security.AuthProviderFailed.code().serialize(),
-                            "message", "An auth provider request failed." ) ) ) );
-
-    private static final ThrowingConsumer<HttpServletResponse, IOException> authProviderTimeout =
-            error(  504,
-                    map( "errors", singletonList( map(
-                            "code", Status.Security.AuthProviderTimeout.code().serialize(),
-                            "message", "An auth provider request timed out." ) ) ) );
-
-    private static ThrowingConsumer<HttpServletResponse, IOException> invalidAuthToken( final String message )
+	private static ThrowingConsumer<HttpServletResponse, IOException> invalidAuthToken( final String message )
     {
         return error( 401,
                 map( "errors", singletonList( map(
@@ -210,7 +212,7 @@ public class AuthorizationEnabledFilter extends AuthorizationFilter
                         "message", message ) ) ) );
     }
 
-    private static ThrowingConsumer<HttpServletResponse, IOException> passwordChangeRequired( final String username, final String baseURL )
+	private static ThrowingConsumer<HttpServletResponse, IOException> passwordChangeRequired( final String username, final String baseURL )
     {
         URI path = UriBuilder.fromUri( baseURL ).path( format( "/user/%s/password", username ) ).build();
         return error( 403,
@@ -219,7 +221,7 @@ public class AuthorizationEnabledFilter extends AuthorizationFilter
                         "message", "User is required to change their password." ) ), "password_change", path.toString() ) );
     }
 
-    /**
+	/**
      * In order to avoid browsers popping up an auth box when using the Neo4j Browser, it sends us a special header.
      * When we get that special header, we send a crippled authentication challenge back that the browser does not
      * understand, which lets the Neo4j Browser handle auth on its own.
@@ -248,7 +250,7 @@ public class AuthorizationEnabledFilter extends AuthorizationFilter
         }
     }
 
-    private String baseURL( HttpServletRequest request )
+	private String baseURL( HttpServletRequest request )
     {
         StringBuffer url = request.getRequestURL();
         String baseURL = url.substring( 0, url.length() - request.getRequestURI().length() ) + "/";
@@ -259,7 +261,7 @@ public class AuthorizationEnabledFilter extends AuthorizationFilter
                 request.getHeader( X_FORWARD_PROTO_HEADER_KEY ) );
     }
 
-    private boolean whitelisted( String path )
+	private boolean whitelisted( String path )
     {
         for ( Pattern pattern : uriWhitelist )
         {
@@ -271,7 +273,7 @@ public class AuthorizationEnabledFilter extends AuthorizationFilter
         return false;
     }
 
-    private String[] extractCredential( String header )
+	private String[] extractCredential( String header )
     {
         if ( header == null )
         {

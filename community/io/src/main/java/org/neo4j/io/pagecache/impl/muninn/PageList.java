@@ -294,11 +294,11 @@ class PageList
 
     void initBuffer( long pageRef )
     {
-        if ( getAddress( pageRef ) == 0L )
-        {
-            long addr = memoryAllocator.allocateAligned( getCachePageSize(), bufferAlignment );
-            UnsafeUtil.putLong( offAddress( pageRef ), addr );
-        }
+        if (getAddress( pageRef ) != 0L) {
+			return;
+		}
+		long addr = memoryAllocator.allocateAligned( getCachePageSize(), bufferAlignment );
+		UnsafeUtil.putLong( offAddress( pageRef ), addr );
     }
 
     private byte getUsageCounter( long pageRef )
@@ -315,16 +315,17 @@ class PageList
         long address = offPageBinding( pageRef );
         long value = UnsafeUtil.getLongVolatile( address );
         long usage = value & MASK_USAGE_COUNT;
-        if ( usage < MAX_USAGE_COUNT ) // avoid cache sloshing by not doing a write if counter is already maxed out
-        {
-            long update = value + 1;
-            // Use compareAndSwapLong to only actually store the updated count if nothing else changed
-            // in this word-line. The word-line is shared with the file page id, and the swapper id.
-            // Those fields are updated under guard of the exclusive lock, but we *might* race with
-            // that here, and in that case we would never want a usage counter update to clobber a page
-            // binding update.
-            UnsafeUtil.compareAndSwapLong( null, address, value, update );
-        }
+        // avoid cache sloshing by not doing a write if counter is already maxed out
+		if (usage >= MAX_USAGE_COUNT) {
+			return;
+		}
+		long update = value + 1;
+		// Use compareAndSwapLong to only actually store the updated count if nothing else changed
+		// in this word-line. The word-line is shared with the file page id, and the swapper id.
+		// Those fields are updated under guard of the exclusive lock, but we *might* race with
+		// that here, and in that case we would never want a usage counter update to clobber a page
+		// binding update.
+		UnsafeUtil.compareAndSwapLong( null, address, value, update );
     }
 
     /**
@@ -447,9 +448,7 @@ class PageList
                                                                long currentFilePageId )
     {
         String msg = format(
-                "Cannot fault page {filePageId = %s, swapper = %s (swapper id = %s)} into " +
-                "cache page %s. Already bound to {filePageId = " +
-                "%s, swapper id = %s}.",
+                new StringBuilder().append("Cannot fault page {filePageId = %s, swapper = %s (swapper id = %s)} into ").append("cache page %s. Already bound to {filePageId = ").append("%s, swapper id = %s}.").toString(),
                 filePageId, swapper, swapperId, pageRef, currentFilePageId, currentSwapper );
         return new IllegalStateException( msg );
     }

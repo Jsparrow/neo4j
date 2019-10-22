@@ -23,17 +23,17 @@ import java.net.URI;
 
 public abstract class MappingRepresentation extends Representation
 {
-    MappingRepresentation( RepresentationType type )
-    {
-        super( type );
-    }
-
     public MappingRepresentation( String type )
     {
         super( type );
     }
 
-    @Override
+	MappingRepresentation( RepresentationType type )
+    {
+        super( type );
+    }
+
+	@Override
     String serialize( RepresentationFormat format, URI baseUri, ExtensionInjector extensions )
     {
         MappingWriter writer = format.serializeMapping( type );
@@ -43,15 +43,15 @@ public abstract class MappingRepresentation extends Representation
         return format.complete( writer );
     }
 
-    protected abstract void serialize( MappingSerializer serializer );
+	protected abstract void serialize( MappingSerializer serializer );
 
-    @Override
+	@Override
     void addTo( ListSerializer serializer )
     {
         serializer.addMapping( this );
     }
 
-    @Override
+	@Override
     void putTo( MappingSerializer serializer, String key )
     {
         serializer.putMapping( key, this );

@@ -55,38 +55,41 @@ import static org.neo4j.graphdb.Label.label;
 @RunWith( Parameterized.class )
 public class UniqueIndexRecoveryTest
 {
-    @Rule
+    private static final String PROPERTY_KEY = "key";
+
+	private static final String PROPERTY_VALUE = "value";
+
+	private static final Label LABEL = label( "label" );
+
+	@Rule
     public final TestDirectory storeDir = TestDirectory.testDirectory();
 
-    private static final String PROPERTY_KEY = "key";
-    private static final String PROPERTY_VALUE = "value";
-    private static final Label LABEL = label( "label" );
+	private final TestGraphDatabaseFactory factory = new TestGraphDatabaseFactory();
 
-    private final TestGraphDatabaseFactory factory = new TestGraphDatabaseFactory();
-    private GraphDatabaseAPI db;
+	private GraphDatabaseAPI db;
 
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameter
+    public SchemaIndex schemaIndex;
+
+	@Parameterized.Parameters( name = "{0}" )
     public static SchemaIndex[] parameters()
     {
         return SchemaIndex.values();
     }
 
-    @Parameterized.Parameter
-    public SchemaIndex schemaIndex;
-
-    @Before
+	@Before
     public void before()
     {
         db = (GraphDatabaseAPI) newDb();
     }
 
-    @After
+	@After
     public void after()
     {
         db.shutdown();
     }
 
-    @Test
+	@Test
     public void shouldRecoverCreationOfUniquenessConstraintFollowedByDeletionOfThatSameConstraint() throws Exception
     {
         // given
@@ -94,7 +97,7 @@ public class UniqueIndexRecoveryTest
         dropConstraints();
 
         // when - perform recovery
-        restart( snapshot( storeDir.absolutePath() ) );
+        restart( );
 
         // then - just make sure the constraint is gone
         try ( Transaction tx = db.beginTx() )
@@ -104,7 +107,7 @@ public class UniqueIndexRecoveryTest
         }
     }
 
-    @Test
+	@Test
     public void shouldRecoverWhenCommandsTemporarilyViolateConstraints() throws Exception
     {
         // GIVEN
@@ -118,7 +121,7 @@ public class UniqueIndexRecoveryTest
         flushAll(); // persist - recovery will do everything since last log rotate
 
         // WHEN recovery is triggered
-        restart( snapshot( storeDir.absolutePath() ) );
+        restart( );
 
         // THEN
         // it should just not blow up!
@@ -131,19 +134,19 @@ public class UniqueIndexRecoveryTest
         }
     }
 
-    private void restart( File newStore )
+	private void restart( )
     {
         db.shutdown();
         db = (GraphDatabaseAPI) newDb();
     }
 
-    private GraphDatabaseService newDb()
+	private GraphDatabaseService newDb()
     {
         return factory.newEmbeddedDatabaseBuilder( storeDir.absolutePath() ).setConfig( GraphDatabaseSettings.default_schema_provider,
                 schemaIndex.providerName() ).newGraphDatabase();
     }
 
-    private static File snapshot( final File path ) throws IOException
+	private static File snapshot( final File path ) throws IOException
     {
         File snapshotDir = new File( path, "snapshot-" + new Random().nextInt() );
         FileUtils.copyRecursively( path, snapshotDir, pathName ->
@@ -155,7 +158,7 @@ public class UniqueIndexRecoveryTest
         return snapshotDir;
     }
 
-    private void addLabelToUnLabeledNode( Node unLabeledNode )
+	private void addLabelToUnLabeledNode( Node unLabeledNode )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -164,7 +167,7 @@ public class UniqueIndexRecoveryTest
         }
     }
 
-    private void setPropertyOnLabeledNode( Node labeledNode )
+	private void setPropertyOnLabeledNode( Node labeledNode )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -173,7 +176,7 @@ public class UniqueIndexRecoveryTest
         }
     }
 
-    private void deletePropertyOnLabeledNode( Node labeledNode )
+	private void deletePropertyOnLabeledNode( Node labeledNode )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -182,7 +185,7 @@ public class UniqueIndexRecoveryTest
         }
     }
 
-    private void createUniqueConstraint()
+	private void createUniqueConstraint()
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -191,7 +194,7 @@ public class UniqueIndexRecoveryTest
         }
     }
 
-    private Node createLabeledNode()
+	private Node createLabeledNode()
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -201,7 +204,7 @@ public class UniqueIndexRecoveryTest
         }
     }
 
-    private Node createUnLabeledNodeWithProperty()
+	private Node createUnLabeledNodeWithProperty()
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -212,7 +215,7 @@ public class UniqueIndexRecoveryTest
         }
     }
 
-    private void dropConstraints()
+	private void dropConstraints()
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -224,7 +227,7 @@ public class UniqueIndexRecoveryTest
         }
     }
 
-    private void rotateLogAndCheckPoint() throws IOException
+	private void rotateLogAndCheckPoint() throws IOException
     {
         db.getDependencyResolver().resolveDependency( LogRotation.class ).rotateLogFile();
         db.getDependencyResolver().resolveDependency( CheckPointer.class ).forceCheckPoint(
@@ -232,7 +235,7 @@ public class UniqueIndexRecoveryTest
         );
     }
 
-    private void flushAll()
+	private void flushAll()
     {
         db.getDependencyResolver().resolveDependency( StorageEngine.class ).flushAndForce( IOLimiter.UNLIMITED );
     }

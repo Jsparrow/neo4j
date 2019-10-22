@@ -49,7 +49,20 @@ import org.neo4j.storageengine.api.lock.WaitStrategy;
 public interface Locks
 {
 
-    /** For introspection and debugging. */
+    /**
+     * A client is able to grab and release locks, and compete with other clients for them. This can be re-used until
+     * you call {@link Locks.Client#close()}.
+     *
+     * @throws IllegalStateException if this instance has been closed, i.e has had {@link #close()} called.
+     */
+    Client newClient();
+
+	/** Visit all held locks. */
+    void accept( Visitor visitor );
+
+	void close();
+
+	/** For introspection and debugging. */
     interface Visitor
     {
         /** Visit the description of a lock held by at least one client. */
@@ -72,10 +85,10 @@ public interface Locks
          * @param resourceType type or resource(s) to lock.
          * @param resourceIds id(s) of resources to lock. Multiple ids should be ordered consistently by all callers
          */
-        void acquireShared( LockTracer tracer, ResourceType resourceType, long... resourceIds ) throws AcquireLockTimeoutException;
+        void acquireShared( LockTracer tracer, ResourceType resourceType, long... resourceIds );
 
         @Override
-        void acquireExclusive( LockTracer tracer, ResourceType resourceType, long... resourceIds ) throws AcquireLockTimeoutException;
+        void acquireExclusive( LockTracer tracer, ResourceType resourceType, long... resourceIds );
 
         /** Try grabbing exclusive lock, not waiting and returning a boolean indicating if we got the lock. */
         boolean tryExclusiveLock( ResourceType resourceType, long resourceId );
@@ -123,17 +136,4 @@ public interface Locks
 
         long activeLockCount();
     }
-
-    /**
-     * A client is able to grab and release locks, and compete with other clients for them. This can be re-used until
-     * you call {@link Locks.Client#close()}.
-     *
-     * @throws IllegalStateException if this instance has been closed, i.e has had {@link #close()} called.
-     */
-    Client newClient();
-
-    /** Visit all held locks. */
-    void accept( Visitor visitor );
-
-    void close();
 }

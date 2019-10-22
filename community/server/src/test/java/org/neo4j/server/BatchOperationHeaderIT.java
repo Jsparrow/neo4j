@@ -74,7 +74,7 @@ public class BatchOperationHeaderIT extends ExclusiveServerTestBase
                 .array()
                 .object()
                 .key( "method" ).value( "GET" )
-                .key( "to" ).value( "../.." + DUMMY_WEB_SERVICE_MOUNT_POINT + "/needs-auth-header" )
+                .key( "to" ).value( new StringBuilder().append("../..").append(DUMMY_WEB_SERVICE_MOUNT_POINT).append("/needs-auth-header").toString() )
                 .key( "body" ).object().endObject()
                 .endObject()
                 .endArray()

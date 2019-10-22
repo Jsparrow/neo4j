@@ -21,17 +21,6 @@ package org.neo4j.storageengine.api.lock;
 
 public interface LockTracer
 {
-    LockWaitEvent waitForLock( boolean exclusive, ResourceType resourceType, long... resourceIds );
-
-    default LockTracer combine( LockTracer tracer )
-    {
-        if ( tracer == NONE )
-        {
-            return this;
-        }
-        return new CombinedTracer( this, tracer );
-    }
-
     LockTracer NONE = new LockTracer()
     {
         @Override
@@ -46,4 +35,15 @@ public interface LockTracer
             return tracer;
         }
     };
+
+	LockWaitEvent waitForLock( boolean exclusive, ResourceType resourceType, long... resourceIds );
+
+	default LockTracer combine( LockTracer tracer )
+    {
+        if ( tracer == NONE )
+        {
+            return this;
+        }
+        return new CombinedTracer( this, tracer );
+    }
 }

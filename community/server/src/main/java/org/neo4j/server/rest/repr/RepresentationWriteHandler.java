@@ -21,12 +21,6 @@ package org.neo4j.server.rest.repr;
 
 public interface RepresentationWriteHandler
 {
-    void onRepresentationStartWriting();
-
-    void onRepresentationWritten();
-
-    void onRepresentationFinal();
-
     RepresentationWriteHandler DO_NOTHING = new RepresentationWriteHandler()
     {
         @Override
@@ -47,4 +41,10 @@ public interface RepresentationWriteHandler
             // do nothing
         }
     };
+
+	void onRepresentationStartWriting();
+
+	void onRepresentationWritten();
+
+	void onRepresentationFinal();
 }

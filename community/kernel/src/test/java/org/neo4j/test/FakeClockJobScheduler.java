@@ -42,7 +42,6 @@ public class FakeClockJobScheduler extends FakeClock implements JobScheduler
 
     public FakeClockJobScheduler()
     {
-        super();
     }
 
     private JobHandle schedule( Runnable job, long firstDeadline )
@@ -203,20 +202,19 @@ public class FakeClockJobScheduler extends FakeClock implements JobScheduler
 
         boolean tryTrigger()
         {
-            if ( now() >= deadline )
-            {
-                runnable.run();
-                if ( period != 0 )
-                {
-                    deadline += period;
-                }
-                else
-                {
-                    jobs.remove( this );
-                }
-                return true;
-            }
-            return false;
+            if (now() < deadline) {
+				return false;
+			}
+			runnable.run();
+			if ( period != 0 )
+			{
+			    deadline += period;
+			}
+			else
+			{
+			    jobs.remove( this );
+			}
+			return true;
         }
 
         @Override

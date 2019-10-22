@@ -67,7 +67,7 @@ public abstract class AnalyzerProvider extends Service
         super( analyzerName, alternativeNames );
     }
 
-    public static AnalyzerProvider getProviderByName( String analyzerName ) throws NoSuchElementException
+    public static AnalyzerProvider getProviderByName( String analyzerName )
     {
         return load( AnalyzerProvider.class, analyzerName );
     }

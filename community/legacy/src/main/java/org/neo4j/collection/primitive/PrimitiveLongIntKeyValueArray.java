@@ -94,24 +94,24 @@ public class PrimitiveLongIntKeyValueArray
     public void ensureCapacity( int newCapacity )
     {
         int capacity = naturalKeys.length;
-        if ( newCapacity > capacity )
-        {
-            long[] newNaturalKeys = new long[newCapacity];
-            int[] newNaturalValues = new int[newCapacity];
-            long[] newSortedKeys = new long[newCapacity];
-            int[] newSortedValues = new int[newCapacity];
-            for ( int i = 0; i < capacity; i++ )
-            {
-                newNaturalKeys[i] = naturalKeys[i];
-                newNaturalValues[i] = naturalValues[i];
-                newSortedKeys[i] = sortedKeys[i];
-                newSortedValues[i] = sortedValues[i];
-            }
-            naturalKeys = newNaturalKeys;
-            naturalValues = newNaturalValues;
-            sortedKeys = newSortedKeys;
-            sortedValues = newSortedValues;
-        }
+        if (newCapacity <= capacity) {
+			return;
+		}
+		long[] newNaturalKeys = new long[newCapacity];
+		int[] newNaturalValues = new int[newCapacity];
+		long[] newSortedKeys = new long[newCapacity];
+		int[] newSortedValues = new int[newCapacity];
+		for ( int i = 0; i < capacity; i++ )
+		{
+		    newNaturalKeys[i] = naturalKeys[i];
+		    newNaturalValues[i] = naturalValues[i];
+		    newSortedKeys[i] = sortedKeys[i];
+		    newSortedValues[i] = sortedValues[i];
+		}
+		naturalKeys = newNaturalKeys;
+		naturalValues = newNaturalValues;
+		sortedKeys = newSortedKeys;
+		sortedValues = newSortedValues;
     }
 
     /**

@@ -34,7 +34,7 @@ public class DefaultExplicitIndexProvider implements IndexProviders, ExplicitInd
     {
         if ( indexProviders.containsKey( name ) )
         {
-            throw new IllegalArgumentException( "Index provider '" + name + "' already registered" );
+            throw new IllegalArgumentException( new StringBuilder().append("Index provider '").append(name).append("' already registered").toString() );
         }
         indexProviders.put( name, index );
     }
@@ -52,8 +52,7 @@ public class DefaultExplicitIndexProvider implements IndexProviders, ExplicitInd
         IndexImplementation provider = indexProviders.get( name );
         if ( provider == null )
         {
-            throw new IllegalArgumentException( "No index provider '" + name + "' found. Maybe the intended provider (or one more of its " + "dependencies) " +
-                    "aren't on the classpath or it failed to load." );
+            throw new IllegalArgumentException( new StringBuilder().append("No index provider '").append(name).append("' found. Maybe the intended provider (or one more of its ").append("dependencies) ").append("aren't on the classpath or it failed to load.").toString() );
         }
         return provider;
     }

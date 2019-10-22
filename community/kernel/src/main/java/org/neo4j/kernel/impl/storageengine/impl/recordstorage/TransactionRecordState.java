@@ -322,8 +322,7 @@ public class TransactionRecordState implements RecordState
         NodeRecord nodeRecord = recordChangeSet.getNodeRecords().getOrLoad( nodeId, null ).forChangingData();
         if ( !nodeRecord.inUse() )
         {
-            throw new IllegalStateException( "Unable to delete Node[" + nodeId +
-                                             "] since it has already been deleted." );
+            throw new IllegalStateException( new StringBuilder().append("Unable to delete Node[").append(nodeId).append("] since it has already been deleted.").toString() );
         }
         nodeRecord.setInUse( false );
         nodeRecord.setLabelField( Record.NO_LABELS_FIELD.intValue(),
@@ -333,10 +332,7 @@ public class TransactionRecordState implements RecordState
 
     private Collection<DynamicRecord> markNotInUse( Collection<DynamicRecord> dynamicLabelRecords )
     {
-        for ( DynamicRecord record : dynamicLabelRecords )
-        {
-            record.setInUse( false );
-        }
+        dynamicLabelRecords.forEach(record -> record.setInUse(false));
         return dynamicLabelRecords;
     }
 
@@ -476,17 +472,6 @@ public class TransactionRecordState implements RecordState
         creator.createToken( name, id, recordChangeSet.getRelationshipTypeTokenChanges() );
     }
 
-    private static class CommandComparator implements Comparator<Command>
-    {
-        @Override
-        public int compare( Command o1, Command o2 )
-        {
-            long id1 = o1.getKey();
-            long id2 = o2.getKey();
-            return Long.compare( id1, id2 );
-        }
-    }
-
     private RecordProxy<NeoStoreRecord, Void> getOrLoadNeoStoreRecord()
     {
         // TODO Move this neo store record thingie into RecordAccessSet
@@ -521,7 +506,7 @@ public class TransactionRecordState implements RecordState
         return neoStoreRecord.getOrLoad( 0L, null );
     }
 
-    /**
+	/**
      * Adds a property to the graph, with the given index and value.
      *  @param propertyKey The index of the key of the property to add.
      * @param value The value of the property.
@@ -532,7 +517,7 @@ public class TransactionRecordState implements RecordState
                 recordChangeSet.getPropertyRecords() );
     }
 
-    /**
+	/**
      * Changes an existing property of the graph, with the given index to
      * the passed value
      *
@@ -545,7 +530,7 @@ public class TransactionRecordState implements RecordState
                 recordChangeSet.getPropertyRecords() );
     }
 
-    /**
+	/**
      * Removes the given property identified by indexKeyId of the graph with the
      * given id.
      *
@@ -557,7 +542,7 @@ public class TransactionRecordState implements RecordState
         propertyDeleter.removeProperty( recordChange, propertyKey, recordChangeSet.getPropertyRecords() );
     }
 
-    void createSchemaRule( SchemaRule schemaRule )
+	void createSchemaRule( SchemaRule schemaRule )
     {
         for ( DynamicRecord change : recordChangeSet.getSchemaRuleChanges()
                 .create( schemaRule.getId(), schemaRule )
@@ -568,7 +553,7 @@ public class TransactionRecordState implements RecordState
         }
     }
 
-    void dropSchemaRule( SchemaRule rule )
+	void dropSchemaRule( SchemaRule rule )
     {
         RecordProxy<SchemaRecord, SchemaRule> change =
                 recordChangeSet.getSchemaRuleChanges().getOrLoad( rule.getId(), rule );
@@ -580,7 +565,7 @@ public class TransactionRecordState implements RecordState
         records.setInUse( false );
     }
 
-    private void changeSchemaRule( SchemaRule rule, SchemaRule updatedRule )
+	private void changeSchemaRule( SchemaRule rule, SchemaRule updatedRule )
     {
         //Read the current record
         RecordProxy<SchemaRecord,SchemaRule> change = recordChangeSet.getSchemaRuleChanges()
@@ -596,22 +581,33 @@ public class TransactionRecordState implements RecordState
         dynamicRecords.setDynamicRecords( schemaStore.allocateFrom( updatedRule ) );
     }
 
-    void addLabelToNode( long labelId, long nodeId )
+	void addLabelToNode( long labelId, long nodeId )
     {
         NodeRecord nodeRecord = recordChangeSet.getNodeRecords().getOrLoad( nodeId, null ).forChangingData();
         parseLabelsField( nodeRecord ).add( labelId, nodeStore, nodeStore.getDynamicLabelStore() );
     }
 
-    void removeLabelFromNode( long labelId, long nodeId )
+	void removeLabelFromNode( long labelId, long nodeId )
     {
         NodeRecord nodeRecord = recordChangeSet.getNodeRecords().getOrLoad( nodeId, null ).forChangingData();
         parseLabelsField( nodeRecord ).remove( labelId, nodeStore );
     }
 
-    void setConstraintIndexOwner( StoreIndexDescriptor storeIndex, long constraintId )
+	void setConstraintIndexOwner( StoreIndexDescriptor storeIndex, long constraintId )
     {
         StoreIndexDescriptor updatedStoreIndex = storeIndex.withOwningConstraint( constraintId );
         changeSchemaRule( storeIndex, updatedStoreIndex );
+    }
+
+	private static class CommandComparator implements Comparator<Command>
+    {
+        @Override
+        public int compare( Command o1, Command o2 )
+        {
+            long id1 = o1.getKey();
+            long id2 = o2.getKey();
+            return Long.compare( id1, id2 );
+        }
     }
 
     public interface PropertyReceiver<P extends StorageProperty>

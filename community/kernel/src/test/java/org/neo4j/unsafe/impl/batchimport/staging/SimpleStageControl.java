@@ -52,11 +52,11 @@ public class SimpleStageControl implements StageControl
     @Override
     public void assertHealthy()
     {
-        if ( panic != null )
-        {
-            throwIfUnchecked( panic );
-            throw new RuntimeException( panic );
-        }
+        if (panic == null) {
+			return;
+		}
+		throwIfUnchecked( panic );
+		throw new RuntimeException( panic );
     }
 
     @Override

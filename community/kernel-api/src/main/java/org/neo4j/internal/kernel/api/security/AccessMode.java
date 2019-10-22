@@ -25,7 +25,28 @@ import org.neo4j.kernel.api.exceptions.Status;
 /** Controls the capabilities of a KernelTransaction. */
 public interface AccessMode
 {
-    enum Static implements AccessMode
+    boolean allowsReads();
+	boolean allowsWrites();
+	boolean allowsTokenCreates();
+	boolean allowsSchemaWrites();
+	boolean allowsPropertyReads( int propertyKey );
+	/**
+     * Determines whether this mode allows execution of a procedure with the parameter string array in its
+     * procedure annotation.
+     *
+     * @param allowed An array of strings that encodes permissions that allows the execution of a procedure
+     * @return {@code true} if this mode allows the execution of a procedure with the given parameter string array
+     * encoding permission
+     */
+    boolean allowsProcedureWith( String[] allowed );
+	AuthorizationViolationException onViolation( String msg );
+	String name();
+	default boolean isOverridden()
+    {
+        return false;
+    }
+
+	enum Static implements AccessMode
     {
         /** No reading or writing allowed. */
         NONE( false, false, false, false, false, false ),
@@ -36,16 +57,8 @@ public interface AccessMode
                     public AuthorizationViolationException onViolation( String msg )
                     {
                         return new AuthorizationViolationException( String.format(
-                                msg + "%n%nThe credentials you provided were valid, but must be " +
-                                "changed before you can " +
-                                "use this instance. If this is the first time you are using Neo4j, this is to " +
-                                "ensure you are not using the default credentials in production. If you are not " +
-                                "using default credentials, you are getting this message because an administrator " +
-                                "requires a password change.%n" +
-                                "Changing your password is easy to do via the Neo4j Browser.%n" +
-                                "If you are connecting via a shell or programmatically via a driver, " +
-                                "just issue a `CALL dbms.changePassword('new password')` statement in the current " +
-                                "session, and then restart your driver with the new password configured." ),
+                                new StringBuilder().append(msg).append("%n%nThe credentials you provided were valid, but must be ").append("changed before you can ").append("use this instance. If this is the first time you are using Neo4j, this is to ").append("ensure you are not using the default credentials in production. If you are not ")
+										.append("using default credentials, you are getting this message because an administrator ").append("requires a password change.%n").append("Changing your password is easy to do via the Neo4j Browser.%n").append("If you are connecting via a shell or programmatically via a driver, ").append("just issue a `CALL dbms.changePassword('new password')` statement in the current ").append("session, and then restart your driver with the new password configured.").toString() ),
                                 Status.Security.CredentialsExpired );
                     }
                 },
@@ -119,30 +132,5 @@ public interface AccessMode
         {
             return new AuthorizationViolationException( msg );
         }
-    }
-
-    boolean allowsReads();
-    boolean allowsWrites();
-    boolean allowsTokenCreates();
-    boolean allowsSchemaWrites();
-
-    boolean allowsPropertyReads( int propertyKey );
-
-    /**
-     * Determines whether this mode allows execution of a procedure with the parameter string array in its
-     * procedure annotation.
-     *
-     * @param allowed An array of strings that encodes permissions that allows the execution of a procedure
-     * @return {@code true} if this mode allows the execution of a procedure with the given parameter string array
-     * encoding permission
-     */
-    boolean allowsProcedureWith( String[] allowed );
-
-    AuthorizationViolationException onViolation( String msg );
-    String name();
-
-    default boolean isOverridden()
-    {
-        return false;
     }
 }

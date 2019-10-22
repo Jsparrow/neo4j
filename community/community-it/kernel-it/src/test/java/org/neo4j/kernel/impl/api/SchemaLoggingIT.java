@@ -65,8 +65,7 @@ public class SchemaLoggingIT
         IndexProviderMap indexProviderMap = db.getDependencyResolver().resolveDependency( IndexProviderMap.class );
         IndexProvider defaultProvider = indexProviderMap.getDefaultProvider();
         IndexProviderDescriptor providerDescriptor = defaultProvider.getProviderDescriptor();
-        logProvider.assertAtLeastOnce( match.info( "Index population started: [%s]", ":User(name) [provider: {key=" +
-                providerDescriptor.getKey() + ", version=" + providerDescriptor.getVersion() + "}]" ) );
+        logProvider.assertAtLeastOnce( match.info( "Index population started: [%s]", new StringBuilder().append(":User(name) [provider: {key=").append(providerDescriptor.getKey()).append(", version=").append(providerDescriptor.getVersion()).append("}]").toString() ) );
 
         assertEventually( (ThrowingSupplier<Object,Exception>) () -> null, new LogMessageMatcher( match, providerDescriptor ), 1, TimeUnit.MINUTES );
     }
@@ -102,7 +101,7 @@ public class SchemaLoggingIT
         public boolean matches( Object item )
         {
             return logProvider.containsMatchingLogCall( match.info( CREATION_FINISHED,
-                    ":User(name) [provider: {key=" + descriptor.getKey() + ", version=" + descriptor.getVersion() + "}]", "ONLINE" ) );
+                    new StringBuilder().append(":User(name) [provider: {key=").append(descriptor.getKey()).append(", version=").append(descriptor.getVersion()).append("}]").toString(), "ONLINE" ) );
         }
 
         @Override

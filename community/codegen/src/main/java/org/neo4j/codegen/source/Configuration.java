@@ -113,10 +113,7 @@ class Configuration
 
     public void visit( TypeReference reference, StringBuilder source )
     {
-        for ( SourceVisitor visitor : sourceVisitors )
-        {
-            visitor.visitSource( reference, source );
-        }
+        sourceVisitors.forEach(visitor -> visitor.visitSource(reference, source));
     }
 
     public WarningsHandler warningsHandler()

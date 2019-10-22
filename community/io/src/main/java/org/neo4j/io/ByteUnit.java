@@ -84,7 +84,7 @@ public enum ByteUnit
         long product = EIC_MULTIPLIER;
         for ( int i = 0; i < power - 1; i++ )
         {
-            product = product * EIC_MULTIPLIER;
+            product *= EIC_MULTIPLIER;
         }
         return product;
     }
@@ -254,7 +254,7 @@ public enum ByteUnit
 
     private static IllegalArgumentException invalidFormat( String text )
     {
-        return new IllegalArgumentException( "Invalid number format: '" + text + "'" );
+        return new IllegalArgumentException( new StringBuilder().append("Invalid number format: '").append(text).append("'").toString() );
     }
 
     private static Stream<Pair<String,ByteUnit>> listUnits()

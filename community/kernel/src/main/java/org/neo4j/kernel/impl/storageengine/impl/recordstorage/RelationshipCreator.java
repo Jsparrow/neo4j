@@ -86,20 +86,20 @@ public class RelationshipCreator
             return;
         }
         long relId = node.getNextRel();
-        if ( relId != Record.NO_NEXT_RELATIONSHIP.intValue() )
-        {
-            RecordProxy<RelationshipRecord, Void> relChange = relRecords.getOrLoad( relId, null );
-            RelationshipRecord rel = relChange.forReadingLinkage();
-            if ( relCount( node.getId(), rel ) >= denseNodeThreshold )
-            {
-                locks.acquireExclusive( LockTracer.NONE, ResourceTypes.RELATIONSHIP, relId );
-                // Re-read the record after we've locked it since another transaction might have
-                // changed in the meantime.
-                relChange = relRecords.getOrLoad( relId, null );
+        if (relId == Record.NO_NEXT_RELATIONSHIP.intValue()) {
+			return;
+		}
+		RecordProxy<RelationshipRecord, Void> relChange = relRecords.getOrLoad( relId, null );
+		RelationshipRecord rel = relChange.forReadingLinkage();
+		if ( relCount( node.getId(), rel ) >= denseNodeThreshold )
+		{
+		    locks.acquireExclusive( LockTracer.NONE, ResourceTypes.RELATIONSHIP, relId );
+		    // Re-read the record after we've locked it since another transaction might have
+		    // changed in the meantime.
+		    relChange = relRecords.getOrLoad( relId, null );
 
-                convertNodeToDenseNode( node, relChange.forChangingLinkage(), relRecords, relGroupRecords, locks );
-            }
-        }
+		    convertNodeToDenseNode( node, relChange.forChangingLinkage(), relRecords, relGroupRecords, locks );
+		}
     }
 
     private void connectRelationship( NodeRecord firstNode,
@@ -222,7 +222,7 @@ public class RelationshipCreator
             }
             if ( !changed )
             {
-                throw new InvalidRecordException( nodeId + " doesn't match " + firstRel );
+                throw new InvalidRecordException( new StringBuilder().append(nodeId).append(" doesn't match ").append(firstRel).toString() );
             }
         }
 
@@ -232,11 +232,11 @@ public class RelationshipCreator
             rel.setFirstPrevRel( newCount );
             rel.setFirstInFirstChain( true );
         }
-        if ( rel.getSecondNode() == nodeId )
-        {
-            rel.setSecondPrevRel( newCount );
-            rel.setFirstInSecondChain( true );
-        }
+        if (rel.getSecondNode() != nodeId) {
+			return;
+		}
+		rel.setSecondPrevRel( newCount );
+		rel.setFirstInSecondChain( true );
     }
 
     private void setCorrectNextRel( NodeRecord node, RelationshipRecord rel, long nextRel )
@@ -261,6 +261,6 @@ public class RelationshipCreator
         {
             return RelationshipConnection.END_NEXT;
         }
-        throw new RuntimeException( nodeId + " neither start not end node in " + rel );
+        throw new RuntimeException( new StringBuilder().append(nodeId).append(" neither start not end node in ").append(rel).toString() );
     }
 }

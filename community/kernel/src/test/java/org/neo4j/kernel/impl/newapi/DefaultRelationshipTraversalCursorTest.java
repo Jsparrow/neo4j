@@ -40,8 +40,9 @@ public class DefaultRelationshipTraversalCursorTest
     private int type2 = 9998;
     private long relationship = 100;
     private long relationshipGroup = 313;
+	private Rel noRel = rel( -1L, -1L, -1L, -1 );
 
-    // Regular traversal of a sparse chain
+	// Regular traversal of a sparse chain
 
     @Test
     public void regularSparseTraversal()
@@ -49,13 +50,13 @@ public class DefaultRelationshipTraversalCursorTest
         regularTraversal( relationship );
     }
 
-    @Test
+	@Test
     public void regularSparseTraversalWithTxState()
     {
         regularTraversalWithTxState( relationship );
     }
 
-    // Dense traversal is just like regular for this class, denseness is handled by the store
+	// Dense traversal is just like regular for this class, denseness is handled by the store
 
     @Test
     public void regularDenseTraversal()
@@ -63,13 +64,13 @@ public class DefaultRelationshipTraversalCursorTest
         regularTraversal( RelationshipReferenceEncoding.encodeGroup( relationshipGroup ) );
     }
 
-    @Test
+	@Test
     public void regularDenseTraversalWithTxState()
     {
         regularTraversalWithTxState( RelationshipReferenceEncoding.encodeGroup( relationshipGroup ) );
     }
 
-    // Sparse traversal but with tx-state filtering
+	// Sparse traversal but with tx-state filtering
 
     @Test
     public void sparseTraversalWithTxStateFiltering()
@@ -97,7 +98,7 @@ public class DefaultRelationshipTraversalCursorTest
         assertRelationships( cursor, 100, 3, 7, 102, 104 );
     }
 
-    // Sparse traversal but with filtering both of store and tx-state
+	// Sparse traversal but with filtering both of store and tx-state
 
     @Test
     public void sparseTraversalWithFiltering()
@@ -127,7 +128,7 @@ public class DefaultRelationshipTraversalCursorTest
         assertRelationships( cursor, 100, 4, 103 );
     }
 
-    // Empty store, but filter tx-state
+	// Empty store, but filter tx-state
 
     @Test
     public void emptyStoreOutgoingOfType()
@@ -151,7 +152,7 @@ public class DefaultRelationshipTraversalCursorTest
         assertRelationships( cursor, 3, 7 );
     }
 
-    @Test
+	@Test
     public void emptyStoreIncomingOfType()
     {
         // given
@@ -174,7 +175,7 @@ public class DefaultRelationshipTraversalCursorTest
         assertRelationships( cursor, 4, 7 );
     }
 
-    @Test
+	@Test
     public void emptyStoreLoopsOfType()
     {
         // given
@@ -197,7 +198,7 @@ public class DefaultRelationshipTraversalCursorTest
         assertRelationships( cursor, 2, 6 );
     }
 
-    // HELPERS
+	// HELPERS
 
     private void regularTraversal( long reference )
     {
@@ -213,7 +214,7 @@ public class DefaultRelationshipTraversalCursorTest
         assertRelationships( cursor, 100, 102, 104 );
     }
 
-    private void regularTraversalWithTxState( long reference )
+	private void regularTraversalWithTxState( long reference )
     {
         // given
         StorageRelationshipTraversalCursor storeCursor = storeCursor( 100, 102, 104 );
@@ -227,17 +228,17 @@ public class DefaultRelationshipTraversalCursorTest
         assertRelationships( cursor, 3, 4, 100, 102, 104 );
     }
 
-    private Read emptyTxState()
+	private Read emptyTxState()
     {
         return mock( Read.class );
     }
 
-    private Read txState( long... ids )
+	private Read txState( long... ids )
     {
         return txState( LongStream.of( ids ).mapToObj( id -> rel( id, node, node, type ) ).toArray( Rel[]::new ) );
     }
 
-    private Read txState( Rel... rels )
+	private Read txState( Rel... rels )
     {
         Read read = mock( Read.class );
         if ( rels.length > 0 )
@@ -253,56 +254,38 @@ public class DefaultRelationshipTraversalCursorTest
         return read;
     }
 
-    private void assertRelationships( DefaultRelationshipTraversalCursor cursor, long... expected )
+	private void assertRelationships( DefaultRelationshipTraversalCursor cursor, long... expected )
     {
         for ( long expectedId : expected )
         {
-            assertTrue( cursor.next(), "Expected relationship " + expectedId + " but got none" );
+            assertTrue( cursor.next(), new StringBuilder().append("Expected relationship ").append(expectedId).append(" but got none").toString() );
             assertEquals( expectedId, cursor.relationshipReference(),
-                          "Expected relationship " + expectedId + " got " + cursor.relationshipReference() );
+                          new StringBuilder().append("Expected relationship ").append(expectedId).append(" got ").append(cursor.relationshipReference()).toString() );
         }
         assertFalse( cursor.next(), "Expected no more relationships, but got " + cursor.relationshipReference() );
     }
 
-    private Rel rel( long relId, long startId, long endId, int type )
+	private Rel rel( long relId, long startId, long endId, int type )
     {
         return new Rel( relId, startId, endId, type );
     }
 
-    private Rel NO_REL = rel( -1L, -1L, -1L, -1 );
-
-    private class Rel
-    {
-        final long relId;
-        final long sourceId;
-        final long targetId;
-        final int type;
-
-        Rel( long relId, long sourceId, long targetId, int type )
-        {
-            this.relId = relId;
-            this.sourceId = sourceId;
-            this.targetId = targetId;
-            this.type = type;
-        }
-    }
-
-    private StorageRelationshipTraversalCursor emptyStoreCursor( long... ids )
+	private StorageRelationshipTraversalCursor emptyStoreCursor( long... ids )
     {
         return storeCursor( new Rel[0] );
     }
 
-    private StorageRelationshipTraversalCursor storeCursor( long... ids )
+	private StorageRelationshipTraversalCursor storeCursor( long... ids )
     {
         return storeCursor( LongStream.of( ids ).mapToObj( id -> rel( id, -1L, -1L, -1 ) ).toArray( Rel[]::new ) );
     }
 
-    private StorageRelationshipTraversalCursor storeCursor( Rel... rels )
+	private StorageRelationshipTraversalCursor storeCursor( Rel... rels )
     {
         return new StorageRelationshipTraversalCursor()
         {
             private int i = -1;
-            private Rel rel = NO_REL;
+            private Rel rel = noRel;
 
             @Override
             public long neighbourNodeReference()
@@ -369,7 +352,7 @@ public class DefaultRelationshipTraversalCursorTest
                 i++;
                 if ( i < 0 || i >= rels.length )
                 {
-                    rel = NO_REL;
+                    rel = noRel;
                     return false;
                 }
                 else
@@ -389,5 +372,21 @@ public class DefaultRelationshipTraversalCursorTest
             {
             }
         };
+    }
+
+    private class Rel
+    {
+        final long relId;
+        final long sourceId;
+        final long targetId;
+        final int type;
+
+        Rel( long relId, long sourceId, long targetId, int type )
+        {
+            this.relId = relId;
+            this.sourceId = sourceId;
+            this.targetId = targetId;
+            this.type = type;
+        }
     }
 }

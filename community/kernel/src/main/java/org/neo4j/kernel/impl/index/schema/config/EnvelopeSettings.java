@@ -64,7 +64,7 @@ class EnvelopeSettings
                 if ( fields.length != 3 )
                 {
                     throw new IllegalArgumentException(
-                            "Invalid spatial config settings, expected three fields after '" + SPATIAL_SETTING_PREFIX + "': " + key );
+                            new StringBuilder().append("Invalid spatial config settings, expected three fields after '").append(SPATIAL_SETTING_PREFIX).append("': ").append(key).toString() );
                 }
                 else
                 {
@@ -77,7 +77,7 @@ class EnvelopeSettings
                     }
                     if ( index >= crs.getDimension() )
                     {
-                        throw new IllegalArgumentException( "Invalid spatial coordinate key for " + crs.getDimension() + "D: " + fields[1] );
+                        throw new IllegalArgumentException( new StringBuilder().append("Invalid spatial coordinate key for ").append(crs.getDimension()).append("D: ").append(fields[1]).toString() );
                     }
                     switch ( fields[2].toLowerCase() )
                     {

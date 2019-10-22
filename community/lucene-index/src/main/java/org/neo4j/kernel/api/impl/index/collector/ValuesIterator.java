@@ -29,10 +29,6 @@ import org.neo4j.collection.PrimitiveLongCollections;
  */
 public interface ValuesIterator extends DocValuesAccess, LongIterator
 {
-    int remaining();
-
-    float currentScore();
-
     ValuesIterator EMPTY = new ValuesIterator.Adapter( 0 )
     {
         @Override
@@ -60,12 +56,21 @@ public interface ValuesIterator extends DocValuesAccess, LongIterator
         }
     };
 
-    abstract class Adapter extends PrimitiveLongCollections.PrimitiveLongBaseIterator implements ValuesIterator
+	int remaining();
+
+	float currentScore();
+
+	abstract class Adapter extends PrimitiveLongCollections.PrimitiveLongBaseIterator implements ValuesIterator
     {
         protected final int size;
         protected int index;
 
-        /**
+        Adapter( int size )
+        {
+            this.size = size;
+        }
+
+		/**
          * Gets the score for the current iterator position.
          *
          * @return The score of the value, or 0 if scoring is not kept or applicable.
@@ -73,12 +78,7 @@ public interface ValuesIterator extends DocValuesAccess, LongIterator
         @Override
         public abstract float currentScore();
 
-        Adapter( int size )
-        {
-            this.size = size;
-        }
-
-        /**
+		/**
          * @return the number of docs left in this iterator.
          */
         @Override

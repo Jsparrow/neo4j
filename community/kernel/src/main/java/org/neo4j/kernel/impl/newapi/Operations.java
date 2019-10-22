@@ -358,17 +358,14 @@ public class Operations implements Write, ExplicitIndexWrite, SchemaWrite
         }
 
         allStoreHolder.singleNode( node, nodeCursor );
-        if ( nodeCursor.next() )
-        {
-            acquireSharedNodeLabelLocks();
-
-            autoIndexing.nodes().entityRemoved( this, node );
-            ktx.txState().nodeDoDelete( node );
-            return true;
-        }
-
-        // tried to delete node that does not exist
-        return false;
+        if (!nodeCursor.next()) {
+			// tried to delete node that does not exist
+			return false;
+		}
+		acquireSharedNodeLabelLocks();
+		autoIndexing.nodes().entityRemoved( this, node );
+		ktx.txState().nodeDoDelete( node );
+		return true;
     }
 
     /**
@@ -385,38 +382,33 @@ public class Operations implements Write, ExplicitIndexWrite, SchemaWrite
     {
         allStoreHolder.singleRelationship( relationship, relationshipCursor ); // tx-state aware
 
-        if ( relationshipCursor.next() )
-        {
-            if ( lock )
-            {
-                lockRelationshipNodes( relationshipCursor.sourceNodeReference(),
-                        relationshipCursor.targetNodeReference() );
-                acquireExclusiveRelationshipLock( relationship );
-            }
-            if ( !allStoreHolder.relationshipExists( relationship ) )
-            {
-                return false;
-            }
-
-            ktx.assertOpen();
-
-            autoIndexing.relationships().entityRemoved( this, relationship );
-
-            TransactionState txState = ktx.txState();
-            if ( txState.relationshipIsAddedInThisTx( relationship ) )
-            {
-                txState.relationshipDoDeleteAddedInThisTx( relationship );
-            }
-            else
-            {
-                txState.relationshipDoDelete( relationship, relationshipCursor.type(),
-                        relationshipCursor.sourceNodeReference(), relationshipCursor.targetNodeReference() );
-            }
-            return true;
-        }
-
-        // tried to delete relationship that does not exist
-        return false;
+        if (!relationshipCursor.next()) {
+			// tried to delete relationship that does not exist
+			return false;
+		}
+		if ( lock )
+		{
+		    lockRelationshipNodes( relationshipCursor.sourceNodeReference(),
+		            relationshipCursor.targetNodeReference() );
+		    acquireExclusiveRelationshipLock( relationship );
+		}
+		if ( !allStoreHolder.relationshipExists( relationship ) )
+		{
+		    return false;
+		}
+		ktx.assertOpen();
+		autoIndexing.relationships().entityRemoved( this, relationship );
+		TransactionState txState = ktx.txState();
+		if ( txState.relationshipIsAddedInThisTx( relationship ) )
+		{
+		    txState.relationshipDoDeleteAddedInThisTx( relationship );
+		}
+		else
+		{
+		    txState.relationshipDoDelete( relationship, relationshipCursor.type(),
+		            relationshipCursor.sourceNodeReference(), relationshipCursor.targetNodeReference() );
+		}
+		return true;
     }
 
     private void singleNode( long node ) throws EntityNotFoundException
@@ -571,10 +563,8 @@ public class Operations implements Write, ExplicitIndexWrite, SchemaWrite
             Collection<IndexBackedConstraintDescriptor> uniquenessConstraints = indexingService.getRelatedUniquenessConstraints( labels, propertyKey, NODE );
             NodeSchemaMatcher.onMatchingSchema( uniquenessConstraints.iterator(), propertyKey, existingPropertyKeyIds,
                     uniquenessConstraint ->
-                    {
-                        validateNoExistingNodeWithExactValues( uniquenessConstraint, getAllPropertyValues( uniquenessConstraint.schema(), propertyKey, value ),
-                                node );
-                    });
+                    validateNoExistingNodeWithExactValues(uniquenessConstraint,
+							getAllPropertyValues(uniquenessConstraint.schema(), propertyKey, value), node));
         }
 
         if ( existingValue == NO_VALUE )
@@ -1015,13 +1005,10 @@ public class Operations implements Write, ExplicitIndexWrite, SchemaWrite
                 throw new NoSuchIndexException( schema );
             }
 
-            if ( existingIndex.type() == UNIQUE )
-            {
-                if ( allStoreHolder.indexGetOwningUniquenessConstraintId( existingIndex ) != null )
-                {
-                    throw new IndexBelongsToConstraintException( schema );
-                }
-            }
+            boolean condition = existingIndex.type() == UNIQUE && allStoreHolder.indexGetOwningUniquenessConstraintId( existingIndex ) != null;
+			if ( condition ) {
+			    throw new IndexBelongsToConstraintException( schema );
+			}
         }
         catch ( IndexBelongsToConstraintException | NoSuchIndexException e )
         {

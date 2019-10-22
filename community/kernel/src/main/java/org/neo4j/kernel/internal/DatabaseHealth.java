@@ -50,35 +50,34 @@ public class DatabaseHealth
      */
     public <EXCEPTION extends Throwable> void assertHealthy( Class<EXCEPTION> panicDisguise ) throws EXCEPTION
     {
-        if ( !healthy )
-        {
-            EXCEPTION exception;
-            try
-            {
-                try
-                {
-                    exception = panicDisguise.getConstructor( String.class, Throwable.class )
-                            .newInstance( panicMessage, causeOfPanic );
-                }
-                catch ( NoSuchMethodException e )
-                {
-                    exception = panicDisguise.getConstructor( String.class ).newInstance( panicMessage );
-                    try
-                    {
-                        exception.initCause( causeOfPanic );
-                    }
-                    catch ( IllegalStateException ignored )
-                    {
-                    }
-                }
-            }
-            catch ( Exception e )
-            {
-                throw new Error( panicMessage + ". An exception of type " + panicDisguise.getName() +
-                        " was requested to be thrown but that proved impossible", e );
-            }
-            throw exception;
-        }
+        if (healthy) {
+			return;
+		}
+		EXCEPTION exception;
+		try
+		{
+		    try
+		    {
+		        exception = panicDisguise.getConstructor( String.class, Throwable.class )
+		                .newInstance( panicMessage, causeOfPanic );
+		    }
+		    catch ( NoSuchMethodException e )
+		    {
+		        exception = panicDisguise.getConstructor( String.class ).newInstance( panicMessage );
+		        try
+		        {
+		            exception.initCause( causeOfPanic );
+		        }
+		        catch ( IllegalStateException ignored )
+		        {
+		        }
+		    }
+		}
+		catch ( Exception e )
+		{
+		    throw new Error( new StringBuilder().append(panicMessage).append(". An exception of type ").append(panicDisguise.getName()).append(" was requested to be thrown but that proved impossible").toString(), e );
+		}
+		throw exception;
     }
 
     public void panic( Throwable cause )

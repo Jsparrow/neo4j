@@ -228,16 +228,16 @@ public class RecordRelationshipTraversalCursorTest
             relationshipStore.updateRecord( createRelationship( i, i + 1 ) );
         }
         relationshipStore.updateRecord( createRelationship( recordsInChain, NO_NEXT_RELATIONSHIP.intValue() ) );
-        if ( dense )
-        {
-            RecordStore<RelationshipGroupRecord> relationshipGroupStore = neoStores.getRelationshipGroupStore();
-            for ( int i = 1; i < recordsInChain; i++ )
-            {
-                relationshipGroupStore.updateRecord( createRelationshipGroup( i, i ) );
-            }
-            relationshipGroupStore
-                    .updateRecord( createRelationshipGroup( recordsInChain, NO_NEXT_RELATIONSHIP.intValue() ) );
-        }
+        if (!dense) {
+			return;
+		}
+		RecordStore<RelationshipGroupRecord> relationshipGroupStore = neoStores.getRelationshipGroupStore();
+		for ( int i = 1; i < recordsInChain; i++ )
+		{
+		    relationshipGroupStore.updateRecord( createRelationshipGroup( i, i ) );
+		}
+		relationshipGroupStore
+		        .updateRecord( createRelationshipGroup( recordsInChain, NO_NEXT_RELATIONSHIP.intValue() ) );
     }
 
     private RelationshipRecord createRelationship( long id, long nextRelationship )

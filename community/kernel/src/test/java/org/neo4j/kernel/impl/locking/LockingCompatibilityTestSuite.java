@@ -132,7 +132,84 @@ public abstract class LockingCompatibilityTestSuite
 
         // Utilities
 
-        public abstract class LockCommand implements WorkerCommand<Void, Object>
+        protected LockCommand acquireExclusive(
+                final Locks.Client client,
+                final LockTracer tracer,
+                final ResourceType resourceType,
+                final long key )
+        {
+            return new LockCommand( clientToThreadMap.get( client ), client )
+            {
+                @Override
+                public void doWork( Locks.Client client )
+                {
+                    client.acquireExclusive( tracer, resourceType, key );
+                }
+            };
+        }
+
+		protected LockCommand acquireShared(
+                Locks.Client client,
+                final LockTracer tracer,
+                final ResourceType resourceType,
+                final long key )
+        {
+            return new LockCommand( clientToThreadMap.get( client ), client )
+            {
+                @Override
+                public void doWork( Locks.Client client )
+                {
+                    client.acquireShared( tracer, resourceType, key );
+                }
+            };
+        }
+
+		protected LockCommand release(
+                final Locks.Client client,
+                final ResourceType resourceType,
+                final long key )
+        {
+            return new LockCommand( clientToThreadMap.get( client ), client )
+            {
+                @Override
+                public void doWork( Locks.Client client )
+                {
+                    client.releaseExclusive( resourceType, key );
+                }
+            };
+        }
+
+		protected void assertNotWaiting( Locks.Client client, Future<Object> lock )
+        {
+            try
+            {
+                lock.get( 5, TimeUnit.SECONDS );
+            }
+            catch ( ExecutionException | TimeoutException | InterruptedException e )
+            {
+                throw new RuntimeException( "Waiting for lock timed out!" );
+            }
+        }
+
+		protected void assertWaiting( Locks.Client client, Future<Object> lock )
+        {
+            try
+            {
+                lock.get(10, TimeUnit.MILLISECONDS);
+                fail("Should be waiting.");
+            }
+            catch ( TimeoutException e )
+            {
+                // Ok
+            }
+            catch ( ExecutionException | InterruptedException e )
+            {
+                throw new RuntimeException( e );
+            }
+            assertThat( clientToThreadMap.get( client ), isWaiting() );
+        }
+
+		public abstract class LockCommand implements WorkerCommand<Void, Object>
         {
             private final OtherThreadRule<Void> thread;
             private final Locks.Client client;
@@ -170,89 +247,12 @@ public abstract class LockingCompatibilityTestSuite
                 return null;
             }
 
-            abstract void doWork( Locks.Client client ) throws AcquireLockTimeoutException;
+            abstract void doWork( Locks.Client client );
 
             public Locks.Client client()
             {
                 return client;
             }
-        }
-
-        protected LockCommand acquireExclusive(
-                final Locks.Client client,
-                final LockTracer tracer,
-                final ResourceType resourceType,
-                final long key )
-        {
-            return new LockCommand( clientToThreadMap.get( client ), client )
-            {
-                @Override
-                public void doWork( Locks.Client client ) throws AcquireLockTimeoutException
-                {
-                    client.acquireExclusive( tracer, resourceType, key );
-                }
-            };
-        }
-
-        protected LockCommand acquireShared(
-                Locks.Client client,
-                final LockTracer tracer,
-                final ResourceType resourceType,
-                final long key )
-        {
-            return new LockCommand( clientToThreadMap.get( client ), client )
-            {
-                @Override
-                public void doWork( Locks.Client client ) throws AcquireLockTimeoutException
-                {
-                    client.acquireShared( tracer, resourceType, key );
-                }
-            };
-        }
-
-        protected LockCommand release(
-                final Locks.Client client,
-                final ResourceType resourceType,
-                final long key )
-        {
-            return new LockCommand( clientToThreadMap.get( client ), client )
-            {
-                @Override
-                public void doWork( Locks.Client client )
-                {
-                    client.releaseExclusive( resourceType, key );
-                }
-            };
-        }
-
-        protected void assertNotWaiting( Locks.Client client, Future<Object> lock )
-        {
-            try
-            {
-                lock.get( 5, TimeUnit.SECONDS );
-            }
-            catch ( ExecutionException | TimeoutException | InterruptedException e )
-            {
-                throw new RuntimeException( "Waiting for lock timed out!" );
-            }
-        }
-
-        protected void assertWaiting( Locks.Client client, Future<Object> lock )
-        {
-            try
-            {
-                lock.get(10, TimeUnit.MILLISECONDS);
-                fail("Should be waiting.");
-            }
-            catch ( TimeoutException e )
-            {
-                // Ok
-            }
-            catch ( ExecutionException | InterruptedException e )
-            {
-                throw new RuntimeException( e );
-            }
-            assertThat( clientToThreadMap.get( client ), isWaiting() );
         }
     }
 }

@@ -45,14 +45,15 @@ import static org.neo4j.test.TestLabels.LABEL_ONE;
 
 public class StringLengthIndexValidationIT
 {
-    @Rule
+    private static final String propKey = "largeString";
+
+	private static final int keySizeLimit = TreeNodeDynamicSize.keyValueSizeCapFromPageSize( PageCache.PAGE_SIZE ) - Long.BYTES;
+
+	@Rule
     public DatabaseRule db = new EmbeddedDatabaseRule()
             .withSetting( GraphDatabaseSettings.default_schema_provider, GraphDatabaseSettings.SchemaIndex.NATIVE20.providerName() );
 
-    private static final String propKey = "largeString";
-    private static final int keySizeLimit = TreeNodeDynamicSize.keyValueSizeCapFromPageSize( PageCache.PAGE_SIZE ) - Long.BYTES;
-
-    @Test
+	@Test
     public void shouldSuccessfullyWriteAndReadWithinIndexKeySizeLimit()
     {
         createIndex();
@@ -66,7 +67,7 @@ public class StringLengthIndexValidationIT
         assertReadNode( propValue, expectedNodeId );
     }
 
-    @Test
+	@Test
     public void shouldSuccessfullyPopulateIndexWithinIndexKeySizeLimit()
     {
         String propValue = getString( keySizeLimit );
@@ -82,7 +83,7 @@ public class StringLengthIndexValidationIT
         assertReadNode( propValue, expectedNodeId );
     }
 
-    @Test
+	@Test
     public void txMustFailIfExceedingIndexKeySizeLimit()
     {
         createIndex();
@@ -101,7 +102,7 @@ public class StringLengthIndexValidationIT
         }
     }
 
-    @Test
+	@Test
     public void indexPopulationMustFailIfExceedingIndexKeySizeLimit()
     {
         // Write
@@ -141,13 +142,13 @@ public class StringLengthIndexValidationIT
         }
     }
 
-    // Each char in string need to fit in one byte
+	// Each char in string need to fit in one byte
     private String getString( int byteArraySize )
     {
         return RandomStringUtils.randomAlphabetic( byteArraySize );
     }
 
-    private void createIndex()
+	private void createIndex()
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -161,7 +162,7 @@ public class StringLengthIndexValidationIT
         }
     }
 
-    private long createNode( String propValue )
+	private long createNode( String propValue )
     {
         long expectedNodeId;
         try ( Transaction tx = db.beginTx() )
@@ -174,7 +175,7 @@ public class StringLengthIndexValidationIT
         return expectedNodeId;
     }
 
-    private void assertReadNode( String propValue, long expectedNodeId )
+	private void assertReadNode( String propValue, long expectedNodeId )
     {
         try ( Transaction tx = db.beginTx() )
         {

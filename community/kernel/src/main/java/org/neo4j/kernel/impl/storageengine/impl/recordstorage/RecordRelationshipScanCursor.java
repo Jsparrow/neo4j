@@ -137,11 +137,11 @@ class RecordRelationshipScanCursor extends RecordRelationshipCursor implements S
     @Override
     public void reset()
     {
-        if ( open )
-        {
-            open = false;
-            resetState();
-        }
+        if (!open) {
+			return;
+		}
+		open = false;
+		resetState();
     }
 
     private void resetState()
@@ -158,8 +158,8 @@ class RecordRelationshipScanCursor extends RecordRelationshipCursor implements S
         }
         else
         {
-            return "RelationshipScanCursor[id=" + getId() + ", open state with: highMark=" + highMark + ", next=" + next + ", type=" + filterType +
-                    ", underlying record=" + super.toString() + "]";
+            return new StringBuilder().append("RelationshipScanCursor[id=").append(getId()).append(", open state with: highMark=").append(highMark).append(", next=").append(next)
+					.append(", type=").append(filterType).append(", underlying record=").append(super.toString()).append("]").toString();
         }
     }
 
@@ -171,11 +171,11 @@ class RecordRelationshipScanCursor extends RecordRelationshipCursor implements S
     @Override
     public void close()
     {
-        if ( pageCursor != null )
-        {
-            pageCursor.close();
-            pageCursor = null;
-        }
+        if (pageCursor == null) {
+			return;
+		}
+		pageCursor.close();
+		pageCursor = null;
     }
 
     private void relationshipAdvance( RelationshipRecord record, PageCursor pageCursor )

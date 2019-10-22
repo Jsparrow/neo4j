@@ -161,9 +161,7 @@ public class SunMiscUTF8Encoder implements UTF8Encoder
         catch ( Throwable e )
         {
             throw new AssertionError(
-                    "This encoder depends being able to access the offset in the char[] array in java.lang.String, " +
-                    "which failed: " +
-                    e.getMessage(), e );
+                    new StringBuilder().append("This encoder depends being able to access the offset in the char[] array in java.lang.String, ").append("which failed: ").append(e.getMessage()).toString(), e );
         }
     }
 

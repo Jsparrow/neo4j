@@ -59,14 +59,19 @@ public class UniqueIndexApplicationIT
 
     private final Function<GraphDatabaseService, ?> createIndex;
 
-    @Parameterized.Parameters( name = "{0}" )
+    public UniqueIndexApplicationIT( Function<GraphDatabaseService, ?> createIndex )
+    {
+        this.createIndex = createIndex;
+    }
+
+	@Parameterized.Parameters( name = "{0}" )
     public static List<Object[]> indexTypes()
     {
         return asList( createIndex( index( label( "Label1" ), "key1" ) ),
                 createIndex( uniquenessConstraint( label( "Label1" ), "key1" ) ) );
     }
 
-    @After
+	@After
     public void then()
     {
         assertThat( "Matching nodes from index lookup",
@@ -74,14 +79,14 @@ public class UniqueIndexApplicationIT
                 hasSize( 1 ) );
     }
 
-    @Before
+	@Before
     public void given()
     {
         db.executeAndCommit( createIndex );
         db.executeAndCommit( awaitIndexesOnline( 5, SECONDS ) );
     }
 
-    @Test
+	@Test
     public void tx_createNode_addLabel_setProperty()
     {
         db.when( db.tx(
@@ -89,7 +94,7 @@ public class UniqueIndexApplicationIT
         ) );
     }
 
-    @Test
+	@Test
     public void tx_createNode_tx_addLabel_setProperty()
     {
         db.when( db.tx(
@@ -99,7 +104,7 @@ public class UniqueIndexApplicationIT
         ) ) );
     }
 
-    @Test
+	@Test
     public void tx_createNode_addLabel_tx_setProperty()
     {
         db.when( db.tx(
@@ -109,7 +114,7 @@ public class UniqueIndexApplicationIT
         ) ) );
     }
 
-    @Test
+	@Test
     public void tx_createNode_setProperty_tx_addLabel()
     {
         db.when( db.tx(
@@ -119,7 +124,7 @@ public class UniqueIndexApplicationIT
         ) ) );
     }
 
-    @Test
+	@Test
     public void tx_createNode_tx_addLabel_tx_setProperty()
     {
         db.when( db.tx(
@@ -131,7 +136,7 @@ public class UniqueIndexApplicationIT
         ) ) );
     }
 
-    @Test
+	@Test
     public void tx_createNode_tx_setProperty_tx_addLabel()
     {
         db.when( db.tx(
@@ -143,7 +148,7 @@ public class UniqueIndexApplicationIT
         ) ) ) );
     }
 
-    private static Matcher<List<?>> hasSize( final int size )
+	private static Matcher<List<?>> hasSize( final int size )
     {
         return new TypeSafeMatcher<List<?>>()
         {
@@ -161,7 +166,7 @@ public class UniqueIndexApplicationIT
         };
     }
 
-    private Function<GraphDatabaseService, List<Long>> listNodeIdsFromIndexLookup(
+	private Function<GraphDatabaseService, List<Long>> listNodeIdsFromIndexLookup(
             final Label label, final String propertyKey, final Object value )
     {
         return graphDb ->
@@ -175,12 +180,7 @@ public class UniqueIndexApplicationIT
         };
     }
 
-    public UniqueIndexApplicationIT( Function<GraphDatabaseService, ?> createIndex )
-    {
-        this.createIndex = createIndex;
-    }
-
-    private static Object[] createIndex( Function<GraphDatabaseService, Void> createIndex )
+	private static Object[] createIndex( Function<GraphDatabaseService, Void> createIndex )
     {
         return new Object[]{createIndex};
     }

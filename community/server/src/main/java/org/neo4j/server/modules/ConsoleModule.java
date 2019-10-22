@@ -42,11 +42,11 @@ public class ConsoleModule implements ServerModule
     @Override
     public void start()
     {
-        if ( config.get( ServerSettings.console_module_enabled ) )
-        {
-            String serverMountPoint = managementApiUri().toString();
-            webServer.addJAXRSClasses( getClassNames(), serverMountPoint, null );
-        }
+        if (!config.get( ServerSettings.console_module_enabled )) {
+			return;
+		}
+		String serverMountPoint = managementApiUri().toString();
+		webServer.addJAXRSClasses( getClassNames(), serverMountPoint, null );
     }
 
     private List<String> getClassNames()

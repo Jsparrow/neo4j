@@ -282,11 +282,11 @@ public class DelayedBufferTest
                 boolean expectedToBeSeen = values[vi] == i;
                 if ( expectedToBeSeen && !seenIds[i] )
                 {
-                    fail( "Expected to have seen " + i + ", but hasn't" );
+                    fail( new StringBuilder().append("Expected to have seen ").append(i).append(", but hasn't").toString() );
                 }
                 else if ( !expectedToBeSeen && seenIds[i] )
                 {
-                    fail( "Expected to NOT have seen " + i + ", but have" );
+                    fail( new StringBuilder().append("Expected to NOT have seen ").append(i).append(", but have").toString() );
                 }
 
                 if ( expectedToBeSeen )

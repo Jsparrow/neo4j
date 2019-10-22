@@ -58,11 +58,11 @@ public class IterableStore<RECORD extends AbstractBaseRecord> implements Bounded
 
     private void closeIterator()
     {
-        if ( iterator != null )
-        {
-            iterator.close();
-            iterator = null;
-        }
+        if (iterator == null) {
+			return;
+		}
+		iterator.close();
+		iterator = null;
     }
 
     @Override

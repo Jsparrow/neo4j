@@ -57,7 +57,7 @@ public class DbStructureInvocationTracingAcceptanceTest
 {
     private final String packageName = "org.neo4j.kernel.impl.util.data";
     private final String className = "XXYYZZData";
-    private final String classNameWithPackage = packageName + "." + className;
+    private final String classNameWithPackage = new StringBuilder().append(packageName).append(".").append(className).toString();
 
     @Test
     public void outputCompilesWithoutErrors() throws IOException
@@ -177,19 +177,19 @@ public class DbStructureInvocationTracingAcceptanceTest
                                              List<Diagnostic<? extends JavaFileObject>> diagnostics,
                                              String className )
     {
-        if ( success == null || !success )
-        {
-            StringBuilder builder = new StringBuilder();
-            builder.append( "Failed to compile: " );
-            builder.append( className );
-            builder.append( "\n\n" );
-            for ( Diagnostic<?> diagnostic : diagnostics )
-            {
-                builder.append( diagnostic.toString() );
-                builder.append( "\n" );
-            }
-            throw new AssertionError( builder.toString() );
-        }
+        if (!(success == null || !success)) {
+			return;
+		}
+		StringBuilder builder = new StringBuilder();
+		builder.append( "Failed to compile: " );
+		builder.append( className );
+		builder.append( "\n\n" );
+		for ( Diagnostic<?> diagnostic : diagnostics )
+		{
+		    builder.append( diagnostic.toString() );
+		    builder.append( "\n" );
+		}
+		throw new AssertionError( builder.toString() );
     }
 
     private <T> T compile( String className, String source, CompilationListener<T> listener )
@@ -214,7 +214,7 @@ public class DbStructureInvocationTracingAcceptanceTest
 
         InMemSource( String className, String javaSource )
         {
-            super( URI.create( "string:///" + className.replace( '.', '/' ) + Kind.SOURCE.extension ), Kind.SOURCE );
+            super( URI.create( new StringBuilder().append("string:///").append(className.replace( '.', '/' )).append(Kind.SOURCE.extension).toString() ), Kind.SOURCE );
             this.javaSource = javaSource;
         }
 
@@ -231,7 +231,7 @@ public class DbStructureInvocationTracingAcceptanceTest
 
         InMemSink( String className )
         {
-            super( URI.create( "mem:///" + className + Kind.CLASS.extension ), Kind.CLASS );
+            super( URI.create( new StringBuilder().append("mem:///").append(className).append(Kind.CLASS.extension).toString() ), Kind.CLASS );
         }
 
         public byte[] getBytes()
@@ -273,16 +273,12 @@ public class DbStructureInvocationTracingAcceptanceTest
         public JavaFileObject getJavaFileForOutput( Location location, String className,
                                                     Kind kind, FileObject sibling ) throws IOException
         {
-            if ( StandardLocation.CLASS_OUTPUT == location && Kind.CLASS == kind )
-            {
-                InMemSink clazz = new InMemSink( className );
-                classes.put( className, clazz );
-                return clazz;
-            }
-            else
-            {
-                return super.getJavaFileForOutput( location, className, kind, sibling );
-            }
+            if (!(StandardLocation.CLASS_OUTPUT == location && Kind.CLASS == kind)) {
+				return super.getJavaFileForOutput( location, className, kind, sibling );
+			}
+			InMemSink clazz = new InMemSink( className );
+			classes.put( className, clazz );
+			return clazz;
         }
     }
 }

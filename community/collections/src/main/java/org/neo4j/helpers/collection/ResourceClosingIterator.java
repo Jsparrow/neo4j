@@ -28,7 +28,16 @@ import org.neo4j.graphdb.ResourceUtils;
 
 public abstract class ResourceClosingIterator<T, V> implements ResourceIterator<V>
 {
-    /**
+    private Resource[] resources;
+	private final Iterator<T> iterator;
+
+	ResourceClosingIterator( Iterator<T> iterator, Resource... resources )
+    {
+        this.resources = resources;
+        this.iterator = iterator;
+    }
+
+	/**
      * @deprecated use {@link #newResourceIterator(Iterator, Resource...)}
      */
     @Deprecated
@@ -37,7 +46,7 @@ public abstract class ResourceClosingIterator<T, V> implements ResourceIterator<
         return newResourceIterator( iterator, resource );
     }
 
-    public static <R> ResourceIterator<R> newResourceIterator( Iterator<R> iterator, Resource... resources )
+	public static <R> ResourceIterator<R> newResourceIterator( Iterator<R> iterator, Resource... resources )
     {
         return new ResourceClosingIterator<R,R>( iterator, resources )
         {
@@ -49,26 +58,17 @@ public abstract class ResourceClosingIterator<T, V> implements ResourceIterator<
         };
     }
 
-    private Resource[] resources;
-    private final Iterator<T> iterator;
-
-    ResourceClosingIterator( Iterator<T> iterator, Resource... resources )
-    {
-        this.resources = resources;
-        this.iterator = iterator;
-    }
-
-    @Override
+	@Override
     public void close()
     {
-        if ( resources != null )
-        {
-            ResourceUtils.closeAll( resources );
-            resources = null;
-        }
+        if (resources == null) {
+			return;
+		}
+		ResourceUtils.closeAll( resources );
+		resources = null;
     }
 
-    @Override
+	@Override
     public boolean hasNext()
     {
         boolean hasNext = iterator.hasNext();
@@ -79,9 +79,9 @@ public abstract class ResourceClosingIterator<T, V> implements ResourceIterator<
         return hasNext;
     }
 
-    public abstract V map( T elem );
+	public abstract V map( T elem );
 
-    @Override
+	@Override
     public V next()
     {
         try
@@ -95,7 +95,7 @@ public abstract class ResourceClosingIterator<T, V> implements ResourceIterator<
         }
     }
 
-    @Override
+	@Override
     public void remove()
     {
         iterator.remove();

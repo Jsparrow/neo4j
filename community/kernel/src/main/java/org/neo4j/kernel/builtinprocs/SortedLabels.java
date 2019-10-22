@@ -57,12 +57,11 @@ public class SortedLabels
     @Override
     public boolean equals( Object obj )
     {
-        if ( obj instanceof SortedLabels )
-        {
-            long[] input = ((SortedLabels) obj).all();
-            return Arrays.equals( labels, input );
-        }
-        return false;
+        if (!(obj instanceof SortedLabels)) {
+			return false;
+		}
+		long[] input = ((SortedLabels) obj).all();
+		return Arrays.equals( labels, input );
     }
 
     public int numberOfLabels()

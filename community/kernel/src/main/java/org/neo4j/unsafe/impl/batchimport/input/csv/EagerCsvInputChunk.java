@@ -40,12 +40,11 @@ class EagerCsvInputChunk implements CsvInputChunk, Source.Chunk
     @Override
     public boolean next( InputEntityVisitor visitor ) throws IOException
     {
-        if ( cursor < entities.length )
-        {
-            entities[cursor++].replayOnto( visitor );
-            return true;
-        }
-        return false;
+        if (cursor >= entities.length) {
+			return false;
+		}
+		entities[cursor++].replayOnto( visitor );
+		return true;
     }
 
     @Override

@@ -108,10 +108,7 @@ public class PropertiesRepresentationTest
         PropertyContainer container = mock( PropertyContainer.class );
         when( container.getPropertyKeys() ).thenReturn( values.keySet() );
         when( container.getAllProperties() ).thenReturn( values );
-        for ( Map.Entry<String, Object> entry : values.entrySet() )
-        {
-            when( container.getProperty( entry.getKey(), null ) ).thenReturn( entry.getValue() );
-        }
+        values.entrySet().forEach(entry -> when(container.getProperty(entry.getKey(), null)).thenReturn(entry.getValue()));
         return container;
     }
 }

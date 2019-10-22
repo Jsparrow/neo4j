@@ -39,93 +39,17 @@ import static org.neo4j.storageengine.api.RelationshipDirection.OUTGOING;
 class DefaultRelationshipTraversalCursor extends DefaultRelationshipCursor<StorageRelationshipTraversalCursor>
         implements RelationshipTraversalCursor
 {
-    private enum FilterState
-    {
-        // need filter, and need to read filter state from first store relationship
-        NOT_INITIALIZED( RelationshipDirection.ERROR )
-                {
-                    @Override
-                    boolean check( long source, long target, long origin )
-                    {
-                        throw new IllegalStateException( "Cannot call check on uninitialized filter" );
-                    }
-                },
-        // allow only incoming relationships
-        INCOMING( RelationshipDirection.INCOMING )
-                {
-                    @Override
-                    boolean check( long source, long target, long origin )
-                    {
-                        return origin == target && source != target;
-                    }
-                },
-        // allow only outgoing relationships
-        OUTGOING( RelationshipDirection.OUTGOING )
-                {
-                    @Override
-                    boolean check( long source, long target, long origin )
-                    {
-                        return origin == source && source != target;
-                    }
-                },
-        // allow only loop relationships
-        LOOP( RelationshipDirection.LOOP )
-                {
-                    @Override
-                    boolean check( long source, long target, long origin )
-                    {
-                        return source == target;
-                    }
-                },
-        // no filtering required
-        NONE( RelationshipDirection.ERROR )
-                {
-                    @Override
-                    boolean check( long source, long target, long origin )
-                    {
-                        return true;
-                    }
-                };
-
-        abstract boolean check( long source, long target, long origin );
-
-        private final RelationshipDirection direction;
-
-        FilterState( RelationshipDirection direction )
-        {
-            this.direction = direction;
-        }
-
-        private static FilterState fromRelationshipDirection( RelationshipDirection direction )
-        {
-            switch ( direction )
-            {
-            case OUTGOING:
-                return FilterState.OUTGOING;
-            case INCOMING:
-                return FilterState.INCOMING;
-            case LOOP:
-                return FilterState.LOOP;
-            case ERROR:
-                throw new IllegalArgumentException( "There has been a RelationshipDirection.ERROR" );
-            default:
-                throw new IllegalStateException(
-                        format( "Still poking my eye, dear checkstyle... (cannot filter on direction '%s')", direction ) );
-            }
-        }
-    }
-
     private FilterState filterState;
-    private boolean filterStore;
-    private int filterType = NO_ID;
-    private LongIterator addedRelationships;
+	private boolean filterStore;
+	private int filterType = NO_ID;
+	private LongIterator addedRelationships;
 
-    DefaultRelationshipTraversalCursor( DefaultCursors pool, StorageRelationshipTraversalCursor storeCursor )
+	DefaultRelationshipTraversalCursor( DefaultCursors pool, StorageRelationshipTraversalCursor storeCursor )
     {
         super( pool, storeCursor );
     }
 
-    void init( long nodeReference, long reference, Read read )
+	void init( long nodeReference, long reference, Read read )
     {
         /* There are 5 different ways a relationship traversal cursor can be initialized:
          *
@@ -204,43 +128,43 @@ class DefaultRelationshipTraversalCursor extends DefaultRelationshipCursor<Stora
         this.addedRelationships = ImmutableEmptyLongIterator.INSTANCE;
     }
 
-    private void initFiltering( FilterState filterState, boolean filterStore )
+	private void initFiltering( FilterState filterState, boolean filterStore )
     {
         this.filterState = filterState;
         this.filterStore = filterStore;
     }
 
-    @Override
+	@Override
     public Position suspend()
     {
         throw new UnsupportedOperationException( "not implemented" );
     }
 
-    @Override
+	@Override
     public void resume( Position position )
     {
         throw new UnsupportedOperationException( "not implemented" );
     }
 
-    @Override
+	@Override
     public void neighbour( NodeCursor cursor )
     {
         read.singleNode( neighbourNodeReference(), cursor );
     }
 
-    @Override
+	@Override
     public long neighbourNodeReference()
     {
         return storeCursor.neighbourNodeReference();
     }
 
-    @Override
+	@Override
     public long originNodeReference()
     {
         return storeCursor.originNodeReference();
     }
 
-    @Override
+	@Override
     public boolean next()
     {
         boolean hasChanges;
@@ -284,10 +208,11 @@ class DefaultRelationshipTraversalCursor extends DefaultRelationshipCursor<Stora
         return false;
     }
 
-    private void setupFilterState()
+	private void setupFilterState()
     {
         filterType = storeCursor.type();
-        final long source = sourceNodeReference(), target = targetNodeReference();
+        final long source = sourceNodeReference();
+		final long target = targetNodeReference();
         if ( source == target )
         {
             filterState = FilterState.LOOP;
@@ -302,28 +227,27 @@ class DefaultRelationshipTraversalCursor extends DefaultRelationshipCursor<Stora
         }
     }
 
-    private boolean correctTypeAndDirection()
+	private boolean correctTypeAndDirection()
     {
         return (filterType == ANY_RELATIONSHIP_TYPE || filterType == storeCursor.type()) &&
                 filterState.check( sourceNodeReference(), targetNodeReference(), storeCursor.originNodeReference() );
     }
 
-    @Override
+	@Override
     public void close()
     {
-        if ( !isClosed() )
-        {
-            read = null;
-            filterState = FilterState.NONE;
-            filterType = NO_ID;
-            filterStore = false;
-            storeCursor.close();
-
-            pool.accept( this );
-        }
+        if (isClosed()) {
+			return;
+		}
+		read = null;
+		filterState = FilterState.NONE;
+		filterType = NO_ID;
+		filterStore = false;
+		storeCursor.close();
+		pool.accept( this );
     }
 
-    @Override
+	@Override
     protected void collectAddedTxStateSnapshot()
     {
         if ( filterState == FilterState.NOT_INITIALIZED )
@@ -338,23 +262,23 @@ class DefaultRelationshipTraversalCursor extends DefaultRelationshipCursor<Stora
                              nodeState.getAddedRelationships();
     }
 
-    private boolean hasTxStateFilter()
+	private boolean hasTxStateFilter()
     {
         return filterState != FilterState.NONE;
     }
 
-    @Override
+	@Override
     public boolean isClosed()
     {
         return read == null;
     }
 
-    public void release()
+	public void release()
     {
         storeCursor.close();
     }
 
-    @Override
+	@Override
     public String toString()
     {
         if ( isClosed() )
@@ -372,9 +296,84 @@ class DefaultRelationshipTraversalCursor extends DefaultRelationshipCursor<Stora
             {
                 mode = mode + "regular";
             }
-            return "RelationshipTraversalCursor[id=" + storeCursor.entityReference() +
-                    ", " + mode +
-                    ", " + storeCursor.toString() + "]";
+            return new StringBuilder().append("RelationshipTraversalCursor[id=").append(storeCursor.entityReference()).append(", ").append(mode).append(", ").append(storeCursor.toString())
+					.append("]").toString();
+        }
+    }
+
+	private enum FilterState
+    {
+        // need filter, and need to read filter state from first store relationship
+        NOT_INITIALIZED( RelationshipDirection.ERROR )
+                {
+                    @Override
+                    boolean check( long source, long target, long origin )
+                    {
+                        throw new IllegalStateException( "Cannot call check on uninitialized filter" );
+                    }
+                },
+        // allow only incoming relationships
+        INCOMING( RelationshipDirection.INCOMING )
+                {
+                    @Override
+                    boolean check( long source, long target, long origin )
+                    {
+                        return origin == target && source != target;
+                    }
+                },
+        // allow only outgoing relationships
+        OUTGOING( RelationshipDirection.OUTGOING )
+                {
+                    @Override
+                    boolean check( long source, long target, long origin )
+                    {
+                        return origin == source && source != target;
+                    }
+                },
+        // allow only loop relationships
+        LOOP( RelationshipDirection.LOOP )
+                {
+                    @Override
+                    boolean check( long source, long target, long origin )
+                    {
+                        return source == target;
+                    }
+                },
+        // no filtering required
+        NONE( RelationshipDirection.ERROR )
+                {
+                    @Override
+                    boolean check( long source, long target, long origin )
+                    {
+                        return true;
+                    }
+                };
+
+        abstract boolean check( long source, long target, long origin );
+
+        private final RelationshipDirection direction;
+
+        FilterState( RelationshipDirection direction )
+        {
+            this.direction = direction;
+        }
+
+        private static FilterState fromRelationshipDirection( RelationshipDirection direction )
+        {
+            switch ( direction )
+            {
+            case OUTGOING:
+                return FilterState.OUTGOING;
+            case INCOMING:
+                return FilterState.INCOMING;
+            case LOOP:
+                return FilterState.LOOP;
+            case ERROR:
+                throw new IllegalArgumentException( "There has been a RelationshipDirection.ERROR" );
+            default:
+                throw new IllegalStateException(
+                        format( "Still poking my eye, dear checkstyle... (cannot filter on direction '%s')", direction ) );
+            }
         }
     }
 }

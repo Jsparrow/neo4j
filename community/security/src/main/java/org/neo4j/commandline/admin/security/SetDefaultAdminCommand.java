@@ -120,7 +120,7 @@ public class SetDefaultAdminCommand implements AdminCommand
         admins.stop();
         admins.shutdown();
 
-        outsideWorld.stdOutLine( "default admin user set to '" + username + "'" );
+        outsideWorld.stdOutLine( new StringBuilder().append("default admin user set to '").append(username).append("'").toString() );
     }
 
     Config loadNeo4jConfig()

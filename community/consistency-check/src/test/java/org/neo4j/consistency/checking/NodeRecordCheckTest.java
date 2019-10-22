@@ -460,14 +460,14 @@ class NodeRecordCheckTest
 
     private static void assertDynamicRecordChain( DynamicRecord... records )
     {
-        if ( records.length > 0 )
-        {
-            for ( int i = 1; i < records.length; i++ )
-            {
-                assertEquals( records[i].getId(), records[i - 1].getNextBlock() );
-            }
-            assertTrue( Record.NO_NEXT_BLOCK.is( records[records.length - 1].getNextBlock() ) );
-        }
+        if (records.length <= 0) {
+			return;
+		}
+		for ( int i = 1; i < records.length; i++ )
+		{
+		    assertEquals( records[i].getId(), records[i - 1].getNextBlock() );
+		}
+		assertTrue( Record.NO_NEXT_BLOCK.is( records[records.length - 1].getNextBlock() ) );
     }
 
     private class NotUsedReusableRecordsAllocator extends ReusableRecordsAllocator

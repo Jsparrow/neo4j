@@ -111,9 +111,7 @@ public class ResourceInjectionTest
     {
         //When
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Unable to set up injection for procedure `ProcedureWithUnknownAPI`, " +
-                "the field `api` has type `class org.neo4j.kernel.impl.proc.ResourceInjectionTest$UnknownAPI` " +
-                "which is not a known injectable component." );
+        exception.expectMessage( new StringBuilder().append("Unable to set up injection for procedure `ProcedureWithUnknownAPI`, ").append("the field `api` has type `class org.neo4j.kernel.impl.proc.ResourceInjectionTest$UnknownAPI` ").append("which is not a known injectable component.").toString() );
 
         // Then
         compiler.compileProcedure( ProcedureWithUnknownAPI.class, null, true );
@@ -175,9 +173,7 @@ public class ResourceInjectionTest
     {
         //When
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Unable to set up injection for procedure `FunctionWithUnknownAPI`, " +
-                "the field `api` has type `class org.neo4j.kernel.impl.proc.ResourceInjectionTest$UnknownAPI` " +
-                "which is not a known injectable component." );
+        exception.expectMessage( new StringBuilder().append("Unable to set up injection for procedure `FunctionWithUnknownAPI`, ").append("the field `api` has type `class org.neo4j.kernel.impl.proc.ResourceInjectionTest$UnknownAPI` ").append("which is not a known injectable component.").toString() );
 
         // Then
         compiler.compileFunction( FunctionWithUnknownAPI.class );
@@ -222,9 +218,7 @@ public class ResourceInjectionTest
     {
         //When
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Unable to set up injection for procedure `AggregationFunctionWithUnknownAPI`, " +
-                "the field `api` has type `class org.neo4j.kernel.impl.proc.ResourceInjectionTest$UnknownAPI` " +
-                "which is not a known injectable component." );
+        exception.expectMessage( new StringBuilder().append("Unable to set up injection for procedure `AggregationFunctionWithUnknownAPI`, ").append("the field `api` has type `class org.neo4j.kernel.impl.proc.ResourceInjectionTest$UnknownAPI` ").append("which is not a known injectable component.").toString() );
 
         // Then
         compiler.compileAggregationFunction( AggregationFunctionWithUnknownAPI.class );
@@ -483,7 +477,19 @@ public class ResourceInjectionTest
             return new VoidOutput( api );
         }
 
-        public static class VoidOutput
+        @Procedure
+        public Stream<MyOutputRecord> listCoolPeopleProcedure()
+        {
+            return api.listCoolPeople().stream().map( MyOutputRecord::new );
+        }
+
+		@UserFunction
+        public String safeUserFunctionInUnsafeAPIClass()
+        {
+            return "a safe function";
+        }
+
+		public static class VoidOutput
         {
             private MyUnsafeAPI api;
 
@@ -502,18 +508,6 @@ public class ResourceInjectionTest
             {
                 return api.listCoolPeople().toString();
             }
-        }
-
-        @Procedure
-        public Stream<MyOutputRecord> listCoolPeopleProcedure()
-        {
-            return api.listCoolPeople().stream().map( MyOutputRecord::new );
-        }
-
-        @UserFunction
-        public String safeUserFunctionInUnsafeAPIClass()
-        {
-            return "a safe function";
         }
     }
 }

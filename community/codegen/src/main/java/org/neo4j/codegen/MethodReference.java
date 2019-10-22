@@ -26,7 +26,24 @@ import static org.neo4j.codegen.TypeReference.typeReferences;
 
 public class MethodReference
 {
-    public static MethodReference methodReference( Class<?> owner, Class<?> returns, String name,
+    private final TypeReference owner;
+	private final String name;
+	private final TypeReference returns;
+	private final TypeReference[] parameters;
+	private final int modifiers;
+
+	MethodReference( TypeReference owner, String name, TypeReference returns, int modifiers,
+            TypeReference[] parameters )
+    {
+        this.owner = owner;
+
+        this.name = name;
+        this.returns = returns;
+        this.modifiers = modifiers;
+        this.parameters = parameters;
+    }
+
+	public static MethodReference methodReference( Class<?> owner, Class<?> returns, String name,
             Class<?>... parameters )
     {
         try
@@ -41,7 +58,7 @@ public class MethodReference
 
     }
 
-    public static MethodReference methodReference( Class<?> owner, TypeReference returns, String name,
+	public static MethodReference methodReference( Class<?> owner, TypeReference returns, String name,
             Class<?>... parameters )
     {
         try
@@ -56,87 +73,70 @@ public class MethodReference
 
     }
 
-    private static MethodReference methodReference( Class<?> owner, TypeReference returns, String name, int modifiers,
+	private static MethodReference methodReference( Class<?> owner, TypeReference returns, String name, int modifiers,
             TypeReference... parameters )
     {
         return methodReference( typeReference( owner ), returns, name, modifiers, parameters );
     }
 
-    public static MethodReference methodReference( TypeReference owner, TypeReference returns, String name,
+	public static MethodReference methodReference( TypeReference owner, TypeReference returns, String name,
             TypeReference... parameters )
     {
         return new MethodReference( owner, name, returns, Modifier.PUBLIC, parameters );
     }
 
-    public static MethodReference methodReference( TypeReference owner, TypeReference returns, String name,
+	public static MethodReference methodReference( TypeReference owner, TypeReference returns, String name,
             int modifiers, TypeReference... parameters )
     {
         return new MethodReference( owner, name, returns, modifiers, parameters );
     }
 
-    public static MethodReference constructorReference( Class<?> owner, Class<?> firstParameter, Class<?>... parameters )
+	public static MethodReference constructorReference( Class<?> owner, Class<?> firstParameter, Class<?>... parameters )
     {
         return constructorReference( typeReference( owner ), typeReferences( firstParameter, parameters ) );
     }
 
-    public static MethodReference constructorReference( Class<?> owner, TypeReference... parameters )
+	public static MethodReference constructorReference( Class<?> owner, TypeReference... parameters )
     {
         return constructorReference( typeReference( owner ), parameters );
     }
 
-    public static MethodReference constructorReference( TypeReference owner, TypeReference... parameters )
+	public static MethodReference constructorReference( TypeReference owner, TypeReference... parameters )
     {
         return new MethodReference( owner, "<init>", TypeReference.VOID,  Modifier.PUBLIC, parameters );
     }
 
-    private final TypeReference owner;
-    private final String name;
-    private final TypeReference returns;
-    private final TypeReference[] parameters;
-    private final int modifiers;
-
-    MethodReference( TypeReference owner, String name, TypeReference returns, int modifiers,
-            TypeReference[] parameters )
-    {
-        this.owner = owner;
-
-        this.name = name;
-        this.returns = returns;
-        this.modifiers = modifiers;
-        this.parameters = parameters;
-    }
-
-    public String name()
+	public String name()
     {
         return name;
     }
 
-    public TypeReference owner()
+	public TypeReference owner()
     {
         return owner;
     }
 
-    public TypeReference returns()
+	public TypeReference returns()
     {
         return returns;
     }
 
-    public TypeReference[] parameters()
+	public TypeReference[] parameters()
     {
         return parameters;
     }
 
-    public boolean isConstructor()
+	public boolean isConstructor()
     {
         return "<init>".equals( name );
     }
 
-    public int modifiers()
+	public int modifiers()
     {
         return modifiers;
     }
 
-    @Override
+	@Override
     public String toString()
     {
         StringBuilder result = new StringBuilder().append( "MethodReference[" );
@@ -144,7 +144,7 @@ public class MethodReference
         return result.append( "]" ).toString();
     }
 
-    void writeTo( StringBuilder result )
+	void writeTo( StringBuilder result )
     {
         owner.writeTo( result );
         result.append( "#" ).append( name ).append( "(...)" );

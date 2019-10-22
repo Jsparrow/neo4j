@@ -44,11 +44,7 @@ public class CreateRelationshipTestIT extends AbstractRestFunctionalDocTestBase
     @Title( "Create a relationship with properties" )
     public void create_a_relationship_with_properties()
     {
-        String jsonString = "{\"to\" : \""
-                            + getDataUri()
-                            + "node/"
-                            + getNode( "Sara" ).getId()
-                            + "\", \"type\" : \"LOVES\", \"data\" : {\"foo\" : \"bar\"}}";
+        String jsonString = new StringBuilder().append("{\"to\" : \"").append(getDataUri()).append("node/").append(getNode( "Sara" ).getId()).append("\", \"type\" : \"LOVES\", \"data\" : {\"foo\" : \"bar\"}}").toString();
         Node i = getNode( "Joe" );
         gen.get().expectedStatus(
                 Status.CREATED.getStatusCode() ).payload( jsonString ).post(
@@ -65,11 +61,7 @@ public class CreateRelationshipTestIT extends AbstractRestFunctionalDocTestBase
     @Graph( "Joe knows Sara" )
     public void create_relationship() throws Exception
     {
-        String jsonString = "{\"to\" : \""
-                            + getDataUri()
-                            + "node/"
-                            + getNode( "Sara" ).getId()
-                            + "\", \"type\" : \"LOVES\"}";
+        String jsonString = new StringBuilder().append("{\"to\" : \"").append(getDataUri()).append("node/").append(getNode( "Sara" ).getId()).append("\", \"type\" : \"LOVES\"}").toString();
         Node i = getNode( "Joe" );
         String entity = gen.get().expectedStatus(
                 Status.CREATED.getStatusCode() ).payload( jsonString )
@@ -85,11 +77,7 @@ public class CreateRelationshipTestIT extends AbstractRestFunctionalDocTestBase
     @Graph( "Joe knows Sara" )
     public void shouldRespondWith404WhenStartNodeDoesNotExist()
     {
-        String jsonString = "{\"to\" : \""
-                            + getDataUri()
-                            + "node/"
-                            + getNode( "Joe" )
-                            + "\", \"type\" : \"LOVES\", \"data\" : {\"foo\" : \"bar\"}}";
+        String jsonString = new StringBuilder().append("{\"to\" : \"").append(getDataUri()).append("node/").append(getNode( "Joe" )).append("\", \"type\" : \"LOVES\", \"data\" : {\"foo\" : \"bar\"}}").toString();
         gen.get().expectedStatus(
                 Status.NOT_FOUND.getStatusCode() ).expectedType( MediaType.TEXT_HTML_TYPE ).payload( jsonString ).post(
                 getDataUri() + "/node/12345/relationships" ).entity();
@@ -99,10 +87,7 @@ public class CreateRelationshipTestIT extends AbstractRestFunctionalDocTestBase
     @Graph( "Joe knows Sara" )
     public void creating_a_relationship_to_a_nonexisting_end_node()
     {
-        String jsonString = "{\"to\" : \""
-                            + getDataUri()
-                            + "node/"
-                            + "999999\", \"type\" : \"LOVES\", \"data\" : {\"foo\" : \"bar\"}}";
+        String jsonString = new StringBuilder().append("{\"to\" : \"").append(getDataUri()).append("node/").append("999999\", \"type\" : \"LOVES\", \"data\" : {\"foo\" : \"bar\"}}").toString();
         gen.get().expectedStatus(
                 Status.BAD_REQUEST.getStatusCode() ).payload( jsonString ).post(
                         getNodeUri( getNode( "Joe" ) ) + "/relationships" ).entity();
@@ -115,8 +100,7 @@ public class CreateRelationshipTestIT extends AbstractRestFunctionalDocTestBase
     {
 
         Node joe = getNode( "Joe" );
-        String jsonString = "{\"to\" : \"" + getNodeUri( joe )
-                            + "\", \"type\" : \"LOVES\"}";
+        String jsonString = new StringBuilder().append("{\"to\" : \"").append(getNodeUri( joe )).append("\", \"type\" : \"LOVES\"}").toString();
         String entity = gen.get().expectedStatus(
                 Status.CREATED.getStatusCode() ).payload( jsonString ).post(
                         getNodeUri( getNode( "Joe" ) ) + "/relationships" ).entity();
@@ -127,9 +111,7 @@ public class CreateRelationshipTestIT extends AbstractRestFunctionalDocTestBase
     @Graph( "Joe knows Sara" )
     public void providing_bad_JSON()
     {
-        String jsonString = "{\"to\" : \""
-                            + getNodeUri( data.get().get( "Joe" ) )
-                            + "\", \"type\" : \"LOVES\", \"data\" : {\"foo\" : **BAD JSON HERE*** \"bar\"}}";
+        String jsonString = new StringBuilder().append("{\"to\" : \"").append(getNodeUri( data.get().get( "Joe" ) )).append("\", \"type\" : \"LOVES\", \"data\" : {\"foo\" : **BAD JSON HERE*** \"bar\"}}").toString();
         gen.get().expectedStatus(
                 Status.BAD_REQUEST.getStatusCode() ).payload( jsonString ).post(
                         getNodeUri( getNode( "Joe" ) ) + "/relationships" ).entity();

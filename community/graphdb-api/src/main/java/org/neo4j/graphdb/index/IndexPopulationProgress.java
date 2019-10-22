@@ -37,7 +37,7 @@ public class IndexPopulationProgress
     {
         if ( total < 0 || completed < 0 || completed > total )
         {
-            throw new IllegalArgumentException( "Invalid progress specified: " + completed + "/" + total );
+            throw new IllegalArgumentException( new StringBuilder().append("Invalid progress specified: ").append(completed).append("/").append(total).toString() );
         }
         this.completedCount = completed;
         this.totalCount = total;

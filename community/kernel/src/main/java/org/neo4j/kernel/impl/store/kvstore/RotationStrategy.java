@@ -209,7 +209,7 @@ abstract class RotationStrategy
             {
                 throw new IllegalStateException( "Invalid path: " + previous, e );
             }
-            return databaseLayout.file( baseName + "." + next );
+            return databaseLayout.file( new StringBuilder().append(baseName).append(".").append(next).toString() );
         }
 
         @Override

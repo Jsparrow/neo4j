@@ -88,104 +88,104 @@ public class NativeLabelScanStore implements LabelScanStore
      */
     private static final byte NEEDS_REBUILDING = (byte) 0x01;
 
-    /**
-     * Whether or not this label scan store is read-only.
-     */
-    private final boolean readOnly;
-
-    /**
-     * Monitoring internal events.
-     */
-    private final Monitor monitor;
-
-    /**
-     * Monitors used to pass down monitor to underlying {@link GBPTree}
-     */
-    private final Monitors monitors;
-
-    /**
-     * {@link PageCache} to {@link PageCache#map(File, int, java.nio.file.OpenOption...)}
-     * store file backing this label scan store. Passed to {@link GBPTree}.
-     */
-    private final PageCache pageCache;
-
-    /**
-     * Store file {@link PageCache#map(File, int, java.nio.file.OpenOption...)}.
-     */
-    private final File storeFile;
-
-    /**
-     * Used in {@link #start()} if the store is empty, where this will provide all data for fully populating
-     * this label scan store. This can be the case when changing label scan store provider on an existing database.
-     */
-    private final FullStoreChangeStream fullStoreChangeStream;
-
-    /**
-     * {@link FileSystemAbstraction} the backing file lives on.
-     */
-    private final FileSystemAbstraction fs;
-
-    /**
-     * Page size to use for each tree node in {@link GBPTree}. Passed to {@link GBPTree}.
-     */
-    private final int pageSize;
-
-    /**
-     * Used for all file operations on the gbpTree file.
-     */
-    private final FileSystemAbstraction fileSystem;
-
-    /**
-     * Layout of the database.
-     */
-    private final DatabaseLayout directoryStructure;
-
-    /**
-     * The index which backs this label scan store. Instantiated in {@link #init()} and considered
-     * started after call to {@link #start()}.
-     */
-    private GBPTree<LabelScanKey,LabelScanValue> index;
-
-    /**
-     * Set during {@link #init()} if {@link #start()} will need to rebuild the whole label scan store from
-     * {@link FullStoreChangeStream}.
-     */
-    private boolean needsRebuild;
-
-    /**
-     * Passed to underlying {@link GBPTree} which use it to submit recovery cleanup jobs.
-     */
-    private final RecoveryCleanupWorkCollector recoveryCleanupWorkCollector;
-
-    /**
-     * The single instance of {@link NativeLabelScanWriter} used for updates.
-     */
-    private NativeLabelScanWriter singleWriter;
-
-    /**
-     * Monitor for all writes going into this label scan store.
-     */
-    private NativeLabelScanWriter.WriteMonitor writeMonitor;
-
-    /**
+	/**
      * Write rebuilding bit to header.
      */
     private static final Consumer<PageCursor> needsRebuildingWriter =
             pageCursor -> pageCursor.putByte( NEEDS_REBUILDING );
 
-    /**
+	/**
      * Write clean header.
      */
     private static final Consumer<PageCursor> writeClean = pageCursor -> pageCursor.putByte( CLEAN );
 
-    public NativeLabelScanStore( PageCache pageCache, DatabaseLayout directoryStructure, FileSystemAbstraction fs, FullStoreChangeStream fullStoreChangeStream,
+	/**
+     * Whether or not this label scan store is read-only.
+     */
+    private final boolean readOnly;
+
+	/**
+     * Monitoring internal events.
+     */
+    private final Monitor monitor;
+
+	/**
+     * Monitors used to pass down monitor to underlying {@link GBPTree}
+     */
+    private final Monitors monitors;
+
+	/**
+     * {@link PageCache} to {@link PageCache#map(File, int, java.nio.file.OpenOption...)}
+     * store file backing this label scan store. Passed to {@link GBPTree}.
+     */
+    private final PageCache pageCache;
+
+	/**
+     * Store file {@link PageCache#map(File, int, java.nio.file.OpenOption...)}.
+     */
+    private final File storeFile;
+
+	/**
+     * Used in {@link #start()} if the store is empty, where this will provide all data for fully populating
+     * this label scan store. This can be the case when changing label scan store provider on an existing database.
+     */
+    private final FullStoreChangeStream fullStoreChangeStream;
+
+	/**
+     * {@link FileSystemAbstraction} the backing file lives on.
+     */
+    private final FileSystemAbstraction fs;
+
+	/**
+     * Page size to use for each tree node in {@link GBPTree}. Passed to {@link GBPTree}.
+     */
+    private final int pageSize;
+
+	/**
+     * Used for all file operations on the gbpTree file.
+     */
+    private final FileSystemAbstraction fileSystem;
+
+	/**
+     * Layout of the database.
+     */
+    private final DatabaseLayout directoryStructure;
+
+	/**
+     * The index which backs this label scan store. Instantiated in {@link #init()} and considered
+     * started after call to {@link #start()}.
+     */
+    private GBPTree<LabelScanKey,LabelScanValue> index;
+
+	/**
+     * Set during {@link #init()} if {@link #start()} will need to rebuild the whole label scan store from
+     * {@link FullStoreChangeStream}.
+     */
+    private boolean needsRebuild;
+
+	/**
+     * Passed to underlying {@link GBPTree} which use it to submit recovery cleanup jobs.
+     */
+    private final RecoveryCleanupWorkCollector recoveryCleanupWorkCollector;
+
+	/**
+     * The single instance of {@link NativeLabelScanWriter} used for updates.
+     */
+    private NativeLabelScanWriter singleWriter;
+
+	/**
+     * Monitor for all writes going into this label scan store.
+     */
+    private NativeLabelScanWriter.WriteMonitor writeMonitor;
+
+	public NativeLabelScanStore( PageCache pageCache, DatabaseLayout directoryStructure, FileSystemAbstraction fs, FullStoreChangeStream fullStoreChangeStream,
             boolean readOnly, Monitors monitors, RecoveryCleanupWorkCollector recoveryCleanupWorkCollector )
     {
         this( pageCache, directoryStructure, fs, fullStoreChangeStream, readOnly, monitors, recoveryCleanupWorkCollector,
                 /*means no opinion about page size*/ 0 );
     }
 
-    /*
+	/*
      * Test access to be able to control page size.
      */
     NativeLabelScanStore( PageCache pageCache, DatabaseLayout directoryStructure, FileSystemAbstraction fs,
@@ -205,7 +205,7 @@ public class NativeLabelScanStore implements LabelScanStore
         this.fileSystem = fs;
     }
 
-    /**
+	/**
      * Returns the file backing the label scan store.
      *
      * @param directoryStructure The store directory to use.
@@ -216,7 +216,7 @@ public class NativeLabelScanStore implements LabelScanStore
         return directoryStructure.labelScanStore();
     }
 
-    /**
+	/**
      * @return {@link LabelScanReader} capable of finding node ids with given label ids.
      * Readers will immediately see updates made by {@link LabelScanWriter}, although {@link LabelScanWriter}
      * may internally batch updates so functionality isn't reliable. The only given is that readers will
@@ -228,7 +228,7 @@ public class NativeLabelScanStore implements LabelScanStore
         return new NativeLabelScanReader( index );
     }
 
-    /**
+	/**
      * Returns {@link LabelScanWriter} capable of making changes to this {@link LabelScanStore}.
      * Only a single writer is allowed at any given point in time.
      *
@@ -254,7 +254,7 @@ public class NativeLabelScanStore implements LabelScanStore
         }
     }
 
-    /**
+	/**
      * Forces all changes to {@link PageCache} and creates a checkpoint so that the {@link LabelScanStore}
      * is recoverable from this point, given that the same transactions which will be applied after this point
      * and non-clean shutdown will be applied again on next startup.
@@ -268,7 +268,7 @@ public class NativeLabelScanStore implements LabelScanStore
         writeMonitor.force();
     }
 
-    @Override
+	@Override
     public AllEntriesLabelScanReader allNodeLabelRanges()
     {
         IntFunction<RawCursor<Hit<LabelScanKey,LabelScanValue>,IOException>> seekProvider = labelId ->
@@ -302,7 +302,7 @@ public class NativeLabelScanStore implements LabelScanStore
         return new NativeAllEntriesLabelScanReader( seekProvider, highestLabelId );
     }
 
-    /**
+	/**
      * @return store files, namely the single "neostore.labelscanstore.db" store file.
      */
     @Override
@@ -311,7 +311,7 @@ public class NativeLabelScanStore implements LabelScanStore
         return asResourceIterator( iterator( storeFile ) );
     }
 
-    /**
+	/**
      * Instantiates the underlying {@link GBPTree} and its resources.
      *
      * @throws IOException on {@link PageCache} exceptions.
@@ -342,31 +342,31 @@ public class NativeLabelScanStore implements LabelScanStore
         writeMonitor = LabelScanWriteMonitor.ENABLED ? new LabelScanWriteMonitor( fs, directoryStructure ) : NativeLabelScanWriter.EMPTY;
         singleWriter = new NativeLabelScanWriter( 1_000, writeMonitor );
 
-        if ( isDirty )
-        {
-            monitor.notValidIndex();
-            if ( !readOnly )
-            {
-                dropStrict();
-                instantiateTree();
-            }
-            needsRebuild = true;
-        }
+        if (!isDirty) {
+			return;
+		}
+		monitor.notValidIndex();
+		if ( !readOnly )
+		{
+		    dropStrict();
+		    instantiateTree();
+		}
+		needsRebuild = true;
     }
 
-    @Override
+	@Override
     public boolean hasStore()
     {
         return fileSystem.fileExists( storeFile );
     }
 
-    @Override
+	@Override
     public File getLabelScanStoreFile()
     {
         return storeFile;
     }
 
-    /**
+	/**
      * @return true if instantiated tree needs to be rebuilt.
      */
     private boolean instantiateTree()
@@ -389,12 +389,12 @@ public class NativeLabelScanStore implements LabelScanStore
         }
     }
 
-    private GBPTree.Monitor treeMonitor()
+	private GBPTree.Monitor treeMonitor()
     {
         return new LabelIndexTreeMonitor();
     }
 
-    @Override
+	@Override
     public void drop() throws IOException
     {
         try
@@ -407,7 +407,7 @@ public class NativeLabelScanStore implements LabelScanStore
         }
     }
 
-    private void dropStrict() throws IOException
+	private void dropStrict() throws IOException
     {
         if ( index != null )
         {
@@ -417,7 +417,7 @@ public class NativeLabelScanStore implements LabelScanStore
         fileSystem.deleteFileOrThrow( storeFile );
     }
 
-    /**
+	/**
      * Starts the store and makes it available for queries and updates.
      * Any required recovery must take place before calling this method.
      *
@@ -426,30 +426,27 @@ public class NativeLabelScanStore implements LabelScanStore
     @Override
     public void start() throws IOException
     {
-        if ( needsRebuild && !readOnly )
-        {
-            monitor.rebuilding();
-            long numberOfNodes;
-
-            // Intentionally ignore read-only flag here when rebuilding.
-            try ( LabelScanWriter writer = writer() )
-            {
-                numberOfNodes = fullStoreChangeStream.applyTo( writer );
-            }
-
-            index.checkpoint( IOLimiter.UNLIMITED, writeClean );
-
-            monitor.rebuilt( numberOfNodes );
-            needsRebuild = false;
-        }
+        if (!(needsRebuild && !readOnly)) {
+			return;
+		}
+		monitor.rebuilding();
+		long numberOfNodes;
+		// Intentionally ignore read-only flag here when rebuilding.
+		try ( LabelScanWriter writer = writer() )
+		{
+		    numberOfNodes = fullStoreChangeStream.applyTo( writer );
+		}
+		index.checkpoint( IOLimiter.UNLIMITED, writeClean );
+		monitor.rebuilt( numberOfNodes );
+		needsRebuild = false;
     }
 
-    private NativeLabelScanWriter writer() throws IOException
+	private NativeLabelScanWriter writer() throws IOException
     {
         return singleWriter.initialize( index.writer() );
     }
 
-    @Override
+	@Override
     public boolean isEmpty() throws IOException
     {
         try ( RawCursor<Hit<LabelScanKey,LabelScanValue>,IOException> cursor = index.seek(
@@ -460,12 +457,12 @@ public class NativeLabelScanStore implements LabelScanStore
         }
     }
 
-    @Override
+	@Override
     public void stop()
     {   // Not needed
     }
 
-    /**
+	/**
      * Shuts down this store so that no more queries or updates can be accepted.
      *
      * @throws IOException on {@link PageCache} exceptions.
@@ -473,32 +470,32 @@ public class NativeLabelScanStore implements LabelScanStore
     @Override
     public void shutdown() throws IOException
     {
-        if ( index != null )
-        {
-            index.close();
-            index = null;
-            writeMonitor.close();
-        }
+        if (index == null) {
+			return;
+		}
+		index.close();
+		index = null;
+		writeMonitor.close();
     }
 
-    @Override
+	@Override
     public boolean isReadOnly()
     {
         return readOnly;
     }
 
-    public boolean isDirty()
+	public boolean isDirty()
     {
         return index == null || index.wasDirtyOnStartup();
     }
 
-    @Override
+	@Override
     public boolean consistencyCheck( ReporterFactory reporterFactory )
     {
         return consistencyCheck( reporterFactory.getClass( GBPTreeConsistencyCheckVisitor.class ) );
     }
 
-    private boolean consistencyCheck( GBPTreeConsistencyCheckVisitor<LabelScanKey> visitor )
+	private boolean consistencyCheck( GBPTreeConsistencyCheckVisitor<LabelScanKey> visitor )
     {
         try
         {

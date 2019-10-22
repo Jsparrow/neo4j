@@ -65,7 +65,7 @@ public class CompilationFailureException extends Exception
                 {
                     if ( sources == null )
                     {
-                        sources = Collections.newSetFromMap( new IdentityHashMap<JavaFileObject,Boolean>() );
+                        sources = Collections.newSetFromMap( new IdentityHashMap<>() );
                     }
                     sources.add( file );
                 }
@@ -76,8 +76,7 @@ public class CompilationFailureException extends Exception
             return "";
         }
         StringBuilder result = new StringBuilder();
-        for ( JavaFileObject source : sources )
-        {
+        sources.forEach(source -> {
             int pos = result.length();
             result.append( "\nSource file " ).append( source.getName() ).append( ":\n" );
             try
@@ -98,7 +97,7 @@ public class CompilationFailureException extends Exception
             {
                 result.setLength( pos );
             }
-        }
+        });
         return result.toString();
     }
 

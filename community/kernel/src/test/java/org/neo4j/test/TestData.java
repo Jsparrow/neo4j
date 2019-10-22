@@ -36,86 +36,27 @@ import org.neo4j.kernel.impl.annotations.Documented;
 
 public class TestData<T> implements TestRule
 {
-    @Target( ElementType.METHOD )
-    @Retention( RetentionPolicy.RUNTIME )
-    public @interface Title
+    private static final String EMPTY = "";
+	private final Producer<T> producer;
+	private final ThreadLocal<Lazy> product = new InheritableThreadLocal<>();
+
+	private TestData( Producer<T> producer )
     {
-        String value();
+        this.producer = producer;
     }
 
-    public interface Producer<T>
-    {
-        T create( GraphDefinition graph, String title, String documentation );
-
-        void destroy( T product, boolean successful );
-    }
-
-    public static <T> TestData<T> producedThrough( Producer<T> transformation )
+	public static <T> TestData<T> producedThrough( Producer<T> transformation )
     {
         Objects.requireNonNull( transformation );
         return new TestData<>( transformation );
     }
 
-    public T get()
+	public T get()
     {
         return get( true );
     }
 
-    private static final class Lazy
-    {
-        private volatile Object productOrFactory;
-
-        Lazy( GraphDefinition graph, String title, String documentation )
-        {
-            productOrFactory = new Factory( graph, title, documentation );
-        }
-
-        @SuppressWarnings( "unchecked" )
-        <T> T get( Producer<T> producer, boolean create )
-        {
-            Object result = productOrFactory;
-            if ( result instanceof Factory )
-            {
-                synchronized ( this )
-                {
-                    if ( ( result = productOrFactory ) instanceof Factory )
-                    {
-                        productOrFactory = result = ( (Factory) result ).create( producer, create );
-                    }
-                }
-            }
-            return (T) result;
-        }
-    }
-
-    private static final class Factory
-    {
-        private final GraphDefinition graph;
-        private final String title;
-        private final String documentation;
-
-        Factory( GraphDefinition graph, String title, String documentation )
-        {
-            this.graph = graph;
-            this.title = title;
-            this.documentation = documentation;
-        }
-
-        Object create( Producer<?> producer, boolean create )
-        {
-            return create ? producer.create( graph, title, documentation ) : null;
-        }
-    }
-
-    private final Producer<T> producer;
-    private final ThreadLocal<Lazy> product = new InheritableThreadLocal<>();
-
-    private TestData( Producer<T> producer )
-    {
-        this.producer = producer;
-    }
-
-    @Override
+	@Override
     public Statement apply( final Statement base, final Description description )
     {
         final Title title = description.getAnnotation( Title.class );
@@ -171,7 +112,7 @@ public class TestData<T> implements TestRule
         };
     }
 
-    private void destroy( @SuppressWarnings( "hiding" ) T product, boolean successful )
+	private void destroy( @SuppressWarnings( "hiding" ) T product, boolean successful )
     {
         if ( product != null )
         {
@@ -179,23 +120,20 @@ public class TestData<T> implements TestRule
         }
     }
 
-    private T get( boolean create )
+	private T get( boolean create )
     {
         Lazy lazy = product.get();
-        if ( lazy == null )
-        {
-            if ( create )
-            {
-                throw new IllegalStateException( "Not in test case" );
-            }
-            return null;
-        }
-        return lazy.get( producer, create );
+        if (lazy != null) {
+			return lazy.get( producer, create );
+		}
+		if ( create )
+		{
+		    throw new IllegalStateException( "Not in test case" );
+		}
+		return null;
     }
 
-    private static final String EMPTY = "";
-
-    private static Lazy create( GraphDescription graph, String title, String doc, String methodName )
+	private static Lazy create( GraphDescription graph, String title, String doc, String methodName )
     {
         if ( doc != null )
         {
@@ -271,5 +209,65 @@ public class TestData<T> implements TestRule
             title = methodName.replace( "_", " " );
         }
         return new Lazy( graph, title, doc );
+    }
+
+	@Target( ElementType.METHOD )
+    @Retention( RetentionPolicy.RUNTIME )
+    public @interface Title
+    {
+        String value();
+    }
+
+	public interface Producer<T>
+    {
+        T create( GraphDefinition graph, String title, String documentation );
+
+        void destroy( T product, boolean successful );
+    }
+
+    private static final class Lazy
+    {
+        private volatile Object productOrFactory;
+
+        Lazy( GraphDefinition graph, String title, String documentation )
+        {
+            productOrFactory = new Factory( graph, title, documentation );
+        }
+
+        @SuppressWarnings( "unchecked" )
+        <T> T get( Producer<T> producer, boolean create )
+        {
+            Object result = productOrFactory;
+            if ( result instanceof Factory )
+            {
+                synchronized ( this )
+                {
+                    if ( ( result = productOrFactory ) instanceof Factory )
+                    {
+                        productOrFactory = result = ( (Factory) result ).create( producer, create );
+                    }
+                }
+            }
+            return (T) result;
+        }
+    }
+
+    private static final class Factory
+    {
+        private final GraphDefinition graph;
+        private final String title;
+        private final String documentation;
+
+        Factory( GraphDefinition graph, String title, String documentation )
+        {
+            this.graph = graph;
+            this.title = title;
+            this.documentation = documentation;
+        }
+
+        Object create( Producer<?> producer, boolean create )
+        {
+            return create ? producer.create( graph, title, documentation ) : null;
+        }
     }
 }

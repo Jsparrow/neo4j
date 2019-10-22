@@ -38,16 +38,52 @@ import static org.objectweb.asm.Type.getType;
 
 interface ByteCodeVisitor
 {
-    interface Configurable
-    {
-        void addByteCodeVisitor( ByteCodeVisitor visitor );
-    }
-
     ByteCodeVisitor DO_NOTHING = ( name, bytes ) ->
     {
     };
 
-    void visitByteCode( String name, ByteBuffer bytes );
+	void visitByteCode( String name, ByteBuffer bytes );
+
+	static Printer printer( PrintWriter out )
+    {
+        return new Printer()
+        {
+            @Override
+            void printf( String format, Object... args )
+            {
+                out.format( format, args );
+            }
+
+            @Override
+            void println( CharSequence line )
+            {
+                out.println( line );
+            }
+        };
+    }
+
+	static Printer printer( PrintStream out )
+    {
+        return new Printer()
+        {
+            @Override
+            void printf( String format, Object... args )
+            {
+                out.format( format, args );
+            }
+
+            @Override
+            void println( CharSequence line )
+            {
+                out.println( line );
+            }
+        };
+    }
+
+	interface Configurable
+    {
+        void addByteCodeVisitor( ByteCodeVisitor visitor );
+    }
 
     class Multiplex implements ByteCodeVisitor
     {
@@ -66,42 +102,6 @@ interface ByteCodeVisitor
                 visitor.visitByteCode( name, bytes.duplicate() );
             }
         }
-    }
-
-    static Printer printer( PrintWriter out )
-    {
-        return new Printer()
-        {
-            @Override
-            void printf( String format, Object... args )
-            {
-                out.format( format, args );
-            }
-
-            @Override
-            void println( CharSequence line )
-            {
-                out.println( line );
-            }
-        };
-    }
-
-    static Printer printer( PrintStream out )
-    {
-        return new Printer()
-        {
-            @Override
-            void printf( String format, Object... args )
-            {
-                out.format( format, args );
-            }
-
-            @Override
-            void println( CharSequence line )
-            {
-                out.println( line );
-            }
-        };
     }
 
     abstract class Printer extends ClassVisitor implements ByteCodeVisitor, CodeGeneratorOption

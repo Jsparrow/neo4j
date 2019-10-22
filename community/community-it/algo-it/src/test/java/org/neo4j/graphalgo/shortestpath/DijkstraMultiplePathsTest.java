@@ -66,7 +66,8 @@ public class DijkstraMultiplePathsTest extends Neo4jAlgoTestCase
                 int nrPaths = dijkstra.getPathsAsNodes().size();
                 if ( !node1.equals( node2 ) )
                 {
-                    assertEquals( "Number of paths (" + node1 + "->" + node2 + "): " + nrPaths, 2, nrPaths );
+                    assertEquals( new StringBuilder().append("Number of paths (").append(node1).append("->").append(node2).append("): ").append(nrPaths)
+							.toString(), 2, nrPaths );
                 }
                 assertEquals( 0.0, dijkstra.getCost(), 0.0 );
             }
@@ -397,8 +398,7 @@ public class DijkstraMultiplePathsTest extends Neo4jAlgoTestCase
         assertEquals( paths.size(), 3 );
         String[] commonPrefix = {"a", "b", "c"};
         String[] commonSuffix = {"f", "g"};
-        for ( List<Node> path : paths )
-        {
+        paths.forEach(path -> {
             /**
              * Check if the prefixes are all correct.
              */
@@ -416,6 +416,6 @@ public class DijkstraMultiplePathsTest extends Neo4jAlgoTestCase
             {
                 assertEquals( path.get( pathSize - j - 1 ), graph.getNode( commonSuffix[commonSuffix.length - j - 1] ) );
             }
-        }
+        });
     }
 }

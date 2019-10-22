@@ -112,12 +112,11 @@ public class LabelSchemaDescriptor implements org.neo4j.internal.kernel.api.sche
     @Override
     public boolean equals( Object o )
     {
-        if ( o instanceof LabelSchemaDescriptor )
-        {
-            LabelSchemaDescriptor that = (LabelSchemaDescriptor)o;
-            return labelId == that.getLabelId() && Arrays.equals( propertyIds, that.getPropertyIds() );
-        }
-        return false;
+        if (!(o instanceof LabelSchemaDescriptor)) {
+			return false;
+		}
+		LabelSchemaDescriptor that = (LabelSchemaDescriptor)o;
+		return labelId == that.getLabelId() && Arrays.equals( propertyIds, that.getPropertyIds() );
     }
 
     @Override
@@ -129,7 +128,7 @@ public class LabelSchemaDescriptor implements org.neo4j.internal.kernel.api.sche
     @Override
     public String toString()
     {
-        return "LabelSchemaDescriptor( " + userDescription( SchemaUtil.idTokenNameLookup ) + " )";
+        return new StringBuilder().append("LabelSchemaDescriptor( ").append(userDescription( SchemaUtil.idTokenNameLookup )).append(" )").toString();
     }
 
     @Override

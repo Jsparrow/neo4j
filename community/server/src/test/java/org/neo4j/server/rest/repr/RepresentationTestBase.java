@@ -29,23 +29,23 @@ class RepresentationTestBase
     static final String NODE_URI_PATTERN = "http://.*/node/[0-9]+";
     static final String RELATIONSHIP_URI_PATTERN = "http://.*/relationship/[0-9]+";
 
-    static void assertUriMatches( String expectedRegex, ValueRepresentation uriRepr )
+    private RepresentationTestBase()
+    {
+        // only static resource
+    }
+
+	static void assertUriMatches( String expectedRegex, ValueRepresentation uriRepr )
     {
         assertUriMatches( expectedRegex, RepresentationTestAccess.serialize( uriRepr ) );
     }
 
-    static void assertUriMatches( String expectedRegex, String actualUri )
+	static void assertUriMatches( String expectedRegex, String actualUri )
     {
-        assertTrue( "expected <" + expectedRegex + "> got <" + actualUri + ">", actualUri.matches( expectedRegex ) );
+        assertTrue( new StringBuilder().append("expected <").append(expectedRegex).append("> got <").append(actualUri).append(">").toString(), actualUri.matches( expectedRegex ) );
     }
 
-    static String uriPattern( String subPath )
+	static String uriPattern( String subPath )
     {
         return "http://.*/[0-9]+" + subPath;
-    }
-
-    private RepresentationTestBase()
-    {
-        // only static resource
     }
 }

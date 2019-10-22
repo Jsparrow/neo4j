@@ -341,23 +341,6 @@ public class ConstraintIndexCreatorTest
         logProvider.rawMessageMatcher().assertContains( "Constraint %s verified." );
     }
 
-    private class StubKernel implements Kernel
-    {
-        private final List<KernelTransactionImplementation> transactions = new ArrayList<>();
-
-        private KernelTransaction remember( KernelTransactionImplementation kernelTransaction )
-        {
-            transactions.add( kernelTransaction );
-            return kernelTransaction;
-        }
-
-        @Override
-        public Transaction beginTransaction( Transaction.Type type, LoginContext loginContext )
-        {
-            return remember( createTransaction() );
-        }
-    }
-
     private SchemaRead schemaRead()
     {
         SchemaRead schemaRead = mock( SchemaRead.class );
@@ -373,7 +356,7 @@ public class ConstraintIndexCreatorTest
         return schemaRead;
     }
 
-    private KernelTransactionImplementation createTransaction()
+	private KernelTransactionImplementation createTransaction()
     {
         KernelTransactionImplementation transaction = mock( KernelTransactionImplementation.class );
         try
@@ -406,8 +389,25 @@ public class ConstraintIndexCreatorTest
         return transaction;
     }
 
-    private static String getDefaultProvider()
+	private static String getDefaultProvider()
     {
         return Config.defaults().get( GraphDatabaseSettings.default_schema_provider );
+    }
+
+	private class StubKernel implements Kernel
+    {
+        private final List<KernelTransactionImplementation> transactions = new ArrayList<>();
+
+        private KernelTransaction remember( KernelTransactionImplementation kernelTransaction )
+        {
+            transactions.add( kernelTransaction );
+            return kernelTransaction;
+        }
+
+        @Override
+        public Transaction beginTransaction( Transaction.Type type, LoginContext loginContext )
+        {
+            return remember( createTransaction() );
+        }
     }
 }

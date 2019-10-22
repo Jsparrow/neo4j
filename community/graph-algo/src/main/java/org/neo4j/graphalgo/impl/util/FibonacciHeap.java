@@ -40,49 +40,16 @@ import java.util.List;
  */
 public class FibonacciHeap<KeyType>
 {
-    /**
-     * One entry in the fibonacci heap is stored as an instance of this class.
-     * References to such entries are required for some operations, like
-     * decreaseKey().
-     */
-    public class FibonacciHeapNode
-    {
-        FibonacciHeapNode left;
-        FibonacciHeapNode right;
-        FibonacciHeapNode parent;
-        FibonacciHeapNode child;
-        boolean marked;
-        KeyType key;
-        int degree;
-
-        public FibonacciHeapNode( KeyType key )
-        {
-            super();
-            this.key = key;
-            left = this;
-            right = this;
-        }
-
-        /**
-         * @return the key
-         */
-        public KeyType getKey()
-        {
-            return key;
-        }
-    }
-
     Comparator<KeyType> keyComparator;
-    FibonacciHeapNode minimum;
-    int nrNodes;
+	FibonacciHeapNode minimum;
+	int nrNodes;
 
-    public FibonacciHeap( Comparator<KeyType> keyComparator )
+	public FibonacciHeap( Comparator<KeyType> keyComparator )
     {
-        super();
         this.keyComparator = keyComparator;
     }
 
-    /**
+	/**
      * @return True if the heap is empty.
      */
     public boolean isEmpty()
@@ -90,7 +57,7 @@ public class FibonacciHeap<KeyType>
         return minimum == null;
     }
 
-    /**
+	/**
      * @return The number of entries in this heap.
      */
     public int size()
@@ -98,7 +65,7 @@ public class FibonacciHeap<KeyType>
         return nrNodes;
     }
 
-    /**
+	/**
      * @return The entry with the highest priority or null if the heap is empty.
      */
     public FibonacciHeapNode getMinimum()
@@ -106,7 +73,7 @@ public class FibonacciHeap<KeyType>
         return minimum;
     }
 
-    /**
+	/**
      * Internal helper function for moving nodes into the root list
      */
     protected void insertInRootList( FibonacciHeapNode fNode )
@@ -133,7 +100,7 @@ public class FibonacciHeap<KeyType>
         }
     }
 
-    /**
+	/**
      * Inserts a new value into the heap.
      * @param key
      *            the value to be inserted.
@@ -147,7 +114,7 @@ public class FibonacciHeap<KeyType>
         return node;
     }
 
-    /**
+	/**
      * Creates the union of two heaps by absorbing the other into this one.
      * Note: Destroys other
      */
@@ -177,7 +144,7 @@ public class FibonacciHeap<KeyType>
         }
     }
 
-    /**
+	/**
      * This removes and returns the entry with the highest priority.
      * @return The value with the highest priority.
      */
@@ -216,7 +183,7 @@ public class FibonacciHeap<KeyType>
         return minNode.key;
     }
 
-    /**
+	/**
      * Internal helper function.
      */
     protected void consolidate()
@@ -269,16 +236,10 @@ public class FibonacciHeap<KeyType>
         // throw away the root list
         minimum = null;
         // and rebuild it from A
-        for ( FibonacciHeapNode node : nodes )
-        {
-            if ( node != null )
-            {
-                insertInRootList( node );
-            }
-        }
+		nodes.stream().filter(node -> node != null).forEach(node -> insertInRootList(node));
     }
 
-    /**
+	/**
      * Internal helper function. Makes root node y a child of root node x.
      */
     protected void link( FibonacciHeapNode y, FibonacciHeapNode x )
@@ -306,7 +267,7 @@ public class FibonacciHeap<KeyType>
         y.marked = false;
     }
 
-    /**
+	/**
      * Raises the priority for an entry.
      * @param node
      *            The entry to receive a higher priority.
@@ -333,7 +294,7 @@ public class FibonacciHeap<KeyType>
         }
     }
 
-    /**
+	/**
      * Internal helper function. This removes y's child x and moves x to the
      * root list.
      */
@@ -355,7 +316,7 @@ public class FibonacciHeap<KeyType>
         insertInRootList( x );
     }
 
-    /**
+	/**
      * Internal helper function.
      */
     protected void cascadingCut( FibonacciHeapNode y )
@@ -372,6 +333,37 @@ public class FibonacciHeap<KeyType>
                 cut( y, parent );
                 cascadingCut( parent );
             }
+        }
+    }
+
+	/**
+     * One entry in the fibonacci heap is stored as an instance of this class.
+     * References to such entries are required for some operations, like
+     * decreaseKey().
+     */
+    public class FibonacciHeapNode
+    {
+        FibonacciHeapNode left;
+        FibonacciHeapNode right;
+        FibonacciHeapNode parent;
+        FibonacciHeapNode child;
+        boolean marked;
+        KeyType key;
+        int degree;
+
+        public FibonacciHeapNode( KeyType key )
+        {
+            this.key = key;
+            left = this;
+            right = this;
+        }
+
+        /**
+         * @return the key
+         */
+        public KeyType getKey()
+        {
+            return key;
         }
     }
 }

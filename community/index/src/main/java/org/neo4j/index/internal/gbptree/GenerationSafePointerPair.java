@@ -388,12 +388,10 @@ class GenerationSafePointerPair
      */
     static String failureDescription( long result )
     {
-        return "GSPP " + (isRead( result ) ? "READ" : "WRITE") + " failure" +
-                format( "%n  Pointer state A: %s",
-                        pointerStateName( pointerStateFromResult( result, SHIFT_STATE_A ) ) ) +
-                format( "%n  Pointer state B: %s",
-                        pointerStateName( pointerStateFromResult( result, SHIFT_STATE_B ) ) ) +
-                format( "%n  Generations: " + generationComparisonFromResult( result ) );
+        return new StringBuilder().append("GSPP ").append(isRead( result ) ? "READ" : "WRITE").append(" failure").append(format( "%n  Pointer state A: %s",
+		        pointerStateName( pointerStateFromResult( result, SHIFT_STATE_A ) ) ))
+				.append(format( "%n  Pointer state B: %s",
+                        pointerStateName( pointerStateFromResult( result, SHIFT_STATE_B ) ) )).append(format( "%n  Generations: " + generationComparisonFromResult( result ) )).toString();
     }
 
     /**
@@ -429,7 +427,7 @@ class GenerationSafePointerPair
         }
         else
         {
-            return "Unknown[" + bits + "]";
+            return new StringBuilder().append("Unknown[").append(bits).append("]").toString();
         }
     }
 
@@ -448,7 +446,7 @@ class GenerationSafePointerPair
         case CRASH: return "CRASH";
         case BROKEN: return "BROKEN";
         case EMPTY: return "EMPTY";
-        default: return "Unknown[" + pointerState + "]";
+        default: return new StringBuilder().append("Unknown[").append(pointerState).append("]").toString();
         }
     }
 

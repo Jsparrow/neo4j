@@ -69,7 +69,7 @@ public enum SourceCode implements CodeGeneratorOption
         @Override
         protected void visitSource( TypeReference reference, CharSequence sourceCode )
         {
-            System.out.println( "=== Generated class " + reference.fullName() + " ===\n" + sourceCode );
+            System.out.println( new StringBuilder().append("=== Generated class ").append(reference.fullName()).append(" ===\n").append(sourceCode).toString() );
         }
 
         @Override
@@ -138,7 +138,7 @@ public enum SourceCode implements CodeGeneratorOption
         @Override
         public String toString()
         {
-            return "annotationProcessor( " + processor + " )";
+            return new StringBuilder().append("annotationProcessor( ").append(processor).append(" )").toString();
         }
     }
 
@@ -154,7 +154,7 @@ public enum SourceCode implements CodeGeneratorOption
         @Override
         public String toString()
         {
-            return "sourceLocation( " + path + " )";
+            return new StringBuilder().append("sourceLocation( ").append(path).append(" )").toString();
         }
 
         @Override
@@ -174,7 +174,7 @@ public enum SourceCode implements CodeGeneratorOption
 
         private Path path( TypeReference reference )
         {
-            return path.resolve( reference.packageName().replace( '.', '/' ) + "/" + reference.name() + ".java" );
+            return path.resolve( new StringBuilder().append(reference.packageName().replace( '.', '/' )).append("/").append(reference.name()).append(".java").toString() );
         }
     }
 

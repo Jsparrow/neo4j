@@ -49,28 +49,28 @@ public class IndexMapTest
     private static final long[] noEntityToken = {};
     private IndexMap indexMap;
 
-    private LabelSchemaDescriptor schema3_4 = SchemaDescriptorFactory.forLabel( 3, 4 );
-    private LabelSchemaDescriptor schema5_6_7 = SchemaDescriptorFactory.forLabel( 5, 6, 7 );
-    private LabelSchemaDescriptor schema5_8 = SchemaDescriptorFactory.forLabel( 5, 8 );
-    private SchemaDescriptor node35_8 = SchemaDescriptorFactory.multiToken( new int[] {3,5}, NODE, 8 );
-    private SchemaDescriptor rel35_8 = SchemaDescriptorFactory.multiToken( new int[] {3,5}, RELATIONSHIP, 8 );
+    private LabelSchemaDescriptor schema34 = SchemaDescriptorFactory.forLabel( 3, 4 );
+    private LabelSchemaDescriptor schema567 = SchemaDescriptorFactory.forLabel( 5, 6, 7 );
+    private LabelSchemaDescriptor schema58 = SchemaDescriptorFactory.forLabel( 5, 8 );
+    private SchemaDescriptor node358 = SchemaDescriptorFactory.multiToken( new int[] {3,5}, NODE, 8 );
+    private SchemaDescriptor rel358 = SchemaDescriptorFactory.multiToken( new int[] {3,5}, RELATIONSHIP, 8 );
 
     @Before
     public void setup()
     {
         indexMap = new IndexMap();
-        indexMap.putIndexProxy( new TestIndexProxy( forSchema( schema3_4 ).withId( 1 ).withoutCapabilities() ) );
-        indexMap.putIndexProxy( new TestIndexProxy( forSchema( schema5_6_7 ).withId( 2 ).withoutCapabilities() ) );
-        indexMap.putIndexProxy( new TestIndexProxy( forSchema( schema5_8 ).withId( 3 ).withoutCapabilities() ) );
-        indexMap.putIndexProxy( new TestIndexProxy( forSchema( node35_8 ).withId( 4 ).withoutCapabilities() ) );
-        indexMap.putIndexProxy( new TestIndexProxy( forSchema( rel35_8 ).withId( 5 ).withoutCapabilities() ) );
+        indexMap.putIndexProxy( new TestIndexProxy( forSchema( schema34 ).withId( 1 ).withoutCapabilities() ) );
+        indexMap.putIndexProxy( new TestIndexProxy( forSchema( schema567 ).withId( 2 ).withoutCapabilities() ) );
+        indexMap.putIndexProxy( new TestIndexProxy( forSchema( schema58 ).withId( 3 ).withoutCapabilities() ) );
+        indexMap.putIndexProxy( new TestIndexProxy( forSchema( node358 ).withId( 4 ).withoutCapabilities() ) );
+        indexMap.putIndexProxy( new TestIndexProxy( forSchema( rel358 ).withId( 5 ).withoutCapabilities() ) );
     }
 
     @Test
     public void shouldGetRelatedIndexForLabel()
     {
         assertThat( getRelatedIndexes( entityTokens( 3 ), noEntityToken, properties(), false, NODE ),
-                containsInAnyOrder( schema3_4, node35_8 ) );
+                containsInAnyOrder( schema34, node358 ) );
     }
 
     private Set<SchemaDescriptor> getRelatedIndexes( long[] changedEntityTokens, long[] unchangedEntityTokens, int[] properties, boolean propertyListIsComplete,
@@ -85,14 +85,14 @@ public class IndexMapTest
     {
         assertThat(
                 getRelatedIndexes( noEntityToken, entityTokens( 3, 4, 5 ), properties( 4 ), false, NODE ),
-                containsInAnyOrder( schema3_4 ) );
+                containsInAnyOrder( schema34 ) );
     }
 
     @Test
     public void shouldGetRelatedIndexesForLabel()
     {
         assertThat( getRelatedIndexes( entityTokens( 5 ), entityTokens( 3, 4 ), properties(), false, NODE ),
-                containsInAnyOrder( schema5_6_7, schema5_8, node35_8 ) );
+                containsInAnyOrder( schema567, schema58, node358 ) );
     }
 
     @Test
@@ -100,7 +100,7 @@ public class IndexMapTest
     {
         assertThat(
                 getRelatedIndexes( entityTokens( 3 ), entityTokens( 4, 5 ), properties( 7 ), false, NODE ),
-                containsInAnyOrder( schema3_4, schema5_6_7, node35_8 ) );
+                containsInAnyOrder( schema34, schema567, node358 ) );
     }
 
     @Test
@@ -108,11 +108,11 @@ public class IndexMapTest
     {
         assertThat(
                 getRelatedIndexes( entityTokens( 3 ), noEntityToken, properties( 4 ), false, NODE ),
-                containsInAnyOrder( schema3_4, node35_8 ) );
+                containsInAnyOrder( schema34, node358 ) );
 
         assertThat(
                 getRelatedIndexes( noEntityToken, entityTokens( 5 ), properties( 6, 7 ), false, NODE ),
-                containsInAnyOrder( schema5_6_7 ) );
+                containsInAnyOrder( schema567 ) );
     }
 
     @Test
@@ -134,20 +134,20 @@ public class IndexMapTest
     public void shouldGetMultiLabelForAnyOfTheLabels()
     {
         assertThat( getRelatedIndexes( entityTokens( 3 ), noEntityToken, properties(), false, NODE ),
-                containsInAnyOrder( schema3_4, node35_8 ) );
+                containsInAnyOrder( schema34, node358 ) );
 
         assertThat( getRelatedIndexes( entityTokens( 5 ), noEntityToken, properties(), false, NODE ),
-                containsInAnyOrder( schema5_8, schema5_6_7, node35_8 ) );
+                containsInAnyOrder( schema58, schema567, node358 ) );
     }
 
     @Test
     public void shouldOnlyGetRelIndexesForRelUpdates()
     {
         assertThat( getRelatedIndexes( entityTokens( 3 ), noEntityToken, properties(), false, RELATIONSHIP ),
-                containsInAnyOrder( rel35_8 ) );
+                containsInAnyOrder( rel358 ) );
 
         assertThat( getRelatedIndexes( entityTokens( 5 ), noEntityToken, properties(), false, RELATIONSHIP ),
-                containsInAnyOrder( rel35_8 ) );
+                containsInAnyOrder( rel358 ) );
     }
 
     @Test
@@ -155,15 +155,15 @@ public class IndexMapTest
     {
         indexMap.removeIndexProxy( 4 );
         assertThat( getRelatedIndexes( entityTokens( 3 ), noEntityToken, properties(), false, NODE ),
-                containsInAnyOrder( schema3_4 ) );
+                containsInAnyOrder( schema34 ) );
         assertThat( getRelatedIndexes( entityTokens( 3 ), noEntityToken, properties(), false, RELATIONSHIP ),
-                containsInAnyOrder( rel35_8 ) );
+                containsInAnyOrder( rel358 ) );
 
         indexMap.removeIndexProxy( 7 );
         assertThat( getRelatedIndexes( entityTokens( 5 ), noEntityToken, properties(), false, NODE ),
-                containsInAnyOrder( schema5_8, schema5_6_7 ) );
+                containsInAnyOrder( schema58, schema567 ) );
         assertThat( getRelatedIndexes( entityTokens( 5 ), noEntityToken, properties(), false, RELATIONSHIP ),
-                containsInAnyOrder( rel35_8 ) );
+                containsInAnyOrder( rel358 ) );
     }
 
     @Test

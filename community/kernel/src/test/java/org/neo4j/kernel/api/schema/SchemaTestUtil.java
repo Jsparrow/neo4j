@@ -28,25 +28,6 @@ import static org.junit.Assert.assertEquals;
 
 public class SchemaTestUtil
 {
-    private SchemaTestUtil()
-    {
-    }
-
-    public static void assertEquality( Object o1, Object o2 )
-    {
-        assertEquals( o1.getClass().getSimpleName() + "s are not equal", o1, o2 );
-        assertEquals( o1.getClass().getSimpleName() + "s do not have the same hashcode", o1.hashCode(), o2.hashCode() );
-    }
-
-    public static void assertArray( int[] values, int... expected )
-    {
-        assertThat( values.length, equalTo( expected.length ) );
-        for ( int i = 0; i < values.length; i++ )
-        {
-            assertEquals( format( "Expected %d, got %d at index %d", expected[i], values[i], i ), values[i], expected[i] );
-        }
-    }
-
     public static TokenNameLookup simpleNameLookup = new TokenNameLookup()
     {
         @Override
@@ -67,4 +48,23 @@ public class SchemaTestUtil
             return "property" + propertyKeyId;
         }
     };
+
+	private SchemaTestUtil()
+    {
+    }
+
+	public static void assertEquality( Object o1, Object o2 )
+    {
+        assertEquals( o1.getClass().getSimpleName() + "s are not equal", o1, o2 );
+        assertEquals( o1.getClass().getSimpleName() + "s do not have the same hashcode", o1.hashCode(), o2.hashCode() );
+    }
+
+	public static void assertArray( int[] values, int... expected )
+    {
+        assertThat( values.length, equalTo( expected.length ) );
+        for ( int i = 0; i < values.length; i++ )
+        {
+            assertEquals( format( "Expected %d, got %d at index %d", expected[i], values[i], i ), values[i], expected[i] );
+        }
+    }
 }

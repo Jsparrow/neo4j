@@ -58,7 +58,7 @@ abstract class Action
         }
         else
         {
-            return String.format( command + format + ", and then " + innerAction, parameters );
+            return String.format( new StringBuilder().append(command).append(format).append(", and then ").append(innerAction).toString(), parameters );
         }
     }
 }

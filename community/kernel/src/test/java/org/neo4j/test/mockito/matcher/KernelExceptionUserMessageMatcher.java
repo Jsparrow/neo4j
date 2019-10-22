@@ -40,12 +40,11 @@ public class KernelExceptionUserMessageMatcher<T extends SchemaKernelException> 
     @Override
     public boolean matches( Object item )
     {
-        if ( item instanceof SchemaKernelException )
-        {
-            actualMessage = ((SchemaKernelException) item).getUserMessage( tokenNameLookup );
-            return expectedMessage.equals( actualMessage );
-        }
-        return false;
+        if (!(item instanceof SchemaKernelException)) {
+			return false;
+		}
+		actualMessage = ((SchemaKernelException) item).getUserMessage( tokenNameLookup );
+		return expectedMessage.equals( actualMessage );
     }
 
     @Override

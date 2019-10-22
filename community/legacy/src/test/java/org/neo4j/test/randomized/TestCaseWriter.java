@@ -47,17 +47,16 @@ public class TestCaseWriter<T, F>
         T target = targetFactory.newInstance();
         LinePrinter baseLinePrinter = new PrintStreamLinePrinter( out, 0 );
         baseLinePrinter.println( "@Test" );
-        baseLinePrinter.println( "public void " + testName + "() throws Exception" );
+        baseLinePrinter.println( new StringBuilder().append("public void ").append(testName).append("() throws Exception").toString() );
         baseLinePrinter.println( "{" );
 
         LinePrinter codePrinter = baseLinePrinter.indent();
         codePrinter.println( "// GIVEN" );
         given.print( codePrinter );
-        for ( Action<T, F> action: actions )
-        {
+        actions.forEach(action -> {
             action.printAsCode( target, codePrinter, false );
             action.apply( target );
-        }
+        });
 
         codePrinter.println( "" );
         codePrinter.println( "// WHEN/THEN" );

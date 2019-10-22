@@ -56,7 +56,7 @@ public class GlobalStoreLocker extends StoreLocker
     }
 
     @Override
-    public void checkLock() throws StoreLockException
+    public void checkLock()
     {
         super.checkLock();
         lockedFiles.add( storeLockFile );

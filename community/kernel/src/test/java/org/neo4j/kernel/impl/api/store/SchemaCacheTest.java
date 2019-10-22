@@ -191,7 +191,7 @@ public class SchemaCacheTest
 
         // then
         assertEquals(
-                asList( uniqueForLabel( 1, 2 ) ),
+                Collections.singletonList( uniqueForLabel( 1, 2 ) ),
                 Iterators.asList( cache.constraints() ) );
     }
 

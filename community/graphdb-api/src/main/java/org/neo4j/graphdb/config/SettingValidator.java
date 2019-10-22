@@ -36,7 +36,6 @@ public interface SettingValidator
      * @return the set of settings considered valid by this validator
      * @throws InvalidSettingException if invalid value detected
      */
-    Map<String,String> validate( Map<String,String> settings, Consumer<String> warningConsumer )
-            throws InvalidSettingException;
+    Map<String,String> validate( Map<String,String> settings, Consumer<String> warningConsumer );
 }
 

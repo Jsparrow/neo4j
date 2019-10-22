@@ -61,11 +61,11 @@ public enum NeoStoresDiagnostics implements DiagnosticsExtractor<NeoStores>
     @Override
     public void dumpDiagnostics( final NeoStores source, DiagnosticsPhase phase, Logger logger )
     {
-        if ( applicable( phase ) )
-        {
-            logger.log( message );
-            dump( source, logger );
-        }
+        if (!applicable( phase )) {
+			return;
+		}
+		logger.log( message );
+		dump( source, logger );
     }
 
     boolean applicable( DiagnosticsPhase phase )

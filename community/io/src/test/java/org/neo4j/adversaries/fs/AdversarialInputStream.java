@@ -46,26 +46,24 @@ public class AdversarialInputStream extends InputStream
     @Override
     public int read( byte[] b ) throws IOException
     {
-        if ( adversary.injectFailureOrMischief( IOException.class, NullPointerException.class ) )
-        {
-            byte[] dup = new byte[Math.max( b.length / 2, 1 )];
-            int read = inputStream.read( dup );
-            System.arraycopy( dup, 0, b, 0, read );
-            return read;
-        }
-        return inputStream.read( b );
+        if (!adversary.injectFailureOrMischief( IOException.class, NullPointerException.class )) {
+			return inputStream.read( b );
+		}
+		byte[] dup = new byte[Math.max( b.length / 2, 1 )];
+		int read = inputStream.read( dup );
+		System.arraycopy( dup, 0, b, 0, read );
+		return read;
     }
 
     @Override
     public int read( byte[] b, int off, int len ) throws IOException
     {
-        if ( adversary.injectFailureOrMischief(
-                IOException.class, NullPointerException.class, IndexOutOfBoundsException.class ) )
-        {
-            int halflen = Math.max( len / 2, 1 );
-            return inputStream.read( b, off, halflen );
-        }
-        return inputStream.read( b, off, len );
+        if (!adversary.injectFailureOrMischief(
+                IOException.class, NullPointerException.class, IndexOutOfBoundsException.class )) {
+			return inputStream.read( b, off, len );
+		}
+		int halflen = Math.max( len / 2, 1 );
+		return inputStream.read( b, off, halflen );
     }
 
     @Override

@@ -57,7 +57,14 @@ import static org.neo4j.helpers.collection.MapUtil.map;
 public class DijkstraTest extends Neo4jAlgoTestCase
 {
 
-    @Test
+    private final DijkstraFactory factory;
+
+	public DijkstraTest( DijkstraFactory factory )
+    {
+        this.factory = factory;
+    }
+
+	@Test
     public void pathToSelfReturnsZero()
     {
         // GIVEN
@@ -73,7 +80,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         assertEquals( 0, path.length() );
     }
 
-    @Test
+	@Test
     public void allPathsToSelfReturnsZero()
     {
         // GIVEN
@@ -93,7 +100,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         }
     }
 
-    @Test
+	@Test
     public void canFindOrphanGraph()
     {
         /*
@@ -110,7 +117,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         assertPaths( finder.findAllPaths( nodeA, nodeA ), "A" );
     }
 
-    @Test
+	@Test
     public void canFindNeighbour()
     {
         /*
@@ -124,7 +131,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         assertPaths( finder.findAllPaths( nodeA, nodeB ), "A,B" );
     }
 
-    @Test
+	@Test
     public void canFindNeighbourMultipleCorrectPaths()
     {
         /*
@@ -141,7 +148,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         assertPaths( finder.findAllPaths( nodeA, nodeB ), "A,B","A,B" );
     }
 
-    @Test
+	@Test
     public void canFindNeighbourMultipleIncorrectPaths()
     {
         /*
@@ -164,7 +171,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
 
     }
 
-    @Test
+	@Test
     public void canKeepSearchingUntilFoundTrueShortest()
     {
         /*
@@ -199,7 +206,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         assertFalse( "Expected at most one path",  paths.hasNext() );
     }
 
-    @Test
+	@Test
     public void canGetPathsInTriangleGraph()
     {
         /* NODE (NAME/INDEX)
@@ -224,7 +231,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         assertPath( finder.findSinglePath( nodeA, nodeC ), nodeA, nodeB, nodeC );
     }
 
-    @Test
+	@Test
     public void canContinueGettingPathsByDiminishingCost()
     {
         /*
@@ -258,7 +265,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
                 "A,B,C,D", "A,D" );
     }
 
-    @Test
+	@Test
     public void canGetMultiplePathsInTriangleGraph()
     {
         /* NODE (NAME/INDEX)
@@ -299,7 +306,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         assertFalse( "expected at most two paths", paths.hasNext() );
     }
 
-    @Test
+	@Test
     public void canGetMultiplePathsInASmallRoadNetwork()
     {
         /*    NODE (NAME/INDEX)
@@ -361,7 +368,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         }
     }
 
-    @Test
+	@Test
     public void shouldOnlyFindTheShortestPaths()
     {
         /*
@@ -400,13 +407,13 @@ public class DijkstraTest extends Neo4jAlgoTestCase
 
         for ( int i = 1; i <= 3; i++ )
         {
-            assertTrue( "Expected at least " + i + " path(s)", paths.hasNext() );
+            assertTrue( new StringBuilder().append("Expected at least ").append(i).append(" path(s)").toString(), paths.hasNext() );
             assertTrue( "Expected 3 paths of cost 2", NoneStrictMath.equals( paths.next().weight(), 2 ) );
         }
         assertFalse( "Expected exactly 3 paths", paths.hasNext() );
     }
 
-    private Relationship createGraph( boolean includeOnes )
+	private Relationship createGraph( boolean includeOnes )
     {
         /* Layout:
          *                       (y)
@@ -438,7 +445,7 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         return shortCTOXRelationship;
     }
 
-    @Test
+	@Test
     public void testSmallGraph()
     {
         Relationship shortCTOXRelationship = createGraph( true );
@@ -457,14 +464,14 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         // of the two from (c) --> (x)
         for ( WeightedPath path : finder.findAllPaths( startNode, endNode ) )
         {
-            if ( getPathDef( path ).equals( "start,a,b,c,x" ) )
+            if ( "start,a,b,c,x".equals( getPathDef( path ) ) )
             {
                 assertContainsRelationship( path, shortCTOXRelationship );
             }
         }
     }
 
-    @Test
+	@Test
     public void testSmallGraphWithDefaults()
     {
         Relationship shortCTOXRelationship = createGraph( true );
@@ -483,14 +490,14 @@ public class DijkstraTest extends Neo4jAlgoTestCase
         // of the two from (c) --> (x)
         for ( WeightedPath path : finder.findAllPaths( startNode, endNode ) )
         {
-            if ( getPathDef( path ).equals( "start,a,b,c,x" ) )
+            if ( "start,a,b,c,x".equals( getPathDef( path ) ) )
             {
                 assertContainsRelationship( path, shortCTOXRelationship );
             }
         }
     }
 
-    private void assertContainsRelationship( WeightedPath path,
+	private void assertContainsRelationship( WeightedPath path,
             Relationship relationship )
     {
         for ( Relationship rel : path.relationships() )
@@ -500,10 +507,10 @@ public class DijkstraTest extends Neo4jAlgoTestCase
                 return;
             }
         }
-        fail( path + " should've contained " + relationship );
+        fail( new StringBuilder().append(path).append(" should've contained ").append(relationship).toString() );
     }
 
-    @Parameterized.Parameters
+	@Parameterized.Parameters
     public static Collection<Object[]> data()
     {
         return Arrays.asList( new Object[][]
@@ -566,16 +573,9 @@ public class DijkstraTest extends Neo4jAlgoTestCase
                 } );
     }
 
-    private interface DijkstraFactory
+	private interface DijkstraFactory
     {
         PathFinder<WeightedPath> dijkstra( PathExpander expander );
         PathFinder<WeightedPath> dijkstra( PathExpander expander, CostEvaluator costEvaluator );
-    }
-
-    private final DijkstraFactory factory;
-
-    public DijkstraTest( DijkstraFactory factory )
-    {
-        this.factory = factory;
     }
 }

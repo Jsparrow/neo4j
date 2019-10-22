@@ -55,7 +55,112 @@ public class CompactJsonFormat extends RepresentationFormat
         super( MEDIA_TYPE );
     }
 
-    private enum MappingTemplate
+    @Override
+    protected ListWriter serializeList( String type )
+    {
+        return new ListWrappingWriter( new ArrayList<>() );
+    }
+
+	@Override
+    protected String complete( ListWriter serializer )
+    {
+        return JsonHelper.createJsonFrom( ( (ListWrappingWriter) serializer ).data );
+    }
+
+	@Override
+    protected MappingWriter serializeMapping( String type )
+    {
+        MappingTemplate template = MappingTemplate.TEMPLATES.get( type );
+        if ( template == null )
+        {
+            throw new WebApplicationException( Response.status( Response.Status.NOT_ACCEPTABLE )
+                    .entity( new StringBuilder().append("Cannot represent \"").append(type).append("\" as compactJson").toString() )
+                    .build() );
+        }
+        return new CompactJsonWriter( template );
+    }
+
+	@Override
+    protected String complete( MappingWriter serializer )
+    {
+        return ( (CompactJsonWriter) serializer ).complete();
+    }
+
+	@Override
+    protected String serializeValue( String type, Object value )
+    {
+        return JsonHelper.createJsonFrom( value );
+    }
+
+	private boolean empty( String input )
+    {
+        return input == null || "".equals( input.trim() );
+    }
+
+	@Override
+    public Map<String, Object> readMap( String input, String... requiredKeys ) throws BadInputException
+    {
+        if ( empty( input ) )
+        {
+            return DefaultFormat.validateKeys( Collections.emptyMap(), requiredKeys );
+        }
+        try
+        {
+            return DefaultFormat.validateKeys( JsonHelper.jsonToMap( stripByteOrderMark( input ) ), requiredKeys );
+        }
+        catch ( JsonParseException ex )
+        {
+            throw new BadInputException( ex );
+        }
+    }
+
+	@Override
+    public List<Object> readList( String input )
+    {
+        // TODO tobias: Implement readList() [Dec 10, 2010]
+        throw new UnsupportedOperationException( "Not implemented: JsonInput.readList()" );
+    }
+
+	@Override
+    public Object readValue( String input ) throws BadInputException
+    {
+        if ( empty( input ) )
+        {
+            return Collections.emptyMap();
+        }
+        try
+        {
+            return assertSupportedPropertyValue( readJson( stripByteOrderMark( input ) ) );
+        }
+        catch ( JsonParseException ex )
+        {
+            throw new BadInputException( ex );
+        }
+    }
+
+	@Override
+    public URI readUri( String input ) throws BadInputException
+    {
+        try
+        {
+            return new URI( readValue( input ).toString() );
+        }
+        catch ( URISyntaxException e )
+        {
+            throw new BadInputException( e );
+        }
+    }
+
+	private String stripByteOrderMark( String string )
+    {
+        if ( string != null && string.length() > 0 && string.charAt( 0 ) == 0xfeff )
+        {
+            return string.substring( 1 );
+        }
+        return string;
+    }
+
+	private enum MappingTemplate
     {
         NODE( Representation.NODE )
         {
@@ -115,7 +220,7 @@ public class CompactJsonFormat extends RepresentationFormat
         abstract String render( Map<String, Object> data );
     }
 
-    private static class CompactJsonWriter extends MapWrappingWriter
+	private static class CompactJsonWriter extends MapWrappingWriter
     {
         private final MappingTemplate template;
 
@@ -152,110 +257,5 @@ public class CompactJsonFormat extends RepresentationFormat
             return template.render( this.data );
         }
 
-    }
-
-    @Override
-    protected ListWriter serializeList( String type )
-    {
-        return new ListWrappingWriter( new ArrayList<>() );
-    }
-
-    @Override
-    protected String complete( ListWriter serializer )
-    {
-        return JsonHelper.createJsonFrom( ( (ListWrappingWriter) serializer ).data );
-    }
-
-    @Override
-    protected MappingWriter serializeMapping( String type )
-    {
-        MappingTemplate template = MappingTemplate.TEMPLATES.get( type );
-        if ( template == null )
-        {
-            throw new WebApplicationException( Response.status( Response.Status.NOT_ACCEPTABLE )
-                    .entity( "Cannot represent \"" + type + "\" as compactJson" )
-                    .build() );
-        }
-        return new CompactJsonWriter( template );
-    }
-
-    @Override
-    protected String complete( MappingWriter serializer )
-    {
-        return ( (CompactJsonWriter) serializer ).complete();
-    }
-
-    @Override
-    protected String serializeValue( String type, Object value )
-    {
-        return JsonHelper.createJsonFrom( value );
-    }
-
-    private boolean empty( String input )
-    {
-        return input == null || "".equals( input.trim() );
-    }
-
-    @Override
-    public Map<String, Object> readMap( String input, String... requiredKeys ) throws BadInputException
-    {
-        if ( empty( input ) )
-        {
-            return DefaultFormat.validateKeys( Collections.emptyMap(), requiredKeys );
-        }
-        try
-        {
-            return DefaultFormat.validateKeys( JsonHelper.jsonToMap( stripByteOrderMark( input ) ), requiredKeys );
-        }
-        catch ( JsonParseException ex )
-        {
-            throw new BadInputException( ex );
-        }
-    }
-
-    @Override
-    public List<Object> readList( String input )
-    {
-        // TODO tobias: Implement readList() [Dec 10, 2010]
-        throw new UnsupportedOperationException( "Not implemented: JsonInput.readList()" );
-    }
-
-    @Override
-    public Object readValue( String input ) throws BadInputException
-    {
-        if ( empty( input ) )
-        {
-            return Collections.emptyMap();
-        }
-        try
-        {
-            return assertSupportedPropertyValue( readJson( stripByteOrderMark( input ) ) );
-        }
-        catch ( JsonParseException ex )
-        {
-            throw new BadInputException( ex );
-        }
-    }
-
-    @Override
-    public URI readUri( String input ) throws BadInputException
-    {
-        try
-        {
-            return new URI( readValue( input ).toString() );
-        }
-        catch ( URISyntaxException e )
-        {
-            throw new BadInputException( e );
-        }
-    }
-
-    private String stripByteOrderMark( String string )
-    {
-        if ( string != null && string.length() > 0 && string.charAt( 0 ) == 0xfeff )
-        {
-            return string.substring( 1 );
-        }
-        return string;
     }
 }

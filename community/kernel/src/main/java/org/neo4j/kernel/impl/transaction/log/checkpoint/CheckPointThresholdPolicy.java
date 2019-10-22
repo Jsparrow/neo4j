@@ -56,7 +56,7 @@ public abstract class CheckPointThresholdPolicy extends Service
      *
      * @throws NoSuchElementException if the policy was not found.
      */
-    public static CheckPointThresholdPolicy loadPolicy( String policyName ) throws NoSuchElementException
+    public static CheckPointThresholdPolicy loadPolicy( String policyName )
     {
         return Service.load( CheckPointThresholdPolicy.class, policyName );
     }

@@ -27,46 +27,6 @@ import java.io.IOException;
  */
 public interface Source extends Closeable
 {
-    Chunk nextChunk( int seekStartPos ) throws IOException;
-
-    /**
-     * One chunk of data to read.
-     */
-    interface Chunk
-    {
-        /**
-         * @return character data to read
-         */
-        char[] data();
-
-        /**
-         * @return number of effective characters in the {@link #data()}
-         */
-        int length();
-
-        /**
-         * @return effective capacity of the {@link #data()} array
-         */
-        int maxFieldSize();
-
-        /**
-         * @return source description of the source this chunk was read from
-         */
-        String sourceDescription();
-
-        /**
-         * @return position in the {@link #data()} array to start reading from
-         */
-        int startPosition();
-
-        /**
-         * @return position in the {@link #data()} array where the current field which is being
-         * read starts. Some characters of the current field may have started in the previous chunk
-         * and so those characters are transfered over to this data array before {@link #startPosition()}
-         */
-        int backPosition();
-    }
-
     Chunk EMPTY_CHUNK = new Chunk()
     {
         @Override
@@ -106,7 +66,9 @@ public interface Source extends Closeable
         }
     };
 
-    static Source singleChunk( Chunk chunk )
+	Chunk nextChunk( int seekStartPos ) throws IOException;
+
+	static Source singleChunk( Chunk chunk )
     {
         return new Source()
         {
@@ -120,13 +82,50 @@ public interface Source extends Closeable
             @Override
             public Chunk nextChunk( int seekStartPos )
             {
-                if ( !returned )
-                {
-                    returned = true;
-                    return chunk;
-                }
-                return EMPTY_CHUNK;
+                if (returned) {
+					return EMPTY_CHUNK;
+				}
+				returned = true;
+				return chunk;
             }
         };
+    }
+
+	/**
+     * One chunk of data to read.
+     */
+    interface Chunk
+    {
+        /**
+         * @return character data to read
+         */
+        char[] data();
+
+        /**
+         * @return number of effective characters in the {@link #data()}
+         */
+        int length();
+
+        /**
+         * @return effective capacity of the {@link #data()} array
+         */
+        int maxFieldSize();
+
+        /**
+         * @return source description of the source this chunk was read from
+         */
+        String sourceDescription();
+
+        /**
+         * @return position in the {@link #data()} array to start reading from
+         */
+        int startPosition();
+
+        /**
+         * @return position in the {@link #data()} array where the current field which is being
+         * read starts. Some characters of the current field may have started in the previous chunk
+         * and so those characters are transfered over to this data array before {@link #startPosition()}
+         */
+        int backPosition();
     }
 }

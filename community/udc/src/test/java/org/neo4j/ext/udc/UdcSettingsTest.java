@@ -42,8 +42,18 @@ public class UdcSettingsTest
     private static final UdcSettings settingsClasses = new UdcSettings();
     @Rule
     public final Configuration configuration = new Configuration();
+	private final String trueVariation;
+	private final String falseVariation;
+	private final String unknown;
 
-    @Parameterized.Parameters( name = "{0}" )
+	public UdcSettingsTest( Variations variations )
+    {
+        this.trueVariation = variations.trueVariation;
+        this.falseVariation = variations.falseVariation;
+        this.unknown = variations.unknown;
+    }
+
+	@Parameterized.Parameters( name = "{0}" )
     public static Iterable<Object[]> variations()
     {
         return Arrays.asList(
@@ -54,25 +64,14 @@ public class UdcSettingsTest
         );
     }
 
-    private final String trueVariation;
-    private final String falseVariation;
-    private final String unknown;
-
-    public UdcSettingsTest( Variations variations )
-    {
-        this.trueVariation = variations.trueVariation;
-        this.falseVariation = variations.falseVariation;
-        this.unknown = variations.unknown;
-    }
-
-    @Test
+	@Test
     public void shouldBeEnabledByDefault()
     {
         assertTrue( configuration.config( settingsClasses ).get( udc_enabled ) );
         assertTrue( Config.defaults().get( udc_enabled ) );
     }
 
-    @Test
+	@Test
     public void shouldBeDisabledByConfigurationProperty()
     {
         assertFalse( configuration.with( udc_enabled, falseVariation )
@@ -82,9 +81,7 @@ public class UdcSettingsTest
         assertFalse( Config.defaults( singletonMap( udc_enabled.name(), "false" ) ).get( udc_enabled ) );
     }
 
-    // enabled by default
-
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableDefault_sysDisableDefault()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -92,9 +89,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    // enabled by the setting = true
-
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableDefault_sysDisableDefault()
     {
         assertEnabled( configuration.with( udc_enabled, trueVariation )
@@ -102,7 +97,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableDefault_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, trueVariation )
@@ -110,7 +105,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, falseVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableDefault_sysDisableTrue()
     {
         assertEnabled( configuration.with( udc_enabled, trueVariation )
@@ -118,7 +113,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, trueVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableTrue_sysDisableDefault()
     {
         assertEnabled( configuration.with( udc_enabled, trueVariation )
@@ -126,7 +121,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableTrue_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, trueVariation )
@@ -134,7 +129,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, falseVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableTrue_sysDisableTrue()
     {
         assertEnabled( configuration.with( udc_enabled, trueVariation )
@@ -142,7 +137,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, trueVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableFalse_sysDisableDefault()
     {
         assertEnabled( configuration.with( udc_enabled, trueVariation )
@@ -150,7 +145,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableFalse_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, trueVariation )
@@ -158,7 +153,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, falseVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableFalse_sysDisableTrue()
     {
         assertEnabled( configuration.with( udc_enabled, trueVariation )
@@ -166,9 +161,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, trueVariation ) );
     }
 
-    // enabled by the enabled=true system property
-
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableTrue_sysDisableDefault()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -176,7 +169,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableTrue_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -184,7 +177,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, falseVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableTrue_sysDisableTrue()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -192,7 +185,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, trueVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingFalse_sysEnableTrue_sysDisableDefault()
     {
         assertEnabled( configuration.with( udc_enabled, falseVariation )
@@ -200,7 +193,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingFalse_sysEnableTrue_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, falseVariation )
@@ -208,7 +201,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, falseVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingFalse_sysEnableTrue_sysDisableTrue()
     {
         assertEnabled( configuration.with( udc_enabled, falseVariation )
@@ -216,9 +209,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, trueVariation ) );
     }
 
-    // enabled by the disabled=false system property
-
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableDefault_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -226,7 +217,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, falseVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableFalse_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -234,7 +225,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, falseVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingFalse_sysEnableDefault_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, falseVariation )
@@ -242,7 +233,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, falseVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingFalse_sysEnableFalse_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, falseVariation )
@@ -250,9 +241,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, falseVariation ) );
     }
 
-    // disabled
-
-    @Test
+	@Test
     public void disableOn_settingFalse_sysEnableFalse_sysDisableTrue()
     {
         assertDisabled( configuration.with( udc_enabled, falseVariation )
@@ -260,7 +249,7 @@ public class UdcSettingsTest
                                      .withSystemProperty( UDC_DISABLE, trueVariation ) );
     }
 
-    @Test
+	@Test
     public void disableOn_settingFalse_sysEnableDefault_sysDisableDefault()
     {
         assertDisabled( configuration.with( udc_enabled, falseVariation )
@@ -268,7 +257,7 @@ public class UdcSettingsTest
                                      .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void disableOn_settingDefault_sysEnableFalse_sysDisableDefault()
     {
         assertDisabled( configuration.with( udc_enabled, DEFAULT )
@@ -276,7 +265,7 @@ public class UdcSettingsTest
                                      .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void disableOn_settingDefault_sysEnableDefault_sysDisableTrue()
     {
         assertDisabled( configuration.with( udc_enabled, DEFAULT )
@@ -284,7 +273,7 @@ public class UdcSettingsTest
                                      .withSystemProperty( UDC_DISABLE, trueVariation ) );
     }
 
-    @Test
+	@Test
     public void disableOn_settingFalse_sysEnableFalse_sysDisableDefault()
     {
         assertDisabled( configuration.with( udc_enabled, falseVariation )
@@ -292,7 +281,7 @@ public class UdcSettingsTest
                                      .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void disableOn_settingFalse_sysEnableDefault_sysDisableTrue()
     {
         assertDisabled( configuration.with( udc_enabled, falseVariation )
@@ -300,7 +289,7 @@ public class UdcSettingsTest
                                      .withSystemProperty( UDC_DISABLE, trueVariation ) );
     }
 
-    @Test
+	@Test
     public void disableOn_settingDefault_sysEnableFalse_sysDisableTrue()
     {
         assertDisabled( configuration.with( udc_enabled, DEFAULT )
@@ -308,9 +297,7 @@ public class UdcSettingsTest
                                      .withSystemProperty( UDC_DISABLE, trueVariation ) );
     }
 
-    // unknown values enables UDC
-
-    @Test
+	@Test
     public void enableOn_settingUnknown_sysEnableDefault_sysDisableDefault()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -318,7 +305,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingUnknown_sysEnableDefault_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -326,7 +313,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, falseVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingUnknown_sysEnableDefault_sysDisableTrue()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -334,7 +321,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, falseVariation ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingUnknown_sysEnableFalse_sysDisableDefault()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -342,7 +329,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingUnknown_sysEnableFalse_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -350,7 +337,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingUnknown_sysEnableFalse_sysDisableTrue()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -358,7 +345,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingUnknown_sysEnableTrue_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -366,7 +353,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingUnknown_sysEnableTrue_sysDisableTrue()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -374,7 +361,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableUnknown_sysDisableDefault()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -382,7 +369,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableUnknown_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -390,7 +377,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableUnknown_sysDisableTrue()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -398,7 +385,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableUnknown_sysDisableDefault()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -406,7 +393,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableUnknown_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -414,7 +401,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableUnknown_sysDisableTrue()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -422,7 +409,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingFalse_sysEnableUnknown_sysDisableDefault()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -430,7 +417,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingFalse_sysEnableUnknown_sysDisableFalse()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -438,7 +425,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingFalse_sysEnableUnknown_sysDisableTrue()
     {
         assertEnabled( configuration.with( udc_enabled, DEFAULT )
@@ -446,7 +433,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableDefault_sysDisableUnknown()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -454,7 +441,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableTrue_sysDisableUnknown()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -462,7 +449,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingDefault_sysEnableFalse_sysDisableUnknown()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -470,7 +457,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableDefault_sysDisableUnknown()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -478,7 +465,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableTrue_sysDisableUnknown()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -486,7 +473,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingTrue_sysEnableFalse_sysDisableUnknown()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -494,7 +481,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingFalse_sysEnableDefault_sysDisableUnknown()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -502,7 +489,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingFalse_sysEnableTrue_sysDisableUnknown()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -510,7 +497,7 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    @Test
+	@Test
     public void enableOn_settingFalse_sysEnableFalse_sysDisableUnknown()
     {
         assertEnabled( configuration.with( udc_enabled, unknown )
@@ -518,17 +505,43 @@ public class UdcSettingsTest
                                     .withSystemProperty( UDC_DISABLE, DEFAULT ) );
     }
 
-    // DSL
-
-    private static void assertEnabled( Configuration configuration )
+	private static void assertEnabled( Configuration configuration )
     {
         assertTrue( "should be enabled", configuration.config( settingsClasses ).get( udc_enabled ) );
     }
 
-    private static void assertDisabled( Configuration configuration )
+	private static void assertDisabled( Configuration configuration )
     {
         assertFalse( "should be disabled", configuration.config( settingsClasses ).get( udc_enabled ) );
     }
+
+    
+
+    // enabled by default
+
+    
+
+    // enabled by the setting = true
+
+    
+
+    // enabled by the enabled=true system property
+
+    
+
+    // enabled by the disabled=false system property
+
+    
+
+    // disabled
+
+    
+
+    // unknown values enables UDC
+
+    
+
+    // DSL
 
     static final class Variations
     {

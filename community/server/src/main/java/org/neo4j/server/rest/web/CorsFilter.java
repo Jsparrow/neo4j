@@ -129,8 +129,8 @@ public class CorsFilter implements Filter
         }
         else
         {
-            log.warn( "Unknown HTTP method specified in " + ACCESS_CONTROL_REQUEST_METHOD + " '" + methodName + "'. " +
-                      "It will be ignored and not attached to the " + ACCESS_CONTROL_ALLOW_METHODS + " response header" );
+            log.warn( new StringBuilder().append("Unknown HTTP method specified in ").append(ACCESS_CONTROL_REQUEST_METHOD).append(" '").append(methodName).append("'. ").append("It will be ignored and not attached to the ")
+					.append(ACCESS_CONTROL_ALLOW_METHODS).append(" response header").toString() );
         }
     }
 
@@ -142,8 +142,8 @@ public class CorsFilter implements Filter
         }
         else
         {
-            log.warn( "Invalid HTTP header specified in " + ACCESS_CONTROL_REQUEST_HEADERS + " '" + headerName + "'. " +
-                      "It will be ignored and not attached to the " + ACCESS_CONTROL_ALLOW_HEADERS + " response header" );
+            log.warn( new StringBuilder().append("Invalid HTTP header specified in ").append(ACCESS_CONTROL_REQUEST_HEADERS).append(" '").append(headerName).append("'. ").append("It will be ignored and not attached to the ")
+					.append(ACCESS_CONTROL_ALLOW_HEADERS).append(" response header").toString() );
         }
     }
 }

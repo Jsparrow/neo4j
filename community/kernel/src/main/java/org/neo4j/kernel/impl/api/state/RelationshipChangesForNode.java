@@ -41,44 +41,20 @@ import static java.lang.Math.toIntExact;
  */
 public class RelationshipChangesForNode
 {
-    /**
-     * Allows this data structure to work both for tracking removals and additions.
-     */
-    public enum DiffStrategy
-    {
-        REMOVE
-                {
-                    @Override
-                    int augmentDegree( int degree, int diff )
-                    {
-                        return degree - diff;
-                    }
-                },
-        ADD
-                {
-                    @Override
-                    int augmentDegree( int degree, int diff )
-                    {
-                        return degree + diff;
-                    }
-                };
-
-        abstract int augmentDegree( int degree, int diff );
-
-    }
-
     private final DiffStrategy diffStrategy;
 
-    private MutableIntObjectMap<MutableLongSet> outgoing;
-    private MutableIntObjectMap<MutableLongSet> incoming;
-    private MutableIntObjectMap<MutableLongSet> loops;
+	private MutableIntObjectMap<MutableLongSet> outgoing;
 
-    public RelationshipChangesForNode( DiffStrategy diffStrategy )
+	private MutableIntObjectMap<MutableLongSet> incoming;
+
+	private MutableIntObjectMap<MutableLongSet> loops;
+
+	public RelationshipChangesForNode( DiffStrategy diffStrategy )
     {
         this.diffStrategy = diffStrategy;
     }
 
-    public void addRelationship( long relId, int typeId, RelationshipDirection direction )
+	public void addRelationship( long relId, int typeId, RelationshipDirection direction )
     {
         final MutableIntObjectMap<MutableLongSet> relTypeToRelsMap = getTypeToRelMapForDirection( direction );
         final MutableLongSet rels = relTypeToRelsMap.getIfAbsentPut( typeId, LongHashSet::new );
@@ -86,22 +62,21 @@ public class RelationshipChangesForNode
         rels.add( relId );
     }
 
-    public boolean removeRelationship( long relId, int typeId, RelationshipDirection direction )
+	public boolean removeRelationship( long relId, int typeId, RelationshipDirection direction )
     {
         final MutableIntObjectMap<MutableLongSet> relTypeToRelsMap = getTypeToRelMapForDirection( direction );
         final MutableLongSet rels = relTypeToRelsMap.get( typeId );
-        if ( rels != null && rels.remove( relId ) )
-        {
-            if ( rels.isEmpty() )
-            {
-                relTypeToRelsMap.remove( typeId );
-            }
-            return true;
-        }
-        return false;
+        if (!(rels != null && rels.remove( relId ))) {
+			return false;
+		}
+		if ( rels.isEmpty() )
+		{
+		    relTypeToRelsMap.remove( typeId );
+		}
+		return true;
     }
 
-    public int augmentDegree( RelationshipDirection direction, int degree, int typeId )
+	public int augmentDegree( RelationshipDirection direction, int degree, int typeId )
     {
         switch ( direction )
         {
@@ -131,7 +106,7 @@ public class RelationshipChangesForNode
         return degree;
     }
 
-    public void clear()
+	public void clear()
     {
         if ( outgoing != null )
         {
@@ -147,7 +122,7 @@ public class RelationshipChangesForNode
         }
     }
 
-    private MutableIntObjectMap<MutableLongSet> outgoing()
+	private MutableIntObjectMap<MutableLongSet> outgoing()
     {
         if ( outgoing == null )
         {
@@ -156,7 +131,7 @@ public class RelationshipChangesForNode
         return outgoing;
     }
 
-    private MutableIntObjectMap<MutableLongSet> incoming()
+	private MutableIntObjectMap<MutableLongSet> incoming()
     {
         if ( incoming == null )
         {
@@ -165,7 +140,7 @@ public class RelationshipChangesForNode
         return incoming;
     }
 
-    private MutableIntObjectMap<MutableLongSet> loops()
+	private MutableIntObjectMap<MutableLongSet> loops()
     {
         if ( loops == null )
         {
@@ -174,7 +149,7 @@ public class RelationshipChangesForNode
         return loops;
     }
 
-    private MutableIntObjectMap<MutableLongSet> getTypeToRelMapForDirection( RelationshipDirection direction )
+	private MutableIntObjectMap<MutableLongSet> getTypeToRelMapForDirection( RelationshipDirection direction )
     {
         final MutableIntObjectMap<MutableLongSet> relTypeToRelsMap;
         switch ( direction )
@@ -194,7 +169,7 @@ public class RelationshipChangesForNode
         return relTypeToRelsMap;
     }
 
-    public LongIterator getRelationships()
+	public LongIterator getRelationships()
     {
         return PrimitiveLongCollections.concat(
                 primitiveIds( incoming ),
@@ -202,7 +177,7 @@ public class RelationshipChangesForNode
                 primitiveIds( loops ) );
     }
 
-    public LongIterator getRelationships( RelationshipDirection direction, int type )
+	public LongIterator getRelationships( RelationshipDirection direction, int type )
     {
         switch ( direction )
         {
@@ -217,7 +192,7 @@ public class RelationshipChangesForNode
         }
     }
 
-    private static LongIterator primitiveIds( IntObjectMap<MutableLongSet> map )
+	private static LongIterator primitiveIds( IntObjectMap<MutableLongSet> map )
     {
         if ( map == null )
         {
@@ -230,9 +205,35 @@ public class RelationshipChangesForNode
         return ids.longIterator();
     }
 
-    private static LongIterator primitiveIdsByType( IntObjectMap<MutableLongSet> map, int type )
+	private static LongIterator primitiveIdsByType( IntObjectMap<MutableLongSet> map, int type )
     {
         final LongSet relationships = map.get( type );
         return relationships == null ? ImmutableEmptyLongIterator.INSTANCE : relationships.freeze().longIterator();
+    }
+
+	/**
+     * Allows this data structure to work both for tracking removals and additions.
+     */
+    public enum DiffStrategy
+    {
+        REMOVE
+                {
+                    @Override
+                    int augmentDegree( int degree, int diff )
+                    {
+                        return degree - diff;
+                    }
+                },
+        ADD
+                {
+                    @Override
+                    int augmentDegree( int degree, int diff )
+                    {
+                        return degree + diff;
+                    }
+                };
+
+        abstract int augmentDegree( int degree, int diff );
+
     }
 }

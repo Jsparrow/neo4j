@@ -67,14 +67,43 @@ public class SchemaRuleSerialization
 
     private static final long NO_OWNING_CONSTRAINT_YET = -1;
     private static final int LEGACY_LABEL_OR_REL_TYPE_ID = -1;
+	private static SchemaComputer<Integer> schemaSizeComputer = new SchemaComputer<Integer>()
+    {
+        @Override
+        public Integer computeSpecific( LabelSchemaDescriptor schema )
+        {
+            return     1 // schema descriptor type
+                     + 4 // label id
+                     + 2 // property id count
+                     + 4 * schema.getPropertyIds().length; // the actual property ids
+        }
 
-    private SchemaRuleSerialization()
+        @Override
+        public Integer computeSpecific( RelationTypeSchemaDescriptor schema )
+        {
+            return    1 // schema descriptor type
+                    + 4 // rel type id
+                    + 2 // property id count
+                    + 4 * schema.getPropertyIds().length; // the actual property ids
+        }
+
+        @Override
+        public Integer computeSpecific( SchemaDescriptor schema )
+        {
+            return    1 // schema descriptor type
+                    + 1 // entity token type
+                    + 2 // entity token count
+                    + 4 * schema.getEntityTokenIds().length // the actual property ids
+                    + 2 // property id count
+                    + 4 * schema.getPropertyIds().length; // the actual property ids
+        }
+    };
+
+	private SchemaRuleSerialization()
     {
     }
 
-    // PUBLIC
-
-    /**
+	/**
      * Serialize the provided SchemaRule onto the target buffer
      *
      * @param schemaRule the SchemaRule to serialize
@@ -92,7 +121,7 @@ public class SchemaRuleSerialization
         throw new IllegalStateException( "Unknown schema rule type: " + schemaRule.getClass() );
     }
 
-    /**
+	/**
      * Parse a SchemaRule from the provided buffer.
      *
      * @param id the id to give the returned Schema Rule
@@ -120,7 +149,7 @@ public class SchemaRuleSerialization
         }
     }
 
-    /**
+	/**
      * Serialize the provided IndexRule onto the target buffer
      *
      * @param indexDescriptor the StoreIndexDescriptor to serialize
@@ -160,7 +189,7 @@ public class SchemaRuleSerialization
         return target.array();
     }
 
-    /**
+	/**
      * Serialize the provided ConstraintRule onto the target buffer
      * @param constraintRule the ConstraintRule to serialize
      * @throws IllegalStateException if the ConstraintRule is of type unique, but the owned index has not been set
@@ -198,7 +227,7 @@ public class SchemaRuleSerialization
         return target.array();
     }
 
-    /**
+	/**
      * Compute the byte size needed to serialize the provided IndexRule using serialize.
      * @param indexDescriptor the StoreIndexDescriptor
      * @return the byte size of StoreIndexDescriptor
@@ -223,7 +252,7 @@ public class SchemaRuleSerialization
         return length;
     }
 
-    /**
+	/**
      * Compute the byte size needed to serialize the provided ConstraintRule using serialize.
      * @param constraintRule the ConstraintRule
      * @return the byte size of ConstraintRule
@@ -245,11 +274,7 @@ public class SchemaRuleSerialization
         return length;
     }
 
-    // PRIVATE
-
-    // READ INDEX
-
-    private static StoreIndexDescriptor readIndexRule( long id, ByteBuffer source ) throws MalformedSchemaRuleException
+	private static StoreIndexDescriptor readIndexRule( long id, ByteBuffer source ) throws MalformedSchemaRuleException
     {
         IndexProviderDescriptor indexProvider = readIndexProviderDescriptor( source );
         byte indexRuleType = source.get();
@@ -276,16 +301,14 @@ public class SchemaRuleSerialization
 
     }
 
-    private static IndexProviderDescriptor readIndexProviderDescriptor( ByteBuffer source )
+	private static IndexProviderDescriptor readIndexProviderDescriptor( ByteBuffer source )
     {
         String providerKey = getDecodedStringFrom( source );
         String providerVersion = getDecodedStringFrom( source );
         return new IndexProviderDescriptor( providerKey, providerVersion );
     }
 
-    // READ CONSTRAINT
-
-    private static ConstraintRule readConstraintRule( long id, ByteBuffer source ) throws MalformedSchemaRuleException
+	private static ConstraintRule readConstraintRule( long id, ByteBuffer source ) throws MalformedSchemaRuleException
     {
         SchemaDescriptor schema;
         byte constraintRuleType = source.get();
@@ -316,19 +339,16 @@ public class SchemaRuleSerialization
         }
     }
 
-    private static Optional<String> readRuleName( ByteBuffer source )
+	private static Optional<String> readRuleName( ByteBuffer source )
     {
-        if ( source.remaining() >= UTF8.MINIMUM_SERIALISED_LENGTH_BYTES )
-        {
-            String ruleName = UTF8.getDecodedStringFrom( source );
-            return ruleName.isEmpty() ? Optional.empty() : Optional.of( ruleName );
-        }
-        return Optional.empty();
+        if (source.remaining() < UTF8.MINIMUM_SERIALISED_LENGTH_BYTES) {
+			return Optional.empty();
+		}
+		String ruleName = UTF8.getDecodedStringFrom( source );
+		return ruleName.isEmpty() ? Optional.empty() : Optional.of( ruleName );
     }
 
-    // READ HELP
-
-    private static SchemaDescriptor readSchema( ByteBuffer source ) throws MalformedSchemaRuleException
+	private static SchemaDescriptor readSchema( ByteBuffer source ) throws MalformedSchemaRuleException
     {
         int[] propertyIds;
         byte schemaDescriptorType = source.get();
@@ -350,7 +370,7 @@ public class SchemaRuleSerialization
         }
     }
 
-    private static SchemaDescriptor readMultiTokenSchema( ByteBuffer source ) throws MalformedSchemaRuleException
+	private static SchemaDescriptor readMultiTokenSchema( ByteBuffer source ) throws MalformedSchemaRuleException
     {
         byte schemaDescriptorType = source.get();
         EntityType type;
@@ -370,7 +390,7 @@ public class SchemaRuleSerialization
         return SchemaDescriptorFactory.multiToken( entityTokenIds, type, propertyIds );
     }
 
-    private static int[] readTokenIdList( ByteBuffer source )
+	private static int[] readTokenIdList( ByteBuffer source )
     {
         short numProperties = source.getShort();
         int[] propertyIds = new int[numProperties];
@@ -380,6 +400,26 @@ public class SchemaRuleSerialization
         }
         return propertyIds;
     }
+
+    
+
+    // PUBLIC
+
+    
+
+    // PRIVATE
+
+    // READ INDEX
+
+    
+
+    // READ CONSTRAINT
+
+    
+
+    // READ HELP
+
+    
 
     // WRITE
 
@@ -437,35 +477,4 @@ public class SchemaRuleSerialization
 
     // LENGTH OF
 
-    private static SchemaComputer<Integer> schemaSizeComputer = new SchemaComputer<Integer>()
-    {
-        @Override
-        public Integer computeSpecific( LabelSchemaDescriptor schema )
-        {
-            return     1 // schema descriptor type
-                     + 4 // label id
-                     + 2 // property id count
-                     + 4 * schema.getPropertyIds().length; // the actual property ids
-        }
-
-        @Override
-        public Integer computeSpecific( RelationTypeSchemaDescriptor schema )
-        {
-            return    1 // schema descriptor type
-                    + 4 // rel type id
-                    + 2 // property id count
-                    + 4 * schema.getPropertyIds().length; // the actual property ids
-        }
-
-        @Override
-        public Integer computeSpecific( SchemaDescriptor schema )
-        {
-            return    1 // schema descriptor type
-                    + 1 // entity token type
-                    + 2 // entity token count
-                    + 4 * schema.getEntityTokenIds().length // the actual property ids
-                    + 2 // property id count
-                    + 4 * schema.getPropertyIds().length; // the actual property ids
-        }
-    };
 }

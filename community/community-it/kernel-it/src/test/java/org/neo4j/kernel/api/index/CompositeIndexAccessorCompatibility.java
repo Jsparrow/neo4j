@@ -657,7 +657,7 @@ public abstract class CompositeIndexAccessorCompatibility extends IndexAccessorC
         {
             // then
             List<Long> hits = query( exact( 0, update.values()[0] ), exact( 1, update.values()[1] ) );
-            assertEquals( update + " " + hits.toString(), 1, hits.size() );
+            assertEquals( new StringBuilder().append(update).append(" ").append(hits.toString()).toString(), 1, hits.size() );
             assertThat( single( hits ), equalTo( update.getEntityId() ) );
         }
     }
@@ -1183,7 +1183,27 @@ public abstract class CompositeIndexAccessorCompatibility extends IndexAccessorC
 
     // This behaviour is expected by General indexes
 
-    @Ignore( "Not a test. This is a compatibility suite" )
+    private static ArrayValue dateArray( int... epochDays )
+    {
+        LocalDate[] localDates = new LocalDate[epochDays.length];
+        for ( int i = 0; i < epochDays.length; i++ )
+        {
+            localDates[i] = ofEpochDay( epochDays[i] );
+        }
+        return Values.dateArray( localDates );
+    }
+
+	private static IndexEntryUpdate<SchemaDescriptor> add( long nodeId, SchemaDescriptor schema, Object value1, Object value2 )
+    {
+        return add( nodeId, schema, Values.of( value1 ), Values.of( value2 ) );
+    }
+
+	private static IndexEntryUpdate<SchemaDescriptor> add( long nodeId, SchemaDescriptor schema, Value value1, Value value2 )
+    {
+        return IndexEntryUpdate.add( nodeId, schema, value1, value2 );
+    }
+
+	@Ignore( "Not a test. This is a compatibility suite" )
     public static class General extends CompositeIndexAccessorCompatibility
     {
         public General( IndexProviderCompatibilityTestSuite testSuite )
@@ -1297,25 +1317,5 @@ public abstract class CompositeIndexAccessorCompatibility extends IndexAccessorC
 
             assertThat( query( exact( 0, "a" ), exact( 1, "a" ) ), equalTo( asList( 1L, 2L ) ) );
         }
-    }
-
-    private static ArrayValue dateArray( int... epochDays )
-    {
-        LocalDate[] localDates = new LocalDate[epochDays.length];
-        for ( int i = 0; i < epochDays.length; i++ )
-        {
-            localDates[i] = ofEpochDay( epochDays[i] );
-        }
-        return Values.dateArray( localDates );
-    }
-
-    private static IndexEntryUpdate<SchemaDescriptor> add( long nodeId, SchemaDescriptor schema, Object value1, Object value2 )
-    {
-        return add( nodeId, schema, Values.of( value1 ), Values.of( value2 ) );
-    }
-
-    private static IndexEntryUpdate<SchemaDescriptor> add( long nodeId, SchemaDescriptor schema, Value value1, Value value2 )
-    {
-        return IndexEntryUpdate.add( nodeId, schema, value1, value2 );
     }
 }

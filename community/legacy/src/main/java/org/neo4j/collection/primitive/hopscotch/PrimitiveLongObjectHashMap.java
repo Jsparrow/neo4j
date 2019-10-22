@@ -100,17 +100,24 @@ public class PrimitiveLongObjectHashMap<VALUE> extends AbstractLongHopScotchColl
     @Override
     public boolean equals( Object other )
     {
-        if ( typeAndSizeEqual( other ) )
-        {
-            PrimitiveLongObjectHashMap<?> that = (PrimitiveLongObjectHashMap<?>) other;
-            LongObjEquality<VALUE> equality = new LongObjEquality<>( that );
-            visitEntries( equality );
-            return equality.isEqual();
-        }
-        return false;
+        if (!typeAndSizeEqual( other )) {
+			return false;
+		}
+		PrimitiveLongObjectHashMap<?> that = (PrimitiveLongObjectHashMap<?>) other;
+		LongObjEquality<VALUE> equality = new LongObjEquality<>( that );
+		visitEntries( equality );
+		return equality.isEqual();
     }
 
-    private static class LongObjEquality<T> implements PrimitiveLongObjectVisitor<T, RuntimeException>
+    @Override
+    public int hashCode()
+    {
+        HashCodeComputer<VALUE> hash = new HashCodeComputer<>();
+        visitEntries( hash );
+        return hash.hashCode();
+    }
+
+	private static class LongObjEquality<T> implements PrimitiveLongObjectVisitor<T, RuntimeException>
     {
         private PrimitiveLongObjectHashMap other;
         private boolean equal = true;
@@ -134,20 +141,12 @@ public class PrimitiveLongObjectHashMap<VALUE> extends AbstractLongHopScotchColl
         }
     }
 
-    @Override
-    public int hashCode()
-    {
-        HashCodeComputer<VALUE> hash = new HashCodeComputer<>();
-        visitEntries( hash );
-        return hash.hashCode();
-    }
-
     private static class HashCodeComputer<T> implements PrimitiveLongObjectVisitor<T, RuntimeException>
     {
         private int hash = 1337;
 
         @Override
-        public boolean visited( long key, T value ) throws RuntimeException
+        public boolean visited( long key, T value )
         {
             hash += DEFAULT_HASHING.hashSingleValueToInt( key + value.hashCode() );
             return false;

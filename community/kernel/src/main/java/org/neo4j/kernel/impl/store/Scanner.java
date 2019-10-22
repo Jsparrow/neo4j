@@ -78,13 +78,9 @@ public class Scanner
             while ( ids.hasNext() )
             {
                 store.getRecordByCursor( ids.next(), record, RecordLoad.CHECK, cursor );
-                if ( record.inUse() )
-                {
-                    if ( passesFilters( record ) )
-                    {
-                        return record;
-                    }
-                }
+                if ( record.inUse() && passesFilters( record ) ) {
+				    return record;
+				}
             }
             return null;
         }

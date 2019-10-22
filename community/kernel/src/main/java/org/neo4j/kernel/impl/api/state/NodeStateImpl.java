@@ -155,15 +155,11 @@ class NodeStateImpl extends PropertyContainerStateImpl implements NodeState
 
     public void removeRelationship( long relId, int typeId, RelationshipDirection direction )
     {
-        if ( hasAddedRelationships() )
-        {
-            if ( relationshipsAdded.removeRelationship( relId, typeId, direction ) )
-            {
-                // This was a rel that was added in this tx, no need to add it to the remove list, instead we just
-                // remove it from added relationships.
-                return;
-            }
-        }
+        if ( hasAddedRelationships() && relationshipsAdded.removeRelationship( relId, typeId, direction ) ) {
+		    // This was a rel that was added in this tx, no need to add it to the remove list, instead we just
+		    // remove it from added relationships.
+		    return;
+		}
         if ( !hasRemovedRelationships() )
         {
             relationshipsRemoved = new RelationshipChangesForNode( DiffStrategy.REMOVE );
@@ -238,8 +234,7 @@ class NodeStateImpl extends PropertyContainerStateImpl implements NodeState
     {
         if ( indexDiffs != null )
         {
-            for ( MutableLongDiffSets diff : indexDiffs )
-            {
+            indexDiffs.forEach(diff -> {
                 if ( diff.getAdded().contains( nodeId ) )
                 {
                     diff.remove( nodeId );
@@ -248,7 +243,7 @@ class NodeStateImpl extends PropertyContainerStateImpl implements NodeState
                 {
                     diff.add( nodeId );
                 }
-            }
+            });
         }
     }
 

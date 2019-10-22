@@ -55,6 +55,6 @@ public abstract class AbstractLogEntry implements LogEntry
     @Override
     public String timestamp( long timeWritten, TimeZone timeZone )
     {
-        return Format.date( timeWritten, timeZone ) + "/" + timeWritten;
+        return new StringBuilder().append(Format.date( timeWritten, timeZone )).append("/").append(timeWritten).toString();
     }
 }

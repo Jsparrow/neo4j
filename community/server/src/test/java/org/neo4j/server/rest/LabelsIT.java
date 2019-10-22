@@ -52,6 +52,7 @@ import static org.neo4j.test.GraphDescription.PropType.STRING;
 import static org.neo4j.test.mockito.matcher.Neo4jMatchers.hasLabel;
 import static org.neo4j.test.mockito.matcher.Neo4jMatchers.hasLabels;
 import static org.neo4j.test.mockito.matcher.Neo4jMatchers.inTx;
+import java.util.Collections;
 
 public class LabelsIT extends AbstractRestFunctionalTestBase
 {
@@ -156,7 +157,7 @@ public class LabelsIT extends AbstractRestFunctionalTestBase
         String labelName = "Person";
         gen.get()
             .expectedStatus( 204 )
-            .delete( nodeUri + "/labels/" + labelName );
+            .delete( new StringBuilder().append(nodeUri).append("/labels/").append(labelName).toString() );
 
         assertThat( node, inTx( graphdb(), not( hasLabel( label( labelName ) ) ) ) );
     }
@@ -173,7 +174,7 @@ public class LabelsIT extends AbstractRestFunctionalTestBase
         String labelName = "Person";
         gen.get()
             .expectedStatus( 204 )
-            .delete( nodeUri + "/labels/" + labelName );
+            .delete( new StringBuilder().append(nodeUri).append("/labels/").append(labelName).toString() );
 
         assertThat( node, inTx( graphdb(), not( hasLabel( label( labelName ) ) ) ) );
     }
@@ -253,7 +254,7 @@ public class LabelsIT extends AbstractRestFunctionalTestBase
         assertEquals( 1, parsed.size() );
 
         //noinspection AssertEqualsBetweenInconvertibleTypes
-        assertEquals( Iterables.asSet( asList( asList( "Clint", "Eastwood" ) ) ),
+        assertEquals( Iterables.asSet( Collections.singletonList( asList( "Clint", "Eastwood" ) ) ),
                 Iterables.asSet( map( getProperty( "names", List.class ), parsed ) ) );
     }
 

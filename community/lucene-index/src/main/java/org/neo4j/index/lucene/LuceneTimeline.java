@@ -54,7 +54,7 @@ public class LuceneTimeline<T extends PropertyContainer> implements TimelineInde
     private void assertIsLuceneIndex( GraphDatabaseService db, Index<T> index )
     {
         Map<String, String> config = db.index().getConfiguration( index );
-        if ( !config.get( IndexManager.PROVIDER ).equals( "lucene" ) ) // Not so hard coded please
+        if ( !"lucene".equals( config.get( IndexManager.PROVIDER ) ) ) // Not so hard coded please
         {
             throw new IllegalArgumentException( index + " isn't a Lucene index" );
         }

@@ -97,7 +97,19 @@ import static org.neo4j.unsafe.impl.batchimport.input.csv.DataFactories.defaultF
 @RunWith( Parameterized.class )
 public class CsvInputTest
 {
-    @Parameters
+    @Rule
+    public final RandomRule random = new RandomRule();
+	@Rule
+    public final TestDirectory directory = TestDirectory.testDirectory();
+	private final Extractors extractors = new Extractors( ',' );
+	@Parameter
+    public Boolean allowMultilineFields;
+	private final InputEntity visitor = new InputEntity();
+	private final Groups groups = new Groups();
+	private InputChunk chunk;
+	private InputIterator referenceData;
+
+	@Parameters
     public static Collection<Boolean> data()
     {
         // multi-line fields
@@ -106,20 +118,7 @@ public class CsvInputTest
                 Boolean.FALSE );
     }
 
-    @Rule
-    public final RandomRule random = new RandomRule();
-    @Rule
-    public final TestDirectory directory = TestDirectory.testDirectory();
-    private final Extractors extractors = new Extractors( ',' );
-    @Parameter
-    public Boolean allowMultilineFields;
-
-    private final InputEntity visitor = new InputEntity();
-    private final Groups groups = new Groups();
-    private InputChunk chunk;
-    private InputIterator referenceData;
-
-    @Test
+	@Test
     public void shouldProvideNodesFromCsvInput() throws Exception
     {
         // GIVEN
@@ -140,7 +139,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldProvideRelationshipsFromCsvInput() throws Exception
     {
         // GIVEN
@@ -164,7 +163,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldCloseDataIteratorsInTheEnd() throws Exception
     {
         // GIVEN
@@ -196,7 +195,7 @@ public class CsvInputTest
         assertClosed( relationshipData.last() );
     }
 
-    private void assertClosed( CharReadable reader )
+	private void assertClosed( CharReadable reader )
     {
         try
         {
@@ -209,13 +208,11 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldCopeWithLinesThatHasTooFewValuesButStillValidates() throws Exception
     {
         // GIVEN
-        Iterable<DataFactory> data = dataIterable( data( "1,ultralisk,ZERG,10\n" +
-                                                         "2,corruptor,ZERG\n" +
-                                                         "3,mutalisk,ZERG,3" ) );
+        Iterable<DataFactory> data = dataIterable( data( new StringBuilder().append("1,ultralisk,ZERG,10\n").append("2,corruptor,ZERG\n").append("3,mutalisk,ZERG,3").toString() ) );
         Input input = new CsvInput(
                 data,
                 header(
@@ -236,7 +233,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldIgnoreValuesAfterHeaderEntries() throws Exception
     {
         // GIVEN
@@ -259,16 +256,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldHandleMultipleInputGroups() throws Exception
     {
         // GIVEN multiple input groups, each with their own, specific, header
-        DataFactory group1 = data( ":ID,name,kills:int,health:int\n" +
-                                   "1,Jim,10,100\n" +
-                                   "2,Abathur,0,200\n" );
-        DataFactory group2 = data( ":ID,type\n" +
-                                   "3,zergling\n" +
-                                   "4,csv\n" );
+        DataFactory group1 = data( new StringBuilder().append(":ID,name,kills:int,health:int\n").append("1,Jim,10,100\n").append("2,Abathur,0,200\n").toString() );
+        DataFactory group2 = data( new StringBuilder().append(":ID,type\n").append("3,zergling\n").append("4,csv\n").toString() );
         Iterable<DataFactory> data = dataIterable( group1, group2 );
         Input input = new CsvInput( data, defaultFormatNodeFileHeader(),
                                     datas(), defaultFormatRelationshipFileHeader(),
@@ -285,15 +278,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldProvideAdditiveLabels() throws Exception
     {
         // GIVEN
         String[] addedLabels = {"Two", "AddTwo"};
-        DataFactory data = data( ":ID,name,:LABEL\n" +
-                                 "0,First,\n" +
-                                 "1,Second,One\n" +
-                                 "2,Third,One;Two",
+        DataFactory data = data( new StringBuilder().append(":ID,name,:LABEL\n").append("0,First,\n").append("1,Second,One\n").append("2,Third,One;Two").toString(),
                                  additiveLabels( addedLabels ) );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(),
@@ -312,16 +302,14 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldProvideDefaultRelationshipType() throws Exception
     {
         // GIVEN
         String defaultType = "DEFAULT";
         String customType = "CUSTOM";
-        DataFactory data = data( ":START_ID,:END_ID,:TYPE\n" +
-                "0,1,\n" +
-                "1,2," + customType + "\n" +
-                "2,1," + defaultType,
+        DataFactory data = data( new StringBuilder().append(":START_ID,:END_ID,:TYPE\n").append("0,1,\n").append("1,2,").append(customType).append("\n").append("2,1,").append(defaultType)
+				.toString(),
                 defaultRelationshipType( defaultType ) );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( datas(), defaultFormatNodeFileHeader(),
@@ -338,14 +326,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldAllowNodesWithoutIdHeader() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                "name:string,level:int\n" +
-                "Mattias,1\n" +
-                "Johan,2\n" );
+                new StringBuilder().append("name:string,level:int\n").append("Mattias,1\n").append("Johan,2\n").toString() );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(), defaultFormatRelationshipFileHeader(),
                 IdType.STRING, config( COMMAS ), silentBadCollector( 0 ), NO_MONITOR );
@@ -360,14 +346,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldAllowSomeNodesToBeAnonymous() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                ":ID,name:string,level:int\n" +
-                "abc,Mattias,1\n" +
-                ",Johan,2\n" ); // this node is anonymous
+                new StringBuilder().append(":ID,name:string,level:int\n").append("abc,Mattias,1\n").append(",Johan,2\n").toString() ); // this node is anonymous
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(), defaultFormatRelationshipFileHeader(),
                 IdType.STRING, config( COMMAS ), silentBadCollector( 0 ), NO_MONITOR );
@@ -382,14 +366,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldAllowNodesToBeAnonymousEvenIfIdHeaderIsNamed() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                "id:ID,name:string,level:int\n" +
-                "abc,Mattias,1\n" +
-                ",Johan,2\n" ); // this node is anonymous
+                new StringBuilder().append("id:ID,name:string,level:int\n").append("abc,Mattias,1\n").append(",Johan,2\n").toString() ); // this node is anonymous
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(), defaultFormatRelationshipFileHeader(),
                 IdType.STRING, config( COMMAS ), silentBadCollector( 0 ), NO_MONITOR );
@@ -404,14 +386,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldNotHaveIdSetAsPropertyIfIdHeaderEntryIsNamedForActualIds() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                "myId:ID,name:string,level:int\n" +
-                "0,Mattias,1\n" +
-                "1,Johan,2\n" ); // this node is anonymous
+                new StringBuilder().append("myId:ID,name:string,level:int\n").append("0,Mattias,1\n").append("1,Johan,2\n").toString() ); // this node is anonymous
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(),
                 datas(), defaultFormatRelationshipFileHeader(), IdType.ACTUAL,
@@ -427,14 +407,13 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldIgnoreEmptyPropertyValues() throws Exception
     {
-        // GIVEN
+        // here we leave out "extra" property
+		// GIVEN
         DataFactory data = data(
-                ":ID,name,extra\n" +
-                "0,Mattias,\n" +            // here we leave out "extra" property
-                "1,Johan,Additional\n" );
+                new StringBuilder().append(":ID,name,extra\n").append("0,Mattias,\n").append("1,Johan,Additional\n").toString() );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(), defaultFormatRelationshipFileHeader(),
                 IdType.ACTUAL, config( COMMAS ), silentBadCollector( 0 ), NO_MONITOR );
@@ -449,14 +428,13 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldIgnoreEmptyIntPropertyValues() throws Exception
     {
-        // GIVEN
+        // here we leave out "extra" property
+		// GIVEN
         DataFactory data = data(
-                ":ID,name,extra:int\n" +
-                "0,Mattias,\n" +            // here we leave out "extra" property
-                "1,Johan,10\n" );
+                new StringBuilder().append(":ID,name,extra:int\n").append("0,Mattias,\n").append("1,Johan,10\n").toString() );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(), defaultFormatRelationshipFileHeader(),
                 IdType.ACTUAL, config( COMMAS ), silentBadCollector( 0 ), NO_MONITOR );
@@ -471,14 +449,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldParsePointPropertyValues() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                ":ID,name,point:Point\n" +
-                "0,Mattias,\"{x: 2.7, y:3.2 }\"\n" +
-                "1,Johan,\" { height :0.01 ,longitude:5, latitude : -4.2 } \"\n" );
+                new StringBuilder().append(":ID,name,point:Point\n").append("0,Mattias,\"{x: 2.7, y:3.2 }\"\n").append("1,Johan,\" { height :0.01 ,longitude:5, latitude : -4.2 } \"\n").toString() );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(), defaultFormatRelationshipFileHeader(),
                 IdType.ACTUAL, config( COMMAS ), silentBadCollector( 0 ), NO_MONITOR );
@@ -495,7 +471,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldNotParsePointPropertyValuesWithDuplicateKeys() throws Exception
     {
         // GIVEN
@@ -518,7 +494,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldParsePointPropertyValuesWithCRSInHeader() throws Exception
     {
         // GIVEN
@@ -539,7 +515,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldUseHeaderInformationToParsePoint() throws Exception
     {
         // GIVEN
@@ -560,14 +536,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldParseDatePropertyValues() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                ":ID,name,date:Date\n" +
-                "0,Mattias,2018-02-27\n" +
-                "1,Johan,2018-03-01\n" );
+                new StringBuilder().append(":ID,name,date:Date\n").append("0,Mattias,2018-02-27\n").append("1,Johan,2018-03-01\n").toString() );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(),
                 defaultFormatRelationshipFileHeader(),
@@ -585,15 +559,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldParseTimePropertyValues() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                ":ID,name,time:Time\n" +
-                "0,Mattias,13:37\n" +
-                "1,Johan,\"16:20:01\"\n" +
-                "2,Bob,07:30-05:00\n" );
+                new StringBuilder().append(":ID,name,time:Time\n").append("0,Mattias,13:37\n").append("1,Johan,\"16:20:01\"\n").append("2,Bob,07:30-05:00\n").toString() );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(),
                 defaultFormatRelationshipFileHeader(),
@@ -613,15 +584,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldParseTimePropertyValuesWithTimezoneInHeader() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                ":ID,name,time:Time{timezone:+02:00}\n" +
-                        "0,Mattias,13:37\n" +
-                        "1,Johan,\"16:20:01\"\n" +
-                        "2,Bob,07:30-05:00\n" );
+                new StringBuilder().append(":ID,name,time:Time{timezone:+02:00}\n").append("0,Mattias,13:37\n").append("1,Johan,\"16:20:01\"\n").append("2,Bob,07:30-05:00\n").toString() );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(),
                 defaultFormatRelationshipFileHeader(),
@@ -641,15 +609,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldParseDateTimePropertyValues() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                ":ID,name,time:DateTime\n" +
-                "0,Mattias,2018-02-27T13:37\n" +
-                "1,Johan,\"2018-03-01T16:20:01\"\n" +
-                "2,Bob,1981-05-11T07:30-05:00\n" );
+                new StringBuilder().append(":ID,name,time:DateTime\n").append("0,Mattias,2018-02-27T13:37\n").append("1,Johan,\"2018-03-01T16:20:01\"\n").append("2,Bob,1981-05-11T07:30-05:00\n").toString() );
 
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(),
@@ -670,15 +635,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldParseDateTimePropertyValuesWithTimezoneInHeader() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                ":ID,name,time:DateTime{timezone:Europe/Stockholm}\n" +
-                "0,Mattias,2018-02-27T13:37\n" +
-                "1,Johan,\"2018-03-01T16:20:01\"\n" +
-                "2,Bob,1981-05-11T07:30-05:00\n" );
+                new StringBuilder().append(":ID,name,time:DateTime{timezone:Europe/Stockholm}\n").append("0,Mattias,2018-02-27T13:37\n").append("1,Johan,\"2018-03-01T16:20:01\"\n").append("2,Bob,1981-05-11T07:30-05:00\n").toString() );
 
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(),
@@ -699,14 +661,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldParseLocalTimePropertyValues() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                ":ID,name,time:LocalTime\n" +
-                "0,Mattias,13:37\n" +
-                "1,Johan,\"16:20:01\"\n" );
+                new StringBuilder().append(":ID,name,time:LocalTime\n").append("0,Mattias,13:37\n").append("1,Johan,\"16:20:01\"\n").toString() );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(),
                 defaultFormatRelationshipFileHeader(),
@@ -724,14 +684,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldParseLocalDateTimePropertyValues() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                ":ID,name,time:LocalDateTime\n" +
-                "0,Mattias,2018-02-27T13:37\n" +
-                "1,Johan,\"2018-03-01T16:20:01\"\n" );
+                new StringBuilder().append(":ID,name,time:LocalDateTime\n").append("0,Mattias,2018-02-27T13:37\n").append("1,Johan,\"2018-03-01T16:20:01\"\n").toString() );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(),
                 defaultFormatRelationshipFileHeader(),
@@ -749,14 +707,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldParseDurationPropertyValues() throws Exception
     {
         // GIVEN
         DataFactory data = data(
-                ":ID,name,duration:Duration\n" +
-                "0,Mattias,P3MT13H37M\n" +
-                "1,Johan,\"P-1YT4H20M\"\n" );
+                new StringBuilder().append(":ID,name,duration:Duration\n").append("0,Mattias,P3MT13H37M\n").append("1,Johan,\"P-1YT4H20M\"\n").toString() );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( dataIterable, defaultFormatNodeFileHeader(), datas(),
                 defaultFormatRelationshipFileHeader(),
@@ -774,7 +730,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldFailOnArrayDelimiterBeingSameAsDelimiter()
     {
         // WHEN
@@ -791,7 +747,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldFailOnQuotationCharacterBeingSameAsDelimiter()
     {
         // WHEN
@@ -809,7 +765,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldFailOnQuotationCharacterBeingSameAsArrayDelimiter()
     {
         // WHEN
@@ -827,7 +783,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldHaveNodesBelongToGroupSpecifiedInHeader() throws Exception
     {
         // GIVEN
@@ -853,7 +809,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldHaveRelationshipsSpecifyStartEndNodeIdGroupsInHeader() throws Exception
     {
         // GIVEN
@@ -865,8 +821,8 @@ public class CsvInputTest
         Group startNodeGroup = groups.getOrCreate( "StartGroup" );
         Group endNodeGroup = groups.getOrCreate( "EndGroup" );
         Iterable<DataFactory> nodeHeader = dataIterable(
-                data( ":ID(" + startNodeGroup.name() + ")" ),
-                data( ":ID(" + endNodeGroup.name() + ")" ) );
+                data( new StringBuilder().append(":ID(").append(startNodeGroup.name()).append(")").toString() ),
+                data( new StringBuilder().append(":ID(").append(endNodeGroup.name()).append(")").toString() ) );
         Input input = new CsvInput( nodeHeader, defaultFormatNodeFileHeader(),
                 data,
                 header( entry( null, Type.START_ID, startNodeGroup.name(), idType.extractor( extractors ) ),
@@ -884,15 +840,13 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldDoWithoutRelationshipTypeHeaderIfDefaultSupplied() throws Exception
     {
         // GIVEN relationship data w/o :TYPE header
         String defaultType = "HERE";
         DataFactory data = data(
-                ":START_ID,:END_ID,name\n" +
-                "0,1,First\n" +
-                "2,3,Second\n", defaultRelationshipType( defaultType ) );
+                new StringBuilder().append(":START_ID,:END_ID,name\n").append("0,1,First\n").append("2,3,Second\n").toString(), defaultRelationshipType( defaultType ) );
         Iterable<DataFactory> dataIterable = dataIterable( data );
         Input input = new CsvInput( datas(), defaultFormatNodeFileHeader(), dataIterable, defaultFormatRelationshipFileHeader(),
                 IdType.ACTUAL, config( COMMAS ),
@@ -908,15 +862,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldIgnoreNodeEntriesMarkedIgnoreUsingHeader() throws Exception
     {
         // GIVEN
         Iterable<DataFactory> data = DataFactories.datas( CsvInputTest.data(
-                ":ID,name:IGNORE,other:int,:LABEL\n" +
-                "1,Mattias,10,Person\n" +
-                "2,Johan,111,Person\n" +
-                "3,Emil,12,Person" ) );
+                new StringBuilder().append(":ID,name:IGNORE,other:int,:LABEL\n").append("1,Mattias,10,Person\n").append("2,Johan,111,Person\n").append("3,Emil,12,Person").toString() ) );
         Input input = new CsvInput( data, defaultFormatNodeFileHeader(), datas(), defaultFormatNodeFileHeader(), IdType.INTEGER,
                 config( COMMAS ), silentBadCollector( 0 ), NO_MONITOR );
 
@@ -930,15 +881,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldIgnoreRelationshipEntriesMarkedIgnoreUsingHeader() throws Exception
     {
         // GIVEN
         Iterable<DataFactory> data = DataFactories.datas( CsvInputTest.data(
-                ":START_ID,:TYPE,:END_ID,prop:IGNORE,other:int\n" +
-                "1,KNOWS,2,Mattias,10\n" +
-                "2,KNOWS,3,Johan,111\n" +
-                "3,KNOWS,4,Emil,12" ) );
+                new StringBuilder().append(":START_ID,:TYPE,:END_ID,prop:IGNORE,other:int\n").append("1,KNOWS,2,Mattias,10\n").append("2,KNOWS,3,Johan,111\n").append("3,KNOWS,4,Emil,12").toString() ) );
         Input input = new CsvInput( datas(), defaultFormatNodeFileHeader(), data, defaultFormatRelationshipFileHeader(), IdType.INTEGER,
                 config( COMMAS ), silentBadCollector( 0 ), NO_MONITOR );
 
@@ -952,7 +900,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldPropagateExceptionFromFailingDecorator() throws Exception
     {
         // GIVEN
@@ -975,14 +923,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldNotIncludeEmptyArraysInEntities() throws Exception
     {
         // GIVEN
         Iterable<DataFactory> data = DataFactories.datas( CsvInputTest.data(
-                ":ID,sprop:String[],lprop:long[]\n" +
-                "1,,\n" +
-                "2,a;b,10;20"
+                new StringBuilder().append(":ID,sprop:String[],lprop:long[]\n").append("1,,\n").append("2,a;b,10;20").toString()
                 ) );
         Input input = new CsvInput( data, defaultFormatNodeFileHeader(), datas(), defaultFormatNodeFileHeader(), IdType.INTEGER,
                 config( COMMAS ), silentBadCollector( 0 ), NO_MONITOR );
@@ -997,7 +943,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldTreatEmptyQuotedStringsAsNullIfConfiguredTo() throws Exception
     {
         // GIVEN
@@ -1024,14 +970,12 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldIgnoreEmptyExtraColumns() throws Exception
     {
         // GIVEN
         Iterable<DataFactory> data = DataFactories.datas( CsvInputTest.data(
-                ":ID,one\n" +
-                "1,test,\n" +
-                "2,test,,additional" ) );
+                new StringBuilder().append(":ID,one\n").append("1,test,\n").append("2,test,,additional").toString() ) );
 
         // WHEN
         Collector collector = mock( Collector.class );
@@ -1051,7 +995,7 @@ public class CsvInputTest
         verify( collector, times( 1 ) ).collectExtraColumns( anyString(), eq( 2L ), eq( "additional" ) );
     }
 
-    @Test
+	@Test
     public void shouldSkipRelationshipValidationIfToldTo() throws Exception
     {
      // GIVEN
@@ -1071,7 +1015,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldFailOnUnparsableNodeHeader()
     {
         // given
@@ -1091,7 +1035,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldFailOnUnparsableRelationshipHeader()
     {
         // given
@@ -1111,7 +1055,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldFailOnUndefinedGroupInRelationshipHeader()
     {
         // given
@@ -1132,7 +1076,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldFailOnGlobalGroupInRelationshipHeaderIfNoGLobalGroupInNodeHeader()
     {
         // given
@@ -1153,7 +1097,7 @@ public class CsvInputTest
         }
     }
 
-    @Test
+	@Test
     public void shouldReportDuplicateNodeSourceFiles()
     {
         // given
@@ -1184,7 +1128,7 @@ public class CsvInputTest
         verify( monitor ).duplicateSourceFile( sourceDescription );
     }
 
-    @Test
+	@Test
     public void shouldReportDuplicateRelationshipSourceFiles()
     {
         // given
@@ -1215,7 +1159,7 @@ public class CsvInputTest
         verify( monitor ).duplicateSourceFile( sourceDescription );
     }
 
-    @Test
+	@Test
     public void shouldReportDuplicateSourceFileUsedAsBothNodeAndRelationshipSourceFile()
     {
         // given
@@ -1261,7 +1205,7 @@ public class CsvInputTest
         verify( monitor ).duplicateSourceFile( sourceDescription );
     }
 
-    private static Reader dataWithSourceDescription( String data, String sourceDescription )
+	private static Reader dataWithSourceDescription( String data, String sourceDescription )
     {
         return new StringReader( data )
         {
@@ -1273,7 +1217,7 @@ public class CsvInputTest
         };
     }
 
-    private Configuration customConfig( final char delimiter, final char arrayDelimiter, final char quote )
+	private Configuration customConfig( final char delimiter, final char arrayDelimiter, final char quote )
     {
         return config( new Configuration.Default()
         {
@@ -1297,28 +1241,28 @@ public class CsvInputTest
         } );
     }
 
-    private DataFactory given( final CharReadable data )
+	private DataFactory given( final CharReadable data )
     {
         return config -> dataItem( data, InputEntityDecorators.NO_DECORATOR );
     }
 
-    private DataFactory data( final CharReadable data, final Decorator decorator )
+	private DataFactory data( final CharReadable data, final Decorator decorator )
     {
         return config -> dataItem( data, decorator );
     }
 
-    private static Data dataItem( final CharReadable data, final Decorator decorator )
+	private static Data dataItem( final CharReadable data, final Decorator decorator )
     {
         return DataFactories.data( decorator, () -> data ).create( COMMAS /*doesn't matter here in this test*/ );
     }
 
-    private void assertNextRelationship( InputIterator relationship,
+	private void assertNextRelationship( InputIterator relationship,
             Object startNode, Object endNode, String type, Object[] properties ) throws IOException
     {
         assertRelationship( relationship, GLOBAL, startNode, GLOBAL, endNode, type, properties );
     }
 
-    private void assertRelationship( InputIterator data,
+	private void assertRelationship( InputIterator data,
             Group startNodeGroup, Object startNode,
             Group endNodeGroup, Object endNode,
             String type, Object[] properties ) throws IOException
@@ -1332,13 +1276,13 @@ public class CsvInputTest
         assertArrayEquals( properties, visitor.properties() );
     }
 
-    private void assertNextNode( InputIterator data, Object id, Object[] properties, Set<String> labels )
+	private void assertNextNode( InputIterator data, Object id, Object[] properties, Set<String> labels )
             throws IOException
     {
         assertNextNode( data, GLOBAL, id, properties, labels );
     }
 
-    private void assertNextNode( InputIterator data, Group group, Object id, Object[] properties, Set<String> labels )
+	private void assertNextNode( InputIterator data, Group group, Object id, Object[] properties, Set<String> labels )
             throws IOException
     {
         assertTrue( readNext( data ) );
@@ -1348,7 +1292,7 @@ public class CsvInputTest
         assertEquals( labels, asSet( visitor.labels() ) );
     }
 
-    private boolean readNext( InputIterator data ) throws IOException
+	private boolean readNext( InputIterator data ) throws IOException
     {
         if ( referenceData != data )
         {
@@ -1376,17 +1320,17 @@ public class CsvInputTest
         return chunk.next( visitor );
     }
 
-    private Object[] properties( Object... keysAndValues )
+	private Object[] properties( Object... keysAndValues )
     {
         return keysAndValues;
     }
 
-    private Set<String> labels( String... labels )
+	private Set<String> labels( String... labels )
     {
         return asSet( labels );
     }
 
-    private Header.Factory header( final Header.Entry... entries )
+	private Header.Factory header( final Header.Entry... entries )
     {
         return new Header.Factory()
         {
@@ -1404,37 +1348,49 @@ public class CsvInputTest
         };
     }
 
-    private Header.Entry entry( String name, Type type, Extractor<?> extractor )
+	private Header.Entry entry( String name, Type type, Extractor<?> extractor )
     {
         return entry( name, type, null, extractor );
     }
 
-    private Header.Entry entry( String name, Type type, String groupName, Extractor<?> extractor )
+	private Header.Entry entry( String name, Type type, String groupName, Extractor<?> extractor )
     {
         return new Header.Entry( name, type, groups.getOrCreate( groupName ), extractor );
     }
 
-    private static DataFactory data( final String data )
+	private static DataFactory data( final String data )
     {
         return data( data, value -> value );
     }
 
-    private static DataFactory data( final String data, final Decorator decorator )
+	private static DataFactory data( final String data, final Decorator decorator )
     {
         return config -> dataItem( charReader( data ), decorator );
     }
 
-    private static CharReadable charReader( String data )
+	private static CharReadable charReader( String data )
     {
         return wrap( data );
     }
 
-    private Iterable<DataFactory> dataIterable( DataFactory... data )
+	private Iterable<DataFactory> dataIterable( DataFactory... data )
     {
         return Iterables.iterable( data );
     }
 
-    private static class CapturingDataFactories implements Iterable<DataFactory>
+	private Configuration config( Configuration config )
+    {
+        return new Configuration.Overridden( config )
+        {
+            @Override
+            public boolean multilineFields()
+            {
+                return allowMultilineFields;
+            }
+        };
+    }
+
+	private static class CapturingDataFactories implements Iterable<DataFactory>
     {
         private final Function<Configuration,CharReadable> factory;
         private CharReadable last;
@@ -1493,17 +1449,5 @@ public class CsvInputTest
                 }
             };
         }
-    }
-
-    private Configuration config( Configuration config )
-    {
-        return new Configuration.Overridden( config )
-        {
-            @Override
-            public boolean multilineFields()
-            {
-                return allowMultilineFields;
-            }
-        };
     }
 }

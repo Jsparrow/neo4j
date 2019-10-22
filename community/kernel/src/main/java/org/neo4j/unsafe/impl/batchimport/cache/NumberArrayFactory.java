@@ -44,21 +44,9 @@ import static org.neo4j.helpers.Numbers.safeCastLongToInt;
  */
 public interface NumberArrayFactory
 {
-    interface Monitor
-    {
-        /**
-         * Notifies about a successful allocation where information about both successful and failed attempts are included.
-         *
-         * @param memory amount of memory for this allocation.
-         * @param successfulFactory the {@link NumberArrayFactory} which proved successful allocating this amount of memory.
-         * @param attemptedAllocationFailures list of failed attempts to allocate this memory in other allocators.
-         */
-        void allocationSuccessful( long memory, NumberArrayFactory successfulFactory, Iterable<AllocationFailure> attemptedAllocationFailures );
-    }
-
     Monitor NO_MONITOR = ( memory, successfulFactory, attemptedAllocationFailures ) -> { /* no-op */ };
 
-    /**
+	/**
      * Puts arrays inside the heap.
      */
     NumberArrayFactory HEAP = new Adapter()
@@ -88,7 +76,7 @@ public interface NumberArrayFactory
         }
     };
 
-    /**
+	/**
      * Puts arrays off-heap, using unsafe calls.
      */
     NumberArrayFactory OFF_HEAP = new Adapter()
@@ -118,19 +106,19 @@ public interface NumberArrayFactory
         }
     };
 
-    /**
+	/**
      * Used as part of the fallback strategy for {@link Auto}. Tries to split up fixed-size arrays
      * ({@link #newLongArray(long, long)} and {@link #newIntArray(long, int)} into smaller chunks where
      * some can live on heap and some off heap.
      */
     NumberArrayFactory CHUNKED_FIXED_SIZE = new ChunkedNumberArrayFactory( NumberArrayFactory.NO_MONITOR );
 
-    /**
+	/**
      * {@link Auto} factory which uses JVM stats for gathering information about available memory.
      */
     NumberArrayFactory AUTO_WITHOUT_PAGECACHE = new Auto( NumberArrayFactory.NO_MONITOR, OFF_HEAP, HEAP, CHUNKED_FIXED_SIZE );
 
-    /**
+	/**
      * {@link Auto} factory which has a page cache backed number array as final fallback, in order to prevent OOM
      * errors.
      * @param pageCache {@link PageCache} to fallback allocation into, if no more memory is available.
@@ -149,7 +137,7 @@ public interface NumberArrayFactory
         return new Auto( monitor, allocationAlternatives( allowHeapAllocation, chunkedArrayFactory ) );
     }
 
-    /**
+	/**
      * @param allowHeapAllocation whether or not to include heap allocation as an alternative.
      * @param additional other means of allocation to try after the standard off/on heap alternatives.
      * @return an array of {@link NumberArrayFactory} with the desired alternatives.
@@ -163,6 +151,93 @@ public interface NumberArrayFactory
         }
         result.addAll( asList( additional ) );
         return result.toArray( new NumberArrayFactory[result.size()] );
+    }
+
+	/**
+     * @param length size of the array.
+     * @param defaultValue value which will represent unset values.
+     * @return a fixed size {@link IntArray}.
+     */
+    default IntArray newIntArray( long length, int defaultValue )
+    {
+        return newIntArray( length, defaultValue, 0 );
+    }
+
+	/**
+     * @param length size of the array.
+     * @param defaultValue value which will represent unset values.
+     * @param base base index to rebase all requested indexes with.
+     * @return a fixed size {@link IntArray}.
+     */
+    IntArray newIntArray( long length, int defaultValue, long base );
+
+	/**
+     * @param chunkSize the size of each array (number of items). Where new chunks are added when needed.
+     * @param defaultValue value which will represent unset values.
+     * @return dynamically growing {@link IntArray}.
+     */
+    IntArray newDynamicIntArray( long chunkSize, int defaultValue );
+
+	/**
+     * @param length size of the array.
+     * @param defaultValue value which will represent unset values.
+     * @return a fixed size {@link LongArray}.
+     */
+    default LongArray newLongArray( long length, long defaultValue )
+    {
+        return newLongArray( length, defaultValue, 0 );
+    }
+
+	/**
+     * @param length size of the array.
+     * @param defaultValue value which will represent unset values.
+     * @param base base index to rebase all requested indexes with.
+     * @return a fixed size {@link LongArray}.
+     */
+    LongArray newLongArray( long length, long defaultValue, long base );
+
+	/**
+     * @param chunkSize the size of each array (number of items). Where new chunks are added when needed.
+     * @param defaultValue value which will represent unset values.
+     * @return dynamically growing {@link LongArray}.
+     */
+    LongArray newDynamicLongArray( long chunkSize, long defaultValue );
+
+	/**
+     * @param length size of the array.
+     * @param defaultValue value which will represent unset values.
+     * @return a fixed size {@link ByteArray}.
+     */
+    default ByteArray newByteArray( long length, byte[] defaultValue )
+    {
+        return newByteArray( length, defaultValue, 0 );
+    }
+
+	/**
+     * @param length size of the array.
+     * @param defaultValue value which will represent unset values.
+     * @param base base index to rebase all requested indexes with.
+     * @return a fixed size {@link ByteArray}.
+     */
+    ByteArray newByteArray( long length, byte[] defaultValue, long base );
+
+	/**
+     * @param chunkSize the size of each array (number of items). Where new chunks are added when needed.
+     * @param defaultValue value which will represent unset values.
+     * @return dynamically growing {@link ByteArray}.
+     */
+    ByteArray newDynamicByteArray( long chunkSize, byte[] defaultValue );
+
+	interface Monitor
+    {
+        /**
+         * Notifies about a successful allocation where information about both successful and failed attempts are included.
+         *
+         * @param memory amount of memory for this allocation.
+         * @param successfulFactory the {@link NumberArrayFactory} which proved successful allocating this amount of memory.
+         * @param attemptedAllocationFailures list of failed attempts to allocate this memory in other allocators.
+         */
+        void allocationSuccessful( long memory, NumberArrayFactory successfulFactory, Iterable<AllocationFailure> attemptedAllocationFailures );
     }
 
     class AllocationFailure
@@ -265,81 +340,6 @@ public interface NumberArrayFactory
         }
 
     }
-
-    /**
-     * @param length size of the array.
-     * @param defaultValue value which will represent unset values.
-     * @return a fixed size {@link IntArray}.
-     */
-    default IntArray newIntArray( long length, int defaultValue )
-    {
-        return newIntArray( length, defaultValue, 0 );
-    }
-
-    /**
-     * @param length size of the array.
-     * @param defaultValue value which will represent unset values.
-     * @param base base index to rebase all requested indexes with.
-     * @return a fixed size {@link IntArray}.
-     */
-    IntArray newIntArray( long length, int defaultValue, long base );
-
-    /**
-     * @param chunkSize the size of each array (number of items). Where new chunks are added when needed.
-     * @param defaultValue value which will represent unset values.
-     * @return dynamically growing {@link IntArray}.
-     */
-    IntArray newDynamicIntArray( long chunkSize, int defaultValue );
-
-    /**
-     * @param length size of the array.
-     * @param defaultValue value which will represent unset values.
-     * @return a fixed size {@link LongArray}.
-     */
-    default LongArray newLongArray( long length, long defaultValue )
-    {
-        return newLongArray( length, defaultValue, 0 );
-    }
-
-    /**
-     * @param length size of the array.
-     * @param defaultValue value which will represent unset values.
-     * @param base base index to rebase all requested indexes with.
-     * @return a fixed size {@link LongArray}.
-     */
-    LongArray newLongArray( long length, long defaultValue, long base );
-
-    /**
-     * @param chunkSize the size of each array (number of items). Where new chunks are added when needed.
-     * @param defaultValue value which will represent unset values.
-     * @return dynamically growing {@link LongArray}.
-     */
-    LongArray newDynamicLongArray( long chunkSize, long defaultValue );
-
-    /**
-     * @param length size of the array.
-     * @param defaultValue value which will represent unset values.
-     * @return a fixed size {@link ByteArray}.
-     */
-    default ByteArray newByteArray( long length, byte[] defaultValue )
-    {
-        return newByteArray( length, defaultValue, 0 );
-    }
-
-    /**
-     * @param length size of the array.
-     * @param defaultValue value which will represent unset values.
-     * @param base base index to rebase all requested indexes with.
-     * @return a fixed size {@link ByteArray}.
-     */
-    ByteArray newByteArray( long length, byte[] defaultValue, long base );
-
-    /**
-     * @param chunkSize the size of each array (number of items). Where new chunks are added when needed.
-     * @param defaultValue value which will represent unset values.
-     * @return dynamically growing {@link ByteArray}.
-     */
-    ByteArray newDynamicByteArray( long chunkSize, byte[] defaultValue );
 
     /**
      * Implements the dynamic array methods, because they are the same in most implementations.

@@ -56,72 +56,56 @@ public class SslResourceBuilder
 
     private final int keyId;
 
-    enum SignedBy
-    {
-        SELF( SELF_SIGNED_NAME ),
-        CA( CA_SIGNED_NAME );
+	private final SignedBy signedBy;
 
-        private final String resourceName;
+	private boolean trustSignedByCA;
 
-        SignedBy( String resourceName )
-        {
-            this.resourceName = resourceName;
-        }
+	private Set<Integer> trusted = new HashSet<>();
 
-        public URL keyId( int keyId )
-        {
-            return resource( resourceName, keyId );
-        }
-    }
+	private Set<Integer> revoked = new HashSet<>();
 
-    private final SignedBy signedBy;
+	private FileSystemAbstraction fsa = new DefaultFileSystemAbstraction();
 
-    private boolean trustSignedByCA;
-    private Set<Integer> trusted = new HashSet<>();
-    private Set<Integer> revoked = new HashSet<>();
-
-    private FileSystemAbstraction fsa = new DefaultFileSystemAbstraction();
-
-    private SslResourceBuilder( int keyId, SignedBy signedBy )
+	private SslResourceBuilder( int keyId, SignedBy signedBy )
     {
         this.keyId = keyId;
         this.signedBy = signedBy;
     }
 
-    public static SslResourceBuilder selfSignedKeyId( int keyId )
+	public static SslResourceBuilder selfSignedKeyId( int keyId )
     {
         return new SslResourceBuilder( keyId, SELF );
     }
 
-    public static SslResourceBuilder caSignedKeyId( int keyId )
+	public static SslResourceBuilder caSignedKeyId( int keyId )
     {
         return new SslResourceBuilder( keyId, CA );
     }
 
-    public SslResourceBuilder trustKeyId( int keyId )
+	public SslResourceBuilder trustKeyId( int keyId )
     {
         trusted.add( keyId );
         return this;
     }
 
-    public SslResourceBuilder trustSignedByCA()
+	public SslResourceBuilder trustSignedByCA()
     {
         this.trustSignedByCA = true;
         return this;
     }
 
-    public SslResourceBuilder revoke( int keyId )
+	public SslResourceBuilder revoke( int keyId )
     {
         revoked.add( keyId );
         return this;
     }
 
-    public SslResource install( File targetDirectory ) throws IOException
+	public SslResource install( File targetDirectory ) throws IOException
     {
         return install( targetDirectory, CA_CERTIFICATE_NAME );
     }
 
-    public SslResource install( File targetDirectory, String trustedFileName ) throws IOException
+	public SslResource install( File targetDirectory, String trustedFileName ) throws IOException
     {
         File targetKey = new File( targetDirectory, PRIVATE_KEY_NAME );
         File targetCertificate = new File( targetDirectory, PUBLIC_CERT_NAME );
@@ -155,17 +139,17 @@ public class SslResourceBuilder
         return new SslResource( targetKey, targetCertificate, targetTrusted, targetRevoked );
     }
 
-    private static URL resource( String filename, int keyId )
+	private static URL resource( String filename, int keyId )
     {
-        return SslResourceBuilder.class.getResource( SERVERS_BASE_PATH + String.valueOf( keyId ) + "/" + filename );
+        return SslResourceBuilder.class.getResource( new StringBuilder().append(SERVERS_BASE_PATH).append(String.valueOf( keyId )).append("/").append(filename).toString() );
     }
 
-    private static URL resource( String filename )
+	private static URL resource( String filename )
     {
         return SslResourceBuilder.class.getResource( CA_BASE_PATH + filename );
     }
 
-    private void copy( URL in, File outFile ) throws IOException
+	private void copy( URL in, File outFile ) throws IOException
     {
         try ( InputStream is = in.openStream();
               OutputStream os = fsa.openAsOutputStream( outFile, false ) )
@@ -176,6 +160,24 @@ public class SslResourceBuilder
                 int nBytes = is.read( buf );
                 os.write( buf, 0, nBytes );
             }
+        }
+    }
+
+	enum SignedBy
+    {
+        SELF( SELF_SIGNED_NAME ),
+        CA( CA_SIGNED_NAME );
+
+        private final String resourceName;
+
+        SignedBy( String resourceName )
+        {
+            this.resourceName = resourceName;
+        }
+
+        public URL keyId( int keyId )
+        {
+            return resource( resourceName, keyId );
         }
     }
 }

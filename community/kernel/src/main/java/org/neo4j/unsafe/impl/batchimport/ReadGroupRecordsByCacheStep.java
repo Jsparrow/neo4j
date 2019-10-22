@@ -61,7 +61,13 @@ public class ReadGroupRecordsByCacheStep extends ProducerStep
         }
     }
 
-    private class NodeVisitor implements NodeChangeVisitor, AutoCloseable, GroupVisitor, Supplier<RelationshipGroupRecord[]>
+    @Override
+    protected long position()
+    {
+        return store.getHighId() * store.getRecordSize();
+    }
+
+	private class NodeVisitor implements NodeChangeVisitor, AutoCloseable, GroupVisitor, Supplier<RelationshipGroupRecord[]>
     {
         private final RecordDataAssembler<RelationshipGroupRecord> assembler = new RecordDataAssembler<>( store::newRecord );
         private RelationshipGroupRecord[] batch = get();
@@ -101,11 +107,11 @@ public class ReadGroupRecordsByCacheStep extends ProducerStep
         @Override
         public void close()
         {
-            if ( cursor > 0 )
-            {
-                batch = assembler.cutOffAt( batch, cursor );
-                send();
-            }
+            if (cursor <= 0) {
+				return;
+			}
+			batch = assembler.cutOffAt( batch, cursor );
+			send();
         }
 
         @Override
@@ -113,11 +119,5 @@ public class ReadGroupRecordsByCacheStep extends ProducerStep
         {
             return assembler.newBatchObject( batchSize );
         }
-    }
-
-    @Override
-    protected long position()
-    {
-        return store.getHighId() * store.getRecordSize();
     }
 }

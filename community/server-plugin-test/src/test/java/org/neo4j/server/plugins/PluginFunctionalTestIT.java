@@ -136,10 +136,7 @@ public class PluginFunctionalTestIT extends SharedServerTestBase
 
     private void verifyNodes( final List<Map<String, Object>> response )
     {
-        for ( Map<String, Object> nodeMap : response )
-        {
-            NodeRepresentationTest.verifySerialisation( nodeMap );
-        }
+        response.forEach(NodeRepresentationTest::verifySerialisation);
     }
 
     @Test
@@ -290,10 +287,7 @@ public class PluginFunctionalTestIT extends SharedServerTestBase
 
     private void verifyRelationships( final List<Map<String, Object>> response )
     {
-        for ( Map<String, Object> relMap : response )
-        {
-            RelationshipRepresentationTest.verifySerialisation( relMap );
-        }
+        response.forEach(RelationshipRepresentationTest::verifySerialisation);
     }
 
     @Test

@@ -156,10 +156,7 @@ public class DynamicIndexStoreViewIT
                             long nodeId = randomValues.nextLongValue( totalNodes ).value();
                             Node node = databaseService.getNodeById( nodeId );
                             Map<String,Object> allProperties = node.getAllProperties();
-                            for ( String key : allProperties.keySet() )
-                            {
-                                node.setProperty( key, randomValues.nextValue().asObject() );
-                            }
+                            allProperties.keySet().forEach(key -> node.setProperty(key, randomValues.nextValue().asObject()));
                             break;
                         case 2:
                             Node nodeToUpdate = databaseService.createNode( Label.label( "label10" ) );

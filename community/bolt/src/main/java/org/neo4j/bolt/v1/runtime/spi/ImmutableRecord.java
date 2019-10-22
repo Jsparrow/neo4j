@@ -46,7 +46,7 @@ public class ImmutableRecord implements QueryResult.Record
         {
             return true;
         }
-        if ( o == null || !(o instanceof QueryResult.Record) )
+        if ( !(o instanceof QueryResult.Record) )
         {
             return false;
         }
@@ -58,9 +58,7 @@ public class ImmutableRecord implements QueryResult.Record
     @Override
     public String toString()
     {
-        return "ImmutableRecord{" +
-                "fields=" + Arrays.toString( fields ) +
-                '}';
+        return new StringBuilder().append("ImmutableRecord{").append("fields=").append(Arrays.toString( fields )).append('}').toString();
     }
 
     @Override

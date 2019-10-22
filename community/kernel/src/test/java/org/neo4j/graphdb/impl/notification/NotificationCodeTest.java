@@ -67,11 +67,7 @@ class NotificationCodeTest
         assertThat( notification.getCode(), equalTo( "Neo.ClientNotification.Statement.CartesianProductWarning" ) );
         assertThat( notification.getPosition(), equalTo( InputPosition.empty ) );
         assertThat( notification.getDescription(), equalTo(
-                "If a part of a query contains multiple disconnected patterns, this will build a cartesian product " +
-                        "between all those parts. This may produce a large amount of data and slow down query processing. While " +
-                        "occasionally intended, it may often be possible to reformulate the query that avoids the use of this cross " +
-                        "product, perhaps by adding a relationship between the different parts or by using OPTIONAL MATCH " +
-                        "(identifiers are: (n, node2))" ) );
+                new StringBuilder().append("If a part of a query contains multiple disconnected patterns, this will build a cartesian product ").append("between all those parts. This may produce a large amount of data and slow down query processing. While ").append("occasionally intended, it may often be possible to reformulate the query that avoids the use of this cross ").append("product, perhaps by adding a relationship between the different parts or by using OPTIONAL MATCH ").append("(identifiers are: (n, node2))").toString() ) );
     }
 
     @Test
@@ -88,9 +84,7 @@ class NotificationCodeTest
         assertThat( notification.getCode(), equalTo( "Neo.ClientNotification.Statement.JoinHintUnfulfillableWarning" ) );
         assertThat( notification.getPosition(), equalTo( InputPosition.empty ) );
         assertThat( notification.getDescription(),
-            equalTo( "The hinted join was not planned. This could happen because no generated plan contained the join key, " +
-                     "please try using a different join key or restructure your query. " +
-                     "(hinted join key identifiers are: n, node2)" ) );
+            equalTo( new StringBuilder().append("The hinted join was not planned. This could happen because no generated plan contained the join key, ").append("please try using a different join key or restructure your query. ").append("(hinted join key identifiers are: n, node2)").toString() ) );
     }
 
     @Test

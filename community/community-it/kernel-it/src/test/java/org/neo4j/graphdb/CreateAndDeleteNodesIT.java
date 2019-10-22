@@ -30,11 +30,6 @@ public class CreateAndDeleteNodesIT
     @Rule
     public ImpermanentDatabaseRule dbRule = new ImpermanentDatabaseRule();
 
-    enum RelTypes implements RelationshipType
-    {
-        ASD
-    }
-
     @Test
     public void creatingAndDeletingEntitiesShouldNotThrow()
     {
@@ -54,5 +49,10 @@ public class CreateAndDeleteNodesIT
 
         // When
         GraphDatabaseServiceCleaner.cleanupAllRelationshipsAndNodes( dataBase );
+    }
+
+	enum RelTypes implements RelationshipType
+    {
+        ASD
     }
 }

@@ -39,13 +39,10 @@ public class MapRow implements Result.ResultRow
     private <T> T get( String key, Class<T> type )
     {
         Object value = map.get( key );
-        if ( value == null )
-        {
-            if ( !map.containsKey( key ) )
-            {
-                throw new NoSuchElementException( "No such entry: " + key );
-            }
-        }
+        boolean condition = value == null && !map.containsKey( key );
+		if ( condition ) {
+		    throw new NoSuchElementException( "No such entry: " + key );
+		}
         try
         {
             return type.cast( value );
@@ -53,7 +50,7 @@ public class MapRow implements Result.ResultRow
         catch ( ClassCastException e )
         {
             throw (NoSuchElementException) new NoSuchElementException(
-                    "Element '" + key + "' is not a " + type.getSimpleName() ).initCause( e );
+                    new StringBuilder().append("Element '").append(key).append("' is not a ").append(type.getSimpleName()).toString() ).initCause( e );
         }
     }
 

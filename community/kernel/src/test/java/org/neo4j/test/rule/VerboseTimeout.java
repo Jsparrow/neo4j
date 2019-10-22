@@ -233,7 +233,22 @@ public class VerboseTimeout extends Timeout
             return timedOutException;
         }
 
-        private class CallableStatement implements Callable<Throwable>
+        private void printThreadDump()
+        {
+            System.err.println( String.format( "=== Test %s timed out, dumping more information ===", currentTestDescription.getDisplayName() ) );
+            if ( !additionalParameters.isEmpty() )
+            {
+                System.err.println( "=== Requested additional parameters: ===" );
+                for ( VerboseTimeoutBuilder.FailureParameter<?> additionalParameter : additionalParameters )
+                {
+                    System.err.println( additionalParameter.describe() );
+                }
+            }
+            System.err.println( "=== Thread dump ===" );
+            System.err.println( DumpUtils.threadDump() );
+        }
+
+		private class CallableStatement implements Callable<Throwable>
         {
             private final CountDownLatch startLatch = new CountDownLatch( 1 );
 
@@ -256,21 +271,6 @@ public class VerboseTimeout extends Timeout
             {
                 startLatch.await();
             }
-        }
-
-        private void printThreadDump()
-        {
-            System.err.println( String.format( "=== Test %s timed out, dumping more information ===", currentTestDescription.getDisplayName() ) );
-            if ( !additionalParameters.isEmpty() )
-            {
-                System.err.println( "=== Requested additional parameters: ===" );
-                for ( VerboseTimeoutBuilder.FailureParameter<?> additionalParameter : additionalParameters )
-                {
-                    System.err.println( additionalParameter.describe() );
-                }
-            }
-            System.err.println( "=== Thread dump ===" );
-            System.err.println( DumpUtils.threadDump() );
         }
     }
 }

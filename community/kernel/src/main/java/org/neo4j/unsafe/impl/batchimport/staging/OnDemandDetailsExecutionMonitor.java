@@ -70,23 +70,17 @@ import static org.neo4j.helpers.Format.duration;
  */
 public class OnDemandDetailsExecutionMonitor implements ExecutionMonitor
 {
-    interface Monitor
-    {
-        void detailsPrinted();
-    }
-
     private final List<StageDetails> details = new ArrayList<>();
-    private final PrintStream out;
-    private final InputStream in;
-    private final Map<String,Pair<String,Runnable>> actions = new HashMap<>();
-    private final VmPauseTimeAccumulator vmPauseTimeAccumulator = new VmPauseTimeAccumulator();
-    private final VmPauseMonitor vmPauseMonitor;
-    private final Monitor monitor;
+	private final PrintStream out;
+	private final InputStream in;
+	private final Map<String,Pair<String,Runnable>> actions = new HashMap<>();
+	private final VmPauseTimeAccumulator vmPauseTimeAccumulator = new VmPauseTimeAccumulator();
+	private final VmPauseMonitor vmPauseMonitor;
+	private final Monitor monitor;
+	private StageDetails current;
+	private boolean printDetailsOnDone;
 
-    private StageDetails current;
-    private boolean printDetailsOnDone;
-
-    public OnDemandDetailsExecutionMonitor( PrintStream out, InputStream in, Monitor monitor, JobScheduler jobScheduler )
+	public OnDemandDetailsExecutionMonitor( PrintStream out, InputStream in, Monitor monitor, JobScheduler jobScheduler )
     {
         this.out = out;
         this.in = in;
@@ -97,28 +91,28 @@ public class OnDemandDetailsExecutionMonitor implements ExecutionMonitor
                 NullLog.getInstance(), jobScheduler, vmPauseTimeAccumulator );
     }
 
-    @Override
+	@Override
     public void initialize( DependencyResolver dependencyResolver )
     {
         out.println( "InteractiveReporterInteractions command list (end with ENTER):" );
-        actions.forEach( ( key, action ) -> out.println( "  " + key + ": " + action.first() ) );
+        actions.forEach( ( key, action ) -> out.println( new StringBuilder().append("  ").append(key).append(": ").append(action.first()).toString() ) );
         out.println();
         vmPauseMonitor.start();
     }
 
-    @Override
+	@Override
     public void start( StageExecution execution )
     {
         details.add( current = new StageDetails( execution, vmPauseTimeAccumulator ) );
     }
 
-    @Override
+	@Override
     public void end( StageExecution execution, long totalTimeMillis )
     {
         current.collect();
     }
 
-    @Override
+	@Override
     public void done( boolean successful, long totalTimeMillis, String additionalInformation )
     {
         if ( printDetailsOnDone )
@@ -128,20 +122,20 @@ public class OnDemandDetailsExecutionMonitor implements ExecutionMonitor
         vmPauseMonitor.stop();
     }
 
-    @Override
+	@Override
     public long nextCheckTime()
     {
         return currentTimeMillis() + 500;
     }
 
-    @Override
+	@Override
     public void check( StageExecution execution )
     {
         current.collect();
         reactToUserInput();
     }
 
-    private void printDetails()
+	private void printDetails()
     {
         printDetailsHeadline();
         long totalTime = 0;
@@ -160,11 +154,11 @@ public class OnDemandDetailsExecutionMonitor implements ExecutionMonitor
         out.println();
     }
 
-    private void printDetailsHeadline()
+	private void printDetailsHeadline()
     {
         out.println();
         out.println();
-        printIndented( out, "******** DETAILS " + date() + " ********" );
+        printIndented( out, new StringBuilder().append("******** DETAILS ").append(date()).append(" ********").toString() );
         out.println();
 
         // Make sure that if user is interested in details then also print the entire details set when import is done
@@ -172,7 +166,7 @@ public class OnDemandDetailsExecutionMonitor implements ExecutionMonitor
         monitor.detailsPrinted();
     }
 
-    private void printDetailsForCurrentStage()
+	private void printDetailsForCurrentStage()
     {
         printDetailsHeadline();
         if ( !details.isEmpty() )
@@ -181,12 +175,12 @@ public class OnDemandDetailsExecutionMonitor implements ExecutionMonitor
         }
     }
 
-    private static void printIndented( PrintStream out, String string )
+	private static void printIndented( PrintStream out, String string )
     {
         out.println( "\t" + string );
     }
 
-    private void reactToUserInput()
+	private void reactToUserInput()
     {
         try
         {
@@ -206,6 +200,11 @@ public class OnDemandDetailsExecutionMonitor implements ExecutionMonitor
         {
             e.printStackTrace( out );
         }
+    }
+
+	interface Monitor
+    {
+        void detailsPrinted();
     }
 
     private static class StageDetails
@@ -248,7 +247,7 @@ public class OnDemandDetailsExecutionMonitor implements ExecutionMonitor
         {
             if ( value > 0 )
             {
-                printIndented( out, description + ": " + toStringConverter.apply( value ) );
+                printIndented( out, new StringBuilder().append(description).append(": ").append(toStringConverter.apply( value )).toString() );
             }
         }
 

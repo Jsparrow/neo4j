@@ -33,17 +33,19 @@ import static java.lang.String.format;
 
 public class PrimitiveNodeStream extends PrimitiveEntityStream<VirtualNodeValue>
 {
-    public PrimitiveNodeStream( LongStream inner )
+    private static final PrimitiveNodeStream empty = new PrimitiveNodeStream( LongStream.empty() );
+
+	public PrimitiveNodeStream( LongStream inner )
     {
         super( inner );
     }
 
-    public static PrimitiveNodeStream of( long[] array )
+	public static PrimitiveNodeStream of( long[] array )
     {
         return new PrimitiveNodeStream( LongStream.of( array ) );
     }
 
-    public static PrimitiveNodeStream of( Object list )
+	public static PrimitiveNodeStream of( Object list )
     {
         if ( list == null )
         {
@@ -60,12 +62,10 @@ public class PrimitiveNodeStream extends PrimitiveEntityStream<VirtualNodeValue>
         throw new IllegalArgumentException( format( "Can not convert to stream: %s", list.getClass().getName() ) );
     }
 
-    @Override
+	@Override
     // This method is only used when we do not know the element type at compile time, so it has to box the elements
     public Iterator<VirtualNodeValue> iterator()
     {
         return inner.mapToObj( (LongFunction<VirtualNodeValue>) VirtualValues::node ).iterator();
     }
-
-    private static final PrimitiveNodeStream empty = new PrimitiveNodeStream( LongStream.empty() );
 }

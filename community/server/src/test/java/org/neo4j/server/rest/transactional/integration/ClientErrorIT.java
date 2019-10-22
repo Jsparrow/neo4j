@@ -83,7 +83,7 @@ public class ClientErrorIT extends AbstractRestFunctionalTestBase
                         Status.Schema.TokenNameError
                 },
                 new Object[]{
-                        "CREATE (b:Book {isbn: " + UNIQUE_ISBN + "})",
+                        new StringBuilder().append("CREATE (b:Book {isbn: ").append(UNIQUE_ISBN).append("})").toString(),
                         Status.Schema.ConstraintValidationFailed
                 },
                 new Object[]{
@@ -103,7 +103,7 @@ public class ClientErrorIT extends AbstractRestFunctionalTestBase
                 "{'statements': [{'statement': 'CREATE CONSTRAINT ON (b:Book) ASSERT b.isbn IS UNIQUE'}]}" ) );
 
         POST( txCommitUri(), quotedJson(
-                "{'statements': [{'statement': 'CREATE (b:Book {isbn: " + UNIQUE_ISBN + "})'}]}" ) );
+                new StringBuilder().append("{'statements': [{'statement': 'CREATE (b:Book {isbn: ").append(UNIQUE_ISBN).append("})'}]}").toString() ) );
     }
 
     @Test
@@ -117,7 +117,7 @@ public class ClientErrorIT extends AbstractRestFunctionalTestBase
 
         // When
         HTTP.Response malformed = POST( txUri( txId ),
-                quotedJson( "{'statements': [{'statement': '" + query + "'}]}" ) );
+                quotedJson( new StringBuilder().append("{'statements': [{'statement': '").append(query).append("'}]}").toString() ) );
 
         // Then
 

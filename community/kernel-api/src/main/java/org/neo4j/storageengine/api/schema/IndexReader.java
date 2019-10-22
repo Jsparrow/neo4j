@@ -34,55 +34,6 @@ import org.neo4j.values.storable.Value;
  */
 public interface IndexReader extends Resource
 {
-    /**
-     * @param nodeId node id to match.
-     * @param propertyKeyIds the property key ids that correspond to each of the property values.
-     * @param propertyValues property values to match.
-     * @return number of index entries for the given {@code nodeId} and {@code propertyValues}.
-     */
-    long countIndexedNodes( long nodeId, int[] propertyKeyIds, Value... propertyValues );
-
-    IndexSampler createSampler();
-
-    /**
-     * Queries the index for the given {@link IndexQuery} predicates.
-     *
-     * @param predicates the predicates to query for.
-     * @return the matching entity IDs.
-     */
-    PrimitiveLongResourceIterator query( IndexQuery... predicates ) throws IndexNotApplicableKernelException;
-
-    /**
-     * Queries the index for the given {@link IndexQuery} predicates.
-     *  @param client the client which will control the progression though query results.
-     * @param needsValues if the index should fetch property values together with node ids for index queries
-     * @param query the query so serve.
-     */
-    void query( IndexProgressor.NodeValueClient client, IndexOrder indexOrder, boolean needsValues, IndexQuery... query )
-            throws IndexNotApplicableKernelException;
-
-    /**
-     * @param predicates query to determine whether or not index has full value precision for.
-     * @return whether or not this reader will only return 100% matching results from {@link #query(IndexQuery...)}.
-     * If {@code false} is returned this means that the caller of {@link #query(IndexQuery...)} will have to
-     * do additional filtering, double-checking of actual property values, externally.
-     */
-    boolean hasFullValuePrecision( IndexQuery... predicates );
-
-    /**
-     * Initializes {@code client} to be able to progress through all distinct values in this index. {@link IndexProgressor.NodeValueClient}
-     * is used because it has a perfect method signature, even if the {@code reference} argument will instead be used
-     * as number of index entries for the specific indexed value.
-     *
-     * {@code needsValues} decides whether or not values will be materialized and given to the client.
-     * The use-case for setting this to {@code false} is to have a more efficient counting of distinct values in an index,
-     * regardless of the actual values.
-     * @param client {@link IndexProgressor.NodeValueClient} to get initialized with this progression.
-     * @param propertyAccessor used for distinguishing between lossy indexed values.
-     * @param needsValues whether or not values should be loaded.
-     */
-    void distinctValues( IndexProgressor.NodeValueClient client, NodePropertyAccessor propertyAccessor, boolean needsValues );
-
     IndexReader EMPTY = new IndexReader()
     {
         // Used for checking index correctness
@@ -128,7 +79,56 @@ public interface IndexReader extends Resource
         }
     };
 
-    class Adaptor implements IndexReader
+	/**
+     * @param nodeId node id to match.
+     * @param propertyKeyIds the property key ids that correspond to each of the property values.
+     * @param propertyValues property values to match.
+     * @return number of index entries for the given {@code nodeId} and {@code propertyValues}.
+     */
+    long countIndexedNodes( long nodeId, int[] propertyKeyIds, Value... propertyValues );
+
+	IndexSampler createSampler();
+
+	/**
+     * Queries the index for the given {@link IndexQuery} predicates.
+     *
+     * @param predicates the predicates to query for.
+     * @return the matching entity IDs.
+     */
+    PrimitiveLongResourceIterator query( IndexQuery... predicates ) throws IndexNotApplicableKernelException;
+
+	/**
+     * Queries the index for the given {@link IndexQuery} predicates.
+     *  @param client the client which will control the progression though query results.
+     * @param needsValues if the index should fetch property values together with node ids for index queries
+     * @param query the query so serve.
+     */
+    void query( IndexProgressor.NodeValueClient client, IndexOrder indexOrder, boolean needsValues, IndexQuery... query )
+            throws IndexNotApplicableKernelException;
+
+	/**
+     * @param predicates query to determine whether or not index has full value precision for.
+     * @return whether or not this reader will only return 100% matching results from {@link #query(IndexQuery...)}.
+     * If {@code false} is returned this means that the caller of {@link #query(IndexQuery...)} will have to
+     * do additional filtering, double-checking of actual property values, externally.
+     */
+    boolean hasFullValuePrecision( IndexQuery... predicates );
+
+	/**
+     * Initializes {@code client} to be able to progress through all distinct values in this index. {@link IndexProgressor.NodeValueClient}
+     * is used because it has a perfect method signature, even if the {@code reference} argument will instead be used
+     * as number of index entries for the specific indexed value.
+     *
+     * {@code needsValues} decides whether or not values will be materialized and given to the client.
+     * The use-case for setting this to {@code false} is to have a more efficient counting of distinct values in an index,
+     * regardless of the actual values.
+     * @param client {@link IndexProgressor.NodeValueClient} to get initialized with this progression.
+     * @param propertyAccessor used for distinguishing between lossy indexed values.
+     * @param needsValues whether or not values should be loaded.
+     */
+    void distinctValues( IndexProgressor.NodeValueClient client, NodePropertyAccessor propertyAccessor, boolean needsValues );
+
+	class Adaptor implements IndexReader
     {
         @Override
         public long countIndexedNodes( long nodeId, int[] propertyKeyIds, Value... propertyValues )

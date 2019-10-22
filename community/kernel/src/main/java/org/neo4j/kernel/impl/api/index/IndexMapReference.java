@@ -61,7 +61,7 @@ public class IndexMapReference implements IndexMapSnapshotProvider
         IndexProxy proxy = indexMap.getIndexProxy( indexId );
         if ( proxy == null )
         {
-            throw new IndexNotFoundKernelException( "No index for index id " + indexId + " exists." );
+            throw new IndexNotFoundKernelException( new StringBuilder().append("No index for index id ").append(indexId).append(" exists.").toString() );
         }
         return proxy;
     }
@@ -71,7 +71,7 @@ public class IndexMapReference implements IndexMapSnapshotProvider
         IndexProxy proxy = indexMap.getIndexProxy( descriptor );
         if ( proxy == null )
         {
-            throw new IndexNotFoundKernelException( "No index for " + descriptor + " exists." );
+            throw new IndexNotFoundKernelException( new StringBuilder().append("No index for ").append(descriptor).append(" exists.").toString() );
         }
         return proxy;
     }
@@ -81,7 +81,7 @@ public class IndexMapReference implements IndexMapSnapshotProvider
         IndexProxy proxy = indexMap.getIndexProxy( descriptor );
         if ( proxy == null )
         {
-            throw new IndexNotFoundKernelException( "No index for " + descriptor + " exists." );
+            throw new IndexNotFoundKernelException( new StringBuilder().append("No index for ").append(descriptor).append(" exists.").toString() );
         }
         return indexMap.getIndexId( descriptor );
     }
@@ -95,7 +95,7 @@ public class IndexMapReference implements IndexMapSnapshotProvider
             return indexMap.getIndexId( descriptor );
 
         default:
-            throw new IndexNotFoundKernelException( "Expected index on " + descriptor + " to be online." );
+            throw new IndexNotFoundKernelException( new StringBuilder().append("Expected index on ").append(descriptor).append(" to be online.").toString() );
         }
     }
 

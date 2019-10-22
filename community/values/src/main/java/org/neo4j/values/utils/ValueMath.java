@@ -173,13 +173,10 @@ public final class ValueMath
         //Check if result overflows
         long aa = Math.abs( a );
         long ab = Math.abs( b );
-        if ( (aa | ab) >>> 31 != 0 )
-        {
-            if ( ((b != 0) && (r / b != a)) || (a == Long.MIN_VALUE && b == -1) )
-            {
-                return doubleValue( (double) a * (double) b );
-            }
-        }
+        boolean condition = (aa | ab) >>> 31 != 0 && (((b != 0) && (r / b != a)) || (a == Long.MIN_VALUE && b == -1));
+		if ( condition ) {
+		    return doubleValue( (double) a * (double) b );
+		}
         return longValue( r );
     }
 

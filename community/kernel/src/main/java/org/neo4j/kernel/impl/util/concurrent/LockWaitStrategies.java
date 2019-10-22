@@ -30,7 +30,7 @@ public enum LockWaitStrategies implements WaitStrategy<AcquireLockTimeoutExcepti
     SPIN
     {
         @Override
-        public void apply( long iteration ) throws AcquireLockTimeoutException
+        public void apply( long iteration )
         {
             // TODO We can experiment with introducing branch mispredictions here, to create
             // TODO bubbles in the pipeline that'll allow hyper-threaded threads on the
@@ -43,7 +43,7 @@ public enum LockWaitStrategies implements WaitStrategy<AcquireLockTimeoutExcepti
     YIELD
     {
         @Override
-        public void apply( long iteration ) throws AcquireLockTimeoutException
+        public void apply( long iteration )
         {
             Thread.yield();
         }
@@ -54,7 +54,7 @@ public enum LockWaitStrategies implements WaitStrategy<AcquireLockTimeoutExcepti
         private static final long multiplyUntilIteration = spinIterations + 2;
 
         @Override
-        public void apply( long iteration ) throws AcquireLockTimeoutException
+        public void apply( long iteration )
         {
             if ( iteration < spinIterations )
             {
@@ -84,7 +84,6 @@ public enum LockWaitStrategies implements WaitStrategy<AcquireLockTimeoutExcepti
     {
         @Override
         public void apply( long iteration )
-                throws AcquireLockTimeoutException
         {
             // The NO_WAIT bail-out is a mix of deadlock and lock acquire timeout.
             throw new AcquireLockTimeoutException( "Cannot acquire lock, and refusing to wait.",

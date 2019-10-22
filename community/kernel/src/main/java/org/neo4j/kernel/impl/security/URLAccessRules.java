@@ -27,24 +27,23 @@ import org.neo4j.graphdb.security.URLAccessValidationError;
 public class URLAccessRules
 {
     private static final URLAccessRule ALWAYS_PERMITTED = ( config, url ) -> url;
+	private static final URLAccessRule FILE_ACCESS = new FileURLAccessRule();
 
-    private URLAccessRules()
+	private URLAccessRules()
     {
     }
 
-    public static URLAccessRule alwaysPermitted()
+	public static URLAccessRule alwaysPermitted()
     {
         return ALWAYS_PERMITTED;
     }
 
-    private static final URLAccessRule FILE_ACCESS = new FileURLAccessRule();
-
-    public static URLAccessRule fileAccess()
+	public static URLAccessRule fileAccess()
     {
         return FILE_ACCESS;
     }
 
-    public static URLAccessRule combined( final Map<String,URLAccessRule> urlAccessRules )
+	public static URLAccessRule combined( final Map<String,URLAccessRule> urlAccessRules )
     {
         return ( config, url ) ->
         {
@@ -52,8 +51,7 @@ public class URLAccessRules
             URLAccessRule protocolRule = urlAccessRules.get( protocol );
             if ( protocolRule == null )
             {
-                throw new URLAccessValidationError( "loading resources via protocol '" + protocol +
-                        "' is not permitted" );
+                throw new URLAccessValidationError( new StringBuilder().append("loading resources via protocol '").append(protocol).append("' is not permitted").toString() );
             }
             return protocolRule.validate( config, url );
         };

@@ -32,13 +32,14 @@ abstract class Lookup<T>
                 if ( field == null )
                 {
                     throw new IllegalArgumentException(
-                            method.clazz.handle() + " has no such field: " + name + " of type " + type );
+                            new StringBuilder().append(method.clazz.handle()).append(" has no such field: ").append(name).append(" of type ").append(type)
+									.toString() );
                 }
                 else if ( !type.equals( field.type() ) )
                 {
                     throw new IllegalArgumentException(
-                            method.clazz.handle() + " has no such field: " + name + " of type " + type +
-                            ", actual field has type: " + field.type() );
+                            new StringBuilder().append(method.clazz.handle()).append(" has no such field: ").append(name).append(" of type ").append(type)
+									.append(", actual field has type: ").append(field.type()).toString() );
                 }
                 return field;
             }

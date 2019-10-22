@@ -103,7 +103,7 @@ public class HumanUnderstandableExecutionMonitorIT
             int previous = stageProgress.getAndSet( percent );
             if ( previous > percent )
             {
-                fail( "Progress should go forwards only, but went from " + previous + " to " + percent );
+                fail( new StringBuilder().append("Progress should go forwards only, but went from ").append(previous).append(" to ").append(percent).toString() );
             }
         }
 

@@ -21,13 +21,13 @@ package org.neo4j.kernel.impl.api.index;
 
 public interface PhaseTracker
 {
-    void enterPhase( Phase phase );
-
-    void stop();
-
     PhaseTracker nullInstance = new NullPhaseTracker();
 
-    enum Phase
+	void enterPhase( Phase phase );
+
+	void stop();
+
+	enum Phase
     {
         // The order in which the phases are declared defines the order in which they will be printed in the log.
         // Keep them arranged in the order in which they naturally are seen during index population.
@@ -39,7 +39,7 @@ public interface PhaseTracker
         FLIP;
     }
 
-    class NullPhaseTracker implements PhaseTracker
+	class NullPhaseTracker implements PhaseTracker
     {
         @Override
         public void enterPhase( Phase phase )

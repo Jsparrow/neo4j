@@ -33,60 +33,60 @@ import org.neo4j.server.rest.repr.ValueRepresentation;
 public class JmxAttributeRepresentation extends ObjectRepresentation
 {
 
-    protected ObjectName objectName;
-    protected MBeanAttributeInfo attrInfo;
-    protected MBeanServer jmxServer = ManagementFactory.getPlatformMBeanServer();
     private static final RepresentationDispatcher REPRESENTATION_DISPATCHER = new JmxAttributeRepresentationDispatcher();
+	protected ObjectName objectName;
+	protected MBeanAttributeInfo attrInfo;
+	protected MBeanServer jmxServer = ManagementFactory.getPlatformMBeanServer();
 
-    public JmxAttributeRepresentation( ObjectName objectName, MBeanAttributeInfo attrInfo )
+	public JmxAttributeRepresentation( ObjectName objectName, MBeanAttributeInfo attrInfo )
     {
         super( "jmxAttribute" );
         this.objectName = objectName;
         this.attrInfo = attrInfo;
     }
 
-    @Mapping( "name" )
+	@Mapping( "name" )
     public ValueRepresentation getName()
     {
         return ValueRepresentation.string( attrInfo.getName() );
     }
 
-    @Mapping( "description" )
+	@Mapping( "description" )
     public ValueRepresentation getDescription()
     {
         return ValueRepresentation.string( attrInfo.getDescription() );
     }
 
-    @Mapping( "type" )
+	@Mapping( "type" )
     public ValueRepresentation getType()
     {
         return ValueRepresentation.string( attrInfo.getType() );
     }
 
-    @Mapping( "isReadable" )
+	@Mapping( "isReadable" )
     public ValueRepresentation isReadable()
     {
         return bool( attrInfo.isReadable() );
     }
 
-    @Mapping( "isWriteable" )
+	@Mapping( "isWriteable" )
     public ValueRepresentation isWriteable()
     {
         return bool( attrInfo.isWritable() );
     }
 
-    @Mapping( "isIs" )
+	@Mapping( "isIs" )
     public ValueRepresentation isIs()
     {
         return bool( attrInfo.isIs() );
     }
 
-    private ValueRepresentation bool( Boolean value )
+	private ValueRepresentation bool( Boolean value )
     {
         return ValueRepresentation.string( value ? "true" : "false " );
     }
 
-    @Mapping( "value" )
+	@Mapping( "value" )
     public Representation getValue()
     {
         try

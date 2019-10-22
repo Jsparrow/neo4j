@@ -98,12 +98,11 @@ public class PointValue extends ScalarValue implements Point, Comparable<PointVa
     @Override
     public boolean equals( Value other )
     {
-        if ( other instanceof PointValue )
-        {
-            PointValue pv = (PointValue) other;
-            return Arrays.equals( this.coordinate, pv.coordinate ) && this.getCoordinateReferenceSystem().equals( pv.getCoordinateReferenceSystem() );
-        }
-        return false;
+        if (!(other instanceof PointValue)) {
+			return false;
+		}
+		PointValue pv = (PointValue) other;
+		return Arrays.equals( this.coordinate, pv.coordinate ) && this.getCoordinateReferenceSystem().equals( pv.getCoordinateReferenceSystem() );
     }
 
     public boolean equals( Point other )
@@ -473,36 +472,35 @@ public class PointValue extends ScalarValue implements Point, Comparable<PointVa
             }
             if ( !crs.isGeographic() )
             {
-                throw new InvalidValuesArgumentException( "Geographic points does not support coordinate reference system: " + crs +
-                        ". This is set either in the csv header or the actual data column" );
+                throw new InvalidValuesArgumentException( new StringBuilder().append("Geographic points does not support coordinate reference system: ").append(crs).append(". This is set either in the csv header or the actual data column").toString() );
             }
         }
         else
         {
             if ( crs == CoordinateReferenceSystem.Cartesian )
             {
-                throw new InvalidValuesArgumentException( "A " + CoordinateReferenceSystem.Cartesian.getName() + " point must contain 'x' and 'y'" );
+                throw new InvalidValuesArgumentException( new StringBuilder().append("A ").append(CoordinateReferenceSystem.Cartesian.getName()).append(" point must contain 'x' and 'y'").toString() );
             }
             else if ( crs == CoordinateReferenceSystem.Cartesian_3D )
             {
-                throw new InvalidValuesArgumentException( "A " + CoordinateReferenceSystem.Cartesian_3D.getName() + " point must contain 'x', 'y' and 'z'" );
+                throw new InvalidValuesArgumentException( new StringBuilder().append("A ").append(CoordinateReferenceSystem.Cartesian_3D.getName()).append(" point must contain 'x', 'y' and 'z'").toString() );
             }
             else if ( crs == CoordinateReferenceSystem.WGS84 )
             {
-                throw new InvalidValuesArgumentException( "A " + CoordinateReferenceSystem.WGS84.getName() + " point must contain 'latitude' and 'longitude'" );
+                throw new InvalidValuesArgumentException( new StringBuilder().append("A ").append(CoordinateReferenceSystem.WGS84.getName()).append(" point must contain 'latitude' and 'longitude'").toString() );
             }
             else if ( crs == CoordinateReferenceSystem.WGS84_3D )
             {
                 throw new InvalidValuesArgumentException(
-                        "A " + CoordinateReferenceSystem.WGS84_3D.getName() + " point must contain 'latitude', 'longitude' and 'height'" );
+                        new StringBuilder().append("A ").append(CoordinateReferenceSystem.WGS84_3D.getName()).append(" point must contain 'latitude', 'longitude' and 'height'").toString() );
             }
             throw new InvalidValuesArgumentException( "A point must contain either 'x' and 'y' or 'latitude' and 'longitude'" );
         }
 
         if ( crs.getDimension() != coordinates.length )
         {
-            throw new InvalidValuesArgumentException( "Cannot create point with " + crs.getDimension() + "D coordinate reference system and "
-                    + coordinates.length + " coordinates. Please consider using equivalent " + coordinates.length + "D coordinate reference system" );
+            throw new InvalidValuesArgumentException( new StringBuilder().append("Cannot create point with ").append(crs.getDimension()).append("D coordinate reference system and ").append(coordinates.length).append(" coordinates. Please consider using equivalent ")
+					.append(coordinates.length).append("D coordinate reference system").toString() );
         }
         return Values.pointValue( crs, coordinates );
     }
@@ -519,11 +517,11 @@ public class PointValue extends ScalarValue implements Point, Comparable<PointVa
     {
         if ( onlyGeographic && !this.getCoordinateReferenceSystem().isGeographic() )
         {
-            throw new InvalidValuesArgumentException( "Field: " + fieldName + " is not available on cartesian point: " + this );
+            throw new InvalidValuesArgumentException( new StringBuilder().append("Field: ").append(fieldName).append(" is not available on cartesian point: ").append(this).toString() );
         }
         else if ( n >= this.coordinate().length )
         {
-            throw new InvalidValuesArgumentException( "Field: " + fieldName + " is not available on point: " + this );
+            throw new InvalidValuesArgumentException( new StringBuilder().append("Field: ").append(fieldName).append(" is not available on point: ").append(this).toString() );
         }
         else
         {

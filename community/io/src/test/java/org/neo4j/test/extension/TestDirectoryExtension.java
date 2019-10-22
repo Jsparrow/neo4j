@@ -32,7 +32,7 @@ import org.neo4j.test.rule.TestDirectory;
 import static java.lang.String.format;
 import static org.neo4j.test.rule.TestDirectory.testDirectory;
 
-public class TestDirectoryExtension extends StatefullFieldExtension<TestDirectory> implements BeforeEachCallback, AfterEachCallback, AfterAllCallback
+public class TestDirectoryExtension extends StatefullFieldExtension<TestDirectory> implements BeforeEachCallback, AfterEachCallback
 {
     static final String TEST_DIRECTORY = "testDirectory";
     static final Namespace TEST_DIRECTORY_NAMESPACE = Namespace.create( TEST_DIRECTORY );

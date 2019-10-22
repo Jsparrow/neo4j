@@ -162,15 +162,8 @@ public class ProcedureJarLoaderTest
 
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( String.format("Procedures must return a Stream of records, where a record is a concrete class%n" +
-                "that you define, with public non-final fields defining the fields in the record.%n" +
-                "If you''d like your procedure to return `boolean`, you could define a record class " +
-                "like:%n" +
-                "public class Output '{'%n" +
-                "    public boolean out;%n" +
-                "'}'%n" +
-                "%n" +
-                "And then define your procedure as returning `Stream<Output>`." ));
+        exception.expectMessage( String.format(new StringBuilder().append("Procedures must return a Stream of records, where a record is a concrete class%n").append("that you define, with public non-final fields defining the fields in the record.%n").append("If you''d like your procedure to return `boolean`, you could define a record class ").append("like:%n").append("public class Output '{'%n").append("    public boolean out;%n").append("'}'%n").append("%n")
+				.append("And then define your procedure as returning `Stream<Output>`.").toString() ));
 
         // When
         jarloader.loadProceduresFromDir( parentDir( jar ) );
@@ -231,9 +224,7 @@ public class ProcedureJarLoaderTest
 
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( String.format("Procedures must return a Stream of records, where a record is a concrete class%n" +
-                "that you define and not a parameterized type such as java.util.List<org.neo4j" +
-                ".kernel.impl.proc.ProcedureJarLoaderTest$Output>."));
+        exception.expectMessage( String.format(new StringBuilder().append("Procedures must return a Stream of records, where a record is a concrete class%n").append("that you define and not a parameterized type such as java.util.List<org.neo4j").append(".kernel.impl.proc.ProcedureJarLoaderTest$Output>.").toString()));
 
         // When
         jarloader.loadProceduresFromDir( parentDir( jar ) );
@@ -270,7 +261,7 @@ public class ProcedureJarLoaderTest
     public void shouldWorkOnPathsWithSpaces() throws Exception
     {
         // given
-        File fileWithSpacesInName = tmpdir.newFile( new Random().nextInt() + "  some spaces in the filename" + ".jar" );
+        File fileWithSpacesInName = tmpdir.newFile( new StringBuilder().append(new Random().nextInt()).append("  some spaces in the filename").append(".jar").toString() );
         URL theJar = new JarBuilder().createJarFor( fileWithSpacesInName, ClassWithOneProcedure.class );
         corruptJar( theJar );
 
@@ -331,7 +322,20 @@ public class ProcedureJarLoaderTest
         return new JarBuilder().createJarFor( tmpdir.newFile( new Random().nextInt() + ".jar" ), targets );
     }
 
-    public static class Output
+    private ComponentRegistry registryWithUnsafeAPI()
+    {
+        ComponentRegistry allComponents = new ComponentRegistry();
+        allComponents.register( UnsafeAPI.class, ctx -> new UnsafeAPI() );
+        return allComponents;
+    }
+
+	private ProcedureConfig procedureConfig()
+    {
+        Config config = Config.defaults( procedure_unrestricted, "org.neo4j.kernel.impl.proc.unsafeFullAccess*" );
+        return new ProcedureConfig( config );
+    }
+
+	public static class Output
     {
         public long someNumber = 1337; // Public because needed by a mapper
 
@@ -459,18 +463,5 @@ public class ProcedureJarLoaderTest
         {
             return 7331;
         }
-    }
-
-    private ComponentRegistry registryWithUnsafeAPI()
-    {
-        ComponentRegistry allComponents = new ComponentRegistry();
-        allComponents.register( UnsafeAPI.class, ctx -> new UnsafeAPI() );
-        return allComponents;
-    }
-
-    private ProcedureConfig procedureConfig()
-    {
-        Config config = Config.defaults( procedure_unrestricted, "org.neo4j.kernel.impl.proc.unsafeFullAccess*" );
-        return new ProcedureConfig( config );
     }
 }

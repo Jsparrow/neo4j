@@ -50,19 +50,17 @@ import static org.neo4j.kernel.impl.api.scan.FullStoreChangeStream.asStream;
 
 public class NativeLabelScanStoreRebuildTest
 {
-    private final PageCacheRule pageCacheRule = new PageCacheRule();
-    private final FileSystemRule fileSystemRule = new DefaultFileSystemRule();
-    private final TestDirectory testDirectory = TestDirectory.testDirectory();
-
-    @Rule
-    public RuleChain ruleChain = RuleChain.outerRule( fileSystemRule ).around( pageCacheRule ).around( testDirectory );
-
     private static final FullStoreChangeStream THROWING_STREAM = writer ->
     {
         throw new IllegalArgumentException();
     };
+	private final PageCacheRule pageCacheRule = new PageCacheRule();
+	private final FileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	private final TestDirectory testDirectory = TestDirectory.testDirectory();
+	@Rule
+    public RuleChain ruleChain = RuleChain.outerRule( fileSystemRule ).around( pageCacheRule ).around( testDirectory );
 
-    @Test
+	@Test
     public void mustBeDirtyIfFailedDuringRebuild() throws Exception
     {
         // given
@@ -86,7 +84,7 @@ public class NativeLabelScanStoreRebuildTest
         nativeLabelScanStore.shutdown();
     }
 
-    @Test
+	@Test
     public void doNotRebuildIfOpenedInReadOnlyModeAndIndexIsNotClean() throws IOException
     {
         PageCache pageCache = pageCacheRule.getPageCache( fileSystemRule.get() );
@@ -107,7 +105,7 @@ public class NativeLabelScanStoreRebuildTest
         nativeLabelScanStore.shutdown();
     }
 
-    @Test
+	@Test
     public void labelScanStoreIsDirtyWhenIndexIsNotClean() throws IOException
     {
         PageCache pageCache = pageCacheRule.getPageCache( fileSystemRule.get() );
@@ -126,7 +124,7 @@ public class NativeLabelScanStoreRebuildTest
         nativeLabelScanStore.shutdown();
     }
 
-    @Test
+	@Test
     public void shouldFailOnUnsortedLabelsFromFullStoreChangeStream() throws Exception
     {
         // given
@@ -160,7 +158,7 @@ public class NativeLabelScanStoreRebuildTest
         }
     }
 
-    private void createDirtyIndex( PageCache pageCache ) throws IOException
+	private void createDirtyIndex( PageCache pageCache ) throws IOException
     {
         NativeLabelScanStore nativeLabelScanStore = null;
         try
@@ -180,7 +178,7 @@ public class NativeLabelScanStoreRebuildTest
         }
     }
 
-    private static class RecordingMonitor extends LabelScanStore.Monitor.Adaptor
+	private static class RecordingMonitor extends LabelScanStore.Monitor.Adaptor
     {
         boolean notValid;
         boolean rebuilding;

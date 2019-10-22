@@ -55,25 +55,6 @@ import org.neo4j.string.HexString;
 public class DecayingFlags
 {
     /**
-     * A flag in the set, with a unique index pointing
-     * to the bit that correlates to this flag.
-     */
-    public static class Key
-    {
-        private final int index;
-
-        public Key( int index )
-        {
-            this.index = index;
-        }
-
-        public int index()
-        {
-            return index;
-        }
-    }
-
-    /**
      * To model the time-based "decay" of the flags,
      * each flag is represented as an int that counts
      * the number of times the flag has been toggled, up to
@@ -86,14 +67,14 @@ public class DecayingFlags
      */
     private int[] flags;
 
-    /**
+	/**
      * The max number of sweep iteration a flag is kept alive
      * if it is not toggled. The more toggles seen in a flag,
      * the more likely it is to hit this threshold.
      */
     private final int keepalive;
 
-    /**
+	/**
      * @param keepalive controls the maximum length of time
      *                     a flag will stay toggled if it is not
      *                     renewed, expressed as the number of times
@@ -105,7 +86,7 @@ public class DecayingFlags
         this.flags = new int[16];
     }
 
-    public void flag( Key key )
+	public void flag( Key key )
     {
         // We dynamically size this up as needed
         if ( key.index >= flags.length )
@@ -120,7 +101,7 @@ public class DecayingFlags
         }
     }
 
-    /**
+	/**
      * This is how decay happens, the interval at which
      * this method is called controls how long unused
      * flags are kept 'high'. Each invocation of this will
@@ -139,7 +120,7 @@ public class DecayingFlags
         }
     }
 
-    private synchronized void resize( int minSize )
+	private synchronized void resize( int minSize )
     {
         int newSize = flags.length;
         while ( newSize < minSize )
@@ -153,7 +134,7 @@ public class DecayingFlags
         }
     }
 
-    public String asHex()
+	public String asHex()
     {
         // Convert the flags to a byte-array, each
         // flag represented as a single bit.
@@ -177,8 +158,27 @@ public class DecayingFlags
         return HexString.encodeHexString( bits );
     }
 
-    private int bit( int idx )
+	private int bit( int idx )
     {
         return flags[idx] > 0 ? 1 : 0;
+    }
+
+	/**
+     * A flag in the set, with a unique index pointing
+     * to the bit that correlates to this flag.
+     */
+    public static class Key
+    {
+        private final int index;
+
+        public Key( int index )
+        {
+            this.index = index;
+        }
+
+        public int index()
+        {
+            return index;
+        }
     }
 }

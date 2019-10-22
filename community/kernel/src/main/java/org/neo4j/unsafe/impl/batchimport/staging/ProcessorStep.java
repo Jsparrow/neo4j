@@ -113,14 +113,15 @@ public abstract class ProcessorStep<T> extends AbstractStep<T>
 
     private void incrementQueue()
     {
-        if ( queuedBatches.getAndIncrement() == 0 )
-        {   // This is the first batch after we last drained the queue.
-            long lastBatchEnd = lastBatchEndTime.get();
-            if ( lastBatchEnd != 0 )
-            {
-                upstreamIdleTime.add( currentTimeMillis() - lastBatchEnd );
-            }
-        }
+        // This is the first batch after we last drained the queue.
+		if (queuedBatches.getAndIncrement() != 0) {
+			return;
+		}
+		long lastBatchEnd = lastBatchEndTime.get();
+		if ( lastBatchEnd != 0 )
+		{
+		    upstreamIdleTime.add( currentTimeMillis() - lastBatchEnd );
+		}
     }
 
     /**

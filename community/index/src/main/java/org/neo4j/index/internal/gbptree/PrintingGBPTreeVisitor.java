@@ -58,11 +58,11 @@ public class PrintingGBPTreeVisitor<KEY,VALUE> extends GBPTreeVisitor.Adaptor<KE
     @Override
     public void treeState( Pair<TreeState,TreeState> statePair )
     {
-        if ( printState )
-        {
-            out.println( "StateA: " + statePair.getLeft() );
-            out.println( "StateB: " + statePair.getRight() );
-        }
+        if (!printState) {
+			return;
+		}
+		out.println( "StateA: " + statePair.getLeft() );
+		out.println( "StateB: " + statePair.getRight() );
     }
 
     @Override
@@ -82,7 +82,7 @@ public class PrintingGBPTreeVisitor<KEY,VALUE> extends GBPTreeVisitor.Adaptor<KE
         }
         else
         {
-            out.print( "{" + pageId + "} " );
+            out.print( new StringBuilder().append("{").append(pageId).append("} ").toString() );
         }
     }
 
@@ -91,14 +91,14 @@ public class PrintingGBPTreeVisitor<KEY,VALUE> extends GBPTreeVisitor.Adaptor<KE
     {
         if ( printPosition )
         {
-            out.print( "#" + i + " " );
+            out.print( new StringBuilder().append("#").append(i).append(" ").toString() );
         }
     }
 
     @Override
     public void key( KEY key, boolean isLeaf )
     {
-        out.print( isLeaf ? key : "[" + key + "]" );
+        out.print( isLeaf ? key : new StringBuilder().append("[").append(key).append("]").toString() );
     }
 
     @Override
@@ -114,7 +114,7 @@ public class PrintingGBPTreeVisitor<KEY,VALUE> extends GBPTreeVisitor.Adaptor<KE
     @Override
     public void child( long child )
     {
-        out.print( " /" + child + "\\ " );
+        out.print( new StringBuilder().append(" /").append(child).append("\\ ").toString() );
     }
 
     @Override
@@ -128,7 +128,7 @@ public class PrintingGBPTreeVisitor<KEY,VALUE> extends GBPTreeVisitor.Adaptor<KE
     {
         if ( printFreelist )
         {
-            out.print( "Freelist{" + pageId + "} " );
+            out.print( new StringBuilder().append("Freelist{").append(pageId).append("} ").toString() );
         }
     }
 
@@ -146,7 +146,7 @@ public class PrintingGBPTreeVisitor<KEY,VALUE> extends GBPTreeVisitor.Adaptor<KE
     {
         if ( printFreelist )
         {
-            out.print( "[" + generation + "," + pageId + "] " );
+            out.print( new StringBuilder().append("[").append(generation).append(",").append(pageId).append("] ").toString() );
         }
     }
 }

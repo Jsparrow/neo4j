@@ -79,7 +79,7 @@ public class ExplicitIndexTransactionStateImpl implements ExplicitIndexTransacti
         Map<String, String> configuration = indexConfigStore.get( Node.class, indexName );
         if ( configuration == null )
         {
-            throw new ExplicitIndexNotFoundKernelException( "Node index '" + indexName + " not found" );
+            throw new ExplicitIndexNotFoundKernelException( new StringBuilder().append("Node index '").append(indexName).append(" not found").toString() );
         }
         String providerName = configuration.get( IndexManager.PROVIDER );
         IndexImplementation provider = providerLookup.getProviderByName( providerName );
@@ -94,7 +94,7 @@ public class ExplicitIndexTransactionStateImpl implements ExplicitIndexTransacti
         Map<String, String> configuration = indexConfigStore.get( Relationship.class, indexName );
         if ( configuration == null )
         {
-            throw new ExplicitIndexNotFoundKernelException( "Relationship index '" + indexName + " not found" );
+            throw new ExplicitIndexNotFoundKernelException( new StringBuilder().append("Relationship index '").append(indexName).append(" not found").toString() );
         }
         String providerName = configuration.get( IndexManager.PROVIDER );
         IndexImplementation provider = providerLookup.getProviderByName( providerName );
@@ -116,20 +116,14 @@ public class ExplicitIndexTransactionStateImpl implements ExplicitIndexTransacti
             extractCommands( target, relationshipCommands );
         }
 
-        for ( ExplicitIndexProviderTransaction providerTransaction : transactions.values() )
-        {
-            providerTransaction.close();
-        }
+        transactions.values().forEach(ExplicitIndexProviderTransaction::close);
     }
 
     private void extractCommands( Collection<StorageCommand> target, Map<String, List<IndexCommand>> commandMap )
     {
         if ( commandMap != null )
         {
-            for ( List<IndexCommand> commands : commandMap.values() )
-            {
-                target.addAll( commands );
-            }
+            commandMap.values().forEach(target::addAll);
         }
     }
 

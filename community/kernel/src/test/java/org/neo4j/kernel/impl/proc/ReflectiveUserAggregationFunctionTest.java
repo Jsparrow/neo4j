@@ -167,9 +167,7 @@ public class ReflectiveUserAggregationFunctionTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Unable to find a usable public no-argument constructor " +
-                                 "in the class `WierdConstructorFunction`. Please add a " +
-                                 "valid, public constructor, recompile the class and try again." );
+        exception.expectMessage( new StringBuilder().append("Unable to find a usable public no-argument constructor ").append("in the class `WierdConstructorFunction`. Please add a ").append("valid, public constructor, recompile the class and try again.").toString() );
 
         // When
         compile( WierdConstructorFunction.class );
@@ -180,9 +178,7 @@ public class ReflectiveUserAggregationFunctionTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Unable to find a usable public no-argument constructor " +
-                                 "in the class `PrivateConstructorFunction`. Please add " +
-                                 "a valid, public constructor, recompile the class and try again." );
+        exception.expectMessage( new StringBuilder().append("Unable to find a usable public no-argument constructor ").append("in the class `PrivateConstructorFunction`. Please add ").append("a valid, public constructor, recompile the class and try again.").toString() );
 
         // When
         compile( PrivateConstructorFunction.class );
@@ -284,13 +280,7 @@ public class ReflectiveUserAggregationFunctionTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( String.format("Don't know how to map `char[]` to the Neo4j Type System.%n" +
-                                 "Please refer to to the documentation for full details.%n" +
-                                 "For your reference, known types are: [boolean, byte[], double, java.lang.Boolean, " +
-                                 "java.lang.Double, java.lang.Long, java.lang.Number, java.lang.Object, " +
-                                 "java.lang.String, java.time.LocalDate, java.time.LocalDateTime, " +
-                                 "java.time.LocalTime, java.time.OffsetTime, java.time.ZonedDateTime, " +
-                                 "java.time.temporal.TemporalAmount, java.util.List, java.util.Map, long]" ));
+        exception.expectMessage( String.format(new StringBuilder().append("Don't know how to map `char[]` to the Neo4j Type System.%n").append("Please refer to to the documentation for full details.%n").append("For your reference, known types are: [boolean, byte[], double, java.lang.Boolean, ").append("java.lang.Double, java.lang.Long, java.lang.Number, java.lang.Object, ").append("java.lang.String, java.time.LocalDate, java.time.LocalDateTime, ").append("java.time.LocalTime, java.time.OffsetTime, java.time.ZonedDateTime, ").append("java.time.temporal.TemporalAmount, java.util.List, java.util.Map, long]").toString() ));
 
         // When
         compile( FunctionWithInvalidOutput.class ).get( 0 );
@@ -301,10 +291,7 @@ public class ReflectiveUserAggregationFunctionTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( String.format("The field `gdb` in the class named `FunctionWithStaticContextAnnotatedField` is " +
-                                 "annotated as a @Context field,%n" +
-                                 "but it is static. @Context fields must be public, non-final and non-static,%n" +
-                                 "because they are reset each time a procedure is invoked." ));
+        exception.expectMessage( String.format(new StringBuilder().append("The field `gdb` in the class named `FunctionWithStaticContextAnnotatedField` is ").append("annotated as a @Context field,%n").append("but it is static. @Context fields must be public, non-final and non-static,%n").append("because they are reset each time a procedure is invoked.").toString() ));
 
         // When
         compile( FunctionWithStaticContextAnnotatedField.class ).get( 0 );
@@ -423,7 +410,12 @@ public class ReflectiveUserAggregationFunctionTest
         }
     }
 
-    public static class SingleAggregationFunction
+    private List<CallableUserAggregationFunction> compile( Class<?> clazz ) throws KernelException
+    {
+        return procedureCompiler.compileAggregationFunction( clazz );
+    }
+
+	public static class SingleAggregationFunction
     {
         @UserAggregationFunction
         public CoolPeopleAggregator collectCool()
@@ -439,7 +431,7 @@ public class ReflectiveUserAggregationFunctionTest
         @UserAggregationUpdate
         public void update( @Name( "name" ) String name )
         {
-            if ( name.equals( "Bonnie" ) || name.equals( "Clyde" ) )
+            if ( "Bonnie".equals( name ) || "Clyde".equals( name ) )
             {
                 coolPeople.add( name );
             }
@@ -867,10 +859,5 @@ public class ReflectiveUserAggregationFunctionTest
                 return "Testing";
             }
         }
-    }
-
-    private List<CallableUserAggregationFunction> compile( Class<?> clazz ) throws KernelException
-    {
-        return procedureCompiler.compileAggregationFunction( clazz );
     }
 }

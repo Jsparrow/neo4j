@@ -56,7 +56,12 @@ public final class PropertiesRepresentation extends MappingRepresentation
         PropertyTypeDispatcher.consumeProperties( new Consumer( writer ), entity );
     }
 
-    private static class Consumer extends PropertyTypeDispatcher<String, Void>
+    public static Representation value( Object property )
+    {
+        return ValueRepresentation.property( property );
+    }
+
+	private static class Consumer extends PropertyTypeDispatcher<String, Void>
     {
         private final MappingWriter writer;
 
@@ -310,10 +315,7 @@ public final class PropertiesRepresentation extends MappingRepresentation
             pointWriter.writeString( "type", property.getGeometryType() );
             //write coordinates
             ListWriter coordinatesWriter = pointWriter.newList( RepresentationType.DOUBLE, "coordinates" );
-            for ( Double coordinate : property.getCoordinate().getCoordinate() )
-            {
-                coordinatesWriter.writeFloatingPointNumber( RepresentationType.DOUBLE, coordinate );
-            }
+            property.getCoordinate().getCoordinate().forEach(coordinate -> coordinatesWriter.writeFloatingPointNumber(RepresentationType.DOUBLE, coordinate));
             coordinatesWriter.done();
 
             //Write coordinate reference system
@@ -328,10 +330,5 @@ public final class PropertiesRepresentation extends MappingRepresentation
             propertiesWriter.done();
             crsWriter.done();
         }
-    }
-
-    public static Representation value( Object property )
-    {
-        return ValueRepresentation.property( property );
     }
 }

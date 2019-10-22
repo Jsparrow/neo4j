@@ -58,32 +58,25 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
     private static final long headerStateRefCountMask = 0x7FFF_0000_0000_0000L;
     private static final long headerStateLastPageIdMask = 0x8000_FFFF_FFFF_FFFFL;
     private static final int PF_LOCK_MASK = PF_SHARED_WRITE_LOCK | PF_SHARED_READ_LOCK;
-
-    final MuninnPageCache pageCache;
-    final int filePageSize;
-    private final PageCacheTracer pageCacheTracer;
-    final LatchMap pageFaultLatches;
-
-    // This is the table where we translate file-page-ids to cache-page-ids. Only one thread can perform a resize at
+	// max modifier transaction id among evicted pages for this file
+    private static final long evictedTransactionIdOffset = UnsafeUtil.getFieldOffset( MuninnPagedFile.class, "highestEvictedTransactionId" );
+	final MuninnPageCache pageCache;
+	final int filePageSize;
+	private final PageCacheTracer pageCacheTracer;
+	final LatchMap pageFaultLatches;
+	// This is the table where we translate file-page-ids to cache-page-ids. Only one thread can perform a resize at
     // a time, and we ensure this mutual exclusion using the monitor lock on this MuninnPagedFile object.
     volatile int[][] translationTable;
-
-    final PageSwapper swapper;
-    final int swapperId;
-    private final CursorFactory cursorFactory;
-
-    // Guarded by the monitor lock on MuninnPageCache (map and unmap)
+	final PageSwapper swapper;
+	final int swapperId;
+	private final CursorFactory cursorFactory;
+	// Guarded by the monitor lock on MuninnPageCache (map and unmap)
     private boolean deleteOnClose;
-
-    // Used to trace the causes of any exceptions from getLastPageId.
+	// Used to trace the causes of any exceptions from getLastPageId.
     private volatile Exception closeStackTrace;
-
-    // max modifier transaction id among evicted pages for this file
-    private static final long evictedTransactionIdOffset = UnsafeUtil.getFieldOffset( MuninnPagedFile.class, "highestEvictedTransactionId" );
-    @SuppressWarnings( "unused" ) // accessed using unsafe
+	@SuppressWarnings( "unused" ) // accessed using unsafe
     private volatile long highestEvictedTransactionId;
-
-    /**
+	/**
      * The header state includes both the reference count of the PagedFile – 15 bits – and the ID of the last page in
      * the file – 48 bits, plus an empty file marker bit. Because our pages are usually 2^13 bytes, this means that we
      * only lose 3 bits to the reference count, in terms of keeping large files byte addressable.
@@ -100,7 +93,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
     @SuppressWarnings( "unused" ) // Accessed via Unsafe
     private volatile long headerState;
 
-    /**
+	/**
      * Create muninn page file
      * @param file original file
      * @param pageCache page cache
@@ -165,13 +158,13 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         this.swapperId = getSwappers().allocate( swapper );
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[" + swapper.file() + "]";
+        return new StringBuilder().append(getClass().getSimpleName()).append("[").append(swapper.file()).append("]").toString();
     }
 
-    @Override
+	@Override
     public PageCursor io( long pageId, int pf_flags )
     {
         int lockFlags = pf_flags & PF_LOCK_MASK;
@@ -193,7 +186,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         return cursor;
     }
 
-    private IllegalArgumentException wrongLocksArgument( int lockFlags )
+	private IllegalArgumentException wrongLocksArgument( int lockFlags )
     {
         if ( lockFlags == 0 )
         {
@@ -207,13 +200,13 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         }
     }
 
-    @Override
+	@Override
     public int pageSize()
     {
         return filePageSize;
     }
 
-    @Override
+	@Override
     public long fileSize() throws FileIsNotMappedException
     {
         final long lastPageId = getLastPageId();
@@ -224,19 +217,19 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         return (lastPageId + 1) * pageSize();
     }
 
-    @Override
+	@Override
     public File file()
     {
         return swapper.file();
     }
 
-    @Override
+	@Override
     public void close()
     {
         pageCache.unmap( this );
     }
 
-    void closeSwapper() throws IOException
+	void closeSwapper() throws IOException
     {
         // We don't set closeStackTrace in close(), because the reference count may keep the file open.
         // But if we get here, to close the swapper, then we are definitely unmapping!
@@ -258,13 +251,13 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         }
     }
 
-    @Override
+	@Override
     public void flushAndForce() throws IOException
     {
         flushAndForce( IOLimiter.UNLIMITED );
     }
 
-    @Override
+	@Override
     public void flushAndForce( IOLimiter limiter ) throws IOException
     {
         if ( limiter == null )
@@ -279,7 +272,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         pageCache.clearEvictorException();
     }
 
-    void flushAndForceForClose() throws IOException
+	void flushAndForceForClose() throws IOException
     {
         if ( deleteOnClose )
         {
@@ -297,15 +290,14 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         pageCache.clearEvictorException();
     }
 
-    private void markAllDirtyPagesAsClean()
+	private void markAllDirtyPagesAsClean()
     {
         long filePageId = -1; // Start at -1 because we increment at the *start* of the chunk-loop iteration.
         int[][] tt = this.translationTable;
         for ( int[] chunk : tt )
         {
             chunkLoop:
-            for ( int i = 0; i < chunk.length; i++ )
-            {
+            for (int aChunk : chunk) {
                 filePageId++;
                 long offset = computeChunkOffset( filePageId );
 
@@ -344,7 +336,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         }
     }
 
-    void flushAndForceInternal( FlushEventOpportunity flushes, boolean forClosing, IOLimiter limiter )
+	void flushAndForceInternal( FlushEventOpportunity flushes, boolean forClosing, IOLimiter limiter )
             throws IOException
     {
         try
@@ -358,7 +350,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         }
     }
 
-    private void doFlushAndForceInternal( FlushEventOpportunity flushes, boolean forClosing, IOLimiter limiter )
+	private void doFlushAndForceInternal( FlushEventOpportunity flushes, boolean forClosing, IOLimiter limiter )
             throws IOException
     {
         // TODO it'd be awesome if, on Linux, we'd call sync_file_range(2) instead of fsync
@@ -375,8 +367,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
             // TODO garbage to the file.
             int pagesGrabbed = 0;
             chunkLoop:
-            for ( int i = 0; i < chunk.length; i++ )
-            {
+            for (int aChunk : chunk) {
                 filePageId++;
                 long offset = computeChunkOffset( filePageId );
 
@@ -441,7 +432,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         swapper.force();
     }
 
-    private void vectoredFlush(
+	private void vectoredFlush(
             long[] pages, long[] bufferAddresses, long[] flushStamps, int pagesGrabbed,
             FlushEventOpportunity flushOpportunity, boolean forClosing ) throws IOException
     {
@@ -496,7 +487,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         }
     }
 
-    boolean flushLockedPage( long pageRef, long filePageId )
+	boolean flushLockedPage( long pageRef, long filePageId )
     {
         boolean success = false;
         try ( MajorFlushEvent flushEvent = pageCacheTracer.beginFileFlush( swapper ) )
@@ -519,18 +510,18 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         return success;
     }
 
-    private void syncDevice()
+	private void syncDevice()
     {
         pageCache.syncDevice();
     }
 
-    @Override
+	@Override
     public void flush() throws IOException
     {
         swapper.force();
     }
 
-    @Override
+	@Override
     public long getLastPageId() throws FileIsNotMappedException
     {
         long state = getHeaderState();
@@ -541,7 +532,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         return state & headerStateLastPageIdMask;
     }
 
-    private FileIsNotMappedException fileIsNotMappedException()
+	private FileIsNotMappedException fileIsNotMappedException()
     {
         FileIsNotMappedException exception = new FileIsNotMappedException( file() );
         Exception closedBy = closeStackTrace;
@@ -552,17 +543,17 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         return exception;
     }
 
-    private long getHeaderState()
+	private long getHeaderState()
     {
         return UnsafeUtil.getLongVolatile( this, headerStateOffset );
     }
 
-    private long refCountOf( long state )
+	private long refCountOf( long state )
     {
         return (state & headerStateRefCountMask) >>> headerStateRefCountShift;
     }
 
-    private void initialiseLastPageId( long lastPageIdFromFile )
+	private void initialiseLastPageId( long lastPageIdFromFile )
     {
         if ( lastPageIdFromFile < 0 )
         {
@@ -575,7 +566,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         }
     }
 
-    /**
+	/**
      * Make sure that the lastPageId is at least the given pageId
      */
     void increaseLastPageIdTo( long newLastPageId )
@@ -593,7 +584,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
                 && !UnsafeUtil.compareAndSwapLong( this, headerStateOffset, current, update ) );
     }
 
-    /**
+	/**
      * Atomically increment the reference count for this mapped file.
      */
     void incrementRefCount()
@@ -606,16 +597,15 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
             long count = refCountOf( current ) + 1;
             if ( count > headerStateRefCountMax )
             {
-                throw new IllegalStateException( "Cannot map file because reference counter would overflow. " +
-                                                 "Maximum reference count is " + headerStateRefCountMax + ". " +
-                                                 "File is " + swapper.file().getAbsolutePath() );
+                throw new IllegalStateException( new StringBuilder().append("Cannot map file because reference counter would overflow. ").append("Maximum reference count is ").append(headerStateRefCountMax).append(". ").append("File is ").append(swapper.file().getAbsolutePath())
+						.toString() );
             }
             update = (current & headerStateLastPageIdMask) + (count << headerStateRefCountShift);
         }
         while ( !UnsafeUtil.compareAndSwapLong( this, headerStateOffset, current, update ) );
     }
 
-    /**
+	/**
      * Atomically decrement the reference count. Returns true if this was the
      * last reference.
      */
@@ -639,7 +629,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         return count == 0;
     }
 
-    /**
+	/**
      * Get the current ref-count. Useful for checking if this PagedFile should
      * be considered unmapped.
      */
@@ -648,12 +638,12 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         return (int) refCountOf( getHeaderState() );
     }
 
-    void markDeleteOnClose( boolean deleteOnClose )
+	void markDeleteOnClose( boolean deleteOnClose )
     {
         this.deleteOnClose |= deleteOnClose;
     }
 
-    /**
+	/**
      * Grab a free page for the purpose of page faulting. Possibly blocking if
      * none are immediately available.
      * @param faultEvent The trace event for the current page fault.
@@ -663,7 +653,7 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         return pageCache.grabFreeAndExclusivelyLockedPage( faultEvent );
     }
 
-    /**
+	/**
      * Remove the mapping of the given filePageId from the translation table, and return the evicted page object.
      * @param filePageId The id of the file page to evict.
      */
@@ -679,17 +669,17 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         UnsafeUtil.putIntVolatile( chunk, chunkOffset, UNMAPPED_TTE );
     }
 
-    private void setHighestEvictedTransactionId( long modifiedTransactionId )
+	private void setHighestEvictedTransactionId( long modifiedTransactionId )
     {
         UnsafeUtil.compareAndSetMaxLong( this, evictedTransactionIdOffset, modifiedTransactionId );
     }
 
-    long getHighestEvictedTransactionId()
+	long getHighestEvictedTransactionId()
     {
         return UnsafeUtil.getLongVolatile( this, evictedTransactionIdOffset );
     }
 
-    /**
+	/**
      * Expand the translation table such that it can include at least the given chunkId.
      * @param maxChunkId The new translation table must be big enough to include at least this chunkId.
      * @return A reference to the expanded transaction table.
@@ -712,25 +702,25 @@ final class MuninnPagedFile extends PageList implements PagedFile, Flushable
         return tt;
     }
 
-    private static int[] newChunk()
+	private static int[] newChunk()
     {
         int[] chunk = new int[translationTableChunkSize];
         Arrays.fill( chunk, UNMAPPED_TTE );
         return chunk;
     }
 
-    private int computeNewRootTableLength( int maxChunkId )
+	private int computeNewRootTableLength( int maxChunkId )
     {
         // Grow by approx. 10% but always by at least one full chunk.
         return 1 + (int) (maxChunkId * 1.1);
     }
 
-    static int computeChunkId( long filePageId )
+	static int computeChunkId( long filePageId )
     {
         return (int) (filePageId >>> translationTableChunkSizePower);
     }
 
-    static long computeChunkOffset( long filePageId )
+	static long computeChunkOffset( long filePageId )
     {
         int index = (int) (filePageId & translationTableChunkSizeMask);
         return UnsafeUtil.arrayOffset( index, translationTableChunkArrayBase, translationTableChunkArrayScale );

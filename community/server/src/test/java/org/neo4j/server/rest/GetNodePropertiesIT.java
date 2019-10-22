@@ -143,7 +143,7 @@ public class GetNodePropertiesIT extends AbstractRestFunctionalDocTestBase
     public void shouldGet404ForPropertyOnNonExistentNode()
     {
         JaxRsResponse response =
-                RestRequest.req().get( getPropertyUri( functionalTestHelper.dataUri() + "node/" + "999999", "foo" ) );
+                RestRequest.req().get( getPropertyUri( new StringBuilder().append(functionalTestHelper.dataUri()).append("node/").append("999999").toString(), "foo" ) );
         assertEquals( 404, response.getStatus() );
     }
 
@@ -177,6 +177,6 @@ public class GetNodePropertiesIT extends AbstractRestFunctionalDocTestBase
 
     private String getPropertyUri( final String baseUri, final String key )
     {
-        return baseUri + "/properties/" + key;
+        return new StringBuilder().append(baseUri).append("/properties/").append(key).toString();
     }
 }

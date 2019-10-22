@@ -60,15 +60,15 @@ public class TestIndexNames
 
     public void finishTx( boolean success )
     {
-        if ( tx != null )
-        {
-            if ( success )
-            {
-                tx.success();
-            }
-            tx.close();
-            tx = null;
-        }
+        if (tx == null) {
+			return;
+		}
+		if ( success )
+		{
+		    tx.success();
+		}
+		tx.close();
+		tx = null;
     }
 
     public void beginTx()

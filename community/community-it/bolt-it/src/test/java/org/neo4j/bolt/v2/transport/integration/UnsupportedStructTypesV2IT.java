@@ -128,7 +128,7 @@ public class UnsupportedStructTypesV2IT
             packer.pack( Values.of( CoordinateReferenceSystem.Cartesian_3D.getCode() ) );
             packer.pack( Values.of( 3.15 ) );
             packer.pack( Values.of( 4.012 ) );
-        }, "Unable to construct Point value: `Cannot create point, CRS cartesian-3d expects 3 dimensions, but got coordinates [3.15, 4.012]`" );
+        } );
     }
 
     @Test
@@ -170,7 +170,7 @@ public class UnsupportedStructTypesV2IT
         assertThat( connection, eventuallyDisconnects() );
     }
 
-    private void testDisconnectWithUnpackableValue( ThrowingConsumer<Neo4jPack.Packer, IOException> valuePacker, String expectedMessage ) throws Exception
+    private void testDisconnectWithUnpackableValue( ThrowingConsumer<Neo4jPack.Packer, IOException> valuePacker ) throws Exception
     {
         connection.connect( address ).send( util.defaultAcceptedVersions() );
         assertThat( connection, util.eventuallyReceivesSelectedProtocolVersion() );

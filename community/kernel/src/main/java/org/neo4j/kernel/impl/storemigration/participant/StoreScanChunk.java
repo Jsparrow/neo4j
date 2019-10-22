@@ -69,18 +69,17 @@ abstract class StoreScanChunk<T extends StorageEntityCursor> implements InputChu
     @Override
     public boolean next( InputEntityVisitor visitor ) throws IOException
     {
-        if ( id < endId )
-        {
-            read( cursor, id );
-            if ( cursor.next() )
-            {
-                visitRecord( cursor, visitor );
-                visitor.endOfEntity();
-            }
-            id++;
-            return true;
-        }
-        return false;
+        if (id >= endId) {
+			return false;
+		}
+		read( cursor, id );
+		if ( cursor.next() )
+		{
+		    visitRecord( cursor, visitor );
+		    visitor.endOfEntity();
+		}
+		id++;
+		return true;
     }
 
     protected abstract void read( T cursor, long id );

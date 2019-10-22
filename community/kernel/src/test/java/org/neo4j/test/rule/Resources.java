@@ -40,14 +40,86 @@ import org.neo4j.test.rule.fs.EphemeralFileSystemRule;
 
 public final class Resources implements TestRule
 {
-    @Retention( RetentionPolicy.RUNTIME )
-    @Target( ElementType.METHOD )
-    public @interface Life
+    private final EphemeralFileSystemRule fs = new EphemeralFileSystemRule();
+	private final PageCacheRule pageCacheRule = new PageCacheRule();
+	private final TestDirectory testDirectory = TestDirectory.testDirectory( fs );
+	private final LifeRule life = new LifeRule();
+
+	@Override
+    public Statement apply( Statement base, Description description )
     {
-        InitialLifecycle value();
+        return fs.apply( testDirectory.apply( pageCacheRule.apply( lifeStatement( base, description ), description ), description ), description );
     }
 
-    public enum InitialLifecycle
+	private Statement lifeStatement( Statement base, Description description )
+    {
+        Life initialLifecycle = description.getAnnotation( Life.class );
+        if ( initialLifecycle != null )
+        {
+            base = initialise( base, initialLifecycle.value() );
+        }
+        return life.apply( base, description );
+    }
+
+	private Statement initialise( final Statement base, final InitialLifecycle initialLifecycle )
+    {
+        return new Statement()
+        {
+            @Override
+            public void evaluate() throws Throwable
+            {
+                initialLifecycle.initialize( life );
+                base.evaluate();
+            }
+        };
+    }
+
+	public FileSystemAbstraction fileSystem()
+    {
+        return fs.get();
+    }
+
+	public PageCache pageCache()
+    {
+        return pageCacheRule.getPageCache( fileSystem() );
+    }
+
+	public TestDirectory testDirectory()
+    {
+        return testDirectory;
+    }
+
+	public void lifeStarts()
+    {
+        life.start();
+    }
+
+	public void lifeShutsDown()
+    {
+        life.shutdown();
+    }
+
+	public <T> T managed( T service )
+    {
+        Lifecycle lifecycle = null;
+        if ( service instanceof Lifecycle )
+        {
+            lifecycle = (Lifecycle) service;
+        }
+        else if ( service instanceof AutoCloseable )
+        {
+            lifecycle = new Closer( (AutoCloseable) service );
+        }
+        life.add( lifecycle );
+        return service;
+    }
+
+	public LogProvider logProvider()
+    {
+        return NullLogProvider.getInstance();
+    }
+
+	public enum InitialLifecycle
     {
         INITIALIZED
                 {
@@ -69,86 +141,14 @@ public final class Resources implements TestRule
         abstract void initialize( LifeRule life );
     }
 
-    private final EphemeralFileSystemRule fs = new EphemeralFileSystemRule();
-    private final PageCacheRule pageCacheRule = new PageCacheRule();
-    private final TestDirectory testDirectory = TestDirectory.testDirectory( fs );
-    private final LifeRule life = new LifeRule();
-
-    @Override
-    public Statement apply( Statement base, Description description )
+	@Retention( RetentionPolicy.RUNTIME )
+    @Target( ElementType.METHOD )
+    public @interface Life
     {
-        return fs.apply( testDirectory.apply( pageCacheRule.apply( lifeStatement( base, description ), description ), description ), description );
+        InitialLifecycle value();
     }
 
-    private Statement lifeStatement( Statement base, Description description )
-    {
-        Life initialLifecycle = description.getAnnotation( Life.class );
-        if ( initialLifecycle != null )
-        {
-            base = initialise( base, initialLifecycle.value() );
-        }
-        return life.apply( base, description );
-    }
-
-    private Statement initialise( final Statement base, final InitialLifecycle initialLifecycle )
-    {
-        return new Statement()
-        {
-            @Override
-            public void evaluate() throws Throwable
-            {
-                initialLifecycle.initialize( life );
-                base.evaluate();
-            }
-        };
-    }
-
-    public FileSystemAbstraction fileSystem()
-    {
-        return fs.get();
-    }
-
-    public PageCache pageCache()
-    {
-        return pageCacheRule.getPageCache( fileSystem() );
-    }
-
-    public TestDirectory testDirectory()
-    {
-        return testDirectory;
-    }
-
-    public void lifeStarts() throws LifecycleException
-    {
-        life.start();
-    }
-
-    public void lifeShutsDown() throws LifecycleException
-    {
-        life.shutdown();
-    }
-
-    public <T> T managed( T service )
-    {
-        Lifecycle lifecycle = null;
-        if ( service instanceof Lifecycle )
-        {
-            lifecycle = (Lifecycle) service;
-        }
-        else if ( service instanceof AutoCloseable )
-        {
-            lifecycle = new Closer( (AutoCloseable) service );
-        }
-        life.add( lifecycle );
-        return service;
-    }
-
-    public LogProvider logProvider()
-    {
-        return NullLogProvider.getInstance();
-    }
-
-    private static class Closer extends LifecycleAdapter
+	private static class Closer extends LifecycleAdapter
     {
         private final AutoCloseable closeable;
 

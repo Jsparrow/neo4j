@@ -139,10 +139,7 @@ public enum MultiPassStore
             for ( MultiPassStore store : stores )
             {
                 List<RecordAccess> filters = store.multiPassFilters( recordAccess, stores );
-                for ( RecordAccess filter : filters )
-                {
-                    result.add( new ConsistencyReporter( filter, report ) );
-                }
+                filters.forEach(filter -> result.add(new ConsistencyReporter(filter, report)));
             }
             return result.toArray( new ConsistencyReporter[result.size()] );
         }

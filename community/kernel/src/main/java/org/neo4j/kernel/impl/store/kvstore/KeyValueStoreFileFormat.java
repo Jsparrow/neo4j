@@ -107,18 +107,17 @@ public abstract class KeyValueStoreFileFormat
             {
                 int size = value.size();
                 ReadableBuffer expectedFormat = expectedFormat();
-                if ( size == expectedFormat.size() )
-                {
-                    for ( int i = 0; i < size; i++ )
-                    {
-                        if ( value.getByte( i ) != expectedFormat.getByte( i ) )
-                        {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-                return false;
+                if (size != expectedFormat.size()) {
+					return false;
+				}
+				for ( int i = 0; i < size; i++ )
+				{
+				    if ( value.getByte( i ) != expectedFormat.getByte( i ) )
+				    {
+				        return false;
+				    }
+				}
+				return true;
             }
         };
     }
@@ -176,16 +175,13 @@ public abstract class KeyValueStoreFileFormat
                 headers.write( header, value );
                 if ( !writer.writeHeader( key, value ) )
                 {
-                    throw new IllegalArgumentException( "Invalid header value. " + header + ": " + value );
+                    throw new IllegalArgumentException( new StringBuilder().append("Invalid header value. ").append(header).append(": ").append(value).toString() );
                 }
             }
-            if ( headerFields.length == 0 )
-            {
-                if ( !writer.writeHeader( key, value ) )
-                {
-                    throw new IllegalStateException( "A padding header should be valid." );
-                }
-            }
+            boolean condition = headerFields.length == 0 && !writer.writeHeader( key, value );
+			if ( condition ) {
+			    throw new IllegalStateException( "A padding header should be valid." );
+			}
 
             // data
             long dataEntries = 0;

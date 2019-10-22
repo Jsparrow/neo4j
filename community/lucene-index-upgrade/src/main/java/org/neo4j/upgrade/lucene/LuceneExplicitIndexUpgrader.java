@@ -44,38 +44,27 @@ import org.neo4j.upgrade.loader.JarLoaderSupplier;
  */
 public class LuceneExplicitIndexUpgrader
 {
-    public interface Monitor
-    {
-        /**
-         * Upgrade is starting.
-         *
-         * @param count number of indexes to migrate.
-         */
-        default void starting( int count ) {}
-
-        /**
-         * Called after an index has been migrated, called for each migrated index.
-         *
-         * @param name name of the index.
-         */
-        default void migrated( String name ) {}
-    }
-
     public static final Monitor NO_MONITOR = new Monitor()
     {
     };
 
-    private static final String LIBRARY_DIRECTORY = "lib";
-    private static final String RESOURCE_SEPARATOR = "/";
-    private static final String LUCENE4_CORE_JAR_NAME = "lucene-core-4.10.4.jar";
-    private static final String LUCENE5_CORE_JAR_NAME = "lucene-core-5.5.0.jar";
-    private static final String LUCENE5_BACKWARD_CODECS_NAME = "lucene-backward-codecs-5.5.0.jar";
-    private static final String SEGMENTS_FILE_NAME_PREFIX = "segments";
+	private static final String LIBRARY_DIRECTORY = "lib";
 
-    private final Path indexRootPath;
-    private final Monitor monitor;
+	private static final String RESOURCE_SEPARATOR = "/";
 
-    public LuceneExplicitIndexUpgrader( Path indexRootPath, Monitor monitor )
+	private static final String LUCENE4_CORE_JAR_NAME = "lucene-core-4.10.4.jar";
+
+	private static final String LUCENE5_CORE_JAR_NAME = "lucene-core-5.5.0.jar";
+
+	private static final String LUCENE5_BACKWARD_CODECS_NAME = "lucene-backward-codecs-5.5.0.jar";
+
+	private static final String SEGMENTS_FILE_NAME_PREFIX = "segments";
+
+	private final Path indexRootPath;
+
+	private final Monitor monitor;
+
+	public LuceneExplicitIndexUpgrader( Path indexRootPath, Monitor monitor )
     {
         this.monitor = monitor;
         if ( Files.exists( indexRootPath ) && !Files.isDirectory( indexRootPath ) )
@@ -85,7 +74,7 @@ public class LuceneExplicitIndexUpgrader
         this.indexRootPath = indexRootPath;
     }
 
-    /**
+	/**
      * Perform index migrations
      * @throws ExplicitIndexMigrationException in case of exception during index migration
      */
@@ -114,7 +103,7 @@ public class LuceneExplicitIndexUpgrader
                     catch ( Throwable e )
                     {
                         throw new ExplicitIndexMigrationException( indexPath.getFileName().toString(),
-                                "Migration of explicit index at path:" + indexPath + " failed.", e );
+                                new StringBuilder().append("Migration of explicit index at path:").append(indexPath).append(" failed.").toString(), e );
                     }
                 }
             }
@@ -129,33 +118,33 @@ public class LuceneExplicitIndexUpgrader
         }
     }
 
-    IndexUpgraderWrapper createIndexUpgrader( String[] jars )
+	IndexUpgraderWrapper createIndexUpgrader( String[] jars )
     {
         return new IndexUpgraderWrapper( JarLoaderSupplier.of( jars ) );
     }
 
-    private static String[] getLucene5JarPaths()
+	private static String[] getLucene5JarPaths()
     {
         return getJarsFullPaths( LUCENE5_CORE_JAR_NAME, LUCENE5_BACKWARD_CODECS_NAME );
     }
 
-    private static String[] getLucene4JarPaths()
+	private static String[] getLucene4JarPaths()
     {
         return getJarsFullPaths( LUCENE4_CORE_JAR_NAME );
     }
 
-    private static String[] getJarsFullPaths( String... jars )
+	private static String[] getJarsFullPaths( String... jars )
     {
         return Stream.of( jars )
                 .map( LuceneExplicitIndexUpgrader::getJarPath ).toArray( String[]::new );
     }
 
-    private static String getJarPath( String library )
+	private static String getJarPath( String library )
     {
-        return LIBRARY_DIRECTORY + RESOURCE_SEPARATOR + library;
+        return new StringBuilder().append(LIBRARY_DIRECTORY).append(RESOURCE_SEPARATOR).append(library).toString();
     }
 
-    private static Predicate<Path> getIndexPathFilter()
+	private static Predicate<Path> getIndexPathFilter()
     {
         return path ->
         {
@@ -170,12 +159,29 @@ public class LuceneExplicitIndexUpgrader
         };
     }
 
-    private static boolean isIndexDirectory( Path path ) throws IOException
+	private static boolean isIndexDirectory( Path path ) throws IOException
     {
         try ( Stream<Path> pathStream = Files.list( path ) )
         {
             return pathStream.anyMatch( child -> child.getFileName().toString().startsWith( SEGMENTS_FILE_NAME_PREFIX ) );
         }
+    }
+
+	public interface Monitor
+    {
+        /**
+         * Upgrade is starting.
+         *
+         * @param count number of indexes to migrate.
+         */
+        default void starting( int count ) {}
+
+        /**
+         * Called after an index has been migrated, called for each migrated index.
+         *
+         * @param name name of the index.
+         */
+        default void migrated( String name ) {}
     }
 
 }

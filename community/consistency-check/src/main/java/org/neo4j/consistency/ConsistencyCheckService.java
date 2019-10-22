@@ -293,12 +293,11 @@ public class ConsistencyCheckService
             }
         }
 
-        if ( !summary.isConsistent() )
-        {
-            log.warn( "See '%s' for a detailed consistency report.", reportFile.getPath() );
-            return Result.failure( reportFile );
-        }
-        return Result.success( reportFile );
+        if (summary.isConsistent()) {
+			return Result.success( reportFile );
+		}
+		log.warn( "See '%s' for a detailed consistency report.", reportFile.getPath() );
+		return Result.failure( reportFile );
     }
 
     private void assertRecovered( DatabaseLayout databaseLayout, Config config, FileSystemAbstraction fileSystem, PageCache pageCache )
@@ -350,7 +349,12 @@ public class ConsistencyCheckService
         return format( "inconsistencies-%s.report", new SimpleDateFormat( "yyyy-MM-dd.HH.mm.ss" ).format( date ) );
     }
 
-    public interface Result
+    public static int defaultConsistencyCheckThreadsNumber()
+    {
+        return Math.max( 1, Runtime.getRuntime().availableProcessors() - 1 );
+    }
+
+	public interface Result
     {
         static Result failure( File reportFile )
         {
@@ -391,10 +395,5 @@ public class ConsistencyCheckService
         boolean isSuccessful();
 
         File reportFile();
-    }
-
-    public static int defaultConsistencyCheckThreadsNumber()
-    {
-        return Math.max( 1, Runtime.getRuntime().availableProcessors() - 1 );
     }
 }

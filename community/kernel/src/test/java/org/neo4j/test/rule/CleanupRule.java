@@ -94,7 +94,7 @@ public class CleanupRule extends ExternalResource
                 throw new RuntimeException( e );
             }
         }
-        throw new IllegalArgumentException( "No suitable close method found on " + toClose + ", which is a " + cls );
+        throw new IllegalArgumentException( new StringBuilder().append("No suitable close method found on ").append(toClose).append(", which is a ").append(cls).toString() );
     }
 
     private static AutoCloseable closeable( final Method method, final Object target )

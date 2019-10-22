@@ -146,12 +146,12 @@ class TestDirectoryExtensionTest
         @Override
         public void executionFinished( TestIdentifier testIdentifier, TestExecutionResult testExecutionResult )
         {
-            if ( testExecutionResult.getStatus() == FAILED )
-            {
-                resultsObserved++;
-                String exceptionMessage = testExecutionResult.getThrowable().map( Throwable::getMessage ).orElse( EMPTY );
-                assertThat( exceptionMessage, containsString( "Fail to cleanup test directory for lockFileAndFailToDeleteDirectory" ) );
-            }
+            if (testExecutionResult.getStatus() != FAILED) {
+				return;
+			}
+			resultsObserved++;
+			String exceptionMessage = testExecutionResult.getThrowable().map( Throwable::getMessage ).orElse( EMPTY );
+			assertThat( exceptionMessage, containsString( "Fail to cleanup test directory for lockFileAndFailToDeleteDirectory" ) );
         }
 
         void assertTestObserver()

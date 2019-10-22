@@ -41,7 +41,10 @@ import static org.neo4j.helpers.collection.Iterators.count;
 
 public class TestNeo4jApiExceptions
 {
-    @Test
+    private Transaction tx;
+	private GraphDatabaseService graph;
+
+	@Test
     public void testNotInTransactionException()
     {
         Node node1 = graph.createNode();
@@ -116,7 +119,7 @@ public class TestNeo4jApiExceptions
         rollback();
     }
 
-    @Test
+	@Test
     public void testNotFoundException()
     {
         Node node1 = graph.createNode();
@@ -150,7 +153,7 @@ public class TestNeo4jApiExceptions
         rollback();
     }
 
-    @Test
+	@Test
     public void shouldGiveNiceErrorWhenShutdownKernelApi()
     {
         GraphDatabaseService graphDb = graph;
@@ -168,7 +171,7 @@ public class TestNeo4jApiExceptions
         }
     }
 
-    @Test
+	@Test
     public void shouldGiveNiceErrorWhenShutdownLegacy()
     {
         GraphDatabaseService graphDb = graph;
@@ -194,10 +197,7 @@ public class TestNeo4jApiExceptions
         }
     }
 
-    private Transaction tx;
-    private GraphDatabaseService graph;
-
-    private void newTransaction()
+	private void newTransaction()
     {
         if ( tx != null )
         {
@@ -207,33 +207,33 @@ public class TestNeo4jApiExceptions
         tx = graph.beginTx();
     }
 
-    public void commit()
+	public void commit()
     {
-        if ( tx != null )
-        {
-            tx.success();
-            tx.close();
-            tx = null;
-        }
+        if (tx == null) {
+			return;
+		}
+		tx.success();
+		tx.close();
+		tx = null;
     }
 
-    public void rollback()
+	public void rollback()
     {
-        if ( tx != null )
-        {
-            tx.close();
-            tx = null;
-        }
+        if (tx == null) {
+			return;
+		}
+		tx.close();
+		tx = null;
     }
 
-    @Before
+	@Before
     public void init()
     {
         graph = new TestGraphDatabaseFactory().newImpermanentDatabase();
         newTransaction();
     }
 
-    @After
+	@After
     public void cleanUp()
     {
         rollback();

@@ -34,7 +34,195 @@ public class SimpleLongLayout extends TestLayout<MutableLong,MutableLong>
     private final int majorVersion;
     private final int minorVersion;
 
-    public static class Builder
+    public SimpleLongLayout( int keyPadding, String customNameAsMetaData, boolean fixedSize, int identifier, int majorVersion, int minorVersion )
+    {
+        this.keyPadding = keyPadding;
+        this.customNameAsMetaData = customNameAsMetaData;
+        this.fixedSize = fixedSize;
+        this.identifier = identifier;
+        this.majorVersion = majorVersion;
+        this.minorVersion = minorVersion;
+    }
+
+	public static Builder longLayout()
+    {
+        return new Builder();
+    }
+
+	@Override
+    public int compare( MutableLong o1, MutableLong o2 )
+    {
+        return Long.compare( o1.longValue(), o2.longValue() );
+    }
+
+	@Override
+    int compareValue( MutableLong v1, MutableLong v2 )
+    {
+        return compare( v1, v2 );
+    }
+
+	@Override
+    public MutableLong newKey()
+    {
+        return new MutableLong();
+    }
+
+	@Override
+    public MutableLong copyKey( MutableLong key, MutableLong into )
+    {
+        into.setValue( key.longValue() );
+        return into;
+    }
+
+	@Override
+    public MutableLong newValue()
+    {
+        return new MutableLong();
+    }
+
+	@Override
+    public int keySize( MutableLong key )
+    {
+        // pad the key here to affect the max key count, useful to get odd or even max key count
+        return Long.BYTES + keyPadding;
+    }
+
+	@Override
+    public int valueSize( MutableLong value )
+    {
+        return Long.BYTES;
+    }
+
+	@Override
+    public void writeKey( PageCursor cursor, MutableLong key )
+    {
+        cursor.putLong( key.longValue() );
+        cursor.putBytes( keyPadding, (byte) 0 );
+    }
+
+	@Override
+    public void writeValue( PageCursor cursor, MutableLong value )
+    {
+        cursor.putLong( value.longValue() );
+    }
+
+	@Override
+    public void readKey( PageCursor cursor, MutableLong into, int keySize )
+    {
+        into.setValue( cursor.getLong() );
+        cursor.getBytes( new byte[keyPadding] );
+    }
+
+	@Override
+    public void readValue( PageCursor cursor, MutableLong into, int valueSize )
+    {
+        into.setValue( cursor.getLong() );
+    }
+
+	@Override
+    public boolean fixedSize()
+    {
+        return fixedSize;
+    }
+
+	@Override
+    public long identifier()
+    {
+        return identifier;
+    }
+
+	@Override
+    public int majorVersion()
+    {
+        return majorVersion;
+    }
+
+	@Override
+    public int minorVersion()
+    {
+        return minorVersion;
+    }
+
+	@Override
+    public void writeMetaData( PageCursor cursor )
+    {
+        writeString( cursor, customNameAsMetaData );
+        cursor.putInt( keyPadding );
+    }
+
+	private static void writeString( PageCursor cursor, String string )
+    {
+        byte[] bytes = string.getBytes( UTF_8 );
+        cursor.putInt( string.length() );
+        cursor.putBytes( bytes );
+    }
+
+	@Override
+    public void readMetaData( PageCursor cursor )
+    {
+        String name = readString( cursor );
+        if ( name == null )
+        {
+            return;
+        }
+
+        boolean condition = customNameAsMetaData != null && !name.equals( customNameAsMetaData );
+		if ( condition ) {
+		    cursor.setCursorException( new StringBuilder().append("Name '").append(name).append("' doesn't match expected '").append(customNameAsMetaData).append("'").toString() );
+		    return;
+		}
+        customNameAsMetaData = name;
+
+        int readKeyPadding = cursor.getInt();
+        if ( readKeyPadding != keyPadding )
+        {
+            cursor.setCursorException( new StringBuilder().append("Key padding ").append(readKeyPadding).append(" doesn't match expected ").append(keyPadding).toString() );
+        }
+    }
+
+	private static String readString( PageCursor cursor )
+    {
+        int length = cursor.getInt();
+        if ( length < 0 || length >= cursor.getCurrentPageSize() )
+        {
+            cursor.setCursorException( "Unexpected length of string " + length );
+            return null;
+        }
+
+        byte[] bytes = new byte[length];
+        cursor.getBytes( bytes );
+        return new String( bytes, UTF_8 );
+    }
+
+	@Override
+    public MutableLong key( long seed )
+    {
+        MutableLong key = newKey();
+        key.setValue( seed );
+        return key;
+    }
+
+	@Override
+    public MutableLong value( long seed )
+    {
+        MutableLong value = newValue();
+        value.setValue( seed );
+        return value;
+    }
+
+	@Override
+    public long keySeed( MutableLong key )
+    {
+        return key.getValue();
+    }
+
+	@Override
+    public long valueSeed( MutableLong value )
+    {
+        return value.getValue();
+    }
+
+	public static class Builder
     {
         private int keyPadding;
         private int identifier = 999;
@@ -83,197 +271,5 @@ public class SimpleLongLayout extends TestLayout<MutableLong,MutableLong>
         {
             return new SimpleLongLayout( keyPadding, customNameAsMetaData, fixedSize, identifier, majorVersion, minorVersion );
         }
-    }
-
-    public static Builder longLayout()
-    {
-        return new Builder();
-    }
-
-    public SimpleLongLayout( int keyPadding, String customNameAsMetaData, boolean fixedSize, int identifier, int majorVersion, int minorVersion )
-    {
-        this.keyPadding = keyPadding;
-        this.customNameAsMetaData = customNameAsMetaData;
-        this.fixedSize = fixedSize;
-        this.identifier = identifier;
-        this.majorVersion = majorVersion;
-        this.minorVersion = minorVersion;
-    }
-
-    @Override
-    public int compare( MutableLong o1, MutableLong o2 )
-    {
-        return Long.compare( o1.longValue(), o2.longValue() );
-    }
-
-    @Override
-    int compareValue( MutableLong v1, MutableLong v2 )
-    {
-        return compare( v1, v2 );
-    }
-
-    @Override
-    public MutableLong newKey()
-    {
-        return new MutableLong();
-    }
-
-    @Override
-    public MutableLong copyKey( MutableLong key, MutableLong into )
-    {
-        into.setValue( key.longValue() );
-        return into;
-    }
-
-    @Override
-    public MutableLong newValue()
-    {
-        return new MutableLong();
-    }
-
-    @Override
-    public int keySize( MutableLong key )
-    {
-        // pad the key here to affect the max key count, useful to get odd or even max key count
-        return Long.BYTES + keyPadding;
-    }
-
-    @Override
-    public int valueSize( MutableLong value )
-    {
-        return Long.BYTES;
-    }
-
-    @Override
-    public void writeKey( PageCursor cursor, MutableLong key )
-    {
-        cursor.putLong( key.longValue() );
-        cursor.putBytes( keyPadding, (byte) 0 );
-    }
-
-    @Override
-    public void writeValue( PageCursor cursor, MutableLong value )
-    {
-        cursor.putLong( value.longValue() );
-    }
-
-    @Override
-    public void readKey( PageCursor cursor, MutableLong into, int keySize )
-    {
-        into.setValue( cursor.getLong() );
-        cursor.getBytes( new byte[keyPadding] );
-    }
-
-    @Override
-    public void readValue( PageCursor cursor, MutableLong into, int valueSize )
-    {
-        into.setValue( cursor.getLong() );
-    }
-
-    @Override
-    public boolean fixedSize()
-    {
-        return fixedSize;
-    }
-
-    @Override
-    public long identifier()
-    {
-        return identifier;
-    }
-
-    @Override
-    public int majorVersion()
-    {
-        return majorVersion;
-    }
-
-    @Override
-    public int minorVersion()
-    {
-        return minorVersion;
-    }
-
-    @Override
-    public void writeMetaData( PageCursor cursor )
-    {
-        writeString( cursor, customNameAsMetaData );
-        cursor.putInt( keyPadding );
-    }
-
-    private static void writeString( PageCursor cursor, String string )
-    {
-        byte[] bytes = string.getBytes( UTF_8 );
-        cursor.putInt( string.length() );
-        cursor.putBytes( bytes );
-    }
-
-    @Override
-    public void readMetaData( PageCursor cursor )
-    {
-        String name = readString( cursor );
-        if ( name == null )
-        {
-            return;
-        }
-
-        if ( customNameAsMetaData != null )
-        {
-            if ( !name.equals( customNameAsMetaData ) )
-            {
-                cursor.setCursorException( "Name '" + name +
-                        "' doesn't match expected '" + customNameAsMetaData + "'" );
-                return;
-            }
-        }
-        customNameAsMetaData = name;
-
-        int readKeyPadding = cursor.getInt();
-        if ( readKeyPadding != keyPadding )
-        {
-            cursor.setCursorException( "Key padding " + readKeyPadding + " doesn't match expected " + keyPadding );
-        }
-    }
-
-    private static String readString( PageCursor cursor )
-    {
-        int length = cursor.getInt();
-        if ( length < 0 || length >= cursor.getCurrentPageSize() )
-        {
-            cursor.setCursorException( "Unexpected length of string " + length );
-            return null;
-        }
-
-        byte[] bytes = new byte[length];
-        cursor.getBytes( bytes );
-        return new String( bytes, UTF_8 );
-    }
-
-    @Override
-    public MutableLong key( long seed )
-    {
-        MutableLong key = newKey();
-        key.setValue( seed );
-        return key;
-    }
-
-    @Override
-    public MutableLong value( long seed )
-    {
-        MutableLong value = newValue();
-        value.setValue( seed );
-        return value;
-    }
-
-    @Override
-    public long keySeed( MutableLong key )
-    {
-        return key.getValue();
-    }
-
-    @Override
-    public long valueSeed( MutableLong value )
-    {
-        return value.getValue();
     }
 }

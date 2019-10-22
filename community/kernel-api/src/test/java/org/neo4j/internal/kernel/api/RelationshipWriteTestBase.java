@@ -49,7 +49,8 @@ public abstract class RelationshipWriteTestBase<G extends KernelAPIWriteTestSupp
     @Test
     public void shouldCreateRelationship() throws Exception
     {
-        long n1, n2;
+        long n1;
+		long n2;
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
             n1 = graphDb.createNode().getId();
@@ -76,7 +77,9 @@ public abstract class RelationshipWriteTestBase<G extends KernelAPIWriteTestSupp
     @Test
     public void shouldCreateRelationshipBetweenInTransactionNodes() throws Exception
     {
-        long n1, n2, r;
+        long n1;
+		long n2;
+		long r;
         try ( Transaction tx = beginTransaction() )
         {
             n1 = tx.dataWrite().nodeCreate();
@@ -97,7 +100,8 @@ public abstract class RelationshipWriteTestBase<G extends KernelAPIWriteTestSupp
     @Test
     public void shouldRollbackRelationshipOnFailure() throws Exception
     {
-        long n1, n2;
+        long n1;
+		long n2;
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
             n1 = graphDb.createNode().getId();
@@ -121,7 +125,8 @@ public abstract class RelationshipWriteTestBase<G extends KernelAPIWriteTestSupp
     @Test
     public void shouldDeleteRelationship() throws Exception
     {
-        long n1, r;
+        long n1;
+		long r;
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
             Node node1 = graphDb.createNode();
@@ -166,7 +171,8 @@ public abstract class RelationshipWriteTestBase<G extends KernelAPIWriteTestSupp
     @Test
     public void shouldDeleteRelationshipAddedInTransaction() throws Exception
     {
-        long n1, n2;
+        long n1;
+		long n2;
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
             n1 = graphDb.createNode().getId();

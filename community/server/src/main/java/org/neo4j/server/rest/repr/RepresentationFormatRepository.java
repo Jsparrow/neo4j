@@ -86,14 +86,7 @@ public final class RepresentationFormatRepository
 
     private boolean containsType( List<MediaType> mediaTypes, MediaType mediaType )
     {
-        for ( MediaType type : mediaTypes )
-        {
-            if ( mediaType.getType().equals( type.getType() ) && mediaType.getSubtype().equals( type.getSubtype() ) )
-            {
-                return true;
-            }
-        }
-        return false;
+        return mediaTypes.stream().anyMatch(type -> mediaType.getType().equals( type.getType() ) && mediaType.getSubtype().equals( type.getSubtype() ));
     }
 
     private RepresentationFormat forMediaTypes( List<MediaType> acceptable )

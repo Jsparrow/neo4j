@@ -98,7 +98,17 @@ class ThreadAheadReadableTest
         assertArrayEquals( expectedChars, copyOfRange( buffer.array(), buffer.back(), buffer.front() ) );
     }
 
-    private static class TrackingReader extends CharReadable.Adapter
+    private static char[] chars( int start, int length )
+    {
+        char[] result = new char[length];
+        for ( int i = 0; i < length; i++ )
+        {
+            result[i] = (char) (start + i);
+        }
+        return result;
+    }
+
+	private static class TrackingReader extends CharReadable.Adapter
     {
         private int bytesRead;
         private volatile int readsCompleted;
@@ -167,15 +177,5 @@ class ThreadAheadReadableTest
         {
             return bytes;
         }
-    }
-
-    private static char[] chars( int start, int length )
-    {
-        char[] result = new char[length];
-        for ( int i = 0; i < length; i++ )
-        {
-            result[i] = (char) (start + i);
-        }
-        return result;
     }
 }

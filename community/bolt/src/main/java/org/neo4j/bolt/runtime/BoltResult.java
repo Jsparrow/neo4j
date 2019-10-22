@@ -30,24 +30,6 @@ import org.neo4j.values.AnyValue;
  */
 public interface BoltResult extends AutoCloseable
 {
-    /** Positional names for all fields in every record of this stream. */
-    String[] fieldNames();
-
-    void accept( Visitor visitor ) throws Exception;
-
-    @Override
-    void close();
-
-    interface Visitor
-    {
-        void visit( QueryResult.Record record ) throws Exception;
-
-        /**
-         * Associate arbitrary metadata with the result stream. This will get transferred at the end of the stream.
-         * Please stick to Neo4j type system types (Map, List, Integer, Float, Boolean, String etc) */
-        void addMetadata( String key, AnyValue value );
-    }
-
     BoltResult EMPTY = new BoltResult()
     {
         private final String[] nothing = new String[0];
@@ -74,4 +56,22 @@ public interface BoltResult extends AutoCloseable
             return "EmptyBoltResult{}";
         }
     };
+
+	/** Positional names for all fields in every record of this stream. */
+    String[] fieldNames();
+
+	void accept( Visitor visitor ) throws Exception;
+
+	@Override
+    void close();
+
+	interface Visitor
+    {
+        void visit( QueryResult.Record record ) throws Exception;
+
+        /**
+         * Associate arbitrary metadata with the result stream. This will get transferred at the end of the stream.
+         * Please stick to Neo4j type system types (Map, List, Integer, Float, Boolean, String etc) */
+        void addMetadata( String key, AnyValue value );
+    }
 }

@@ -510,7 +510,7 @@ public class RecordStorageReaderRelTypesAndDegreeTest extends RecordStorageReade
         return nodeCursor;
     }
 
-    private void noNodeChange( long nodeId )
+    private void noNodeChange( )
     {
     }
 
@@ -543,29 +543,27 @@ public class RecordStorageReaderRelTypesAndDegreeTest extends RecordStorageReade
             relGroupId = relGroup.getNext();
         }
 
-        throw new IllegalStateException( "No relationship group with type: " + type + " found" );
+        throw new IllegalStateException( new StringBuilder().append("No relationship group with type: ").append(type).append(" found").toString() );
     }
 
     private void markRandomRelsInChainNotInUse( long relId )
     {
-        if ( relId != NO_NEXT_RELATIONSHIP.intValue() )
-        {
-            RelationshipRecord record = getRelRecord( relId );
-
-            boolean shouldBeMarked = random.nextBoolean();
-            if ( shouldBeMarked )
-            {
-                record.setInUse( false );
-                update( record );
-            }
-
-            markRandomRelsInChainNotInUse( record.getFirstNextRel() );
-            boolean isLoopRelationship = record.getFirstNextRel() == record.getSecondNextRel();
-            if ( !isLoopRelationship )
-            {
-                markRandomRelsInChainNotInUse( record.getSecondNextRel() );
-            }
-        }
+        if (relId == NO_NEXT_RELATIONSHIP.intValue()) {
+			return;
+		}
+		RelationshipRecord record = getRelRecord( relId );
+		boolean shouldBeMarked = random.nextBoolean();
+		if ( shouldBeMarked )
+		{
+		    record.setInUse( false );
+		    update( record );
+		}
+		markRandomRelsInChainNotInUse( record.getFirstNextRel() );
+		boolean isLoopRelationship = record.getFirstNextRel() == record.getSecondNextRel();
+		if ( !isLoopRelationship )
+		{
+		    markRandomRelsInChainNotInUse( record.getSecondNextRel() );
+		}
     }
 
     private void markRelGroupNotInUse( long nodeId, TestRelType... types )

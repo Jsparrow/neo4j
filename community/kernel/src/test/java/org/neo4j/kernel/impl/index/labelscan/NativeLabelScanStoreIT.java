@@ -48,19 +48,18 @@ import static org.neo4j.kernel.api.labelscan.NodeLabelUpdate.labelChanges;
 
 public class NativeLabelScanStoreIT
 {
-    private final TestDirectory directory = TestDirectory.testDirectory();
-    private final DefaultFileSystemRule fileSystem = new DefaultFileSystemRule();
-    private final PageCacheRule pageCacheRule = new PageCacheRule();
-    private final LifeRule life = new LifeRule( true );
-    private final RandomRule random = new RandomRule();
-    @Rule
-    public final RuleChain rules = outerRule( fileSystem ).around( directory ).around( pageCacheRule ).around( life ).around( random );
-    private NativeLabelScanStore store;
-
     private static final int NODE_COUNT = 10_000;
-    private static final int LABEL_COUNT = 12;
+	private static final int LABEL_COUNT = 12;
+	private final TestDirectory directory = TestDirectory.testDirectory();
+	private final DefaultFileSystemRule fileSystem = new DefaultFileSystemRule();
+	private final PageCacheRule pageCacheRule = new PageCacheRule();
+	private final LifeRule life = new LifeRule( true );
+	private final RandomRule random = new RandomRule();
+	@Rule
+    public final RuleChain rules = outerRule( fileSystem ).around( directory ).around( pageCacheRule ).around( life ).around( random );
+	private NativeLabelScanStore store;
 
-    @Before
+	@Before
     public void before()
     {
         PageCache pageCache = pageCacheRule.getPageCache( fileSystem );
@@ -70,7 +69,7 @@ public class NativeLabelScanStoreIT
                 Math.min( pageCache.pageSize(), 256 << random.nextInt( 5 ) ) ) );
     }
 
-    @Test
+	@Test
     public void shouldRandomlyTestIt() throws Exception
     {
         // GIVEN
@@ -85,7 +84,7 @@ public class NativeLabelScanStoreIT
         }
     }
 
-    private void verifyReads( long[] expected )
+	private void verifyReads( long[] expected )
     {
         try ( LabelScanReader reader = store.newReader() )
         {
@@ -98,7 +97,7 @@ public class NativeLabelScanStoreIT
         }
     }
 
-    public static long[] nodesWithLabel( long[] expected, int labelId )
+	public static long[] nodesWithLabel( long[] expected, int labelId )
     {
         int mask = 1 << labelId;
         int count = 0;
@@ -123,7 +122,7 @@ public class NativeLabelScanStoreIT
         return result;
     }
 
-    private void randomModifications( long[] expected, int count ) throws IOException
+	private void randomModifications( long[] expected, int count ) throws IOException
     {
         BitSet editedNodes = new BitSet();
         try ( LabelScanWriter writer = store.newWriter() )
@@ -154,12 +153,12 @@ public class NativeLabelScanStoreIT
         }
     }
 
-    public static long flipRandom( long existingLabels, int highLabelId, Random random )
+	public static long flipRandom( long existingLabels, int highLabelId, Random random )
     {
         return existingLabels ^ (1 << random.nextInt( highLabelId ));
     }
 
-    public static long[] getLabels( long bits )
+	public static long[] getLabels( long bits )
     {
         long[] result = new long[Long.bitCount( bits )];
         for ( int labelId = 0, c = 0; labelId < LABEL_COUNT; labelId++ )

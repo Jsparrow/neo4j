@@ -142,38 +142,14 @@ public class DbRepresentation
 
     private void constraintDiff( DbRepresentation other, DiffReport diff )
     {
-        for ( ConstraintDefinition constraint : constraints )
-        {
-            if ( !other.constraints.contains( constraint ) )
-            {
-                diff.add( "I have constraint " + constraint + " which other doesn't" );
-            }
-        }
-        for ( ConstraintDefinition otherConstraint : other.constraints )
-        {
-            if ( !constraints.contains( otherConstraint ) )
-            {
-                diff.add( "Other has constraint " + otherConstraint + " which I don't" );
-            }
-        }
+        constraints.stream().filter(constraint -> !other.constraints.contains( constraint )).forEach(constraint -> diff.add(new StringBuilder().append("I have constraint ").append(constraint).append(" which other doesn't").toString()));
+        other.constraints.stream().filter(otherConstraint -> !constraints.contains( otherConstraint )).forEach(otherConstraint -> diff.add(new StringBuilder().append("Other has constraint ").append(otherConstraint).append(" which I don't").toString()));
     }
 
     private void indexDiff( DbRepresentation other, DiffReport diff )
     {
-        for ( IndexDefinition schemaIndex : schemaIndexes )
-        {
-            if ( !other.schemaIndexes.contains( schemaIndex ) )
-            {
-                diff.add( "I have schema index " + schemaIndex + " which other doesn't" );
-            }
-        }
-        for ( IndexDefinition otherSchemaIndex : other.schemaIndexes )
-        {
-            if ( !schemaIndexes.contains( otherSchemaIndex ) )
-            {
-                diff.add( "Other has schema index " + otherSchemaIndex + " which I don't" );
-            }
-        }
+        schemaIndexes.stream().filter(schemaIndex -> !other.schemaIndexes.contains( schemaIndex )).forEach(schemaIndex -> diff.add(new StringBuilder().append("I have schema index ").append(schemaIndex).append(" which other doesn't").toString()));
+        other.schemaIndexes.stream().filter(otherSchemaIndex -> !schemaIndexes.contains( otherSchemaIndex )).forEach(otherSchemaIndex -> diff.add(new StringBuilder().append("Other has schema index ").append(otherSchemaIndex).append(" which I don't").toString()));
     }
 
     private void nodeDiff( DbRepresentation other, DiffReport diff )
@@ -183,19 +159,13 @@ public class DbRepresentation
             NodeRep otherNode = other.nodes.get( node.id );
             if ( otherNode == null )
             {
-                diff.add( "I have node " + node.id + " which other doesn't" );
+                diff.add( new StringBuilder().append("I have node ").append(node.id).append(" which other doesn't").toString() );
                 continue;
             }
             node.compareWith( otherNode, diff );
         }
 
-        for ( Long id : other.nodes.keySet() )
-        {
-            if ( !nodes.containsKey( id ) )
-            {
-                diff.add( "Other has node " + id + " which I don't" );
-            }
-        }
+        other.nodes.keySet().stream().filter(id -> !nodes.containsKey( id )).forEach(id -> diff.add(new StringBuilder().append("Other has node ").append(id).append(" which I don't").toString()));
     }
 
     @Override
@@ -280,12 +250,12 @@ public class DbRepresentation
             {
                 if ( !index.containsKey( indexName ) )
                 {
-                    diff.add( this + " isn't indexed in " + indexName + " for mine" );
+                    diff.add( new StringBuilder().append(this).append(" isn't indexed in ").append(indexName).append(" for mine").toString() );
                     continue;
                 }
                 if ( !other.index.containsKey( indexName ) )
                 {
-                    diff.add( this + " isn't indexed in " + indexName + " for other" );
+                    diff.add( new StringBuilder().append(this).append(" isn't indexed in ").append(indexName).append(" for other").toString() );
                     continue;
                 }
 
@@ -294,21 +264,14 @@ public class DbRepresentation
 
                 if ( thisIndex.size() != otherIndex.size() )
                 {
-                    diff.add( "other index had a different mapping count than me for node " + this + " mine:" +
-                            thisIndex + ", other:" + otherIndex );
+                    diff.add( new StringBuilder().append("other index had a different mapping count than me for node ").append(this).append(" mine:").append(thisIndex).append(", other:").append(otherIndex)
+							.toString() );
                     continue;
                 }
 
-                for ( Map.Entry<String,Serializable> indexEntry : thisIndex.entrySet() )
-                {
-                    if ( !indexEntry.getValue().equals(
-                            otherIndex.get( indexEntry.getKey() ) ) )
-                    {
-                        diff.add( "other index had a different value indexed for " + indexEntry.getKey() + "=" +
-                                indexEntry.getValue() + ", namely " + otherIndex.get( indexEntry.getKey() ) +
-                                " for " + this );
-                    }
-                }
+                thisIndex.entrySet().stream().filter(indexEntry -> !indexEntry.getValue().equals(
+				        otherIndex.get( indexEntry.getKey() ) )).forEach(indexEntry -> diff.add(new StringBuilder().append("other index had a different value indexed for ").append(indexEntry.getKey()).append("=").append(indexEntry.getValue()).append(", namely ")
+								.append(otherIndex.get(indexEntry.getKey())).append(" for ").append(this).toString()));
             }
         }
 
@@ -316,7 +279,7 @@ public class DbRepresentation
         {
             if ( other.id != id )
             {
-                diff.add( "Id differs mine:" + id + ", other:" + other.id );
+                diff.add( new StringBuilder().append("Id differs mine:").append(id).append(", other:").append(other.id).toString() );
             }
             properties.compareWith( other.properties, diff );
             if ( index != null && other.index != null )
@@ -333,19 +296,13 @@ public class DbRepresentation
                 PropertiesRep otherRel = other.outRelationships.get( rel.entityId );
                 if ( otherRel == null )
                 {
-                    diff.add( "I have relationship " + rel.entityId + " which other don't" );
+                    diff.add( new StringBuilder().append("I have relationship ").append(rel.entityId).append(" which other don't").toString() );
                     continue;
                 }
                 rel.compareWith( otherRel, diff );
             }
 
-            for ( Long id : other.outRelationships.keySet() )
-            {
-                if ( !outRelationships.containsKey( id ) )
-                {
-                    diff.add( "Other has relationship " + id + " which I don't" );
-                }
-            }
+            other.outRelationships.keySet().stream().filter(id -> !outRelationships.containsKey( id )).forEach(id -> diff.add(new StringBuilder().append("Other has relationship ").append(id).append(" which I don't").toString()));
         }
 
         @Override
@@ -382,7 +339,8 @@ public class DbRepresentation
         @Override
         public String toString()
         {
-            return "<id: " + id + " props: " + properties + ", rels: " + outRelationships + ", index: " + index + ">";
+            return new StringBuilder().append("<id: ").append(id).append(" props: ").append(properties).append(", rels: ").append(outRelationships)
+					.append(", index: ").append(index).append(">").toString();
         }
     }
 
@@ -419,7 +377,8 @@ public class DbRepresentation
             boolean equals = props.equals( other.props );
             if ( !equals )
             {
-                diff.add( "Properties diff for " + entityToString + " mine:" + props + ", other:" + other.props );
+                diff.add( new StringBuilder().append("Properties diff for ").append(entityToString).append(" mine:").append(props).append(", other:")
+						.append(other.props).toString() );
             }
         }
 

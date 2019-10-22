@@ -46,151 +46,7 @@ public class DefaultPageCursorTracer implements PageCursorTracer
 
     private PageCacheTracer pageCacheTracer = PageCacheTracer.NULL;
     private DefaultPinEvent pinTracingEvent = new DefaultPinEvent();
-
-    @Override
-    public void init( PageCacheTracer pageCacheTracer )
-    {
-        this.pageCacheTracer = pageCacheTracer;
-    }
-
-    @Override
-    public void reportEvents()
-    {
-        if ( pins > 0 )
-        {
-            pageCacheTracer.pins( pins );
-        }
-        if ( unpins > 0 )
-        {
-            pageCacheTracer.unpins( unpins );
-        }
-        if ( hits > 0 )
-        {
-            pageCacheTracer.hits( hits );
-            historicalHits = historicalHits + hits;
-        }
-        if ( faults > 0 )
-        {
-            pageCacheTracer.faults( faults );
-            historicalFaults = historicalFaults + faults;
-        }
-        if ( bytesRead > 0 )
-        {
-            pageCacheTracer.bytesRead( bytesRead );
-        }
-        if ( evictions > 0 )
-        {
-            pageCacheTracer.evictions( evictions );
-        }
-        if ( evictionExceptions > 0 )
-        {
-            pageCacheTracer.evictionExceptions( evictionExceptions );
-        }
-        if ( bytesWritten > 0 )
-        {
-            pageCacheTracer.bytesWritten( bytesWritten );
-        }
-        if ( flushes > 0 )
-        {
-            pageCacheTracer.flushes( flushes );
-        }
-        reset();
-    }
-
-    @Override
-    public long accumulatedHits()
-    {
-        return historicalHits + hits;
-    }
-
-    @Override
-    public long accumulatedFaults()
-    {
-        return historicalFaults + faults;
-    }
-
-    private void reset()
-    {
-        pins = 0;
-        unpins = 0;
-        hits = 0;
-        faults = 0;
-        bytesRead = 0;
-        bytesWritten = 0;
-        evictions = 0;
-        evictionExceptions = 0;
-        flushes = 0;
-    }
-
-    @Override
-    public long faults()
-    {
-        return faults;
-    }
-
-    @Override
-    public long pins()
-    {
-        return pins;
-    }
-
-    @Override
-    public long unpins()
-    {
-        return unpins;
-    }
-
-    @Override
-    public long hits()
-    {
-        return hits;
-    }
-
-    @Override
-    public long bytesRead()
-    {
-        return bytesRead;
-    }
-
-    @Override
-    public long evictions()
-    {
-        return evictions;
-    }
-
-    @Override
-    public long evictionExceptions()
-    {
-        return evictionExceptions;
-    }
-
-    @Override
-    public long bytesWritten()
-    {
-        return bytesWritten;
-    }
-
-    @Override
-    public long flushes()
-    {
-        return flushes;
-    }
-
-    @Override
-    public double hitRatio()
-    {
-        return MathUtil.portion( hits(), faults() );
-    }
-
-    @Override
-    public PinEvent beginPin( boolean writeLock, long filePageId, PageSwapper swapper )
-    {
-        pins++;
-        pinTracingEvent.eventHits = 1;
-        return pinTracingEvent;
-    }
-
-    private final EvictionEvent evictionEvent = new EvictionEvent()
+	private final EvictionEvent evictionEvent = new EvictionEvent()
     {
         @Override
         public void setFilePageId( long filePageId )
@@ -225,8 +81,7 @@ public class DefaultPageCursorTracer implements PageCursorTracer
             evictions++;
         }
     };
-
-    private final PageFaultEvent pageFaultEvent = new PageFaultEvent()
+	private final PageFaultEvent pageFaultEvent = new PageFaultEvent()
     {
         @Override
         public void addBytesRead( long bytes )
@@ -257,8 +112,7 @@ public class DefaultPageCursorTracer implements PageCursorTracer
         {
         }
     };
-
-    private final FlushEventOpportunity flushEventOpportunity = new FlushEventOpportunity()
+	private final FlushEventOpportunity flushEventOpportunity = new FlushEventOpportunity()
     {
         @Override
         public FlushEvent beginFlush( long filePageId, long cachePageId, PageSwapper swapper )
@@ -266,8 +120,7 @@ public class DefaultPageCursorTracer implements PageCursorTracer
             return flushEvent;
         }
     };
-
-    private final FlushEvent flushEvent = new FlushEvent()
+	private final FlushEvent flushEvent = new FlushEvent()
     {
         @Override
         public void addBytesWritten( long bytes )
@@ -292,6 +145,149 @@ public class DefaultPageCursorTracer implements PageCursorTracer
         {
         }
     };
+
+	@Override
+    public void init( PageCacheTracer pageCacheTracer )
+    {
+        this.pageCacheTracer = pageCacheTracer;
+    }
+
+	@Override
+    public void reportEvents()
+    {
+        if ( pins > 0 )
+        {
+            pageCacheTracer.pins( pins );
+        }
+        if ( unpins > 0 )
+        {
+            pageCacheTracer.unpins( unpins );
+        }
+        if ( hits > 0 )
+        {
+            pageCacheTracer.hits( hits );
+            historicalHits += hits;
+        }
+        if ( faults > 0 )
+        {
+            pageCacheTracer.faults( faults );
+            historicalFaults += faults;
+        }
+        if ( bytesRead > 0 )
+        {
+            pageCacheTracer.bytesRead( bytesRead );
+        }
+        if ( evictions > 0 )
+        {
+            pageCacheTracer.evictions( evictions );
+        }
+        if ( evictionExceptions > 0 )
+        {
+            pageCacheTracer.evictionExceptions( evictionExceptions );
+        }
+        if ( bytesWritten > 0 )
+        {
+            pageCacheTracer.bytesWritten( bytesWritten );
+        }
+        if ( flushes > 0 )
+        {
+            pageCacheTracer.flushes( flushes );
+        }
+        reset();
+    }
+
+	@Override
+    public long accumulatedHits()
+    {
+        return historicalHits + hits;
+    }
+
+	@Override
+    public long accumulatedFaults()
+    {
+        return historicalFaults + faults;
+    }
+
+	private void reset()
+    {
+        pins = 0;
+        unpins = 0;
+        hits = 0;
+        faults = 0;
+        bytesRead = 0;
+        bytesWritten = 0;
+        evictions = 0;
+        evictionExceptions = 0;
+        flushes = 0;
+    }
+
+	@Override
+    public long faults()
+    {
+        return faults;
+    }
+
+	@Override
+    public long pins()
+    {
+        return pins;
+    }
+
+	@Override
+    public long unpins()
+    {
+        return unpins;
+    }
+
+	@Override
+    public long hits()
+    {
+        return hits;
+    }
+
+	@Override
+    public long bytesRead()
+    {
+        return bytesRead;
+    }
+
+	@Override
+    public long evictions()
+    {
+        return evictions;
+    }
+
+	@Override
+    public long evictionExceptions()
+    {
+        return evictionExceptions;
+    }
+
+	@Override
+    public long bytesWritten()
+    {
+        return bytesWritten;
+    }
+
+	@Override
+    public long flushes()
+    {
+        return flushes;
+    }
+
+	@Override
+    public double hitRatio()
+    {
+        return MathUtil.portion( hits(), faults() );
+    }
+
+	@Override
+    public PinEvent beginPin( boolean writeLock, long filePageId, PageSwapper swapper )
+    {
+        pins++;
+        pinTracingEvent.eventHits = 1;
+        return pinTracingEvent;
+    }
 
     private class DefaultPinEvent implements PinEvent
     {

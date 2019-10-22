@@ -422,28 +422,28 @@ public class BatchingNeoStores implements AutoCloseable, MemoryStatsVisitor.Visi
 
     public void startFlushingPageCache()
     {
-        if ( importConfiguration.sequentialBackgroundFlushing() )
-        {
-            if ( flusher != null )
-            {
-                throw new IllegalStateException( "Flusher already started" );
-            }
-            flusher = new PageCacheFlusher( pageCache );
-            flusher.start();
-        }
+        if (!importConfiguration.sequentialBackgroundFlushing()) {
+			return;
+		}
+		if ( flusher != null )
+		{
+		    throw new IllegalStateException( "Flusher already started" );
+		}
+		flusher = new PageCacheFlusher( pageCache );
+		flusher.start();
     }
 
     public void stopFlushingPageCache()
     {
-        if ( importConfiguration.sequentialBackgroundFlushing() )
-        {
-            if ( flusher == null )
-            {
-                throw new IllegalStateException( "Flusher not started" );
-            }
-            flusher.halt();
-            flusher = null;
-        }
+        if (!importConfiguration.sequentialBackgroundFlushing()) {
+			return;
+		}
+		if ( flusher == null )
+		{
+		    throw new IllegalStateException( "Flusher not started" );
+		}
+		flusher.halt();
+		flusher = null;
     }
 
     @Override

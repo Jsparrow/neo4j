@@ -141,25 +141,23 @@ public class IndexBackupIT
         assertThat( format( "Should have %d modified index segment files. Snapshot segment files are: %s",
                         NUMBER_OF_INDEXES, firstSnapshotFileNames ), firstSnapshotFileNames,
                 hasSize( NUMBER_OF_INDEXES ) );
-        for ( String fileName : firstSnapshotFileNames )
-        {
+        firstSnapshotFileNames.forEach(fileName -> {
             assertFalse( "Snapshot segments fileset should not have files from another snapshot set." +
                             describeFileSets( firstSnapshotFileNames, secondSnapshotFileNames ),
                     secondSnapshotFileNames.contains( fileName ) );
             String path = FilenameUtils.getFullPath( fileName );
-            assertTrue( "Snapshot should contain files for index in path: " + path + "." +
-                            describeFileSets( firstSnapshotFileNames, secondSnapshotFileNames ),
+            assertTrue( new StringBuilder().append("Snapshot should contain files for index in path: ").append(path).append(".").append(describeFileSets( firstSnapshotFileNames, secondSnapshotFileNames )).toString(),
                     secondSnapshotFileNames.stream().anyMatch( name -> name.startsWith( path ) ) );
             assertTrue( format( "Snapshot segment file '%s' should exist.", fileName ),
                     fileSystem.fileExists( new File( fileName ) ) );
-        }
+        });
     }
 
     private void removeOldNodes( LongStream idRange )
     {
         try ( Transaction transaction = database.beginTx() )
         {
-            idRange.mapToObj( id -> database.getNodeById( id ) ).forEach( Node::delete );
+            idRange.mapToObj( database::getNodeById ).forEach( Node::delete );
             transaction.success();
         }
     }
@@ -168,7 +166,7 @@ public class IndexBackupIT
     {
         try ( Transaction transaction = database.beginTx() )
         {
-            List<Node> nodes = idRange.mapToObj( id -> database.getNodeById( id ) ).collect( Collectors.toList() );
+            List<Node> nodes = idRange.mapToObj( database::getNodeById ).collect( Collectors.toList() );
             for ( int i = 0; i < NUMBER_OF_INDEXES; i++ )
             {
                 String propertyName = PROPERTY_PREFIX + i;
@@ -180,8 +178,7 @@ public class IndexBackupIT
 
     private String describeFileSets( Set<String> firstFileSet, Set<String> secondFileSet )
     {
-        return "First snapshot files are: " + firstFileSet + System.lineSeparator() +
-                "second snapshot files are: " + secondFileSet;
+        return new StringBuilder().append("First snapshot files are: ").append(firstFileSet).append(System.lineSeparator()).append("second snapshot files are: ").append(secondFileSet).toString();
     }
 
     private Set<String> getFileNames( ResourceIterator<File> files )

@@ -53,7 +53,183 @@ public class TransactionHandleRegistry implements TransactionRegistry
         this.log = logProvider.getLog( getClass() );
     }
 
-    private abstract static class TransactionMarker
+    @Override
+    public long begin( TransactionHandle handle )
+    {
+        long id = idGenerator.incrementAndGet();
+        if ( null == registry.putIfAbsent( id, new ActiveTransaction( handle ) ) )
+        {
+            return id;
+        }
+        else
+        {
+            throw new IllegalStateException( "Attempt to begin transaction for id that was already registered" );
+        }
+    }
+
+	@Override
+    public long release( long id, TransactionHandle transactionHandle )
+    {
+        TransactionMarker marker = registry.get( id );
+
+        if ( null == marker )
+        {
+            throw new IllegalStateException( "Trying to suspend unregistered transaction" );
+        }
+
+        if ( marker.isSuspended() )
+        {
+            throw new IllegalStateException( "Trying to suspend transaction that was already suspended" );
+        }
+
+        SuspendedTransaction suspendedTx = new SuspendedTransaction( marker.getActiveTransaction(), transactionHandle );
+        if ( !registry.replace( id, marker, suspendedTx ) )
+        {
+            throw new IllegalStateException( "Trying to suspend transaction that has been concurrently suspended" );
+        }
+        return computeNewExpiryTime( suspendedTx.getLastActiveTimestamp() );
+    }
+
+	private long computeNewExpiryTime( long lastActiveTimestamp )
+    {
+        return  lastActiveTimestamp + timeoutMillis;
+    }
+
+	@Override
+    public TransactionHandle acquire( long id ) throws TransactionLifecycleException
+    {
+        TransactionMarker marker = registry.get( id );
+
+        if ( null == marker )
+        {
+            throw new InvalidTransactionId();
+        }
+
+        SuspendedTransaction transaction = marker.getSuspendedTransaction();
+        if ( registry.replace( id, marker, marker.getActiveTransaction() ) )
+        {
+            return transaction.transactionHandle;
+        }
+        else
+        {
+            throw new InvalidConcurrentTransactionAccess();
+        }
+    }
+
+	@Override
+    public void forget( long id )
+    {
+        TransactionMarker marker = registry.get( id );
+
+        if ( null == marker )
+        {
+            throw new IllegalStateException( "Could not finish unregistered transaction" );
+        }
+
+        if ( marker.isSuspended() )
+        {
+            throw new IllegalStateException( "Cannot finish suspended registered transaction" );
+        }
+
+        if ( !registry.remove( id, marker ) )
+        {
+            throw new IllegalStateException(
+                    "Trying to finish transaction that has been concurrently finished or suspended" );
+        }
+    }
+
+	@Override
+    public TransactionHandle terminate( long id ) throws TransactionLifecycleException
+    {
+        TransactionMarker marker = registry.get( id );
+        if ( null == marker )
+        {
+            throw new InvalidTransactionId();
+        }
+
+        TransactionTerminationHandle handle = marker.getActiveTransaction().getTerminationHandle();
+        handle.terminate();
+
+        try
+        {
+            SuspendedTransaction transaction = marker.getSuspendedTransaction();
+            if ( registry.replace( id, marker, marker.getActiveTransaction() ) )
+            {
+                return transaction.transactionHandle;
+            }
+        }
+        catch ( InvalidConcurrentTransactionAccess exception )
+        {
+            // We could not acquire the transaction. Let the other request clean up.
+        }
+        return null;
+    }
+
+	@Override
+    public void rollbackAllSuspendedTransactions()
+    {
+        rollbackSuspended( Predicates.alwaysTrue() );
+    }
+
+	public void rollbackSuspendedTransactionsIdleSince( final long oldestLastActiveTime )
+    {
+        rollbackSuspended( item ->
+        {
+            try
+            {
+                SuspendedTransaction transaction = item.getSuspendedTransaction();
+                return transaction.lastActiveTimestamp < oldestLastActiveTime;
+            }
+            catch ( InvalidConcurrentTransactionAccess concurrentTransactionAccessError )
+            {
+                throw new RuntimeException( concurrentTransactionAccessError );
+            }
+        } );
+    }
+
+	private void rollbackSuspended( Predicate<TransactionMarker> predicate )
+    {
+        Set<Long> candidateTransactionIdsToRollback = new HashSet<>();
+
+        registry.entrySet().forEach(entry -> {
+            TransactionMarker marker = entry.getValue();
+            if ( marker.isSuspended() && predicate.test( marker ) )
+            {
+                candidateTransactionIdsToRollback.add( entry.getKey() );
+            }
+        });
+
+        for ( long id : candidateTransactionIdsToRollback )
+        {
+            TransactionHandle handle;
+            try
+            {
+                handle = acquire( id );
+            }
+            catch ( TransactionLifecycleException invalidTransactionId )
+            {
+                // Allow this - someone snatched the transaction from under our feet,
+                continue;
+            }
+            try
+            {
+                handle.forceRollback();
+                log.info(
+                        format( "Transaction with id %d has been automatically rolled back due to transaction timeout.",
+                                id ) );
+            }
+            catch ( Throwable e )
+            {
+                log.error( format( "Transaction with id %d failed to roll back.", id ), e );
+            }
+            finally
+            {
+                forget( id );
+            }
+        }
+    }
+
+	private abstract static class TransactionMarker
     {
         abstract ActiveTransaction getActiveTransaction();
 
@@ -129,183 +305,6 @@ public class TransactionHandleRegistry implements TransactionRegistry
         long getLastActiveTimestamp()
         {
             return lastActiveTimestamp;
-        }
-    }
-
-    @Override
-    public long begin( TransactionHandle handle )
-    {
-        long id = idGenerator.incrementAndGet();
-        if ( null == registry.putIfAbsent( id, new ActiveTransaction( handle ) ) )
-        {
-            return id;
-        }
-        else
-        {
-            throw new IllegalStateException( "Attempt to begin transaction for id that was already registered" );
-        }
-    }
-
-    @Override
-    public long release( long id, TransactionHandle transactionHandle )
-    {
-        TransactionMarker marker = registry.get( id );
-
-        if ( null == marker )
-        {
-            throw new IllegalStateException( "Trying to suspend unregistered transaction" );
-        }
-
-        if ( marker.isSuspended() )
-        {
-            throw new IllegalStateException( "Trying to suspend transaction that was already suspended" );
-        }
-
-        SuspendedTransaction suspendedTx = new SuspendedTransaction( marker.getActiveTransaction(), transactionHandle );
-        if ( !registry.replace( id, marker, suspendedTx ) )
-        {
-            throw new IllegalStateException( "Trying to suspend transaction that has been concurrently suspended" );
-        }
-        return computeNewExpiryTime( suspendedTx.getLastActiveTimestamp() );
-    }
-
-    private long computeNewExpiryTime( long lastActiveTimestamp )
-    {
-        return  lastActiveTimestamp + timeoutMillis;
-    }
-
-    @Override
-    public TransactionHandle acquire( long id ) throws TransactionLifecycleException
-    {
-        TransactionMarker marker = registry.get( id );
-
-        if ( null == marker )
-        {
-            throw new InvalidTransactionId();
-        }
-
-        SuspendedTransaction transaction = marker.getSuspendedTransaction();
-        if ( registry.replace( id, marker, marker.getActiveTransaction() ) )
-        {
-            return transaction.transactionHandle;
-        }
-        else
-        {
-            throw new InvalidConcurrentTransactionAccess();
-        }
-    }
-
-    @Override
-    public void forget( long id )
-    {
-        TransactionMarker marker = registry.get( id );
-
-        if ( null == marker )
-        {
-            throw new IllegalStateException( "Could not finish unregistered transaction" );
-        }
-
-        if ( marker.isSuspended() )
-        {
-            throw new IllegalStateException( "Cannot finish suspended registered transaction" );
-        }
-
-        if ( !registry.remove( id, marker ) )
-        {
-            throw new IllegalStateException(
-                    "Trying to finish transaction that has been concurrently finished or suspended" );
-        }
-    }
-
-    @Override
-    public TransactionHandle terminate( long id ) throws TransactionLifecycleException
-    {
-        TransactionMarker marker = registry.get( id );
-        if ( null == marker )
-        {
-            throw new InvalidTransactionId();
-        }
-
-        TransactionTerminationHandle handle = marker.getActiveTransaction().getTerminationHandle();
-        handle.terminate();
-
-        try
-        {
-            SuspendedTransaction transaction = marker.getSuspendedTransaction();
-            if ( registry.replace( id, marker, marker.getActiveTransaction() ) )
-            {
-                return transaction.transactionHandle;
-            }
-        }
-        catch ( InvalidConcurrentTransactionAccess exception )
-        {
-            // We could not acquire the transaction. Let the other request clean up.
-        }
-        return null;
-    }
-
-    @Override
-    public void rollbackAllSuspendedTransactions()
-    {
-        rollbackSuspended( Predicates.alwaysTrue() );
-    }
-
-    public void rollbackSuspendedTransactionsIdleSince( final long oldestLastActiveTime )
-    {
-        rollbackSuspended( item ->
-        {
-            try
-            {
-                SuspendedTransaction transaction = item.getSuspendedTransaction();
-                return transaction.lastActiveTimestamp < oldestLastActiveTime;
-            }
-            catch ( InvalidConcurrentTransactionAccess concurrentTransactionAccessError )
-            {
-                throw new RuntimeException( concurrentTransactionAccessError );
-            }
-        } );
-    }
-
-    private void rollbackSuspended( Predicate<TransactionMarker> predicate )
-    {
-        Set<Long> candidateTransactionIdsToRollback = new HashSet<>();
-
-        for ( Map.Entry<Long, TransactionMarker> entry : registry.entrySet() )
-        {
-            TransactionMarker marker = entry.getValue();
-            if ( marker.isSuspended() && predicate.test( marker ) )
-            {
-                candidateTransactionIdsToRollback.add( entry.getKey() );
-            }
-        }
-
-        for ( long id : candidateTransactionIdsToRollback )
-        {
-            TransactionHandle handle;
-            try
-            {
-                handle = acquire( id );
-            }
-            catch ( TransactionLifecycleException invalidTransactionId )
-            {
-                // Allow this - someone snatched the transaction from under our feet,
-                continue;
-            }
-            try
-            {
-                handle.forceRollback();
-                log.info(
-                        format( "Transaction with id %d has been automatically rolled back due to transaction timeout.",
-                                id ) );
-            }
-            catch ( Throwable e )
-            {
-                log.error( format( "Transaction with id %d failed to roll back.", id ), e );
-            }
-            finally
-            {
-                forget( id );
-            }
         }
     }
 }

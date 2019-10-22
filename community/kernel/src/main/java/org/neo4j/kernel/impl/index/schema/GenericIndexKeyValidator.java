@@ -52,16 +52,16 @@ class GenericIndexKeyValidator implements Validator<Value[]>
     public void validate( Value[] values )
     {
         int worstCaseSize = worstCaseLength( values );
-        if ( worstCaseSize > maxLength )
-        {
-            int size = actualLength( values );
-            if ( size > maxLength )
-            {
-                throw new IllegalArgumentException( format(
-                        "Property value size:%d of %s is too large to index into this particular index. Please see index documentation for limitations.",
-                        size, Arrays.toString( values ) ) );
-            }
-        }
+        if (worstCaseSize <= maxLength) {
+			return;
+		}
+		int size = actualLength( values );
+		if ( size > maxLength )
+		{
+		    throw new IllegalArgumentException( format(
+		            "Property value size:%d of %s is too large to index into this particular index. Please see index documentation for limitations.",
+		            size, Arrays.toString( values ) ) );
+		}
     }
 
     /**

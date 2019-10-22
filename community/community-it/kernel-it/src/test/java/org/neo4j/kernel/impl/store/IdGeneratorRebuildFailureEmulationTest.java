@@ -175,7 +175,67 @@ public class IdGeneratorRebuildFailureEmulationTest
         return count;
     }
 
-    private static class FileSystem extends EphemeralFileSystemAbstraction
+    @Test
+    public void neostore()
+    {
+        performTest( databaseLayout.idMetadataStore() );
+    }
+
+	@Test
+    public void neostore_nodestore_db()
+    {
+        performTest( databaseLayout.idNodeStore() );
+    }
+
+	@Test
+    public void neostore_propertystore_db_arrays()
+    {
+        performTest( databaseLayout.idPropertyArrayStore() );
+    }
+
+	@Test
+    public void neostore_propertystore_db()
+    {
+        performTest( databaseLayout.idPropertyStore() );
+    }
+
+	@Test
+    public void neostore_propertystore_db_index()
+    {
+        performTest( databaseLayout.idPropertyKeyTokenStore() );
+    }
+
+	@Test
+    public void neostore_propertystore_db_index_keys()
+    {
+        performTest( databaseLayout.idPropertyKeyTokenNamesStore() );
+    }
+
+	@Test
+    public void neostore_propertystore_db_strings()
+    {
+        performTest( databaseLayout.idPropertyStringStore() );
+    }
+
+	@Test
+    public void neostore_relationshipstore_db()
+    {
+        performTest( databaseLayout.idRelationshipStore() );
+    }
+
+	@Test
+    public void neostore_relationshiptypestore_db()
+    {
+        performTest( databaseLayout.idRelationshipTypeTokenStore() );
+    }
+
+	@Test
+    public void neostore_relationshiptypestore_db_names()
+    {
+        performTest( databaseLayout.idRelationshipTypeTokenNamesStore() );
+    }
+
+	private static class FileSystem extends EphemeralFileSystemAbstraction
     {
         void disposeAndAssertNoOpenFiles() throws Exception
         {
@@ -220,65 +280,5 @@ public class IdGeneratorRebuildFailureEmulationTest
                 }
             }.initFacade( databasesRoot, params, dependencies, this );
         }
-    }
-
-    @Test
-    public void neostore()
-    {
-        performTest( databaseLayout.idMetadataStore() );
-    }
-
-    @Test
-    public void neostore_nodestore_db()
-    {
-        performTest( databaseLayout.idNodeStore() );
-    }
-
-    @Test
-    public void neostore_propertystore_db_arrays()
-    {
-        performTest( databaseLayout.idPropertyArrayStore() );
-    }
-
-    @Test
-    public void neostore_propertystore_db()
-    {
-        performTest( databaseLayout.idPropertyStore() );
-    }
-
-    @Test
-    public void neostore_propertystore_db_index()
-    {
-        performTest( databaseLayout.idPropertyKeyTokenStore() );
-    }
-
-    @Test
-    public void neostore_propertystore_db_index_keys()
-    {
-        performTest( databaseLayout.idPropertyKeyTokenNamesStore() );
-    }
-
-    @Test
-    public void neostore_propertystore_db_strings()
-    {
-        performTest( databaseLayout.idPropertyStringStore() );
-    }
-
-    @Test
-    public void neostore_relationshipstore_db()
-    {
-        performTest( databaseLayout.idRelationshipStore() );
-    }
-
-    @Test
-    public void neostore_relationshiptypestore_db()
-    {
-        performTest( databaseLayout.idRelationshipTypeTokenStore() );
-    }
-
-    @Test
-    public void neostore_relationshiptypestore_db_names()
-    {
-        performTest( databaseLayout.idRelationshipTypeTokenNamesStore() );
     }
 }

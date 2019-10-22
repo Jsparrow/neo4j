@@ -82,7 +82,7 @@ public class StoreProcessorTest
                 stores.builder().build().getNodeStore() )
         {
             @Override
-            public void getRecordByCursor( long id, NodeRecord target, RecordLoad mode, PageCursor cursor ) throws InvalidRecordException
+            public void getRecordByCursor( long id, NodeRecord target, RecordLoad mode, PageCursor cursor )
             {
                 if ( id == 3 )
                 {

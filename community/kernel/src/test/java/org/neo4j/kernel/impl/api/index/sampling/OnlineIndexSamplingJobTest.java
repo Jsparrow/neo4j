@@ -44,7 +44,18 @@ import static org.neo4j.storageengine.api.schema.IndexDescriptorFactory.forSchem
 
 public class OnlineIndexSamplingJobTest
 {
-    @Test
+    private final LogProvider logProvider = NullLogProvider.getInstance();
+	private final long indexId = 1;
+	private final IndexProxy indexProxy = mock( IndexProxy.class );
+	private final IndexStoreView indexStoreView = mock( IndexStoreView.class );
+	private final CapableIndexDescriptor indexDescriptor =
+            forSchema( forLabel( 1, 2 ), IndexProviderDescriptor.UNDECIDED ).withId( indexId ).withoutCapabilities();
+	private final IndexReader indexReader = mock( IndexReader.class );
+	private final IndexSampler indexSampler = mock( IndexSampler.class );
+	private final long indexUniqueValues = 21L;
+	private final long indexSize = 23L;
+
+	@Test
     public void shouldSampleTheIndexAndStoreTheValueWhenTheIndexIsOnline()
     {
         // given
@@ -59,7 +70,7 @@ public class OnlineIndexSamplingJobTest
         verifyNoMoreInteractions( indexStoreView );
     }
 
-    @Test
+	@Test
     public void shouldSampleTheIndexButDoNotStoreTheValuesIfTheIndexIsNotOnline()
     {
         // given
@@ -73,19 +84,7 @@ public class OnlineIndexSamplingJobTest
         verifyNoMoreInteractions( indexStoreView );
     }
 
-    private final LogProvider logProvider = NullLogProvider.getInstance();
-    private final long indexId = 1;
-    private final IndexProxy indexProxy = mock( IndexProxy.class );
-    private final IndexStoreView indexStoreView = mock( IndexStoreView.class );
-    private final CapableIndexDescriptor indexDescriptor =
-            forSchema( forLabel( 1, 2 ), IndexProviderDescriptor.UNDECIDED ).withId( indexId ).withoutCapabilities();
-    private final IndexReader indexReader = mock( IndexReader.class );
-    private final IndexSampler indexSampler = mock( IndexSampler.class );
-
-    private final long indexUniqueValues = 21L;
-    private final long indexSize = 23L;
-
-    @Before
+	@Before
     public void setup() throws IndexNotFoundKernelException
     {
         when( indexProxy.getDescriptor() ).thenReturn( indexDescriptor );

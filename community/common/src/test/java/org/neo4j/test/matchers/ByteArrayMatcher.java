@@ -26,13 +26,19 @@ public class ByteArrayMatcher extends TypeSafeDiagnosingMatcher<byte[]>
 {
     private static final char[] hexadecimals =
             {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+	private final byte[] expected;
 
-    public static ByteArrayMatcher byteArray( byte... expected )
+	public ByteArrayMatcher( byte[] expected )
+    {
+        this.expected = expected;
+    }
+
+	public static ByteArrayMatcher byteArray( byte... expected )
     {
         return new ByteArrayMatcher( expected );
     }
 
-    public static ByteArrayMatcher byteArray( int... expected )
+	public static ByteArrayMatcher byteArray( int... expected )
     {
         byte[] bytes = new byte[expected.length];
         for ( int i = 0; i < expected.length; i++ )
@@ -42,14 +48,7 @@ public class ByteArrayMatcher extends TypeSafeDiagnosingMatcher<byte[]>
         return byteArray( bytes );
     }
 
-    private final byte[] expected;
-
-    public ByteArrayMatcher( byte[] expected )
-    {
-        this.expected = expected;
-    }
-
-    @Override
+	@Override
     protected boolean matchesSafely( byte[] actual, Description description )
     {
         if ( actual.length != expected.length )
@@ -68,13 +67,13 @@ public class ByteArrayMatcher extends TypeSafeDiagnosingMatcher<byte[]>
         return true;
     }
 
-    @Override
+	@Override
     public void describeTo( Description description )
     {
         describe( expected, description );
     }
 
-    private void describe( byte[] bytes, Description description )
+	private void describe( byte[] bytes, Description description )
     {
         String prefix = "byte[] { ";
         String suffix = "}";
@@ -82,9 +81,8 @@ public class ByteArrayMatcher extends TypeSafeDiagnosingMatcher<byte[]>
 
         sb.append( prefix );
         //noinspection ForLoopReplaceableByForEach
-        for ( int i = 0; i < bytes.length; i++ )
-        {
-            int b = bytes[i] & 0xFF;
+		for (byte aByte : bytes) {
+            int b = aByte & 0xFF;
             char hi = hexadecimals[b >> 4];
             char lo = hexadecimals[b & 0x0F];
             sb.append( hi ).append( lo ).append( ' ' );

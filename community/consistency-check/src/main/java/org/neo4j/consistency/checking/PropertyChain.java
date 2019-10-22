@@ -48,39 +48,38 @@ public class PropertyChain<RECORD extends PrimitiveRecord, REPORT extends Consis
     public void checkConsistency( RECORD record, CheckerEngine<RECORD, REPORT> engine,
                                   RecordAccess records )
     {
-        if ( !Record.NO_NEXT_PROPERTY.is( record.getNextProp() ) )
-        {
-            // Check the whole chain here instead of scattered during multiple checks.
-            // This type of check obviously favors chains with good locality, performance-wise.
-            Iterator<PropertyRecord> props = records.rawPropertyChain( record.getNextProp() );
-            PropertyRecord firstProp = props.next();
-            if ( !Record.NO_PREVIOUS_PROPERTY.is( firstProp.getPrevProp() ) )
-            {
-                engine.report().propertyNotFirstInChain( firstProp );
-            }
+        if (Record.NO_NEXT_PROPERTY.is( record.getNextProp() )) {
+			return;
+		}
+		// Check the whole chain here instead of scattered during multiple checks.
+		// This type of check obviously favors chains with good locality, performance-wise.
+		Iterator<PropertyRecord> props = records.rawPropertyChain( record.getNextProp() );
+		PropertyRecord firstProp = props.next();
+		if ( !Record.NO_PREVIOUS_PROPERTY.is( firstProp.getPrevProp() ) )
+		{
+		    engine.report().propertyNotFirstInChain( firstProp );
+		}
+		final MutableIntSet keys = new IntHashSet();
+		final MutableLongSet propertyRecordIds = new LongHashSet( 8 );
+		propertyRecordIds.add( firstProp.getId() );
+		try ( MandatoryProperties.Check<RECORD,REPORT> mandatory = mandatoryProperties.apply( record ) )
+		{
+		    checkChainItem( firstProp, engine, keys, mandatory );
 
-            final MutableIntSet keys = new IntHashSet();
-            final MutableLongSet propertyRecordIds = new LongHashSet( 8 );
-            propertyRecordIds.add( firstProp.getId() );
-            try ( MandatoryProperties.Check<RECORD,REPORT> mandatory = mandatoryProperties.apply( record ) )
-            {
-                checkChainItem( firstProp, engine, keys, mandatory );
-
-                // Check the whole chain here. We also take the opportunity to check mandatory property constraints.
-                PropertyRecord prop = firstProp;
-                while ( props.hasNext() )
-                {
-                    PropertyRecord nextProp = props.next();
-                    if ( !propertyRecordIds.add( nextProp.getId() ) )
-                    {
-                        engine.report().propertyChainContainsCircularReference( prop );
-                        break;
-                    }
-                    checkChainItem( nextProp, engine, keys, mandatory );
-                    prop = nextProp;
-                }
-            }
-        }
+		    // Check the whole chain here. We also take the opportunity to check mandatory property constraints.
+		    PropertyRecord prop = firstProp;
+		    while ( props.hasNext() )
+		    {
+		        PropertyRecord nextProp = props.next();
+		        if ( !propertyRecordIds.add( nextProp.getId() ) )
+		        {
+		            engine.report().propertyChainContainsCircularReference( prop );
+		            break;
+		        }
+		        checkChainItem( nextProp, engine, keys, mandatory );
+		        prop = nextProp;
+		    }
+		}
     }
 
     private void checkChainItem( PropertyRecord property, CheckerEngine<RECORD,REPORT> engine,

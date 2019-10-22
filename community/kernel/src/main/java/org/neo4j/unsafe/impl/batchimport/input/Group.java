@@ -27,23 +27,25 @@ import org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdMapper;
  */
 public interface Group
 {
-    /**
+    Group GLOBAL = new Adapter( 0, "global id space" );
+
+	/**
      * @return id of this group, used for identifying this group.
      */
     int id();
 
-    /**
+	/**
      * @return the name of this group.
      */
     String name();
 
-    /**
+	/**
      * @return {@link #name()}.
      */
     @Override
     String toString();
 
-    class Adapter implements Group
+	class Adapter implements Group
     {
         private final int id;
         private final String name;
@@ -69,7 +71,7 @@ public interface Group
         @Override
         public String toString()
         {
-            return "(" + name + "," + id + ")";
+            return new StringBuilder().append("(").append(name).append(",").append(id).append(")").toString();
         }
 
         @Override
@@ -87,6 +89,4 @@ public interface Group
             return obj instanceof Group && ((Group)obj).id() == id;
         }
     }
-
-    Group GLOBAL = new Adapter( 0, "global id space" );
 }

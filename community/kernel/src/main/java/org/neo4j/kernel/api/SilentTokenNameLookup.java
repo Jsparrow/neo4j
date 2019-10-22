@@ -50,7 +50,7 @@ public final class SilentTokenNameLookup implements TokenNameLookup
         }
         catch ( LabelNotFoundKernelException e )
         {
-            return "[" + labelId + "]";
+            return new StringBuilder().append("[").append(labelId).append("]").toString();
         }
     }
 
@@ -66,7 +66,7 @@ public final class SilentTokenNameLookup implements TokenNameLookup
         }
         catch ( KernelException e )
         {
-            return "[" + relTypeId + "]";
+            return new StringBuilder().append("[").append(relTypeId).append("]").toString();
         }
     }
 
@@ -82,7 +82,7 @@ public final class SilentTokenNameLookup implements TokenNameLookup
         }
         catch ( PropertyKeyIdNotFoundKernelException e )
         {
-            return "[" + propertyKeyId + "]";
+            return new StringBuilder().append("[").append(propertyKeyId).append("]").toString();
         }
     }
 }

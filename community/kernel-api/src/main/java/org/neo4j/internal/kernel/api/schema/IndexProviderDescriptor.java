@@ -36,7 +36,7 @@ public class IndexProviderDescriptor
         {
             throw new IllegalArgumentException( "null provider key prohibited" );
         }
-        if ( key.length() == 0 )
+        if ( key.isEmpty() )
         {
             throw new IllegalArgumentException( "empty provider key prohibited" );
         }
@@ -64,7 +64,7 @@ public class IndexProviderDescriptor
      */
     public String name()
     {
-        return key + "-" + version;
+        return new StringBuilder().append(key).append("-").append(version).toString();
     }
 
     @Override
@@ -76,17 +76,16 @@ public class IndexProviderDescriptor
     @Override
     public boolean equals( Object obj )
     {
-        if ( obj instanceof IndexProviderDescriptor )
-        {
-            IndexProviderDescriptor otherDescriptor = (IndexProviderDescriptor) obj;
-            return key.equals( otherDescriptor.getKey() ) && version.equals( otherDescriptor.getVersion() );
-        }
-        return false;
+        if (!(obj instanceof IndexProviderDescriptor)) {
+			return false;
+		}
+		IndexProviderDescriptor otherDescriptor = (IndexProviderDescriptor) obj;
+		return key.equals( otherDescriptor.getKey() ) && version.equals( otherDescriptor.getVersion() );
     }
 
     @Override
     public String toString()
     {
-        return "{key=" + key + ", version=" + version + "}";
+        return new StringBuilder().append("{key=").append(key).append(", version=").append(version).append("}").toString();
     }
 }

@@ -35,68 +35,50 @@ import static org.neo4j.helpers.Exceptions.withMessage;
 
 public class BadCollector implements Collector
 {
-    /**
-     * Introduced to avoid creating an exception for every reported bad thing, since it can be
-     * quite the performance hogger for scenarios where there are many many bad things to collect.
-     */
-    abstract static class ProblemReporter extends AsyncEvent
-    {
-        private final int type;
-
-        ProblemReporter( int type )
-        {
-            this.type = type;
-        }
-
-        int type()
-        {
-            return type;
-        }
-
-        abstract String message();
-
-        abstract InputException exception();
-    }
-
-    interface Monitor
-    {
-        default void beforeProcessEvent()
-        {
-        }
-    }
-
     static final Monitor NO_MONITOR = new Monitor()
     {
     };
 
-    static final int BAD_RELATIONSHIPS = 0x1;
-    static final int DUPLICATE_NODES = 0x2;
-    static final int EXTRA_COLUMNS = 0x4;
+	static final int BAD_RELATIONSHIPS = 0x1;
 
-    static final int COLLECT_ALL = BAD_RELATIONSHIPS | DUPLICATE_NODES | EXTRA_COLUMNS;
-    public static final long UNLIMITED_TOLERANCE = -1;
-    static final int DEFAULT_BACK_PRESSURE_THRESHOLD = 10_000;
+	static final int DUPLICATE_NODES = 0x2;
 
-    private final PrintStream out;
-    private final long tolerance;
-    private final int collect;
-    private final int backPressureThreshold;
-    private final boolean logBadEntries;
-    private final Monitor monitor;
+	static final int EXTRA_COLUMNS = 0x4;
 
-    // volatile since one importer thread calls collect(), where this value is incremented and later the "main"
+	static final int COLLECT_ALL = BAD_RELATIONSHIPS | DUPLICATE_NODES | EXTRA_COLUMNS;
+
+	public static final long UNLIMITED_TOLERANCE = -1;
+
+	static final int DEFAULT_BACK_PRESSURE_THRESHOLD = 10_000;
+
+	private final PrintStream out;
+
+	private final long tolerance;
+
+	private final int collect;
+
+	private final int backPressureThreshold;
+
+	private final boolean logBadEntries;
+
+	private final Monitor monitor;
+
+	// volatile since one importer thread calls collect(), where this value is incremented and later the "main"
     // thread calls badEntries() to get a count.
     private final AtomicLong badEntries = new AtomicLong();
-    private final AsyncEvents<ProblemReporter> logger;
-    private final Thread eventProcessor;
-    private final LongAdder queueSize = new LongAdder();
 
-    public BadCollector( OutputStream out, long tolerance, int collect )
+	private final AsyncEvents<ProblemReporter> logger;
+
+	private final Thread eventProcessor;
+
+	private final LongAdder queueSize = new LongAdder();
+
+	public BadCollector( OutputStream out, long tolerance, int collect )
     {
         this( out, tolerance, collect, DEFAULT_BACK_PRESSURE_THRESHOLD, false, NO_MONITOR );
     }
 
-    BadCollector( OutputStream out, long tolerance, int collect, int backPressureThreshold, boolean skipBadEntriesLogging, Monitor monitor )
+	BadCollector( OutputStream out, long tolerance, int collect, int backPressureThreshold, boolean skipBadEntriesLogging, Monitor monitor )
     {
         this.out = new PrintStream( out );
         this.tolerance = tolerance;
@@ -109,39 +91,39 @@ public class BadCollector implements Collector
         this.eventProcessor.start();
     }
 
-    private void processEvent( ProblemReporter report )
+	private void processEvent( ProblemReporter report )
     {
         monitor.beforeProcessEvent();
         out.println( report.message() );
         queueSize.add( -1 );
     }
 
-    @Override
+	@Override
     public void collectBadRelationship( Object startId, String startIdGroup, String type, Object endId,
             String endIdGroup, Object specificValue )
     {
         collect( new RelationshipsProblemReporter( startId, startIdGroup, type, endId, endIdGroup, specificValue ) );
     }
 
-    @Override
+	@Override
     public void collectExtraColumns( final String source, final long row, final String value )
     {
         collect( new ExtraColumnsProblemReporter( row, source, value ) );
     }
 
-    @Override
+	@Override
     public void collectDuplicateNode( final Object id, long actualId, final String group )
     {
         collect( new NodesProblemReporter( id, group ) );
     }
 
-    @Override
+	@Override
     public boolean isCollectingBadRelationships()
     {
         return collects( BAD_RELATIONSHIPS );
     }
 
-    private void collect( ProblemReporter report )
+	private void collect( ProblemReporter report )
     {
         boolean collect = collects( report.type() );
         if ( collect )
@@ -170,7 +152,7 @@ public class BadCollector implements Collector
                 badEntries.longValue(), exception.getMessage() ) ) : exception;
     }
 
-    @Override
+	@Override
     public void close()
     {
         logger.shutdown();
@@ -190,15 +172,45 @@ public class BadCollector implements Collector
         }
     }
 
-    @Override
+	@Override
     public long badEntries()
     {
         return badEntries.get();
     }
 
-    private boolean collects( int bit )
+	private boolean collects( int bit )
     {
         return (collect & bit) != 0;
+    }
+
+	/**
+     * Introduced to avoid creating an exception for every reported bad thing, since it can be
+     * quite the performance hogger for scenarios where there are many many bad things to collect.
+     */
+    abstract static class ProblemReporter extends AsyncEvent
+    {
+        private final int type;
+
+        ProblemReporter( int type )
+        {
+            this.type = type;
+        }
+
+        int type()
+        {
+            return type;
+        }
+
+        abstract String message();
+
+        abstract InputException exception();
+    }
+
+    interface Monitor
+    {
+        default void beforeProcessEvent()
+        {
+        }
     }
 
     private static class RelationshipsProblemReporter extends ProblemReporter

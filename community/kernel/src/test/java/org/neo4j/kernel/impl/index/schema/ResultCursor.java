@@ -41,13 +41,12 @@ class ResultCursor implements RawCursor<Hit<StringIndexKey,NativeIndexValue>,IOE
     @Override
     public boolean next()
     {
-        if ( iterator.hasNext() )
-        {
-            current = iterator.next();
-            pos++;
-            return true;
-        }
-        return false;
+        if (!iterator.hasNext()) {
+			return false;
+		}
+		current = iterator.next();
+		pos++;
+		return true;
     }
 
     @Override

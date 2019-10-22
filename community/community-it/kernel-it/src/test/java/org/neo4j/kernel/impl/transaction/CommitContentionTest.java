@@ -171,19 +171,17 @@ public class CommitContentionTest
         {
             super.transactionFinished( committed, write );
 
-            if ( committed )
-            {
-                // skip signal and waiting for second transaction
-                if ( skip )
-                {
-                    return;
-                }
-                skip = true;
-
-                signalFirstTransactionStartedPushing();
-
-                waitForSecondTransactionToFinish();
-            }
+            if (!committed) {
+				return;
+			}
+			// skip signal and waiting for second transaction
+			if ( skip )
+			{
+			    return;
+			}
+			skip = true;
+			signalFirstTransactionStartedPushing();
+			waitForSecondTransactionToFinish();
         }
     }
 }

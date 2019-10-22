@@ -68,7 +68,7 @@ public abstract class LuceneExplicitIndex implements ExplicitIndex
     static final String KEY_START_NODE_ID = "_start_node_id_";
     static final String KEY_END_NODE_ID = "_end_node_id_";
 
-    private static Set<String> FORBIDDEN_KEYS = new HashSet<>( Arrays.asList(
+    private static Set<String> forbiddenKeys = new HashSet<>( Arrays.asList(
             null, KEY_DOC_ID, KEY_START_NODE_ID, KEY_END_NODE_ID ) );
 
     protected final IndexIdentifier identifier;
@@ -129,14 +129,14 @@ public abstract class LuceneExplicitIndex implements ExplicitIndex
 
     static boolean isValidKey( String key )
     {
-        return !FORBIDDEN_KEYS.contains( key );
+        return !forbiddenKeys.contains( key );
     }
 
     private static void assertValidKey( String key )
     {
         if ( !isValidKey( key ) )
         {
-            throw new IllegalArgumentException( "Key " + key + " forbidden" );
+            throw new IllegalArgumentException( new StringBuilder().append("Key ").append(key).append(" forbidden").toString() );
         }
     }
 
@@ -288,7 +288,7 @@ public abstract class LuceneExplicitIndex implements ExplicitIndex
             }
             catch ( IOException e )
             {
-                throw new RuntimeException( "Unable to query " + this + " with " + query, e );
+                throw new RuntimeException( new StringBuilder().append("Unable to query ").append(this).append(" with ").append(query).toString(), e );
             }
         }
 
@@ -323,10 +323,7 @@ public abstract class LuceneExplicitIndex implements ExplicitIndex
         final MutableLongSet set = new LongHashSet( simpleTransactionStateIds.size() + fulltextSize );
 
         // Add from simple tx state
-        for ( EntityId id : simpleTransactionStateIds )
-        {
-            set.add( id.id() );
-        }
+		simpleTransactionStateIds.forEach(id -> set.add(id.id()));
 
         if ( docValuesCollector != null )
         {
@@ -498,8 +495,7 @@ public abstract class LuceneExplicitIndex implements ExplicitIndex
         public ExplicitIndexHits query( String key, Object queryOrQueryObjectOrNull, long startNode, long endNode )
                 throws ExplicitIndexNotFoundKernelException
         {
-            QueryContext context = queryOrQueryObjectOrNull != null &&
-                    queryOrQueryObjectOrNull instanceof QueryContext ?
+            QueryContext context = queryOrQueryObjectOrNull instanceof QueryContext ?
                             (QueryContext) queryOrQueryObjectOrNull : null;
 
             BooleanQuery.Builder builder = new BooleanQuery.Builder();
@@ -549,7 +545,7 @@ public abstract class LuceneExplicitIndex implements ExplicitIndex
         {
             if ( node != -1 )
             {
-                builder.add( new TermQuery( new Term( field, "" + node ) ), Occur.MUST );
+                builder.add( new TermQuery( new Term( field, Long.toString(node) ) ), Occur.MUST );
             }
         }
 

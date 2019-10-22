@@ -161,7 +161,7 @@ public class StartupLoggingIT extends ExclusiveServerTestBase
             @Override
             protected boolean matchesSafely( String line )
             {
-                return line.matches( ".*" + level + "\\s+" + messagePattern );
+                return line.matches( new StringBuilder().append(".*").append(level).append("\\s+").append(messagePattern).toString() );
             }
 
             @Override

@@ -102,7 +102,7 @@ public class RecordStorageReaderPropertyTest extends RecordStorageReaderTestBase
                         Value propVal = props.propertyValue();
 
                         //then
-                        assertTrue( propVal + ".equals(" + value + ")",
+                        assertTrue( new StringBuilder().append(propVal).append(".equals(").append(value).append(")").toString(),
                                 propVal.equals( Values.of( value ) ) );
                     }
                     else

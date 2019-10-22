@@ -108,13 +108,6 @@ public class Neo4jError
         {
             return false;
         }
-        for ( Neo4jError error : errors )
-        {
-            if ( error.status().code().classification().rollbackTransaction() )
-            {
-                return true;
-            }
-        }
-        return false;
+        return errors.stream().anyMatch(error -> error.status().code().classification().rollbackTransaction());
     }
 }

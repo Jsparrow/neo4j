@@ -94,27 +94,26 @@ public class CachedThreadPoolExecutorFactoryTest
     {
         executorService = factory.create( 0, 1, Duration.ZERO, queueSize, false, newThreadFactory() );
 
-        if ( executorService instanceof ThreadPoolExecutor )
-        {
-            BlockingQueue<Runnable> queue = ((ThreadPoolExecutor) executorService).getQueue();
-
-            switch ( queueSize )
-            {
-            case UNBOUNDED_QUEUE:
-                assertThat( queue, instanceOf( LinkedBlockingQueue.class ) );
-                assertEquals( Integer.MAX_VALUE, queue.remainingCapacity() );
-                break;
-            case SYNCHRONOUS_QUEUE:
-                assertThat( queue, instanceOf( SynchronousQueue.class ) );
-                break;
-            case TEST_BOUNDED_QUEUE_SIZE:
-                assertThat( queue, instanceOf( ArrayBlockingQueue.class ) );
-                assertEquals( queueSize, queue.remainingCapacity() );
-                break;
-            default:
-                fail( String.format( "Unexpected queue size %d", queueSize ) );
-            }
-        }
+        if (!(executorService instanceof ThreadPoolExecutor)) {
+			return;
+		}
+		BlockingQueue<Runnable> queue = ((ThreadPoolExecutor) executorService).getQueue();
+		switch ( queueSize )
+		{
+		case UNBOUNDED_QUEUE:
+		    assertThat( queue, instanceOf( LinkedBlockingQueue.class ) );
+		    assertEquals( Integer.MAX_VALUE, queue.remainingCapacity() );
+		    break;
+		case SYNCHRONOUS_QUEUE:
+		    assertThat( queue, instanceOf( SynchronousQueue.class ) );
+		    break;
+		case TEST_BOUNDED_QUEUE_SIZE:
+		    assertThat( queue, instanceOf( ArrayBlockingQueue.class ) );
+		    assertEquals( queueSize, queue.remainingCapacity() );
+		    break;
+		default:
+		    fail( String.format( "Unexpected queue size %d", queueSize ) );
+		}
     }
 
     @Test

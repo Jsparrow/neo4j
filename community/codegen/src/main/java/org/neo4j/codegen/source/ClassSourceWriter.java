@@ -129,27 +129,27 @@ class ClassSourceWriter implements ClassEmitter
     private static void typeParameters( StringBuilder target, MethodDeclaration method )
     {
         List<MethodDeclaration.TypeParameter> parameters = method.typeParameters();
-        if ( !parameters.isEmpty() )
-        {
-            target.append( '<' );
-            String sep = "";
-            for ( MethodDeclaration.TypeParameter parameter : parameters )
-            {
-                target.append( sep ).append( parameter.name() );
-                TypeReference ext = parameter.extendsBound();
-                TypeReference sup = parameter.superBound();
-                if ( ext != null )
-                {
-                    target.append( " extends " ).append( ext.fullName() );
-                }
-                else if ( sup != null )
-                {
-                    target.append( " super " ).append( sup.fullName() );
-                }
-                sep = ", ";
-            }
-            target.append( "> " );
-        }
+        if (parameters.isEmpty()) {
+			return;
+		}
+		target.append( '<' );
+		String sep = "";
+		for ( MethodDeclaration.TypeParameter parameter : parameters )
+		{
+		    target.append( sep ).append( parameter.name() );
+		    TypeReference ext = parameter.extendsBound();
+		    TypeReference sup = parameter.superBound();
+		    if ( ext != null )
+		    {
+		        target.append( " extends " ).append( ext.fullName() );
+		    }
+		    else if ( sup != null )
+		    {
+		        target.append( " super " ).append( sup.fullName() );
+		    }
+		    sep = ", ";
+		}
+		target.append( "> " );
     }
 
     @Override

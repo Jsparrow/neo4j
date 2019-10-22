@@ -144,7 +144,13 @@ class LuceneSchemaIndexCorruptionTest
         };
     }
 
-    private class FaultyIndexStorageFactory extends IndexStorageFactory
+    private static AssertableLogProvider.LogMatcher loggedException( Throwable exception )
+    {
+        return inLog( CoreMatchers.any( String.class ) )
+                .error( CoreMatchers.any( String.class ), sameInstance( exception ) );
+    }
+
+	private class FaultyIndexStorageFactory extends IndexStorageFactory
     {
         final long faultyIndexId;
         final Exception error;
@@ -177,11 +183,5 @@ class LuceneSchemaIndexCorruptionTest
                 throw new UncheckedIOException( e );
             }
         }
-    }
-
-    private static AssertableLogProvider.LogMatcher loggedException( Throwable exception )
-    {
-        return inLog( CoreMatchers.any( String.class ) )
-                .error( CoreMatchers.any( String.class ), sameInstance( exception ) );
     }
 }

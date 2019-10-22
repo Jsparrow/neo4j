@@ -57,13 +57,12 @@ public abstract class MultiPassStoreTest
         List<RecordAccess> filters = multiPassStore().multiPassFilters( recordAccess, MultiPassStore.values() );
 
         // then
-        for ( RecordAccess filter : filters )
-        {
+		filters.forEach(filter -> {
             for ( long id : new long[] {0, 100, 200, 300, 400, 500, 600, 700, 800, 900} )
             {
                 otherRecords( filter, id );
             }
-        }
+        });
 
         verifyZeroInteractions( recordAccess );
     }

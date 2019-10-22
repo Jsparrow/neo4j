@@ -55,7 +55,7 @@ public abstract class MapUtil
      */
     public static <K, V> Map<K, V> genericMap( Object... objects )
     {
-        return genericMap( new HashMap<K, V>(), objects );
+        return genericMap( new HashMap<>(), objects );
     }
 
     /**
@@ -183,11 +183,8 @@ public abstract class MapUtil
         props.load( stream );
 
         HashMap<String,String> result = new HashMap<>();
-        for ( Map.Entry<Object,Object> entry : props.entrySet() )
-        {
-            // Properties does not trim whitespace from the right side of values
-            result.put( (String) entry.getKey(), ( (String) entry.getValue() ).trim() );
-        }
+        // Properties does not trim whitespace from the right side of values
+		props.entrySet().forEach(entry -> result.put((String) entry.getKey(), ((String) entry.getValue()).trim()));
 
         return result;
     }
@@ -294,10 +291,7 @@ public abstract class MapUtil
     public static void store( Map<String, String> config, OutputStream stream ) throws IOException
     {
         Properties properties = new Properties();
-        for ( Map.Entry<String, String> property : config.entrySet() )
-        {
-            properties.setProperty( property.getKey(), property.getValue() );
-        }
+        config.entrySet().forEach(property -> properties.setProperty(property.getKey(), property.getValue()));
         properties.store( stream, null );
     }
 
@@ -369,10 +363,7 @@ public abstract class MapUtil
     public static <K, V> Map<V, K> reverse( Map<K, V> map )
     {
         Map<V, K> reversedMap = new HashMap<>();
-        for ( Map.Entry<K, V> entry : map.entrySet() )
-        {
-            reversedMap.put( entry.getValue(), entry.getKey() );
-        }
+        map.entrySet().forEach(entry -> reversedMap.put(entry.getValue(), entry.getKey()));
         return reversedMap;
     }
 
@@ -411,22 +402,6 @@ public abstract class MapUtil
         return new MapBuilder<K, V>().entry( key, value );
     }
 
-    public static class MapBuilder<K, V>
-    {
-        private final Map<K, V> map = new HashMap<>();
-
-        public MapBuilder<K, V> entry( K key, V value )
-        {
-            map.put( key, value );
-            return this;
-        }
-
-        public Map<K, V> create()
-        {
-            return map;
-        }
-    }
-
     /**
      * Mutates the input map by removing entries which do not have keys in the new backing data, as extracted with
      * the keyExtractor.
@@ -443,7 +418,7 @@ public abstract class MapUtil
         trimToList( map, retainedKeys );
     }
 
-    /**
+	/**
      * Mutates the input map by removing entries which do not have keys in the new backing data, as extracted with
      * the keyExtractor.
      * @param map the map to mutate.
@@ -460,7 +435,7 @@ public abstract class MapUtil
         trimToList( map, retainedKeys );
     }
 
-    /**
+	/**
      * Mutates the input map by removing entries which are not in the retained set of keys.
      * @param map the map to mutate.
      * @param retainedKeys the keys to retain.
@@ -472,5 +447,21 @@ public abstract class MapUtil
         Set<K> keysToRemove = new HashSet<>( map.keySet() );
         keysToRemove.removeAll( retainedKeys );
         keysToRemove.forEach( map::remove );
+    }
+
+	public static class MapBuilder<K, V>
+    {
+        private final Map<K, V> map = new HashMap<>();
+
+        public MapBuilder<K, V> entry( K key, V value )
+        {
+            map.put( key, value );
+            return this;
+        }
+
+        public Map<K, V> create()
+        {
+            return map;
+        }
     }
 }

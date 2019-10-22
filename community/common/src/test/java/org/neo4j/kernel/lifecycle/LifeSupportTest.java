@@ -41,7 +41,7 @@ import static org.mockito.Mockito.verify;
 class LifeSupportTest
 {
     @Test
-    void testOkLifecycle() throws LifecycleException
+    void testOkLifecycle()
     {
         LifeSupport lifeSupport = newLifeSupport();
 
@@ -173,7 +173,7 @@ class LifeSupportTest
     }
 
     @Test
-    void testFailingStop() throws LifecycleException
+    void testFailingStop()
     {
         LifeSupport lifeSupport = newLifeSupport();
 
@@ -203,7 +203,7 @@ class LifeSupportTest
     }
 
     @Test
-    void testFailingShutdown() throws LifecycleException
+    void testFailingShutdown()
     {
         LifeSupport lifeSupport = newLifeSupport();
 
@@ -233,7 +233,7 @@ class LifeSupportTest
     }
 
     @Test
-    void testAddInstanceWhenInitInitsInstance() throws LifecycleException
+    void testAddInstanceWhenInitInitsInstance()
     {
         LifeSupport support = newLifeSupport();
 
@@ -250,7 +250,7 @@ class LifeSupportTest
     }
 
     @Test
-    void testAddInstanceWhenStartedStartsInstance() throws LifecycleException
+    void testAddInstanceWhenStartedStartsInstance()
     {
         LifeSupport support = newLifeSupport();
 
@@ -270,7 +270,7 @@ class LifeSupportTest
     }
 
     @Test
-    void testAddInstanceWhenStoppedInitsInstance() throws LifecycleException
+    void testAddInstanceWhenStoppedInitsInstance()
     {
         LifeSupport support = newLifeSupport();
 
@@ -291,7 +291,7 @@ class LifeSupportTest
     }
 
     @Test
-    void testAddInstanceWhenShutdownDoesNotAffectInstance() throws LifecycleException
+    void testAddInstanceWhenShutdownDoesNotAffectInstance()
     {
         LifeSupport support = newLifeSupport();
 
@@ -585,7 +585,19 @@ class LifeSupportTest
         assertThrows( IllegalStateException.class, () -> lifeSupport.setLast( anotherLastComponent ) );
     }
 
-    static class LifecycleMock implements Lifecycle
+    private LifeSupport newLifeSupport()
+    {
+        return new LifeSupport();
+    }
+
+	private String getExceptionStackTrace( Exception e )
+    {
+        StringWriter stringWriter = new StringWriter();
+        e.printStackTrace( new PrintWriter( stringWriter ) );
+        return stringWriter.toString();
+    }
+
+	static class LifecycleMock implements Lifecycle
     {
 
         Throwable initThrowable;
@@ -655,17 +667,5 @@ class LifeSupportTest
         {
             return transitions.get( transitions.size() - 1 );
         }
-    }
-
-    private LifeSupport newLifeSupport()
-    {
-        return new LifeSupport();
-    }
-
-    private String getExceptionStackTrace( Exception e )
-    {
-        StringWriter stringWriter = new StringWriter();
-        e.printStackTrace( new PrintWriter( stringWriter ) );
-        return stringWriter.toString();
     }
 }

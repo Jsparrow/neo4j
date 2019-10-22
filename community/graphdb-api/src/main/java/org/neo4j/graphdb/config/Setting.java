@@ -75,7 +75,6 @@ public interface Setting<T> extends Function<Function<String,String>,T>, Setting
 
     @Override
     default Map<String,String> validate( Map<String,String> rawConfig, Consumer<String> warningConsumer )
-            throws InvalidSettingException
     {
         // Validate setting, if present or default value otherwise
         try

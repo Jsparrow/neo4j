@@ -109,10 +109,7 @@ class GroupingRecoveryCleanupWorkCollectorTest
         collector.shutdown();
 
         // then
-        for ( DummyJob job : someJobs )
-        {
-            assertTrue( job.isClosed(), "Expected all jobs to be closed" );
-        }
+		someJobs.forEach(job -> assertTrue(job.isClosed(), "Expected all jobs to be closed"));
     }
 
     @Test
@@ -202,7 +199,7 @@ class GroupingRecoveryCleanupWorkCollectorTest
                 }
 
                 @Override
-                public void waitTermination() throws InterruptedException, ExecutionException, CancellationException
+                public void waitTermination() throws InterruptedException, ExecutionException
                 {
                     future.get();
                 }

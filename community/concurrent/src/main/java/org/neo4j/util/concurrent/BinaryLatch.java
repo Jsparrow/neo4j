@@ -34,28 +34,16 @@ import org.neo4j.unsafe.impl.internal.dragons.UnsafeUtil;
  */
 public class BinaryLatch
 {
-    private static class Node
-    {
-        volatile Node next;
-    }
-
-    private static final class Waiter extends Node
-    {
-        final Thread waitingThread = Thread.currentThread();
-        volatile byte state;
-    }
-
     private static final long stackOffset =
             UnsafeUtil.getFieldOffset( BinaryLatch.class, "stack" );
-    private static final Node end = new Node();
-    private static final Node released = new Node();
-    private static final byte waiterStateSuccessor = 1;
-    private static final byte waiterStateReleased = 2;
-
-    @SuppressWarnings( "unused" )
+	private static final Node end = new Node();
+	private static final Node released = new Node();
+	private static final byte waiterStateSuccessor = 1;
+	private static final byte waiterStateReleased = 2;
+	@SuppressWarnings( "unused" )
     private volatile Node stack; // written to via unsafe
 
-    /**
+	/**
      * Release the latch, thereby unblocking all current and future calls to {@link #await()}.
      */
     public void release()
@@ -73,17 +61,17 @@ public class BinaryLatch
         unparkSuccessor( waiters );
     }
 
-    private void unparkSuccessor( Node waiters )
+	private void unparkSuccessor( Node waiters )
     {
-        if ( waiters.getClass() == Waiter.class )
-        {
-            Waiter waiter = (Waiter) waiters;
-            waiter.state = waiterStateSuccessor;
-            LockSupport.unpark( waiter.waitingThread );
-        }
+        if (waiters.getClass() != Waiter.class) {
+			return;
+		}
+		Waiter waiter = (Waiter) waiters;
+		waiter.state = waiterStateSuccessor;
+		LockSupport.unpark( waiter.waitingThread );
     }
 
-    /**
+	/**
      * Wait for the latch to be released, blocking the current thread if necessary.
      * <p>
      * This method returns immediately if the latch has already been released.
@@ -92,42 +80,42 @@ public class BinaryLatch
     {
         // Put in a local variable to avoid volatile reads we don't need.
         Node state = stack;
-        if ( state != released )
-        {
-            // The latch hasn't obviously already been released, so we want to add a waiter to the stack. Trouble is,
-            // we might race with release here, so we need to re-check for release after we've modified the stack.
-            Waiter waiter = new Waiter();
-            state = (Node) UnsafeUtil.getAndSetObject( this, stackOffset, waiter );
-            if ( state == released )
-            {
-                // If we get 'released' back from the swap, then we raced with release, and it is our job to put the
-                // released sentinel back. Doing so can, however, return more waiters that have added themselves in
-                // the mean time. If we find such waiters, then we must make sure to unpark them. Note that we will
-                // never get a null back from this swap, because we at least added our own waiter earlier.
-                Node others = (Node) UnsafeUtil.getAndSetObject( this, stackOffset, released );
-                // Set our next pointer to 'released' as a signal to other threads who might be going through the
-                // stack in the isReleased check.
-                waiter.next = released;
-                unparkAll( others );
-            }
-            else
-            {
-                // It looks like the latch hasn't yet been released, so we are going to park. Before that, we must
-                // assign a non-null value to our next pointer, so other threads will know that we have been properly
-                // enqueued. We use the 'end' sentinel as a marker when there's otherwise no other next node.
-                waiter.next = state == null ? end : state;
-                do
-                {
-                    // Park may wake up spuriously, so we have to loop on it until we observe from the state of the
-                    // stack, that the latch has been released.
-                    LockSupport.park( this );
-                }
-                while ( !isReleased( waiter ) );
-            }
-        }
+        if (state == released) {
+			return;
+		}
+		// The latch hasn't obviously already been released, so we want to add a waiter to the stack. Trouble is,
+		// we might race with release here, so we need to re-check for release after we've modified the stack.
+		Waiter waiter = new Waiter();
+		state = (Node) UnsafeUtil.getAndSetObject( this, stackOffset, waiter );
+		if ( state == released )
+		{
+		    // If we get 'released' back from the swap, then we raced with release, and it is our job to put the
+		    // released sentinel back. Doing so can, however, return more waiters that have added themselves in
+		    // the mean time. If we find such waiters, then we must make sure to unpark them. Note that we will
+		    // never get a null back from this swap, because we at least added our own waiter earlier.
+		    Node others = (Node) UnsafeUtil.getAndSetObject( this, stackOffset, released );
+		    // Set our next pointer to 'released' as a signal to other threads who might be going through the
+		    // stack in the isReleased check.
+		    waiter.next = released;
+		    unparkAll( others );
+		}
+		else
+		{
+		    // It looks like the latch hasn't yet been released, so we are going to park. Before that, we must
+		    // assign a non-null value to our next pointer, so other threads will know that we have been properly
+		    // enqueued. We use the 'end' sentinel as a marker when there's otherwise no other next node.
+		    waiter.next = state == null ? end : state;
+		    do
+		    {
+		        // Park may wake up spuriously, so we have to loop on it until we observe from the state of the
+		        // stack, that the latch has been released.
+		        LockSupport.park( this );
+		    }
+		    while ( !isReleased( waiter ) );
+		}
     }
 
-    private boolean isReleased( Waiter waiter )
+	private boolean isReleased( Waiter waiter )
     {
         // If we are the most recently enqueued waiter on the stack before the release, then that makes us the
         // successor. As the successor, it is our job to wake up all the other threads. We can *only* become the
@@ -171,7 +159,7 @@ public class BinaryLatch
         return false;
     }
 
-    private void unparkAll( Node waiters )
+	private void unparkAll( Node waiters )
     {
         // If we find a node that is not a waiter, then it is either 'end' or 'released'. Looking at the type pointer
         // is the cheapest way to make this check.
@@ -189,5 +177,16 @@ public class BinaryLatch
             while ( next == null );
             waiters = next;
         }
+    }
+
+	private static class Node
+    {
+        volatile Node next;
+    }
+
+    private static final class Waiter extends Node
+    {
+        final Thread waitingThread = Thread.currentThread();
+        volatile byte state;
     }
 }

@@ -39,17 +39,37 @@ import static org.neo4j.unsafe.impl.batchimport.cache.idmapping.string.EncodingI
  */
 public class ParallelSort
 {
-    private final int[] radixIndexCount;
-    private final RadixCalculator radixCalculator;
-    private final LongArray dataCache;
-    private final long highestSetIndex;
-    private final Tracker tracker;
-    private final int threads;
-    private long[][] sortBuckets;
-    private final ProgressListener progress;
-    private final Comparator comparator;
+    public static final Comparator DEFAULT = new Comparator()
+    {
+        @Override
+        public boolean lt( long left, long pivot )
+        {
+            return Utils.unsignedCompare( left, pivot, CompareType.LT );
+        }
 
-    public ParallelSort( Radix radix, LongArray dataCache, long highestSetIndex,
+        @Override
+        public boolean ge( long right, long pivot )
+        {
+            return Utils.unsignedCompare( right, pivot, CompareType.GE );
+        }
+
+        @Override
+        public long dataValue( long dataValue )
+        {
+            return dataValue;
+        }
+    };
+	private final int[] radixIndexCount;
+	private final RadixCalculator radixCalculator;
+	private final LongArray dataCache;
+	private final long highestSetIndex;
+	private final Tracker tracker;
+	private final int threads;
+	private long[][] sortBuckets;
+	private final ProgressListener progress;
+	private final Comparator comparator;
+
+	public ParallelSort( Radix radix, LongArray dataCache, long highestSetIndex,
             Tracker tracker, int threads, ProgressListener progress, Comparator comparator )
     {
         this.progress = progress;
@@ -62,7 +82,7 @@ public class ParallelSort
         this.threads = threads;
     }
 
-    public synchronized long[][] run() throws InterruptedException
+	public synchronized long[][] run() throws InterruptedException
     {
         long[][] sortParams = sortRadix();
         int threadsNeeded = 0;
@@ -96,7 +116,7 @@ public class ParallelSort
         return sortBuckets;
     }
 
-    private long[][] sortRadix() throws InterruptedException
+	private long[][] sortRadix() throws InterruptedException
     {
         long[][] rangeParams = new long[threads][2];
         int[] bucketRange = new int[threads];
@@ -160,13 +180,13 @@ public class ParallelSort
         }
         if ( error != null )
         {
-            throw new AssertionError( error.getMessage() + "\n" + dumpBuckets( rangeParams, bucketRange, bucketIndex ),
+            throw new AssertionError( new StringBuilder().append(error.getMessage()).append("\n").append(dumpBuckets( rangeParams, bucketRange, bucketIndex )).toString(),
                     error );
         }
         return rangeParams;
     }
 
-    private String dumpBuckets( long[][] rangeParams, int[] bucketRange, long[] bucketIndex )
+	private String dumpBuckets( long[][] rangeParams, int[] bucketRange, long[] bucketIndex )
     {
         StringBuilder builder = new StringBuilder();
         builder.append( "rangeParams:\n" );
@@ -187,7 +207,7 @@ public class ParallelSort
         return builder.toString();
     }
 
-    /**
+	/**
      * Pluggable comparator for the comparisons that quick-sort needs in order to function.
      */
     public interface Comparator
@@ -210,27 +230,6 @@ public class ParallelSort
          */
         long dataValue( long dataValue );
     }
-
-    public static final Comparator DEFAULT = new Comparator()
-    {
-        @Override
-        public boolean lt( long left, long pivot )
-        {
-            return Utils.unsignedCompare( left, pivot, CompareType.LT );
-        }
-
-        @Override
-        public boolean ge( long right, long pivot )
-        {
-            return Utils.unsignedCompare( right, pivot, CompareType.GE );
-        }
-
-        @Override
-        public long dataValue( long dataValue )
-        {
-            return dataValue;
-        }
-    };
 
     /**
      * Sorts a part of data in dataCache covered by trackerCache. Values in data cache doesn't change location,
@@ -411,7 +410,8 @@ public class ParallelSort
                 {
                     long trackerIndex = rangeParams[0] + bucketIndex++;
                     assert tracker.get( trackerIndex ) == -1 :
-                            "Overlapping buckets i:" + i + ", k:" + threadIndex + ", index:" + trackerIndex;
+                            new StringBuilder().append("Overlapping buckets i:").append(i).append(", k:").append(threadIndex).append(", index:").append(trackerIndex)
+							.toString();
                     tracker.set( trackerIndex, i );
                     if ( bucketIndex == rangeParams[1] )
                     {

@@ -147,7 +147,7 @@ public class IndexSamplingIntegrationTest
             {
                 for ( int i = 0; i < nodes; i++ )
                 {
-                    db.createNode( label ).setProperty( property, "" + i );
+                    db.createNode( label ).setProperty( property, Integer.toString(i) );
                     tx.success();
                 }
             }
@@ -159,7 +159,7 @@ public class IndexSamplingIntegrationTest
                     if ( i % 10 == 0 )
                     {
                         deletedNodes++;
-                        db.findNode( label, property, "" + i ).delete();
+                        db.findNode( label, property, Integer.toString(i) ).delete();
                         tx.success();
                     }
                 }

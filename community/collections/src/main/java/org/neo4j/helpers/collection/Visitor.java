@@ -44,7 +44,11 @@ public interface Visitor<E, FAILURE extends Exception>
 
     final class SafeGenerics
     {
-        /**
+        private SafeGenerics()
+        {
+        }
+
+		/**
          * Useful for determining "is this an object that can visit the things I can provide?"
          *
          * Checks if the passed in object is a {@link Visitor} and if the objects it can
@@ -87,10 +91,6 @@ public interface Visitor<E, FAILURE extends Exception>
                 }
             }
             return null;
-        }
-
-        private SafeGenerics()
-        {
         }
     }
 }

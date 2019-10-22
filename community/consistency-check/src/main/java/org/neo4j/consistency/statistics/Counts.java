@@ -24,7 +24,32 @@ package org.neo4j.consistency.statistics;
  */
 public interface Counts
 {
-    enum Type
+    Counts NONE = new Counts()
+    {
+        @Override
+        public void reset()
+        {
+        }
+
+        @Override
+        public void incAndGet( Type type, int threadIndex )
+        {
+        }
+
+        @Override
+        public long sum( Type type )
+        {
+            return 0;
+        }
+    };
+
+	void incAndGet( Type type, int threadIndex );
+
+	long sum( Type type );
+
+	void reset();
+
+	enum Type
     {
         skipCheck,
         missCheck,
@@ -49,29 +74,4 @@ public interface Counts
         nodeSparse,
         nodeDense
     }
-
-    void incAndGet( Type type, int threadIndex );
-
-    long sum( Type type );
-
-    void reset();
-
-    Counts NONE = new Counts()
-    {
-        @Override
-        public void reset()
-        {
-        }
-
-        @Override
-        public void incAndGet( Type type, int threadIndex )
-        {
-        }
-
-        @Override
-        public long sum( Type type )
-        {
-            return 0;
-        }
-    };
 }

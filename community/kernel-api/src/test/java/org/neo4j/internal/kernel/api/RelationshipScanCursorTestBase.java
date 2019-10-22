@@ -40,8 +40,12 @@ import static org.neo4j.graphdb.RelationshipType.withName;
 
 public abstract class RelationshipScanCursorTestBase<G extends KernelAPIReadTestSupport> extends KernelAPIReadTestBase<G>
 {
-    private static List<Long> RELATIONSHIP_IDS;
-    private static long none, loop, one, c, d;
+    private static List<Long> relationshipIds;
+    private static long none;
+	private static long loop;
+	private static long one;
+	private static long c;
+	private static long d;
 
     @Override
     public void createTestGraph( GraphDatabaseService graphDb )
@@ -49,8 +53,12 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPIReadTest
         Relationship deleted;
         try ( Transaction tx = graphDb.beginTx() )
         {
-            Node a = graphDb.createNode(), b = graphDb.createNode(), c = graphDb.createNode(),
-                    d = graphDb.createNode(), e = graphDb.createNode(), f = graphDb.createNode();
+            Node a = graphDb.createNode();
+			Node b = graphDb.createNode();
+			Node c = graphDb.createNode();
+			Node d = graphDb.createNode();
+			Node e = graphDb.createNode();
+			Node f = graphDb.createNode();
 
             a.createRelationshipTo( b, withName( "CIRCLE" ) );
             b.createRelationshipTo( c, withName( "CIRCLE" ) );
@@ -75,13 +83,13 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPIReadTest
             tx.success();
         }
 
-        RELATIONSHIP_IDS = new ArrayList<>();
+        relationshipIds = new ArrayList<>();
         try ( Transaction tx = graphDb.beginTx() )
         {
             deleted.delete();
             for ( Relationship relationship : graphDb.getAllRelationships() )
             {
-                RELATIONSHIP_IDS.add( relationship.getId() );
+                relationshipIds.add( relationship.getId() );
             }
             tx.success();
         }
@@ -102,7 +110,7 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPIReadTest
             }
         }
 
-        assertEquals( RELATIONSHIP_IDS, ids );
+        assertEquals( relationshipIds, ids );
     }
 
     @Test
@@ -111,8 +119,7 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPIReadTest
         // given
         try ( RelationshipScanCursor relationships = cursors.allocateRelationshipScanCursor() )
         {
-            for ( long id : RELATIONSHIP_IDS )
-            {
+            relationshipIds.stream().mapToLong(Long::valueOf).forEach(id -> {
                 // when
                 read.singleRelationship( id, relationships );
 
@@ -120,7 +127,7 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPIReadTest
                 assertTrue( "should access defined relationship", relationships.next() );
                 assertEquals( "should access the correct relationship", id, relationships.relationshipReference() );
                 assertFalse( "should only access a single relationship", relationships.next() );
-            }
+            });
         }
     }
 

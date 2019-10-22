@@ -26,7 +26,6 @@ public class DumpableProcess extends UnicastRemoteObject
 {
     public DumpableProcess() throws RemoteException
     {
-        super();
     }
 
     public static void main( String[] args ) throws Exception

@@ -28,7 +28,7 @@ public class NoSuchPropertyException extends Exception implements Status.HasStat
 
     public NoSuchPropertyException( PropertyContainer entity, String key )
     {
-        super( entity + " does not have a property \"" + key + "\"" );
+        super( new StringBuilder().append(entity).append(" does not have a property \"").append(key).append("\"").toString() );
     }
 
     @Override

@@ -101,14 +101,14 @@ public class LifecycleManagingDatabase implements Database
     @Override
     public void stop()
     {
-        if ( graph != null )
-        {
-            log.info( "Stopping..." );
-            graph.shutdown();
-            isRunning = false;
-            graph = null;
-            log.info( "Stopped." );
-        }
+        if (graph == null) {
+			return;
+		}
+		log.info( "Stopping..." );
+		graph.shutdown();
+		isRunning = false;
+		graph = null;
+		log.info( "Stopped." );
     }
 
     @Override

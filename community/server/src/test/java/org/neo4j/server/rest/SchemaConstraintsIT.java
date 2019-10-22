@@ -50,7 +50,9 @@ import static org.neo4j.test.mockito.matcher.Neo4jMatchers.isEmpty;
 
 public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
 {
-    @Documented( "Create uniqueness constraint.\n" +
+    private final Factory<String> labels =  UniqueStrings.withPrefix( "label" );
+	private final Factory<String> properties =  UniqueStrings.withPrefix( "property" );
+	@Documented( "Create uniqueness constraint.\n" +
                  "Create a uniqueness constraint on a property." )
     @Test
     @GraphDescription.Graph( nodes = {} )
@@ -75,7 +77,7 @@ public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
         assertThat( serialized, equalTo( constraint ) );
     }
 
-    @Documented( "Get a specific uniqueness constraint.\n" +
+	@Documented( "Get a specific uniqueness constraint.\n" +
                  "Get a specific uniqueness constraint for a label and a property." )
     @Test
     @GraphDescription.Graph( nodes = {} )
@@ -100,7 +102,7 @@ public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
         assertThat( serializedList, hasItem( constraint ) );
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     @Documented( "Get all uniqueness constraints for a label." )
     @Test
     @GraphDescription.Graph( nodes = {} )
@@ -131,7 +133,7 @@ public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
         assertThat( serializedList, hasItems( constraint1, constraint2 ) );
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     @Documented( "Get all constraints for a label." )
     @Test
     @GraphDescription.Graph( nodes = {} )
@@ -155,7 +157,7 @@ public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
         assertThat( serializedList, hasItems( constraint1 ) );
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     @Documented( "Get all constraints." )
     @Test
     @GraphDescription.Graph( nodes = {} )
@@ -179,7 +181,7 @@ public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
         assertThat( serializedList, hasItems( constraint1 ) );
     }
 
-    @Documented( "Drop uniqueness constraint.\n" +
+	@Documented( "Drop uniqueness constraint.\n" +
                  "Drop uniqueness constraint for a label and a property." )
     @Test
     @GraphDescription.Graph( nodes = {} )
@@ -197,7 +199,7 @@ public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
         assertThat( getConstraints( graphdb(), label( labelName ) ), isEmpty() );
     }
 
-    /**
+	/**
      * Create an index for a label and property key which already exists.
      */
     @Test
@@ -212,7 +214,7 @@ public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
                 .post( getSchemaConstraintLabelUniquenessUri( labelName ) ).entity();
     }
 
-    @Test
+	@Test
     public void drop_non_existent_constraint()
     {
         String labelName = labels.newInstance();
@@ -222,7 +224,7 @@ public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
                 .delete( getSchemaConstraintLabelUniquenessPropertyUri( labelName, propertyKey ) );
     }
 
-    @Test
+	@Test
     public void create_compound_schema_index()
     {
         Map<String,Object> definition = map( "property_keys",
@@ -232,7 +234,7 @@ public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
                 .payload( createJsonFrom( definition ) ).post( getSchemaIndexLabelUri( labels.newInstance() ) );
     }
 
-    @Test
+	@Test
     public void create_compound_schema_constraint()
     {
         Map<String,Object> definition = map( "property_keys",
@@ -242,7 +244,7 @@ public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
                 .payload( createJsonFrom( definition ) ).post( getSchemaConstraintLabelUri( labels.newInstance() ) );
     }
 
-    private ConstraintDefinition createLabelUniquenessPropertyConstraint( String labelName, String propertyKey )
+	private ConstraintDefinition createLabelUniquenessPropertyConstraint( String labelName, String propertyKey )
     {
         try ( Transaction tx = graphdb().beginTx() )
         {
@@ -252,7 +254,4 @@ public class SchemaConstraintsIT extends AbstractRestFunctionalTestBase
             return constraintDefinition;
         }
     }
-
-    private final Factory<String> labels =  UniqueStrings.withPrefix( "label" );
-    private final Factory<String> properties =  UniqueStrings.withPrefix( "property" );
 }

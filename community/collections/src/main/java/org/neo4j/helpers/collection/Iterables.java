@@ -684,7 +684,135 @@ public final class Iterables
         return () -> Iterators.resourceIterator( iterable.iterator(), Resource.EMPTY );
     }
 
-    private static class FlattenIterable<T, I extends Iterable<? extends T>> implements Iterable<T>
+    /**
+     * Returns the index of the first occurrence of the specified element
+     * in this iterable, or -1 if this iterable does not contain the element.
+     * More formally, returns the lowest index {@code i} such that
+     * {@code (o==null ? get(i)==null : o.equals(get(i)))},
+     * or -1 if there is no such index.
+     *
+     * @param itemToFind element to find
+     * @param iterable iterable to look for the element in
+     * @param <T> the type of the elements
+     * @return the index of the first occurrence of the specified element
+     *         (or {@code null} if that was specified) or {@code -1}
+     */
+    public static <T> int indexOf( T itemToFind, Iterable<T> iterable )
+    {
+        if ( itemToFind == null )
+        {
+            int index = 0;
+            for ( T item : iterable )
+            {
+                if ( item == null )
+                {
+                    return index;
+                }
+                index++;
+            }
+        }
+        else
+        {
+            int index = 0;
+            for ( T item : iterable )
+            {
+                if ( itemToFind.equals( item ) )
+                {
+                    return index;
+                }
+                index++;
+            }
+        }
+        return -1;
+    }
+
+	public static <T> Iterable<T> option( final T item )
+    {
+        if ( item == null )
+        {
+            return Collections.emptyList();
+        }
+
+        return () -> Iterators.iterator( item );
+    }
+
+	public static <T, S extends Comparable<? super S>> Iterable<T> sort( Iterable<T> iterable, final Function<T, S> compareFunction )
+    {
+        List<T> list = asList( iterable );
+        list.sort( Comparator.comparing( compareFunction ) );
+        return list;
+    }
+
+	public static String join( String joinString, Iterable<?> iter )
+    {
+        return Iterators.join( joinString, iter.iterator() );
+    }
+
+	/**
+     * Create a stream from the given iterable.
+     * <p>
+     * <b>Note:</b> returned stream needs to be closed via {@link Stream#close()} if the given iterable implements
+     * {@link Resource}.
+     *
+     * @param iterable the iterable to convert to stream
+     * @param <T> the type of elements in the given iterable
+     * @return stream over the iterable elements
+     * @throws NullPointerException when the given iterable is {@code null}
+     */
+    public static <T> Stream<T> stream( Iterable<T> iterable )
+    {
+        return stream( iterable, 0 );
+    }
+
+	/**
+     * Create a stream from the given iterable with given characteristics.
+     * <p>
+     * <b>Note:</b> returned stream needs to be closed via {@link Stream#close()} if the given iterable implements
+     * {@link Resource}.
+     *
+     * @param iterable the iterable to convert to stream
+     * @param characteristics the logical OR of characteristics for the underlying {@link Spliterator}
+     * @param <T> the type of elements in the given iterable
+     * @return stream over the iterable elements
+     * @throws NullPointerException when the given iterable is {@code null}
+     */
+    public static <T> Stream<T> stream( Iterable<T> iterable, int characteristics )
+    {
+        Objects.requireNonNull( iterable );
+        return Iterators.stream( iterable.iterator(), characteristics );
+    }
+
+	/**
+     * Method for calling a lambda function on many objects when it is expected that the function might
+     * throw an exception. First exception will be thrown and subsequent will be suppressed.
+     * This method guarantees that all subjects will be consumed, unless {@link OutOfMemoryError} or some other serious error happens.
+     *
+     * @param consumer lambda function to call on each object passed
+     * @param subjects {@link Iterable} of objects to call the function on
+     * @param <E> the type of exception anticipated, inferred from the lambda
+     * @throws E if consumption fails with this exception
+     */
+    public static <T, E extends Exception> void safeForAll( ThrowingConsumer<T,E> consumer, Iterable<T> subjects ) throws E
+    {
+        E exception = null;
+        for ( T instance : subjects )
+        {
+            try
+            {
+                consumer.accept( instance );
+            }
+            catch ( Exception e )
+            {
+                exception = Exceptions.chain( exception, (E) e );
+            }
+        }
+        if ( exception != null )
+        {
+            throw exception;
+        }
+    }
+
+	private static class FlattenIterable<T, I extends Iterable<? extends T>> implements Iterable<T>
     {
         private final Iterable<I> iterable;
 
@@ -803,134 +931,6 @@ public final class Iterables
 
                 }
             };
-        }
-    }
-
-    /**
-     * Returns the index of the first occurrence of the specified element
-     * in this iterable, or -1 if this iterable does not contain the element.
-     * More formally, returns the lowest index {@code i} such that
-     * {@code (o==null ? get(i)==null : o.equals(get(i)))},
-     * or -1 if there is no such index.
-     *
-     * @param itemToFind element to find
-     * @param iterable iterable to look for the element in
-     * @param <T> the type of the elements
-     * @return the index of the first occurrence of the specified element
-     *         (or {@code null} if that was specified) or {@code -1}
-     */
-    public static <T> int indexOf( T itemToFind, Iterable<T> iterable )
-    {
-        if ( itemToFind == null )
-        {
-            int index = 0;
-            for ( T item : iterable )
-            {
-                if ( item == null )
-                {
-                    return index;
-                }
-                index++;
-            }
-        }
-        else
-        {
-            int index = 0;
-            for ( T item : iterable )
-            {
-                if ( itemToFind.equals( item ) )
-                {
-                    return index;
-                }
-                index++;
-            }
-        }
-        return -1;
-    }
-
-    public static <T> Iterable<T> option( final T item )
-    {
-        if ( item == null )
-        {
-            return Collections.emptyList();
-        }
-
-        return () -> Iterators.iterator( item );
-    }
-
-    public static <T, S extends Comparable<? super S>> Iterable<T> sort( Iterable<T> iterable, final Function<T, S> compareFunction )
-    {
-        List<T> list = asList( iterable );
-        list.sort( Comparator.comparing( compareFunction ) );
-        return list;
-    }
-
-    public static String join( String joinString, Iterable<?> iter )
-    {
-        return Iterators.join( joinString, iter.iterator() );
-    }
-
-    /**
-     * Create a stream from the given iterable.
-     * <p>
-     * <b>Note:</b> returned stream needs to be closed via {@link Stream#close()} if the given iterable implements
-     * {@link Resource}.
-     *
-     * @param iterable the iterable to convert to stream
-     * @param <T> the type of elements in the given iterable
-     * @return stream over the iterable elements
-     * @throws NullPointerException when the given iterable is {@code null}
-     */
-    public static <T> Stream<T> stream( Iterable<T> iterable )
-    {
-        return stream( iterable, 0 );
-    }
-
-    /**
-     * Create a stream from the given iterable with given characteristics.
-     * <p>
-     * <b>Note:</b> returned stream needs to be closed via {@link Stream#close()} if the given iterable implements
-     * {@link Resource}.
-     *
-     * @param iterable the iterable to convert to stream
-     * @param characteristics the logical OR of characteristics for the underlying {@link Spliterator}
-     * @param <T> the type of elements in the given iterable
-     * @return stream over the iterable elements
-     * @throws NullPointerException when the given iterable is {@code null}
-     */
-    public static <T> Stream<T> stream( Iterable<T> iterable, int characteristics )
-    {
-        Objects.requireNonNull( iterable );
-        return Iterators.stream( iterable.iterator(), characteristics );
-    }
-
-    /**
-     * Method for calling a lambda function on many objects when it is expected that the function might
-     * throw an exception. First exception will be thrown and subsequent will be suppressed.
-     * This method guarantees that all subjects will be consumed, unless {@link OutOfMemoryError} or some other serious error happens.
-     *
-     * @param consumer lambda function to call on each object passed
-     * @param subjects {@link Iterable} of objects to call the function on
-     * @param <E> the type of exception anticipated, inferred from the lambda
-     * @throws E if consumption fails with this exception
-     */
-    public static <T, E extends Exception> void safeForAll( ThrowingConsumer<T,E> consumer, Iterable<T> subjects ) throws E
-    {
-        E exception = null;
-        for ( T instance : subjects )
-        {
-            try
-            {
-                consumer.accept( instance );
-            }
-            catch ( Exception e )
-            {
-                exception = Exceptions.chain( exception, (E) e );
-            }
-        }
-        if ( exception != null )
-        {
-            throw exception;
         }
     }
 

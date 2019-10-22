@@ -51,34 +51,35 @@ import static org.junit.Assert.assertTrue;
 
 public class KernelTransactionTimeoutMonitorIT
 {
-    @Rule
+    private static final int NODE_ID = 0;
+
+	@Rule
     public DatabaseRule database = createDatabaseRule();
 
-    @Rule
+	@Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    private static final int NODE_ID = 0;
-    private ExecutorService executor;
+	private ExecutorService executor;
 
-    protected DatabaseRule createDatabaseRule()
+	protected DatabaseRule createDatabaseRule()
     {
         return new EmbeddedDatabaseRule()
                 .withSetting( GraphDatabaseSettings.transaction_monitor_check_interval, "100ms" );
     }
 
-    @Before
+	@Before
     public void setUp()
     {
         executor = Executors.newSingleThreadExecutor();
     }
 
-    @After
+	@After
     public void tearDown()
     {
         executor.shutdown();
     }
 
-    @Test( timeout = 30_000 )
+	@Test( timeout = 30_000 )
     public void terminateExpiredTransaction() throws Exception
     {
         try ( Transaction transaction = database.beginTx() )
@@ -97,7 +98,7 @@ public class KernelTransactionTimeoutMonitorIT
         }
     }
 
-    @Test( timeout = 30_000 )
+	@Test( timeout = 30_000 )
     public void terminatingTransactionMustEagerlyReleaseTheirLocks() throws Exception
     {
         AtomicBoolean nodeLockAcquired = new AtomicBoolean();
@@ -144,18 +145,15 @@ public class KernelTransactionTimeoutMonitorIT
         assertTrue( lockerDone.get() );
     }
 
-    private void terminateOngoingTransaction()
+	private void terminateOngoingTransaction()
     {
         Set<KernelTransactionHandle> kernelTransactionHandles =
                 database.resolveDependency( KernelTransactions.class ).activeTransactions();
         assertThat( kernelTransactionHandles, hasSize( 1 ) );
-        for ( KernelTransactionHandle kernelTransactionHandle : kernelTransactionHandles )
-        {
-            kernelTransactionHandle.markForTermination( Status.Transaction.Terminated );
-        }
+        kernelTransactionHandles.forEach(kernelTransactionHandle -> kernelTransactionHandle.markForTermination(Status.Transaction.Terminated));
     }
 
-    private Runnable startAnotherTransaction()
+	private Runnable startAnotherTransaction()
     {
         return () ->
         {

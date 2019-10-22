@@ -54,15 +54,14 @@ public class FastSlf4jLog
     @Override
     public void debug( String msg, Object... args )
     {
-        if ( debugEnabled )
-        {
-            if ( args != null && args.length == 0 )
-            {
-                args = null;
-            }
-
-            super.debug( msg, args );
-        }
+        if (!debugEnabled) {
+			return;
+		}
+		if ( args != null && args.length == 0 )
+		{
+		    args = null;
+		}
+		super.debug( msg, args );
     }
 
     @Override

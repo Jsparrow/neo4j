@@ -44,8 +44,7 @@ enum DataSourceDiagnostics implements DiagnosticsExtractor<NeoStoreDataSource>
                             {
                                 LogHeader header = logFiles.extractHeader( logVersion );
                                 long firstTransactionIdInThisLog = header.lastCommittedTxId + 1;
-                                log.log( "Oldest transaction " + firstTransactionIdInThisLog +
-                                         " found in log with version " + logVersion );
+                                log.log( new StringBuilder().append("Oldest transaction ").append(firstTransactionIdInThisLog).append(" found in log with version ").append(logVersion).toString() );
                                 return;
                             }
                         }
@@ -68,11 +67,11 @@ enum DataSourceDiagnostics implements DiagnosticsExtractor<NeoStoreDataSource>
     @Override
     public void dumpDiagnostics( final NeoStoreDataSource source, DiagnosticsPhase phase, Logger logger )
     {
-        if ( applicable( phase ) )
-        {
-            logger.log( message );
-            dump( source, logger );
-        }
+        if (!applicable( phase )) {
+			return;
+		}
+		logger.log( message );
+		dump( source, logger );
     }
 
     boolean applicable( DiagnosticsPhase phase )

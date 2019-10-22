@@ -91,44 +91,44 @@ final class DefaultNodeValueIndexCursor extends IndexCursor<IndexProgressor>
         this.needsValues = needsValues;
         this.query = query;
 
-        if ( read.hasTxStateWithChanges() && query.length > 0 )
-        {
-            IndexQuery firstPredicate = query[0];
-            switch ( firstPredicate.type() )
-            {
-            case exact:
-                // No need to order, all values are the same
-                this.indexOrder = IndexOrder.NONE;
-                seekQuery( descriptor, query );
-                break;
+        if (!(read.hasTxStateWithChanges() && query.length > 0)) {
+			return;
+		}
+		IndexQuery firstPredicate = query[0];
+		switch ( firstPredicate.type() )
+		{
+		case exact:
+		    // No need to order, all values are the same
+		    this.indexOrder = IndexOrder.NONE;
+		    seekQuery( descriptor, query );
+		    break;
 
-            case exists:
-                setNeedsValuesIfRequiresOrder();
-                scanQuery( descriptor );
-                break;
+		case exists:
+		    setNeedsValuesIfRequiresOrder();
+		    scanQuery( descriptor );
+		    break;
 
-            case range:
-                assert query.length == 1;
-                setNeedsValuesIfRequiresOrder();
-                rangeQuery( descriptor, (IndexQuery.RangePredicate) firstPredicate );
-                break;
+		case range:
+		    assert query.length == 1;
+		    setNeedsValuesIfRequiresOrder();
+		    rangeQuery( descriptor, (IndexQuery.RangePredicate) firstPredicate );
+		    break;
 
-            case stringPrefix:
-                assert query.length == 1;
-                setNeedsValuesIfRequiresOrder();
-                prefixQuery( descriptor, (IndexQuery.StringPrefixPredicate) firstPredicate );
-                break;
+		case stringPrefix:
+		    assert query.length == 1;
+		    setNeedsValuesIfRequiresOrder();
+		    prefixQuery( descriptor, (IndexQuery.StringPrefixPredicate) firstPredicate );
+		    break;
 
-            case stringSuffix:
-            case stringContains:
-                assert query.length == 1;
-                suffixOrContainsQuery( descriptor, firstPredicate );
-                break;
+		case stringSuffix:
+		case stringContains:
+		    assert query.length == 1;
+		    suffixOrContainsQuery( descriptor, firstPredicate );
+		    break;
 
-            default:
-                throw new UnsupportedOperationException( "Query not supported: " + Arrays.toString( query ) );
-            }
-        }
+		default:
+		    throw new UnsupportedOperationException( "Query not supported: " + Arrays.toString( query ) );
+		}
     }
 
     /**
@@ -275,19 +275,18 @@ final class DefaultNodeValueIndexCursor extends IndexCursor<IndexProgressor>
     @Override
     public void close()
     {
-        if ( !isClosed() )
-        {
-            super.close();
-            this.node = NO_ID;
-            this.query = null;
-            this.values = null;
-            this.read = null;
-            this.added = ImmutableEmptyLongIterator.INSTANCE;
-            this.addedWithValues = Collections.emptyIterator();
-            this.removed = LongSets.immutable.empty();
-
-            pool.accept( this );
-        }
+        if (isClosed()) {
+			return;
+		}
+		super.close();
+		this.node = NO_ID;
+		this.query = null;
+		this.values = null;
+		this.read = null;
+		this.added = ImmutableEmptyLongIterator.INSTANCE;
+		this.addedWithValues = Collections.emptyIterator();
+		this.removed = LongSets.immutable.empty();
+		pool.accept( this );
     }
 
     @Override
@@ -306,9 +305,8 @@ final class DefaultNodeValueIndexCursor extends IndexCursor<IndexProgressor>
         else
         {
             String keys = query == null ? "unknown" : Arrays.toString( stream( query ).map( IndexQuery::propertyKeyId ).toArray( Integer[]::new ) );
-            return "NodeValueIndexCursor[node=" + node + ", open state with: keys=" + keys +
-                    ", values=" + Arrays.toString( values ) +
-                    ", underlying record=" + super.toString() + "]";
+            return new StringBuilder().append("NodeValueIndexCursor[node=").append(node).append(", open state with: keys=").append(keys).append(", values=").append(Arrays.toString( values ))
+					.append(", underlying record=").append(super.toString()).append("]").toString();
         }
     }
 

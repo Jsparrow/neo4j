@@ -40,13 +40,13 @@ public abstract class AbstractTokenHolderBase implements TokenHolder
     }
 
     @Override
-    public void setInitialTokens( List<NamedToken> tokens ) throws NonUniqueTokenException
+    public void setInitialTokens( List<NamedToken> tokens )
     {
         tokenRegistry.setInitialTokens( tokens );
     }
 
     @Override
-    public void addToken( NamedToken token ) throws NonUniqueTokenException
+    public void addToken( NamedToken token )
     {
         tokenRegistry.put( token );
     }

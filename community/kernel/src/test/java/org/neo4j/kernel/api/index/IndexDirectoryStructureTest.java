@@ -51,8 +51,8 @@ public class IndexDirectoryStructureTest
     public void shouldSeeCorrectDirectoriesForProvider()
     {
         assertCorrectDirectories( directoriesByProvider( databaseStoreDir ).forProvider( provider ),
-                path( baseIndexDirectory, provider.getKey() + "-" + provider.getVersion() ),
-                path( baseIndexDirectory, provider.getKey() + "-" +  provider.getVersion(), String.valueOf( indexId ) ) );
+                path( baseIndexDirectory, new StringBuilder().append(provider.getKey()).append("-").append(provider.getVersion()).toString() ),
+                path( baseIndexDirectory, new StringBuilder().append(provider.getKey()).append("-").append(provider.getVersion()).toString(), String.valueOf( indexId ) ) );
     }
 
     @Test
@@ -61,9 +61,9 @@ public class IndexDirectoryStructureTest
         IndexDirectoryStructure parentStructure = directoriesByProvider( databaseStoreDir ).forProvider( provider );
         IndexProviderDescriptor subProvider = new IndexProviderDescriptor( "sub", "0.3" );
         assertCorrectDirectories( directoriesBySubProvider( parentStructure ).forProvider( subProvider ),
-                path( baseIndexDirectory, provider.getKey() + "-" + provider.getVersion() ),
-                path( baseIndexDirectory, provider.getKey() + "-" + provider.getVersion(),
-                        String.valueOf( indexId ), subProvider.getKey() + "-" + subProvider.getVersion() ) );
+                path( baseIndexDirectory, new StringBuilder().append(provider.getKey()).append("-").append(provider.getVersion()).toString() ),
+                path( baseIndexDirectory, new StringBuilder().append(provider.getKey()).append("-").append(provider.getVersion()).toString(),
+                        String.valueOf( indexId ), new StringBuilder().append(subProvider.getKey()).append("-").append(subProvider.getVersion()).toString() ) );
     }
 
     @Test

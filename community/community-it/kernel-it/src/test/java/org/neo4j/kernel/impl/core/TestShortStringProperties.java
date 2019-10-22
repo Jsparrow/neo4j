@@ -42,23 +42,23 @@ public class TestShortStringProperties
     @ClassRule
     public static DatabaseRule graphdb = new ImpermanentDatabaseRule();
 
-    @Rule
+	private static final String LONG_STRING = "this is a really long string, believe me!";
+
+	@Rule
     public GraphTransactionRule tx = new GraphTransactionRule( graphdb );
 
-    public void commit()
+	public void commit()
     {
         tx.success();
     }
 
-    private void newTx()
+	private void newTx()
     {
         tx.success();
         tx.begin();
     }
 
-    private static final String LONG_STRING = "this is a really long string, believe me!";
-
-    @Test
+	@Test
     public void canAddMultipleShortStringsToTheSameNode()
     {
         Node node = graphdb.getGraphDatabaseAPI().createNode();
@@ -69,7 +69,7 @@ public class TestShortStringProperties
         assertThat( node, inTx( graphdb.getGraphDatabaseAPI(), hasProperty( "reverse" ).withValue( "esrever" )  ) );
     }
 
-    @Test
+	@Test
     public void canAddShortStringToRelationship()
     {
         GraphDatabaseService db = graphdb.getGraphDatabaseAPI();
@@ -79,7 +79,7 @@ public class TestShortStringProperties
         assertThat( rel, inTx( db, hasProperty( "type" ).withValue( "dimsedut" ) ) );
     }
 
-    @Test
+	@Test
     public void canUpdateShortStringInplace()
     {
         Node node = graphdb.getGraphDatabaseAPI().createNode();
@@ -95,7 +95,7 @@ public class TestShortStringProperties
         assertThat( node, inTx( graphdb.getGraphDatabaseAPI(), hasProperty( "key" ).withValue( "other" )  ) );
     }
 
-    @Test
+	@Test
     public void canReplaceLongStringWithShortString()
     {
         Node node = graphdb.getGraphDatabaseAPI().createNode();
@@ -110,7 +110,7 @@ public class TestShortStringProperties
         assertThat( node, inTx( graphdb.getGraphDatabaseAPI(), hasProperty( "key" ).withValue( "value" )  ) );
     }
 
-    @Test
+	@Test
     public void canReplaceShortStringWithLongString()
     {
         Node node = graphdb.getGraphDatabaseAPI().createNode();
@@ -125,7 +125,7 @@ public class TestShortStringProperties
         assertThat( node, inTx( graphdb.getGraphDatabaseAPI(), hasProperty( "key" ).withValue( LONG_STRING )  ) );
     }
 
-    @Test
+	@Test
     public void canRemoveShortStringProperty()
     {
         GraphDatabaseService db = graphdb.getGraphDatabaseAPI();

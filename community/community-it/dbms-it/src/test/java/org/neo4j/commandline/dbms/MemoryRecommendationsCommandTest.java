@@ -245,7 +245,7 @@ public class MemoryRecommendationsCommandTest
                 File file = path.toFile();
                 Path name = path.getName( path.getNameCount() - 3 );
                 boolean isLuceneFile = (path.getNameCount() >= 3 && name.toString().startsWith( "lucene-" )) ||
-                        (path.getNameCount() >= 4 && path.getName( path.getNameCount() - 4 ).toString().equals( "lucene" ));
+                        (path.getNameCount() >= 4 && "lucene".equals( path.getName( path.getNameCount() - 4 ).toString() ));
                 if ( !FailureStorage.DEFAULT_FAILURE_FILE_NAME.equals( file.getName() ) )
                 {
                     (isLuceneFile ? luceneTotal : pageCacheTotal).add( file.length() );

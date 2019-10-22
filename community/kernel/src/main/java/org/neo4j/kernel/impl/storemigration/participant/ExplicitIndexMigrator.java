@@ -90,11 +90,11 @@ public class ExplicitIndexMigrator extends AbstractStoreMigrationParticipant
     public void moveMigratedFiles( DatabaseLayout migrationLayout, DatabaseLayout directoryLayout, String versionToMigrateFrom,
             String versionToMigrateTo ) throws IOException
     {
-        if ( explicitIndexMigrated )
-        {
-            fileSystem.deleteRecursively( originalExplicitIndexesRoot );
-            fileSystem.moveToDirectory( migrationExplicitIndexesRoot, originalExplicitIndexesRoot.getParentFile() );
-        }
+        if (!explicitIndexMigrated) {
+			return;
+		}
+		fileSystem.deleteRecursively( originalExplicitIndexesRoot );
+		fileSystem.moveToDirectory( migrationExplicitIndexesRoot, originalExplicitIndexesRoot.getParentFile() );
     }
 
     @Override
@@ -122,20 +122,18 @@ public class ExplicitIndexMigrator extends AbstractStoreMigrationParticipant
         }
         catch ( ExplicitIndexMigrationException lime )
         {
-            log.error( "Migration of explicit indexes failed. Index: " + lime.getFailedIndexName() + " can't be " +
-                       "migrated.", lime );
+            log.error( new StringBuilder().append("Migration of explicit indexes failed. Index: ").append(lime.getFailedIndexName()).append(" can't be ").append("migrated.").toString(), lime );
             throw new IOException( "Explicit index migration failed.", lime );
         }
     }
 
     private boolean isNotEmptyDirectory( File file )
     {
-        if ( fileSystem.isDirectory( file ) )
-        {
-            File[] files = fileSystem.listFiles( file );
-            return files != null && files.length > 0;
-        }
-        return false;
+        if (!fileSystem.isDirectory( file )) {
+			return false;
+		}
+		File[] files = fileSystem.listFiles( file );
+		return files != null && files.length > 0;
     }
 
     LuceneExplicitIndexUpgrader createLuceneExplicitIndexUpgrader( Path indexRootPath,

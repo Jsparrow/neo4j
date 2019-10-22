@@ -51,45 +51,20 @@ import static org.neo4j.helpers.collection.MapUtil.genericMap;
 
 public class Neo4jJsonCodec extends ObjectMapper
 {
-    private enum Neo4jJsonMetaType
-    {
-        NODE( "node" ),
-        RELATIONSHIP( "relationship" ),
-        DATE_TIME( "datetime" ),
-        TIME( "time" ),
-        LOCAL_DATE_TIME( "localdatetime" ),
-        DATE( "date" ),
-        LOCAL_TIME( "localtime" ),
-        DURATION( "duration" ),
-        POINT( "point" );
-
-        private final String code;
-
-        Neo4jJsonMetaType( final String code )
-        {
-            this.code = code;
-        }
-
-        String code()
-        {
-            return this.code;
-        }
-    }
-
     private TransitionalPeriodTransactionMessContainer container;
 
-    public Neo4jJsonCodec( TransitionalPeriodTransactionMessContainer container )
+	public Neo4jJsonCodec( TransitionalPeriodTransactionMessContainer container )
     {
         this();
         this.container = container;
     }
 
-    public Neo4jJsonCodec()
+	public Neo4jJsonCodec()
     {
         getSerializationConfig().without( SerializationConfig.Feature.FLUSH_AFTER_WRITE_VALUE );
     }
 
-    @Override
+	@Override
     public void writeValue( JsonGenerator out, Object value ) throws IOException
     {
         if ( value instanceof PropertyContainer )
@@ -149,13 +124,13 @@ public class Neo4jJsonCodec extends ObjectMapper
         }
     }
 
-    private boolean supportedArrayType( Class<?> valueClass )
+	private boolean supportedArrayType( Class<?> valueClass )
     {
         return Geometry.class.isAssignableFrom( valueClass ) || CRS.class.isAssignableFrom( valueClass ) ||
                Temporal.class.isAssignableFrom( valueClass ) || TemporalAmount.class.isAssignableFrom( valueClass );
     }
 
-    private void writeReflectiveArray( JsonGenerator out, Object array ) throws IOException
+	private void writeReflectiveArray( JsonGenerator out, Object array ) throws IOException
     {
         out.writeStartArray();
         try
@@ -172,7 +147,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         }
     }
 
-    private void writeMap( JsonGenerator out, Map value ) throws IOException
+	private void writeMap( JsonGenerator out, Map value ) throws IOException
     {
         out.writeStartObject();
         try
@@ -191,7 +166,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         }
     }
 
-    private void writeIterator( JsonGenerator out, Iterator value ) throws IOException
+	private void writeIterator( JsonGenerator out, Iterator value ) throws IOException
     {
         out.writeStartArray();
         try
@@ -207,7 +182,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         }
     }
 
-    private void writePath( JsonGenerator out, Iterator<PropertyContainer> value,
+	private void writePath( JsonGenerator out, Iterator<PropertyContainer> value,
             TransactionStateChecker txStateChecker ) throws IOException
     {
         out.writeStartArray();
@@ -224,7 +199,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         }
     }
 
-    private void writePropertyContainer( JsonGenerator out, PropertyContainer value,
+	private void writePropertyContainer( JsonGenerator out, PropertyContainer value,
             TransactionStateChecker txStateChecker )
             throws IOException
     {
@@ -243,7 +218,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         }
     }
 
-    private void writeNodeOrRelationship( JsonGenerator out, PropertyContainer entity, boolean isDeleted )
+	private void writeNodeOrRelationship( JsonGenerator out, PropertyContainer entity, boolean isDeleted )
             throws IOException
     {
         out.writeStartObject();
@@ -263,7 +238,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         }
     }
 
-    private void writeByteArray( JsonGenerator out, byte[] bytes ) throws IOException
+	private void writeByteArray( JsonGenerator out, byte[] bytes ) throws IOException
     {
         out.writeStartArray();
         try
@@ -279,7 +254,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         }
     }
 
-    void writeMeta( JsonGenerator out, Object value ) throws IOException
+	void writeMeta( JsonGenerator out, Object value ) throws IOException
     {
         if ( value instanceof Node )
         {
@@ -335,7 +310,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         }
     }
 
-    private Neo4jJsonMetaType parseGeometryType( Geometry value ) throws IOException
+	private Neo4jJsonMetaType parseGeometryType( Geometry value ) throws IOException
     {
         Neo4jJsonMetaType type = null;
         if ( value instanceof Point )
@@ -350,7 +325,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         return type;
     }
 
-    private Neo4jJsonMetaType parseTemporalType( Temporal value )
+	private Neo4jJsonMetaType parseTemporalType( Temporal value )
     {
         Neo4jJsonMetaType type = null;
         if ( value instanceof ZonedDateTime )
@@ -381,7 +356,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         return type;
     }
 
-    private void writeMetaPath( JsonGenerator out, Path value ) throws IOException
+	private void writeMetaPath( JsonGenerator out, Path value ) throws IOException
     {
         out.writeStartArray();
         try
@@ -397,7 +372,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         }
     }
 
-    private void writeObjectMeta( JsonGenerator out, Neo4jJsonMetaType type )
+	private void writeObjectMeta( JsonGenerator out, Neo4jJsonMetaType type )
             throws IOException
     {
         requireNonNull( type, "The meta type cannot be null for known types." );
@@ -412,7 +387,7 @@ public class Neo4jJsonCodec extends ObjectMapper
         }
     }
 
-    private void writeNodeOrRelationshipMeta( JsonGenerator out, long id, Neo4jJsonMetaType type, boolean isDeleted )
+	private void writeNodeOrRelationshipMeta( JsonGenerator out, long id, Neo4jJsonMetaType type, boolean isDeleted )
             throws IOException
     {
         requireNonNull( type, "The meta type could not be null for node or relationship." );
@@ -426,6 +401,31 @@ public class Neo4jJsonCodec extends ObjectMapper
         finally
         {
             out.writeEndObject();
+        }
+    }
+
+	private enum Neo4jJsonMetaType
+    {
+        NODE( "node" ),
+        RELATIONSHIP( "relationship" ),
+        DATE_TIME( "datetime" ),
+        TIME( "time" ),
+        LOCAL_DATE_TIME( "localdatetime" ),
+        DATE( "date" ),
+        LOCAL_TIME( "localtime" ),
+        DURATION( "duration" ),
+        POINT( "point" );
+
+        private final String code;
+
+        Neo4jJsonMetaType( final String code )
+        {
+            this.code = code;
+        }
+
+        String code()
+        {
+            return this.code;
         }
     }
 }

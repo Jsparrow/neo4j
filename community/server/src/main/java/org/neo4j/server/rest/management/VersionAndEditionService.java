@@ -35,27 +35,27 @@ import static org.neo4j.server.rest.domain.JsonHelper.createJsonFrom;
 @Path( VersionAndEditionService.SERVER_PATH )
 public class VersionAndEditionService implements AdvertisableService
 {
-    private NeoServer neoServer;
     public static final String SERVER_PATH = "server/version";
+	private NeoServer neoServer;
 
-    public VersionAndEditionService( @Context NeoServer neoServer )
+	public VersionAndEditionService( @Context NeoServer neoServer )
     {
         this.neoServer = neoServer;
     }
 
-    @Override
+	@Override
     public String getName()
     {
         return "version";
     }
 
-    @Override
+	@Override
     public String getServerPath()
     {
         return SERVER_PATH;
     }
 
-    @GET
+	@GET
     @Produces( APPLICATION_JSON )
     public Response getVersionAndEditionData()
     {
@@ -66,13 +66,13 @@ public class VersionAndEditionService implements AdvertisableService
                 .build();
     }
 
-    private String neoDatabaseVersion( NeoServer neoServer )
+	private String neoDatabaseVersion( NeoServer neoServer )
     {
         return neoServer.getDatabase().getGraph().getDependencyResolver().resolveDependency( KernelData.class )
                 .version().getReleaseVersion();
     }
 
-    private String neoServerEdition( NeoServer neoServer )
+	private String neoServerEdition( NeoServer neoServer )
     {
         String serverClassName = neoServer.getClass().getName().toLowerCase();
 

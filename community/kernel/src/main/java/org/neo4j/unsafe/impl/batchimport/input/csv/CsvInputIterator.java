@@ -83,18 +83,16 @@ class CsvInputIterator implements SourceTraceability, Closeable
     static Header extractHeader( CharReadable stream, Header.Factory headerFactory, IdType idType,
             Configuration config, Groups groups ) throws IOException
     {
-        if ( !headerFactory.isDefined() )
-        {
-            char[] firstLineBuffer = Readables.extractFirstLineFrom( stream );
-            // make the chunk slightly bigger than the header to not have the seeker think that it's reading
-            // a value bigger than its max buffer size
-            ChunkImpl firstChunk = new ChunkImpl( copyOf( firstLineBuffer, firstLineBuffer.length + 1 ) );
-            firstChunk.initialize( firstLineBuffer.length, stream.sourceDescription() );
-            CharSeeker firstSeeker = seeker( firstChunk, config );
-            return headerFactory.create( firstSeeker, config, idType, groups );
-        }
-
-        return headerFactory.create( null, null, null, null );
+        if (headerFactory.isDefined()) {
+			return headerFactory.create( null, null, null, null );
+		}
+		char[] firstLineBuffer = Readables.extractFirstLineFrom( stream );
+		// make the chunk slightly bigger than the header to not have the seeker think that it's reading
+		// a value bigger than its max buffer size
+		ChunkImpl firstChunk = new ChunkImpl( copyOf( firstLineBuffer, firstLineBuffer.length + 1 ) );
+		firstChunk.initialize( firstLineBuffer.length, stream.sourceDescription() );
+		CharSeeker firstSeeker = seeker( firstChunk, config );
+		return headerFactory.create( firstSeeker, config, idType, groups );
     }
 
     public boolean next( CsvInputChunkProxy proxy ) throws IOException

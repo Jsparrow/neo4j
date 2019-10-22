@@ -66,19 +66,40 @@ public abstract class SubProcess<T, P> implements Serializable
 {
     private static final long serialVersionUID = -6084373832996850958L;
 
-    private interface NoInterface
-    {
-        // Used when no interface is declared
-    }
-
-    // by default will inherit output destinations for subprocess from current process
+	// by default will inherit output destinations for subprocess from current process
     private static final boolean INHERIT_OUTPUT_DEFAULT_VALUE = true;
 
-    private Class<T> t;
-    private transient boolean inheritOutput = INHERIT_OUTPUT_DEFAULT_VALUE;
-    private final transient Predicate<String> classPathFilter;
+	private static final Field PID;
+	static
+    {
+        Field pid;
+        try
+        {
+            pid = Class.forName( "java.lang.UNIXProcess" ).getDeclaredField( "pid" );
+            pid.setAccessible( true );
+        }
+        catch ( Throwable ex )
+        {
+            pid = null;
+        }
+        PID = pid;
+    }
 
-    @SuppressWarnings( { "unchecked", "rawtypes" } )
+	private static PipeThread piper;
+
+	private static Set<Handler> live;
+
+	private Class<T> t;
+
+	private transient boolean inheritOutput = INHERIT_OUTPUT_DEFAULT_VALUE;
+
+	private final transient Predicate<String> classPathFilter;
+
+	private transient volatile boolean alive;
+
+	private int lastPid;
+
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
     public SubProcess( Predicate<String> classPathFilter, boolean inheritOutput )
     {
         this.inheritOutput = inheritOutput;
@@ -120,17 +141,17 @@ public abstract class SubProcess<T, P> implements Serializable
         }
         else
         {
-            throw new ClassCastException( getClass().getName() + " must implement declared interface " + t );
+            throw new ClassCastException( new StringBuilder().append(getClass().getName()).append(" must implement declared interface ").append(t).toString() );
         }
         this.classPathFilter = classPathFilter;
     }
 
-    public SubProcess()
+	public SubProcess()
     {
         this( null, INHERIT_OUTPUT_DEFAULT_VALUE );
     }
 
-    public T start( P parameter )
+	public T start( P parameter )
     {
         DispatcherTrapImpl callback;
         try
@@ -154,8 +175,8 @@ public abstract class SubProcess<T, P> implements Serializable
             // target streams
             if ( !inheritOutput )
             {
-                pipe( "[" + toString() + ":" + pid + "] ", process.getErrorStream(), errorStreamTarget() );
-                pipe( "[" + toString() + ":" + pid + "] ", process.getInputStream(), inputStreamTarget() );
+                pipe( new StringBuilder().append("[").append(toString()).append(":").append(pid).append("] ").toString(), process.getErrorStream(), errorStreamTarget() );
+                pipe( new StringBuilder().append("[").append(toString()).append(":").append(pid).append("] ").toString(), process.getInputStream(), inputStreamTarget() );
             }
             dispatcher = callback.get( process );
         }
@@ -175,21 +196,21 @@ public abstract class SubProcess<T, P> implements Serializable
             }
         }
         requireNonNull( dispatcher );
-        Handler handler = new Handler( t, dispatcher, process, "<" + toString() + ":" + pid + ">" );
+        Handler handler = new Handler( t, dispatcher, process, new StringBuilder().append("<").append(toString()).append(":").append(pid).append(">").toString() );
         return t.cast( Proxy.newProxyInstance( t.getClassLoader(), new Class[]{t}, live( handler ) ) );
     }
 
-    protected PrintStream errorStreamTarget()
+	protected PrintStream errorStreamTarget()
     {
         return System.err;
     }
 
-    protected PrintStream inputStreamTarget()
+	protected PrintStream inputStreamTarget()
     {
         return System.out;
     }
 
-    private String classPath()
+	private String classPath()
     {
         if ( classPathFilter == null )
         {
@@ -199,7 +220,7 @@ public abstract class SubProcess<T, P> implements Serializable
         return stream.filter( classPathFilter ).collect( Collectors.joining( File.pathSeparator ) );
     }
 
-    private static Process start( boolean inheritOutput, String... args )
+	private static Process start( boolean inheritOutput, String... args )
     {
         ProcessBuilder builder = new ProcessBuilder( args );
         if ( inheritOutput )
@@ -221,40 +242,40 @@ public abstract class SubProcess<T, P> implements Serializable
         }
     }
 
-    protected abstract void startup( P parameter ) throws Throwable;
+	protected abstract void startup( P parameter ) throws Throwable;
 
-    public final void shutdown()
+	public final void shutdown()
     {
         shutdown( true );
     }
 
-    protected void shutdown( boolean normal )
+	protected void shutdown( boolean normal )
     {
         System.exit( 0 );
     }
 
-    public static void stop( Object subprocess )
+	public static void stop( Object subprocess )
     {
         ( (Handler) Proxy.getInvocationHandler( subprocess ) ).stop( null, 0 );
     }
 
-    public static void stop( Object subprocess, long timeout, TimeUnit unit )
+	public static void stop( Object subprocess, long timeout, TimeUnit unit )
     {
         ( (Handler) Proxy.getInvocationHandler( subprocess ) ).stop( unit, timeout );
     }
 
-    public static void kill( Object subprocess )
+	public static void kill( Object subprocess )
     {
         ( (Handler) Proxy.getInvocationHandler( subprocess ) ).kill( true );
     }
 
-    @Override
+	@Override
     public String toString()
     {
         return getClass().getSimpleName();
     }
 
-    public static void main( String[] args ) throws Throwable
+	public static void main( String[] args ) throws Throwable
     {
         if ( args.length != 1 )
         {
@@ -265,22 +286,20 @@ public abstract class SubProcess<T, P> implements Serializable
         subProcess.doStart( trap.trap( new DispatcherImpl( subProcess ) ) );
     }
 
-    private transient volatile boolean alive;
-
-    private void doStart( P parameter ) throws Throwable
+	private void doStart( P parameter ) throws Throwable
     {
         alive = true;
         startup( parameter );
         liveLoop();
     }
 
-    private void doStop( boolean normal )
+	private void doStop( boolean normal )
     {
         alive = false;
         shutdown( normal );
     }
 
-    private void liveLoop() throws Exception
+	private void liveLoop() throws Exception
     {
         while ( alive )
         {
@@ -296,25 +315,7 @@ public abstract class SubProcess<T, P> implements Serializable
         }
     }
 
-    private static final Field PID;
-    static
-    {
-        Field pid;
-        try
-        {
-            pid = Class.forName( "java.lang.UNIXProcess" ).getDeclaredField( "pid" );
-            pid.setAccessible( true );
-        }
-        catch ( Throwable ex )
-        {
-            pid = null;
-        }
-        PID = pid;
-    }
-
-    private int lastPid;
-
-    private String getPid( Process process )
+	private String getPid( Process process )
     {
         if ( PID != null )
         {
@@ -328,6 +329,107 @@ public abstract class SubProcess<T, P> implements Serializable
             }
         }
         return Integer.toString( lastPid++ );
+    }
+
+	private static void pipe( final String prefix, final InputStream source, final PrintStream target )
+    {
+        synchronized ( PipeThread.class )
+        {
+            if ( piper == null )
+            {
+                piper = new PipeThread();
+                piper.start();
+            }
+            piper.tasks.add( new PipeTask( prefix, source, target ) );
+        }
+    }
+
+	@SuppressWarnings( "restriction" )
+    private static String serialize( DispatcherTrapImpl obj )
+    {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try (ObjectOutputStream oos = new ObjectOutputStream(os))
+        {
+            oos.writeObject( RemoteObject.toStub( obj ) );
+        }
+        catch ( IOException e )
+        {
+            throw new RuntimeException( "Broken implementation!", e );
+        }
+        return Base64.getEncoder().encodeToString( os.toByteArray() );
+    }
+
+	@SuppressWarnings( "restriction" )
+    private static DispatcherTrap deserialize( String data ) throws Exception
+    {
+        return (DispatcherTrap) new ObjectInputStream( new ByteArrayInputStream(
+                Base64.getDecoder().decode( data ) ) ).readObject();
+    }
+
+	private static InvocationHandler live( Handler handler )
+    {
+        try
+        {
+            synchronized ( Handler.class )
+            {
+                if ( live == null )
+                {
+                    final Set<Handler> handlers = live = new HashSet<>();
+                    Runtime.getRuntime().addShutdownHook( new Thread( () -> killAll( handlers ) ) );
+                }
+                live.add( handler );
+            }
+        }
+        catch ( UnsupportedOperationException e )
+        {
+            handler.kill( false );
+            throw new IllegalStateException( "JVM is shutting down!" );
+        }
+        return handler;
+    }
+
+	private static void dead( Handler handler )
+    {
+        synchronized ( Handler.class )
+        {
+            try
+            {
+                if ( live != null )
+                {
+                    live.remove( handler );
+                }
+            }
+            catch ( UnsupportedOperationException ok )
+            {
+                // ok, already dead
+            }
+        }
+    }
+
+	private static void killAll( Set<Handler> handlers )
+    {
+        synchronized ( Handler.class )
+        {
+            if ( !handlers.isEmpty() )
+            {
+                handlers.forEach(handler -> {
+                    try
+                    {
+                        handler.process.exitValue();
+                    }
+                    catch ( IllegalThreadStateException e )
+                    {
+                        handler.kill( false );
+                    }
+                });
+            }
+            live = Collections.emptySet();
+        }
+    }
+
+    private interface NoInterface
+    {
+        // Used when no interface is declared
     }
 
     private static class PipeTask
@@ -381,11 +483,11 @@ public abstract class SubProcess<T, P> implements Serializable
 
         private void printLastLine()
         {
-            if ( line.length() > 0 )
-            {
-                line.append( '\n' );
-                print();
-            }
+            if (line.length() <= 0) {
+				return;
+			}
+			line.append( '\n' );
+			print();
         }
 
         private void print()
@@ -397,24 +499,19 @@ public abstract class SubProcess<T, P> implements Serializable
 
     private static class PipeThread extends Thread
     {
-        {
-            setName( getClass().getSimpleName() );
-        }
         final CopyOnWriteArrayList<PipeTask> tasks = new CopyOnWriteArrayList<>();
 
-        @Override
+		{
+            setName( getClass().getSimpleName() );
+        }
+
+		@Override
         public void run()
         {
             while ( true )
             {
                 List<PipeTask> done = new ArrayList<>();
-                for ( PipeTask task : tasks )
-                {
-                    if ( !task.pipe() )
-                    {
-                        done.add( task );
-                    }
-                }
+                done.addAll(tasks.stream().filter(task -> !task.pipe()).collect(Collectors.toList()));
                 if ( !done.isEmpty() )
                 {
                     tasks.removeAll( done );
@@ -442,21 +539,6 @@ public abstract class SubProcess<T, P> implements Serializable
         }
     }
 
-    private static PipeThread piper;
-
-    private static void pipe( final String prefix, final InputStream source, final PrintStream target )
-    {
-        synchronized ( PipeThread.class )
-        {
-            if ( piper == null )
-            {
-                piper = new PipeThread();
-                piper.start();
-            }
-            piper.tasks.add( new PipeTask( prefix, source, target ) );
-        }
-    }
-
     private interface DispatcherTrap extends Remote
     {
         Object trap( Dispatcher dispatcher ) throws RemoteException;
@@ -472,7 +554,6 @@ public abstract class SubProcess<T, P> implements Serializable
 
         DispatcherTrapImpl( SubProcess<?, ?> process, Object parameter ) throws RemoteException
         {
-            super();
             this.process = process;
             this.parameter = parameter;
         }
@@ -512,100 +593,12 @@ public abstract class SubProcess<T, P> implements Serializable
         }
     }
 
-    @SuppressWarnings( "restriction" )
-    private static String serialize( DispatcherTrapImpl obj )
-    {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        try
-        {
-            ObjectOutputStream oos = new ObjectOutputStream( os );
-            oos.writeObject( RemoteObject.toStub( obj ) );
-            oos.close();
-        }
-        catch ( IOException e )
-        {
-            throw new RuntimeException( "Broken implementation!", e );
-        }
-        return Base64.getEncoder().encodeToString( os.toByteArray() );
-    }
-
-    @SuppressWarnings( "restriction" )
-    private static DispatcherTrap deserialize( String data ) throws Exception
-    {
-        return (DispatcherTrap) new ObjectInputStream( new ByteArrayInputStream(
-                Base64.getDecoder().decode( data ) ) ).readObject();
-    }
-
     private interface Dispatcher extends Remote
     {
         void stop() throws RemoteException;
 
         Object dispatch( String name, String[] types, Object[] args ) throws Throwable;
     }
-
-    private static InvocationHandler live( Handler handler )
-    {
-        try
-        {
-            synchronized ( Handler.class )
-            {
-                if ( live == null )
-                {
-                    final Set<Handler> handlers = live = new HashSet<>();
-                    Runtime.getRuntime().addShutdownHook( new Thread( () -> killAll( handlers ) ) );
-                }
-                live.add( handler );
-            }
-        }
-        catch ( UnsupportedOperationException e )
-        {
-            handler.kill( false );
-            throw new IllegalStateException( "JVM is shutting down!" );
-        }
-        return handler;
-    }
-
-    private static void dead( Handler handler )
-    {
-        synchronized ( Handler.class )
-        {
-            try
-            {
-                if ( live != null )
-                {
-                    live.remove( handler );
-                }
-            }
-            catch ( UnsupportedOperationException ok )
-            {
-                // ok, already dead
-            }
-        }
-    }
-
-    private static void killAll( Set<Handler> handlers )
-    {
-        synchronized ( Handler.class )
-        {
-            if ( !handlers.isEmpty() )
-            {
-                for ( Handler handler : handlers )
-                {
-                    try
-                    {
-                        handler.process.exitValue();
-                    }
-                    catch ( IllegalThreadStateException e )
-                    {
-                        handler.kill( false );
-                    }
-                }
-            }
-            live = Collections.emptySet();
-        }
-    }
-
-    private static Set<Handler> live;
 
     private static class Handler implements InvocationHandler
     {
@@ -631,11 +624,11 @@ public abstract class SubProcess<T, P> implements Serializable
         void kill( boolean wait )
         {
             process.destroy();
-            if ( wait )
-            {
-                dead( this );
-                await( process );
-            }
+            if (!wait) {
+				return;
+			}
+			dead( this );
+			await( process );
         }
 
         int stop( TimeUnit unit, long timeout )
@@ -725,7 +718,6 @@ public abstract class SubProcess<T, P> implements Serializable
 
         protected DispatcherImpl( SubProcess<?, ?> subprocess ) throws RemoteException
         {
-            super();
             this.subprocess = subprocess;
         }
 

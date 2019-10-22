@@ -47,7 +47,10 @@ import static org.junit.Assert.assertThat;
 
 public class TxStateVisitorTest
 {
-    @Test
+    private TransactionState state;
+	private final Collection<StorageProperty> noProperty = Collections.emptySet();
+
+	@Test
     public void shouldSeeAddedRelationshipProperties() throws Exception
     {
         // Given
@@ -62,32 +65,54 @@ public class TxStateVisitorTest
 
         // Then
         StorageProperty prop = new PropertyKeyValue( propKey, Values.of( "hello" ) );
-        assertThat( visitor.relPropertyChanges, contains( propChange( relId, noProperty, asList( prop ), IntSets.immutable.empty() ) ) );
+        assertThat( visitor.relPropertyChanges, contains( propChange( relId, noProperty, Collections.singletonList( prop ), IntSets.immutable.empty() ) ) );
     }
 
-    private Matcher<List<GatheringVisitor.PropertyChange>> contains( GatheringVisitor.PropertyChange ... change )
+	private Matcher<List<GatheringVisitor.PropertyChange>> contains( GatheringVisitor.PropertyChange ... change )
     {
         return equalTo(asList( change ));
     }
 
-    private GatheringVisitor.PropertyChange propChange( long relId, Collection<StorageProperty> added,
+	private GatheringVisitor.PropertyChange propChange( long relId, Collection<StorageProperty> added,
             List<StorageProperty> changed, IntIterable removed )
     {
         return new GatheringVisitor.PropertyChange( relId, added, changed, removed );
     }
 
-    private TransactionState state;
-    private final Collection<StorageProperty> noProperty = Collections.emptySet();
-
-    @Before
+	@Before
     public void before()
     {
         state = new TxState();
     }
 
-    static class GatheringVisitor extends TxStateVisitor.Adapter
+	static class GatheringVisitor extends TxStateVisitor.Adapter
     {
-        static class PropertyChange
+        public List<PropertyChange> nodePropertyChanges = new ArrayList<>();
+		public List<PropertyChange> relPropertyChanges = new ArrayList<>();
+		public List<PropertyChange> graphPropertyChanges = new ArrayList<>();
+
+		@Override
+        public void visitNodePropertyChanges( long id, Iterator<StorageProperty> added, Iterator<StorageProperty>
+                changed, IntIterable removed )
+        {
+            nodePropertyChanges.add( new PropertyChange( id, added, changed, removed ) );
+        }
+
+		@Override
+        public void visitRelPropertyChanges( long id, Iterator<StorageProperty> added, Iterator<StorageProperty>
+                changed, IntIterable removed )
+        {
+            relPropertyChanges.add( new PropertyChange( id, added, changed, removed ) );
+        }
+
+		@Override
+        public void visitGraphPropertyChanges( Iterator<StorageProperty> added, Iterator<StorageProperty> changed,
+                IntIterable removed )
+        {
+            graphPropertyChanges.add( new PropertyChange( -1, added, changed, removed ) );
+        }
+
+		static class PropertyChange
         {
             final long entityId;
             final List<StorageProperty> added;
@@ -115,12 +140,8 @@ public class TxStateVisitorTest
             @Override
             public String toString()
             {
-                return "PropertyChange{" +
-                        "entityId=" + entityId +
-                        ", added=" + added +
-                        ", changed=" + changed +
-                        ", removed=" + removed +
-                        '}';
+                return new StringBuilder().append("PropertyChange{").append("entityId=").append(entityId).append(", added=").append(added).append(", changed=")
+						.append(changed).append(", removed=").append(removed).append('}').toString();
             }
 
             @Override
@@ -161,31 +182,6 @@ public class TxStateVisitorTest
                 result = 31 * result + removed.hashCode();
                 return result;
             }
-        }
-
-        public List<PropertyChange> nodePropertyChanges = new ArrayList<>();
-        public List<PropertyChange> relPropertyChanges = new ArrayList<>();
-        public List<PropertyChange> graphPropertyChanges = new ArrayList<>();
-
-        @Override
-        public void visitNodePropertyChanges( long id, Iterator<StorageProperty> added, Iterator<StorageProperty>
-                changed, IntIterable removed )
-        {
-            nodePropertyChanges.add( new PropertyChange( id, added, changed, removed ) );
-        }
-
-        @Override
-        public void visitRelPropertyChanges( long id, Iterator<StorageProperty> added, Iterator<StorageProperty>
-                changed, IntIterable removed )
-        {
-            relPropertyChanges.add( new PropertyChange( id, added, changed, removed ) );
-        }
-
-        @Override
-        public void visitGraphPropertyChanges( Iterator<StorageProperty> added, Iterator<StorageProperty> changed,
-                IntIterable removed )
-        {
-            graphPropertyChanges.add( new PropertyChange( -1, added, changed, removed ) );
         }
     }
 }

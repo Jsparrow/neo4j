@@ -109,7 +109,7 @@ class RaceTest
         race.addContestants( 3, () -> { } );
 
         // WHEN
-        Exception exception = assertThrows( Exception.class, () -> race.go() );
+        Exception exception = assertThrows( Exception.class, race::go );
         assertEquals( error, exception.getMessage() );
     }
 

@@ -201,7 +201,7 @@ public class DefaultCacheAccess implements CacheAccess
         @Override
         public String toString()
         {
-            return "Client[" + threadIndex + ", records/CPU:" + recordsPerCPU + "]";
+            return new StringBuilder().append("Client[").append(threadIndex).append(", records/CPU:").append(recordsPerCPU).append("]").toString();
         }
     }
 }

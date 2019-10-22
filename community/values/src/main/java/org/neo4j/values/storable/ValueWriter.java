@@ -35,7 +35,52 @@ import java.time.ZonedDateTime;
  */
 public interface ValueWriter<E extends Exception>
 {
-    enum ArrayType
+    void writeNull() throws E;
+
+	void writeBoolean( boolean value ) throws E;
+
+	void writeInteger( byte value ) throws E;
+
+	void writeInteger( short value ) throws E;
+
+	void writeInteger( int value ) throws E;
+
+	void writeInteger( long value ) throws E;
+
+	void writeFloatingPoint( float value ) throws E;
+
+	void writeFloatingPoint( double value ) throws E;
+
+	void writeString( String value ) throws E;
+
+	void writeString( char value ) throws E;
+
+	default void writeUTF8( byte[] bytes, int offset, int length ) throws E
+    {
+        writeString( new String( bytes, offset, length, StandardCharsets.UTF_8 ) );
+    }
+
+	void beginArray( int size, ArrayType arrayType ) throws E;
+
+	void endArray() throws E;
+
+	void writeByteArray( byte[] value ) throws E;
+
+	void writePoint( CoordinateReferenceSystem crs, double[] coordinate ) throws E;
+
+	void writeDuration( long months, long days, long seconds, int nanos ) throws E;
+
+	void writeDate( LocalDate localDate ) throws E;
+
+	void writeLocalTime( LocalTime localTime ) throws E;
+
+	void writeTime( OffsetTime offsetTime ) throws E;
+
+	void writeLocalDateTime( LocalDateTime localDateTime ) throws E;
+
+	void writeDateTime( ZonedDateTime zonedDateTime ) throws E;
+
+	enum ArrayType
     {
         BYTE,
         SHORT,
@@ -55,52 +100,7 @@ public interface ValueWriter<E extends Exception>
         DURATION
     }
 
-    void writeNull() throws E;
-
-    void writeBoolean( boolean value ) throws E;
-
-    void writeInteger( byte value ) throws E;
-
-    void writeInteger( short value ) throws E;
-
-    void writeInteger( int value ) throws E;
-
-    void writeInteger( long value ) throws E;
-
-    void writeFloatingPoint( float value ) throws E;
-
-    void writeFloatingPoint( double value ) throws E;
-
-    void writeString( String value ) throws E;
-
-    void writeString( char value ) throws E;
-
-    default void writeUTF8( byte[] bytes, int offset, int length ) throws E
-    {
-        writeString( new String( bytes, offset, length, StandardCharsets.UTF_8 ) );
-    }
-
-    void beginArray( int size, ArrayType arrayType ) throws E;
-
-    void endArray() throws E;
-
-    void writeByteArray( byte[] value ) throws E;
-
-    void writePoint( CoordinateReferenceSystem crs, double[] coordinate ) throws E;
-
-    void writeDuration( long months, long days, long seconds, int nanos ) throws E;
-
-    void writeDate( LocalDate localDate ) throws E;
-
-    void writeLocalTime( LocalTime localTime ) throws E;
-
-    void writeTime( OffsetTime offsetTime ) throws E;
-
-    void writeLocalDateTime( LocalDateTime localDateTime ) throws E;
-
-    void writeDateTime( ZonedDateTime zonedDateTime ) throws E;
-
-    class Adapter<E extends Exception> implements ValueWriter<E>
+	class Adapter<E extends Exception> implements ValueWriter<E>
     {
         @Override
         public void writeNull() throws E

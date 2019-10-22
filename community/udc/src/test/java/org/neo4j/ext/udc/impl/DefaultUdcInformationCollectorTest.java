@@ -163,11 +163,10 @@ class DefaultUdcInformationCollectorTest
 
         // When & Then
         String userAgents = collector.getUdcParams().get( UdcConstants.USER_AGENTS );
-        if ( !(userAgents.equals( "SteveBrookClient/1.0,MayorClient/1.0" ) ||
-                userAgents.equals( "MayorClient/1.0,SteveBrookClient/1.0" )) )
+        if ( !("SteveBrookClient/1.0,MayorClient/1.0".equals( userAgents ) ||
+                "MayorClient/1.0,SteveBrookClient/1.0".equals( userAgents )) )
         {
-            fail( "Expected \"SteveBrookClient/1.0,MayorClient/1.0\" or \"MayorClient/1.0,SteveBrookClient/1.0\", " +
-                    "got \"" + userAgents + "\"" );
+            fail( new StringBuilder().append("Expected \"SteveBrookClient/1.0,MayorClient/1.0\" or \"MayorClient/1.0,SteveBrookClient/1.0\", ").append("got \"").append(userAgents).append("\"").toString() );
         }
     }
 

@@ -55,21 +55,19 @@ public class UsageData extends LifecycleAdapter
     public <T> T get( UsageDataKey<T> key )
     {
         Object o = store.get( key );
-        if ( o == null )
-        {
-            // When items are missing, if there is a default value, we do a get-or-create style operation
-            // This allows outside actors to get-or-create rich objects and know they will get the same object out
-            // that other threads would use, which is helpful when we store mutable objects
-            T value = key.generateDefaultValue();
-            if ( value == null )
-            {
-                return null;
-            }
-
-            store.putIfAbsent( key, value );
-            return get( key );
-        }
-        return (T) o;
+        if (o != null) {
+			return (T) o;
+		}
+		// When items are missing, if there is a default value, we do a get-or-create style operation
+		// This allows outside actors to get-or-create rich objects and know they will get the same object out
+		// that other threads would use, which is helpful when we store mutable objects
+		T value = key.generateDefaultValue();
+		if ( value == null )
+		{
+		    return null;
+		}
+		store.putIfAbsent( key, value );
+		return get( key );
     }
 
     @Override

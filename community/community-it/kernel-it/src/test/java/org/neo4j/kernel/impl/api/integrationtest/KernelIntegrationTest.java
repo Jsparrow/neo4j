@@ -129,9 +129,7 @@ public abstract class KernelIntegrationTest
     {
         Transaction tx = transaction;
         return () ->
-        {
-            transaction = tx;
-        };
+        transaction = tx;
     }
 
     protected DbmsOperations dbmsOperations()

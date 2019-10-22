@@ -127,12 +127,11 @@ public class TracerCompatibility extends LockingCompatibilityTestSuite.Compatibi
 
         private <EX extends Throwable> EX withCallTraces( EX failure )
         {
-            for ( StackTraceElement[] waitCall : waitCalls )
-            {
+            waitCalls.forEach(waitCall -> {
                 RuntimeException call = new RuntimeException( "Wait called" );
                 call.setStackTrace( waitCall );
                 failure.addSuppressed( call );
-            }
+            });
             return failure;
         }
     }

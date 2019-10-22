@@ -62,7 +62,7 @@ public final class RelationshipRepresentation extends ObjectRepresentation imple
 
     private String path( String path )
     {
-        return "relationship/" + rel.getId() + path;
+        return new StringBuilder().append("relationship/").append(rel.getId()).append(path).toString();
     }
 
     static String path( Relationship rel )
@@ -121,12 +121,12 @@ public final class RelationshipRepresentation extends ObjectRepresentation imple
     @Override
     void extraData( MappingSerializer serializer )
     {
-        if ( !isDeleted() )
-        {
-            MappingWriter properties = serializer.writer.newMapping( RepresentationType.PROPERTIES, "data" );
-            new PropertiesRepresentation( rel ).serialize( properties );
-            properties.done();
-        }
+        if (isDeleted()) {
+			return;
+		}
+		MappingWriter properties = serializer.writer.newMapping( RepresentationType.PROPERTIES, "data" );
+		new PropertiesRepresentation( rel ).serialize( properties );
+		properties.done();
     }
 
     public static ListRepresentation list( Iterable<Relationship> relationships )

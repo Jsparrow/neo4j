@@ -355,14 +355,14 @@ public abstract class RecordStoreConsistentReadTest<R extends AbstractBaseRecord
                 DynamicRecord actualNameRecord = actualNRs.next();
                 DynamicRecord expectedNameRecord = expectedNRs.next();
 
-                assertThat( "[" + i + "]getData", actualNameRecord.getData(), is( expectedNameRecord.getData() ) );
-                assertThat( "[" + i + "]getLength", actualNameRecord.getLength(), is( expectedNameRecord.getLength() ) );
-                assertThat( "[" + i + "]getNextBlock", actualNameRecord.getNextBlock(), is( expectedNameRecord.getNextBlock() ) );
-                assertThat( "[" + i + "]getType", actualNameRecord.getType(), is( expectedNameRecord.getType() ) );
-                assertThat( "[" + i + "]getId", actualNameRecord.getId(), is( expectedNameRecord.getId() ) );
-                assertThat( "[" + i + "]getLongId", actualNameRecord.getId(), is( expectedNameRecord.getId() ) );
-                assertThat( "[" + i + "]isStartRecord", actualNameRecord.isStartRecord(), is( expectedNameRecord.isStartRecord() ) );
-                assertThat( "[" + i + "]inUse", actualNameRecord.inUse(), is( expectedNameRecord.inUse() ) );
+                assertThat( new StringBuilder().append("[").append(i).append("]getData").toString(), actualNameRecord.getData(), is( expectedNameRecord.getData() ) );
+                assertThat( new StringBuilder().append("[").append(i).append("]getLength").toString(), actualNameRecord.getLength(), is( expectedNameRecord.getLength() ) );
+                assertThat( new StringBuilder().append("[").append(i).append("]getNextBlock").toString(), actualNameRecord.getNextBlock(), is( expectedNameRecord.getNextBlock() ) );
+                assertThat( new StringBuilder().append("[").append(i).append("]getType").toString(), actualNameRecord.getType(), is( expectedNameRecord.getType() ) );
+                assertThat( new StringBuilder().append("[").append(i).append("]getId").toString(), actualNameRecord.getId(), is( expectedNameRecord.getId() ) );
+                assertThat( new StringBuilder().append("[").append(i).append("]getLongId").toString(), actualNameRecord.getId(), is( expectedNameRecord.getId() ) );
+                assertThat( new StringBuilder().append("[").append(i).append("]isStartRecord").toString(), actualNameRecord.isStartRecord(), is( expectedNameRecord.isStartRecord() ) );
+                assertThat( new StringBuilder().append("[").append(i).append("]inUse").toString(), actualNameRecord.inUse(), is( expectedNameRecord.inUse() ) );
                 i++;
             }
         }
@@ -508,46 +508,46 @@ public abstract class RecordStoreConsistentReadTest<R extends AbstractBaseRecord
 
         private static void assertPropertyBlocksEqual( int index, PropertyBlock actualBlock, PropertyBlock expectedBlock )
         {
-            assertThat( "[" + index + "]getKeyIndexId", actualBlock.getKeyIndexId(),
+            assertThat( new StringBuilder().append("[").append(index).append("]getKeyIndexId").toString(), actualBlock.getKeyIndexId(),
                     is( expectedBlock.getKeyIndexId() ) );
-            assertThat( "[" + index + "]getSingleValueBlock", actualBlock.getSingleValueBlock(),
+            assertThat( new StringBuilder().append("[").append(index).append("]getSingleValueBlock").toString(), actualBlock.getSingleValueBlock(),
                     is( expectedBlock.getSingleValueBlock() ) );
-            assertThat( "[" + index + "]getSingleValueByte", actualBlock.getSingleValueByte(),
+            assertThat( new StringBuilder().append("[").append(index).append("]getSingleValueByte").toString(), actualBlock.getSingleValueByte(),
                     is( expectedBlock.getSingleValueByte() ) );
-            assertThat( "[" + index + "]getSingleValueInt", actualBlock.getSingleValueInt(),
+            assertThat( new StringBuilder().append("[").append(index).append("]getSingleValueInt").toString(), actualBlock.getSingleValueInt(),
                     is( expectedBlock.getSingleValueInt() ) );
-            assertThat( "[" + index + "]getSingleValueLong", actualBlock.getSingleValueLong(),
+            assertThat( new StringBuilder().append("[").append(index).append("]getSingleValueLong").toString(), actualBlock.getSingleValueLong(),
                     is( expectedBlock.getSingleValueLong() ) );
-            assertThat( "[" + index + "]getSingleValueShort", actualBlock.getSingleValueShort(),
+            assertThat( new StringBuilder().append("[").append(index).append("]getSingleValueShort").toString(), actualBlock.getSingleValueShort(),
                     is( expectedBlock.getSingleValueShort() ) );
-            assertThat( "[" + index + "]getSize", actualBlock.getSize(), is( expectedBlock.getSize() ) );
-            assertThat( "[" + index + "]getType", actualBlock.getType(), is( expectedBlock.getType() ) );
-            assertThat( "[" + index + "]isLight", actualBlock.isLight(), is( expectedBlock.isLight() ) );
+            assertThat( new StringBuilder().append("[").append(index).append("]getSize").toString(), actualBlock.getSize(), is( expectedBlock.getSize() ) );
+            assertThat( new StringBuilder().append("[").append(index).append("]getType").toString(), actualBlock.getType(), is( expectedBlock.getType() ) );
+            assertThat( new StringBuilder().append("[").append(index).append("]isLight").toString(), actualBlock.isLight(), is( expectedBlock.isLight() ) );
 
             List<DynamicRecord> actualValueRecords = actualBlock.getValueRecords();
             List<DynamicRecord> expectedValueRecords = expectedBlock.getValueRecords();
-            assertThat( "[" + index + "]getValueRecords.size",
+            assertThat( new StringBuilder().append("[").append(index).append("]getValueRecords.size").toString(),
                     actualValueRecords.size(), is( expectedValueRecords.size() ) );
 
             for ( int i = 0; i < actualValueRecords.size(); i++ )
             {
                 DynamicRecord actualValueRecord = actualValueRecords.get( i );
                 DynamicRecord expectedValueRecord = expectedValueRecords.get( i );
-                assertThat( "[" + index + "]getValueRecords[" + i + "]getData", actualValueRecord.getData(),
+                assertThat( new StringBuilder().append("[").append(index).append("]getValueRecords[").append(i).append("]getData").toString(), actualValueRecord.getData(),
                         is( expectedValueRecord.getData() ) );
-                assertThat( "[" + index + "]getValueRecords[" + i + "]getLength", actualValueRecord.getLength(),
+                assertThat( new StringBuilder().append("[").append(index).append("]getValueRecords[").append(i).append("]getLength").toString(), actualValueRecord.getLength(),
                         is( expectedValueRecord.getLength() ) );
-                assertThat( "[" + index + "]getValueRecords[" + i + "]getNextBlock", actualValueRecord.getNextBlock(),
+                assertThat( new StringBuilder().append("[").append(index).append("]getValueRecords[").append(i).append("]getNextBlock").toString(), actualValueRecord.getNextBlock(),
                         is( expectedValueRecord.getNextBlock() ) );
-                assertThat( "[" + index + "]getValueRecords[" + i + "]getType", actualValueRecord.getType(),
+                assertThat( new StringBuilder().append("[").append(index).append("]getValueRecords[").append(i).append("]getType").toString(), actualValueRecord.getType(),
                         is( expectedValueRecord.getType() ) );
-                assertThat( "[" + index + "]getValueRecords[" + i + "]getId", actualValueRecord.getId(),
+                assertThat( new StringBuilder().append("[").append(index).append("]getValueRecords[").append(i).append("]getId").toString(), actualValueRecord.getId(),
                         is( expectedValueRecord.getId() ) );
-                assertThat( "[" + index + "]getValueRecords[" + i + "]getLongId", actualValueRecord.getId(),
+                assertThat( new StringBuilder().append("[").append(index).append("]getValueRecords[").append(i).append("]getLongId").toString(), actualValueRecord.getId(),
                         is( expectedValueRecord.getId() ) );
-                assertThat( "[" + index + "]getValueRecords[" + i + "]isStartRecord", actualValueRecord.isStartRecord(),
+                assertThat( new StringBuilder().append("[").append(index).append("]getValueRecords[").append(i).append("]isStartRecord").toString(), actualValueRecord.isStartRecord(),
                         is( expectedValueRecord.isStartRecord() ) );
-                assertThat( "[" + index + "]getValueRecords[" + i + "]inUse", actualValueRecord.inUse(),
+                assertThat( new StringBuilder().append("[").append(index).append("]getValueRecords[").append(i).append("]inUse").toString(), actualValueRecord.inUse(),
                         is( expectedValueRecord.inUse() ) );
             }
         }

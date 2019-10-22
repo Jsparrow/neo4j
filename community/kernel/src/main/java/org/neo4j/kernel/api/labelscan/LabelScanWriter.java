@@ -24,20 +24,6 @@ import java.io.IOException;
 
 public interface LabelScanWriter extends Closeable
 {
-    /**
-     * Store a {@link NodeLabelUpdate}. Calls to this method MUST be ordered by ascending node id.
-     *
-     * @param update node label update to store
-     * @throws IOException some kind of I/O exception has occurred
-     */
-    void write( NodeLabelUpdate update ) throws IOException;
-
-    /**
-     * Close this writer and flush pending changes to the store.
-     */
-    @Override
-    void close() throws IOException;
-
     LabelScanWriter EMPTY = new LabelScanWriter()
     {
         @Override
@@ -52,4 +38,18 @@ public interface LabelScanWriter extends Closeable
             // nothing to close
         }
     };
+
+	/**
+     * Store a {@link NodeLabelUpdate}. Calls to this method MUST be ordered by ascending node id.
+     *
+     * @param update node label update to store
+     * @throws IOException some kind of I/O exception has occurred
+     */
+    void write( NodeLabelUpdate update ) throws IOException;
+
+	/**
+     * Close this writer and flush pending changes to the store.
+     */
+    @Override
+    void close() throws IOException;
 }

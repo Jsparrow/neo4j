@@ -84,12 +84,13 @@ public class SocketConnection implements TransportConnection
         }
         catch ( SocketTimeoutException e )
         {
-            throw new SocketTimeoutException( "Reading data timed out, missing " + left + " bytes. Buffer: " + HexPrinter.hex( bytes ) );
+            throw new SocketTimeoutException( new StringBuilder().append("Reading data timed out, missing ").append(left).append(" bytes. Buffer: ").append(HexPrinter.hex( bytes )).toString() );
         }
         //all the bytes could not be read, fail
         if ( left != 0 )
         {
-            throw new IOException( "Failed to read " + length + " bytes, missing " + left + " bytes. Buffer: " + HexPrinter.hex( bytes ) );
+            throw new IOException( new StringBuilder().append("Failed to read ").append(length).append(" bytes, missing ").append(left).append(" bytes. Buffer: ").append(HexPrinter.hex( bytes ))
+					.toString() );
         }
         return bytes;
     }

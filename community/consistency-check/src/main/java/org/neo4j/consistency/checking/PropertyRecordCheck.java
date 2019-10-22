@@ -93,7 +93,31 @@ public class PropertyRecordCheck
         }
     }
 
-    public enum PropertyField implements
+    private static ComparativeRecordChecker<PropertyRecord, PropertyKeyTokenRecord, ConsistencyReport.PropertyConsistencyReport>
+    propertyKey( final PropertyBlock block )
+    {
+        return new ComparativeRecordChecker<PropertyRecord, PropertyKeyTokenRecord, ConsistencyReport.PropertyConsistencyReport>()
+        {
+            @Override
+            public void checkReference( PropertyRecord record, PropertyKeyTokenRecord referred,
+                                        CheckerEngine<PropertyRecord, ConsistencyReport.PropertyConsistencyReport> engine,
+                                        RecordAccess records )
+            {
+                if ( !referred.inUse() )
+                {
+                    engine.report().keyNotInUse( block, referred );
+                }
+            }
+
+            @Override
+            public String toString()
+            {
+                return "PROPERTY_KEY";
+            }
+        };
+    }
+
+	public enum PropertyField implements
             RecordField<PropertyRecord, ConsistencyReport.PropertyConsistencyReport>,
             ComparativeRecordChecker<PropertyRecord, PropertyRecord, ConsistencyReport.PropertyConsistencyReport>
     {
@@ -163,18 +187,18 @@ public class PropertyRecordCheck
                                       CheckerEngine<PropertyRecord, ConsistencyReport.PropertyConsistencyReport> engine,
                                       RecordAccess records )
         {
-            if ( !NONE.is( valueFrom( record ) ) )
-            {
-                PropertyRecord prop = records.cacheAccess().client().getPropertyFromCache( valueFrom( record ) );
-                if ( prop == null )
-                {
-                    engine.comparativeCheck( records.property( valueFrom( record ) ), this );
-                }
-                else
-                {
-                    engine.comparativeCheck( new DirectRecordReference<>( prop, records ), this );
-                }
-            }
+            if (NONE.is( valueFrom( record ) )) {
+				return;
+			}
+			PropertyRecord prop = records.cacheAccess().client().getPropertyFromCache( valueFrom( record ) );
+			if ( prop == null )
+			{
+			    engine.comparativeCheck( records.property( valueFrom( record ) ), this );
+			}
+			else
+			{
+			    engine.comparativeCheck( new DirectRecordReference<>( prop, records ), this );
+			}
         }
 
         @Override
@@ -200,31 +224,7 @@ public class PropertyRecordCheck
         public abstract void noBackReference( ConsistencyReport.PropertyConsistencyReport report, PropertyRecord property );
     }
 
-    private static ComparativeRecordChecker<PropertyRecord, PropertyKeyTokenRecord, ConsistencyReport.PropertyConsistencyReport>
-    propertyKey( final PropertyBlock block )
-    {
-        return new ComparativeRecordChecker<PropertyRecord, PropertyKeyTokenRecord, ConsistencyReport.PropertyConsistencyReport>()
-        {
-            @Override
-            public void checkReference( PropertyRecord record, PropertyKeyTokenRecord referred,
-                                        CheckerEngine<PropertyRecord, ConsistencyReport.PropertyConsistencyReport> engine,
-                                        RecordAccess records )
-            {
-                if ( !referred.inUse() )
-                {
-                    engine.report().keyNotInUse( block, referred );
-                }
-            }
-
-            @Override
-            public String toString()
-            {
-                return "PROPERTY_KEY";
-            }
-        };
-    }
-
-    private abstract static class DynamicReference implements
+	private abstract static class DynamicReference implements
             ComparativeRecordChecker<PropertyRecord, DynamicRecord, ConsistencyReport.PropertyConsistencyReport>
     {
         final PropertyBlock block;

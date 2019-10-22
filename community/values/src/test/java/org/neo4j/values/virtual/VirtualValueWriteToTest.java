@@ -54,7 +54,14 @@ import static org.neo4j.values.virtual.VirtualValues.nodeValue;
 public class VirtualValueWriteToTest
 {
 
-    @Parameterized.Parameters( name = "{0}" )
+    private WriteTest currentTest;
+
+	public VirtualValueWriteToTest( WriteTest currentTest )
+    {
+        this.currentTest = currentTest;
+    }
+
+	@Parameterized.Parameters( name = "{0}" )
     public static Iterable<WriteTest> data()
     {
         return Arrays.asList(
@@ -147,25 +154,18 @@ public class VirtualValueWriteToTest
         );
     }
 
-    private WriteTest currentTest;
-
-    public VirtualValueWriteToTest( WriteTest currentTest )
-    {
-        this.currentTest = currentTest;
-    }
-
-    private static WriteTest shouldWrite( AnyValue value, Object... expected )
+	private static WriteTest shouldWrite( AnyValue value, Object... expected )
     {
         return new WriteTest( value, expected );
     }
 
-    @Test
+	@Test
     public void runTest()
     {
         currentTest.verifyWriteTo();
     }
 
-    private static class WriteTest
+	private static class WriteTest
     {
         private final AnyValue value;
         private final Object[] expected;

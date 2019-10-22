@@ -300,8 +300,7 @@ class LuceneSchemaIndexUniquenessVerificationIT
         }
         catch ( Throwable t )
         {
-            fail( "Unable to create uniqueness constraint for data: " + Strings.prettyPrint( data.toArray() ) +
-                  "\n" + Exceptions.stringify( t ) );
+            fail( new StringBuilder().append("Unable to create uniqueness constraint for data: ").append(Strings.prettyPrint( data.toArray() )).append("\n").append(Exceptions.stringify( t )).toString() );
         }
     }
 

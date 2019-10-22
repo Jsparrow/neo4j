@@ -97,19 +97,18 @@ public class MathUtil
     // Tested by PropertyValueComparisonTest
     public static int compareDoubleAgainstLong( double lhs, long rhs )
     {
-        if  ( (NON_DOUBLE_LONG & rhs ) != NON_DOUBLE_LONG )
-        {
-            if ( Double.isNaN( lhs ) )
-            {
-                return +1;
-            }
-            if ( Double.isInfinite( lhs ) )
-            {
-                return lhs < 0 ? -1 : +1;
-            }
-            return BigDecimal.valueOf( lhs ).compareTo( BigDecimal.valueOf( rhs ) );
-        }
-        return Double.compare( lhs, rhs );
+        if (!((NON_DOUBLE_LONG & rhs ) != NON_DOUBLE_LONG)) {
+			return Double.compare( lhs, rhs );
+		}
+		if ( Double.isNaN( lhs ) )
+		{
+		    return +1;
+		}
+		if ( Double.isInfinite( lhs ) )
+		{
+		    return lhs < 0 ? -1 : +1;
+		}
+		return BigDecimal.valueOf( lhs ).compareTo( BigDecimal.valueOf( rhs ) );
     }
 
     // Tested by PropertyValueComparisonTest

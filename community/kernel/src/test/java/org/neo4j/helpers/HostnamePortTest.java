@@ -143,31 +143,31 @@ class HostnamePortTest
         // When & Then
 
         // Should match, same host and port
-        assertTrue( hostnamePortSinglePort.matches( URI.create( "ha://" + unknownHost1 + ":1234" ) ) );
+        assertTrue( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost1).append(":1234").toString() ) ) );
         // Should fail, different host or port
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + unknownHost1 + ":1235" ) ) );
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + unknownHost2 + ":1234" ) ) );
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + unknownHost2 + ":1235" ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost1).append(":1235").toString() ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost2).append(":1234").toString() ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost2).append(":1235").toString() ) ) );
         // Should fail, no port
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + unknownHost1 + "" ) ) );
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + unknownHost2 + "" ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost1).append("").toString() ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost2).append("").toString() ) ) );
 
         // Unknown host should never match with any IP or known host
         assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://1.2.3.4:1234" ) ) );
 
         // Should return false with any other known host
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + knownHost + ":1234" ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(knownHost).append(":1234").toString() ) ) );
 
         // Should match, port in range and host the same
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost1 + ":1234" ) ) );
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost1 + ":1235" ) ) );
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost1 + ":1236" ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost1).append(":1234").toString() ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost1).append(":1235").toString() ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost1).append(":1236").toString() ) ) );
         // Should not match, different host
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost2 + ":1234" ) ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost2 + ":1235" ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost2).append(":1234").toString() ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost2).append(":1235").toString() ) ) );
         // Should not match, port outside of range
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost1 + ":1233" ) ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost1 + ":1237" ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost1).append(":1233").toString() ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost1).append(":1237").toString() ) ) );
         // Should not match, no port
         assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost1 ) ) );
         assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost2 ) ) );
@@ -196,25 +196,25 @@ class HostnamePortTest
         // When & Then
 
         // Should match, same host and port
-        assertTrue( hostnamePortSinglePort.matches( URI.create( "ha://" + hostname1 + ":1234" ) ) );
+        assertTrue( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(hostname1).append(":1234").toString() ) ) );
         // Should fail, different host or port
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + hostname1 + ":1235" ) ) );
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host2 + ":1234" ) ) );
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host2 + ":1235" ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(hostname1).append(":1235").toString() ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(host2).append(":1234").toString() ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(host2).append(":1235").toString() ) ) );
         // Should fail, no port
         assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host1 ) ) );
         assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host2 ) ) );
 
         // Should match, port in range and host the same
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + hostname1 + ":1234" ) ) );
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + hostname1 + ":1235" ) ) );
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + hostname1 + ":1236" ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(hostname1).append(":1234").toString() ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(hostname1).append(":1235").toString() ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(hostname1).append(":1236").toString() ) ) );
         // Should not match, different host
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host2 + ":1234" ) ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host2 + ":1235" ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host2).append(":1234").toString() ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host2).append(":1235").toString() ) ) );
         // Should not match, port outside of range
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + hostname1 + ":1233" ) ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + hostname1 + ":1237" ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(hostname1).append(":1233").toString() ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(hostname1).append(":1237").toString() ) ) );
         // Should not match, no port
         assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + hostname1 ) ) );
         assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host2 ) ) );
@@ -237,25 +237,25 @@ class HostnamePortTest
         // When & Then
 
         // Should match, same host and port
-        assertTrue( hostnamePortSinglePort.matches( URI.create( "ha://" + host1 + ":1234" ) ) );
+        assertTrue( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1234").toString() ) ) );
         // Should fail, different host or port
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host1 + ":1235" ) ) );
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + hostname2 + ":1234" ) ) );
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + hostname2 + ":1235" ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1235").toString() ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(hostname2).append(":1234").toString() ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(hostname2).append(":1235").toString() ) ) );
         // Should fail, no port
         assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host1 ) ) );
         assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + hostname2 ) ) );
 
         // Should match, port in range and host the same
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + host1 + ":1234" ) ) );
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + host1 + ":1235" ) ) );
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + host1 + ":1236" ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1234").toString() ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1235").toString() ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1236").toString() ) ) );
         // Should not match, different host
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + hostname2 + ":1234" ) ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + hostname2 + ":1235" ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(hostname2).append(":1234").toString() ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(hostname2).append(":1235").toString() ) ) );
         // Should not match, port outside of range
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host1 + ":1233" ) ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host1 + ":1237" ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1233").toString() ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1237").toString() ) ) );
         // Should not match, no port
         assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host1 ) ) );
         assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + hostname2 ) ) );
@@ -277,10 +277,10 @@ class HostnamePortTest
         // When & Then
 
         // should return false if matched with any unknown host
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + unknownHost + ":1234") ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost + ":1234") ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost + ":1235") ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost + ":1236") ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost).append(":1234").toString()) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost).append(":1234").toString()) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost).append(":1235").toString()) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost).append(":1236").toString()) ) );
     }
 
     @Test
@@ -301,25 +301,25 @@ class HostnamePortTest
         // When & Then
 
         // Should match, same host and port
-        assertTrue( hostnamePortSinglePort.matches( URI.create( "ha://" + host1 + ":1234" ) ) );
+        assertTrue( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1234").toString() ) ) );
         // Should fail, different host or port
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host1 + ":1235" ) ) );
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host2 + ":1234" ) ) );
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host2 + ":1235" ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1235").toString() ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(host2).append(":1234").toString() ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(host2).append(":1235").toString() ) ) );
         // Should fail, no port
         assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host1 ) ) );
         assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host2 ) ) );
 
         // Should match, port in range and host the same
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + host1 + ":1234" ) ) );
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + host1 + ":1235" ) ) );
-        assertTrue( hostnamePortWithRange.matches( URI.create( "ha://" + host1 + ":1236" ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1234").toString() ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1235").toString() ) ) );
+        assertTrue( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1236").toString() ) ) );
         // Should not match, different host
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host2 + ":1234" ) ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host2 + ":1235" ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host2).append(":1234").toString() ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host2).append(":1235").toString() ) ) );
         // Should not match, port outside of range
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host1 + ":1233" ) ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host1 + ":1237" ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1233").toString() ) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1237").toString() ) ) );
         // Should not match, no port
         assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host1 ) ) );
         assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + host2 ) ) );
@@ -341,10 +341,10 @@ class HostnamePortTest
         // When & Then
 
         // should return false if matched with any unknown host
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + unknownHost + ":1234") ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost + ":1234") ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost + ":1235") ) );
-        assertFalse( hostnamePortWithRange.matches( URI.create( "ha://" + unknownHost + ":1236") ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost).append(":1234").toString()) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost).append(":1234").toString()) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost).append(":1235").toString()) ) );
+        assertFalse( hostnamePortWithRange.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost).append(":1236").toString()) ) );
     }
 
     @Test
@@ -391,7 +391,7 @@ class HostnamePortTest
         assertThrows( UnknownHostException.class, () -> InetAddress.getByName( unknownHost ) );
         // When & Then
 
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + unknownHost + ":1234" ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(unknownHost).append(":1234").toString() ) ) );
     }
 
     @Test
@@ -400,7 +400,7 @@ class HostnamePortTest
         HostnamePort hostnamePortSinglePort = new HostnamePort( ":1234" );
         String host1IP = InetAddress.getLocalHost().getHostAddress();
 
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host1IP + ":1234" ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(host1IP).append(":1234").toString() ) ) );
     }
 
     @Test
@@ -409,7 +409,7 @@ class HostnamePortTest
         HostnamePort hostnamePortSinglePort = new HostnamePort( ":1234" );
         String host1 = InetAddress.getLocalHost().getHostName();
 
-        assertFalse( hostnamePortSinglePort.matches( URI.create( "ha://" + host1 + ":1234" ) ) );
+        assertFalse( hostnamePortSinglePort.matches( URI.create( new StringBuilder().append("ha://").append(host1).append(":1234").toString() ) ) );
     }
 
     @Test

@@ -71,6 +71,6 @@ public class OverriddenAccessMode extends WrappedAccessMode
     @Override
     public String name()
     {
-        return original.name() + " overridden by " + wrapping.name();
+        return new StringBuilder().append(original.name()).append(" overridden by ").append(wrapping.name()).toString();
     }
 }

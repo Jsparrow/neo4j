@@ -137,11 +137,10 @@ public class ConvertersTest
                 Pair.of( "[::1]", new OptionalHostnamePort( "::1", null, null ) ),
                 Pair.of( "[3FFe::1]", new OptionalHostnamePort( "3FFe::1", null, null ) ),
                 Pair.of( "[::1]:2", new OptionalHostnamePort( "::1", 2, 2 ) ),
-                Pair.of( "[" + full + "]", new OptionalHostnamePort( full, null, null ) ),
-                Pair.of( "[" + full + "]" + ":5432", new OptionalHostnamePort( full, 5432, 5432 ) ),
+                Pair.of( new StringBuilder().append("[").append(full).append("]").toString(), new OptionalHostnamePort( full, null, null ) ),
+                Pair.of( new StringBuilder().append("[").append(full).append("]").append(":5432").toString(), new OptionalHostnamePort( full, 5432, 5432 ) ),
                 Pair.of( "[1::2]:3-4", new OptionalHostnamePort( "1::2", 3, 4 ) ) );
-        for ( Pair<String,OptionalHostnamePort> useCase : cases )
-        {
+        cases.forEach(useCase -> {
             // given
             String caseInput = useCase.first();
             OptionalHostnamePort caseOutput = useCase.other();
@@ -154,7 +153,7 @@ public class ConvertersTest
             assertEquals( msg, caseOutput.getHostname(), optionalHostnamePort.getHostname() );
             assertEquals( msg, caseOutput.getPort(), optionalHostnamePort.getPort() );
             assertEquals( msg, caseOutput.getUpperRangePort(), optionalHostnamePort.getUpperRangePort() );
-        }
+        });
     }
 
     @Test

@@ -42,132 +42,132 @@ public abstract class ThrowingValueWriter<E extends Exception> implements ValueW
         };
     }
 
-    public abstract static class AssertOnly extends ThrowingValueWriter<RuntimeException>
-    {
-        @Override
-        protected RuntimeException exception( String method )
-        {
-            throw new AssertionError( method );
-        }
-    }
-
     @Override
     public void writeNull() throws E
     {
         throw exception( "writeNull" );
     }
 
-    @Override
+	@Override
     public void writeBoolean( boolean value ) throws E
     {
         throw exception( "writeBoolean" );
     }
 
-    @Override
+	@Override
     public void writeInteger( byte value ) throws E
     {
         throw exception( "writeInteger" );
     }
 
-    @Override
+	@Override
     public void writeInteger( short value ) throws E
     {
         throw exception( "writeInteger" );
     }
 
-    @Override
+	@Override
     public void writeInteger( int value ) throws E
     {
         throw exception( "writeInteger" );
     }
 
-    @Override
+	@Override
     public void writeInteger( long value ) throws E
     {
         throw exception( "writeInteger" );
     }
 
-    @Override
+	@Override
     public void writeFloatingPoint( float value ) throws E
     {
         throw exception( "writeFloatingPoint" );
     }
 
-    @Override
+	@Override
     public void writeFloatingPoint( double value ) throws E
     {
         throw exception( "writeFloatingPoint" );
     }
 
-    @Override
+	@Override
     public void writeString( String value ) throws E
     {
         throw exception( "writeString" );
     }
 
-    @Override
+	@Override
     public void writeString( char value ) throws E
     {
         throw exception( "writeString" );
     }
 
-    @Override
+	@Override
     public void beginArray( int size, ArrayType arrayType ) throws E
     {
         throw exception( "beginArray" );
     }
 
-    @Override
+	@Override
     public void endArray() throws E
     {
         throw exception( "endArray" );
     }
 
-    @Override
+	@Override
     public void writeByteArray( byte[] value ) throws E
     {
         throw exception( "writeByteArray" );
     }
 
-    @Override
+	@Override
     public void writePoint( CoordinateReferenceSystem crs, double[] coordinate ) throws E
     {
         throw exception( "writePoint" );
     }
 
-    @Override
+	@Override
     public void writeDuration( long months, long days, long seconds, int nanos ) throws E
     {
         throw exception( "writeDuration" );
     }
 
-    @Override
+	@Override
     public void writeDate( LocalDate localDate ) throws E
     {
         throw exception( "writeDate" );
     }
 
-    @Override
+	@Override
     public void writeLocalTime( LocalTime localTime ) throws E
     {
         throw exception( "writeLocalTime" );
     }
 
-    @Override
+	@Override
     public void writeTime( OffsetTime offsetTime ) throws E
     {
         throw exception( "writeTime" );
     }
 
-    @Override
+	@Override
     public void writeLocalDateTime( LocalDateTime localDateTime ) throws E
     {
         throw exception( "writeLocalDateTime" );
     }
 
-    @Override
+	@Override
     public void writeDateTime( ZonedDateTime zonedDateTime ) throws E
     {
         throw exception( "writeDateTime" );
+    }
+
+	public abstract static class AssertOnly extends ThrowingValueWriter<RuntimeException>
+    {
+        @Override
+        protected RuntimeException exception( String method )
+        {
+            throw new AssertionError( method );
+        }
     }
 }

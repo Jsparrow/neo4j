@@ -31,25 +31,6 @@ package org.neo4j.csv.reader;
  */
 public interface SourceTraceability
 {
-    /**
-     * @return description of the source being read from.
-     */
-    String sourceDescription();
-
-    /**
-     * @return a low-level byte-like position e.g. byte offset.
-     */
-    long position();
-
-    abstract class Adapter implements SourceTraceability
-    {
-        @Override
-        public long position()
-        {
-            return 0;
-        }
-    }
-
     SourceTraceability EMPTY = new Adapter()
     {
         @Override
@@ -58,4 +39,23 @@ public interface SourceTraceability
             return "EMPTY";
         }
     };
+
+	/**
+     * @return description of the source being read from.
+     */
+    String sourceDescription();
+
+	/**
+     * @return a low-level byte-like position e.g. byte offset.
+     */
+    long position();
+
+	abstract class Adapter implements SourceTraceability
+    {
+        @Override
+        public long position()
+        {
+            return 0;
+        }
+    }
 }

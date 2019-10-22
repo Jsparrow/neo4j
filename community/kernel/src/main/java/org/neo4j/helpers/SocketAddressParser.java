@@ -93,26 +93,22 @@ public class SocketAddressParser
         }
 
         Matcher hostnamePortMatcher = hostnamePortPattern.matcher( settingValue );
-        if ( hostnamePortMatcher.matches() )
-        {
-            String hostname = hostnamePortMatcher.group( "hostname" );
-            int port = parseInt( hostnamePortMatcher.group( "port" ) );
-            return constructor.apply( hostname, port );
-        }
-
-        return null;
+        if (!hostnamePortMatcher.matches()) {
+			return null;
+		}
+		String hostname = hostnamePortMatcher.group( "hostname" );
+		int port = parseInt( hostnamePortMatcher.group( "port" ) );
+		return constructor.apply( hostname, port );
     }
 
     private static <T extends SocketAddress> T matchPort( String settingValue, String defaultHostname,
             BiFunction<String,Integer,T> constructor )
     {
         Matcher portMatcher = portPattern.matcher( settingValue );
-        if ( portMatcher.matches() )
-        {
-            int port = parseInt( portMatcher.group( "port" ) );
-            return constructor.apply( defaultHostname, port );
-        }
-
-        return null;
+        if (!portMatcher.matches()) {
+			return null;
+		}
+		int port = parseInt( portMatcher.group( "port" ) );
+		return constructor.apply( defaultHostname, port );
     }
 }

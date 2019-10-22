@@ -56,20 +56,13 @@ public class KernelTransactionMonitor implements Runnable
 
     private void checkExpiredTransactions( Set<KernelTransactionHandle> activeTransactions, long nowNanos )
     {
-        for ( KernelTransactionHandle activeTransaction : activeTransactions )
-        {
+        activeTransactions.forEach(activeTransaction -> {
             long transactionTimeoutMillis = activeTransaction.timeoutMillis();
-            if ( transactionTimeoutMillis > 0 )
-            {
-                if ( isTransactionExpired( activeTransaction, nowNanos, transactionTimeoutMillis ) && !activeTransaction.isSchemaTransaction() )
-                {
-                    if ( activeTransaction.markForTermination( Status.Transaction.TransactionTimedOut ) )
-                    {
-                        log.warn( "Transaction %s timeout.", activeTransaction );
-                    }
-                }
-            }
-        }
+            boolean condition = transactionTimeoutMillis > 0 && isTransactionExpired( activeTransaction, nowNanos, transactionTimeoutMillis ) && !activeTransaction.isSchemaTransaction() && activeTransaction.markForTermination( Status.Transaction.TransactionTimedOut );
+			if ( condition ) {
+			    log.warn( "Transaction %s timeout.", activeTransaction );
+			}
+        });
     }
 
     private static boolean isTransactionExpired( KernelTransactionHandle activeTransaction, long nowNanos, long transactionTimeoutMillis )

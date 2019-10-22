@@ -311,26 +311,22 @@ public class NodeRelationshipCacheTest
         }
 
         {
-            // WHEN (sparse)
+            // THEN (sparse)
+			// WHEN (sparse)
             NodeChangeVisitor visitor = ( nodeId, array ) ->
-            {
-                // THEN (sparse)
-                assertTrue( "Unexpected sparse change reported for " + nodeId, keySparseChanged.remove( nodeId ) );
-            };
+            assertTrue("Unexpected sparse change reported for " + nodeId, keySparseChanged.remove(nodeId));
             cache.visitChangedNodes( visitor, NodeType.NODE_TYPE_SPARSE );
-            assertTrue( "There was " + keySparseChanged.size() + " expected sparse changes that weren't reported",
+            assertTrue( new StringBuilder().append("There was ").append(keySparseChanged.size()).append(" expected sparse changes that weren't reported").toString(),
                     keySparseChanged.isEmpty() );
         }
 
         {
-            // WHEN (dense)
+            // THEN (dense)
+			// WHEN (dense)
             NodeChangeVisitor visitor = ( nodeId, array ) ->
-            {
-                // THEN (dense)
-                assertTrue( "Unexpected dense change reported for " + nodeId, keyDenseChanged.remove( nodeId ) );
-            };
+            assertTrue("Unexpected dense change reported for " + nodeId, keyDenseChanged.remove(nodeId));
             cache.visitChangedNodes( visitor, NodeType.NODE_TYPE_DENSE );
-            assertTrue( "There was " + keyDenseChanged.size() + " expected dense changes that weren reported",
+            assertTrue( new StringBuilder().append("There was ").append(keyDenseChanged.size()).append(" expected dense changes that weren reported").toString(),
                     keyDenseChanged.isEmpty() );
         }
     }

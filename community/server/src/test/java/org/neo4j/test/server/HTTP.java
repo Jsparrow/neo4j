@@ -70,7 +70,7 @@ public class HTTP
 
     public static String basicAuthHeader( String username, String password )
     {
-        String usernamePassword = username + ':' + password;
+        String usernamePassword = new StringBuilder().append(username).append(':').append(password).toString();
         return "Basic " + Base64.getEncoder().encodeToString( usernamePassword.getBytes() );
     }
 
@@ -138,7 +138,27 @@ public class HTTP
         }
     }
 
-    public static class Builder
+    /**
+     * Check some general validations that all REST responses should always pass.
+     */
+    public static ClientResponse sanityCheck( ClientResponse response )
+    {
+        List<String> contentEncodings = response.getHeaders().get( "Content-Encoding" );
+        String contentEncoding;
+        if ( contentEncodings != null && (contentEncoding = Iterables.singleOrNull( contentEncodings )) != null )
+        {
+            // Specifically, this is never used for character encoding.
+            contentEncoding = contentEncoding.toLowerCase();
+            assertThat( contentEncoding, anyOf(
+                    containsString( "gzip" ),
+                    containsString( "deflate" ) ) );
+            assertThat( contentEncoding, allOf(
+                    not( containsString( "utf-8" ) ) ) );
+        }
+        return response;
+    }
+
+	public static class Builder
     {
         private final Map<String, String> headers;
         private final String baseUri;
@@ -240,26 +260,6 @@ public class HTTP
         }
     }
 
-    /**
-     * Check some general validations that all REST responses should always pass.
-     */
-    public static ClientResponse sanityCheck( ClientResponse response )
-    {
-        List<String> contentEncodings = response.getHeaders().get( "Content-Encoding" );
-        String contentEncoding;
-        if ( contentEncodings != null && (contentEncoding = Iterables.singleOrNull( contentEncodings )) != null )
-        {
-            // Specifically, this is never used for character encoding.
-            contentEncoding = contentEncoding.toLowerCase();
-            assertThat( contentEncoding, anyOf(
-                    containsString( "gzip" ),
-                    containsString( "deflate" ) ) );
-            assertThat( contentEncoding, allOf(
-                    not( containsString( "utf-8" ) ) ) );
-        }
-        return response;
-    }
-
     public static class Response
     {
         private final ClientResponse response;
@@ -282,8 +282,7 @@ public class HTTP
             {
                 return response.getLocation().toString();
             }
-            throw new RuntimeException( "The request did not contain a location header, " +
-                    "unable to provide location. Status code was: " + status() );
+            throw new RuntimeException( new StringBuilder().append("The request did not contain a location header, ").append("unable to provide location. Status code was: ").append(status()).toString() );
         }
 
         @SuppressWarnings( "unchecked" )
@@ -324,13 +323,7 @@ public class HTTP
         {
             StringBuilder sb = new StringBuilder();
             sb.append( "HTTP " ).append( response.getStatus() ).append( "\n" );
-            for ( Map.Entry<String, List<String>> header : response.getHeaders().entrySet() )
-            {
-                for ( String headerEntry : header.getValue() )
-                {
-                    sb.append( header.getKey() + ": " ).append( headerEntry ).append( "\n" );
-                }
-            }
+            response.getHeaders().entrySet().forEach(header -> header.getValue().forEach(headerEntry -> sb.append(header.getKey() + ": ").append(headerEntry).append("\n")));
             sb.append( "\n" );
             sb.append( entity ).append( "\n" );
 
@@ -342,22 +335,22 @@ public class HTTP
     {
         private final String payload;
 
-        public static RawPayload rawPayload( String payload )
-        {
-            return new RawPayload( payload );
-        }
-
-        public static RawPayload quotedJson( String json )
-        {
-            return new RawPayload( json.replaceAll( "'", "\"" ) );
-        }
-
         private RawPayload( String payload )
         {
             this.payload = payload;
         }
 
-        public String get()
+		public static RawPayload rawPayload( String payload )
+        {
+            return new RawPayload( payload );
+        }
+
+		public static RawPayload quotedJson( String json )
+        {
+            return new RawPayload( json.replaceAll( "'", "\"" ) );
+        }
+
+		public String get()
         {
             return payload;
         }

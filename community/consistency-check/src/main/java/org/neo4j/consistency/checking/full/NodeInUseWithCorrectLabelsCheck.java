@@ -57,12 +57,11 @@ public class NodeInUseWithCorrectLabelsCheck
 
     static long[] sortAndDeduplicate( long[] labels )
     {
-        if ( ArrayUtils.isNotEmpty( labels ) )
-        {
-            sort( labels );
-            return PrimitiveLongCollections.deduplicate( labels );
-        }
-        return labels;
+        if (!ArrayUtils.isNotEmpty( labels )) {
+			return labels;
+		}
+		sort( labels );
+		return PrimitiveLongCollections.deduplicate( labels );
     }
 
     @Override
@@ -155,7 +154,7 @@ public class NodeInUseWithCorrectLabelsCheck
         }
         else
         {
-            throw new IllegalStateException( "Unknown property schema type '" + propertySchemaType + "'." );
+            throw new IllegalStateException( new StringBuilder().append("Unknown property schema type '").append(propertySchemaType).append("'.").toString() );
         }
     }
 

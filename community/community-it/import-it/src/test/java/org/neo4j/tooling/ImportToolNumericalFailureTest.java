@@ -47,7 +47,24 @@ import static org.neo4j.tooling.ImportToolTest.importTool;
 @RunWith( Parameterized.class )
 public class ImportToolNumericalFailureTest
 {
-    @Parameters( name = "{index}: {0}, \"{1}\", \"{2}\"" )
+    @Parameter
+    public String type;
+
+	@Parameter( value = 1 )
+    public String val;
+
+	@Parameter( value = 2 )
+    public String expectedError;
+
+	@Rule
+    public final EmbeddedDatabaseRule dbRule = new EmbeddedDatabaseRule().startLazily();
+
+	@Rule
+    public final SuppressOutput suppressOutput = SuppressOutput.suppress( SuppressOutput.System.values() );
+
+	private int dataIndex;
+
+	@Parameters( name = "{index}: {0}, \"{1}\", \"{2}\"" )
     public static List<Object[]> types()
     {
         ArrayList<Object[]> params = new ArrayList<>();
@@ -58,19 +75,19 @@ public class ImportToolNumericalFailureTest
                     "1E 10", " . 1" ) )
             {
                 // Only include decimals for floating point
-                if ( val.contains( "." ) && !( type.equals( "float" ) || type.equals( "double" ) ) )
+                if ( val.contains( "." ) && !( "float".equals( type ) || "double".equals( type ) ) )
                 {
                     continue;
                 }
 
                 final String error;
-                if ( type.equals( "float" ) || type.equals( "double" ) )
+                if ( "float".equals( type ) || "double".equals( type ) )
                 {
-                    error = "Not a number: \"" + val + "\"";
+                    error = new StringBuilder().append("Not a number: \"").append(val).append("\"").toString();
                 }
                 else
                 {
-                    error = "Not an integer: \"" + val + "\"";
+                    error = new StringBuilder().append("Not an integer: \"").append(val).append("\"").toString();
                 }
 
                 String[] args = new String[3];
@@ -85,23 +102,7 @@ public class ImportToolNumericalFailureTest
         return params;
     }
 
-    @Parameter
-    public String type;
-
-    @Parameter( value = 1 )
-    public String val;
-
-    @Parameter( value = 2 )
-    public String expectedError;
-
-    @Rule
-    public final EmbeddedDatabaseRule dbRule = new EmbeddedDatabaseRule().startLazily();
-    @Rule
-    public final SuppressOutput suppressOutput = SuppressOutput.suppress( SuppressOutput.System.values() );
-
-    private int dataIndex;
-
-    @Test
+	@Test
     public void test() throws Exception
     {
         // GIVEN
@@ -125,12 +126,12 @@ public class ImportToolNumericalFailureTest
         }
     }
 
-    private String fileName( String name )
+	private String fileName( String name )
     {
-        return dataIndex++ + "-" + name;
+        return new StringBuilder().append(dataIndex++).append("-").append(name).toString();
     }
 
-    private File file( String localname )
+	private File file( String localname )
     {
         return dbRule.databaseLayout().file( localname );
     }

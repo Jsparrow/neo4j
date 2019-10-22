@@ -54,13 +54,15 @@ public abstract class KernelAPIReadTestBase<ReadSupport extends KernelAPIReadTes
     protected SchemaRead schemaRead;
     protected Token token;
     protected ManagedTestCursors cursors;
+	@Rule
+    public CursorsClosedPostCondition cursorsClosedPostCondition = new CursorsClosedPostCondition( () -> cursors );
 
-    /**
+	/**
      * Creates a new instance of KernelAPIReadTestSupport, which will be used to execute the concrete test
      */
     public abstract ReadSupport newTestSupport();
 
-    /**
+	/**
      * Create the graph which all test in the class will be executed against. The graph is only built once,
      * regardless of the number of tests.
      *
@@ -68,7 +70,7 @@ public abstract class KernelAPIReadTestBase<ReadSupport extends KernelAPIReadTes
      */
     public abstract void createTestGraph( GraphDatabaseService graphDb );
 
-    @Before
+	@Before
     public void setupGraph() throws IOException, KernelException
     {
         if ( testSupport == null )
@@ -86,30 +88,27 @@ public abstract class KernelAPIReadTestBase<ReadSupport extends KernelAPIReadTes
         cursors = new ManagedTestCursors( tx.cursors() );
     }
 
-    protected Transaction beginTransaction() throws TransactionFailureException
+	protected Transaction beginTransaction() throws TransactionFailureException
     {
         Kernel kernel = testSupport.kernelToTest();
         return kernel.beginTransaction( Transaction.Type.implicit, LoginContext.AUTH_DISABLED );
     }
 
-    @Rule
-    public CursorsClosedPostCondition cursorsClosedPostCondition = new CursorsClosedPostCondition( () -> cursors );
-
-    @After
+	@After
     public void closeTransaction() throws Exception
     {
         tx.success();
         tx.close();
     }
 
-    @AfterClass
+	@AfterClass
     public static void tearDown()
     {
-        if ( testSupport != null )
-        {
-            testSupport.tearDown();
-            folder.delete();
-            testSupport = null;
-        }
+        if (testSupport == null) {
+			return;
+		}
+		testSupport.tearDown();
+		folder.delete();
+		testSupport = null;
     }
 }

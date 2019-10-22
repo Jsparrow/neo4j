@@ -42,14 +42,14 @@ public class ModelBuilder
 
         DomainEntity thomas = new DomainEntity();
         thomas.properties.put( "name", "Thomas Anderson" );
-        thomas.location = (URI) rgd.createNode( "{\"name\":\"" + "Thomas Anderson" + "\"}" )
+        thomas.location = (URI) rgd.createNode( new StringBuilder().append("{\"name\":\"").append("Thomas Anderson").append("\"}").toString() )
                 .getMetadata()
                 .getFirst( "Location" );
         dm.add( thomas );
 
         DomainEntity agent = new DomainEntity();
         agent.properties.put( "name", "Agent Smith" );
-        agent.location = (URI) rgd.createNode( "{\"name\":\"" + "Agent Smith" + "\"}" )
+        agent.location = (URI) rgd.createNode( new StringBuilder().append("{\"name\":\"").append("Agent Smith").append("\"}").toString() )
                 .getMetadata()
                 .getFirst( "Location" );
         dm.add( agent );
@@ -58,12 +58,14 @@ public class ModelBuilder
         dm.indexedNodeKeyValues.put( key, value );
 
         dm.indexedNodeUriToEntityMap.put( (URI) rgd.addToNodeIndex( dm.nodeIndexName, null, null,
-                "{\"key\": \"" + key + "\", \"value\":\"" + value + "\", \"uri\": \"" + thomas.location + "\"}" )
+                new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\":\"").append(value).append("\", \"uri\": \"")
+						.append(thomas.location).append("\"}").toString() )
                         .getMetadata()
                         .getFirst( "Location" ), thomas );
         dm.indexedNodeUriToEntityMap.put(
                 (URI) rgd.addToNodeIndex( dm.nodeIndexName, null, null,
-                        "{\"key\": \"" + key + "\", \"value\":\"" + value + "\", \"uri\": \"" + agent.location + "\"}" )
+                        new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\":\"").append(value).append("\", \"uri\": \"")
+								.append(agent.location).append("\"}").toString() )
                         .getMetadata()
                         .getFirst( "Location" ), agent );
 

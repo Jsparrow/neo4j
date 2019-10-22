@@ -143,13 +143,11 @@ public class FileUtils
     {
         if ( !toMove.exists() )
         {
-            throw new FileNotFoundException( "Source file[" + toMove.getAbsolutePath()
-                                             + "] not found" );
+            throw new FileNotFoundException( new StringBuilder().append("Source file[").append(toMove.getAbsolutePath()).append("] not found").toString() );
         }
         if ( target.exists() )
         {
-            throw new IOException( "Target file[" + target.getAbsolutePath()
-                                   + "] already exists" );
+            throw new IOException( new StringBuilder().append("Target file[").append(target.getAbsolutePath()).append("] already exists").toString() );
         }
 
         if ( toMove.renameTo( target ) )
@@ -360,7 +358,7 @@ public class FileUtils
             {
                 FileStore fileStore = Files.getFileStore( pathOnDevice );
                 String name = fileStore.name();
-                if ( name.equals( "tmpfs" ) || name.equals( "hugetlbfs" ) )
+                if ( "tmpfs".equals( name ) || "hugetlbfs".equals( name ) )
                 {
                     // This is a purely in-memory device. It doesn't get faster than this.
                     return true;
@@ -468,7 +466,7 @@ public class FileUtils
         // File to move must be true sub path to from dir
         if ( !fileToMove.startsWith( fromDir ) || fileToMove.equals( fromDir ) )
         {
-            throw new IllegalArgumentException( "File " + fileToMove + " is not a sub path to dir " + fromDir );
+            throw new IllegalArgumentException( new StringBuilder().append("File ").append(fileToMove).append(" is not a sub path to dir ").append(fromDir).toString() );
         }
 
         return toDir.resolve( fromDir.relativize( fileToMove ) );
@@ -490,11 +488,6 @@ public class FileUtils
         }
     }
 
-    public interface Operation
-    {
-        void perform() throws IOException;
-    }
-
     public static void windowsSafeIOOperation( Operation operation ) throws IOException
     {
         IOException storedIoe = null;
@@ -514,44 +507,32 @@ public class FileUtils
         throw Objects.requireNonNull( storedIoe );
     }
 
-    public interface LineListener
-    {
-        void line( String line );
-    }
-
-    public static LineListener echo( final PrintStream target )
+	public static LineListener echo( final PrintStream target )
     {
         return target::println;
     }
 
-    public static void readTextFile( File file, LineListener listener ) throws IOException
+	public static void readTextFile( File file, LineListener listener ) throws IOException
     {
         try ( BufferedReader reader = new BufferedReader( new FileReader( file ) ) )
         {
-            String line;
-            while ( (line = reader.readLine()) != null )
-            {
-                listener.line( line );
-            }
+            reader.lines().forEach(listener::line);
         }
     }
 
-    public static String readTextFile( File file, Charset charset ) throws IOException
+	public static String readTextFile( File file, Charset charset ) throws IOException
     {
         StringBuilder out = new StringBuilder();
-        for ( String s : Files.readAllLines( file.toPath(), charset ) )
-        {
-            out.append( s ).append( "\n" );
-        }
+        Files.readAllLines( file.toPath(), charset ).forEach(s -> out.append(s).append("\n"));
         return out.toString();
     }
 
-    private static void deleteFile( Path path ) throws IOException
+	private static void deleteFile( Path path ) throws IOException
     {
         windowsSafeIOOperation( () -> Files.delete( path ) );
     }
 
-    /**
+	/**
      * Given a directory and a path under it, return filename of the path
      * relative to the directory.
      *
@@ -579,7 +560,7 @@ public class FileUtils
         return path;
     }
 
-    /**
+	/**
      * Canonical file resolution on windows does not resolve links.
      * Real paths on windows can be resolved only using {@link Path#toRealPath(LinkOption...)}, but file should exist in that case.
      * We will try to do as much as possible and will try to use {@link Path#toRealPath(LinkOption...)} when file exist and will fallback to only
@@ -601,7 +582,7 @@ public class FileUtils
         }
     }
 
-    public static void writeAll( FileChannel channel, ByteBuffer src, long position ) throws IOException
+	public static void writeAll( FileChannel channel, ByteBuffer src, long position ) throws IOException
     {
         long filePosition = position;
         long expectedEndPosition = filePosition + src.limit() - src.position();
@@ -615,7 +596,7 @@ public class FileUtils
         }
     }
 
-    public static void writeAll( FileChannel channel, ByteBuffer src ) throws IOException
+	public static void writeAll( FileChannel channel, ByteBuffer src ) throws IOException
     {
         long bytesToWrite = src.limit() - src.position();
         int bytesWritten;
@@ -628,7 +609,7 @@ public class FileUtils
         }
     }
 
-    public static OpenOption[] convertOpenMode( OpenMode mode )
+	public static OpenOption[] convertOpenMode( OpenMode mode )
     {
         OpenOption[] options;
         switch ( mode )
@@ -651,17 +632,17 @@ public class FileUtils
         return options;
     }
 
-    public static FileChannel open( Path path, OpenMode openMode ) throws IOException
+	public static FileChannel open( Path path, OpenMode openMode ) throws IOException
     {
         return FileChannel.open( path, convertOpenMode( openMode ) );
     }
 
-    public static InputStream openAsInputStream( Path path ) throws IOException
+	public static InputStream openAsInputStream( Path path ) throws IOException
     {
         return Files.newInputStream( path, READ );
     }
 
-    /**
+	/**
      * Check if directory is empty.
      *
      * @param directory - directory to check
@@ -688,7 +669,7 @@ public class FileUtils
         return true;
     }
 
-    public static OutputStream openAsOutputStream( Path path, boolean append ) throws IOException
+	public static OutputStream openAsOutputStream( Path path, boolean append ) throws IOException
     {
         OpenOption[] options;
         if ( append )
@@ -702,7 +683,7 @@ public class FileUtils
         return Files.newOutputStream( path, options );
     }
 
-    /**
+	/**
      * Calculates the size of a given directory or file given the provided abstract filesystem.
      *
      * @param fs the filesystem abstraction to use
@@ -712,23 +693,29 @@ public class FileUtils
      */
     public static long size( FileSystemAbstraction fs, File file )
     {
-        if ( fs.isDirectory( file ) )
-        {
-            long size = 0L;
-            File[] files = fs.listFiles( file );
-            if ( files == null )
-            {
-                return 0L;
-            }
-            for ( File child : files )
-            {
-                size += size( fs, child );
-            }
-            return size;
-        }
-        else
-        {
-            return fs.getFileSize( file );
-        }
+        if (!fs.isDirectory( file )) {
+			return fs.getFileSize( file );
+		}
+		long size = 0L;
+		File[] files = fs.listFiles( file );
+		if ( files == null )
+		{
+		    return 0L;
+		}
+		for ( File child : files )
+		{
+		    size += size( fs, child );
+		}
+		return size;
+    }
+
+	public interface Operation
+    {
+        void perform() throws IOException;
+    }
+
+    public interface LineListener
+    {
+        void line( String line );
     }
 }

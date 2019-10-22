@@ -39,30 +39,55 @@ import java.lang.annotation.Target;
  */
 public class RepeatRule implements TestRule
 {
-    @Retention( RetentionPolicy.RUNTIME )
+    private final boolean printRepeats;
+	private final int defaultTimes;
+	private int count;
+
+	public RepeatRule()
+    {
+        this( false, 1 );
+    }
+
+	public RepeatRule( boolean printRepeats, int defaultRepeats )
+    {
+        this.printRepeats = printRepeats;
+        this.defaultTimes = defaultRepeats;
+    }
+
+	@Override
+    public Statement apply( Statement base, Description description )
+    {
+        Repeat repeat = description.getAnnotation( Repeat.class );
+        if ( repeat != null )
+        {
+            return new RepeatStatement( repeat.times(), base, description );
+        }
+        if ( defaultTimes > 1 )
+        {
+            return new RepeatStatement( defaultTimes, base, description );
+        }
+        return base;
+    }
+
+	/**
+     * Get the current count. This can be used (for example) in a non-suspending breakpoint at the beginning of a
+     * test to print out what iteration is currently running.
+     *
+     * @return current count
+     */
+    public int getCount()
+    {
+        return count;
+    }
+
+	@Retention( RetentionPolicy.RUNTIME )
     @Target( ElementType.METHOD )
     public @interface Repeat
     {
         int times();
     }
 
-    private final boolean printRepeats;
-    private final int defaultTimes;
-
-    private int count;
-
-    public RepeatRule()
-    {
-        this( false, 1 );
-    }
-
-    public RepeatRule( boolean printRepeats, int defaultRepeats )
-    {
-        this.printRepeats = printRepeats;
-        this.defaultTimes = defaultRepeats;
-    }
-
-    private class RepeatStatement extends Statement
+	private class RepeatStatement extends Statement
     {
         private final int times;
         private final Statement statement;
@@ -82,36 +107,11 @@ public class RepeatRule implements TestRule
             {
                 if ( printRepeats )
                 {
-                    System.out.println( testName + " iteration " + (count + 1) + "/" + times );
+                    System.out.println( new StringBuilder().append(testName).append(" iteration ").append(count + 1).append("/").append(times)
+							.toString() );
                 }
                 statement.evaluate();
             }
         }
-    }
-
-    @Override
-    public Statement apply( Statement base, Description description )
-    {
-        Repeat repeat = description.getAnnotation( Repeat.class );
-        if ( repeat != null )
-        {
-            return new RepeatStatement( repeat.times(), base, description );
-        }
-        if ( defaultTimes > 1 )
-        {
-            return new RepeatStatement( defaultTimes, base, description );
-        }
-        return base;
-    }
-
-    /**
-     * Get the current count. This can be used (for example) in a non-suspending breakpoint at the beginning of a
-     * test to print out what iteration is currently running.
-     *
-     * @return current count
-     */
-    public int getCount()
-    {
-        return count;
     }
 }

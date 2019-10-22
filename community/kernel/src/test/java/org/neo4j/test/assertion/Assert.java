@@ -53,7 +53,7 @@ public final class Assert
         try
         {
             f.apply();
-            fail( "Expected exception of type " + typeOfException + ", but no exception was thrown" );
+            fail( new StringBuilder().append("Expected exception of type ").append(typeOfException).append(", but no exception was thrown").toString() );
         }
         catch ( Exception e )
         {
@@ -66,7 +66,7 @@ public final class Assert
             }
             else
             {
-                fail( "Got unexpected exception " + e.getClass() + "\nExpected: " + typeOfException );
+                fail( new StringBuilder().append("Got unexpected exception ").append(e.getClass()).append("\nExpected: ").append(typeOfException).toString() );
             }
         }
     }
@@ -132,24 +132,22 @@ public final class Assert
             Thread.sleep( 100 );
         } while ( true );
 
-        if ( !matched )
-        {
-            Description description = new StringDescription();
-            description.appendText( reason.apply( last ) )
-                    .appendText( "\nExpected: " )
-                    .appendDescriptionOf( matcher )
-                    .appendText( "\n     but: " );
-            matcher.describeMismatch( last, description );
-
-            throw new AssertionError( "Timeout hit (" + timeout + " " + timeUnit.toString().toLowerCase() +
-                    ") while waiting for condition to match: " + description.toString() );
-        }
+        if (matched) {
+			return;
+		}
+		Description description = new StringDescription();
+		description.appendText( reason.apply( last ) )
+		        .appendText( "\nExpected: " )
+		        .appendDescriptionOf( matcher )
+		        .appendText( "\n     but: " );
+		matcher.describeMismatch( last, description );
+		throw new AssertionError( new StringBuilder().append("Timeout hit (").append(timeout).append(" ").append(timeUnit.toString().toLowerCase()).append(") while waiting for condition to match: ").append(description.toString())
+				.toString() );
     }
 
     private static AssertionError newAssertionError( String message, Object expected, Object actual )
     {
-        return new AssertionError( ((message == null || message.isEmpty()) ? "" : message + "\n") +
-                                   "Expected: " + Strings.prettyPrint( expected ) +
-                                   ", actual: " + Strings.prettyPrint( actual ) );
+        return new AssertionError( new StringBuilder().append((message == null || message.isEmpty()) ? "" : message + "\n").append("Expected: ").append(Strings.prettyPrint( expected )).append(", actual: ")
+				.append(Strings.prettyPrint( actual )).toString() );
     }
 }

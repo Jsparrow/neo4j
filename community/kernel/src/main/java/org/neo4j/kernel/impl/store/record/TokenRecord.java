@@ -89,10 +89,7 @@ public abstract class TokenRecord extends AbstractBaseRecord
         additionalToString( buf );
         if ( !isLight() )
         {
-            for ( DynamicRecord dyn : nameRecords )
-            {
-                buf.append( ',' ).append( dyn );
-            }
+            nameRecords.forEach(dyn -> buf.append(',').append(dyn));
         }
         return buf.append( ']' ).toString();
     }

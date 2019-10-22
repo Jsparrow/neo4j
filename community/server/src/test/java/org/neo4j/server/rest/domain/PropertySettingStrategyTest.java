@@ -43,35 +43,35 @@ import static org.neo4j.helpers.collection.MapUtil.map;
 public class PropertySettingStrategyTest
 {
     private static GraphDatabaseAPI db;
-    private Transaction tx;
-    private static PropertySettingStrategy propSetter;
+	private static PropertySettingStrategy propSetter;
+	private Transaction tx;
 
-    @BeforeClass
+	@BeforeClass
     public static void createDb()
     {
         db = (GraphDatabaseAPI) new TestGraphDatabaseFactory().newImpermanentDatabase();
         propSetter = new PropertySettingStrategy( db );
     }
 
-    @AfterClass
+	@AfterClass
     public static void closeDb()
     {
         db.shutdown();
     }
 
-    @Before
+	@Before
     public void beginTx()
     {
         tx = db.beginTx();
     }
 
-    @After
+	@After
     public void rollbackTx()
     {
         tx.close();
     }
 
-    @Test
+	@Test
     public void shouldSetSingleProperty() throws Exception
     {
         // Given
@@ -84,7 +84,7 @@ public class PropertySettingStrategyTest
         assertThat( node.getProperty( "name" ), is("bob"));
     }
 
-    @Test
+	@Test
     public void shouldSetMultipleProperties() throws Exception
     {
         // Given
@@ -108,7 +108,7 @@ public class PropertySettingStrategyTest
         assertThat( node.getProperty( "anArray" ), is(new String[]{"hello","Iamanarray"}));
     }
 
-    @Test
+	@Test
     public void shouldSetAllProperties() throws Exception
     {
         // Given
@@ -125,9 +125,7 @@ public class PropertySettingStrategyTest
         assertThat( node.hasProperty( "age" ), is(false));
     }
 
-    // Handling empty collections
-
-    @Test
+	@Test
     public void shouldNotFailSettingEmptyArrayIfEntityAlreadyHasAnEmptyArrayAsValue() throws Exception
     {
         // Given
@@ -141,7 +139,7 @@ public class PropertySettingStrategyTest
         assertThat( node.getProperty( "arr" ), is(new String[]{}));
     }
 
-    @Test
+	@Test
     public void shouldNotFailSettingEmptyArrayAndOtherValuesIfEntityAlreadyHasAnEmptyArrayAsValue() throws Exception
     {
         // Given
@@ -160,7 +158,7 @@ public class PropertySettingStrategyTest
         assertThat( node.getProperty( "arr" ), is(new String[]{}));
     }
 
-    @Test( expected = PropertyValueException.class )
+	@Test( expected = PropertyValueException.class )
     public void shouldThrowPropertyErrorWhenSettingEmptyArrayOnEntityWithNoPreExistingProperty() throws Exception
     {
         // Given
@@ -170,7 +168,7 @@ public class PropertySettingStrategyTest
         propSetter.setProperty( node, "arr", new ArrayList<>() );
     }
 
-    @Test( expected = PropertyValueException.class )
+	@Test( expected = PropertyValueException.class )
     public void shouldThrowPropertyErrorWhenSettingEmptyArrayOnEntityWithNoPreExistingEmptyArray() throws Exception
     {
         // Given
@@ -181,7 +179,7 @@ public class PropertySettingStrategyTest
         propSetter.setProperty( node, "arr", new ArrayList<>() );
     }
 
-    @Test
+	@Test
     public void shouldUseOriginalTypeWhenSettingEmptyArrayIfEntityAlreadyHasACollection() throws Exception
     {
         // Given
@@ -195,7 +193,7 @@ public class PropertySettingStrategyTest
         assertThat( node.getProperty( "arr" ), is(new String[]{}));
     }
 
-    @Test
+	@Test
     public void shouldUseOriginalTypeOnEmptyCollectionWhenSettingAllProperties() throws Exception
     {
         // Given
@@ -210,5 +208,8 @@ public class PropertySettingStrategyTest
         assertThat( node.hasProperty( "name" ), is(false));
         assertThat( node.getProperty( "arr" ), is(new String[]{}));
     }
+
+    // Handling empty collections
+
 
 }

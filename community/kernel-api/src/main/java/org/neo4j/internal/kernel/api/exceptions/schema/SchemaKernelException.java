@@ -29,29 +29,29 @@ import org.neo4j.kernel.api.exceptions.Status;
  */
 public abstract class SchemaKernelException extends KernelException
 {
-    public enum OperationContext
-    {
-        INDEX_CREATION,
-        CONSTRAINT_CREATION
-    }
-
-    protected SchemaKernelException( Status statusCode, Throwable cause, String message, Object... parameters )
-    {
-        super( statusCode, cause, message, parameters );
-    }
-
     public SchemaKernelException( Status statusCode, String message, Throwable cause )
     {
         super( statusCode, cause, message );
     }
 
-    public SchemaKernelException( Status statusCode, String message )
+	public SchemaKernelException( Status statusCode, String message )
     {
         super( statusCode, message );
     }
 
-    protected static String messageWithLabelAndPropertyName( TokenNameLookup tokenNameLookup, String formatString, SchemaDescriptor descriptor )
+	protected SchemaKernelException( Status statusCode, Throwable cause, String message, Object... parameters )
+    {
+        super( statusCode, cause, message, parameters );
+    }
+
+	protected static String messageWithLabelAndPropertyName( TokenNameLookup tokenNameLookup, String formatString, SchemaDescriptor descriptor )
     {
         return String.format( formatString, descriptor.userDescription( tokenNameLookup ) );
+    }
+
+	public enum OperationContext
+    {
+        INDEX_CREATION,
+        CONSTRAINT_CREATION
     }
 }

@@ -351,9 +351,7 @@ public class RecoveryCorruptedTransactionLogIT
         logProvider.rawMessageMatcher().assertContains( "Fail to read first transaction of log version 5." );
         logProvider.rawMessageMatcher().assertContains(
                 "Recovery required from position LogPosition{logVersion=5, byteOffset=593}" );
-        logProvider.rawMessageMatcher().assertContains( "Fail to recover all transactions. " +
-                "Any later transactions after position LogPosition{logVersion=5, byteOffset=593} " +
-                "are unreadable and will be truncated." );
+        logProvider.rawMessageMatcher().assertContains( new StringBuilder().append("Fail to recover all transactions. ").append("Any later transactions after position LogPosition{logVersion=5, byteOffset=593} ").append("are unreadable and will be truncated.").toString() );
 
         assertEquals( 5, logFiles.getHighestLogVersion() );
         ObjectLongMap<Class> logEntriesDistribution = getLogEntriesDistribution( logFiles );

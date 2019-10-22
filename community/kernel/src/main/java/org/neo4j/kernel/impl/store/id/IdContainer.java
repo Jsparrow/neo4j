@@ -143,8 +143,7 @@ public class IdContainer
         byte storageStatus = buffer.get();
         if ( storageStatus != CLEAN_GENERATOR )
         {
-            throw new InvalidIdGeneratorException( "Id file not properly shutdown [ " +
-                    fileName + " ], delete this id file and build a new one" );
+            throw new InvalidIdGeneratorException( new StringBuilder().append("Id file not properly shutdown [ ").append(fileName).append(" ], delete this id file and build a new one").toString() );
         }
         return buffer.getLong();
     }
@@ -298,7 +297,7 @@ public class IdContainer
         }
         if ( throwIfFileExists && fs.fileExists( file ) )
         {
-            throw new IllegalStateException( "Can't create id file [" + file + "], file already exists" );
+            throw new IllegalStateException( new StringBuilder().append("Can't create id file [").append(file).append("], file already exists").toString() );
         }
         try ( StoreChannel channel = fs.create( file ) )
         {
@@ -326,16 +325,16 @@ public class IdContainer
             ByteBuffer exceptionBuffer = buffer.duplicate();
             exceptionBuffer.flip();
             throw new InvalidIdGeneratorException(
-                    "Unable to read header of id file [" + file + "], bytes read: " + Arrays.toString( getBufferBytes( exceptionBuffer ) ) );
+                    new StringBuilder().append("Unable to read header of id file [").append(file).append("], bytes read: ").append(Arrays.toString( getBufferBytes( exceptionBuffer ) )).toString() );
         }
     }
 
     @Override
     public String toString()
     {
-        return "IdContainer{" + "file=" + file + ", fs=" + fs + ", fileChannel=" + fileChannel + ", defragCount=" +
-                freeIdKeeper.getCount() + ", grabSize=" + grabSize + ", aggressiveReuse=" +
-                aggressiveReuse + ", closed=" + closed + '}';
+        return new StringBuilder().append("IdContainer{").append("file=").append(file).append(", fs=").append(fs).append(", fileChannel=").append(fileChannel)
+				.append(", defragCount=").append(freeIdKeeper.getCount()).append(", grabSize=").append(grabSize).append(", aggressiveReuse=").append(aggressiveReuse).append(", closed=")
+				.append(closed).append('}').toString();
     }
 
     private static byte[] getBufferBytes( ByteBuffer buffer )

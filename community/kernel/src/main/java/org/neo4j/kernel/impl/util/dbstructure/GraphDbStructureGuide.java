@@ -53,7 +53,7 @@ import static org.neo4j.kernel.api.StatementConstants.ANY_RELATIONSHIP_TYPE;
 
 public class GraphDbStructureGuide implements Visitable<DbStructureVisitor>
 {
-    private static RelationshipType WILDCARD_REL_TYPE = () -> "";
+    private static RelationshipType wildcardRelType = () -> "";
 
     private final GraphDatabaseService db;
     private final ThreadToStatementContextBridge bridge;
@@ -175,8 +175,7 @@ public class GraphDbStructureGuide implements Visitable<DbStructureVisitor>
             }
             else
             {
-                throw new IllegalArgumentException( "Unknown constraint type: " + constraint.getClass() + ", " +
-                                                    "constraint: " + constraint );
+                throw new IllegalArgumentException( new StringBuilder().append("Unknown constraint type: ").append(constraint.getClass()).append(", ").append("constraint: ").append(constraint).toString() );
             }
         }
     }
@@ -200,7 +199,7 @@ public class GraphDbStructureGuide implements Visitable<DbStructureVisitor>
     private void showRelCounts( KernelTransaction ktx, DbStructureVisitor visitor )
     {
         // all wildcards
-        noSide( ktx, visitor, WILDCARD_REL_TYPE, ANY_RELATIONSHIP_TYPE );
+        noSide( ktx, visitor, wildcardRelType, ANY_RELATIONSHIP_TYPE );
 
         TokenRead tokenRead = ktx.tokenRead();
         // one label only
@@ -208,8 +207,8 @@ public class GraphDbStructureGuide implements Visitable<DbStructureVisitor>
         {
             int labelId = tokenRead.nodeLabel( label.name() );
 
-            leftSide( ktx, visitor, label, labelId, WILDCARD_REL_TYPE, ANY_RELATIONSHIP_TYPE );
-            rightSide( ktx, visitor, label, labelId, WILDCARD_REL_TYPE, ANY_RELATIONSHIP_TYPE );
+            leftSide( ktx, visitor, label, labelId, wildcardRelType, ANY_RELATIONSHIP_TYPE );
+            rightSide( ktx, visitor, label, labelId, wildcardRelType, ANY_RELATIONSHIP_TYPE );
         }
 
         // fixed rel type
@@ -261,6 +260,6 @@ public class GraphDbStructureGuide implements Visitable<DbStructureVisitor>
 
     private String colon( String name )
     {
-        return  name.length() == 0 ? name : (":" + name);
+        return  name.isEmpty() ? name : (":" + name);
     }
 }

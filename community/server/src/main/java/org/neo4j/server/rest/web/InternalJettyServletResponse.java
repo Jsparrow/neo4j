@@ -39,7 +39,255 @@ import javax.servlet.http.Cookie;
 public class InternalJettyServletResponse extends Response
 {
 
-    private class Output extends ServletOutputStream
+    private final Map<String, Object> headers = new HashMap<>();
+	private final Output output = new Output();
+	private int status = -1;
+	private String message = "";
+
+	public InternalJettyServletResponse()
+    {
+        super( null, null );
+    }
+
+	@Override
+    public void addCookie( Cookie cookie )
+    {
+        // TODO Auto-generated method stub
+    }
+
+	@Override
+    public String encodeURL( String url )
+    {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+	@Override
+    public void sendError( int sc )
+    {
+        sendError( sc, null );
+    }
+
+	@Override
+    public void sendError( int code, String message )
+    {
+        setStatus( code, message );
+    }
+
+	@Override
+    public void sendRedirect( String location )
+    {
+        setStatus( 304 );
+        addHeader( "location", location );
+    }
+
+	@Override
+    public boolean containsHeader( String name )
+    {
+        return headers.containsKey( name );
+    }
+
+	@Override
+    public void setDateHeader( String name, long date )
+    {
+        headers.put( name, date );
+    }
+
+	@Override
+    public void addDateHeader( String name, long date )
+    {
+        if ( headers.containsKey( name ) )
+        {
+            headers.put( name, date );
+        }
+    }
+
+	@Override
+    public void addHeader( String name, String value )
+    {
+        setHeader( name, value );
+    }
+
+	@Override
+    public void setHeader( String name, String value )
+    {
+        headers.put( name, value );
+    }
+
+	@Override
+    public void setIntHeader( String name, int value )
+    {
+        headers.put( name, value );
+    }
+
+	@Override
+    public void addIntHeader( String name, int value )
+    {
+        setIntHeader( name, value );
+    }
+
+	@Override
+    public String getHeader( String name )
+    {
+        if ( headers.containsKey( name ) )
+        {
+            Object value = headers.get( name );
+            if ( value instanceof String )
+            {
+                return (String) value;
+            }
+            else if ( value instanceof Collection )
+            {
+                return ( (Collection<?>) value ).iterator()
+                        .next()
+                        .toString();
+            }
+            else
+            {
+                return value.toString();
+            }
+        }
+
+        return null;
+    }
+
+	public Map<String, Object> getHeaders()
+    {
+        return headers;
+    }
+
+	@Override
+    public Collection<String> getHeaders( String name )
+    {
+        if ( headers.containsKey( name ) )
+        {
+            Object value = headers.get( name );
+            if ( value instanceof Collection )
+            {
+                return (Collection<String>) value;
+            }
+            else
+            {
+                return Collections.singleton( (String) value );
+            }
+        }
+        return null;
+    }
+
+	@Override
+    public void setStatus( int sc )
+    {
+        status = sc;
+    }
+
+	@Override
+    public void setStatus( int sc, String sm )
+    {
+        status = sc;
+        message = sm;
+    }
+
+	@Override
+    public int getStatus()
+    {
+        return status;
+    }
+
+	@Override
+    public String getReason()
+    {
+        return message;
+    }
+
+	@Override
+    public ServletOutputStream getOutputStream()
+    {
+        return output;
+    }
+
+	@Override
+    public boolean isWriting()
+    {
+        return false;
+    }
+
+	@Override
+    public PrintWriter getWriter()
+    {
+        return new PrintWriter( new OutputStreamWriter( output, StandardCharsets.UTF_8 ) );
+    }
+
+	@Override
+    public void setCharacterEncoding( String encoding )
+    {
+
+    }
+
+	@Override
+    public void setContentLength( int len )
+    {
+    }
+
+	@Override
+    public void setLongContentLength( long len )
+    {
+    }
+
+	@Override
+    public void setContentType( String contentType )
+    {
+    }
+
+	@Override
+    public void setBufferSize( int size )
+    {
+    }
+
+	@Override
+    public int getBufferSize()
+    {
+        return -1;
+    }
+
+	@Override
+    public void flushBuffer()
+    {
+    }
+
+	@Override
+    public String toString()
+    {
+        return null;
+    }
+
+	@Override
+    public HttpFields getHttpFields()
+    {
+        return null;
+    }
+
+	@Override
+    public long getContentCount()
+    {
+        return 1L;
+    }
+
+	public void complete()
+    {
+    }
+
+	@Override
+    public void setLocale( Locale locale )
+    {
+    }
+
+	@Override
+    public boolean isCommitted()
+    {
+        return false;
+    }
+
+	private class Output extends ServletOutputStream
     {
 
         private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -82,254 +330,6 @@ public class InternalJettyServletResponse extends Response
                 // Ignore
             }
         }
-    }
-
-    private final Map<String, Object> headers = new HashMap<>();
-    private final Output output = new Output();
-    private int status = -1;
-    private String message = "";
-
-    public InternalJettyServletResponse()
-    {
-        super( null, null );
-    }
-
-    @Override
-    public void addCookie( Cookie cookie )
-    {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public String encodeURL( String url )
-    {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void sendError( int sc )
-    {
-        sendError( sc, null );
-    }
-
-    @Override
-    public void sendError( int code, String message )
-    {
-        setStatus( code, message );
-    }
-
-    @Override
-    public void sendRedirect( String location )
-    {
-        setStatus( 304 );
-        addHeader( "location", location );
-    }
-
-    @Override
-    public boolean containsHeader( String name )
-    {
-        return headers.containsKey( name );
-    }
-
-    @Override
-    public void setDateHeader( String name, long date )
-    {
-        headers.put( name, date );
-    }
-
-    @Override
-    public void addDateHeader( String name, long date )
-    {
-        if ( headers.containsKey( name ) )
-        {
-            headers.put( name, date );
-        }
-    }
-
-    @Override
-    public void addHeader( String name, String value )
-    {
-        setHeader( name, value );
-    }
-
-    @Override
-    public void setHeader( String name, String value )
-    {
-        headers.put( name, value );
-    }
-
-    @Override
-    public void setIntHeader( String name, int value )
-    {
-        headers.put( name, value );
-    }
-
-    @Override
-    public void addIntHeader( String name, int value )
-    {
-        setIntHeader( name, value );
-    }
-
-    @Override
-    public String getHeader( String name )
-    {
-        if ( headers.containsKey( name ) )
-        {
-            Object value = headers.get( name );
-            if ( value instanceof String )
-            {
-                return (String) value;
-            }
-            else if ( value instanceof Collection )
-            {
-                return ( (Collection<?>) value ).iterator()
-                        .next()
-                        .toString();
-            }
-            else
-            {
-                return value.toString();
-            }
-        }
-
-        return null;
-    }
-
-    public Map<String, Object> getHeaders()
-    {
-        return headers;
-    }
-
-    @Override
-    public Collection<String> getHeaders( String name )
-    {
-        if ( headers.containsKey( name ) )
-        {
-            Object value = headers.get( name );
-            if ( value instanceof Collection )
-            {
-                return (Collection<String>) value;
-            }
-            else
-            {
-                return Collections.singleton( (String) value );
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public void setStatus( int sc )
-    {
-        status = sc;
-    }
-
-    @Override
-    public void setStatus( int sc, String sm )
-    {
-        status = sc;
-        message = sm;
-    }
-
-    @Override
-    public int getStatus()
-    {
-        return status;
-    }
-
-    @Override
-    public String getReason()
-    {
-        return message;
-    }
-
-    @Override
-    public ServletOutputStream getOutputStream()
-    {
-        return output;
-    }
-
-    @Override
-    public boolean isWriting()
-    {
-        return false;
-    }
-
-    @Override
-    public PrintWriter getWriter()
-    {
-        return new PrintWriter( new OutputStreamWriter( output, StandardCharsets.UTF_8 ) );
-    }
-
-    @Override
-    public void setCharacterEncoding( String encoding )
-    {
-
-    }
-
-    @Override
-    public void setContentLength( int len )
-    {
-    }
-
-    @Override
-    public void setLongContentLength( long len )
-    {
-    }
-
-    @Override
-    public void setContentType( String contentType )
-    {
-    }
-
-    @Override
-    public void setBufferSize( int size )
-    {
-    }
-
-    @Override
-    public int getBufferSize()
-    {
-        return -1;
-    }
-
-    @Override
-    public void flushBuffer()
-    {
-    }
-
-    @Override
-    public String toString()
-    {
-        return null;
-    }
-
-    @Override
-    public HttpFields getHttpFields()
-    {
-        return null;
-    }
-
-    @Override
-    public long getContentCount()
-    {
-        return 1L;
-    }
-
-    public void complete()
-    {
-    }
-
-    @Override
-    public void setLocale( Locale locale )
-    {
-    }
-
-    @Override
-    public boolean isCommitted()
-    {
-        return false;
     }
 
 }

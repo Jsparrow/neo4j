@@ -33,32 +33,30 @@ import java.io.Writer;
  */
 public class StreamConsumer implements Runnable
 {
-    public interface StreamExceptionHandler
-    {
-        void handle( IOException failure );
-    }
-
     public static final StreamExceptionHandler PRINT_FAILURES = Throwable::printStackTrace;
 
-    public static final StreamExceptionHandler IGNORE_FAILURES = failure ->
+	public static final StreamExceptionHandler IGNORE_FAILURES = failure ->
     {
     };
 
-    private final BufferedReader in;
-    private final Writer out;
+	private final BufferedReader in;
 
-    private final boolean quiet;
-    private final String prefix;
+	private final Writer out;
 
-    private final StreamExceptionHandler failureHandler;
-    private final Exception stackTraceOfOrigin;
+	private final boolean quiet;
 
-    public StreamConsumer( InputStream in, OutputStream out, boolean quiet )
+	private final String prefix;
+
+	private final StreamExceptionHandler failureHandler;
+
+	private final Exception stackTraceOfOrigin;
+
+	public StreamConsumer( InputStream in, OutputStream out, boolean quiet )
     {
         this( in, out, quiet, "", quiet ? IGNORE_FAILURES : PRINT_FAILURES );
     }
 
-    public StreamConsumer( InputStream in, OutputStream out, boolean quiet, String prefix,
+	public StreamConsumer( InputStream in, OutputStream out, boolean quiet, String prefix,
             StreamExceptionHandler failureHandler )
     {
         this.quiet = quiet;
@@ -69,7 +67,7 @@ public class StreamConsumer implements Runnable
         this.stackTraceOfOrigin = new Exception( "Stack trace of thread that created this StreamConsumer" );
     }
 
-    @Override
+	@Override
     public void run()
     {
         try
@@ -79,7 +77,7 @@ public class StreamConsumer implements Runnable
             {
                 if ( !quiet )
                 {
-                    out.write( prefix + line + "\n" );
+                    out.write( new StringBuilder().append(prefix).append(line).append("\n").toString() );
                     out.flush();
                 }
             }
@@ -89,5 +87,10 @@ public class StreamConsumer implements Runnable
             exc.addSuppressed( stackTraceOfOrigin );
             failureHandler.handle( exc );
         }
+    }
+
+	public interface StreamExceptionHandler
+    {
+        void handle( IOException failure );
     }
 }

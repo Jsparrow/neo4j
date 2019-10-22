@@ -55,21 +55,21 @@ public class DynamicRecordCheck
         {
             engine.report().invalidLength();
         }
-        if ( !Record.NO_NEXT_BLOCK.is( record.getNextBlock() ) )
-        {
-            if ( record.getNextBlock() == record.getId() )
-            {
-                engine.report().selfReferentialNext();
-            }
-            else
-            {
-                engine.comparativeCheck( dereference.lookup( records, record.getNextBlock() ), this );
-            }
-            if ( record.getLength() < blockSize )
-            {
-                engine.report().recordNotFullReferencesNext();
-            }
-        }
+        if (Record.NO_NEXT_BLOCK.is( record.getNextBlock() )) {
+			return;
+		}
+		if ( record.getNextBlock() == record.getId() )
+		{
+		    engine.report().selfReferentialNext();
+		}
+		else
+		{
+		    engine.comparativeCheck( dereference.lookup( records, record.getNextBlock() ), this );
+		}
+		if ( record.getLength() < blockSize )
+		{
+		    engine.report().recordNotFullReferencesNext();
+		}
     }
 
     @Override

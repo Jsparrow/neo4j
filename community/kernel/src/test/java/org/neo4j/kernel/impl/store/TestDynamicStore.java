@@ -97,10 +97,7 @@ public class TestDynamicStore
         Collection<DynamicRecord> records = new ArrayList<>();
         store.allocateRecordsFromBytes( records, new byte[10] );
         long blockId = Iterables.first( records ).getId();
-        for ( DynamicRecord record : records )
-        {
-            store.updateRecord( record );
-        }
+        records.forEach(store::updateRecord);
         neoStores.close();
         neoStores = null;
         try
@@ -130,11 +127,9 @@ public class TestDynamicStore
         STR.getChars( 0, STR.length(), chars, 0 );
         Collection<DynamicRecord> records = new ArrayList<>();
         store.allocateRecords( records, chars );
-        for ( DynamicRecord record : records )
-        {
-            store.updateRecord( record );
-        }
         // assertEquals( STR, new String( store.getChars( blockId ) ) );
+		records.forEach(store::updateRecord
+);
     }
 
     @Test
@@ -215,10 +210,7 @@ public class TestDynamicStore
     {
         Collection<DynamicRecord> records = new ArrayList<>();
         store.allocateRecords( records, arrayToStore );
-        for ( DynamicRecord record : records )
-        {
-            store.updateRecord( record );
-        }
+        records.forEach(store::updateRecord);
         return Iterables.first( records ).getId();
     }
 
@@ -233,11 +225,10 @@ public class TestDynamicStore
         assertEquals( 0, bytes.length );
 
         Collection<DynamicRecord> records = store.getRecords( blockId, NORMAL );
-        for ( DynamicRecord record : records )
-        {
+        records.forEach(record -> {
             record.setInUse( false );
             store.updateRecord( record );
-        }
+        });
     }
 
     @Test
@@ -250,10 +241,9 @@ public class TestDynamicStore
         assertEquals( 0, readBack.length );
 
         Collection<DynamicRecord> records = store.getRecords( blockId, NORMAL );
-        for ( DynamicRecord record : records )
-        {
+        records.forEach(record -> {
             record.setInUse( false );
             store.updateRecord( record );
-        }
+        });
     }
 }

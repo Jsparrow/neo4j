@@ -71,7 +71,7 @@ public class SpectrumExecutionMonitor extends ExecutionMonitor.Adapter
     @Override
     public void start( StageExecution execution )
     {
-        out.println( execution.name() + ", started " + date() );
+        out.println( new StringBuilder().append(execution.name()).append(", started ").append(date()).toString() );
         lastProgress = 0;
     }
 
@@ -139,10 +139,10 @@ public class SpectrumExecutionMonitor extends ExecutionMonitor.Adapter
                 }
                 boolean isBottleNeck = bottleNeck.first() == step;
                 String name =
-                        (isBottleNeck ? "*" : "") +
-                        stats.toString( additionalStatsLevel ) + (step.processors( 0 ) > 1
+                        new StringBuilder().append(isBottleNeck ? "*" : "").append(stats.toString( additionalStatsLevel ))
+						.append(step.processors( 0 ) > 1
                         ? "(" + step.processors( 0 ) + ")"
-                        : "");
+                        : "").toString();
                 int charIndex = 0; // negative value "delays" the text, i.e. pushes it to the right
                 char backgroundChar = step.processors( 0 ) > 1 ? '=' : '-';
                 for ( int i = 0; i < stepWidth; i++, charIndex++ )

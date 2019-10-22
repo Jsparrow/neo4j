@@ -124,11 +124,10 @@ public final class ByteCodeUtils
         if ( showErasure && !typeParameters.isEmpty() )
         {
             builder.append( "<" );
-            for ( MethodDeclaration.TypeParameter typeParameter : typeParameters )
-            {
+            typeParameters.forEach(typeParameter -> {
                 builder.append( typeParameter.name() ).append( ":" );
                 internalType( builder, typeParameter.extendsBound(), true );
-            }
+            });
             builder.append( ">" );
         }
         builder.append( "(" );

@@ -86,15 +86,15 @@ public class TestIndexDeletion
 
     public void finishTx( boolean success )
     {
-        if ( tx != null )
-        {
-            if ( success )
-            {
-                tx.success();
-            }
-            tx.close();
-            tx = null;
-        }
+        if (tx == null) {
+			return;
+		}
+		if ( success )
+		{
+		    tx.success();
+		}
+		tx.close();
+		tx = null;
     }
 
     @Before

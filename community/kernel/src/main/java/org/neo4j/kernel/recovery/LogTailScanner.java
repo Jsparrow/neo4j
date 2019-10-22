@@ -251,7 +251,7 @@ public class LogTailScanner
      * @return snapshot of the state of the transaction logs tail at startup.
      * @throws UnderlyingStorageException if any errors occurs while parsing the transaction logs
      */
-    public LogTailInformation getTailInformation() throws UnderlyingStorageException
+    public LogTailInformation getTailInformation()
     {
         if ( logTailInformation == null )
         {

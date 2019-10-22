@@ -93,12 +93,11 @@ public class ExecutorBoltScheduler implements BoltScheduler, BoltConnectionLifet
     @Override
     public void stop()
     {
-        if ( threadPool != null )
-        {
-            activeConnections.values().forEach( this::stopConnection );
-
-            threadPool.shutdown();
-        }
+        if (threadPool == null) {
+			return;
+		}
+		activeConnections.values().forEach( this::stopConnection );
+		threadPool.shutdown();
     }
 
     @Override

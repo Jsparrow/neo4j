@@ -43,7 +43,7 @@ public class WebSocketConnection implements TransportConnection, WebSocketListen
     private final Supplier<WebSocketClient> clientSupplier;
     private final Function<HostnamePort,URI> uriGenerator;
 
-    private final byte[] POISON_PILL = "poison".getBytes();
+    private final byte[] poisonPill = "poison".getBytes();
 
     private WebSocketClient client;
     private RemoteEndpoint server;
@@ -59,7 +59,7 @@ public class WebSocketConnection implements TransportConnection, WebSocketListen
 
     public WebSocketConnection()
     {
-        this( WebSocketClient::new, address -> URI.create( "ws://" + address.getHost() + ":" + address.getPort() ) );
+        this( WebSocketClient::new, address -> URI.create( new StringBuilder().append("ws://").append(address.getHost()).append(":").append(address.getPort()).toString() ) );
     }
 
     public WebSocketConnection( Supplier<WebSocketClient> clientSupplier, Function<HostnamePort,URI> uriGenerator )
@@ -133,16 +133,15 @@ public class WebSocketConnection implements TransportConnection, WebSocketListen
             currentReceiveBuffer = received.poll( 10, MILLISECONDS );
 
             if ( (currentReceiveBuffer == null && (client.isStopped() || client.isStopping())) ||
-                    currentReceiveBuffer == POISON_PILL )
+                    currentReceiveBuffer == poisonPill )
             {
                 // no data received
                 throw new IOException( "Connection closed while waiting for data from the server." );
             }
             if ( System.currentTimeMillis() - start > 30_000 )
             {
-                throw new IOException( "Waited 30 seconds for " + remaining + " bytes, " +
-                                       "" + (length - remaining) + " was received: " +
-                                       HexPrinter.hex( ByteBuffer.wrap( target ), 0, length - remaining ) );
+                throw new IOException( new StringBuilder().append("Waited 30 seconds for ").append(remaining).append(" bytes, ").append("").append(length - remaining)
+						.append(" was received: ").append(HexPrinter.hex( ByteBuffer.wrap( target ), 0, length - remaining )).toString() );
             }
         }
     }
@@ -172,7 +171,7 @@ public class WebSocketConnection implements TransportConnection, WebSocketListen
     @Override
     public void onWebSocketClose( int i, String s )
     {
-        received.add( POISON_PILL );
+        received.add( poisonPill );
     }
 
     @Override

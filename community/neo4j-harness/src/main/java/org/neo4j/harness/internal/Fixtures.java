@@ -69,7 +69,7 @@ public class Fixtures
         catch ( IOException e )
         {
             throw new RuntimeException(
-                    "Unable to read fixture file '" + fixturePath.getAbsolutePath() + "': " + e.getMessage(), e );
+                    new StringBuilder().append("Unable to read fixture file '").append(fixturePath.getAbsolutePath()).append("': ").append(e.getMessage()).toString(), e );
         }
     }
 
@@ -97,9 +97,6 @@ public class Fixtures
                 tx.success();
             }
         }
-        for ( Function<GraphDatabaseService,Void> fixtureFunction : fixtureFunctions )
-        {
-            fixtureFunction.apply( db );
-        }
+        fixtureFunctions.forEach(fixtureFunction -> fixtureFunction.apply(db));
     }
 }

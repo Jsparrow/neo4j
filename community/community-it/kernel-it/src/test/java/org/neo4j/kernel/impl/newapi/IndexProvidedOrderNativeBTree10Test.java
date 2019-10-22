@@ -53,8 +53,8 @@ import static org.neo4j.values.storable.ValueTuple.COMPARATOR;
 @SuppressWarnings( "FieldCanBeLocal" )
 public class IndexProvidedOrderNativeBTree10Test extends KernelAPIReadTestBase<ReadTestSupport>
 {
-    private static int N_NODES = 10000;
-    private static int N_ITERATIONS = 100;
+    private static int nNodes = 10000;
+    private static int nIterations = 100;
 
     @Rule
     public RandomRule randomRule = new RandomRule();
@@ -104,7 +104,7 @@ public class IndexProvidedOrderNativeBTree10Test extends KernelAPIReadTestBase<R
         targetedTypes = ensureHighEnoughCardinality( targetedTypes );
         try ( Transaction tx = graphDb.beginTx() )
         {
-            for ( int i = 0; i < N_NODES; i++ )
+            for ( int i = 0; i < nNodes; i++ )
             {
                 Node node = graphDb.createNode( label( "Node" ) );
                 Value propValue;
@@ -137,7 +137,7 @@ public class IndexProvidedOrderNativeBTree10Test extends KernelAPIReadTestBase<R
 
         RandomValues randomValues = randomRule.randomValues();
         IndexReference index = schemaRead.index( label, prop );
-        for ( int i = 0; i < N_ITERATIONS; i++ )
+        for ( int i = 0; i < nIterations; i++ )
         {
             ValueType type = randomValues.among( targetedTypes );
             IndexOrder[] order = index.orderCapability( type.valueGroup.category() );

@@ -28,20 +28,6 @@ import java.util.function.ToIntFunction;
  */
 public interface LoginContext
 {
-    /**
-     * Get the authenticated user.
-     */
-    AuthSubject subject();
-
-    /**
-     * Authorize the user and return a SecurityContext.
-     *
-     * @param propertyIdLookup token lookup, used to compile property level security verification
-     * @param dbName the name of the database the user should be authorized against
-     * @return the security context
-     */
-    SecurityContext authorize( ToIntFunction<String> propertyIdLookup, String dbName );
-
     LoginContext AUTH_DISABLED = new LoginContext()
     {
         @Override
@@ -56,4 +42,18 @@ public interface LoginContext
             return SecurityContext.AUTH_DISABLED;
         }
     };
+
+	/**
+     * Get the authenticated user.
+     */
+    AuthSubject subject();
+
+	/**
+     * Authorize the user and return a SecurityContext.
+     *
+     * @param propertyIdLookup token lookup, used to compile property level security verification
+     * @param dbName the name of the database the user should be authorized against
+     * @return the security context
+     */
+    SecurityContext authorize( ToIntFunction<String> propertyIdLookup, String dbName );
 }

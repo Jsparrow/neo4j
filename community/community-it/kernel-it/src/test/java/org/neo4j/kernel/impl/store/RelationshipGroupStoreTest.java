@@ -54,7 +54,6 @@ import org.neo4j.test.rule.PageCacheRule;
 import org.neo4j.test.rule.TestDirectory;
 
 import static java.lang.Integer.parseInt;
-import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -62,6 +61,7 @@ import static org.junit.Assert.assertThat;
 import static org.neo4j.kernel.impl.store.RecordStore.getRecord;
 import static org.neo4j.kernel.impl.store.record.RecordLoad.NORMAL;
 import static org.neo4j.test.rule.PageCacheRule.config;
+import java.util.Collections;
 
 public class RelationshipGroupStoreTest
 {
@@ -131,7 +131,7 @@ public class RelationshipGroupStoreTest
 
     private void newDb( int denseNodeThreshold )
     {
-        db = new ImpermanentGraphDatabase( MapUtil.stringMap( "dbms.relationship_grouping_threshold", "" + denseNodeThreshold ) );
+        db = new ImpermanentGraphDatabase( MapUtil.stringMap( "dbms.relationship_grouping_threshold", Integer.toString(denseNodeThreshold) ) );
         fs = db.getDependencyResolver().resolveDependency( FileSystemAbstraction.class );
     }
 
@@ -165,7 +165,7 @@ public class RelationshipGroupStoreTest
         Map<String, String> customConfig = new HashMap<>();
         if ( customThreshold != null )
         {
-            customConfig.put( GraphDatabaseSettings.dense_node_threshold.name(), "" + customThreshold );
+            customConfig.put( GraphDatabaseSettings.dense_node_threshold.name(), Integer.toString(customThreshold) );
         }
         return new StoreFactory( testDir.databaseLayout(), Config.defaults( customConfig ), new DefaultIdGeneratorFactory( fs ), pageCache,
                 fs, NullLogProvider.getInstance(), EmptyVersionContextSupplier.EMPTY );
@@ -347,7 +347,7 @@ public class RelationshipGroupStoreTest
             relationshipStore.getRecord( nextId, record, NORMAL );
         }
 
-        Set<Long> expectedChain = new HashSet<>( asList( firstId ) );
+        Set<Long> expectedChain = new HashSet<>( Collections.singletonList( firstId ) );
         for ( long id : chainedIds )
         {
             expectedChain.add( id );

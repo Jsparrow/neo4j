@@ -109,13 +109,9 @@ public class ProcedureProcessorTest extends ExtensionTestBase
                 assert_().about( javaSource() ).that( sproc ).processedWith( processor() ).failsToCompile()
                         .withErrorCount( 3 );
 
-        compilation.withErrorContaining( "Unsupported parameter type " +
-                "<java.util.List<java.util.List<java.util.Map<java.lang.String,java.lang.Thread>>>>" +
-                " of procedure|function BadGenericInputSproc#doSomething" ).in( sproc ).onLine( 36 );
+        compilation.withErrorContaining( new StringBuilder().append("Unsupported parameter type ").append("<java.util.List<java.util.List<java.util.Map<java.lang.String,java.lang.Thread>>>>").append(" of procedure|function BadGenericInputSproc#doSomething").toString() ).in( sproc ).onLine( 36 );
 
-        compilation.withErrorContaining( "Unsupported parameter type " +
-                "<java.util.Map<java.lang.String,java.util.List<java.util.concurrent.ExecutorService>>>" +
-                " of procedure|function BadGenericInputSproc#doSomething2" ).in( sproc ).onLine( 42 );
+        compilation.withErrorContaining( new StringBuilder().append("Unsupported parameter type ").append("<java.util.Map<java.lang.String,java.util.List<java.util.concurrent.ExecutorService>>>").append(" of procedure|function BadGenericInputSproc#doSomething2").toString() ).in( sproc ).onLine( 42 );
 
         compilation.withErrorContaining(
                 "Unsupported parameter type <java.util.Map> of procedure|function BadGenericInputSproc#doSomething3" )

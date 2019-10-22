@@ -99,7 +99,7 @@ class SpatialIndexFiles
         {
             this.crs = crs;
             this.configuredSettings = configuredSettings;
-            String s = crs.getTable().getTableId() + "-" + Integer.toString( crs.getCode() );
+            String s = new StringBuilder().append(crs.getTable().getTableId()).append("-").append(Integer.toString( crs.getCode() )).toString();
             this.indexFile = new File( indexDirectory, s );
         }
 

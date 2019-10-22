@@ -114,7 +114,7 @@ public class StageTest
         @Override
         public long receive( long ticket, Object batch )
         {
-            assertEquals( "For " + batch + " in " + name(), lastTicket.getAndIncrement(), ticket );
+            assertEquals( new StringBuilder().append("For ").append(batch).append(" in ").append(name()).toString(), lastTicket.getAndIncrement(), ticket );
             return super.receive( ticket, batch );
         }
 

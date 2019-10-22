@@ -73,8 +73,17 @@ public class GenerationSafePointerPairTest
     private static final int GSPP_OFFSET = 5;
     private static final int SLOT_A_OFFSET = GSPP_OFFSET;
     private static final int SLOT_B_OFFSET = SLOT_A_OFFSET + GenerationSafePointer.SIZE;
+	@Parameter( 0 )
+    public State stateA;
+	@Parameter( 1 )
+    public State stateB;
+	@Parameter( 2 )
+    public Slot expectedReadOutcome;
+	@Parameter( 3 )
+    public Slot expectedWriteOutcome;
+	private final PageCursor cursor = ByteArrayPageCursor.wrap( new byte[PAGE_SIZE] );
 
-    @Parameters( name = "{0},{1},read {2},write {3}" )
+	@Parameters( name = "{0},{1},read {2},write {3}" )
     public static Collection<Object[]> data()
     {
         Collection<Object[]> data = new ArrayList<>();
@@ -115,18 +124,7 @@ public class GenerationSafePointerPairTest
         return data;
     }
 
-    @Parameter( 0 )
-    public State stateA;
-    @Parameter( 1 )
-    public State stateB;
-    @Parameter( 2 )
-    public Slot expectedReadOutcome;
-    @Parameter( 3 )
-    public Slot expectedWriteOutcome;
-
-    private final PageCursor cursor = ByteArrayPageCursor.wrap( new byte[PAGE_SIZE] );
-
-    @Test
+	@Test
     public void shouldRead()
     {
         // GIVEN
@@ -144,7 +142,7 @@ public class GenerationSafePointerPairTest
         expectedReadOutcome.verifyRead( cursor, result, stateA, stateB, preStatePointerA, preStatePointerB, generationKeeper.generation );
     }
 
-    @Test
+	@Test
     public void shouldWrite()
     {
         // GIVEN
@@ -161,7 +159,7 @@ public class GenerationSafePointerPairTest
         expectedWriteOutcome.verifyWrite( cursor, written, stateA, stateB, preStatePointerA, preStatePointerB );
     }
 
-    private static void assertFailure( long result, long readOrWrite, int generationComparison,
+	private static void assertFailure( long result, long readOrWrite, int generationComparison,
             byte pointerStateA, byte pointerStateB )
     {
         assertFalse( GenerationSafePointerPair.isSuccess( result ) );
@@ -186,7 +184,7 @@ public class GenerationSafePointerPairTest
         assertThat( failureDescription, containsString( pointerStateName( pointerStateB ) ) );
     }
 
-    private static String generationComparisonName( int generationComparison )
+	private static String generationComparisonName( int generationComparison )
     {
         switch ( generationComparison )
         {
@@ -201,7 +199,7 @@ public class GenerationSafePointerPairTest
         }
     }
 
-    private static long generationComparisonBits( int generationComparison )
+	private static long generationComparisonBits( int generationComparison )
     {
         switch ( generationComparison )
         {
@@ -216,19 +214,19 @@ public class GenerationSafePointerPairTest
         }
     }
 
-    private static long readSlotA( PageCursor cursor )
+	private static long readSlotA( PageCursor cursor )
     {
         cursor.setOffset( SLOT_A_OFFSET );
         return readSlot( cursor );
     }
 
-    private static long readSlotB( PageCursor cursor )
+	private static long readSlotB( PageCursor cursor )
     {
         cursor.setOffset( SLOT_B_OFFSET );
         return readSlot( cursor );
     }
 
-    private static long readSlot( PageCursor cursor )
+	private static long readSlot( PageCursor cursor )
     {
         long generation = GenerationSafePointer.readGeneration( cursor );
         long pointer = GenerationSafePointer.readPointer( cursor );
@@ -237,12 +235,12 @@ public class GenerationSafePointerPairTest
         return pointer;
     }
 
-    private static Object[] array( Object... array )
+	private static Object[] array( Object... array )
     {
         return array;
     }
 
-    enum State
+	enum State
     {
         EMPTY( GenerationSafePointerPair.EMPTY )
         {
@@ -364,32 +362,7 @@ public class GenerationSafePointerPairTest
         }
     }
 
-    interface Slot
-    {
-        /**
-         * @param cursor {@link PageCursor} to read actual result from.
-         * @param result read-result from {@link GenerationSafePointerPair#read(PageCursor, long, long, GBPTreeGenerationTarget)}.
-         * @param stateA state of pointer A when read.
-         * @param stateB state of pointer B when read.
-         * @param preStatePointerA pointer A as it looked like in pre-state.
-         * @param preStatePointerB pointer B as it looked like in pre-state.
-         * @param generation read generation.
-         */
-        void verifyRead( PageCursor cursor, long result, State stateA, State stateB, long preStatePointerA, long preStatePointerB, long generation );
-
-        /**
-         * @param cursor {@link PageCursor} to read actual result from.
-         * @param result write-result from {@link GenerationSafePointerPair#write(PageCursor, long, long, long)}.
-         * @param stateA state of pointer A when written.
-         * @param stateB state of pointer B when written.
-         * @param preStatePointerA pointer A as it looked like in pre-state.
-         * @param preStatePointerB pointer B as it looked like in pre-state.
-         */
-        void verifyWrite( PageCursor cursor, long result, State stateA, State stateB,
-                long preStatePointerA, long preStatePointerB );
-    }
-
-    enum Success implements Slot
+	enum Success implements Slot
     {
         A( POINTER_A, SLOT_A ),
         B( POINTER_B, SLOT_B );
@@ -444,7 +417,7 @@ public class GenerationSafePointerPairTest
         }
     }
 
-    enum Fail implements Slot
+	enum Fail implements Slot
     {
         GENERATION_DISREGARD( EXPECTED_GENERATION_DISREGARD ),
         GENERATION_B_BIG( EXPECTED_GENERATION_B_BIG ),
@@ -475,5 +448,30 @@ public class GenerationSafePointerPairTest
             stateA.verify( cursor, preStatePointerA, SLOT_A );
             stateB.verify( cursor, preStatePointerB, SLOT_B );
         }
+    }
+
+    interface Slot
+    {
+        /**
+         * @param cursor {@link PageCursor} to read actual result from.
+         * @param result read-result from {@link GenerationSafePointerPair#read(PageCursor, long, long, GBPTreeGenerationTarget)}.
+         * @param stateA state of pointer A when read.
+         * @param stateB state of pointer B when read.
+         * @param preStatePointerA pointer A as it looked like in pre-state.
+         * @param preStatePointerB pointer B as it looked like in pre-state.
+         * @param generation read generation.
+         */
+        void verifyRead( PageCursor cursor, long result, State stateA, State stateB, long preStatePointerA, long preStatePointerB, long generation );
+
+        /**
+         * @param cursor {@link PageCursor} to read actual result from.
+         * @param result write-result from {@link GenerationSafePointerPair#write(PageCursor, long, long, long)}.
+         * @param stateA state of pointer A when written.
+         * @param stateB state of pointer B when written.
+         * @param preStatePointerA pointer A as it looked like in pre-state.
+         * @param preStatePointerB pointer B as it looked like in pre-state.
+         */
+        void verifyWrite( PageCursor cursor, long result, State stateA, State stateB,
+                long preStatePointerA, long preStatePointerB );
     }
 }

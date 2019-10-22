@@ -61,12 +61,11 @@ public class EagerParserChunker implements Chunker
         {   // just loop through and parse
         }
 
-        if ( cursor > 0 )
-        {
-            ((EagerCsvInputChunk)chunk).initialize( entities.toArray() );
-            return true;
-        }
-        return false;
+        if (cursor <= 0) {
+			return false;
+		}
+		((EagerCsvInputChunk)chunk).initialize( entities.toArray() );
+		return true;
     }
 
     @Override

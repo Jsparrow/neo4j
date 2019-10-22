@@ -160,12 +160,11 @@ abstract class AbstractLockService<HANDLE> implements LockService
         @Override
         public boolean equals( Object obj )
         {
-            if ( obj != null && obj.getClass().equals( getClass() ) )
-            {
-                LockedPropertyContainer that = (LockedPropertyContainer) obj;
-                return this.id == that.id;
-            }
-            return false;
+            if (!(obj != null && obj.getClass().equals( getClass() ))) {
+				return false;
+			}
+			LockedPropertyContainer that = (LockedPropertyContainer) obj;
+			return this.id == that.id;
         }
     }
 

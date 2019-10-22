@@ -29,7 +29,6 @@ public class IntegerEvaluator implements CostEvaluator<Integer>
 
     public IntegerEvaluator( String costPropertyName )
     {
-        super();
         this.costPropertyName = costPropertyName;
     }
 

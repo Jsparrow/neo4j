@@ -769,8 +769,8 @@ public class RecoveryIT
         long relationshipId;
         try ( Transaction tx = db.beginTx() )
         {
-            Node start = db.createNode( Label.label( System.currentTimeMillis() + "" ) );
-            Node end = db.createNode( Label.label( System.currentTimeMillis() + "" ) );
+            Node start = db.createNode( Label.label( Long.toString(System.currentTimeMillis()) ) );
+            Node end = db.createNode( Label.label( Long.toString(System.currentTimeMillis()) ) );
             relationshipId = start.createRelationshipTo( end, withName( "KNOWS" ) ).getId();
             tx.success();
         }
@@ -868,7 +868,7 @@ public class RecoveryIT
         }
 
         @Override
-        public String getPopulationFailure( StoreIndexDescriptor descriptor ) throws IllegalStateException
+        public String getPopulationFailure( StoreIndexDescriptor descriptor )
         {
             return actual.getPopulationFailure( descriptor );
         }
@@ -1019,20 +1019,20 @@ public class RecoveryIT
     {
         private final IndexProvider indexProvider;
 
-        interface Dependencies
-        {
-        }
-
         IndexExtensionFactory( IndexProvider indexProvider )
         {
             super( "customExtension" );
             this.indexProvider = indexProvider;
         }
 
-        @Override
+		@Override
         public Lifecycle newInstance( KernelContext context, Dependencies dependencies )
         {
             return indexProvider;
+        }
+
+		interface Dependencies
+        {
         }
     }
 }

@@ -30,45 +30,52 @@ import static org.neo4j.helpers.collection.MapUtil.map;
 
 public abstract class AuthTokenDecoderTest
 {
-    protected abstract void testShouldDecodeAuthToken( Map<String,Object> authToken, boolean checkDecodingResult ) throws Exception;
+    private static Object[] valuesWithInvalidTypes = {
+            // This is not an exhaustive list
+            new char[]{ 'p', 'a', 's', 's' },
+            Collections.emptyList(),
+            Collections.emptyMap()
+    };
 
-    @Test
+	protected abstract void testShouldDecodeAuthToken( Map<String,Object> authToken, boolean checkDecodingResult ) throws Exception;
+
+	@Test
     void shouldDecodeAuthTokenWithStringCredentials() throws Exception
     {
         testShouldDecodeAuthToken( authTokenMapWith( AuthToken.CREDENTIALS, "password" ), true );
     }
 
-    @Test
+	@Test
     void shouldDecodeAuthTokenWithEmptyStringCredentials() throws Exception
     {
         testShouldDecodeAuthToken( authTokenMapWith( AuthToken.CREDENTIALS, "" ), true );
     }
 
-    @Test
+	@Test
     void shouldDecodeAuthTokenWithNullCredentials() throws Exception
     {
         testShouldDecodeAuthToken( authTokenMapWith( AuthToken.CREDENTIALS, null ), true );
     }
 
-    @Test
+	@Test
     void shouldDecodeAuthTokenWithStringNewCredentials() throws Exception
     {
         testShouldDecodeAuthToken( authTokenMapWith( AuthToken.NEW_CREDENTIALS, "password" ), true );
     }
 
-    @Test
+	@Test
     void shouldDecodeAuthTokenWithEmptyStringNewCredentials() throws Exception
     {
         testShouldDecodeAuthToken( authTokenMapWith( AuthToken.NEW_CREDENTIALS, "" ), true );
     }
 
-    @Test
+	@Test
     void shouldDecodeAuthTokenWithNullNewCredentials() throws Exception
     {
         testShouldDecodeAuthToken( authTokenMapWith( AuthToken.NEW_CREDENTIALS, null ), true );
     }
 
-    @Test
+	@Test
     void shouldDecodeAuthTokenWithCredentialsOfUnsupportedTypes() throws Exception
     {
         for ( Object value : valuesWithInvalidTypes )
@@ -77,7 +84,7 @@ public abstract class AuthTokenDecoderTest
         }
     }
 
-    @Test
+	@Test
     void shouldDecodeAuthTokenWithNewCredentialsOfUnsupportedType() throws Exception
     {
         for ( Object value : valuesWithInvalidTypes )
@@ -86,15 +93,8 @@ public abstract class AuthTokenDecoderTest
         }
     }
 
-    private static Map<String,Object> authTokenMapWith( String fieldName, Object fieldValue )
+	private static Map<String,Object> authTokenMapWith( String fieldName, Object fieldValue )
     {
         return map( AuthToken.PRINCIPAL, "neo4j", fieldName, fieldValue );
     }
-
-    private static Object[] valuesWithInvalidTypes = {
-            // This is not an exhaustive list
-            new char[]{ 'p', 'a', 's', 's' },
-            Collections.emptyList(),
-            Collections.emptyMap()
-    };
 }

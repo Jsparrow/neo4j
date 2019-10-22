@@ -96,14 +96,7 @@ public class KernelAuxTransactionStateManager implements AuxiliaryTransactionSta
             {
                 return false;
             }
-            for ( AuxiliaryTransactionState state : openedStates.values() )
-            {
-                if ( state.hasChanges() )
-                {
-                    return true;
-                }
-            }
-            return false;
+            return openedStates.values().stream().anyMatch(AuxiliaryTransactionState::hasChanges);
         }
 
         @Override
@@ -119,7 +112,7 @@ public class KernelAuxTransactionStateManager implements AuxiliaryTransactionSta
         }
 
         @Override
-        public void close() throws AuxiliaryTransactionStateCloseException
+        public void close()
         {
             IOUtils.close( ( msg, cause ) -> new AuxiliaryTransactionStateCloseException( "Failure when closing auxiliary transaction state.", cause ),
                     openedStates.values() );

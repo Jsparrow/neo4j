@@ -75,13 +75,8 @@ public class LuceneFulltextIndex extends AbstractLuceneIndex<FulltextIndexReader
     @Override
     public String toString()
     {
-        return "LuceneFulltextIndex{" +
-               "analyzer=" + analyzer.getClass().getSimpleName() +
-               ", identifier='" + identifier + '\'' +
-               ", type=" + type +
-               ", properties=" + properties +
-               ", descriptor=" + descriptor.userDescription( SchemaUtil.idTokenNameLookup ) +
-               '}';
+        return new StringBuilder().append("LuceneFulltextIndex{").append("analyzer=").append(analyzer.getClass().getSimpleName()).append(", identifier='").append(identifier).append('\'').append(", type=")
+				.append(type).append(", properties=").append(properties).append(", descriptor=").append(descriptor.userDescription( SchemaUtil.idTokenNameLookup )).append('}').toString();
     }
 
     String[] getPropertiesArray()

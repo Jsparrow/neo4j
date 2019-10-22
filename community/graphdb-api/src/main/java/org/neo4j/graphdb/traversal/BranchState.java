@@ -34,19 +34,6 @@ package org.neo4j.graphdb.traversal;
 public interface BranchState<STATE>
 {
     /**
-     * @return the associated state for a {@link TraversalBranch}.
-     */
-    STATE getState();
-
-    /**
-     * Sets the {@link TraversalBranch} state for upcoming children of that
-     * branch.
-     * @param state the {@link TraversalBranch} state to set for upcoming
-     * children.
-     */
-    void setState( STATE state );
-
-    /**
      * Instance representing no state, usage resulting in
      * {@link IllegalStateException} being thrown.
      */
@@ -64,4 +51,17 @@ public interface BranchState<STATE>
             throw new IllegalStateException( "Branch state disabled, pass in an initial state to enable it" );
         }
     };
+
+	/**
+     * @return the associated state for a {@link TraversalBranch}.
+     */
+    STATE getState();
+
+	/**
+     * Sets the {@link TraversalBranch} state for upcoming children of that
+     * branch.
+     * @param state the {@link TraversalBranch} state to set for upcoming
+     * children.
+     */
+    void setState( STATE state );
 }

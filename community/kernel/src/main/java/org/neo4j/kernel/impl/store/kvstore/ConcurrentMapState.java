@@ -71,7 +71,7 @@ class ConcurrentMapState<Key> extends ActiveState<Key>
     @Override
     public String toString()
     {
-        return super.toString() + "[" + file + "]";
+        return new StringBuilder().append(super.toString()).append("[").append(file).append("]").toString();
     }
 
     @Override
@@ -93,49 +93,13 @@ class ConcurrentMapState<Key> extends ActiveState<Key>
         return new Updater<>( lock, store, changes, null, TransactionIdStore.BASE_TX_ID );
     }
 
-    private static class Updater<Key> extends EntryUpdater<Key>
-    {
-        private AtomicLong changeCounter;
-        private final ReadableState<Key> store;
-        private final ConcurrentMap<Key, ChangeEntry> changes;
-        private final long version;
-
-        Updater( Lock lock, ReadableState<Key> store, ConcurrentMap<Key,ChangeEntry> changes, AtomicLong changeCounter,
-                long version )
-        {
-            super( lock );
-            this.changeCounter = changeCounter;
-            this.store = store;
-            this.changes = changes;
-            this.version = version;
-        }
-
-        @Override
-        public void apply( Key key, ValueUpdate update ) throws IOException
-        {
-            ensureOpenOnSameThread();
-            applyUpdate( store, changes, key, update, false, version );
-        }
-
-        @Override
-        public void close()
-        {
-            if ( changeCounter != null )
-            {
-                changeCounter.incrementAndGet();
-                changeCounter = null;
-            }
-            super.close();
-        }
-    }
-
     @Override
     protected long storedVersion()
     {
         return previousVersion;
     }
 
-    @Override
+	@Override
     protected EntryUpdater<Key> resettingUpdater( Lock lock, final Runnable closeAction )
     {
         if ( hasChanges() )
@@ -166,13 +130,13 @@ class ConcurrentMapState<Key> extends ActiveState<Key>
         };
     }
 
-    @Override
+	@Override
     protected PrototypeState<Key> prototype( long version )
     {
         return new Prototype<>( this, version );
     }
 
-    @SuppressWarnings( "SynchronizationOnLocalVariableOrMethodParameter" )
+	@SuppressWarnings( "SynchronizationOnLocalVariableOrMethodParameter" )
     static <Key> void applyUpdate( ReadableState<Key> store, ConcurrentMap<Key, ChangeEntry> changes,
                                    Key key, ValueUpdate update, boolean reset, long version ) throws IOException
     {
@@ -211,7 +175,7 @@ class ConcurrentMapState<Key> extends ActiveState<Key>
         }
     }
 
-    private static void update( AtomicLong highestAppliedVersion, long version )
+	private static void update( AtomicLong highestAppliedVersion, long version )
     {
         for ( long high; ; )
         {
@@ -224,6 +188,145 @@ class ConcurrentMapState<Key> extends ActiveState<Key>
             {
                 return;
             }
+        }
+    }
+
+	@Override
+    protected long version()
+    {
+        return highestAppliedVersion.get();
+    }
+
+	@Override
+    protected long applied()
+    {
+        return appliedChanges.get();
+    }
+
+	@Override
+    protected boolean hasChanges()
+    {
+        return hasTrackedChanges.get() && !changes.isEmpty();
+    }
+
+	@Override
+    public void close() throws IOException
+    {
+        store.close();
+    }
+
+	@Override
+    protected File file()
+    {
+        return file;
+    }
+
+	@Override
+    protected Factory factory()
+    {
+        return State.Strategy.CONCURRENT_HASH_MAP;
+    }
+
+	@Override
+    protected boolean lookup( Key key, ValueSink sink ) throws IOException
+    {
+        return performLookup( store, versionContextSupplier.getVersionContext(), changes, key, sink );
+    }
+
+	private static <Key> boolean performLookup( ReadableState<Key> store, VersionContext versionContext,
+            ConcurrentMap<Key,ChangeEntry> changes, Key key, ValueSink sink  ) throws IOException
+    {
+        ChangeEntry change = changes.get( key );
+        if (change == null) {
+			return store.lookup( key, sink );
+		}
+		if ( change.version > versionContext.lastClosedTransactionId() )
+		{
+		    versionContext.markAsDirty();
+		}
+		sink.value( new BigEndianByteArrayBuffer( change.data ) );
+		return true;
+    }
+
+	/**
+     * This method is expected to be called under a lock preventing modification to the state.
+     */
+    @Override
+    public DataProvider dataProvider() throws IOException
+    {
+        return dataProvider( store, changes );
+    }
+
+	private static <Key> DataProvider dataProvider( ReadableState<Key> store, ConcurrentMap<Key, ChangeEntry> changes )
+            throws IOException
+    {
+        if ( changes.isEmpty() )
+        {
+            return store.dataProvider();
+        }
+        else
+        {
+            KeyFormat<Key> keys = store.keyFormat();
+            return new KeyValueMerger( store.dataProvider(), new UpdateProvider(
+                    sortedUpdates( keys, changes ) ), keys.keySize(), keys.valueSize() );
+        }
+    }
+
+	private static <Key> byte[][] sortedUpdates( KeyFormat<Key> keys, ConcurrentMap<Key, ChangeEntry> changes )
+    {
+        Entry[] buffer = new Entry[changes.size()];
+        Iterator<Map.Entry<Key, ChangeEntry>> entries = changes.entrySet().iterator();
+        for ( int i = 0; i < buffer.length; i++ )
+        {
+            Map.Entry<Key, ChangeEntry> next = entries.next(); // we hold the lock, so this should succeed
+            byte[] key = new byte[keys.keySize()];
+            keys.writeKey( next.getKey(), new BigEndianByteArrayBuffer( key ) );
+            buffer[i] = new Entry( key, next.getValue().data );
+        }
+        Arrays.sort( buffer );
+        assert !entries.hasNext() : "We hold the lock, so we should see 'size' entries.";
+        byte[][] result = new byte[buffer.length * 2][];
+        for ( int i = 0; i < buffer.length; i++ )
+        {
+            result[i * 2] = buffer[i].key;
+            result[i * 2 + 1] = buffer[i].value;
+        }
+        return result;
+    }
+
+	private static class Updater<Key> extends EntryUpdater<Key>
+    {
+        private AtomicLong changeCounter;
+        private final ReadableState<Key> store;
+        private final ConcurrentMap<Key, ChangeEntry> changes;
+        private final long version;
+
+        Updater( Lock lock, ReadableState<Key> store, ConcurrentMap<Key,ChangeEntry> changes, AtomicLong changeCounter,
+                long version )
+        {
+            super( lock );
+            this.changeCounter = changeCounter;
+            this.store = store;
+            this.changes = changes;
+            this.version = version;
+        }
+
+        @Override
+        public void apply( Key key, ValueUpdate update ) throws IOException
+        {
+            ensureOpenOnSameThread();
+            applyUpdate( store, changes, key, update, false, version );
+        }
+
+        @Override
+        public void close()
+        {
+            if ( changeCounter != null )
+            {
+                changeCounter.incrementAndGet();
+                changeCounter = null;
+            }
+            super.close();
         }
     }
 
@@ -314,110 +417,6 @@ class ConcurrentMapState<Key> extends ActiveState<Key>
         }
     }
 
-    @Override
-    protected long version()
-    {
-        return highestAppliedVersion.get();
-    }
-
-    @Override
-    protected long applied()
-    {
-        return appliedChanges.get();
-    }
-
-    @Override
-    protected boolean hasChanges()
-    {
-        return hasTrackedChanges.get() && !changes.isEmpty();
-    }
-
-    @Override
-    public void close() throws IOException
-    {
-        store.close();
-    }
-
-    @Override
-    protected File file()
-    {
-        return file;
-    }
-
-    @Override
-    protected Factory factory()
-    {
-        return State.Strategy.CONCURRENT_HASH_MAP;
-    }
-
-    @Override
-    protected boolean lookup( Key key, ValueSink sink ) throws IOException
-    {
-        return performLookup( store, versionContextSupplier.getVersionContext(), changes, key, sink );
-    }
-
-    private static <Key> boolean performLookup( ReadableState<Key> store, VersionContext versionContext,
-            ConcurrentMap<Key,ChangeEntry> changes, Key key, ValueSink sink  ) throws IOException
-    {
-        ChangeEntry change = changes.get( key );
-        if ( change != null )
-        {
-            if ( change.version > versionContext.lastClosedTransactionId() )
-            {
-                versionContext.markAsDirty();
-            }
-            sink.value( new BigEndianByteArrayBuffer( change.data ) );
-            return true;
-        }
-        return store.lookup( key, sink );
-    }
-
-    /**
-     * This method is expected to be called under a lock preventing modification to the state.
-     */
-    @Override
-    public DataProvider dataProvider() throws IOException
-    {
-        return dataProvider( store, changes );
-    }
-
-    private static <Key> DataProvider dataProvider( ReadableState<Key> store, ConcurrentMap<Key, ChangeEntry> changes )
-            throws IOException
-    {
-        if ( changes.isEmpty() )
-        {
-            return store.dataProvider();
-        }
-        else
-        {
-            KeyFormat<Key> keys = store.keyFormat();
-            return new KeyValueMerger( store.dataProvider(), new UpdateProvider(
-                    sortedUpdates( keys, changes ) ), keys.keySize(), keys.valueSize() );
-        }
-    }
-
-    private static <Key> byte[][] sortedUpdates( KeyFormat<Key> keys, ConcurrentMap<Key, ChangeEntry> changes )
-    {
-        Entry[] buffer = new Entry[changes.size()];
-        Iterator<Map.Entry<Key, ChangeEntry>> entries = changes.entrySet().iterator();
-        for ( int i = 0; i < buffer.length; i++ )
-        {
-            Map.Entry<Key, ChangeEntry> next = entries.next(); // we hold the lock, so this should succeed
-            byte[] key = new byte[keys.keySize()];
-            keys.writeKey( next.getKey(), new BigEndianByteArrayBuffer( key ) );
-            buffer[i] = new Entry( key, next.getValue().data );
-        }
-        Arrays.sort( buffer );
-        assert !entries.hasNext() : "We hold the lock, so we should see 'size' entries.";
-        byte[][] result = new byte[buffer.length * 2][];
-        for ( int i = 0; i < buffer.length; i++ )
-        {
-            result[i * 2] = buffer[i].key;
-            result[i * 2 + 1] = buffer[i].value;
-        }
-        return result;
-    }
-
     private static class Entry implements Comparable<Entry>
     {
         final byte[] key;
@@ -449,14 +448,13 @@ class ConcurrentMapState<Key> extends ActiveState<Key>
         @Override
         public boolean visit( WritableBuffer key, WritableBuffer value )
         {
-            if ( i < data.length )
-            {
-                key.put( 0, data[i] );
-                value.put( 0, data[i + 1] );
-                i += 2;
-                return true;
-            }
-            return false;
+            if (i >= data.length) {
+				return false;
+			}
+			key.put( 0, data[i] );
+			value.put( 0, data[i + 1] );
+			i += 2;
+			return true;
         }
 
         @Override
@@ -470,15 +468,15 @@ class ConcurrentMapState<Key> extends ActiveState<Key>
         private byte[] data;
         private long version;
 
-        static ChangeEntry of( byte[] data, long version )
-        {
-            return new ChangeEntry( data, version );
-        }
-
         ChangeEntry( byte[] data, long version )
         {
             this.data = data;
             this.version = version;
+        }
+
+		static ChangeEntry of( byte[] data, long version )
+        {
+            return new ChangeEntry( data, version );
         }
     }
 }

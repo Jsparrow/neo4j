@@ -96,7 +96,7 @@ public class RepresentationTestAccess
         int lastSlash = nodeUri.lastIndexOf( '/' );
         if ( lastSlash == -1 )
         {
-            throw new IllegalArgumentException( "'" + nodeUri + "' isn't a node URI" );
+            throw new IllegalArgumentException( new StringBuilder().append("'").append(nodeUri).append("' isn't a node URI").toString() );
         }
         return Long.parseLong( nodeUri.substring( lastSlash + 1 ) );
     }

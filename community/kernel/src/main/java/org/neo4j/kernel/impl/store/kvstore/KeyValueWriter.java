@@ -39,27 +39,27 @@ class KeyValueWriter implements Closeable
     private int valueSize;
     private State state = State.expecting_format_specifier;
 
-    public static KeyValueWriter create(
-            MetadataCollector metadata, FileSystemAbstraction fs, PageCache pages, File path, int pageSize )
-            throws IOException
-    {
-        return new KeyValueWriter( metadata, Writer.create( fs, pages, path, pageSize ) );
-    }
-
     KeyValueWriter( MetadataCollector metadata, Writer writer )
     {
         this.metadata = metadata;
         this.writer = writer;
     }
 
-    public boolean writeHeader( BigEndianByteArrayBuffer key, BigEndianByteArrayBuffer value ) throws IOException
+	public static KeyValueWriter create(
+            MetadataCollector metadata, FileSystemAbstraction fs, PageCache pages, File path, int pageSize )
+            throws IOException
+    {
+        return new KeyValueWriter( metadata, Writer.create( fs, pages, path, pageSize ) );
+    }
+
+	public boolean writeHeader( BigEndianByteArrayBuffer key, BigEndianByteArrayBuffer value ) throws IOException
     {
         boolean result = state.header( this, value.allZeroes() || value.minusOneAtTheEnd() );
         doWrite( key, value, State.done );
         return result;
     }
 
-    public void writeData( BigEndianByteArrayBuffer key, BigEndianByteArrayBuffer value ) throws IOException
+	public void writeData( BigEndianByteArrayBuffer key, BigEndianByteArrayBuffer value ) throws IOException
     {
         state.data( this );
         assert key.size() == keySize;
@@ -69,31 +69,28 @@ class KeyValueWriter implements Closeable
             state = State.in_error;
             throw new IllegalArgumentException( "All-zero keys are not allowed." );
         }
-        if ( !write( key, value ) )
-        {
-            state = State.in_error;
-            throw new IllegalStateException( "MetadataCollector stopped on data field." );
-        }
+        if (write( key, value )) {
+			return;
+		}
+		state = State.in_error;
+		throw new IllegalStateException( "MetadataCollector stopped on data field." );
     }
 
-    private void doWrite( BigEndianByteArrayBuffer key, BigEndianByteArrayBuffer value, State expectedNextState )
+	private void doWrite( BigEndianByteArrayBuffer key, BigEndianByteArrayBuffer value, State expectedNextState )
             throws IOException
     {
         this.keySize = key.size();
         this.valueSize = value.size();
         assert key.allZeroes() : "key should have been cleared by previous call";
-        if ( !write( key, value ) )
-        {
-            if ( state != expectedNextState )
-            {
-                state = State.in_error;
-                throw new IllegalStateException(
-                        "MetadataCollector stopped before " + expectedNextState + " reached." );
-            }
-        }
+        boolean condition = !write( key, value ) && state != expectedNextState;
+		if ( condition ) {
+		    state = State.in_error;
+		    throw new IllegalStateException(
+		            new StringBuilder().append("MetadataCollector stopped before ").append(expectedNextState).append(" reached.").toString() );
+		}
     }
 
-    private boolean write( BigEndianByteArrayBuffer key, BigEndianByteArrayBuffer value ) throws IOException
+	private boolean write( BigEndianByteArrayBuffer key, BigEndianByteArrayBuffer value ) throws IOException
     {
         boolean result = metadata.visit( key, value );
         writer.write( key.buffer );
@@ -103,19 +100,19 @@ class KeyValueWriter implements Closeable
         return result;
     }
 
-    public KeyValueStoreFile openStoreFile() throws IOException
+	public KeyValueStoreFile openStoreFile() throws IOException
     {
         state.open( this );
         return writer.open( metadata, keySize, valueSize );
     }
 
-    @Override
+	@Override
     public void close() throws IOException
     {
         writer.close();
     }
 
-    private enum State
+	private enum State
     {   // <pre>
         expecting_format_specifier
         {
@@ -236,11 +233,11 @@ class KeyValueWriter implements Closeable
         private IllegalStateException illegalState( KeyValueWriter writer, String what )
         {
             writer.state = in_error;
-            return new IllegalStateException( "Cannot " + what + " when " + name().replace( '_', ' ' ) + "." );
+            return new IllegalStateException( new StringBuilder().append("Cannot ").append(what).append(" when ").append(name().replace( '_', ' ' )).append(".").toString() );
         }
     }
 
-    abstract static class Writer
+	abstract static class Writer
     {
         private static final boolean WRITE_TO_PAGE_CACHE =
                 flag( KeyValueWriter.class, "WRITE_TO_PAGE_CACHE", false );

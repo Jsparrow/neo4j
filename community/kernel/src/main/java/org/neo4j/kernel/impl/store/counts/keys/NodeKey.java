@@ -73,12 +73,11 @@ public final class NodeKey implements CountsKey
     @Override
     public int compareTo( CountsKey other )
     {
-        if ( other instanceof org.neo4j.kernel.impl.store.counts.keys.NodeKey )
-        {
-            org.neo4j.kernel.impl.store.counts.keys.NodeKey that =
-                    (org.neo4j.kernel.impl.store.counts.keys.NodeKey) other;
-            return Integer.compare( this.labelId, that.labelId );
-        }
-        return recordType().compareTo( other.recordType() );
+        if (!(other instanceof org.neo4j.kernel.impl.store.counts.keys.NodeKey)) {
+			return recordType().compareTo( other.recordType() );
+		}
+		org.neo4j.kernel.impl.store.counts.keys.NodeKey that =
+		        (org.neo4j.kernel.impl.store.counts.keys.NodeKey) other;
+		return Integer.compare( this.labelId, that.labelId );
     }
 }

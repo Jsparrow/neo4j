@@ -45,79 +45,84 @@ public class Format
 
     private static final ThreadLocalFormat DATE = new ThreadLocalFormat( DATE_FORMAT );
     private static final ThreadLocalFormat TIME = new ThreadLocalFormat( TIME_FORMAT );
-    private static int KB = (int) ByteUnit.kibiBytes( 1 );
+    private static int kb = (int) ByteUnit.kibiBytes( 1 );
 
-    public static String date()
+    private Format()
+    {
+        // No instances
+    }
+
+	public static String date()
     {
         return date( DEFAULT_TIME_ZONE );
     }
 
-    public static String date( TimeZone timeZone )
+	public static String date( TimeZone timeZone )
     {
         return date( new Date(), timeZone );
     }
 
-    public static String date( long millis )
+	public static String date( long millis )
     {
         return date( millis, DEFAULT_TIME_ZONE );
     }
 
-    public static String date( long millis, TimeZone timeZone )
+	public static String date( long millis, TimeZone timeZone )
     {
         return date( new Date( millis ), timeZone );
     }
 
-    public static String date( Date date )
+	public static String date( Date date )
     {
         return date( date, DEFAULT_TIME_ZONE );
     }
 
-    public static String date( Date date, TimeZone timeZone )
+	public static String date( Date date, TimeZone timeZone )
     {
         return DATE.format( date, timeZone );
     }
 
-    public static String time()
+	public static String time()
     {
         return time( DEFAULT_TIME_ZONE );
     }
 
-    public static String time( TimeZone timeZone )
+	public static String time( TimeZone timeZone )
     {
         return time( new Date(), timeZone );
     }
 
-    public static String time( long millis )
+	public static String time( long millis )
     {
         return time( millis, DEFAULT_TIME_ZONE );
     }
 
-    public static String time( long millis, TimeZone timeZone )
+	public static String time( long millis, TimeZone timeZone )
     {
         return time( new Date( millis ), timeZone );
     }
 
-    public static String time( Date date )
+	public static String time( Date date )
     {
         return time( date, DEFAULT_TIME_ZONE );
     }
 
-    public static String time( Date date, TimeZone timeZone )
+	public static String time( Date date, TimeZone timeZone )
     {
         return TIME.format( date, timeZone );
     }
 
-    public static String bytes( long bytes )
+	public static String bytes( long bytes )
     {
-        return suffixCount( bytes, BYTE_SIZES, KB );
+        return suffixCount( bytes, BYTE_SIZES, kb );
     }
 
-    public static String count( long count )
+	public static String count( long count )
     {
         return suffixCount( count, COUNT_SIZES, 1_000 );
     }
 
-    private static String suffixCount( long value, String[] sizes, int stride )
+	private static String suffixCount( long value, String[] sizes, int stride )
     {
         double size = value;
         for ( String suffix : sizes )
@@ -131,12 +136,12 @@ public class Format
         return String.format( Locale.ROOT, "%.2f TB", size );
     }
 
-    public static String duration( long durationMillis )
+	public static String duration( long durationMillis )
     {
         return duration( durationMillis, TimeUnit.DAYS, TimeUnit.MILLISECONDS );
     }
 
-    public static String duration( long durationMillis, TimeUnit highestGranularity, TimeUnit lowestGranularity )
+	public static String duration( long durationMillis, TimeUnit highestGranularity, TimeUnit lowestGranularity )
     {
         StringBuilder builder = new StringBuilder();
 
@@ -170,7 +175,7 @@ public class Format
         return builder.toString();
     }
 
-    private static <T> void reverse( T[] array )
+	private static <T> void reverse( T[] array )
     {
         int half = array.length >> 1;
         for ( int i = 0; i < half; i++ )
@@ -182,7 +187,7 @@ public class Format
         }
     }
 
-    private static String shortName( TimeUnit unit )
+	private static String shortName( TimeUnit unit )
     {
         switch ( unit )
         {
@@ -193,7 +198,7 @@ public class Format
         }
     }
 
-    private static long extractFromDuration( long durationMillis, TimeUnit unit, StringBuilder target )
+	private static long extractFromDuration( long durationMillis, TimeUnit unit, StringBuilder target )
     {
         int count = 0;
         long millisPerUnit = unit.toMillis( 1 );
@@ -209,12 +214,7 @@ public class Format
         return durationMillis;
     }
 
-    private Format()
-    {
-        // No instances
-    }
-
-    private static class ThreadLocalFormat extends ThreadLocal<DateFormat>
+	private static class ThreadLocalFormat extends ThreadLocal<DateFormat>
     {
         private final String format;
 

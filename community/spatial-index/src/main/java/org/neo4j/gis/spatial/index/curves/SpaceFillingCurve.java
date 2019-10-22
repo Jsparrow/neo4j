@@ -30,57 +30,16 @@ import org.neo4j.gis.spatial.index.Envelope;
 
 public abstract class SpaceFillingCurve
 {
-    /**
-     * Description of the space filling curve structure
-     */
-    abstract static class CurveRule
-    {
-        final int dimension;
-        final int[] npointValues;
-
-        CurveRule( int dimension, int[] npointValues )
-        {
-            this.dimension = dimension;
-            this.npointValues = npointValues;
-            assert npointValues.length == length();
-        }
-
-        final int length()
-        {
-            return (int) Math.pow( 2, dimension );
-        }
-
-        int npointForIndex( int derivedIndex )
-        {
-            return npointValues[derivedIndex];
-        }
-
-        int indexForNPoint( int npoint )
-        {
-            for ( int index = 0; index < npointValues.length; index++ )
-            {
-                if ( npointValues[index] == npoint )
-                {
-                    return index;
-                }
-            }
-            return -1;
-        }
-
-        abstract CurveRule childAt( int npoint );
-    }
-
     private final Envelope range;
-    private final int nbrDim;
-    private final int maxLevel;
-    private final long width;
-    private final long valueWidth;
-    private final int quadFactor;
-    private final long initialNormMask;
+	private final int nbrDim;
+	private final int maxLevel;
+	private final long width;
+	private final long valueWidth;
+	private final int quadFactor;
+	private final long initialNormMask;
+	private double[] scalingFactor;
 
-    private double[] scalingFactor;
-
-    SpaceFillingCurve( Envelope range, int maxLevel )
+	SpaceFillingCurve( Envelope range, int maxLevel )
     {
         this.range = range;
         this.nbrDim = range.getDimension();
@@ -104,34 +63,34 @@ public abstract class SpaceFillingCurve
         this.quadFactor = (int) Math.pow( 2, nbrDim );
     }
 
-    public int getMaxLevel()
+	public int getMaxLevel()
     {
         return maxLevel;
     }
 
-    public long getWidth()
+	public long getWidth()
     {
         return width;
     }
 
-    public long getValueWidth()
+	public long getValueWidth()
     {
         return valueWidth;
     }
 
-    public double getTileWidth( int dimension, int level )
+	public double getTileWidth( int dimension, int level )
     {
         return range.getWidth( dimension ) / Math.pow( 2, level );
     }
 
-    public Envelope getRange()
+	public Envelope getRange()
     {
         return range;
     }
 
-    protected abstract CurveRule rootCurve();
+	protected abstract CurveRule rootCurve();
 
-    /**
+	/**
      * Given a coordinate in multiple dimensions, calculate its derived key for maxLevel
      * Needs to be public due to dependency from Neo4j Spatial
      */
@@ -140,7 +99,7 @@ public abstract class SpaceFillingCurve
         return derivedValueFor( coord, maxLevel );
     }
 
-    /**
+	/**
      * Given a coordinate in multiple dimensions, calculate its derived key for given level
      */
     private Long derivedValueFor( double[] coord, int level )
@@ -150,7 +109,7 @@ public abstract class SpaceFillingCurve
         return derivedValueFor( normalizedValues, level );
     }
 
-    /**
+	/**
      * Given a normalized coordinate in multiple dimensions, calculate its derived key for maxLevel
      */
     public Long derivedValueFor( long[] normalizedValues )
@@ -158,7 +117,7 @@ public abstract class SpaceFillingCurve
         return derivedValueFor( normalizedValues, maxLevel );
     }
 
-    /**
+	/**
      * Given a normalized coordinate in multiple dimensions, calculate its derived key for given level
      */
     private Long derivedValueFor( long[] normalizedValues, int level )
@@ -193,7 +152,7 @@ public abstract class SpaceFillingCurve
         return derivedValue;
     }
 
-    /**
+	/**
      * Given a derived key, find the center coordinate of the corresponding tile at maxLevel
      */
     public double[] centerPointFor( long derivedValue )
@@ -201,7 +160,7 @@ public abstract class SpaceFillingCurve
         return centerPointFor( derivedValue, maxLevel );
     }
 
-    /**
+	/**
      * Given a derived key, find the center coordinate of the corresponding tile at given level
      */
     private double[] centerPointFor( long derivedValue, int level )
@@ -210,7 +169,7 @@ public abstract class SpaceFillingCurve
         return getDoubleCoord( normalizedCoord, level );
     }
 
-    /**
+	/**
      * Given a derived key, find the normalized coordinate it corresponds to on a specific level
      */
     long[] normalizedCoordinateFor( long derivedValue, int level )
@@ -251,7 +210,7 @@ public abstract class SpaceFillingCurve
         return coordinate;
     }
 
-    /**
+	/**
      * Given an envelope, find a collection of LongRange of tiles intersecting it on maxLevel and merge adjacent ones
      */
     List<LongRange> getTilesIntersectingEnvelope( Envelope referenceEnvelope )
@@ -259,7 +218,7 @@ public abstract class SpaceFillingCurve
         return getTilesIntersectingEnvelope( referenceEnvelope.getMin(), referenceEnvelope.getMax(), new StandardConfiguration() );
     }
 
-    public List<LongRange> getTilesIntersectingEnvelope( double[] fromOrNull, double[] toOrNull, SpaceFillingCurveConfiguration config )
+	public List<LongRange> getTilesIntersectingEnvelope( double[] fromOrNull, double[] toOrNull, SpaceFillingCurveConfiguration config )
     {
         double[] from = fromOrNull == null ? range.getMin() : fromOrNull.clone();
         double[] to = toOrNull == null ? range.getMax() : toOrNull.clone();
@@ -278,7 +237,8 @@ public abstract class SpaceFillingCurve
                 }
                 else
                 {
-                    throw new IllegalArgumentException( "Invalid range, min greater than max: " + from[i] + " > " + to[i] );
+                    throw new IllegalArgumentException( new StringBuilder().append("Invalid range, min greater than max: ").append(from[i]).append(" > ").append(to[i])
+							.toString() );
                 }
             }
         }
@@ -286,7 +246,7 @@ public abstract class SpaceFillingCurve
         return getTilesIntersectingEnvelope( referenceEnvelope, config, null );
     }
 
-    List<LongRange> getTilesIntersectingEnvelope( Envelope referenceEnvelope, SpaceFillingCurveConfiguration config, SpaceFillingCurveMonitor monitor )
+	List<LongRange> getTilesIntersectingEnvelope( Envelope referenceEnvelope, SpaceFillingCurveConfiguration config, SpaceFillingCurveMonitor monitor )
     {
         SearchEnvelope search = new SearchEnvelope( this, referenceEnvelope );
         SearchEnvelope wholeExtent = new SearchEnvelope( 0, this.getWidth(), nbrDim );
@@ -302,7 +262,7 @@ public abstract class SpaceFillingCurve
         return results;
     }
 
-    private void addTilesIntersectingEnvelopeAt( SpaceFillingCurveConfiguration config, SpaceFillingCurveMonitor monitor, int depth, int maxDepth,
+	private void addTilesIntersectingEnvelopeAt( SpaceFillingCurveConfiguration config, SpaceFillingCurveMonitor monitor, int depth, int maxDepth,
             SearchEnvelope search, SearchEnvelope currentExtent, CurveRule curve, long left, long right, ArrayList<LongRange> results )
     {
         if ( right - left == 1 )
@@ -364,7 +324,7 @@ public abstract class SpaceFillingCurve
         }
     }
 
-    /**
+	/**
      * Bit index describing the in which quadrant an npoint corresponds to
      */
     private int[] bitValues( int npoint )
@@ -379,7 +339,7 @@ public abstract class SpaceFillingCurve
         return bitValues;
     }
 
-    /**
+	/**
      * Given a coordinate, find the corresponding normalized coordinate
      */
     long[] getNormalizedCoord( double[] coord )
@@ -418,7 +378,7 @@ public abstract class SpaceFillingCurve
         return normalizedCoord;
     }
 
-    /**
+	/**
      * Given a normalized coordinate, find the center coordinate of that tile  on the given level
      */
     private double[] getDoubleCoord( long[] normalizedCoord, int level )
@@ -433,7 +393,7 @@ public abstract class SpaceFillingCurve
         return coord;
     }
 
-    private static double clamp( double val, double min, double max )
+	private static double clamp( double val, double min, double max )
     {
         if ( val <= min )
         {
@@ -446,15 +406,55 @@ public abstract class SpaceFillingCurve
         return val;
     }
 
-    /**
+	/**
      * Assert that a given level is valid
      */
     private void assertValidLevel( int level )
     {
         if ( level > maxLevel )
         {
-            throw new IllegalArgumentException( "Level " + level + " greater than max-level " + maxLevel );
+            throw new IllegalArgumentException( new StringBuilder().append("Level ").append(level).append(" greater than max-level ").append(maxLevel).toString() );
         }
+    }
+
+	/**
+     * Description of the space filling curve structure
+     */
+    abstract static class CurveRule
+    {
+        final int dimension;
+        final int[] npointValues;
+
+        CurveRule( int dimension, int[] npointValues )
+        {
+            this.dimension = dimension;
+            this.npointValues = npointValues;
+            assert npointValues.length == length();
+        }
+
+        final int length()
+        {
+            return (int) Math.pow( 2, dimension );
+        }
+
+        int npointForIndex( int derivedIndex )
+        {
+            return npointValues[derivedIndex];
+        }
+
+        int indexForNPoint( int npoint )
+        {
+            for ( int index = 0; index < npointValues.length; index++ )
+            {
+                if ( npointValues[index] == npoint )
+                {
+                    return index;
+                }
+            }
+            return -1;
+        }
+
+        abstract CurveRule childAt( int npoint );
     }
 
     /**
@@ -501,7 +501,7 @@ public abstract class SpaceFillingCurve
         @Override
         public String toString()
         {
-            return "LongRange(" + min + "," + max + ")";
+            return new StringBuilder().append("LongRange(").append(min).append(",").append(max).append(")").toString();
         }
     }
 }

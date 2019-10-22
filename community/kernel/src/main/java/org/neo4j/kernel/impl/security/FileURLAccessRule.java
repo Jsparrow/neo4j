@@ -36,13 +36,13 @@ class FileURLAccessRule implements URLAccessRule
     @Override
     public URL validate( Configuration config, URL url ) throws URLAccessValidationError
     {
-        if ( !(url.getAuthority() == null || url.getAuthority().equals( "" )) )
+        if ( !(url.getAuthority() == null || "".equals( url.getAuthority() )) )
         {
             throw new URLAccessValidationError(
                     "file URL may not contain an authority section (i.e. it should be 'file:///')" );
         }
 
-        if ( !(url.getQuery() == null || url.getQuery().equals( "" )) )
+        if ( !(url.getQuery() == null || "".equals( url.getQuery() )) )
         {
             throw new URLAccessValidationError( "file URL may not contain a query component" );
         }
@@ -50,7 +50,7 @@ class FileURLAccessRule implements URLAccessRule
         if ( !config.get( GraphDatabaseSettings.allow_file_urls ) )
         {
             throw new URLAccessValidationError(
-                    "configuration property '" + GraphDatabaseSettings.allow_file_urls.name() + "' is false" );
+                    new StringBuilder().append("configuration property '").append(GraphDatabaseSettings.allow_file_urls.name()).append("' is false").toString() );
         }
 
         final File root = config.get( GraphDatabaseSettings.load_csv_file_url_root );

@@ -278,10 +278,7 @@ public class TransactionIT
             {
                 machine[0] = stateMachine;
                 stateMachine.process( new InitMessage( USER_AGENT, emptyMap() ), nullResponseHandler() );
-                String query = format( "USING PERIODIC COMMIT 10 LOAD CSV FROM 'http://localhost:%d' AS line " +
-                                       "CREATE (n:A {id: line[0], square: line[1]}) " +
-                                       "WITH count(*) as number " +
-                                       "CREATE (n:ShouldNotExist)",
+                String query = format( new StringBuilder().append("USING PERIODIC COMMIT 10 LOAD CSV FROM 'http://localhost:%d' AS line ").append("CREATE (n:A {id: line[0], square: line[1]}) ").append("WITH count(*) as number ").append("CREATE (n:ShouldNotExist)").toString(),
                                        localPort );
                 try
                 {

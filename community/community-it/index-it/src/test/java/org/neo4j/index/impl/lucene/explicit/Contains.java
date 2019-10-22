@@ -45,7 +45,7 @@ public class Contains<T> extends TypeSafeMatcher<IndexHits<T>>
 
         if ( expectedItems.length != collection.size() )
         {
-            message = "IndexHits with a size of " + expectedItems.length + ", got one with " + collection.size();
+            message = new StringBuilder().append("IndexHits with a size of ").append(expectedItems.length).append(", got one with ").append(collection.size()).toString();
             message += collection.toString();
             return false;
         }
@@ -54,7 +54,7 @@ public class Contains<T> extends TypeSafeMatcher<IndexHits<T>>
         {
             if ( !collection.contains( item ) )
             {
-                message = "Item (" + item + ") not found.";
+                message = new StringBuilder().append("Item (").append(item).append(") not found.").toString();
                 return false;
             }
 

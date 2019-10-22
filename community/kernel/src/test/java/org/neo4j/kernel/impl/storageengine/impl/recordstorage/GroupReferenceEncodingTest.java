@@ -29,7 +29,7 @@ import static org.junit.Assert.assertTrue;
 public class GroupReferenceEncodingTest
 {
     // This value the largest possible high limit id +1 (see HighLimitV3_1_0)
-    private static long MAX_ID_LIMIT = 1L << 50;
+    private static long maxIdLimit = 1L << 50;
 
     @Test
     public void encodeRelationship()
@@ -37,7 +37,7 @@ public class GroupReferenceEncodingTest
         ThreadLocalRandom random = ThreadLocalRandom.current();
         for ( int i = 0; i < 1000; i++ )
         {
-            long reference = random.nextLong( MAX_ID_LIMIT );
+            long reference = random.nextLong( maxIdLimit );
             assertFalse( GroupReferenceEncoding.isRelationship( reference ) );
             assertTrue( GroupReferenceEncoding.isRelationship( GroupReferenceEncoding.encodeRelationship( reference ) ) );
             assertTrue( "encoded reference is negative", GroupReferenceEncoding.encodeRelationship( reference ) < 0 );

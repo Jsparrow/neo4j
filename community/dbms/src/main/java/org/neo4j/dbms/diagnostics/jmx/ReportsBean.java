@@ -78,10 +78,7 @@ public class ReportsBean extends ManagementBeanProvider
         public String getEnvironmentVariables()
         {
             StringBuilder sb = new StringBuilder();
-            for ( Map.Entry<String,String> env : System.getenv().entrySet() )
-            {
-                sb.append( env.getKey() ).append( '=' ).append( env.getValue() ).append( '\n' );
-            }
+            System.getenv().entrySet().forEach(env -> sb.append(env.getKey()).append('=').append(env.getValue()).append('\n'));
             return sb.toString();
         }
     }

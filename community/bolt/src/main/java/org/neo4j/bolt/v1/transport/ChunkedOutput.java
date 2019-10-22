@@ -208,7 +208,7 @@ public class ChunkedOutput implements PackOutput
     {
         if ( offset + length > data.length )
         {
-            throw new IOException( "Asked to write " + length + " bytes, but there is only " + (data.length - offset) + " bytes available in data provided." );
+            throw new IOException( new StringBuilder().append("Asked to write ").append(length).append(" bytes, but there is only ").append(data.length - offset).append(" bytes available in data provided.").toString() );
         }
         return writeBytes( ByteBuffer.wrap( data, offset, length ) );
     }
@@ -265,12 +265,12 @@ public class ChunkedOutput implements PackOutput
 
     private void closeChunkIfOpen()
     {
-        if ( chunkOpen )
-        {
-            int chunkBodySize = currentChunkBodySize();
-            buffer.setShort( currentChunkStartIndex, chunkBodySize );
-            chunkOpen = false;
-        }
+        if (!chunkOpen) {
+			return;
+		}
+		int chunkBodySize = currentChunkBodySize();
+		buffer.setShort( currentChunkStartIndex, chunkBodySize );
+		chunkOpen = false;
     }
 
     private int availableBytesInCurrentChunk()

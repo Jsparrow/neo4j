@@ -120,10 +120,8 @@ public class DeleteDuplicateNodesStepTest
             assertEquals( expectedToBeInUse, neoStores.getNodeStore().isInUse( entity.node.getId() ) );
 
             // Verify label records
-            for ( DynamicRecord labelRecord : entity.node.getDynamicLabelRecords() )
-            {
-                assertEquals( expectedToBeInUse, neoStores.getNodeStore().getDynamicLabelStore().isInUse( labelRecord.getId() ) );
-            }
+			entity.node.getDynamicLabelRecords().forEach(labelRecord -> assertEquals(expectedToBeInUse,
+					neoStores.getNodeStore().getDynamicLabelStore().isInUse(labelRecord.getId())));
 
             // Verify property records
             for ( PropertyRecord propertyRecord : entity.properties )
@@ -143,7 +141,7 @@ public class DeleteDuplicateNodesStepTest
                         case ARRAY:
                             valueStore = neoStores.getPropertyStore().getArrayStore();
                             break;
-                        default: throw new IllegalArgumentException( propertyRecord + " " + property );
+                        default: throw new IllegalArgumentException( new StringBuilder().append(propertyRecord).append(" ").append(property).toString() );
                         }
                         assertEquals( expectedToBeInUse, valueStore.isInUse( valueRecord.getId() ) );
                     }
@@ -176,18 +174,6 @@ public class DeleteDuplicateNodesStepTest
         return Arrays.copyOf( nodeIds, cursor );
     }
 
-    private static class Ids
-    {
-        private final NodeRecord node;
-        private final PropertyRecord[] properties;
-
-        Ids( NodeRecord node, PropertyRecord[] properties )
-        {
-            this.node = node;
-            this.properties = properties;
-        }
-    }
-
     private Ids createNode( DataImporter.Monitor monitor, NeoStores neoStores, int propertyCount, int labelCount )
     {
         PropertyStore propertyStore = neoStores.getPropertyStore();
@@ -209,7 +195,7 @@ public class DeleteDuplicateNodesStepTest
         return new Ids( nodeRecord, propertyRecords );
     }
 
-    private static PropertyRecord[] extractPropertyRecords( RecordAccess<PropertyRecord,PrimitiveRecord> propertyRecordAccess,
+	private static PropertyRecord[] extractPropertyRecords( RecordAccess<PropertyRecord,PrimitiveRecord> propertyRecordAccess,
             long nextProp )
     {
         List<PropertyRecord> result = new ArrayList<>();
@@ -222,7 +208,7 @@ public class DeleteDuplicateNodesStepTest
         return result.toArray( new PropertyRecord[result.size()] );
     }
 
-    private Iterator<PropertyBlock> properties( PropertyStore propertyStore, int propertyCount )
+	private Iterator<PropertyBlock> properties( PropertyStore propertyStore, int propertyCount )
     {
         return new PrefetchingIterator<PropertyBlock>()
         {
@@ -243,7 +229,7 @@ public class DeleteDuplicateNodesStepTest
         };
     }
 
-    private static long[] labelIds( int labelCount )
+	private static long[] labelIds( int labelCount )
     {
         long[] result = new long[labelCount];
         for ( int i = 0; i < labelCount; i++ )
@@ -253,10 +239,22 @@ public class DeleteDuplicateNodesStepTest
         return result;
     }
 
-    private static void startAndAwaitCompletionOf( DeleteDuplicateNodesStep step ) throws InterruptedException
+	private static void startAndAwaitCompletionOf( DeleteDuplicateNodesStep step ) throws InterruptedException
     {
         step.start( 0 );
         step.receive( 0, null );
         step.awaitCompleted();
+    }
+
+	private static class Ids
+    {
+        private final NodeRecord node;
+        private final PropertyRecord[] properties;
+
+        Ids( NodeRecord node, PropertyRecord[] properties )
+        {
+            this.node = node;
+            this.properties = properties;
+        }
     }
 }

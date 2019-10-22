@@ -91,8 +91,27 @@ public class IndexPopulationStressTest
     private static final int THREADS = 50;
     private static final int MAX_BATCH_SIZE = 100;
     private static final int BATCHES_PER_THREAD = 100;
+	@Rule
+    public final RandomRule random = new RandomRule();
+	@Rule
+    public PageCacheAndDependenciesRule rules = new PageCacheAndDependenciesRule().with( new DefaultFileSystemRule() );
+	protected final StoreIndexDescriptor descriptor = forSchema( forLabel( 0, 0 ), PROVIDER ).withId( 0 );
+	private final StoreIndexDescriptor descriptor2 = forSchema( forLabel( 1, 0 ), PROVIDER ).withId( 1 );
+	private final IndexSamplingConfig samplingConfig = new IndexSamplingConfig( 1000, 0.2, true );
+	private final NodePropertyAccessor nodePropertyAccessor = mock( NodePropertyAccessor.class );
+	@Parameterized.Parameter
+    public String name;
+	@Parameterized.Parameter( 1 )
+    public boolean hasValues;
+	@Parameterized.Parameter( 2 )
+    public Function<RandomValues,Value> valueGenerator;
+	@Parameterized.Parameter( 3 )
+    public Function<IndexPopulationStressTest,IndexProvider> providerCreator;
+	private IndexPopulator populator;
+	private IndexProvider indexProvider;
+	private boolean prevAccessCheck;
 
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static Collection<Object[]> providers()
     {
         Collection<Object[]> parameters = new ArrayList<>();
@@ -114,41 +133,19 @@ public class IndexPopulationStressTest
         return parameters;
     }
 
-    private static Object[] of( String name, boolean hasValues, Function<RandomValues,Value> valueGenerator,
+	private static Object[] of( String name, boolean hasValues, Function<RandomValues,Value> valueGenerator,
             Function<IndexPopulationStressTest,IndexProvider> providerCreator )
     {
         return toArray( name, hasValues, valueGenerator, providerCreator );
     }
 
-    @Rule
-    public final RandomRule random = new RandomRule();
-    @Rule
-    public PageCacheAndDependenciesRule rules = new PageCacheAndDependenciesRule().with( new DefaultFileSystemRule() );
-
-    protected final StoreIndexDescriptor descriptor = forSchema( forLabel( 0, 0 ), PROVIDER ).withId( 0 );
-    private final StoreIndexDescriptor descriptor2 = forSchema( forLabel( 1, 0 ), PROVIDER ).withId( 1 );
-    private final IndexSamplingConfig samplingConfig = new IndexSamplingConfig( 1000, 0.2, true );
-    private final NodePropertyAccessor nodePropertyAccessor = mock( NodePropertyAccessor.class );
-    @Parameterized.Parameter
-    public String name;
-    @Parameterized.Parameter( 1 )
-    public boolean hasValues;
-    @Parameterized.Parameter( 2 )
-    public Function<RandomValues,Value> valueGenerator;
-    @Parameterized.Parameter( 3 )
-    public Function<IndexPopulationStressTest,IndexProvider> providerCreator;
-
-    private IndexPopulator populator;
-    private IndexProvider indexProvider;
-    private boolean prevAccessCheck;
-
-    private IndexDirectoryStructure.Factory directory()
+	private IndexDirectoryStructure.Factory directory()
     {
         File storeDir = rules.directory().databaseDir();
         return directoriesBySubProvider( directoriesByProvider( storeDir ).forProvider( PROVIDER ) );
     }
 
-    @Before
+	@Before
     public void setup() throws IOException, EntityNotFoundException
     {
         indexProvider = providerCreator.apply( this );
@@ -158,7 +155,7 @@ public class IndexPopulationStressTest
         prevAccessCheck = UnsafeUtil.exchangeNativeAccessCheckEnabled( false );
     }
 
-    @After
+	@After
     public void teardown()
     {
         UnsafeUtil.exchangeNativeAccessCheckEnabled( prevAccessCheck );
@@ -168,7 +165,7 @@ public class IndexPopulationStressTest
         }
     }
 
-    @Test
+	@Test
     public void stressIt() throws Throwable
     {
         Race race = new Race();
@@ -213,7 +210,7 @@ public class IndexPopulationStressTest
         }
     }
 
-    private Runnable updater( AtomicReferenceArray<List<? extends IndexEntryUpdate<?>>> lastBatches, CountDownLatch insertersDone, ReadWriteLock updateLock,
+	private Runnable updater( AtomicReferenceArray<List<? extends IndexEntryUpdate<?>>> lastBatches, CountDownLatch insertersDone, ReadWriteLock updateLock,
             Collection<IndexEntryUpdate<?>> updates )
     {
         return throwing( () ->
@@ -271,7 +268,7 @@ public class IndexPopulationStressTest
         } );
     }
 
-    private Runnable inserter( AtomicReferenceArray<List<? extends IndexEntryUpdate<?>>> lastBatches, Generator[] generators, CountDownLatch insertersDone,
+	private Runnable inserter( AtomicReferenceArray<List<? extends IndexEntryUpdate<?>>> lastBatches, Generator[] generators, CountDownLatch insertersDone,
             ReadWriteLock updateLock, int slot )
     {
         int worstCaseEntriesPerThread = BATCHES_PER_THREAD * MAX_BATCH_SIZE;
@@ -303,7 +300,7 @@ public class IndexPopulationStressTest
         } );
     }
 
-    private void buildReferencePopulatorSingleThreaded( Generator[] generators, Collection<IndexEntryUpdate<?>> updates )
+	private void buildReferencePopulatorSingleThreaded( Generator[] generators, Collection<IndexEntryUpdate<?>> updates )
             throws IndexEntryConflictException
     {
         IndexPopulator referencePopulator = indexProvider.getPopulator( descriptor2, samplingConfig, heapBufferFactory( 1024 ) );

@@ -350,18 +350,18 @@ public class TransactionEventsIT
             void perform( Graph graph, ExpectedTransactionData expectations )
             {
                 Node node = graph.randomNode();
-                if ( node != null )
-                {
-                    for ( Relationship relationship : node.getRelationships() )
-                    {
-                        graph.deleteRelationship( relationship );
-                        expectations.deletedRelationship( relationship );
-                        debug( relationship );
-                    }
-                    graph.deleteNode( node );
-                    expectations.deletedNode( node );
-                    debug( node );
-                }
+                if (node == null) {
+					return;
+				}
+				for ( Relationship relationship : node.getRelationships() )
+				{
+				    graph.deleteRelationship( relationship );
+				    expectations.deletedRelationship( relationship );
+				    debug( relationship );
+				}
+				graph.deleteNode( node );
+				expectations.deletedNode( node );
+				debug( node );
             }
         },
         assignLabel
@@ -370,16 +370,16 @@ public class TransactionEventsIT
             void perform( Graph graph, ExpectedTransactionData expectations )
             {
                 Node node = graph.randomNode();
-                if ( node != null )
-                {
-                    Label label = graph.randomLabel();
-                    if ( !node.hasLabel( label ) )
-                    {
-                        node.addLabel( label );
-                        expectations.assignedLabel( node, label );
-                        debug( node + " " + label );
-                    }
-                }
+                if (node == null) {
+					return;
+				}
+				Label label = graph.randomLabel();
+				if ( !node.hasLabel( label ) )
+				{
+				    node.addLabel( label );
+				    expectations.assignedLabel( node, label );
+				    debug( new StringBuilder().append(node).append(" ").append(label).toString() );
+				}
             }
         },
         removeLabel
@@ -388,16 +388,16 @@ public class TransactionEventsIT
             void perform( Graph graph, ExpectedTransactionData expectations )
             {
                 Node node = graph.randomNode();
-                if ( node != null )
-                {
-                    Label label = graph.randomLabel();
-                    if ( node.hasLabel( label ) )
-                    {
-                        node.removeLabel( label );
-                        expectations.removedLabel( node, label );
-                        debug( node + " " + label );
-                    }
-                }
+                if (node == null) {
+					return;
+				}
+				Label label = graph.randomLabel();
+				if ( node.hasLabel( label ) )
+				{
+				    node.removeLabel( label );
+				    expectations.removedLabel( node, label );
+				    debug( new StringBuilder().append(node).append(" ").append(label).toString() );
+				}
             }
         },
         setNodeProperty
@@ -406,15 +406,16 @@ public class TransactionEventsIT
             void perform( Graph graph, ExpectedTransactionData expectations )
             {
                 Node node = graph.randomNode();
-                if ( node != null )
-                {
-                    String key = graph.randomPropertyKey();
-                    Object valueBefore = node.getProperty( key, null );
-                    Object value = graph.randomPropertyValue();
-                    node.setProperty( key, value );
-                    expectations.assignedProperty( node, key, value, valueBefore );
-                    debug( node + " " + key + "=" + value + " prev " + valueBefore );
-                }
+                if (node == null) {
+					return;
+				}
+				String key = graph.randomPropertyKey();
+				Object valueBefore = node.getProperty( key, null );
+				Object value = graph.randomPropertyValue();
+				node.setProperty( key, value );
+				expectations.assignedProperty( node, key, value, valueBefore );
+				debug( new StringBuilder().append(node).append(" ").append(key).append("=").append(value).append(" prev ")
+						.append(valueBefore).toString() );
             }
         },
         removeNodeProperty
@@ -423,16 +424,16 @@ public class TransactionEventsIT
             void perform( Graph graph, ExpectedTransactionData expectations )
             {
                 Node node = graph.randomNode();
-                if ( node != null )
-                {
-                    String key = graph.randomPropertyKey();
-                    if ( node.hasProperty( key ) )
-                    {
-                        Object valueBefore = node.removeProperty( key );
-                        expectations.removedProperty( node, key, valueBefore );
-                        debug( node + " " + key + "=" + valueBefore );
-                    }
-                }
+                if (node == null) {
+					return;
+				}
+				String key = graph.randomPropertyKey();
+				if ( node.hasProperty( key ) )
+				{
+				    Object valueBefore = node.removeProperty( key );
+				    expectations.removedProperty( node, key, valueBefore );
+				    debug( new StringBuilder().append(node).append(" ").append(key).append("=").append(valueBefore).toString() );
+				}
             }
         },
         setRelationshipProperty
@@ -441,15 +442,16 @@ public class TransactionEventsIT
             void perform( Graph graph, ExpectedTransactionData expectations )
             {
                 Relationship relationship = graph.randomRelationship();
-                if ( relationship != null )
-                {
-                    String key = graph.randomPropertyKey();
-                    Object valueBefore = relationship.getProperty( key, null );
-                    Object value = graph.randomPropertyValue();
-                    relationship.setProperty( key, value );
-                    expectations.assignedProperty( relationship, key, value, valueBefore );
-                    debug( relationship + " " + key + "=" + value + " prev " + valueBefore );
-                }
+                if (relationship == null) {
+					return;
+				}
+				String key = graph.randomPropertyKey();
+				Object valueBefore = relationship.getProperty( key, null );
+				Object value = graph.randomPropertyValue();
+				relationship.setProperty( key, value );
+				expectations.assignedProperty( relationship, key, value, valueBefore );
+				debug( new StringBuilder().append(relationship).append(" ").append(key).append("=").append(value).append(" prev ")
+						.append(valueBefore).toString() );
             }
         },
         removeRelationshipProperty
@@ -458,16 +460,16 @@ public class TransactionEventsIT
             void perform( Graph graph, ExpectedTransactionData expectations )
             {
                 Relationship relationship = graph.randomRelationship();
-                if ( relationship != null )
-                {
-                    String key = graph.randomPropertyKey();
-                    if ( relationship.hasProperty( key ) )
-                    {
-                        Object valueBefore = relationship.removeProperty( key );
-                        expectations.removedProperty( relationship, key, valueBefore );
-                        debug( relationship + " " + key + "=" + valueBefore );
-                    }
-                }
+                if (relationship == null) {
+					return;
+				}
+				String key = graph.randomPropertyKey();
+				if ( relationship.hasProperty( key ) )
+				{
+				    Object valueBefore = relationship.removeProperty( key );
+				    expectations.removedProperty( relationship, key, valueBefore );
+				    debug( new StringBuilder().append(relationship).append(" ").append(key).append("=").append(valueBefore).toString() );
+				}
             }
         },
         createRelationship
@@ -492,12 +494,12 @@ public class TransactionEventsIT
             void perform( Graph graph, ExpectedTransactionData expectations )
             {
                 Relationship relationship = graph.randomRelationship();
-                if ( relationship != null )
-                {
-                    graph.deleteRelationship( relationship );
-                    expectations.deletedRelationship( relationship );
-                    debug( relationship );
-                }
+                if (relationship == null) {
+					return;
+				}
+				graph.deleteRelationship( relationship );
+				expectations.deletedRelationship( relationship );
+				debug( relationship );
             }
         };
 

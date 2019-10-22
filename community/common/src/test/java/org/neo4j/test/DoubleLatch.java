@@ -125,6 +125,7 @@ public class DoubleLatch
     @Override
     public String toString()
     {
-        return super.toString() + "[Start[" + startSignal.getCount() + "], Finish[" + finishSignal.getCount() + "]]";
+        return new StringBuilder().append(super.toString()).append("[Start[").append(startSignal.getCount()).append("], Finish[").append(finishSignal.getCount()).append("]]")
+				.toString();
     }
 }

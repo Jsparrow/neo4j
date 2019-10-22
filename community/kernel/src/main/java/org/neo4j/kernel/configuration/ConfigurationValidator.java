@@ -36,5 +36,5 @@ public interface ConfigurationValidator
      * @return a map containing any additional settings to add the the configuration
      * @throws InvalidSettingException in case of invalid values.
      */
-    Map<String,String> validate( @Nonnull Config config, @Nonnull Log log ) throws InvalidSettingException;
+    Map<String,String> validate( @Nonnull Config config, @Nonnull Log log );
 }

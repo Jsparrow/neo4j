@@ -48,24 +48,24 @@ import static org.junit.Assert.assertTrue;
 
 public class RetrieveNodeIT extends AbstractRestFunctionalDocTestBase
 {
-    private URI nodeUri;
-    private GraphDbHelper helper;
     private static FunctionalTestHelper functionalTestHelper;
+	private URI nodeUri;
+	private GraphDbHelper helper;
 
-    @BeforeClass
+	@BeforeClass
     public static void setupServer()
     {
         functionalTestHelper = new FunctionalTestHelper( server() );
     }
 
-    @Before
+	@Before
     public void cleanTheDatabaseAndInitialiseTheNodeUri() throws Exception
     {
         helper = new GraphDbHelper( server().getDatabase() );
-        nodeUri = new URI( functionalTestHelper.nodeUri() + "/" + helper.createNode() );
+        nodeUri = new URI( new StringBuilder().append(functionalTestHelper.nodeUri()).append("/").append(helper.createNode()).toString() );
     }
 
-    @Test
+	@Test
     public void shouldParameteriseUrisInNodeRepresentationWithHostHeaderValue() throws Exception
     {
         try ( CloseableHttpClient httpclient = HttpClientBuilder.create().build() )
@@ -84,7 +84,7 @@ public class RetrieveNodeIT extends AbstractRestFunctionalDocTestBase
         }
     }
 
-    @Test
+	@Test
     public void shouldParameteriseUrisInNodeRepresentationWithoutHostHeaderUsingRequestUri() throws Exception
     {
         try ( CloseableHttpClient httpclient = HttpClientBuilder.create().build() )
@@ -101,7 +101,7 @@ public class RetrieveNodeIT extends AbstractRestFunctionalDocTestBase
         }
     }
 
-    @Documented( "Get node.\n" +
+	@Documented( "Get node.\n" +
                  "\n" +
                  "Note that the response contains URI/templates for the available\n" +
                  "operations for getting properties and relationships." )
@@ -114,7 +114,7 @@ public class RetrieveNodeIT extends AbstractRestFunctionalDocTestBase
                 .get( uri );
     }
 
-    @Documented( "Get node -- compact.\n" +
+	@Documented( "Get node -- compact.\n" +
                  "\n" +
                  "Specifying the subformat in the requests media type yields a more compact\n" +
                  "JSON response without metadata and templates." )
@@ -130,7 +130,7 @@ public class RetrieveNodeIT extends AbstractRestFunctionalDocTestBase
                 .contains( "self" ) );
     }
 
-    @Test
+	@Test
     public void shouldGetContentLengthHeaderWhenRetrievingNode()
     {
         JaxRsResponse response = retrieveNodeFromService( nodeUri.toString() );
@@ -139,7 +139,7 @@ public class RetrieveNodeIT extends AbstractRestFunctionalDocTestBase
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldHaveJsonMediaTypeOnResponse()
     {
         JaxRsResponse response = retrieveNodeFromService( nodeUri.toString() );
@@ -147,7 +147,7 @@ public class RetrieveNodeIT extends AbstractRestFunctionalDocTestBase
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldHaveJsonDataInResponse() throws Exception
     {
         JaxRsResponse response = retrieveNodeFromService( nodeUri.toString() );
@@ -157,20 +157,20 @@ public class RetrieveNodeIT extends AbstractRestFunctionalDocTestBase
         response.close();
     }
 
-    @Documented( "Get non-existent node." )
+	@Documented( "Get non-existent node." )
     @Test
     public void shouldGet404WhenRetrievingNonExistentNode() throws Exception
     {
         long nonExistentNode = helper.createNode();
         helper.deleteNode( nonExistentNode );
-        URI nonExistentNodeUri = new URI( functionalTestHelper.nodeUri() + "/" + nonExistentNode );
+        URI nonExistentNodeUri = new URI( new StringBuilder().append(functionalTestHelper.nodeUri()).append("/").append(nonExistentNode).toString() );
 
         gen.get()
                 .expectedStatus( 404 )
                 .get( nonExistentNodeUri.toString() );
     }
 
-    private JaxRsResponse retrieveNodeFromService( final String uri )
+	private JaxRsResponse retrieveNodeFromService( final String uri )
     {
         return RestRequest.req().get( uri );
     }

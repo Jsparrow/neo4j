@@ -62,7 +62,7 @@ public final class ManagementData
     {
         if ( !provider.beanInterface.isAssignableFrom( implClass ) )
         {
-            throw new IllegalStateException( implClass + " does not implement " + provider.beanInterface );
+            throw new IllegalStateException( new StringBuilder().append(implClass).append(" does not implement ").append(provider.beanInterface).toString() );
         }
     }
 }

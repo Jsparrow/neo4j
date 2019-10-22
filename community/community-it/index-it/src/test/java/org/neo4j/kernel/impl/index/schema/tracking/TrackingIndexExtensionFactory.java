@@ -33,10 +33,6 @@ public class TrackingIndexExtensionFactory extends KernelExtensionFactory<Tracki
         super( "trackingIndex" );
     }
 
-    public interface Dependencies extends NativeLuceneFusionIndexProviderFactory20.Dependencies
-    {
-    }
-
     @Override
     public synchronized IndexProvider newInstance( KernelContext context, Dependencies dependencies )
     {
@@ -48,8 +44,12 @@ public class TrackingIndexExtensionFactory extends KernelExtensionFactory<Tracki
         return indexProvider;
     }
 
-    public TrackingReadersIndexProvider getIndexProvider()
+	public TrackingReadersIndexProvider getIndexProvider()
     {
         return indexProvider;
+    }
+
+	public interface Dependencies extends NativeLuceneFusionIndexProviderFactory20.Dependencies
+    {
     }
 }

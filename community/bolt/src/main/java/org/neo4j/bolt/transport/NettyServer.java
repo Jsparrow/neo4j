@@ -64,15 +64,6 @@ public class NettyServer extends LifecycleAdapter
     private EventLoopGroup selectorGroup;
 
     /**
-     * Describes how to initialize new channels for a protocol, and which address the protocol should be bolted into.
-     */
-    public interface ProtocolInitializer
-    {
-        ChannelInitializer<Channel> channelInitializer();
-        ListenSocketAddress address();
-    }
-
-    /**
      * @param tf used to create IO threads to listen and handle network events
      * @param initializersMap  function per bolt connector map to bootstrap configured protocols
      * @param connectorRegister register to keep local address information on all configured connectors
@@ -86,7 +77,7 @@ public class NettyServer extends LifecycleAdapter
         this.log = log;
     }
 
-    @Override
+	@Override
     public void start() throws Throwable
     {
         boolean useEpoll = USE_EPOLL && Epoll.isAvailable();
@@ -133,14 +124,14 @@ public class NettyServer extends LifecycleAdapter
         }
     }
 
-    @Override
+	@Override
     public void stop()
     {
         bossGroup.shutdownGracefully();
         selectorGroup.shutdownGracefully();
     }
 
-    private ServerBootstrap createServerBootstrap( ServerConfigurationProvider configurationProvider, ProtocolInitializer protocolInitializer )
+	private ServerBootstrap createServerBootstrap( ServerConfigurationProvider configurationProvider, ProtocolInitializer protocolInitializer )
     {
         return new ServerBootstrap()
                 .group( bossGroup, selectorGroup )
@@ -149,5 +140,14 @@ public class NettyServer extends LifecycleAdapter
                 .option( ChannelOption.SO_REUSEADDR, true )
                 .childOption( ChannelOption.SO_KEEPALIVE, true )
                 .childHandler( protocolInitializer.channelInitializer() );
+    }
+
+	/**
+     * Describes how to initialize new channels for a protocol, and which address the protocol should be bolted into.
+     */
+    public interface ProtocolInitializer
+    {
+        ChannelInitializer<Channel> channelInitializer();
+        ListenSocketAddress address();
     }
 }

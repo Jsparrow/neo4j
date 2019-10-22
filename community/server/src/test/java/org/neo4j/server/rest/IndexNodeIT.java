@@ -61,15 +61,16 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
 {
     private static FunctionalTestHelper functionalTestHelper;
     private static GraphDbHelper helper;
+	private final Factory<String> indexes =  UniqueStrings.withPrefix( "index" );
 
-    @BeforeClass
+	@BeforeClass
     public static void setupServer()
     {
         functionalTestHelper = new FunctionalTestHelper( server() );
         helper = functionalTestHelper.getGraphDbHelper();
     }
 
-    @Documented( "List node indexes." )
+	@Documented( "List node indexes." )
     @Test
     public void shouldGetListOfNodeIndexesWhenOneExist() throws JsonParseException
     {
@@ -86,11 +87,11 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         HashMap<String,Object> theIndex = new HashMap<>();
         theIndex.put( indexName, map.get( indexName ) );
 
-        assertEquals( "Was: " + theIndex + ", no-auto-index:" + functionalTestHelper.removeAnyAutoIndex( theIndex ),
+        assertEquals( new StringBuilder().append("Was: ").append(theIndex).append(", no-auto-index:").append(functionalTestHelper.removeAnyAutoIndex( theIndex )).toString(),
                 1, functionalTestHelper.removeAnyAutoIndex( theIndex ).size() );
     }
 
-    @Documented( "Create node index\n" +
+	@Documented( "Create node index\n" +
                  "\n" +
                  "NOTE: Instead of creating the index this way, you can simply start to use\n" +
                  "it, and it will be created automatically with default configuration." )
@@ -112,7 +113,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertThat( helper.getNodeIndexes(), FunctionalTestHelper.arrayContains( indexName ) );
     }
 
-    @Test
+	@Test
     public void shouldCreateANamedNodeIndexWithSpaces()
     {
         String indexName =  indexes.newInstance() + " with spaces";
@@ -130,7 +131,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertThat( helper.getNodeIndexes(), FunctionalTestHelper.arrayContains( indexName ) );
     }
 
-    @Documented( "Create node index with configuration.\n\n" +
+	@Documented( "Create node index with configuration.\n\n" +
                  "This request is only necessary if you want to customize the index settings. \n" +
                  "If you are happy with the defaults, you can just start indexing nodes/relationships, as\n" +
                  "non-existent indexes will automatically be created as you do. See\n" +
@@ -150,7 +151,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertThat( helper.getNodeIndexes(), FunctionalTestHelper.arrayContains( "fulltext" ) );
     }
 
-    @Documented( "Add node to index.\n" +
+	@Documented( "Add node to index.\n" +
                  "\n" +
                  "Associates a node with the given key/value pair in the given index.\n" +
                  "\n" +
@@ -183,7 +184,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertEquals( 1, hits.size() );
     }
 
-    @Documented( "Find node by exact match.\n" +
+	@Documented( "Find node by exact match.\n" +
                  "\n" +
                  "NOTE: Spaces in the URI have to be encoded as +%20+." )
     @Test
@@ -208,7 +209,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertEquals( 1, hits.size() );
     }
 
-    @Documented( "Find node by query.\n" +
+	@Documented( "Find node by query.\n" +
                  "\n" +
                  "The query language used here depends on what type of index you are\n" +
                  "querying. The default index type is Lucene, in which case you should use\n" +
@@ -237,8 +238,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
 
         String entity = gen()
                 .expectedStatus( 200 )
-                .get( functionalTestHelper.indexNodeUri( indexName ) + "?query=" + key +
-                      ":Build~0.1%20AND%20Gender:Male" )
+                .get( new StringBuilder().append(functionalTestHelper.indexNodeUri( indexName )).append("?query=").append(key).append(":Build~0.1%20AND%20Gender:Male").toString() )
                 .entity();
 
         Collection<?> hits = (Collection<?>) JsonHelper.readJson( entity );
@@ -247,7 +247,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertNull( "score should not be present when not explicitly ordering", nodeMap.get( "score" ) );
     }
 
-    @Test
+	@Test
     public void orderedResultsAreSupersetOfUnordered() throws Exception
     {
         // Given
@@ -259,8 +259,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         helper.addNodeToIndex( indexName, "Gender", "Male", node );
 
         String entity = gen().expectedStatus( 200 ).get(
-                functionalTestHelper.indexNodeUri( indexName )
-                + "?query=" + key + ":Build~0.1%20AND%20Gender:Male" ).entity();
+                new StringBuilder().append(functionalTestHelper.indexNodeUri( indexName )).append("?query=").append(key).append(":Build~0.1%20AND%20Gender:Male").toString() ).entity();
 
         @SuppressWarnings( "unchecked" )
         Collection<LinkedHashMap<String, String>> hits =
@@ -269,24 +268,19 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
 
         // When
         entity = gen().expectedStatus( 200 ).get(
-                functionalTestHelper.indexNodeUri( indexName )
-                        + "?query=" + key + ":Build~0.1%20AND%20Gender:Male&order=score" ).entity();
+                new StringBuilder().append(functionalTestHelper.indexNodeUri( indexName )).append("?query=").append(key).append(":Build~0.1%20AND%20Gender:Male&order=score").toString() ).entity();
 
         //noinspection unchecked
         hits = (Collection<LinkedHashMap<String, String>>) JsonHelper.readJson( entity );
         LinkedHashMap<String, String> nodeMapOrdered = hits.iterator().next();
 
         // Then
-        for ( Map.Entry<String, String> unorderedEntry : nodeMapUnordered.entrySet() )
-        {
-            assertEquals( "wrong entry for key: " + unorderedEntry.getKey(),
-                    unorderedEntry.getValue(),
-                    nodeMapOrdered.get( unorderedEntry.getKey() ) );
-        }
+		nodeMapUnordered.entrySet().forEach(unorderedEntry -> assertEquals("wrong entry for key: " + unorderedEntry.getKey(), unorderedEntry.getValue(),
+				nodeMapOrdered.get(unorderedEntry.getKey())));
         assertEquals( "There should be only one extra value for the ordered map", nodeMapOrdered.size(), nodeMapUnordered.size() + 1 );
     }
 
-    //TODO:add compatibility tests for old syntax
+	//TODO:add compatibility tests for old syntax
     @Test
     public void shouldAddToIndexAndRetrieveItByQuerySorted()
             throws JsonParseException
@@ -302,8 +296,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         helper.addNodeToIndex( indexName, "Gender", "Male", node2 );
 
         String entity = gen().expectedStatus( 200 ).get(
-                functionalTestHelper.indexNodeUri( indexName )
-                + "?query=" + key + ":Builder~%20AND%20Gender:Male&order=relevance" ).entity();
+                new StringBuilder().append(functionalTestHelper.indexNodeUri( indexName )).append("?query=").append(key).append(":Builder~%20AND%20Gender:Male&order=relevance").toString() ).entity();
 
         Collection<?> hits = (Collection<?>) JsonHelper.readJson( entity );
         assertEquals( 2, hits.size() );
@@ -326,8 +319,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
          */
         assertTrue( "scores are reversed", score2 > score1 );
 
-        entity = gen().expectedStatus( 200 ).get( functionalTestHelper.indexNodeUri( indexName ) + "?query=" + key +
-                ":Builder~%20AND%20Gender:Male&order=index" ).entity();
+        entity = gen().expectedStatus( 200 ).get( new StringBuilder().append(functionalTestHelper.indexNodeUri( indexName )).append("?query=").append(key).append(":Builder~%20AND%20Gender:Male&order=index").toString() ).entity();
 
         hits = (Collection<?>) JsonHelper.readJson( entity );
         assertEquals( 2, hits.size() );
@@ -350,8 +342,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertTrue( "scores are reversed", score2 > score1 );
 
         entity = gen().expectedStatus( 200 ).get(
-                functionalTestHelper.indexNodeUri( indexName )
-                        + "?query=" + key + ":Builder~%20AND%20Gender:Male&order=score" ).entity();
+                new StringBuilder().append(functionalTestHelper.indexNodeUri( indexName )).append("?query=").append(key).append(":Builder~%20AND%20Gender:Male&order=score").toString() ).entity();
 
         hits = (Collection<?>) JsonHelper.readJson( entity );
         assertEquals( 2, hits.size() );
@@ -371,7 +362,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertTrue( "scores are reversed", score2 > score1 );
     }
 
-    /**
+	/**
      * POST ${org.neo4j.server.rest.web}/index/node/{indexName}/{key}/{value}
      * "http://uri.for.node.to.index"
      */
@@ -392,7 +383,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertEquals( singletonList( nodeId ), helper.getIndexedNodes( indexName, key, value ) );
     }
 
-    @Test
+	@Test
     public void shouldGetNodeRepresentationFromIndexUri() throws  JsonParseException
     {
         long nodeId = helper.createNode();
@@ -419,19 +410,20 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertNotNull( map.get( "self" ) );
     }
 
-    @Test
+	@Test
     public void shouldGet404WhenRequestingIndexUriWhichDoesntExist()
     {
         String key = "key3";
         String value = "value";
         String indexName = indexes.newInstance();
-        String indexUri = functionalTestHelper.nodeIndexUri() + indexName + "/" + key + "/" + value;
+        String indexUri = new StringBuilder().append(functionalTestHelper.nodeIndexUri()).append(indexName).append("/").append(key).append("/").append(value)
+				.toString();
         JaxRsResponse response = RestRequest.req()
                 .get( indexUri );
         assertEquals( Status.NOT_FOUND.getStatusCode(), response.getStatus() );
     }
 
-    @Test
+	@Test
     public void shouldGet404WhenDeletingNonExistentIndex()
     {
         final String indexName = indexes.newInstance();
@@ -440,7 +432,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertEquals( Status.NOT_FOUND.getStatusCode(), response.getStatus() );
     }
 
-    @Test
+	@Test
     public void shouldGet200AndArrayOfNodeRepsWhenGettingFromIndex() throws JsonParseException
     {
         String key = "myKey";
@@ -451,12 +443,12 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
 
         String indexName = indexes.newInstance();
         final RestRequest request = RestRequest.req();
-        JaxRsResponse responseToPost = request.post( functionalTestHelper.nodeUri(), "{\"name\":\"" + name1 + "\"}" );
+        JaxRsResponse responseToPost = request.post( functionalTestHelper.nodeUri(), new StringBuilder().append("{\"name\":\"").append(name1).append("\"}").toString() );
         assertEquals( 201, responseToPost.getStatus() );
         String location1 = responseToPost.getHeaders()
                 .getFirst( HttpHeaders.LOCATION );
         responseToPost.close();
-        responseToPost = request.post( functionalTestHelper.nodeUri(), "{\"name\":\"" + name2 + "\"}" );
+        responseToPost = request.post( functionalTestHelper.nodeUri(), new StringBuilder().append("{\"name\":\"").append(name2).append("\"}").toString() );
         assertEquals( 201, responseToPost.getStatus() );
         String location2 = responseToPost.getHeaders()
                 .getFirst( HttpHeaders.LOCATION );
@@ -495,7 +487,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldGet200WhenGettingNodesFromIndexWithNoHits()
     {
         final String indexName = indexes.newInstance();
@@ -506,7 +498,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         response.close();
     }
 
-    @Documented( "Delete node index." )
+	@Documented( "Delete node index." )
     @Test
     public void shouldReturn204WhenRemovingNodeIndexes()
     {
@@ -518,11 +510,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
                 .delete( functionalTestHelper.indexNodeUri( indexName ) );
     }
 
-    //
-    // REMOVING ENTRIES
-    //
-
-    @Documented( "Remove all entries with a given node from an index." )
+	@Documented( "Remove all entries with a given node from an index." )
     @Test
     public void shouldBeAbleToRemoveIndexingById()
     {
@@ -539,7 +527,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
 
         gen()
                 .expectedStatus( 204 )
-                .delete( functionalTestHelper.indexNodeUri( indexName ) + "/" + node );
+                .delete( new StringBuilder().append(functionalTestHelper.indexNodeUri( indexName )).append("/").append(node).toString() );
 
         assertEquals( 0, helper.getIndexedNodes( indexName, key1, value1 )
                 .size() );
@@ -551,7 +539,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
                 .size() );
     }
 
-    @Documented( "Remove all entries with a given node and key from an index." )
+	@Documented( "Remove all entries with a given node and key from an index." )
     @Test
     public void shouldBeAbleToRemoveIndexingByIdAndKey()
     {
@@ -568,7 +556,8 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
 
         gen()
                 .expectedStatus( 204 )
-                .delete( functionalTestHelper.nodeIndexUri() + indexName + "/" + key2 + "/" + node );
+                .delete( new StringBuilder().append(functionalTestHelper.nodeIndexUri()).append(indexName).append("/").append(key2).append("/")
+						.append(node).toString() );
 
         assertEquals( 1, helper.getIndexedNodes( indexName, key1, value1 )
                 .size() );
@@ -580,7 +569,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
                 .size() );
     }
 
-    @Documented( "Remove all entries with a given node, key and value from an index." )
+	@Documented( "Remove all entries with a given node, key and value from an index." )
     @Test
     public void shouldBeAbleToRemoveIndexingByIdAndKeyAndValue()
     {
@@ -597,7 +586,8 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
 
         gen()
                 .expectedStatus( 204 )
-                .delete( functionalTestHelper.nodeIndexUri() + indexName + "/" + key1 + "/" + value1 + "/" + node );
+                .delete( new StringBuilder().append(functionalTestHelper.nodeIndexUri()).append(indexName).append("/").append(key1).append("/")
+						.append(value1).append("/").append(node).toString() );
 
         assertEquals( 0, helper.getIndexedNodes( indexName, key1, value1 )
                 .size() );
@@ -610,7 +600,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
 
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToIndexValuesContainingSpaces() throws Exception
     {
         final long nodeId = helper.createNode();
@@ -639,7 +629,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertEquals( 0, hits.size() );
     }
 
-    @Test
+	@Test
     public void shouldRespondWith400WhenSendingCorruptJson()
     {
         final String indexName = indexes.newInstance();
@@ -652,7 +642,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         response.close();
     }
 
-    @Documented( "Get or create unique node (create).\n" +
+	@Documented( "Get or create unique node (create).\n" +
                  "\n" +
                  "The node is created if it doesn't exist in the unique index already." )
     @Test
@@ -665,10 +655,9 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         ResponseEntity response = gen()
                 .expectedStatus( 201 /* created */ )
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
-                .payload( "{\"key\": \"" + key + "\", \"value\": \"" + value
-                          + "\", \"properties\": {\"" + key + "\": \"" + value
-                                                       + "\", \"sequence\": 1}}" )
-                                     .post( functionalTestHelper.nodeIndexUri() + index + "?uniqueness=get_or_create" );
+                .payload( new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"properties\": {\"").append(key)
+						.append("\": \"").append(value).append("\", \"sequence\": 1}}").toString() )
+                                     .post( new StringBuilder().append(functionalTestHelper.nodeIndexUri()).append(index).append("?uniqueness=get_or_create").toString() );
 
         MultivaluedMap<String, String> headers = response.response().getHeaders();
         Map<String, Object> result = JsonHelper.jsonToMap( response.entity() );
@@ -678,7 +667,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertEquals( 1, data.get( "sequence" ) );
     }
 
-    @Test
+	@Test
     public void get_or_create_node_with_array_properties() throws Exception
     {
         final String index = indexes.newInstance();
@@ -688,10 +677,9 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         ResponseEntity response = gen()
                 .expectedStatus( 201 /* created */ )
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
-                .payload( "{\"key\": \"" + key + "\", \"value\": \"" + value
-                                                       + "\", \"properties\": {\"" + key + "\": \"" + value
-                                                       + "\", \"array\": [1,2,3]}}" )
-                                     .post( functionalTestHelper.nodeIndexUri() + index + "?unique" );
+                .payload( new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"properties\": {\"").append(key)
+						.append("\": \"").append(value).append("\", \"array\": [1,2,3]}}").toString() )
+                                     .post( new StringBuilder().append(functionalTestHelper.nodeIndexUri()).append(index).append("?unique").toString() );
 
         MultivaluedMap<String, String> headers = response.response().getHeaders();
         Map<String, Object> result = JsonHelper.jsonToMap( response.entity() );
@@ -709,7 +697,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertThat( node, inTx( graphdb(), hasProperty( "array" ).withValue( new int[]{1, 2, 3} ) ) );
     }
 
-    @Documented( "Get or create unique node (existing).\n" +
+	@Documented( "Get or create unique node (existing).\n" +
                  "\n" +
                  "Here,\n" +
                  "a node is not created but the existing unique node returned, since another node\n" +
@@ -737,10 +725,9 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         ResponseEntity response = gen()
                 .expectedStatus( 200 /* ok */ )
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
-                .payload( "{\"key\": \"" + key + "\", \"value\": \"" + value
-                          + "\", \"properties\": {\"" + key + "\": \"" + value
-                                                       + "\", \"sequence\": 2}}" )
-                                     .post( functionalTestHelper.nodeIndexUri() + index + "?uniqueness=get_or_create" );
+                .payload( new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"properties\": {\"").append(key)
+						.append("\": \"").append(value).append("\", \"sequence\": 2}}").toString() )
+                                     .post( new StringBuilder().append(functionalTestHelper.nodeIndexUri()).append(index).append("?uniqueness=get_or_create").toString() );
 
         Map<String, Object> result = JsonHelper.jsonToMap( response.entity() );
         Map<String, Object> data = assertCast( Map.class, result.get( "data" ) );
@@ -748,7 +735,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertEquals( 1, data.get( "sequence" ) );
     }
 
-    @Documented( "Create a unique node or return fail (create).\n" +
+	@Documented( "Create a unique node or return fail (create).\n" +
                  "\n" +
                  "Here, in case\n" +
                  "of an already existing node, an error should be returned. In this\n" +
@@ -763,11 +750,10 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         ResponseEntity response = gen.get()
                 .expectedStatus( 201 /* created */ )
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
-                .payload( "{\"key\": \"" + key + "\", \"value\": \"" + value
-                          + "\", \"properties\": {\"" + key + "\": \"" + value
-                                                       + "\", \"sequence\": 1}}" )
-                                     .post( functionalTestHelper.nodeIndexUri() + index + "?uniqueness=create_or_fail" +
-                                            "" );
+                .payload( new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"properties\": {\"").append(key)
+						.append("\": \"").append(value).append("\", \"sequence\": 1}}").toString() )
+                                     .post( new StringBuilder().append(functionalTestHelper.nodeIndexUri()).append(index).append("?uniqueness=create_or_fail").append("")
+											.toString() );
 
         MultivaluedMap<String, String> headers = response.response().getHeaders();
         Map<String, Object> result = JsonHelper.jsonToMap( response.entity() );
@@ -777,7 +763,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertEquals( 1, data.get( "sequence" ) );
     }
 
-    @Documented( "Create a unique node or return fail (fail).\n" +
+	@Documented( "Create a unique node or return fail (fail).\n" +
                  "\n" +
                  "Here, in case\n" +
                  "of an already existing node, an error should be returned. In this\n" +
@@ -808,10 +794,9 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         ResponseEntity response = gen.get()
                 .expectedStatus( 409 /* conflict */ )
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
-                .payload( "{\"key\": \"" + key + "\", \"value\": \"" + value
-                          + "\", \"properties\": {\"" + key + "\": \"" + value
-                                                       + "\", \"sequence\": 2}}" )
-                                    .post( functionalTestHelper.nodeIndexUri() + index + "?uniqueness=create_or_fail" );
+                .payload( new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"properties\": {\"").append(key)
+						.append("\": \"").append(value).append("\", \"sequence\": 2}}").toString() )
+                                    .post( new StringBuilder().append(functionalTestHelper.nodeIndexUri()).append(index).append("?uniqueness=create_or_fail").toString() );
 
         Map<String, Object> result = JsonHelper.jsonToMap( response.entity() );
         Map<String, Object> data = assertCast( Map.class, result.get( "data" ) );
@@ -819,7 +804,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertEquals( 1, data.get( "sequence" ) );
     }
 
-    @Documented( "Add an existing node to unique index (not indexed).\n" +
+	@Documented( "Add an existing node to unique index (not indexed).\n" +
                  "\n" +
                  "Associates a node with the given key/value pair in the given unique\n" +
                  "index.\n" +
@@ -847,7 +832,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         assertEquals( 1, hits.size() );
     }
 
-    @Documented( "Add an existing node to unique index (already indexed).\n" +
+	@Documented( "Add an existing node to unique index (already indexed).\n" +
                  "\n" +
                  "In this case, the node already exists in the index, and thus we get a `HTTP 409` status response,\n" +
                  "as we have set the uniqueness to `create_or_fail`." )
@@ -875,7 +860,7 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
                 .post( functionalTestHelper.indexNodeUri( indexName ) + "?uniqueness=create_or_fail" );
     }
 
-    @Documented( "Backward Compatibility Test (using old syntax ?unique)\n" +
+	@Documented( "Backward Compatibility Test (using old syntax ?unique)\n" +
                  "Put node if absent - Create.\n" +
                  "\n" +
                  "Add a node to an index unless a node already exists for the given index data. In\n" +
@@ -887,15 +872,15 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         String key = "name";
         String value = "Mattias";
         helper.createNodeIndex( index );
-        String uri = functionalTestHelper.nodeIndexUri() + index + "?unique";
+        String uri = new StringBuilder().append(functionalTestHelper.nodeIndexUri()).append(index).append("?unique").toString();
         gen().expectedStatus( 201 /* created */ )
                  .payloadType( MediaType.APPLICATION_JSON_TYPE )
-                 .payload( "{\"key\": \"" + key + "\", \"value\": \"" + value + "\", " +
-                         "\"uri\":\"" + functionalTestHelper.nodeUri( helper.createNode() ) + "\"}" )
+                 .payload( new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", ").append("\"uri\":\"")
+						.append(functionalTestHelper.nodeUri( helper.createNode() )).append("\"}").toString() )
                  .post( uri );
     }
 
-    @Test
+	@Test
     public void already_indexed_node_should_not_fail_on_create_or_fail()
     {
         // Given
@@ -917,18 +902,18 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
                 .expectedStatus( 201 )
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
                 .payload(
-                        "{\"key\": \"" + key + "\", \"value\": \"" + value + "\", \"uri\":\""
-                                + functionalTestHelper.nodeUri( node.getId() ) + "\"}" )
-                .post( functionalTestHelper.nodeIndexUri() + index + "?uniqueness=create_or_fail" );
+                        new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"uri\":\"")
+								.append(functionalTestHelper.nodeUri( node.getId() )).append("\"}").toString() )
+                .post( new StringBuilder().append(functionalTestHelper.nodeIndexUri()).append(index).append("?uniqueness=create_or_fail").toString() );
     }
 
-    private static <T> T assertCast( Class<T> type, Object object )
+	private static <T> T assertCast( Class<T> type, Object object )
     {
         assertTrue( type.isInstance( object ) );
         return type.cast( object );
     }
 
-    private long createNode()
+	private long createNode()
     {
         GraphDatabaseService graphdb = server().getDatabase().getGraph();
         try ( Transaction tx = graphdb.beginTx() )
@@ -939,13 +924,13 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         }
     }
 
-    private String createJsonStringFor( final long nodeId, final String key, final String value )
+	private String createJsonStringFor( final long nodeId, final String key, final String value )
     {
-        return "{\"key\": \"" + key + "\", \"value\": \"" + value + "\", \"uri\": \""
-               + functionalTestHelper.nodeUri( nodeId ) + "\"}";
+        return new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"uri\": \"").append(functionalTestHelper.nodeUri( nodeId ))
+				.append("\"}").toString();
     }
 
-    private Object generateNodeIndexCreationPayload( String key, String value, String nodeUri )
+	private Object generateNodeIndexCreationPayload( String key, String value, String nodeUri )
     {
         Map<String, String> results = new HashMap<>();
         results.put( "key", key );
@@ -954,5 +939,8 @@ public class IndexNodeIT extends AbstractRestFunctionalTestBase
         return results;
     }
 
-    private final Factory<String> indexes =  UniqueStrings.withPrefix( "index" );
+    //
+    // REMOVING ENTRIES
+    //
+
 }

@@ -80,29 +80,25 @@ public class CommonAbstractStoreTest
     private static final int PAGE_SIZE = 32;
     private static final int RECORD_SIZE = 10;
     private static final int HIGH_ID = 42;
-
-    private final IdGenerator idGenerator = mock( IdGenerator.class );
-    private final IdGeneratorFactory idGeneratorFactory = mock( IdGeneratorFactory.class );
-    private final PageCursor pageCursor = mock( PageCursor.class );
-    private final PagedFile pageFile = mock( PagedFile.class );
-    private final PageCache pageCache = mock( PageCache.class );
-    private final Config config = Config.defaults();
-    private final File storeFile = new File( "store" );
-    private final File idStoreFile = new File( "isStore" );
-    private final RecordFormat<TheRecord> recordFormat = mock( RecordFormat.class );
-    private final IdType idType = IdType.RELATIONSHIP; // whatever
-
-    private static final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
-    private static final TestDirectory dir = testDirectory( fileSystemRule.get() );
-    private static final ConfigurablePageCacheRule pageCacheRule = new ConfigurablePageCacheRule();
-
-    @ClassRule
+	private static final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	private static final TestDirectory dir = testDirectory( fileSystemRule.get() );
+	private static final ConfigurablePageCacheRule pageCacheRule = new ConfigurablePageCacheRule();
+	@ClassRule
     public static final RuleChain ruleChain = RuleChain.outerRule( fileSystemRule ).around( dir ).around( pageCacheRule );
-
-    @Rule
+	private final IdGenerator idGenerator = mock( IdGenerator.class );
+	private final IdGeneratorFactory idGeneratorFactory = mock( IdGeneratorFactory.class );
+	private final PageCursor pageCursor = mock( PageCursor.class );
+	private final PagedFile pageFile = mock( PagedFile.class );
+	private final PageCache pageCache = mock( PageCache.class );
+	private final Config config = Config.defaults();
+	private final File storeFile = new File( "store" );
+	private final File idStoreFile = new File( "isStore" );
+	private final RecordFormat<TheRecord> recordFormat = mock( RecordFormat.class );
+	private final IdType idType = IdType.RELATIONSHIP; // whatever
+	@Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    @Before
+	@Before
     public void setUpMocks() throws IOException
     {
         when( idGeneratorFactory.open( any( File.class ), eq( idType ), any( LongSupplier.class ), anyLong() ) )
@@ -113,7 +109,7 @@ public class CommonAbstractStoreTest
         when( pageCache.map( eq( storeFile ), anyInt() ) ).thenReturn( pageFile );
     }
 
-    @Test
+	@Test
     public void shouldCloseStoreFileFirstAndIdGeneratorAfter() throws Throwable
     {
         // given
@@ -128,7 +124,7 @@ public class CommonAbstractStoreTest
         inOrder.verify( idGenerator, times( 1 ) ).close();
     }
 
-    @Test
+	@Test
     public void failStoreInitializationWhenHeaderRecordCantBeRead() throws IOException
     {
         File storeFile = dir.file( "a" );
@@ -154,7 +150,7 @@ public class CommonAbstractStoreTest
         }
     }
 
-    @Test
+	@Test
     public void throwsWhenRecordWithNegativeIdIsUpdated()
     {
         TheStore store = newStore();
@@ -171,7 +167,7 @@ public class CommonAbstractStoreTest
         }
     }
 
-    @Test
+	@Test
     public void throwsWhenRecordWithTooHighIdIsUpdated()
     {
         long maxFormatId = 42;
@@ -191,7 +187,7 @@ public class CommonAbstractStoreTest
         }
     }
 
-    @Test
+	@Test
     public void throwsWhenRecordWithReservedIdIsUpdated()
     {
         TheStore store = newStore();
@@ -208,7 +204,7 @@ public class CommonAbstractStoreTest
         }
     }
 
-    @Test
+	@Test
     public void shouldDeleteOnCloseIfOpenOptionsSaysSo()
     {
         // GIVEN
@@ -232,7 +228,7 @@ public class CommonAbstractStoreTest
         assertFalse( fs.fileExists( idFile ) );
     }
 
-    private TheStore newStore()
+	private TheStore newStore()
     {
         LogProvider log = NullLogProvider.getInstance();
         TheStore store = new TheStore( storeFile, idStoreFile, config, idType, idGeneratorFactory, pageCache, log, recordFormat );
@@ -240,7 +236,7 @@ public class CommonAbstractStoreTest
         return store;
     }
 
-    private TheRecord newRecord( long id )
+	private TheRecord newRecord( long id )
     {
         return new TheRecord( id );
     }

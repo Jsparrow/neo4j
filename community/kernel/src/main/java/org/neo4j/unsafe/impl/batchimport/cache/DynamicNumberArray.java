@@ -90,15 +90,15 @@ abstract class DynamicNumberArray<N extends NumberArray<N>> implements NumberArr
 
     private synchronized void synchronizedAddChunk( long index )
     {
-        if ( index >= length() )
-        {
-            N[] newChunks = Arrays.copyOf( chunks, chunkIndex( index ) + 1 );
-            for ( int i = chunks.length; i < newChunks.length; i++ )
-            {
-                newChunks[i] = addChunk( chunkSize, chunkSize * i );
-            }
-            chunks = newChunks;
-        }
+        if (index < length()) {
+			return;
+		}
+		N[] newChunks = Arrays.copyOf( chunks, chunkIndex( index ) + 1 );
+		for ( int i = chunks.length; i < newChunks.length; i++ )
+		{
+		    newChunks[i] = addChunk( chunkSize, chunkSize * i );
+		}
+		chunks = newChunks;
     }
 
     protected abstract N addChunk( long chunkSize, long base );

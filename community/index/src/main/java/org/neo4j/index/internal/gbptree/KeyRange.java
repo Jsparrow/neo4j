@@ -47,15 +47,14 @@ class KeyRange<KEY>
 
     boolean inRange( KEY key )
     {
-        if ( fromInclusive != null )
-        {
-            if ( toExclusive != null )
-            {
-                return comparator.compare( key, fromInclusive ) >= 0 && comparator.compare( key, toExclusive ) < 0;
-            }
-            return comparator.compare( key, fromInclusive ) >= 0;
-        }
-        return toExclusive == null || comparator.compare( key, toExclusive ) < 0;
+        if (fromInclusive == null) {
+			return toExclusive == null || comparator.compare( key, toExclusive ) < 0;
+		}
+		if ( toExclusive != null )
+		{
+		    return comparator.compare( key, fromInclusive ) >= 0 && comparator.compare( key, toExclusive ) < 0;
+		}
+		return comparator.compare( key, fromInclusive ) >= 0;
     }
 
     KeyRange<KEY> newSubRange( int level, long pageId )
@@ -128,6 +127,7 @@ class KeyRange<KEY>
 
     private String singleLevel()
     {
-        return "level: " + level + " {" + pageId + "} " + fromInclusive + " ≤ key < " + toExclusive;
+        return new StringBuilder().append("level: ").append(level).append(" {").append(pageId).append("} ").append(fromInclusive).append(" ≤ key < ")
+				.append(toExclusive).toString();
     }
 }

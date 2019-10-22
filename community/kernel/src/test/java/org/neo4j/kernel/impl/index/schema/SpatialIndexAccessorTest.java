@@ -84,7 +84,8 @@ public class SpatialIndexAccessorTest extends NativeIndexAccessorTests<SpatialIn
         // This test doesn't make sense for spatial, since it needs a proper store for the values
     }
 
-    @Test
+    @Override
+	@Test
     public void shouldReturnMatchingEntriesForRangePredicateWithInclusiveStartAndInclusiveEnd() throws Exception
     {
         // given

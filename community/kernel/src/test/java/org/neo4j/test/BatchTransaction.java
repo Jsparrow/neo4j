@@ -26,85 +26,83 @@ import org.neo4j.helpers.progress.ProgressListener;
 public class BatchTransaction implements AutoCloseable
 {
     private static final int DEFAULT_INTERMEDIARY_SIZE = 10000;
+	private final GraphDatabaseService db;
+	private Transaction tx;
+	private int txSize;
+	private int total;
+	private int intermediarySize = DEFAULT_INTERMEDIARY_SIZE;
+	private ProgressListener progressListener = ProgressListener.NONE;
 
-    public static BatchTransaction beginBatchTx( GraphDatabaseService db )
-    {
-        return new BatchTransaction( db );
-    }
-
-    private final GraphDatabaseService db;
-    private Transaction tx;
-    private int txSize;
-    private int total;
-    private int intermediarySize = DEFAULT_INTERMEDIARY_SIZE;
-    private ProgressListener progressListener = ProgressListener.NONE;
-
-    private BatchTransaction( GraphDatabaseService db )
+	private BatchTransaction( GraphDatabaseService db )
     {
         this.db = db;
         beginTx();
     }
 
-    private void beginTx()
+	public static BatchTransaction beginBatchTx( GraphDatabaseService db )
+    {
+        return new BatchTransaction( db );
+    }
+
+	private void beginTx()
     {
         this.tx = db.beginTx();
     }
 
-    public GraphDatabaseService getDb()
+	public GraphDatabaseService getDb()
     {
         return db;
     }
 
-    public boolean increment()
+	public boolean increment()
     {
         return increment( 1 );
     }
 
-    public boolean increment( int count )
+	public boolean increment( int count )
     {
         txSize += count;
         total += count;
         progressListener.add( count );
-        if ( txSize >= intermediarySize )
-        {
-            txSize = 0;
-            intermediaryCommit();
-            return true;
-        }
-        return false;
+        if (txSize < intermediarySize) {
+			return false;
+		}
+		txSize = 0;
+		intermediaryCommit();
+		return true;
     }
 
-    public void intermediaryCommit()
+	public void intermediaryCommit()
     {
         closeTx();
         beginTx();
     }
 
-    private void closeTx()
+	private void closeTx()
     {
         tx.success();
         tx.close();
     }
 
-    @Override
+	@Override
     public void close()
     {
         closeTx();
         progressListener.done();
     }
 
-    public int total()
+	public int total()
     {
         return total;
     }
 
-    public BatchTransaction withIntermediarySize( int intermediarySize )
+	public BatchTransaction withIntermediarySize( int intermediarySize )
     {
         this.intermediarySize = intermediarySize;
         return this;
     }
 
-    public BatchTransaction withProgress( ProgressListener progressListener )
+	public BatchTransaction withProgress( ProgressListener progressListener )
     {
         this.progressListener = progressListener;
         this.progressListener.started();

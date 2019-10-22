@@ -56,7 +56,7 @@ public class RelationshipExplicitIndexProxy extends ExplicitIndexProxy<Relations
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( type + " index '" + name + "' doesn't exist" );
+            throw new NotFoundException( new StringBuilder().append(type).append(" index '").append(name).append("' doesn't exist").toString() );
         }
     }
 
@@ -75,7 +75,7 @@ public class RelationshipExplicitIndexProxy extends ExplicitIndexProxy<Relations
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( type + " index '" + name + "' doesn't exist" );
+            throw new NotFoundException( new StringBuilder().append(type).append(" index '").append(name).append("' doesn't exist").toString() );
         }
     }
 
@@ -93,7 +93,7 @@ public class RelationshipExplicitIndexProxy extends ExplicitIndexProxy<Relations
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( type + " index '" + name + "' doesn't exist" );
+            throw new NotFoundException( new StringBuilder().append(type).append(" index '").append(name).append("' doesn't exist").toString() );
         }
     }
 }

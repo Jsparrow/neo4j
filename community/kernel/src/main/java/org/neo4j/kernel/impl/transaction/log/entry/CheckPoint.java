@@ -73,8 +73,6 @@ public class CheckPoint extends AbstractLogEntry
     @Override
     public String toString()
     {
-        return "CheckPoint[" +
-               "position=" + logPosition +
-               ']';
+        return new StringBuilder().append("CheckPoint[").append("position=").append(logPosition).append(']').toString();
     }
 }

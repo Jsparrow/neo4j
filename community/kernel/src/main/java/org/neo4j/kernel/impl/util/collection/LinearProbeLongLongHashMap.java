@@ -651,11 +651,11 @@ class LinearProbeLongLongHashMap extends AbstractLongIterable implements Mutable
     public void close()
     {
         ++modCount;
-        if ( memory != null )
-        {
-            memory.free();
-            memory = null;
-        }
+        if (memory == null) {
+			return;
+		}
+		memory.free();
+		memory = null;
     }
 
     @VisibleForTesting
@@ -859,7 +859,15 @@ class LinearProbeLongLongHashMap extends AbstractLongIterable implements Mutable
         }
     }
 
-    private class KeyValuesView extends AbstractLazyIterable<LongLongPair>
+    private void validateIteratorState( long iteratorModCount )
+    {
+        if ( iteratorModCount != modCount )
+        {
+            throw new ConcurrentModificationException();
+        }
+    }
+
+	private class KeyValuesView extends AbstractLazyIterable<LongLongPair>
     {
         @Override
         public void each( Procedure<? super LongLongPair> procedure )
@@ -1008,14 +1016,6 @@ class LinearProbeLongLongHashMap extends AbstractLongIterable implements Mutable
         {
             validateIteratorState( modCount );
             return visited < size();
-        }
-    }
-
-    private void validateIteratorState( long iteratorModCount )
-    {
-        if ( iteratorModCount != modCount )
-        {
-            throw new ConcurrentModificationException();
         }
     }
 }

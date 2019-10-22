@@ -108,7 +108,7 @@ enum Neo4JTemporalField implements TemporalField
     @Override
     public long getFrom( TemporalAccessor temporal )
     {
-        throw new UnsupportedOperationException( "Getting a " + this.name + " from temporal values is not supported." );
+        throw new UnsupportedOperationException( new StringBuilder().append("Getting a ").append(this.name).append(" from temporal values is not supported.").toString() );
     }
 
     @SuppressWarnings( "unchecked" )

@@ -218,7 +218,53 @@ public abstract class IndexCommand extends Command
         }
     }
 
-    public static class AddNodeCommand extends IndexCommand
+    protected static byte needsLong( long value )
+    {
+        return value > Integer.MAX_VALUE ? (byte)1 : (byte)0;
+    }
+
+	@Override
+    public boolean equals( Object o )
+    {
+        if ( this == o )
+        {
+            return true;
+        }
+        if ( o == null || getClass() != o.getClass() )
+        {
+            return false;
+        }
+        if ( !super.equals( o ) )
+        {
+            return false;
+        }
+        IndexCommand that = (IndexCommand) o;
+        return commandType == that.commandType &&
+               indexNameId == that.indexNameId &&
+               entityType == that.entityType &&
+               entityId == that.entityId &&
+               keyId == that.keyId &&
+               valueType == that.valueType &&
+               Objects.equals( value, that.value );
+    }
+
+	@Override
+    public int hashCode()
+    {
+        return Objects.hash( super.hashCode(), commandType, indexNameId, entityType, entityId, keyId, valueType, value );
+    }
+
+	public byte getCommandType()
+    {
+        return commandType;
+    }
+
+	public byte getValueType()
+    {
+        return valueType;
+    }
+
+	public static class AddNodeCommand extends IndexCommand
     {
         public void init( int indexNameId, long entityId, int keyId, Object value )
         {
@@ -235,7 +281,8 @@ public abstract class IndexCommand extends Command
         @Override
         public String toString()
         {
-            return "AddNode[index:" + indexNameId + ", id:" + entityId + ", key:" + keyId + ", value:" + value + "]";
+            return new StringBuilder().append("AddNode[index:").append(indexNameId).append(", id:").append(entityId).append(", key:").append(keyId)
+					.append(", value:").append(value).append("]").toString();
         }
 
         @Override
@@ -244,11 +291,6 @@ public abstract class IndexCommand extends Command
             channel.put( NeoCommandType.INDEX_ADD_COMMAND );
             writeToFile( channel );
         }
-    }
-
-    protected static byte needsLong( long value )
-    {
-        return value > Integer.MAX_VALUE ? (byte)1 : (byte)0;
     }
 
     public static class AddRelationshipCommand extends IndexCommand
@@ -321,11 +363,9 @@ public abstract class IndexCommand extends Command
         @Override
         public String toString()
         {
-            return "AddRelationship[index:" + indexNameId + ", id:" + entityId + ", key:" + keyId +
-                    ", value:" + value + "(" + (value != null ? value.getClass().getSimpleName() : "null") + ")" +
-                    ", startNode:" + startNode +
-                    ", endNode:" + endNode +
-                    "]";
+            return new StringBuilder().append("AddRelationship[index:").append(indexNameId).append(", id:").append(entityId).append(", key:").append(keyId)
+					.append(", value:").append(value).append("(").append(value != null ? value.getClass().getSimpleName() : "null").append(")").append(", startNode:")
+					.append(startNode).append(", endNode:").append(endNode).append("]").toString();
         }
 
         @Override
@@ -382,7 +422,7 @@ public abstract class IndexCommand extends Command
         @Override
         public String toString()
         {
-            return "Delete[index:" + indexNameId + ", type:" + IndexEntityType.byId( entityType ).nameToLowerCase() + "]";
+            return new StringBuilder().append("Delete[index:").append(indexNameId).append(", type:").append(IndexEntityType.byId( entityType ).nameToLowerCase()).append("]").toString();
         }
 
         @Override
@@ -458,46 +498,5 @@ public abstract class IndexCommand extends Command
                 write2bLengthAndString( channel, entry.getValue() );
             }
         }
-    }
-
-    @Override
-    public boolean equals( Object o )
-    {
-        if ( this == o )
-        {
-            return true;
-        }
-        if ( o == null || getClass() != o.getClass() )
-        {
-            return false;
-        }
-        if ( !super.equals( o ) )
-        {
-            return false;
-        }
-        IndexCommand that = (IndexCommand) o;
-        return commandType == that.commandType &&
-               indexNameId == that.indexNameId &&
-               entityType == that.entityType &&
-               entityId == that.entityId &&
-               keyId == that.keyId &&
-               valueType == that.valueType &&
-               Objects.equals( value, that.value );
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash( super.hashCode(), commandType, indexNameId, entityType, entityId, keyId, valueType, value );
-    }
-
-    public byte getCommandType()
-    {
-        return commandType;
-    }
-
-    public byte getValueType()
-    {
-        return valueType;
     }
 }

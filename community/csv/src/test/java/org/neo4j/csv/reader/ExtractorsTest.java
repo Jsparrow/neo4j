@@ -317,7 +317,7 @@ class ExtractorsTest
         assertEquals( expected.length, values.length, "Array lengths differ" );
         for ( int i = 0; i < expected.length; i++ )
         {
-            assertEquals( expected[i], values[i], "Item " + i + " differs" );
+            assertEquals( expected[i], values[i], new StringBuilder().append("Item ").append(i).append(" differs").toString() );
         }
     }
 }

@@ -44,18 +44,13 @@ import static org.neo4j.io.ByteUnit.mebiBytes;
 
 public class CsvOutput implements BatchImporter
 {
-    private interface Deserializer
-    {
-        String apply( InputEntity entity, Deserialization<String> deserialization, Header header );
-    }
-
     private final File targetDirectory;
-    private final Header nodeHeader;
-    private final Header relationshipHeader;
-    private Configuration config;
-    private final Deserialization<String> deserialization;
+	private final Header nodeHeader;
+	private final Header relationshipHeader;
+	private Configuration config;
+	private final Deserialization<String> deserialization;
 
-    public CsvOutput( File targetDirectory, Header nodeHeader, Header relationshipHeader, Configuration config )
+	public CsvOutput( File targetDirectory, Header nodeHeader, Header relationshipHeader, Configuration config )
     {
         this.targetDirectory = targetDirectory;
         assert targetDirectory.isDirectory();
@@ -66,14 +61,14 @@ public class CsvOutput implements BatchImporter
         targetDirectory.mkdirs();
     }
 
-    @Override
+	@Override
     public void doImport( Input input ) throws IOException
     {
         consume( "nodes", input.nodes().iterator(), nodeHeader, RandomEntityDataGenerator::convert );
         consume( "relationships", input.relationships().iterator(), relationshipHeader, RandomEntityDataGenerator::convert );
     }
 
-    private void consume( String name, InputIterator entities, Header header, Deserializer deserializer ) throws IOException
+	private void consume( String name, InputIterator entities, Header header, Deserializer deserializer ) throws IOException
     {
         try ( PrintStream out = file( name + "header.csv" ) )
         {
@@ -89,7 +84,7 @@ public class CsvOutput implements BatchImporter
                 int id = i;
                 executor.submit( (Callable<Void>) () -> {
                     StringDeserialization deserialization = new StringDeserialization( config );
-                    try ( PrintStream out = file( name + "-" + id + ".csv" );
+                    try ( PrintStream out = file( new StringBuilder().append(name).append("-").append(id).append(".csv").toString() );
                           InputChunk chunk = entities.newChunk() )
                     {
                         InputEntity entity = new InputEntity();
@@ -114,7 +109,7 @@ public class CsvOutput implements BatchImporter
         }
     }
 
-    private void serialize( PrintStream out, Header header )
+	private void serialize( PrintStream out, Header header )
     {
         deserialization.clear();
         for ( Header.Entry entry : header.entries() )
@@ -124,9 +119,14 @@ public class CsvOutput implements BatchImporter
         out.println( deserialization.materialize() );
     }
 
-    private PrintStream file( String name ) throws IOException
+	private PrintStream file( String name ) throws IOException
     {
         return new PrintStream( new BufferedOutputStream( new FileOutputStream( new File( targetDirectory, name ) ),
                 (int) mebiBytes( 1 ) ) );
+    }
+
+	private interface Deserializer
+    {
+        String apply( InputEntity entity, Deserialization<String> deserialization, Header header );
     }
 }

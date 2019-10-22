@@ -21,15 +21,15 @@ package org.neo4j.io.pagecache.tracing.cursor;
 
 public class DefaultPageCursorTracerSupplier implements PageCursorTracerSupplier
 {
-    private ThreadLocal<DefaultPageCursorTracer> tracer = ThreadLocal.withInitial( DefaultPageCursorTracer::new );
-
     public static final DefaultPageCursorTracerSupplier INSTANCE = new DefaultPageCursorTracerSupplier();
 
-    private DefaultPageCursorTracerSupplier()
+	private ThreadLocal<DefaultPageCursorTracer> tracer = ThreadLocal.withInitial( DefaultPageCursorTracer::new );
+
+	private DefaultPageCursorTracerSupplier()
     {
     }
 
-    @Override
+	@Override
     public PageCursorTracer get()
     {
         return tracer.get();

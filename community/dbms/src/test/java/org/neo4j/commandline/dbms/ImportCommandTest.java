@@ -224,106 +224,18 @@ class ImportCommandTest
             Usage usage = new Usage( "neo4j-admin", mock( CommandLocator.class ) );
             usage.printUsageForCommand( new ImportCommandProvider(), ps::println );
 
-            assertEquals( String.format( "usage: neo4j-admin import [--mode=csv] [--database=<name>]%n" +
-                            "                          [--additional-config=<config-file-path>]%n" +
-                            "                          [--report-file=<filename>]%n" +
-                            "                          [--nodes[:Label1:Label2]=<\"file1,file2,...\">]%n" +
-                            "                          [--relationships[:RELATIONSHIP_TYPE]=<\"file1,file2,...\">]%n" +
-                            "                          [--id-type=<STRING|INTEGER|ACTUAL>]%n" +
-                            "                          [--input-encoding=<character-set>]%n" +
-                            "                          [--ignore-extra-columns[=<true|false>]]%n" +
-                            "                          [--ignore-duplicate-nodes[=<true|false>]]%n" +
-                            "                          [--ignore-missing-nodes[=<true|false>]]%n" +
-                            "                          [--multiline-fields[=<true|false>]]%n" +
-                            "                          [--delimiter=<delimiter-character>]%n" +
-                            "                          [--array-delimiter=<array-delimiter-character>]%n" +
-                            "                          [--quote=<quotation-character>]%n" +
-                            "                          [--max-memory=<max-memory-that-importer-can-use>]%n" +
-                            "                          [--f=<File containing all arguments to this import>]%n" +
-                            "                          [--high-io=<true/false>]%n" +
-                            "usage: neo4j-admin import --mode=database [--database=<name>]%n" +
-                            "                          [--additional-config=<config-file-path>]%n" +
-                            "                          [--from=<source-directory>]%n" +
-                            "%n" +
-                            "environment variables:%n" +
-                            "    NEO4J_CONF    Path to directory which contains neo4j.conf.%n" +
-                            "    NEO4J_DEBUG   Set to anything to enable debug output.%n" +
-                            "    NEO4J_HOME    Neo4j home directory.%n" +
-                            "    HEAP_SIZE     Set JVM maximum heap size during command execution.%n" +
-                            "                  Takes a number and a unit, for example 512m.%n" +
-                            "%n" +
-                            "Import a collection of CSV files with --mode=csv (default), or a database from a%n" +
-                            "pre-3.0 installation with --mode=database.%n" +
-                            "%n" +
-                            "options:%n" +
-                            "  --database=<name>%n" +
-                            "      Name of database. [default:" + GraphDatabaseSettings.DEFAULT_DATABASE_NAME + "]%n" +
-                            "  --additional-config=<config-file-path>%n" +
-                            "      Configuration file to supply additional configuration in. [default:]%n" +
-                            "  --mode=<database|csv>%n" +
-                            "      Import a collection of CSV files or a pre-3.0 installation. [default:csv]%n" +
-                            "  --from=<source-directory>%n" +
-                            "      The location of the pre-3.0 database (e.g. <neo4j-root>/data/graph.db).%n" +
-                            "      [default:]%n" +
-                            "  --report-file=<filename>%n" +
-                            "      File in which to store the report of the csv-import.%n" +
-                            "      [default:import.report]%n" +
-                            "  --nodes[:Label1:Label2]=<\"file1,file2,...\">%n" +
-                            "      Node CSV header and data. Multiple files will be logically seen as one big%n" +
-                            "      file from the perspective of the importer. The first line must contain the%n" +
-                            "      header. Multiple data sources like these can be specified in one import,%n" +
-                            "      where each data source has its own header. Note that file groups must be%n" +
-                            "      enclosed in quotation marks. [default:]%n" +
-                            "  --relationships[:RELATIONSHIP_TYPE]=<\"file1,file2,...\">%n" +
-                            "      Relationship CSV header and data. Multiple files will be logically seen as%n" +
-                            "      one big file from the perspective of the importer. The first line must%n" +
-                            "      contain the header. Multiple data sources like these can be specified in%n" +
-                            "      one import, where each data source has its own header. Note that file%n" +
-                            "      groups must be enclosed in quotation marks. [default:]%n" +
-                            "  --id-type=<STRING|INTEGER|ACTUAL>%n" +
-                            "      Each node must provide a unique id. This is used to find the correct nodes%n" +
-                            "      when creating relationships. Possible values are:%n" +
-                            "        STRING: arbitrary strings for identifying nodes,%n" +
-                            "        INTEGER: arbitrary integer values for identifying nodes,%n" +
-                            "        ACTUAL: (advanced) actual node ids.%n" +
-                            "      For more information on id handling, please see the Neo4j Manual:%n" +
-                            "      https://neo4j.com/docs/operations-manual/current/tools/import/%n" +
-                            "      [default:STRING]%n" +
-                            "  --input-encoding=<character-set>%n" +
-                            "      Character set that input data is encoded in. [default:UTF-8]%n" +
-                            "  --ignore-extra-columns=<true|false>%n" +
-                            "      If un-specified columns should be ignored during the import.%n" +
-                            "      [default:false]%n" +
-                            "  --ignore-duplicate-nodes=<true|false>%n" +
-                            "      If duplicate nodes should be ignored during the import. [default:false]%n" +
-                            "  --ignore-missing-nodes=<true|false>%n" +
-                            "      If relationships referring to missing nodes should be ignored during the%n" +
-                            "      import. [default:false]%n" +
-                            "  --multiline-fields=<true|false>%n" +
-                            "      Whether or not fields from input source can span multiple lines, i.e.%n" +
-                            "      contain newline characters. [default:false]%n" +
-                            "  --delimiter=<delimiter-character>%n" +
-                            "      Delimiter character between values in CSV data. [default:,]%n" +
-                            "  --array-delimiter=<array-delimiter-character>%n" +
-                            "      Delimiter character between array elements within a value in CSV data.%n" +
-                            "      [default:;]%n" +
-                            "  --quote=<quotation-character>%n" +
-                            "      Character to treat as quotation character for values in CSV data. Quotes%n" +
-                            "      can be escaped as per RFC 4180 by doubling them, for example \"\" would be%n" +
-                            "      interpreted as a literal \". You cannot escape using \\. [default:\"]%n" +
-                            "  --max-memory=<max-memory-that-importer-can-use>%n" +
-                            "      Maximum memory that neo4j-admin can use for various data structures and%n" +
-                            "      caching to improve performance. Values can be plain numbers, like 10000000%n" +
-                            "      or e.g. 20G for 20 gigabyte, or even e.g. 70%%. [default:90%%]%n" +
-                            "  --f=<File containing all arguments to this import>%n" +
-                            "      File containing all arguments, used as an alternative to supplying all%n" +
-                            "      arguments on the command line directly.Each argument can be on a separate%n" +
-                            "      line or multiple arguments per line separated by space.Arguments%n" +
-                            "      containing spaces needs to be quoted.Supplying other arguments in addition%n" +
-                            "      to this file argument is not supported. [default:]%n" +
-                            "  --high-io=<true/false>%n" +
-                            "      Ignore environment-based heuristics, and assume that the target storage%n" +
-                            "      subsystem can support parallel IO with high throughput. [default:null]%n" ),
+            assertEquals( String.format( new StringBuilder().append("usage: neo4j-admin import [--mode=csv] [--database=<name>]%n").append("                          [--additional-config=<config-file-path>]%n").append("                          [--report-file=<filename>]%n").append("                          [--nodes[:Label1:Label2]=<\"file1,file2,...\">]%n").append("                          [--relationships[:RELATIONSHIP_TYPE]=<\"file1,file2,...\">]%n").append("                          [--id-type=<STRING|INTEGER|ACTUAL>]%n").append("                          [--input-encoding=<character-set>]%n").append("                          [--ignore-extra-columns[=<true|false>]]%n")
+					.append("                          [--ignore-duplicate-nodes[=<true|false>]]%n").append("                          [--ignore-missing-nodes[=<true|false>]]%n").append("                          [--multiline-fields[=<true|false>]]%n").append("                          [--delimiter=<delimiter-character>]%n").append("                          [--array-delimiter=<array-delimiter-character>]%n").append("                          [--quote=<quotation-character>]%n").append("                          [--max-memory=<max-memory-that-importer-can-use>]%n").append("                          [--f=<File containing all arguments to this import>]%n").append("                          [--high-io=<true/false>]%n")
+					.append("usage: neo4j-admin import --mode=database [--database=<name>]%n").append("                          [--additional-config=<config-file-path>]%n").append("                          [--from=<source-directory>]%n").append("%n").append("environment variables:%n").append("    NEO4J_CONF    Path to directory which contains neo4j.conf.%n").append("    NEO4J_DEBUG   Set to anything to enable debug output.%n").append("    NEO4J_HOME    Neo4j home directory.%n").append("    HEAP_SIZE     Set JVM maximum heap size during command execution.%n")
+					.append("                  Takes a number and a unit, for example 512m.%n").append("%n").append("Import a collection of CSV files with --mode=csv (default), or a database from a%n").append("pre-3.0 installation with --mode=database.%n").append("%n").append("options:%n").append("  --database=<name>%n").append("      Name of database. [default:")
+					.append(GraphDatabaseSettings.DEFAULT_DATABASE_NAME).append("]%n").append("  --additional-config=<config-file-path>%n").append("      Configuration file to supply additional configuration in. [default:]%n").append("  --mode=<database|csv>%n").append("      Import a collection of CSV files or a pre-3.0 installation. [default:csv]%n").append("  --from=<source-directory>%n")
+					.append("      The location of the pre-3.0 database (e.g. <neo4j-root>/data/graph.db).%n").append("      [default:]%n").append("  --report-file=<filename>%n").append("      File in which to store the report of the csv-import.%n").append("      [default:import.report]%n").append("  --nodes[:Label1:Label2]=<\"file1,file2,...\">%n").append("      Node CSV header and data. Multiple files will be logically seen as one big%n").append("      file from the perspective of the importer. The first line must contain the%n").append("      header. Multiple data sources like these can be specified in one import,%n")
+					.append("      where each data source has its own header. Note that file groups must be%n").append("      enclosed in quotation marks. [default:]%n").append("  --relationships[:RELATIONSHIP_TYPE]=<\"file1,file2,...\">%n").append("      Relationship CSV header and data. Multiple files will be logically seen as%n").append("      one big file from the perspective of the importer. The first line must%n").append("      contain the header. Multiple data sources like these can be specified in%n").append("      one import, where each data source has its own header. Note that file%n").append("      groups must be enclosed in quotation marks. [default:]%n").append("  --id-type=<STRING|INTEGER|ACTUAL>%n")
+					.append("      Each node must provide a unique id. This is used to find the correct nodes%n").append("      when creating relationships. Possible values are:%n").append("        STRING: arbitrary strings for identifying nodes,%n").append("        INTEGER: arbitrary integer values for identifying nodes,%n").append("        ACTUAL: (advanced) actual node ids.%n").append("      For more information on id handling, please see the Neo4j Manual:%n").append("      https://neo4j.com/docs/operations-manual/current/tools/import/%n").append("      [default:STRING]%n").append("  --input-encoding=<character-set>%n")
+					.append("      Character set that input data is encoded in. [default:UTF-8]%n").append("  --ignore-extra-columns=<true|false>%n").append("      If un-specified columns should be ignored during the import.%n").append("      [default:false]%n").append("  --ignore-duplicate-nodes=<true|false>%n").append("      If duplicate nodes should be ignored during the import. [default:false]%n").append("  --ignore-missing-nodes=<true|false>%n").append("      If relationships referring to missing nodes should be ignored during the%n").append("      import. [default:false]%n")
+					.append("  --multiline-fields=<true|false>%n").append("      Whether or not fields from input source can span multiple lines, i.e.%n").append("      contain newline characters. [default:false]%n").append("  --delimiter=<delimiter-character>%n").append("      Delimiter character between values in CSV data. [default:,]%n").append("  --array-delimiter=<array-delimiter-character>%n").append("      Delimiter character between array elements within a value in CSV data.%n").append("      [default:;]%n").append("  --quote=<quotation-character>%n")
+					.append("      Character to treat as quotation character for values in CSV data. Quotes%n").append("      can be escaped as per RFC 4180 by doubling them, for example \"\" would be%n").append("      interpreted as a literal \". You cannot escape using \\. [default:\"]%n").append("  --max-memory=<max-memory-that-importer-can-use>%n").append("      Maximum memory that neo4j-admin can use for various data structures and%n").append("      caching to improve performance. Values can be plain numbers, like 10000000%n").append("      or e.g. 20G for 20 gigabyte, or even e.g. 70%%. [default:90%%]%n").append("  --f=<File containing all arguments to this import>%n").append("      File containing all arguments, used as an alternative to supplying all%n")
+					.append("      arguments on the command line directly.Each argument can be on a separate%n").append("      line or multiple arguments per line separated by space.Arguments%n").append("      containing spaces needs to be quoted.Supplying other arguments in addition%n").append("      to this file argument is not supported. [default:]%n").append("  --high-io=<true/false>%n").append("      Ignore environment-based heuristics, and assume that the target storage%n").append("      subsystem can support parallel IO with high throughput. [default:null]%n").toString() ),
                     baos.toString() );
         }
     }

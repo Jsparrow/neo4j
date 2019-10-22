@@ -39,7 +39,10 @@ import static org.neo4j.graphdb.Label.label;
 
 public class SchemaRecoveryIT
 {
-    @Test
+    @Rule
+    public TestDirectory testDirectory = TestDirectory.testDirectory();
+
+	@Test
     public void schemaTransactionsShouldSurviveRecovery() throws Exception
     {
         // given
@@ -58,10 +61,7 @@ public class SchemaRecoveryIT
         recoveredDatabase.shutdown();
     }
 
-    @Rule
-    public TestDirectory testDirectory = TestDirectory.testDirectory();
-
-    private List<ConstraintDefinition> constraints( GraphDatabaseService database )
+	private List<ConstraintDefinition> constraints( GraphDatabaseService database )
     {
         try ( Transaction ignored = database.beginTx() )
         {
@@ -69,7 +69,7 @@ public class SchemaRecoveryIT
         }
     }
 
-    private List<IndexDefinition> indexes( GraphDatabaseService database )
+	private List<IndexDefinition> indexes( GraphDatabaseService database )
     {
         try ( Transaction ignored = database.beginTx() )
         {
@@ -77,7 +77,7 @@ public class SchemaRecoveryIT
         }
     }
 
-    public interface Process
+	public interface Process
     {
         void waitForSchemaTransactionCommitted() throws InterruptedException;
     }

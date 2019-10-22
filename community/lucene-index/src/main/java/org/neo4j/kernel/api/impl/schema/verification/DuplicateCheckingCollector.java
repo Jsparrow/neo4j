@@ -40,19 +40,19 @@ public class DuplicateCheckingCollector extends SimpleCollector
     protected LeafReader reader;
     DuplicateCheckStrategy duplicateCheckStrategy;
 
-    static DuplicateCheckingCollector forProperties( NodePropertyAccessor accessor, int[] propertyKeyIds )
-    {
-        return (propertyKeyIds.length == 1) ? new DuplicateCheckingCollector( accessor, propertyKeyIds[0] )
-                                            : new CompositeDuplicateCheckingCollector( accessor, propertyKeyIds );
-    }
-
     DuplicateCheckingCollector( NodePropertyAccessor accessor, int propertyKeyId )
     {
         this.accessor = accessor;
         this.propertyKeyId = propertyKeyId;
     }
 
-    @Override
+	static DuplicateCheckingCollector forProperties( NodePropertyAccessor accessor, int[] propertyKeyIds )
+    {
+        return (propertyKeyIds.length == 1) ? new DuplicateCheckingCollector( accessor, propertyKeyIds[0] )
+                                            : new CompositeDuplicateCheckingCollector( accessor, propertyKeyIds );
+    }
+
+	@Override
     public void collect( int doc ) throws IOException
     {
         try
@@ -69,7 +69,7 @@ public class DuplicateCheckingCollector extends SimpleCollector
         }
     }
 
-    protected void doCollect( int doc ) throws IOException, KernelException, IndexEntryConflictException
+	protected void doCollect( int doc ) throws IOException, KernelException, IndexEntryConflictException
     {
         Document document = reader.document( doc );
         long nodeId = LuceneDocumentStructure.getNodeId( document );
@@ -77,19 +77,19 @@ public class DuplicateCheckingCollector extends SimpleCollector
         duplicateCheckStrategy.checkForDuplicate( value, nodeId );
     }
 
-    @Override
+	@Override
     protected void doSetNextReader( LeafReaderContext context )
     {
         this.reader = context.reader();
     }
 
-    @Override
+	@Override
     public boolean needsScores()
     {
         return false;
     }
 
-    /**
+	/**
      * Initialise collector for unknown number of entries that are suspected to be duplicates.
      */
     public void init()
@@ -97,7 +97,7 @@ public class DuplicateCheckingCollector extends SimpleCollector
         duplicateCheckStrategy = new BucketsDuplicateCheckStrategy();
     }
 
-    /**
+	/**
      * Initialize collector for some known and expected number of entries that are suspected to be duplicates.
      * @param expectedNumberOfEntries expected number entries
      */
@@ -113,7 +113,7 @@ public class DuplicateCheckingCollector extends SimpleCollector
         }
     }
 
-    private boolean useFastCheck( int expectedNumberOfEntries )
+	private boolean useFastCheck( int expectedNumberOfEntries )
     {
         return expectedNumberOfEntries <= BucketsDuplicateCheckStrategy.BUCKET_STRATEGY_ENTRIES_THRESHOLD;
     }

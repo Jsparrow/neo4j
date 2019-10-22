@@ -57,18 +57,18 @@ final class MuninnWritePageCursor extends MuninnPageCursor
     private void eagerlyFlushAndUnlockPage()
     {
         long flushStamp = pagedFile.unlockWriteAndTryTakeFlushLock( pinnedPageRef );
-        if ( flushStamp != 0 )
-        {
-            boolean success = false;
-            try
-            {
-                success = pagedFile.flushLockedPage( pinnedPageRef, currentPageId );
-            }
-            finally
-            {
-                pagedFile.unlockFlush( pinnedPageRef, flushStamp, success );
-            }
-        }
+        if (flushStamp == 0) {
+			return;
+		}
+		boolean success = false;
+		try
+		{
+		    success = pagedFile.flushLockedPage( pinnedPageRef, currentPageId );
+		}
+		finally
+		{
+		    pagedFile.unlockFlush( pinnedPageRef, flushStamp, success );
+		}
     }
 
     @Override

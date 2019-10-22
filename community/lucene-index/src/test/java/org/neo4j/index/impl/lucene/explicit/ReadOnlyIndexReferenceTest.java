@@ -49,14 +49,14 @@ class ReadOnlyIndexReferenceTest
     @Test
     void obtainingWriterIsUnsupported()
     {
-        UnsupportedOperationException uoe = assertThrows( UnsupportedOperationException.class, () -> indexReference.getWriter() );
+        UnsupportedOperationException uoe = assertThrows( UnsupportedOperationException.class, indexReference::getWriter );
         assertEquals( uoe.getMessage(), "Read only indexes do not have index writers." );
     }
 
     @Test
     void markAsStaleIsUnsupported()
     {
-        UnsupportedOperationException uoe = assertThrows( UnsupportedOperationException.class, () -> indexReference.setStale() );
+        UnsupportedOperationException uoe = assertThrows( UnsupportedOperationException.class, indexReference::setStale );
         assertEquals( uoe.getMessage(), "Read only indexes can't be marked as stale." );
     }
 

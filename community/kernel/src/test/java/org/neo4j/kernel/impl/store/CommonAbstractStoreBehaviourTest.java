@@ -247,7 +247,7 @@ public class CommonAbstractStoreBehaviourTest
         record.value = 0xCAFEBABE;
         store.updateRecord( record );
         intsPerRecord = 8192;
-        assertThrowsUnderlyingStorageException( () -> store.makeStoreOk() );
+        assertThrowsUnderlyingStorageException( store::makeStoreOk );
     }
 
     @Test
@@ -259,7 +259,7 @@ public class CommonAbstractStoreBehaviourTest
         record.value = 0xCAFEBABE;
         store.updateRecord( record );
         intsPerRecord = 8192;
-        assertThrowsUnderlyingStorageException( () -> store.makeStoreOk() );
+        assertThrowsUnderlyingStorageException( store::makeStoreOk );
     }
 
     @Test
@@ -295,7 +295,7 @@ public class CommonAbstractStoreBehaviourTest
         @Override
         public String toString()
         {
-            return "IntRecord[" + getId() + "](" + value + ")";
+            return new StringBuilder().append("IntRecord[").append(getId()).append("](").append(value).append(")").toString();
         }
     }
 

@@ -187,19 +187,18 @@ class FulltextIndexProvider extends IndexProvider implements FulltextAdapter, Au
         if ( !(index.schema() instanceof FulltextSchemaDescriptor) )
         {
             // The fulltext index provider only support fulltext indexes.
-            throw new MisconfiguredIndexException( InvalidArguments, "The index provider '" + getProviderDescriptor() + "' only supports fulltext index " +
-                    "descriptors. Make sure that fulltext indexes are created using the relevant fulltext index procedures." );
+            throw new MisconfiguredIndexException( InvalidArguments, new StringBuilder().append("The index provider '").append(getProviderDescriptor()).append("' only supports fulltext index ").append("descriptors. Make sure that fulltext indexes are created using the relevant fulltext index procedures.").toString() );
         }
         return super.bless( index );
     }
 
     @Override
-    public String getPopulationFailure( StoreIndexDescriptor descriptor ) throws IllegalStateException
+    public String getPopulationFailure( StoreIndexDescriptor descriptor )
     {
         String failure = getIndexStorage( descriptor.getId() ).getStoredIndexFailure();
         if ( failure == null )
         {
-            throw new IllegalStateException( "Index " + descriptor.getId() + " isn't failed" );
+            throw new IllegalStateException( new StringBuilder().append("Index ").append(descriptor.getId()).append(" isn't failed").toString() );
         }
         return failure;
     }
@@ -289,7 +288,7 @@ class FulltextIndexProvider extends IndexProvider implements FulltextAdapter, Au
         if ( entityTokens.length == 0 )
         {
             throw new BadSchemaException(
-                    "At least one " + ( type == EntityType.NODE ? "label" : "relationship type" ) + " must be specified when creating a fulltext index." );
+                    new StringBuilder().append("At least one ").append(type == EntityType.NODE ? "label" : "relationship type").append(" must be specified when creating a fulltext index.").toString() );
         }
         if ( properties.length == 0 )
         {

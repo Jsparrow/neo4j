@@ -99,23 +99,22 @@ public class NodeLabelReader
     public static long[] getListOfLabels( NodeRecord nodeRecord, RecordStore<DynamicRecord> labels )
     {
         long field = nodeRecord.getLabelField();
-        if ( NodeLabelsField.fieldPointsToDynamicRecordOfLabels( field ) )
-        {
-            List<DynamicRecord> recordList = new ArrayList<>();
-            final MutableLongSet alreadySeen = new LongHashSet();
-            long id = NodeLabelsField.firstDynamicLabelRecordId( field );
-            while ( !Record.NULL_REFERENCE.is( id ) )
-            {
-                DynamicRecord record = labels.getRecord( id, labels.newRecord(), FORCE );
-                if ( !record.inUse() || !alreadySeen.add( id ) )
-                {
-                    return PrimitiveLongCollections.EMPTY_LONG_ARRAY;
-                }
-                recordList.add( record );
-            }
-            return LabelChainWalker.labelIds( recordList );
-        }
-        return InlineNodeLabels.get( nodeRecord );
+        if (!NodeLabelsField.fieldPointsToDynamicRecordOfLabels( field )) {
+			return InlineNodeLabels.get( nodeRecord );
+		}
+		List<DynamicRecord> recordList = new ArrayList<>();
+		final MutableLongSet alreadySeen = new LongHashSet();
+		long id = NodeLabelsField.firstDynamicLabelRecordId( field );
+		while ( !Record.NULL_REFERENCE.is( id ) )
+		{
+		    DynamicRecord record = labels.getRecord( id, labels.newRecord(), FORCE );
+		    if ( !record.inUse() || !alreadySeen.add( id ) )
+		    {
+		        return PrimitiveLongCollections.EMPTY_LONG_ARRAY;
+		    }
+		    recordList.add( record );
+		}
+		return LabelChainWalker.labelIds( recordList );
     }
 
     public static Set<Long> getListOfLabels( long labelField )

@@ -590,7 +590,7 @@ public class StopCompatibility extends LockingCompatibilityTestSuite.Compatibili
     private void assertNoLocksHeld()
     {
         locks.accept( ( resourceType, resourceId, description, estimatedWaitTime, lockIdentityHashCode ) ->
-                fail( "Unexpected lock on " + resourceType + " " + resourceId ) );
+                fail( new StringBuilder().append("Unexpected lock on ").append(resourceType).append(" ").append(resourceId).toString() ) );
     }
 
     private void assertThreadIsWaitingForLock( LockAcquisition lockAcquisition ) throws Exception

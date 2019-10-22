@@ -38,8 +38,8 @@ public abstract class RandomRelationshipTraversalCursorTestBase<G extends Kernel
         extends KernelAPIReadTestBase<G>
 {
     private static final int N_TRAVERSALS = 10_000;
-    private static int N_NODES = 100;
-    private static int N_RELATIONSHIPS = 1000;
+    private static int nNodes = 100;
+    private static int nRelationships = 1000;
     private static long seed = (new Random()).nextInt();
     private static Random random = new Random( seed );
     private static List<Long> nodeIds = new ArrayList<>();
@@ -49,7 +49,7 @@ public abstract class RandomRelationshipTraversalCursorTestBase<G extends Kernel
     {
         try ( Transaction tx = graphDb.beginTx() )
         {
-            for ( int i = 0; i < N_NODES; i++ )
+            for ( int i = 0; i < nNodes; i++ )
             {
                 nodeIds.add( graphDb.createNode( Label.label( "LABEL" + i ) ).getId() );
             }
@@ -58,10 +58,10 @@ public abstract class RandomRelationshipTraversalCursorTestBase<G extends Kernel
 
         try ( Transaction tx = graphDb.beginTx() )
         {
-            for ( int i = 0; i < N_RELATIONSHIPS; i++ )
+            for ( int i = 0; i < nRelationships; i++ )
             {
-                Long source = nodeIds.get( random.nextInt( N_NODES ) );
-                Long target = nodeIds.get( random.nextInt( N_NODES ) );
+                Long source = nodeIds.get( random.nextInt( nNodes ) );
+                Long target = nodeIds.get( random.nextInt( nNodes ) );
                 graphDb.getNodeById( source ).createRelationshipTo( graphDb.getNodeById( target ),
                         RelationshipType.withName( "REL" + (i % 10) ) );
             }
@@ -80,7 +80,7 @@ public abstract class RandomRelationshipTraversalCursorTestBase<G extends Kernel
             for ( int i = 0; i < N_TRAVERSALS; i++ )
             {
                 // when
-                long nodeId = nodeIds.get( random.nextInt( N_NODES ) );
+                long nodeId = nodeIds.get( random.nextInt( nNodes ) );
                 read.singleNode( nodeId, node );
                 assertTrue( "access root node", node.next() );
                 node.relationships( group );

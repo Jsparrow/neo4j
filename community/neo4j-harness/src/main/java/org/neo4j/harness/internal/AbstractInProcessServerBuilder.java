@@ -287,10 +287,10 @@ public abstract class AbstractInProcessServerBuilder implements TestServerBuilde
             for ( int i = 0; i < packageCount - 1; i++ )
             {
                 jaxRsPackage = extensions.get( i );
-                propertyString += jaxRsPackage.getPackageName() + "=" + jaxRsPackage.getMountPoint() + Settings.SEPARATOR;
+                propertyString += new StringBuilder().append(jaxRsPackage.getPackageName()).append("=").append(jaxRsPackage.getMountPoint()).append(Settings.SEPARATOR).toString();
             }
             jaxRsPackage = extensions.get( packageCount - 1 );
-            propertyString += jaxRsPackage.getPackageName() + "=" + jaxRsPackage.getMountPoint();
+            propertyString += new StringBuilder().append(jaxRsPackage.getPackageName()).append("=").append(jaxRsPackage.getMountPoint()).toString();
             return propertyString;
         }
     }
@@ -308,20 +308,15 @@ public abstract class AbstractInProcessServerBuilder implements TestServerBuilde
      */
     private static class Neo4jHarnessExtensions extends KernelExtensionFactory<Neo4jHarnessExtensions.Dependencies>
     {
-        interface Dependencies
-        {
-            Procedures procedures();
-        }
-
         private HarnessRegisteredProcs userProcs;
 
-        Neo4jHarnessExtensions( HarnessRegisteredProcs userProcs )
+		Neo4jHarnessExtensions( HarnessRegisteredProcs userProcs )
         {
             super( ExtensionType.DATABASE, "harness" );
             this.userProcs = userProcs;
         }
 
-        @Override
+		@Override
         public Lifecycle newInstance( KernelContext context,
                 Dependencies dependencies )
         {
@@ -333,6 +328,11 @@ public abstract class AbstractInProcessServerBuilder implements TestServerBuilde
                     userProcs.applyTo( dependencies.procedures() );
                 }
             };
+        }
+
+		interface Dependencies
+        {
+            Procedures procedures();
         }
 
     }

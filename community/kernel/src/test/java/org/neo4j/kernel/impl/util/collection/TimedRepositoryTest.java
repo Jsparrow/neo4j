@@ -36,7 +36,6 @@ import org.neo4j.function.Factory;
 import org.neo4j.time.Clocks;
 import org.neo4j.time.FakeClock;
 
-import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -44,6 +43,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import java.util.Collections;
 
 public class TimedRepositoryTest
 {
@@ -68,7 +68,7 @@ public class TimedRepositoryTest
 
         // Then
         assertThat( acquired, equalTo( 0L ) );
-        assertThat( reapedValues, equalTo( asList( 0L ) ) );
+        assertThat( reapedValues, equalTo( Collections.singletonList( 0L ) ) );
     }
 
     @Test
@@ -146,7 +146,7 @@ public class TimedRepositoryTest
         repo.release( 1L );
 
         // Then
-        assertThat( reapedValues, equalTo( asList( 0L ) ) );
+        assertThat( reapedValues, equalTo( Collections.singletonList( 0L ) ) );
     }
 
     @Test
@@ -188,7 +188,7 @@ public class TimedRepositoryTest
         repo.run();
 
         // Then
-        assertThat( reapedValues, equalTo( asList( 0L ) ) );
+        assertThat( reapedValues, equalTo( Collections.singletonList( 0L ) ) );
 
         try
         {
@@ -220,7 +220,7 @@ public class TimedRepositoryTest
             assertThat( e.getMessage(), containsString( "Cannot begin '1', because Entry" ) );
             assertThat( e.getMessage(), containsString( " with that key already exists." ) );
         }
-        assertThat( reapedValues, equalTo( asList( 1L ) ) );
+        assertThat( reapedValues, equalTo( Collections.singletonList( 1L ) ) );
     }
 
     @Test
@@ -236,7 +236,7 @@ public class TimedRepositoryTest
 
         //then
         repo.begin( 1L );
-        assertThat( reapedValues, equalTo( asList( 0L ) ) );
+        assertThat( reapedValues, equalTo( Collections.singletonList( 0L ) ) );
     }
 
     @Test
@@ -261,9 +261,7 @@ public class TimedRepositoryTest
                 timedRepository.release( entryKey );
                 timedRepository.end( entryKey );
 
-                countDownReaper.await("Reaper should consume entry from cleaner thread or from our 'end' call. " +
-                                      "If it was not consumed it mean cleaner and worker thread where not able to" +
-                                      " figure out who removes entry, and block will ends up in the repo forever.",
+                countDownReaper.await(new StringBuilder().append("Reaper should consume entry from cleaner thread or from our 'end' call. ").append("If it was not consumed it mean cleaner and worker thread where not able to").append(" figure out who removes entry, and block will ends up in the repo forever.").toString(),
                                       10, SECONDS);
                 countDownReaper.reset();
             }

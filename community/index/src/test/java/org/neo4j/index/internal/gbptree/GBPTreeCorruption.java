@@ -66,9 +66,7 @@ public final class GBPTreeCorruption
 
     public static <KEY, VALUE> PageCorruption<KEY,VALUE> setPointer( GBPTreePointerType pointerType, long pointer )
     {
-        return ( cursor, layout, node, treeState ) -> {
-            overwriteGSPP( cursor, pointerType.offset( node ), treeState.stableGeneration(), pointer );
-        };
+        return ( cursor, layout, node, treeState ) -> overwriteGSPP(cursor, pointerType.offset(node), treeState.stableGeneration(), pointer);
     }
 
     public static <KEY, VALUE> PageCorruption<KEY,VALUE> notATreeNode()
@@ -308,9 +306,7 @@ public final class GBPTreeCorruption
 
     public static <KEY, VALUE> PageCorruption<KEY,VALUE> setKeyCount( int keyCount )
     {
-        return ( cursor, layout, node, treeState ) -> {
-            cursor.putInt( BYTE_POS_KEYCOUNT, keyCount );
-        };
+        return ( cursor, layout, node, treeState ) -> cursor.putInt(BYTE_POS_KEYCOUNT, keyCount);
     }
 
     public static <KEY, VALUE> PageCorruption<KEY,VALUE> setHighestReasonableKeyCount()
@@ -365,8 +361,7 @@ public final class GBPTreeCorruption
         if ( treeState.unstableGeneration() - treeState.stableGeneration() < 2 )
         {
             throw new IllegalStateException(
-                    "Need stable and unstable generation to have a crash gap but was stableGeneration=" + treeState.stableGeneration() +
-                            " and unstableGeneration=" + treeState.unstableGeneration() );
+                    new StringBuilder().append("Need stable and unstable generation to have a crash gap but was stableGeneration=").append(treeState.stableGeneration()).append(" and unstableGeneration=").append(treeState.unstableGeneration()).toString() );
         }
         return treeState.unstableGeneration() - 1;
     }

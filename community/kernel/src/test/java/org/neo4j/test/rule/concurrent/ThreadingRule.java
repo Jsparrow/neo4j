@@ -43,7 +43,6 @@ import static org.neo4j.function.ThrowingPredicate.throwingPredicate;
 
 public class ThreadingRule extends ExternalResource
 {
-    private ExecutorService executor;
     private static final FailableConsumer<Thread> NULL_CONSUMER = new FailableConsumer<Thread>()
     {
         @Override
@@ -56,14 +55,15 @@ public class ThreadingRule extends ExternalResource
         {
         }
     };
+	private ExecutorService executor;
 
-    @Override
+	@Override
     protected void before()
     {
         executor = Executors.newCachedThreadPool();
     }
 
-    @Override
+	@Override
     protected void after()
     {
         try
@@ -81,23 +81,23 @@ public class ThreadingRule extends ExternalResource
         }
     }
 
-    public <FROM, TO, EX extends Exception> Future<TO> execute( ThrowingFunction<FROM,TO,EX> function, FROM parameter )
+	public <FROM, TO, EX extends Exception> Future<TO> execute( ThrowingFunction<FROM,TO,EX> function, FROM parameter )
     {
         return executor.submit( task( function, function.toString(), parameter, NULL_CONSUMER ) );
     }
 
-    public <FROM, TO, EX extends Exception> List<Future<TO>> multiple( int threads, ThrowingFunction<FROM,TO,EX> function, FROM parameter )
+	public <FROM, TO, EX extends Exception> List<Future<TO>> multiple( int threads, ThrowingFunction<FROM,TO,EX> function, FROM parameter )
     {
         List<Future<TO>> result = new ArrayList<>( threads );
         for ( int i = 0; i < threads; i++ )
         {
             result.add( executor.submit( task(
-                    function, function.toString() + ":task=" + i, parameter, NULL_CONSUMER ) ) );
+                    function, new StringBuilder().append(function.toString()).append(":task=").append(i).toString(), parameter, NULL_CONSUMER ) ) );
         }
         return result;
     }
 
-    public static <T> List<T> await( Iterable<Future<T>> futures ) throws InterruptedException, ExecutionException
+	public static <T> List<T> await( Iterable<Future<T>> futures ) throws InterruptedException, ExecutionException
     {
         List<T> result = futures instanceof Collection
                 ? new ArrayList<>( ((Collection) futures).size() )
@@ -125,16 +125,13 @@ public class ThreadingRule extends ExternalResource
                 throw new ExecutionException( failures.get( 0 ) );
             }
             ExecutionException exception = new ExecutionException( null );
-            for ( Throwable failure : failures )
-            {
-                exception.addSuppressed( failure );
-            }
+            failures.forEach(exception::addSuppressed);
             throw exception;
         }
         return result;
     }
 
-    public <FROM, TO, EX extends Exception> Future<TO> executeAndAwait(
+	public <FROM, TO, EX extends Exception> Future<TO> executeAndAwait(
             ThrowingFunction<FROM,TO,EX> function, FROM parameter, Predicate<Thread> threadCondition,
             long timeout, TimeUnit unit ) throws ExecutionException
     {
@@ -151,7 +148,7 @@ public class ThreadingRule extends ExternalResource
         return future;
     }
 
-    private static <FROM, TO, EX extends Exception> Callable<TO> task(
+	private static <FROM, TO, EX extends Exception> Callable<TO> task(
             final ThrowingFunction<FROM,TO,EX> function, String name, final FROM parameter,
             final FailableConsumer<Thread> threadConsumer )
     {
@@ -177,7 +174,7 @@ public class ThreadingRule extends ExternalResource
         };
     }
 
-    /*Sample Stacktrace for method on owner*/
+	/*Sample Stacktrace for method on owner*/
     public static Predicate<Thread> waitingWhileIn( final Class<?> owner, final String method )
     {
         return new Predicate<Thread>()
@@ -209,7 +206,7 @@ public class ThreadingRule extends ExternalResource
         };
     }
 
-    private static class FailableConcurrentTransfer<TYPE> implements FailableConsumer<TYPE>, ThrowingSupplier<TYPE, Exception>
+	private static class FailableConcurrentTransfer<TYPE> implements FailableConsumer<TYPE>, ThrowingSupplier<TYPE, Exception>
     {
         private final CountDownLatch latch = new CountDownLatch( 1 );
         private TYPE value;

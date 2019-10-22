@@ -76,11 +76,11 @@ public class IndexDefinitionRepresentation extends MappingRepresentation
         serializer.putList( "property_keys", new ListRepresentation( RepresentationType.STRING,
                 propertyKeyRepresentations ) );
         // Only print state and progress if progress is a valid value and not yet online
-        if ( indexState == Schema.IndexState.POPULATING )
-        {
-            serializer.putString( "state", indexState.name() );
-            serializer.putString( "population_progress", String.format( "%1.0f%%",
-                    indexPopulationProgress.getCompletedPercentage() ) );
-        }
+		if (indexState != Schema.IndexState.POPULATING) {
+			return;
+		}
+		serializer.putString( "state", indexState.name() );
+		serializer.putString( "population_progress", String.format( "%1.0f%%",
+		        indexPopulationProgress.getCompletedPercentage() ) );
     }
 }

@@ -137,17 +137,17 @@ public class ReentrantLockServiceTest
         try ( Lock lock = first = locks.acquireNodeLock( 666, LockService.LockType.WRITE_LOCK ) )
         {
             // then
-            assertEquals( "LockedNode[id=666; HELD_BY=1*" + Thread.currentThread() + "]", lock.toString() );
+            assertEquals( new StringBuilder().append("LockedNode[id=666; HELD_BY=1*").append(Thread.currentThread()).append("]").toString(), lock.toString() );
 
             // when
             try ( Lock inner = second = locks.acquireNodeLock( 666, LockService.LockType.WRITE_LOCK ) )
             {
-                assertEquals( "LockedNode[id=666; HELD_BY=2*" + Thread.currentThread() + "]", lock.toString() );
+                assertEquals( new StringBuilder().append("LockedNode[id=666; HELD_BY=2*").append(Thread.currentThread()).append("]").toString(), lock.toString() );
                 assertEquals( lock.toString(), inner.toString() );
             }
 
             // then
-            assertEquals( "LockedNode[id=666; HELD_BY=1*" + Thread.currentThread() + "]", lock.toString() );
+            assertEquals( new StringBuilder().append("LockedNode[id=666; HELD_BY=1*").append(Thread.currentThread()).append("]").toString(), lock.toString() );
             assertEquals( "LockedNode[id=666; RELEASED]", second.toString() );
         }
 
@@ -156,49 +156,38 @@ public class ReentrantLockServiceTest
         assertEquals( "LockedNode[id=666; RELEASED]", second.toString() );
     }
 
-    private static class LockNode implements ThreadRepository.Task
-    {
-        private final LockService locks;
-        private final long nodeId;
-        private Lock lock;
-
-        LockNode( LockService locks, long nodeId )
-        {
-            this.locks = locks;
-            this.nodeId = nodeId;
-        }
-
-        private final ThreadRepository.Task release = new ThreadRepository.Task()
-        {
-            @Override
-            public void perform()
-            {
-                lock.release();
-            }
-        };
-
-        @Override
-        public void perform()
-        {
-            this.lock = locks.acquireNodeLock( nodeId, LockService.LockType.WRITE_LOCK );
-        }
-    }
-
     private static boolean awaitParked( ThreadRepository.ThreadInfo thread, long timeout, TimeUnit unit )
     {
         boolean parked = false;
         for ( long end = System.currentTimeMillis() + unit.toMillis( timeout ); System.currentTimeMillis() < end; )
         {
             StackTraceElement frame = thread.getStackTrace()[0];
-            if ( "park".equals( frame.getMethodName() ) && frame.getClassName().endsWith( "Unsafe" ) )
-            {
-                if ( thread.getState().name().endsWith( "WAITING" ) )
-                {
-                    parked = true;
-                    break;
-                }
-            }
+            boolean condition = "park".equals( frame.getMethodName() ) && frame.getClassName().endsWith( "Unsafe" ) && thread.getState().name().endsWith( "WAITING" );
+			if ( condition ) {
+			    parked = true;
+			    break;
+			}
         }
         return parked;
+    }
+
+	private static class LockNode implements ThreadRepository.Task
+    {
+        private final LockService locks;
+        private final long nodeId;
+        private Lock lock;
+		private final ThreadRepository.Task release = lock::release;
+
+		LockNode( LockService locks, long nodeId )
+        {
+            this.locks = locks;
+            this.nodeId = nodeId;
+        }
+
+		@Override
+        public void perform()
+        {
+            this.lock = locks.acquireNodeLock( nodeId, LockService.LockType.WRITE_LOCK );
+        }
     }
 }

@@ -96,58 +96,6 @@ import org.neo4j.storageengine.api.schema.StoreIndexDescriptor;
  */
 public abstract class IndexProvider extends LifecycleAdapter
 {
-    public interface Monitor
-    {
-        Monitor EMPTY = new Monitor.Adaptor();
-
-        class Adaptor implements Monitor
-        {
-            @Override
-            public void failedToOpenIndex( StoreIndexDescriptor schemaIndexDescriptor, String action, Exception cause )
-            {   // no-op
-            }
-
-            @Override
-            public void recoveryCleanupRegistered( File indexFile, IndexDescriptor indexDescriptor )
-            {   // no-op
-            }
-
-            @Override
-            public void recoveryCleanupStarted( File indexFile, IndexDescriptor indexDescriptor )
-            {   // no-op
-            }
-
-            @Override
-            public void recoveryCleanupFinished( File indexFile, IndexDescriptor indexDescriptor,
-                    long numberOfPagesVisited, long numberOfCleanedCrashPointers, long durationMillis )
-            {   // no-op
-            }
-
-            @Override
-            public void recoveryCleanupClosed( File indexFile, IndexDescriptor indexDescriptor )
-            {   // no-op
-            }
-
-            @Override
-            public void recoveryCleanupFailed( File indexFile, IndexDescriptor indexDescriptor, Throwable throwable )
-            {   // no-op
-            }
-        }
-
-        void failedToOpenIndex( StoreIndexDescriptor schemaIndexDescriptor, String action, Exception cause );
-
-        void recoveryCleanupRegistered( File indexFile, IndexDescriptor indexDescriptor );
-
-        void recoveryCleanupStarted( File indexFile, IndexDescriptor indexDescriptor );
-
-        void recoveryCleanupFinished( File indexFile, IndexDescriptor indexDescriptor,
-                long numberOfPagesVisited, long numberOfCleanedCrashPointers, long durationMillis );
-
-        void recoveryCleanupClosed( File indexFile, IndexDescriptor indexDescriptor );
-
-        void recoveryCleanupFailed( File indexFile, IndexDescriptor indexDescriptor, Throwable throwable );
-    }
-
     public static final IndexProvider EMPTY =
             new IndexProvider( new IndexProviderDescriptor( "no-index-provider", "1.0" ), IndexDirectoryStructure.NONE )
             {
@@ -186,22 +134,24 @@ public abstract class IndexProvider extends LifecycleAdapter
                 }
 
                 @Override
-                public String getPopulationFailure( StoreIndexDescriptor descriptor ) throws IllegalStateException
+                public String getPopulationFailure( StoreIndexDescriptor descriptor )
                 {
                     throw new IllegalStateException();
                 }
             };
 
-    private final IndexProviderDescriptor providerDescriptor;
-    private final IndexDirectoryStructure.Factory directoryStructureFactory;
-    private final IndexDirectoryStructure directoryStructure;
+	private final IndexProviderDescriptor providerDescriptor;
 
-    protected IndexProvider( IndexProvider copySource )
+	private final IndexDirectoryStructure.Factory directoryStructureFactory;
+
+	private final IndexDirectoryStructure directoryStructure;
+
+	protected IndexProvider( IndexProvider copySource )
     {
         this( copySource.providerDescriptor, copySource.directoryStructureFactory );
     }
 
-    protected IndexProvider( IndexProviderDescriptor descriptor, IndexDirectoryStructure.Factory directoryStructureFactory )
+	protected IndexProvider( IndexProviderDescriptor descriptor, IndexDirectoryStructure.Factory directoryStructureFactory )
     {
         this.directoryStructureFactory = directoryStructureFactory;
         assert descriptor != null;
@@ -209,7 +159,7 @@ public abstract class IndexProvider extends LifecycleAdapter
         this.directoryStructure = directoryStructureFactory.forProvider( descriptor );
     }
 
-    /**
+	/**
      * Before an index is created, the chosen index provider will be asked to bless the index descriptor by calling this method, giving the index descriptor
      * as an argument. The returned index descriptor is then blessed, and will be used for creating the index. This gives the provider an opportunity to check
      * the index configuration, and make sure that it is sensible and support by this provider.
@@ -225,17 +175,17 @@ public abstract class IndexProvider extends LifecycleAdapter
         return index;
     }
 
-    /**
+	/**
      * Used for initially populating a created index, using batch insertion.
      */
     public abstract IndexPopulator getPopulator( StoreIndexDescriptor descriptor, IndexSamplingConfig samplingConfig, ByteBufferFactory bufferFactory );
 
-    /**
+	/**
      * Used for updating an index once initial population has completed.
      */
     public abstract IndexAccessor getOnlineAccessor( StoreIndexDescriptor descriptor, IndexSamplingConfig samplingConfig ) throws IOException;
 
-    /**
+	/**
      * Returns a failure previously gotten from {@link IndexPopulator#markAsFailed(String)}
      *
      * Implementations are expected to persist this failure
@@ -243,9 +193,9 @@ public abstract class IndexProvider extends LifecycleAdapter
      * @return failure, in the form of a stack trace, that happened during population.
      * @throws IllegalStateException If there was no failure during population.
      */
-    public abstract String getPopulationFailure( StoreIndexDescriptor descriptor ) throws IllegalStateException;
+    public abstract String getPopulationFailure( StoreIndexDescriptor descriptor );
 
-    /**
+	/**
      * Called during startup to find out which state an index is in. If {@link InternalIndexState#FAILED}
      * is returned then a further call to {@link #getPopulationFailure(StoreIndexDescriptor)} is expected and should return
      * the failure accepted by any call to {@link IndexPopulator#markAsFailed(String)} call at the time
@@ -253,14 +203,14 @@ public abstract class IndexProvider extends LifecycleAdapter
      */
     public abstract InternalIndexState getInitialState( StoreIndexDescriptor descriptor );
 
-    /**
+	/**
      * Return {@link IndexCapability} for this index provider.
      *
      * @param descriptor The specific {@link StoreIndexDescriptor} to get the capabilities for, in case it matters.
      */
     public abstract IndexCapability getCapability( StoreIndexDescriptor descriptor );
 
-    /**
+	/**
      * @return a description of this index provider
      */
     public IndexProviderDescriptor getProviderDescriptor()
@@ -268,7 +218,7 @@ public abstract class IndexProvider extends LifecycleAdapter
         return providerDescriptor;
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -285,13 +235,13 @@ public abstract class IndexProvider extends LifecycleAdapter
         return providerDescriptor.equals( other.providerDescriptor );
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         return providerDescriptor.hashCode();
     }
 
-    /**
+	/**
      * @return {@link IndexDirectoryStructure} for this schema index provider. From it can be retrieved directories
      * for individual indexes.
      */
@@ -300,7 +250,59 @@ public abstract class IndexProvider extends LifecycleAdapter
         return directoryStructure;
     }
 
-    public abstract StoreMigrationParticipant storeMigrationParticipant( FileSystemAbstraction fs, PageCache pageCache );
+	public abstract StoreMigrationParticipant storeMigrationParticipant( FileSystemAbstraction fs, PageCache pageCache );
+
+	public interface Monitor
+    {
+        Monitor EMPTY = new Monitor.Adaptor();
+
+        void failedToOpenIndex( StoreIndexDescriptor schemaIndexDescriptor, String action, Exception cause );
+
+		void recoveryCleanupRegistered( File indexFile, IndexDescriptor indexDescriptor );
+
+		void recoveryCleanupStarted( File indexFile, IndexDescriptor indexDescriptor );
+
+		void recoveryCleanupFinished( File indexFile, IndexDescriptor indexDescriptor,
+                long numberOfPagesVisited, long numberOfCleanedCrashPointers, long durationMillis );
+
+		void recoveryCleanupClosed( File indexFile, IndexDescriptor indexDescriptor );
+
+		void recoveryCleanupFailed( File indexFile, IndexDescriptor indexDescriptor, Throwable throwable );
+
+		class Adaptor implements Monitor
+        {
+            @Override
+            public void failedToOpenIndex( StoreIndexDescriptor schemaIndexDescriptor, String action, Exception cause )
+            {   // no-op
+            }
+
+            @Override
+            public void recoveryCleanupRegistered( File indexFile, IndexDescriptor indexDescriptor )
+            {   // no-op
+            }
+
+            @Override
+            public void recoveryCleanupStarted( File indexFile, IndexDescriptor indexDescriptor )
+            {   // no-op
+            }
+
+            @Override
+            public void recoveryCleanupFinished( File indexFile, IndexDescriptor indexDescriptor,
+                    long numberOfPagesVisited, long numberOfCleanedCrashPointers, long durationMillis )
+            {   // no-op
+            }
+
+            @Override
+            public void recoveryCleanupClosed( File indexFile, IndexDescriptor indexDescriptor )
+            {   // no-op
+            }
+
+            @Override
+            public void recoveryCleanupFailed( File indexFile, IndexDescriptor indexDescriptor, Throwable throwable )
+            {   // no-op
+            }
+        }
+    }
 
     public static class Adaptor extends IndexProvider
     {
@@ -322,7 +324,7 @@ public abstract class IndexProvider extends LifecycleAdapter
         }
 
         @Override
-        public String getPopulationFailure( StoreIndexDescriptor descriptor ) throws IllegalStateException
+        public String getPopulationFailure( StoreIndexDescriptor descriptor )
         {
             return null;
         }

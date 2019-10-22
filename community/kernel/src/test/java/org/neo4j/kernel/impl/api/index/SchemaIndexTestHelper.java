@@ -47,7 +47,39 @@ public class SchemaIndexTestHelper
         return new SingleInstanceIndexProviderFactory( key, provider );
     }
 
-    public interface SingleInstanceIndexProviderFactoryDependencies
+    public static IndexProxy mockIndexProxy()
+    {
+        return mock( IndexProxy.class );
+    }
+
+	public static boolean awaitLatch( CountDownLatch latch )
+    {
+        try
+        {
+            return latch.await( 10, SECONDS );
+        }
+        catch ( InterruptedException e )
+        {
+            Thread.interrupted();
+            throw new RuntimeException( e );
+        }
+    }
+
+	public static void awaitIndexOnline( SchemaRead schemaRead, IndexReference index )
+            throws IndexNotFoundKernelException
+    {
+        long start = System.currentTimeMillis();
+        while ( schemaRead.indexGetState( index ) != InternalIndexState.ONLINE )
+        {
+
+            if ( start + 1000 * 10 < System.currentTimeMillis() )
+            {
+                throw new RuntimeException( "Index didn't come online within a reasonable time." );
+            }
+        }
+    }
+
+	public interface SingleInstanceIndexProviderFactoryDependencies
     {
         Config config();
     }
@@ -68,38 +100,6 @@ public class SchemaIndexTestHelper
                 SingleInstanceIndexProviderFactoryDependencies dependencies )
         {
             return provider;
-        }
-    }
-
-    public static IndexProxy mockIndexProxy()
-    {
-        return mock( IndexProxy.class );
-    }
-
-    public static boolean awaitLatch( CountDownLatch latch )
-    {
-        try
-        {
-            return latch.await( 10, SECONDS );
-        }
-        catch ( InterruptedException e )
-        {
-            Thread.interrupted();
-            throw new RuntimeException( e );
-        }
-    }
-
-    public static void awaitIndexOnline( SchemaRead schemaRead, IndexReference index )
-            throws IndexNotFoundKernelException
-    {
-        long start = System.currentTimeMillis();
-        while ( schemaRead.indexGetState( index ) != InternalIndexState.ONLINE )
-        {
-
-            if ( start + 1000 * 10 < System.currentTimeMillis() )
-            {
-                throw new RuntimeException( "Index didn't come online within a reasonable time." );
-            }
         }
     }
 }

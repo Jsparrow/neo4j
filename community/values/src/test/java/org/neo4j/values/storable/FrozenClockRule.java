@@ -49,86 +49,79 @@ import static org.junit.Assert.assertThat;
 
 public class FrozenClockRule extends Clock implements TestRule, Function<String,Clock>, Supplier<ZoneId>
 {
-    @Target( ElementType.METHOD )
-    @Retention( RetentionPolicy.RUNTIME )
-    @interface TimeZone
-    {
-        String[] value();
-    }
-
     public static final TemporalAdjuster SECOND_PRECISION = temporal -> temporal.with( ChronoField.NANO_OF_SECOND, 0 );
-    public static final TemporalAdjuster MILLISECOND_PRECISION = temporal -> temporal
+	public static final TemporalAdjuster MILLISECOND_PRECISION = temporal -> temporal
             .with( ChronoField.NANO_OF_SECOND, temporal.get( ChronoField.MILLI_OF_SECOND ) * 1000_000 );
-    private Instant instant;
-    private ZoneId zone;
+	private Instant instant;
+	private ZoneId zone;
 
-    @Override
+	@Override
     public ZoneId getZone()
     {
         return zone;
     }
 
-    public Clock withZone( String zoneId )
+	public Clock withZone( String zoneId )
     {
         return withZone( ZoneId.of( zoneId ) );
     }
 
-    @Override
+	@Override
     public Clock withZone( ZoneId zone )
     {
         return fixed( instant, zone );
     }
 
-    @Override
+	@Override
     public Instant instant()
     {
         return instant;
     }
 
-    @Override
+	@Override
     public long millis()
     {
         return instant.toEpochMilli();
     }
 
-    public Clock at( LocalDateTime datetime )
+	public Clock at( LocalDateTime datetime )
     {
         return at( datetime.atZone( zone ) );
     }
 
-    public Clock at( OffsetDateTime datetime )
+	public Clock at( OffsetDateTime datetime )
     {
         return fixed( datetime.toInstant(), datetime.getOffset() );
     }
 
-    public Clock at( ZonedDateTime datetime )
+	public Clock at( ZonedDateTime datetime )
     {
         return fixed( datetime.toInstant(), datetime.getZone() );
     }
 
-    public Clock with( TemporalAdjuster adjuster )
+	public Clock with( TemporalAdjuster adjuster )
     {
         return fixed( instant.with( adjuster ), zone );
     }
 
-    public Clock with( TemporalField field, long newValue )
+	public Clock with( TemporalField field, long newValue )
     {
         return fixed( instant.with( field, newValue ), zone );
     }
 
-    @Override
+	@Override
     public Clock apply( String when )
     {
         return this;
     }
 
-    @Override
+	@Override
     public ZoneId get()
     {
         return zone;
     }
 
-    @Override
+	@Override
     public Statement apply( Statement base, Description description )
     {
         return new Statement()
@@ -173,7 +166,7 @@ public class FrozenClockRule extends Clock implements TestRule, Function<String,
         };
     }
 
-    static <V extends TemporalValue<?,V>> void assertEqualTemporal( V expected, V actual )
+	static <V extends TemporalValue<?,V>> void assertEqualTemporal( V expected, V actual )
     {
         assertThat( actual, allOf(
                 equalTo( expected ),
@@ -181,7 +174,7 @@ public class FrozenClockRule extends Clock implements TestRule, Function<String,
                 equalOn( "temporal", TemporalValue::temporal, expected ) ) );
     }
 
-    private static ZoneId timezone( TemporalValue<?,?> temporal )
+	private static ZoneId timezone( TemporalValue<?,?> temporal )
     {
         if ( temporal instanceof DateTimeValue )
         {
@@ -194,7 +187,7 @@ public class FrozenClockRule extends Clock implements TestRule, Function<String,
         return null;
     }
 
-    private static <T, U> Matcher<T> equalOn( String trait, Function<T,U> mapping, T expected )
+	private static <T, U> Matcher<T> equalOn( String trait, Function<T,U> mapping, T expected )
     {
         return new TypeSafeDiagnosingMatcher<T>( expected.getClass() )
         {
@@ -219,5 +212,12 @@ public class FrozenClockRule extends Clock implements TestRule, Function<String,
                 description.appendText( trait ).appendText( " should be equal" );
             }
         };
+    }
+
+	@Target( ElementType.METHOD )
+    @Retention( RetentionPolicy.RUNTIME )
+    @interface TimeZone
+    {
+        String[] value();
     }
 }

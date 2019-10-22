@@ -59,7 +59,7 @@ public class StoreLocker implements Closeable
      *
      * @throws StoreLockException if lock could not be acquired
      */
-    public void checkLock() throws StoreLockException
+    public void checkLock()
     {
         if ( haveLockAlready() )
         {
@@ -113,7 +113,7 @@ public class StoreLocker implements Closeable
     {
         String help = "Please ensure no other process is using this database, and that the directory is writable " +
                 "(required even for read-only access)";
-        return new StoreLockException( message + ". " + help, e );
+        return new StoreLockException( new StringBuilder().append(message).append(". ").append(help).toString(), e );
     }
 
     @Override

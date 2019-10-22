@@ -34,7 +34,9 @@ public class TestLengthyArrayPacking extends AbstractNeo4jTestCase
 {
     private static final String SOME_MIXED_CHARS = "abc421#¤åäö(/&€";
     private static final String SOME_LATIN_1_CHARS = "abcdefghijklmnopqrstuvwxyz";
-    @Test
+	private final DynamicRecordCounter arrayRecordCounter = new ArrayRecordCounter();
+	private final DynamicRecordCounter stringRecordCounter = new StringRecordCounter();
+	@Test
     public void bitPackingOfLengthyArrays()
     {
         long arrayRecordsBefore = dynamicArrayRecordsInUse();
@@ -56,23 +58,23 @@ public class TestLengthyArrayPacking extends AbstractNeo4jTestCase
         assertTrue( Arrays.equals( arrayWhichUnpackedWouldFillTwoDynamicRecords, (int[]) node.getProperty( key ) ) );
     }
 
-    // Tests for strings, although the test class name suggests otherwise
+	// Tests for strings, although the test class name suggests otherwise
 
     @Test
     public void makeSureLongLatin1StringUsesOneBytePerChar()
     {
         String string = stringOfLength( SOME_LATIN_1_CHARS, DEFAULT_DATA_BLOCK_SIZE * 2 - 1 );
-        makeSureRightAmountOfDynamicRecordsUsed( string, 2, STRING_RECORD_COUNTER );
+        makeSureRightAmountOfDynamicRecordsUsed( string, 2, stringRecordCounter );
     }
 
-    @Test
+	@Test
     public void makeSureLongUtf8StringUsesLessThanTwoBytesPerChar()
     {
         String string = stringOfLength( SOME_MIXED_CHARS, DEFAULT_DATA_BLOCK_SIZE + 10 );
-        makeSureRightAmountOfDynamicRecordsUsed( string, 2, STRING_RECORD_COUNTER );
+        makeSureRightAmountOfDynamicRecordsUsed( string, 2, stringRecordCounter );
     }
 
-    @Test
+	@Test
     public void makeSureLongLatin1StringArrayUsesOneBytePerChar()
     {
         // Exactly 120 bytes: 5b header + (19+4)*5. w/o compression 5+(19*2 + 4)*5
@@ -81,10 +83,10 @@ public class TestLengthyArrayPacking extends AbstractNeo4jTestCase
         {
             stringArray[i] = stringOfLength( SOME_LATIN_1_CHARS, 19 );
         }
-        makeSureRightAmountOfDynamicRecordsUsed( stringArray, 1, ARRAY_RECORD_COUNTER );
+        makeSureRightAmountOfDynamicRecordsUsed( stringArray, 1, arrayRecordCounter );
     }
 
-    @Test
+	@Test
     public void makeSureLongUtf8StringArrayUsesLessThanTwoBytePerChar()
     {
         String[] stringArray = new String[7];
@@ -92,10 +94,10 @@ public class TestLengthyArrayPacking extends AbstractNeo4jTestCase
         {
             stringArray[i] = stringOfLength( SOME_MIXED_CHARS, 20 );
         }
-        makeSureRightAmountOfDynamicRecordsUsed( stringArray, 2, ARRAY_RECORD_COUNTER );
+        makeSureRightAmountOfDynamicRecordsUsed( stringArray, 2, arrayRecordCounter );
     }
 
-    private void makeSureRightAmountOfDynamicRecordsUsed( Object value, int expectedAddedDynamicRecords,
+	private void makeSureRightAmountOfDynamicRecordsUsed( Object value, int expectedAddedDynamicRecords,
             DynamicRecordCounter recordCounter )
     {
         long stringRecordsBefore = recordCounter.count();
@@ -106,7 +108,7 @@ public class TestLengthyArrayPacking extends AbstractNeo4jTestCase
         assertEquals( stringRecordsBefore + expectedAddedDynamicRecords, stringRecordsAfter );
     }
 
-    private String stringOfLength( String possibilities, int length )
+	private String stringOfLength( String possibilities, int length )
     {
         StringBuilder builder = new StringBuilder();
         for ( int i = 0; i < length; i++ )
@@ -115,7 +117,6 @@ public class TestLengthyArrayPacking extends AbstractNeo4jTestCase
         }
         return builder.toString();
     }
-
     private interface DynamicRecordCounter
     {
         long count();
@@ -138,7 +139,4 @@ public class TestLengthyArrayPacking extends AbstractNeo4jTestCase
             return dynamicStringRecordsInUse();
         }
     }
-
-    private final DynamicRecordCounter ARRAY_RECORD_COUNTER = new ArrayRecordCounter();
-    private final DynamicRecordCounter STRING_RECORD_COUNTER = new StringRecordCounter();
 }

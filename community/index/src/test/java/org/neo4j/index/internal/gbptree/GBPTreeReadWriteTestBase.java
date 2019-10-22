@@ -147,7 +147,7 @@ public abstract class GBPTreeReadWriteTestBase<KEY,VALUE>
                     long hitSeed = layout.keySeed( hit );
                     if ( hitSeed < prev )
                     {
-                        fail( hit + " smaller than prev " + prev );
+                        fail( new StringBuilder().append(hit).append(" smaller than prev ").append(prev).toString() );
                     }
                     prev = hitSeed;
                     assertTrue( removeFromList( seen, hit ) );

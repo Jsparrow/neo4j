@@ -50,7 +50,7 @@ public interface SchemaRule extends SchemaDescriptorSupplier
                 char ch = name.charAt( i );
                 if ( ch == '\0' )
                 {
-                    throw new IllegalArgumentException( "Illegal schema rule name: '" + name + "'" );
+                    throw new IllegalArgumentException( new StringBuilder().append("Illegal schema rule name: '").append(name).append("'").toString() );
                 }
             }
         }
@@ -71,7 +71,7 @@ public interface SchemaRule extends SchemaDescriptorSupplier
                 char ch = name.charAt( i );
                 if ( ch == '\0' )
                 {
-                    throw new IllegalArgumentException( "Illegal schema rule name: '" + name + "'" );
+                    throw new IllegalArgumentException( new StringBuilder().append("Illegal schema rule name: '").append(name).append("'").toString() );
                 }
             }
         }

@@ -90,43 +90,10 @@ import static org.neo4j.values.storable.Values.COMPARATOR;
 @ExtendWith( TestDirectoryExtension.class )
 class IndexConfigMigrationIT
 {
-    private enum MinMaxSetting
-    {
-        wgs84MinX( makeCRSRangeSetting( WGS84, 0, "min" ), "-1" ),
-        wgs84MinY( makeCRSRangeSetting( WGS84, 1, "min" ), "-2" ),
-        wgs84MaxX( makeCRSRangeSetting( WGS84, 0, "max" ), "3" ),
-        wgs84MaxY( makeCRSRangeSetting( WGS84, 1, "max" ), "4" ),
-        wgs84_3DMinX( makeCRSRangeSetting( WGS84_3D, 0, "min" ), "-5" ),
-        wgs84_3DMinY( makeCRSRangeSetting( WGS84_3D, 1, "min" ), "-6" ),
-        wgs84_3DMinZ( makeCRSRangeSetting( WGS84_3D, 2, "min" ), "-7" ),
-        wgs84_3DMaxX( makeCRSRangeSetting( WGS84_3D, 0, "max" ), "8" ),
-        wgs84_3DMaxY( makeCRSRangeSetting( WGS84_3D, 1, "max" ), "9" ),
-        wgs84_3DMaxZ( makeCRSRangeSetting( WGS84_3D, 2, "max" ), "10" ),
-        cartesianMinX( makeCRSRangeSetting( Cartesian, 0, "min" ), "-11" ),
-        cartesianMinY( makeCRSRangeSetting( Cartesian, 1, "min" ), "-12" ),
-        cartesianMaxX( makeCRSRangeSetting( Cartesian, 0, "max" ), "13" ),
-        cartesianMaxY( makeCRSRangeSetting( Cartesian, 1, "max" ), "14" ),
-        cartesian_3DMinX( makeCRSRangeSetting( Cartesian_3D, 0, "min" ), "-15" ),
-        cartesian_3DMinY( makeCRSRangeSetting( Cartesian_3D, 1, "min" ), "-16" ),
-        cartesian_3DMinZ( makeCRSRangeSetting( Cartesian_3D, 2, "min" ), "-17" ),
-        cartesian_3DMaxX( makeCRSRangeSetting( Cartesian_3D, 0, "max" ), "18" ),
-        cartesian_3DMaxY( makeCRSRangeSetting( Cartesian_3D, 1, "max" ), "19" ),
-        cartesian_3DMaxZ( makeCRSRangeSetting( Cartesian_3D, 2, "max" ), "20" );
-
-        private final Setting<Double> setting;
-        private final String settingValue;
-
-        MinMaxSetting( Setting<Double> setting, String settingValue )
-        {
-            this.setting = setting;
-            this.settingValue = settingValue;
-        }
-    }
-
     private static final String space_filling_curve_max_bits_value = "30";
-    private static final Map<String,Value> staticExpectedIndexConfig = new HashMap<>();
+	private static final Map<String,Value> staticExpectedIndexConfig = new HashMap<>();
 
-    static
+	static
     {
         staticExpectedIndexConfig.put( "spatial.wgs-84.tableId", Values.intValue( 1 ) );
         staticExpectedIndexConfig.put( "spatial.wgs-84.code", Values.intValue( 4326 ) );
@@ -157,41 +124,18 @@ class IndexConfigMigrationIT
         staticExpectedIndexConfig.put( "spatial.cartesian-3d.max", Values.doubleArray( new double[]{18.0, 19.0, 20.0} ) );
     }
 
-    private static final String ZIP_FILE_3_5 = "IndexConfigMigrationIT-3_5-db.zip";
-
-    // Schema index
+	private static final String ZIP_FILE_3_5 = "IndexConfigMigrationIT-3_5-db.zip";
+	// Schema index
     private static final String propKey = "key";
-    private static final Label label1 = Label.label( "label1" );
-    private static final Label label2 = Label.label( "label2" );
-    private static final Label label3 = Label.label( "label3" );
-    private static final Label label4 = Label.label( "label4" );
-    private static final Label[] labels = {label1, label2, label3, label4};
-
-    // Fulltext index
-    private enum FulltextIndexDescription
-    {
-        BOTH( "fulltextBoth", true, "fulltextToken1", asConfigMap( "simple", true ) ),
-        ANALYZER_ONLY( "fulltextAnalyzer", false, "fulltextToken2", asConfigMap( "russian" ) ),
-        EVENTUALLY_CONSISTENY_ONLY( "fulltextEC", true, "fulltextToken3", asConfigMap( true ) );
-
-        private final String indexName;
-        private final String indexProcedure;
-        private final String tokenName;
-        private final Map<String,Value> configMap;
-
-        FulltextIndexDescription( String indexName, boolean nodeIndex, String tokenName, Map<String,Value> configMap )
-        {
-            this.indexName = indexName;
-            this.tokenName = tokenName;
-            this.configMap = configMap;
-            this.indexProcedure = nodeIndex ? "createNodeIndex" : "createRelationshipIndex";
-        }
-    }
-
-    @Inject
+	private static final Label label1 = Label.label( "label1" );
+	private static final Label label2 = Label.label( "label2" );
+	private static final Label label3 = Label.label( "label3" );
+	private static final Label label4 = Label.label( "label4" );
+	private static final Label[] labels = {label1, label2, label3, label4};
+	@Inject
     private TestDirectory directory;
 
-    private static File tempStoreDirectory() throws IOException
+	private static File tempStoreDirectory() throws IOException
     {
         File file = File.createTempFile( "create-db", "neo4j" );
         File storeDir = new File( file.getAbsoluteFile().getParentFile(), file.getName() );
@@ -199,7 +143,7 @@ class IndexConfigMigrationIT
         return storeDir;
     }
 
-    @Disabled( "Here as reference for how 3.5 db was created" )
+	@Disabled( "Here as reference for how 3.5 db was created" )
     @Test
     void create3_5Database() throws Exception
     {
@@ -224,7 +168,7 @@ class IndexConfigMigrationIT
         System.out.println( "Db created in " + zipFile.getAbsolutePath() );
     }
 
-    @Test
+	@Test
     void shouldHaveCorrectDataAndIndexConfiguration() throws IOException, IndexNotFoundKernelException
     {
         File storeDir = directory.databaseDir();
@@ -258,14 +202,13 @@ class IndexConfigMigrationIT
         }
     }
 
-    private static void assertIndexConfiguration( GraphDatabaseAPI db ) throws IndexNotFoundKernelException
+	private static void assertIndexConfiguration( GraphDatabaseAPI db ) throws IndexNotFoundKernelException
     {
         for ( Label label : labels )
         {
             Map<String,Value> actualIndexConfig = getIndexConfig( db, label, propKey );
             Map<String,Value> expectedIndexConfig = new HashMap<>( staticExpectedIndexConfig );
-            for ( Map.Entry<String,Value> entry : actualIndexConfig.entrySet() )
-            {
+            actualIndexConfig.entrySet().forEach(entry -> {
                 String actualKey = entry.getKey();
                 Value actualValue = entry.getValue();
                 Value expectedValue = expectedIndexConfig.remove( actualKey );
@@ -273,27 +216,26 @@ class IndexConfigMigrationIT
                 assertEquals( 0, COMPARATOR.compare( expectedValue, actualValue ),
                         format( "Expected and actual index config value differed for %s, expected %s but was %s.", actualKey, expectedValue,
                                 actualValue ) );
-            }
+            });
             assertTrue( expectedIndexConfig.isEmpty(), "Actual index config was missing some values: " + expectedIndexConfig );
         }
     }
 
-    private static void assertFulltextIndexConfiguration( GraphDatabaseAPI db ) throws IndexNotFoundKernelException
+	private static void assertFulltextIndexConfiguration( GraphDatabaseAPI db ) throws IndexNotFoundKernelException
     {
         for ( FulltextIndexDescription fulltextIndex : FulltextIndexDescription.values() )
         {
             Map<String,Value> actualIndexConfig = getFulltextIndexConfig( db, fulltextIndex.indexName );
-            for ( Map.Entry<String,Value> expectedEntry : fulltextIndex.configMap.entrySet() )
-            {
+            fulltextIndex.configMap.entrySet().forEach(expectedEntry -> {
                 Value actualValue = actualIndexConfig.get( expectedEntry.getKey() );
                 assertEquals( expectedEntry.getValue(), actualValue,
                         format( "Index did not have expected config, %s.%nExpected: %s%nActual: %s ",
                                 fulltextIndex.indexName, fulltextIndex.configMap, actualIndexConfig ) );
-            }
+            });
         }
     }
 
-    private static Map<String,Value> getFulltextIndexConfig( GraphDatabaseAPI db, String indexName ) throws IndexNotFoundKernelException
+	private static Map<String,Value> getFulltextIndexConfig( GraphDatabaseAPI db, String indexName ) throws IndexNotFoundKernelException
     {
         IndexingService indexingService = getIndexingService( db );
         IndexReference indexReference = schemaRead( db ).indexGetForName( indexName );
@@ -301,7 +243,7 @@ class IndexConfigMigrationIT
         return indexProxy.indexConfig();
     }
 
-    @SuppressWarnings( "SameParameterValue" )
+	@SuppressWarnings( "SameParameterValue" )
     private static Map<String,Value> getIndexConfig( GraphDatabaseAPI db, Label label, String propKey )
             throws IndexNotFoundKernelException
     {
@@ -313,15 +255,15 @@ class IndexConfigMigrationIT
         return indexProxy.indexConfig();
     }
 
-    @SuppressWarnings( "SameParameterValue" )
+	@SuppressWarnings( "SameParameterValue" )
     private static void hasIndexCount( GraphDatabaseAPI db, int expectedIndexCount )
     {
         Iterable<IndexDefinition> indexes = db.schema().getIndexes();
         long actualIndexCount = Iterables.count( indexes );
-        assertEquals( expectedIndexCount, actualIndexCount, "Expected there to be " + expectedIndexCount + " indexes but was " + actualIndexCount );
+        assertEquals( expectedIndexCount, actualIndexCount, new StringBuilder().append("Expected there to be ").append(expectedIndexCount).append(" indexes but was ").append(actualIndexCount).toString() );
     }
 
-    private static void hasLabels( Node node, Label... labels )
+	private static void hasLabels( Node node, Label... labels )
     {
         for ( Label label : labels )
         {
@@ -329,7 +271,7 @@ class IndexConfigMigrationIT
         }
     }
 
-    private static void createSpatialData( GraphDatabaseService db, Label... labels )
+	private static void createSpatialData( GraphDatabaseService db, Label... labels )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -344,12 +286,12 @@ class IndexConfigMigrationIT
         }
     }
 
-    private static void createIndex( GraphDatabaseService db, String providerName, Label label )
+	private static void createIndex( GraphDatabaseService db, String providerName, Label label )
     {
         try ( Transaction tx = db.beginTx() )
         {
             String indexPattern = format( "\":%s(%s)\"", label.name(), propKey );
-            String indexProvider = "\"" + providerName + "\"";
+            String indexProvider = new StringBuilder().append("\"").append(providerName).append("\"").toString();
             db.execute( format( "CALL db.createIndex( %s, %s )", indexPattern, indexProvider ) ).close();
             tx.success();
         }
@@ -360,7 +302,7 @@ class IndexConfigMigrationIT
         }
     }
 
-    private static void createFulltextIndex( GraphDatabaseService db, String indexProcedure, String fulltextName, String token, String propKey,
+	private static void createFulltextIndex( GraphDatabaseService db, String indexProcedure, String fulltextName, String token, String propKey,
             Map<String,Value> configMap )
     {
         try ( Transaction tx = db.beginTx() )
@@ -368,14 +310,14 @@ class IndexConfigMigrationIT
             String labelArray = array( token );
             String propArray = array( propKey );
             String configString = asConfigString( configMap );
-            System.out.println( fulltextName + " created with config: " + configString );
-            String query = format( "CALL db.index.fulltext." + indexProcedure + "(\"%s\", %s, %s, %s )", fulltextName, labelArray, propArray, configString );
+            System.out.println( new StringBuilder().append(fulltextName).append(" created with config: ").append(configString).toString() );
+            String query = format( new StringBuilder().append("CALL db.index.fulltext.").append(indexProcedure).append("(\"%s\", %s, %s, %s )").toString(), fulltextName, labelArray, propArray, configString );
             db.execute( query ).close();
             tx.success();
         }
     }
 
-    private static Map<String,Value> asConfigMap( String analyzer, boolean eventuallyConsistent )
+	private static Map<String,Value> asConfigMap( String analyzer, boolean eventuallyConsistent )
     {
         Map<String,Value> map = new HashMap<>();
         map.put( INDEX_CONFIG_ANALYZER, Values.stringValue( analyzer ) );
@@ -383,33 +325,33 @@ class IndexConfigMigrationIT
         return map;
     }
 
-    private static Map<String,Value> asConfigMap( String analyzer )
+	private static Map<String,Value> asConfigMap( String analyzer )
     {
         Map<String,Value> map = new HashMap<>();
         map.put( INDEX_CONFIG_ANALYZER, Values.stringValue( analyzer ) );
         return map;
     }
 
-    private static Map<String,Value> asConfigMap( boolean eventuallyConsistent )
+	private static Map<String,Value> asConfigMap( boolean eventuallyConsistent )
     {
         Map<String,Value> map = new HashMap<>();
         map.put( INDEX_CONFIG_EVENTUALLY_CONSISTENT, Values.booleanValue( eventuallyConsistent ) );
         return map;
     }
 
-    private static String asConfigString( Map<String,Value> configMap )
+	private static String asConfigString( Map<String,Value> configMap )
     {
         StringJoiner joiner = new StringJoiner( ", ", "{", "}" );
-        configMap.forEach( ( k, v ) -> joiner.add( k + ": \"" + v.asObject() + "\"" ) );
+        configMap.forEach( ( k, v ) -> joiner.add( new StringBuilder().append(k).append(": \"").append(v.asObject()).append("\"").toString() ) );
         return joiner.toString();
     }
 
-    private static String array( String... args )
+	private static String array( String... args )
     {
         return Arrays.stream( args ).collect( Collectors.joining( "\", \"", "[\"", "\"]" ) );
     }
 
-    private static void setSpatialConfig( GraphDatabaseBuilder builder )
+	private static void setSpatialConfig( GraphDatabaseBuilder builder )
     {
         builder.setConfig( space_filling_curve_max_bits, space_filling_curve_max_bits_value );
         for ( MinMaxSetting minMaxSetting : MinMaxSetting.values() )
@@ -418,18 +360,72 @@ class IndexConfigMigrationIT
         }
     }
 
-    private static IndexingService getIndexingService( GraphDatabaseAPI db )
+	private static IndexingService getIndexingService( GraphDatabaseAPI db )
     {
         return db.getDependencyResolver().resolveDependency( IndexingService.class );
     }
 
-    private static TokenRead tokenRead( GraphDatabaseAPI db )
+	private static TokenRead tokenRead( GraphDatabaseAPI db )
     {
         return db.getDependencyResolver().resolveDependency( ThreadToStatementContextBridge.class ).getKernelTransactionBoundToThisThread( false ).tokenRead();
     }
 
-    private static SchemaRead schemaRead( GraphDatabaseAPI db )
+	private static SchemaRead schemaRead( GraphDatabaseAPI db )
     {
         return db.getDependencyResolver().resolveDependency( ThreadToStatementContextBridge.class ).getKernelTransactionBoundToThisThread( false ).schemaRead();
+    }
+
+	private enum MinMaxSetting
+    {
+        wgs84MinX( makeCRSRangeSetting( WGS84, 0, "min" ), "-1" ),
+        wgs84MinY( makeCRSRangeSetting( WGS84, 1, "min" ), "-2" ),
+        wgs84MaxX( makeCRSRangeSetting( WGS84, 0, "max" ), "3" ),
+        wgs84MaxY( makeCRSRangeSetting( WGS84, 1, "max" ), "4" ),
+        wgs84_3DMinX( makeCRSRangeSetting( WGS84_3D, 0, "min" ), "-5" ),
+        wgs84_3DMinY( makeCRSRangeSetting( WGS84_3D, 1, "min" ), "-6" ),
+        wgs84_3DMinZ( makeCRSRangeSetting( WGS84_3D, 2, "min" ), "-7" ),
+        wgs84_3DMaxX( makeCRSRangeSetting( WGS84_3D, 0, "max" ), "8" ),
+        wgs84_3DMaxY( makeCRSRangeSetting( WGS84_3D, 1, "max" ), "9" ),
+        wgs84_3DMaxZ( makeCRSRangeSetting( WGS84_3D, 2, "max" ), "10" ),
+        cartesianMinX( makeCRSRangeSetting( Cartesian, 0, "min" ), "-11" ),
+        cartesianMinY( makeCRSRangeSetting( Cartesian, 1, "min" ), "-12" ),
+        cartesianMaxX( makeCRSRangeSetting( Cartesian, 0, "max" ), "13" ),
+        cartesianMaxY( makeCRSRangeSetting( Cartesian, 1, "max" ), "14" ),
+        cartesian_3DMinX( makeCRSRangeSetting( Cartesian_3D, 0, "min" ), "-15" ),
+        cartesian_3DMinY( makeCRSRangeSetting( Cartesian_3D, 1, "min" ), "-16" ),
+        cartesian_3DMinZ( makeCRSRangeSetting( Cartesian_3D, 2, "min" ), "-17" ),
+        cartesian_3DMaxX( makeCRSRangeSetting( Cartesian_3D, 0, "max" ), "18" ),
+        cartesian_3DMaxY( makeCRSRangeSetting( Cartesian_3D, 1, "max" ), "19" ),
+        cartesian_3DMaxZ( makeCRSRangeSetting( Cartesian_3D, 2, "max" ), "20" );
+
+        private final Setting<Double> setting;
+        private final String settingValue;
+
+        MinMaxSetting( Setting<Double> setting, String settingValue )
+        {
+            this.setting = setting;
+            this.settingValue = settingValue;
+        }
+    }
+
+	// Fulltext index
+    private enum FulltextIndexDescription
+    {
+        BOTH( "fulltextBoth", true, "fulltextToken1", asConfigMap( "simple", true ) ),
+        ANALYZER_ONLY( "fulltextAnalyzer", false, "fulltextToken2", asConfigMap( "russian" ) ),
+        EVENTUALLY_CONSISTENY_ONLY( "fulltextEC", true, "fulltextToken3", asConfigMap( true ) );
+
+        private final String indexName;
+        private final String indexProcedure;
+        private final String tokenName;
+        private final Map<String,Value> configMap;
+
+        FulltextIndexDescription( String indexName, boolean nodeIndex, String tokenName, Map<String,Value> configMap )
+        {
+            this.indexName = indexName;
+            this.tokenName = tokenName;
+            this.configMap = configMap;
+            this.indexProcedure = nodeIndex ? "createNodeIndex" : "createRelationshipIndex";
+        }
     }
 }

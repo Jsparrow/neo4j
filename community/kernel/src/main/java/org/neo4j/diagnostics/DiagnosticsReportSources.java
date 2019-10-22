@@ -75,12 +75,11 @@ public class DiagnosticsReportSources
         files.add( newDiagnosticsFile( destination, fs, file ) );
 
         List<File> allArchives = getAllArchives( fs, file );
-        for ( File archive : allArchives )
-        {
+        allArchives.forEach(archive -> {
             String name = archive.getName();
             String n = name.substring( name.lastIndexOf( '.' ) );
-            files.add( newDiagnosticsFile( destination + "." + n, fs, archive ) );
-        }
+            files.add( newDiagnosticsFile( new StringBuilder().append(destination).append(".").append(n).toString(), fs, archive ) );
+        });
         return files;
     }
 

@@ -33,7 +33,14 @@ import static org.neo4j.graphdb.Direction.BOTH;
  */
 public class PathExpanderBuilder
 {
-    /**
+    private final StandardExpander expander;
+
+	private PathExpanderBuilder( StandardExpander expander )
+    {
+        this.expander = expander;
+    }
+
+	/**
      * A {@link PathExpanderBuilder} that follows no relationships. You start with this and use
      * {@link #add(RelationshipType, Direction)} to form a restrictive PathExpander with just a few expansion rules
      * in it.
@@ -45,7 +52,7 @@ public class PathExpanderBuilder
         return new PathExpanderBuilder( StandardExpander.EMPTY );
     }
 
-    /**
+	/**
      * A {@link PathExpanderBuilder} that follows no relationships. You start with this and use
      * {@link #add(RelationshipType, Direction)} to form a restrictive PathExpander with just a few expansion rules
      * in it.
@@ -57,7 +64,7 @@ public class PathExpanderBuilder
         return new PathExpanderBuilder( new OrderedByTypeExpander() );
     }
 
-    /**
+	/**
      * A {@link PathExpanderBuilder} that is seeded with all possible relationship types in {@link Direction#BOTH both
      * directions}. You start with this and {@link #remove(RelationshipType) remove types} to form a permissive
      * {@link PathExpander} with just a few exceptions in it.
@@ -70,7 +77,7 @@ public class PathExpanderBuilder
         return new PathExpanderBuilder( StandardExpander.DEFAULT );
     }
 
-    /**
+	/**
      * A {@link PathExpanderBuilder} seeded with all possible types but restricted to {@code direction}. You start
      * with this and {@link #remove(RelationshipType) remove types} to form a permissive {@link PathExpander} with
      * just a few exceptions in it.
@@ -83,7 +90,7 @@ public class PathExpanderBuilder
         return new PathExpanderBuilder( StandardExpander.create( direction ) );
     }
 
-    /**
+	/**
      * Add a pair of {@code type} and {@link Direction#BOTH} to the PathExpander configuration.
      *
      * @param type the type to add for expansion in both directions
@@ -94,7 +101,7 @@ public class PathExpanderBuilder
         return add( type, BOTH );
     }
 
-    /**
+	/**
      * Add a pair of {@code type} and {@code direction} to the PathExpander configuration.
      *
      * @param type the type to add for expansion
@@ -106,7 +113,7 @@ public class PathExpanderBuilder
         return new PathExpanderBuilder( expander.add( type, direction ) );
     }
 
-    /**
+	/**
      * Remove expansion of {@code type} in any direction from the PathExpander configuration.
      * <p>
      * Example: {@code PathExpanderBuilder.allTypesAndDirections().remove(type).add(type, Direction.INCOMING)}
@@ -121,7 +128,7 @@ public class PathExpanderBuilder
         return new PathExpanderBuilder( expander.remove( type ) );
     }
 
-    /**
+	/**
      * Adds a {@link Node} filter.
      *
      * @param filter a Predicate for filtering nodes.
@@ -132,7 +139,7 @@ public class PathExpanderBuilder
         return new PathExpanderBuilder( expander.addNodeFilter( filter ) );
     }
 
-    /**
+	/**
      * Adds a {@link Relationship} filter.
      *
      * @param filter a Predicate for filtering relationships.
@@ -143,7 +150,7 @@ public class PathExpanderBuilder
         return new PathExpanderBuilder( expander.addRelationshipFilter( filter ) );
     }
 
-    /**
+	/**
      * Produce a {@link PathExpander} from the configuration you have built up.
      *
      * @param <STATE> the type of the object holding the state
@@ -153,12 +160,5 @@ public class PathExpanderBuilder
     public <STATE> PathExpander<STATE> build()
     {
         return expander;
-    }
-
-    private final StandardExpander expander;
-
-    private PathExpanderBuilder( StandardExpander expander )
-    {
-        this.expander = expander;
     }
 }

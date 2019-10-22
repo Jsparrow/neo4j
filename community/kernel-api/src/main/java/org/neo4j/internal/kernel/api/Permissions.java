@@ -24,25 +24,25 @@ import java.util.EnumSet;
 
 public final class Permissions
 {
-    enum Grant
+    private final EnumSet<Grant> grants;
+
+	Permissions( Grant... grants )
+    {
+        this.grants = EnumSet.noneOf( Grant.class );
+        Collections.addAll( this.grants, grants );
+    }
+
+	boolean permits( Grant grant )
+    {
+        return grants.contains( grant );
+    }
+
+	enum Grant
     {
         DATA_READ,
         DATA_WRITE,
         SCHEMA_READ,
         SCHEMA_WRITE,
         TOKEN_WRITE
-    }
-
-    private final EnumSet<Grant> grants;
-
-    Permissions( Grant... grants )
-    {
-        this.grants = EnumSet.noneOf( Grant.class );
-        Collections.addAll( this.grants, grants );
-    }
-
-    boolean permits( Grant grant )
-    {
-        return grants.contains( grant );
     }
 }

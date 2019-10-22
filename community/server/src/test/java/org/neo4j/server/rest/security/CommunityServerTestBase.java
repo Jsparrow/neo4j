@@ -71,7 +71,7 @@ public class CommunityServerTestBase extends ExclusiveServerTestBase
 
     protected String passwordURL( String username )
     {
-        return server.baseUri().resolve( "user/" + username + "/password" ).toString();
+        return server.baseUri().resolve( new StringBuilder().append("user/").append(username).append("/password").toString() ).toString();
     }
 
     protected String txCommitURL()

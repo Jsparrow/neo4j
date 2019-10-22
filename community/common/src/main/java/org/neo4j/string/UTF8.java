@@ -29,22 +29,27 @@ public class UTF8
 {
     public static final int MINIMUM_SERIALISED_LENGTH_BYTES = Integer.BYTES;
 
-    public static byte[] encode( String string )
+    private UTF8()
+    {
+        throw new AssertionError( "no instance" );
+    }
+
+	public static byte[] encode( String string )
     {
         return string.getBytes( StandardCharsets.UTF_8 );
     }
 
-    public static String decode( byte[] bytes )
+	public static String decode( byte[] bytes )
     {
         return new String( bytes, StandardCharsets.UTF_8 );
     }
 
-    public static String decode( byte[] bytes, int offset, int length )
+	public static String decode( byte[] bytes, int offset, int length )
     {
         return new String( bytes, offset, length, StandardCharsets.UTF_8 );
     }
 
-    public static String getDecodedStringFrom( ByteBuffer source )
+	public static String getDecodedStringFrom( ByteBuffer source )
     {
         // Currently only one key is supported although the data format supports multiple
         int count = source.getInt();
@@ -58,27 +63,22 @@ public class UTF8
         return UTF8.decode( data );
     }
 
-    private static IllegalArgumentException badStringFormatException( int count, int remaining )
+	private static IllegalArgumentException badStringFormatException( int count, int remaining )
     {
         return new IllegalArgumentException(
-                "Bad string format; claims string is " + count + " bytes long, " +
-                "but only " + remaining + " bytes remain in buffer" );
+                new StringBuilder().append("Bad string format; claims string is ").append(count).append(" bytes long, ").append("but only ").append(remaining).append(" bytes remain in buffer")
+						.toString() );
     }
 
-    public static void putEncodedStringInto( String text, ByteBuffer target )
+	public static void putEncodedStringInto( String text, ByteBuffer target )
     {
         byte[] data = encode( text );
         target.putInt( data.length );
         target.put( data );
     }
 
-    public static int computeRequiredByteBufferSize( String text )
+	public static int computeRequiredByteBufferSize( String text )
     {
         return encode( text ).length + 4;
-    }
-
-    private UTF8()
-    {
-        throw new AssertionError( "no instance" );
     }
 }

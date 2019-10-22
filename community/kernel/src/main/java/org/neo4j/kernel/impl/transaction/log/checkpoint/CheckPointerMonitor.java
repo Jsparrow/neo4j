@@ -21,10 +21,6 @@ package org.neo4j.kernel.impl.transaction.log.checkpoint;
 
 public interface CheckPointerMonitor
 {
-    long numberOfCheckPointEvents();
-
-    long checkPointAccumulatedTotalTimeMillis();
-
     CheckPointerMonitor NULL = new CheckPointerMonitor()
     {
         @Override
@@ -39,4 +35,8 @@ public interface CheckPointerMonitor
             return 0;
         }
     };
+
+	long numberOfCheckPointEvents();
+
+	long checkPointAccumulatedTotalTimeMillis();
 }

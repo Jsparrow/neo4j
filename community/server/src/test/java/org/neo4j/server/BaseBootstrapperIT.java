@@ -203,7 +203,7 @@ public abstract class BaseBootstrapperIT extends ExclusiveServerTestBase
 
     protected String configOption( Setting<?> setting, String value )
     {
-        return setting.name() + "=" + value;
+        return new StringBuilder().append(setting.name()).append("=").append(value).toString();
     }
 
     protected static String[] withConnectorsOnRandomPortsConfig( String... otherConfigs )
@@ -212,7 +212,7 @@ public abstract class BaseBootstrapperIT extends ExclusiveServerTestBase
 
         Stream<String> connectorsConfig = connectorsOnRandomPortsConfig().entrySet()
                 .stream()
-                .map( entry -> entry.getKey() + "=" + entry.getValue() )
+                .map( entry -> new StringBuilder().append(entry.getKey()).append("=").append(entry.getValue()).toString() )
                 .flatMap( config -> Stream.of( "-c", config ) );
 
         return Stream.concat( configs, connectorsConfig ).toArray( String[]::new );

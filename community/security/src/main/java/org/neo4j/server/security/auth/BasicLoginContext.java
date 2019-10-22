@@ -54,7 +54,19 @@ public class BasicLoginContext implements LoginContext
         }
     }
 
-    private class BasicAuthSubject implements AuthSubject
+    @Override
+    public AuthSubject subject()
+    {
+        return authSubject;
+    }
+
+	@Override
+    public SecurityContext authorize( ToIntFunction<String> propertyIdLookup, String dbName )
+    {
+        return new SecurityContext( authSubject, accessMode );
+    }
+
+	private class BasicAuthSubject implements AuthSubject
     {
         private User user;
         private AuthenticationResult authenticationResult;
@@ -81,11 +93,11 @@ public class BasicLoginContext implements LoginContext
         @Override
         public void setPasswordChangeNoLongerRequired()
         {
-            if ( authenticationResult == PASSWORD_CHANGE_REQUIRED )
-            {
-                authenticationResult = SUCCESS;
-                accessMode = AccessMode.Static.FULL;
-            }
+            if (authenticationResult != PASSWORD_CHANGE_REQUIRED) {
+				return;
+			}
+			authenticationResult = SUCCESS;
+			accessMode = AccessMode.Static.FULL;
         }
 
         @Override
@@ -99,17 +111,5 @@ public class BasicLoginContext implements LoginContext
         {
             return username().equals( username );
         }
-    }
-
-    @Override
-    public AuthSubject subject()
-    {
-        return authSubject;
-    }
-
-    @Override
-    public SecurityContext authorize( ToIntFunction<String> propertyIdLookup, String dbName )
-    {
-        return new SecurityContext( authSubject, accessMode );
     }
 }

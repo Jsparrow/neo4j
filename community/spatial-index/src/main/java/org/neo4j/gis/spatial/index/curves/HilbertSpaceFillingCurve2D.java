@@ -31,7 +31,69 @@ import static org.neo4j.gis.spatial.index.curves.HilbertSpaceFillingCurve2D.Dire
 public class HilbertSpaceFillingCurve2D extends SpaceFillingCurve
 {
 
-    /**
+    private static EnumMap<Direction2D,HilbertCurve2D> curves = new EnumMap<>( Direction2D.class );
+	private static final HilbertCurve2D curveUp;
+
+	static
+    {
+        addCurveRule( 0, 1, 3, 2 );
+        addCurveRule( 0, 2, 3, 1 );
+        addCurveRule( 3, 1, 0, 2 );
+        addCurveRule( 3, 2, 0, 1 );
+        setChildren( UP, RIGHT, UP, UP, LEFT );
+        setChildren( RIGHT, UP, RIGHT, RIGHT, DOWN );
+        setChildren( DOWN, LEFT, DOWN, DOWN, RIGHT );
+        setChildren( LEFT, DOWN, LEFT, LEFT, UP );
+        curveUp = curves.get( UP );
+    }
+
+	public static final int MAX_LEVEL = 63 / 2 - 1;
+
+	public HilbertSpaceFillingCurve2D( Envelope range )
+    {
+        this( range, MAX_LEVEL );
+    }
+
+	public HilbertSpaceFillingCurve2D( Envelope range, int maxLevel )
+    {
+        super( range, maxLevel );
+        assert maxLevel <= MAX_LEVEL;
+        assert range.getDimension() == 2;
+    }
+
+	private static void addCurveRule( int... npointValues )
+    {
+        HilbertCurve2D curve = new HilbertCurve2D( npointValues );
+        Direction2D name = curve.name();
+        if ( !curves.containsKey( name ) )
+        {
+            curves.put( name, curve );
+        }
+    }
+
+	private static void setChildren( Direction2D parent, Direction2D... children )
+    {
+        HilbertCurve2D curve = curves.get( parent );
+        HilbertCurve2D[] childCurves = new HilbertCurve2D[children.length];
+        for ( int i = 0; i < children.length; i++ )
+        {
+            childCurves[i] = curves.get( children[i] );
+        }
+        curve.setChildren( childCurves );
+    }
+
+	@Override
+    protected CurveRule rootCurve()
+    {
+        return curveUp;
+    }
+
+	enum Direction2D
+    {
+        UP, RIGHT, LEFT, DOWN
+    }
+
+	/**
      * Description of the space filling curve structure
      */
     static class HilbertCurve2D extends CurveRule
@@ -84,69 +146,6 @@ public class HilbertSpaceFillingCurve2D extends SpaceFillingCurve
         {
             return String.valueOf( name() );
         }
-    }
-
-    enum Direction2D
-    {
-        UP, RIGHT, LEFT, DOWN
-    }
-
-    private static EnumMap<Direction2D,HilbertCurve2D> curves = new EnumMap<>( Direction2D.class );
-
-    private static void addCurveRule( int... npointValues )
-    {
-        HilbertCurve2D curve = new HilbertCurve2D( npointValues );
-        Direction2D name = curve.name();
-        if ( !curves.containsKey( name ) )
-        {
-            curves.put( name, curve );
-        }
-    }
-
-    private static void setChildren( Direction2D parent, Direction2D... children )
-    {
-        HilbertCurve2D curve = curves.get( parent );
-        HilbertCurve2D[] childCurves = new HilbertCurve2D[children.length];
-        for ( int i = 0; i < children.length; i++ )
-        {
-            childCurves[i] = curves.get( children[i] );
-        }
-        curve.setChildren( childCurves );
-    }
-
-    private static final HilbertCurve2D curveUp;
-
-    static
-    {
-        addCurveRule( 0, 1, 3, 2 );
-        addCurveRule( 0, 2, 3, 1 );
-        addCurveRule( 3, 1, 0, 2 );
-        addCurveRule( 3, 2, 0, 1 );
-        setChildren( UP, RIGHT, UP, UP, LEFT );
-        setChildren( RIGHT, UP, RIGHT, RIGHT, DOWN );
-        setChildren( DOWN, LEFT, DOWN, DOWN, RIGHT );
-        setChildren( LEFT, DOWN, LEFT, LEFT, UP );
-        curveUp = curves.get( UP );
-    }
-
-    public static final int MAX_LEVEL = 63 / 2 - 1;
-
-    public HilbertSpaceFillingCurve2D( Envelope range )
-    {
-        this( range, MAX_LEVEL );
-    }
-
-    public HilbertSpaceFillingCurve2D( Envelope range, int maxLevel )
-    {
-        super( range, maxLevel );
-        assert maxLevel <= MAX_LEVEL;
-        assert range.getDimension() == 2;
-    }
-
-    @Override
-    protected CurveRule rootCurve()
-    {
-        return curveUp;
     }
 
 }

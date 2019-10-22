@@ -25,7 +25,43 @@ import static org.neo4j.kernel.configuration.Settings.parseLongWithUnit;
 
 public class ThresholdConfigParser
 {
-    public static final class ThresholdConfigValue
+    private ThresholdConfigParser()
+    {
+    }
+
+	public static ThresholdConfigValue parse( String configValue )
+    {
+        String[] tokens = configValue.split( " " );
+        if ( tokens.length == 0 )
+        {
+            throw new IllegalArgumentException( new StringBuilder().append("Invalid log pruning configuration value '").append(configValue).append("'").toString() );
+        }
+
+        final String boolOrNumber = tokens[0];
+
+        if ( tokens.length == 1 )
+        {
+            switch ( boolOrNumber )
+            {
+            case "keep_all":
+            case "true":
+                return ThresholdConfigValue.NO_PRUNING;
+            case "keep_none":
+            case "false":
+                return ThresholdConfigValue.KEEP_LAST_FILE;
+            default:
+                throw new IllegalArgumentException( new StringBuilder().append("Invalid log pruning configuration value '").append(configValue).append("'. The form is 'true', 'false' or '<number><unit> <type>'. For example, '100k txs' ").append("will keep the 100 000 latest transactions.").toString() );
+            }
+        }
+        else
+        {
+            long thresholdValue = parseLongWithUnit( boolOrNumber );
+            String thresholdType = tokens[1];
+            return new ThresholdConfigValue( thresholdType, thresholdValue );
+        }
+    }
+
+	public static final class ThresholdConfigValue
     {
         static final ThresholdConfigValue NO_PRUNING = new ThresholdConfigValue( "false", -1 );
         static final ThresholdConfigValue KEEP_LAST_FILE = new ThresholdConfigValue( "entries", 1 );
@@ -58,44 +94,6 @@ public class ThresholdConfigParser
         public int hashCode()
         {
             return Objects.hash( type, value );
-        }
-    }
-
-    private ThresholdConfigParser()
-    {
-    }
-
-    public static ThresholdConfigValue parse( String configValue )
-    {
-        String[] tokens = configValue.split( " " );
-        if ( tokens.length == 0 )
-        {
-            throw new IllegalArgumentException( "Invalid log pruning configuration value '" + configValue + "'" );
-        }
-
-        final String boolOrNumber = tokens[0];
-
-        if ( tokens.length == 1 )
-        {
-            switch ( boolOrNumber )
-            {
-            case "keep_all":
-            case "true":
-                return ThresholdConfigValue.NO_PRUNING;
-            case "keep_none":
-            case "false":
-                return ThresholdConfigValue.KEEP_LAST_FILE;
-            default:
-                throw new IllegalArgumentException( "Invalid log pruning configuration value '" + configValue +
-                        "'. The form is 'true', 'false' or '<number><unit> <type>'. For example, '100k txs' " +
-                        "will keep the 100 000 latest transactions." );
-            }
-        }
-        else
-        {
-            long thresholdValue = parseLongWithUnit( boolOrNumber );
-            String thresholdType = tokens[1];
-            return new ThresholdConfigValue( thresholdType, thresholdValue );
         }
     }
 }

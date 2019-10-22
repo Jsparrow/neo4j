@@ -28,7 +28,108 @@ import org.neo4j.function.Factory;
 
 public class LinkedQueuePool<R> implements Pool<R>
 {
-    public interface Monitor<R>
+    private static final int DEFAULT_CHECK_INTERVAL = 60 * 1000;
+
+	private final Queue<R> unused = new ConcurrentLinkedQueue<>();
+
+	private final Monitor<R> monitor;
+
+	private final int minSize;
+
+	private final Factory<R> factory;
+
+	private final CheckStrategy checkStrategy;
+
+	// Guarded by nothing. Those are estimates, losing some values doesn't matter much
+    private final AtomicInteger allocated = new AtomicInteger( 0 );
+
+	private final AtomicInteger queueSize = new AtomicInteger( 0 );
+
+	private int currentPeakSize;
+
+	private int targetSize;
+
+	public LinkedQueuePool( int minSize, Factory<R> factory )
+    {
+        this( minSize, factory, new CheckStrategy.TimeoutCheckStrategy( DEFAULT_CHECK_INTERVAL ),
+                new Monitor.Adapter<>() );
+    }
+
+	public LinkedQueuePool( int minSize, Factory<R> factory, CheckStrategy strategy, Monitor<R> monitor )
+    {
+        this.minSize = minSize;
+        this.factory = factory;
+        this.currentPeakSize = 0;
+        this.targetSize = minSize;
+        this.checkStrategy = strategy;
+        this.monitor = monitor;
+    }
+
+	protected R create()
+    {
+        return factory.newInstance();
+    }
+
+	protected void dispose( R resource )
+    {
+        monitor.disposed( resource );
+        allocated.decrementAndGet();
+    }
+
+	@Override
+    public final R acquire()
+    {
+        R resource = unused.poll();
+        if ( resource == null )
+        {
+            resource = create();
+            allocated.incrementAndGet();
+            monitor.created( resource );
+        }
+        else
+        {
+            queueSize.decrementAndGet();
+        }
+        currentPeakSize = Math.max( currentPeakSize, allocated.get() - queueSize.get() );
+        if ( checkStrategy.shouldCheck() )
+        {
+            targetSize = Math.max( minSize, currentPeakSize );
+            monitor.updatedCurrentPeakSize( currentPeakSize );
+            currentPeakSize = 0;
+            monitor.updatedTargetSize( targetSize );
+        }
+
+        monitor.acquired( resource );
+        return resource;
+    }
+
+	@Override
+    public void release( R toRelease )
+    {
+        if ( queueSize.get() < targetSize )
+        {
+            unused.offer( toRelease );
+            queueSize.incrementAndGet();
+        }
+        else
+        {
+            dispose( toRelease );
+        }
+    }
+
+	/**
+     * Dispose of all pooled objects.
+     */
+    @Override
+    public void close()
+    {
+        for ( R resource = unused.poll(); resource != null; resource = unused.poll() )
+        {
+            dispose( resource );
+        }
+    }
+
+	public interface Monitor<R>
     {
         void updatedCurrentPeakSize( int currentPeakSize );
 
@@ -95,106 +196,12 @@ public class LinkedQueuePool<R> implements Pool<R>
             public boolean shouldCheck()
             {
                 long currentTime = clock.getAsLong();
-                if ( currentTime > lastCheckTime + interval )
-                {
-                    lastCheckTime = currentTime;
-                    return true;
-                }
-                return false;
+                if (!(currentTime > lastCheckTime + interval)) {
+					return false;
+				}
+				lastCheckTime = currentTime;
+				return true;
             }
-        }
-    }
-
-    private static final int DEFAULT_CHECK_INTERVAL = 60 * 1000;
-
-    private final Queue<R> unused = new ConcurrentLinkedQueue<>();
-    private final Monitor<R> monitor;
-    private final int minSize;
-    private final Factory<R> factory;
-    private final CheckStrategy checkStrategy;
-    // Guarded by nothing. Those are estimates, losing some values doesn't matter much
-    private final AtomicInteger allocated = new AtomicInteger( 0 );
-    private final AtomicInteger queueSize = new AtomicInteger( 0 );
-    private int currentPeakSize;
-    private int targetSize;
-
-    public LinkedQueuePool( int minSize, Factory<R> factory )
-    {
-        this( minSize, factory, new CheckStrategy.TimeoutCheckStrategy( DEFAULT_CHECK_INTERVAL ),
-                new Monitor.Adapter<>() );
-    }
-
-    public LinkedQueuePool( int minSize, Factory<R> factory, CheckStrategy strategy, Monitor<R> monitor )
-    {
-        this.minSize = minSize;
-        this.factory = factory;
-        this.currentPeakSize = 0;
-        this.targetSize = minSize;
-        this.checkStrategy = strategy;
-        this.monitor = monitor;
-    }
-
-    protected R create()
-    {
-        return factory.newInstance();
-    }
-
-    protected void dispose( R resource )
-    {
-        monitor.disposed( resource );
-        allocated.decrementAndGet();
-    }
-
-    @Override
-    public final R acquire()
-    {
-        R resource = unused.poll();
-        if ( resource == null )
-        {
-            resource = create();
-            allocated.incrementAndGet();
-            monitor.created( resource );
-        }
-        else
-        {
-            queueSize.decrementAndGet();
-        }
-        currentPeakSize = Math.max( currentPeakSize, allocated.get() - queueSize.get() );
-        if ( checkStrategy.shouldCheck() )
-        {
-            targetSize = Math.max( minSize, currentPeakSize );
-            monitor.updatedCurrentPeakSize( currentPeakSize );
-            currentPeakSize = 0;
-            monitor.updatedTargetSize( targetSize );
-        }
-
-        monitor.acquired( resource );
-        return resource;
-    }
-
-    @Override
-    public void release( R toRelease )
-    {
-        if ( queueSize.get() < targetSize )
-        {
-            unused.offer( toRelease );
-            queueSize.incrementAndGet();
-        }
-        else
-        {
-            dispose( toRelease );
-        }
-    }
-
-    /**
-     * Dispose of all pooled objects.
-     */
-    @Override
-    public void close()
-    {
-        for ( R resource = unused.poll(); resource != null; resource = unused.poll() )
-        {
-            dispose( resource );
         }
     }
 }

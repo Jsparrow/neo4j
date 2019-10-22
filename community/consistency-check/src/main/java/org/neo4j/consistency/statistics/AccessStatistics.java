@@ -58,10 +58,7 @@ public class AccessStatistics
 
     public void reset()
     {
-        for ( AccessStats accessStats : stats.values() )
-        {
-            accessStats.reset();
-        }
+        stats.values().forEach(AccessStats::reset);
     }
 
     public static class AccessStats
@@ -133,12 +130,12 @@ public class AccessStatistics
 
         public void upRead( long id )
         {
-            if ( prevReadId != id )
-            {
-                reads++;
-                incrementRandomReads( id, prevReadId );
-                prevReadId = id;
-            }
+            if (prevReadId == id) {
+				return;
+			}
+			reads++;
+			incrementRandomReads( id, prevReadId );
+			prevReadId = id;
         }
 
         private boolean notCloseBy( long id1, long id2 )
@@ -148,15 +145,15 @@ public class AccessStatistics
 
         public void upWrite( long id )
         {
-            if ( prevWriteId != id )
-            {
-                writes++;
-                if ( id > 0 && notCloseBy( id, prevWriteId ) )
-                {
-                    randomWrites++;
-                }
-                prevWriteId = id;
-            }
+            if (prevWriteId == id) {
+				return;
+			}
+			writes++;
+			if ( id > 0 && notCloseBy( id, prevWriteId ) )
+			{
+			    randomWrites++;
+			}
+			prevWriteId = id;
         }
 
         public synchronized void incrementRandomReads( long id1, long id2 )

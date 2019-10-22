@@ -73,13 +73,12 @@ public class TransactionLogFileInformation implements LogFileInformation
         }
 
         // Wasn't cached, go look for it
-        if ( logFiles.versionExists( version ) )
-        {
-            long previousVersionLastCommittedTx = logFiles.extractHeader( version ).lastCommittedTxId;
-            logHeaderCache.putHeader( version, previousVersionLastCommittedTx );
-            return previousVersionLastCommittedTx + 1;
-        }
-        return -1;
+		if (!logFiles.versionExists( version )) {
+			return -1;
+		}
+		long previousVersionLastCommittedTx = logFiles.extractHeader( version ).lastCommittedTxId;
+		logHeaderCache.putHeader( version, previousVersionLastCommittedTx );
+		return previousVersionLastCommittedTx + 1;
     }
 
     @Override

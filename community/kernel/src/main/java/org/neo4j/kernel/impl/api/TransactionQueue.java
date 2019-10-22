@@ -26,25 +26,19 @@ package org.neo4j.kernel.impl.api;
  */
 public class TransactionQueue
 {
-    @FunctionalInterface
-    public interface Applier
-    {
-        void apply( TransactionToApply first, TransactionToApply last ) throws Exception;
-    }
-
     private final int maxSize;
-    private final Applier applier;
-    private TransactionToApply first;
-    private TransactionToApply last;
-    private int size;
+	private final Applier applier;
+	private TransactionToApply first;
+	private TransactionToApply last;
+	private int size;
 
-    public TransactionQueue( int maxSize, Applier applier )
+	public TransactionQueue( int maxSize, Applier applier )
     {
         this.maxSize = maxSize;
         this.applier = applier;
     }
 
-    public void queue( TransactionToApply transaction ) throws Exception
+	public void queue( TransactionToApply transaction ) throws Exception
     {
         if ( isEmpty() )
         {
@@ -61,22 +55,22 @@ public class TransactionQueue
         }
     }
 
-    public void empty() throws Exception
+	public void empty() throws Exception
     {
-        if ( size > 0 )
-        {
-            applier.apply( first, last );
-            first = last = null;
-            size = 0;
-        }
+        if (size <= 0) {
+			return;
+		}
+		applier.apply( first, last );
+		first = last = null;
+		size = 0;
     }
 
-    public boolean isEmpty()
+	public boolean isEmpty()
     {
         return size == 0;
     }
 
-    public TransactionToApply first()
+	public TransactionToApply first()
     {
         if ( isEmpty() )
         {
@@ -85,12 +79,18 @@ public class TransactionQueue
         return first;
     }
 
-    public TransactionToApply last()
+	public TransactionToApply last()
     {
         if ( isEmpty() )
         {
             throw new IllegalStateException( "Nothing in queue" );
         }
         return last;
+    }
+
+	@FunctionalInterface
+    public interface Applier
+    {
+        void apply( TransactionToApply first, TransactionToApply last ) throws Exception;
     }
 }

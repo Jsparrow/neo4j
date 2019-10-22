@@ -37,17 +37,6 @@ public class AnnotationBasedConfigurationMigratorTest
 
     private static final AtomicBoolean wasCalled = new AtomicBoolean( false );
 
-    static class SomeSettings implements LoadableConfig
-    {
-        @SuppressWarnings( "unused" )
-        @Migrator
-        private static ConfigurationMigrator migrator = ( rawConfiguration, log ) ->
-        {
-            wasCalled.set( true );
-            return rawConfiguration;
-        };
-    }
-
     @Test
     public void migratorShouldGetPickedUp()
     {
@@ -62,6 +51,17 @@ public class AnnotationBasedConfigurationMigratorTest
         // Then
         assertThat( wasCalled.get(), is( true ) );
 
+    }
+
+	static class SomeSettings implements LoadableConfig
+    {
+        @SuppressWarnings( "unused" )
+        @Migrator
+        private static ConfigurationMigrator migrator = ( rawConfiguration, log ) ->
+        {
+            wasCalled.set( true );
+            return rawConfiguration;
+        };
     }
 
 }

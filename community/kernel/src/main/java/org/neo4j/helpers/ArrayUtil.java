@@ -35,28 +35,6 @@ import static java.util.Arrays.copyOf;
 public abstract class ArrayUtil
 {
     @Deprecated
-    public static int hashCode( Object array )
-    {
-        assert array.getClass().isArray() : array + " is not an array";
-
-        int length = Array.getLength( array );
-        int result = length;
-        for ( int i = 0; i < length; i++ )
-        {
-            result = 31 * result + Array.get( array, i ).hashCode();
-        }
-        return result;
-    }
-
-    @Deprecated
-    public interface ArrayEquality
-    {
-        boolean typeEquals( Class<?> firstType, Class<?> otherType );
-
-        boolean itemEquals( Object firstArray, Object otherArray );
-    }
-
-    @Deprecated
     public static final ArrayEquality DEFAULT_ARRAY_EQUALITY = new ArrayEquality()
     {
         @Override
@@ -72,7 +50,7 @@ public abstract class ArrayUtil
         }
     };
 
-    @Deprecated
+	@Deprecated
     public static final ArrayEquality BOXING_AWARE_ARRAY_EQUALITY = new ArrayEquality()
     {
         @Override
@@ -130,13 +108,31 @@ public abstract class ArrayUtil
         }
     };
 
-    @Deprecated
+	private ArrayUtil()
+    {   // No instances allowed
+    }
+
+	@Deprecated
+    public static int hashCode( Object array )
+    {
+        assert array.getClass().isArray() : array + " is not an array";
+
+        int length = Array.getLength( array );
+        int result = length;
+        for ( int i = 0; i < length; i++ )
+        {
+            result = 31 * result + Array.get( array, i ).hashCode();
+        }
+        return result;
+    }
+
+	@Deprecated
     public static boolean equals( Object firstArray, Object otherArray )
     {
         return equals( firstArray, otherArray, DEFAULT_ARRAY_EQUALITY );
     }
 
-    /**
+	/**
      * Check if two arrays are equal.
      * I also can't believe this method is missing from {@link Arrays}.
      * Both arguments must be arrays of some type.
@@ -155,22 +151,21 @@ public abstract class ArrayUtil
         assert otherArray.getClass().isArray() : otherArray + " is not an array";
 
         int length;
-        if ( equality.typeEquals( firstArray.getClass().getComponentType(), otherArray.getClass().getComponentType() )
-                && (length = Array.getLength( firstArray )) == Array.getLength( otherArray ) )
-        {
-            for ( int i = 0; i < length; i++ )
-            {
-                if ( !equality.itemEquals( Array.get( firstArray, i ), Array.get( otherArray, i ) ) )
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
+        if (!(equality.typeEquals( firstArray.getClass().getComponentType(), otherArray.getClass().getComponentType() )
+                && (length = Array.getLength( firstArray )) == Array.getLength( otherArray ))) {
+			return false;
+		}
+		for ( int i = 0; i < length; i++ )
+		{
+		    if ( !equality.itemEquals( Array.get( firstArray, i ), Array.get( otherArray, i ) ) )
+		    {
+		        return false;
+		    }
+		}
+		return true;
     }
 
-    @Deprecated
+	@Deprecated
     public static Object clone( Object array )
     {
         if ( array instanceof Object[] )
@@ -212,7 +207,7 @@ public abstract class ArrayUtil
         throw new IllegalArgumentException( "Not an array type: " + array.getClass() );
     }
 
-    /**
+	/**
      * Count missing items in an array.
      * The order of items doesn't matter.
      *
@@ -235,7 +230,7 @@ public abstract class ArrayUtil
         return missing;
     }
 
-    /**
+	/**
      * Count items from a different array contained in an array.
      * The order of items doesn't matter.
      *
@@ -257,7 +252,7 @@ public abstract class ArrayUtil
         return true;
     }
 
-    /**
+	/**
      * Check if array contains item.
      *
      * @param array Array to examine
@@ -271,7 +266,7 @@ public abstract class ArrayUtil
         return contains( array, array.length, contains );
     }
 
-    /**
+	/**
      * Check if array contains item.
      *
      * @param array Array to examine
@@ -294,7 +289,7 @@ public abstract class ArrayUtil
         return false;
     }
 
-    /**
+	/**
      * Compare two items for equality; if both are {@code null} they are regarded as equal.
      *
      * @param first First item to compare
@@ -308,7 +303,7 @@ public abstract class ArrayUtil
         return first == null ? first == other : first.equals( other );
     }
 
-    /**
+	/**
      * Get the union of two arrays.
      * The resulting array will not contain any duplicates.
      *
@@ -347,7 +342,7 @@ public abstract class ArrayUtil
         return union;
     }
 
-    /**
+	/**
      * Check if provided array is empty
      * @param array - array to check
      * @return true if array is null or empty
@@ -358,7 +353,7 @@ public abstract class ArrayUtil
         return (array == null) || (array.length == 0);
     }
 
-    /**
+	/**
      * Convert an array to a String using a custom delimiter.
      *
      * @param items The array to convert
@@ -377,7 +372,7 @@ public abstract class ArrayUtil
         return builder.toString();
     }
 
-    /**
+	/**
      * Create new array with all items converted into a new type using a supplied transformer.
      *
      * @param from original array
@@ -399,7 +394,7 @@ public abstract class ArrayUtil
         return result;
     }
 
-    /**
+	/**
      * Create an array from a single first item and additional items following it.
      *
      * @param first the item to put first
@@ -418,7 +413,7 @@ public abstract class ArrayUtil
         return result;
     }
 
-    /**
+	/**
      * Create a array from a existing array and additional items following it.
      *
      * @param initial the initial array
@@ -436,7 +431,7 @@ public abstract class ArrayUtil
         return result;
     }
 
-    /**
+	/**
      * Create a single array from many arrays.
      *
      * @param initial an initial array
@@ -461,7 +456,7 @@ public abstract class ArrayUtil
         return result;
     }
 
-    /**
+	/**
      * Returns the array version of the vararg argument.
      *
      * @param varargs the items
@@ -475,13 +470,13 @@ public abstract class ArrayUtil
         return varargs;
     }
 
-    @Deprecated
+	@Deprecated
     public static <T> T lastOf( T[] array )
     {
         return array[array.length - 1];
     }
 
-    @Deprecated
+	@Deprecated
     public static <T> int indexOf( T[] array, T item )
     {
         for ( int i = 0; i < array.length; i++ )
@@ -494,7 +489,7 @@ public abstract class ArrayUtil
         return -1;
     }
 
-    @Deprecated
+	@Deprecated
     public static <T> T[] without( T[] source, T... toRemove )
     {
         T[] result = source.clone();
@@ -514,7 +509,7 @@ public abstract class ArrayUtil
         return length == result.length ? result : Arrays.copyOf( result, length );
     }
 
-    @Deprecated
+	@Deprecated
     public static <T> void reverse( T[] array )
     {
         for ( int low = 0, high = array.length - 1; high - low > 0; low++, high-- )
@@ -525,7 +520,11 @@ public abstract class ArrayUtil
         }
     }
 
-    private ArrayUtil()
-    {   // No instances allowed
+	@Deprecated
+    public interface ArrayEquality
+    {
+        boolean typeEquals( Class<?> firstType, Class<?> otherType );
+
+        boolean itemEquals( Object firstArray, Object otherArray );
     }
 }

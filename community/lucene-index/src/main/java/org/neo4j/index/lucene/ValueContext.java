@@ -56,8 +56,7 @@ public class ValueContext
     {
         if ( !( this.value instanceof Number ) )
         {
-            throw new IllegalStateException( "Value should be a Number, is " + value +
-                    " (" + value.getClass() + ")" );
+            throw new IllegalStateException( new StringBuilder().append("Value should be a Number, is ").append(value).append(" (").append(value.getClass()).append(")").toString() );
         }
         this.indexNumeric = true;
         return this;

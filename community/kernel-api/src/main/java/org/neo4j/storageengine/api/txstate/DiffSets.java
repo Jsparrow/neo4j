@@ -53,67 +53,67 @@ public interface DiffSets<T>
 
     final class Empty<T> implements DiffSets<T>
     {
-        @SuppressWarnings( "unchecked" )
+        private static final DiffSets INSTANCE = new Empty();
+
+		private Empty()
+        {
+            // singleton
+        }
+
+		@SuppressWarnings( "unchecked" )
         public static <T> DiffSets<T> instance()
         {
             return INSTANCE;
         }
 
-        public static <T> DiffSets<T> ifNull( DiffSets<T> diffSets )
+		public static <T> DiffSets<T> ifNull( DiffSets<T> diffSets )
         {
             return diffSets == null ? INSTANCE : diffSets;
         }
 
-        private static final DiffSets INSTANCE = new Empty();
-
-        private Empty()
-        {
-            // singleton
-        }
-
-        @Override
+		@Override
         public boolean isAdded( T elem )
         {
             return false;
         }
 
-        @Override
+		@Override
         public boolean isRemoved( T elem )
         {
             return false;
         }
 
-        @Override
+		@Override
         public Set<T> getAdded()
         {
             return Collections.emptySet();
         }
 
-        @Override
+		@Override
         public Set<T> getRemoved()
         {
             return Collections.emptySet();
         }
 
-        @Override
+		@Override
         public boolean isEmpty()
         {
             return true;
         }
 
-        @Override
+		@Override
         public Iterator<T> apply( Iterator<? extends T> source )
         {
             return (Iterator)source;
         }
 
-        @Override
+		@Override
         public int delta()
         {
             return 0;
         }
 
-        @Override
+		@Override
         public DiffSets<T> filterAdded( Predicate<T> addedFilter )
         {
             return this;

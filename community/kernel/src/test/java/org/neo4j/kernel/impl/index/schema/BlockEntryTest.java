@@ -39,13 +39,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith( RandomExtension.class )
 class BlockEntryTest
 {
-    @Inject
+    private static final PageCursor pageCursor = ByteArrayPageCursor.wrap( 1000 );
+
+	private static SimpleLongLayout layout;
+
+	@Inject
     RandomRule rnd;
 
-    private static final PageCursor pageCursor = ByteArrayPageCursor.wrap( 1000 );
-    private static SimpleLongLayout layout;
-
-    @BeforeEach
+	@BeforeEach
     void setup()
     {
         layout = SimpleLongLayout.longLayout()
@@ -54,7 +55,7 @@ class BlockEntryTest
                 .build();
     }
 
-    @Test
+	@Test
     void shouldReadWriteSingleEntry()
     {
         // given
@@ -74,7 +75,7 @@ class BlockEntryTest
         assertEquals( 0, layout.compare( writeValue, readValue ) );
     }
 
-    @Test
+	@Test
     void shouldReadWriteMultipleEntries()
     {
         List<BlockEntry<MutableLong,MutableLong>> expectedEntries = new ArrayList<>();
@@ -88,14 +89,13 @@ class BlockEntryTest
         }
 
         pageCursor.setOffset( offset );
-        for ( BlockEntry<MutableLong,MutableLong> expectedEntry : expectedEntries )
-        {
+        expectedEntries.forEach(expectedEntry -> {
             BlockEntry<MutableLong,MutableLong> actualEntry = BlockEntry.read( pageCursor, layout );
             assertBlockEquals( expectedEntry, actualEntry );
-        }
+        });
     }
 
-    private static void assertBlockEquals( BlockEntry<MutableLong,MutableLong> expected, BlockEntry<MutableLong,MutableLong> actual )
+	private static void assertBlockEquals( BlockEntry<MutableLong,MutableLong> expected, BlockEntry<MutableLong,MutableLong> actual )
     {
         assertEquals( 0, layout.compare( expected.key(), actual.key() ) );
         assertEquals( 0, layout.compare( expected.value(), actual.value() ) );

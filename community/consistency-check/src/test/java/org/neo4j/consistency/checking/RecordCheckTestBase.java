@@ -239,12 +239,11 @@ public abstract class RecordCheckTestBase<RECORD extends AbstractBaseRecord,
     static PropertyBlock propertyBlock( PropertyKeyTokenRecord key, DynamicRecord value )
     {
         PropertyType type = value.getType();
-        if ( value.getType() != PropertyType.STRING && value.getType() != PropertyType.ARRAY )
-        {
-            fail( "Dynamic record must be either STRING or ARRAY" );
-            return null;
-        }
-        return propertyBlock( key, type, value.getId() );
+        if (!(value.getType() != PropertyType.STRING && value.getType() != PropertyType.ARRAY)) {
+			return propertyBlock( key, type, value.getId() );
+		}
+		fail( "Dynamic record must be either STRING or ARRAY" );
+		return null;
     }
 
     public static PropertyBlock propertyBlock( PropertyKeyTokenRecord key, PropertyType type, long value )

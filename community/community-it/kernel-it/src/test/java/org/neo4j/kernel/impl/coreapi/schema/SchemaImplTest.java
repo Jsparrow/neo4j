@@ -85,7 +85,7 @@ public class SchemaImplTest
             for ( int id = 0; id < 100000; id++ )
             {
                 Node userNode = db.createNode( label );
-                userNode.setProperty( "username", "user" + id + "@neo4j.org" );
+                userNode.setProperty( "username", new StringBuilder().append("user").append(id).append("@neo4j.org").toString() );
             }
             tx.success();
         }

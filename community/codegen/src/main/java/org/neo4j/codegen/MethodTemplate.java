@@ -32,12 +32,29 @@ import static org.neo4j.codegen.TypeReference.typeReference;
 
 public class MethodTemplate
 {
-    public static Builder method( Class<?> returnType, String name, Parameter... parameters )
+    private final MethodDeclaration.Builder declaration;
+	private final Parameter[] parameters;
+	private final Statement[] statements;
+	private final TypeReference returnType;
+	private final String name;
+	private final int modifiers;
+
+	private MethodTemplate( Builder builder, TypeReference returnType, String name )
+    {
+        this.returnType = returnType;
+        this.name = name;
+        this.declaration = builder.declaration();
+        this.parameters = builder.parameters;
+        this.statements = builder.statements.toArray( new Statement[builder.statements.size()] );
+        this.modifiers = builder.modifiers;
+    }
+
+	public static Builder method( Class<?> returnType, String name, Parameter... parameters )
     {
         return method( typeReference( returnType ), name, parameters );
     }
 
-    public static Builder method( final TypeReference returnType, final String name, Parameter... parameters )
+	public static Builder method( final TypeReference returnType, final String name, Parameter... parameters )
     {
         try
         {
@@ -58,11 +75,11 @@ public class MethodTemplate
         }
         catch ( IllegalArgumentException | NullPointerException e )
         {
-            throw new IllegalArgumentException( "Invalid signature for " + name + ": " + e.getMessage(), e );
+            throw new IllegalArgumentException( new StringBuilder().append("Invalid signature for ").append(name).append(": ").append(e.getMessage()).toString(), e );
         }
     }
 
-    public static ConstructorBuilder constructor( Parameter... parameters )
+	public static ConstructorBuilder constructor( Parameter... parameters )
     {
         try
         {
@@ -74,7 +91,59 @@ public class MethodTemplate
         }
     }
 
-    public static class ConstructorBuilder extends Builder
+	public TypeReference returnType()
+    {
+        return returnType;
+    }
+
+	public String name()
+    {
+        return name;
+    }
+
+	public int modifiers()
+    {
+        return modifiers;
+    }
+
+	public TypeReference[] parameterTypes()
+    {
+        if ( parameters.length == 0 )
+        {
+            return NO_TYPES;
+        }
+        TypeReference[] result = new TypeReference[parameters.length];
+        for ( int i = 0; i < result.length; i++ )
+        {
+            result[i] = parameters[i].type();
+        }
+        return result;
+    }
+
+	MethodDeclaration declaration( ClassHandle handle )
+    {
+        return declaration.build( handle );
+    }
+
+	void generate( CodeBlock generator )
+    {
+        for ( Statement statement : statements )
+        {
+            statement.generate( generator );
+        }
+    }
+
+	private static MethodTemplate buildMethod( Builder builder, TypeReference returnType, String name )
+    {
+        return new MethodTemplate( builder, returnType, name );
+    }
+
+	private static MethodTemplate buildConstructor( Builder builder )
+    {
+        return new MethodTemplate( builder, TypeReference.VOID, "<init>" );
+    }
+
+	public static class ConstructorBuilder extends Builder
     {
         ConstructorBuilder( Parameter[] parameters )
         {
@@ -138,7 +207,7 @@ public class MethodTemplate
                 Parameter parameter = requireNonNull( this.parameters[i], "Parameter " + i );
                 if ( null != locals.put( parameter.name(), parameter.type() ) )
                 {
-                    throw new IllegalArgumentException( "Duplicate parameters named \"" + parameter.name() + "\"." );
+                    throw new IllegalArgumentException( new StringBuilder().append("Duplicate parameters named \"").append(parameter.name()).append("\".").toString() );
                 }
             }
         }
@@ -177,74 +246,5 @@ public class MethodTemplate
         }
 
         abstract MethodDeclaration.Builder declaration();
-    }
-
-    public TypeReference returnType()
-    {
-        return returnType;
-    }
-
-    public String name()
-    {
-        return name;
-    }
-
-    public int modifiers()
-    {
-        return modifiers;
-    }
-
-    public TypeReference[] parameterTypes()
-    {
-        if ( parameters.length == 0 )
-        {
-            return NO_TYPES;
-        }
-        TypeReference[] result = new TypeReference[parameters.length];
-        for ( int i = 0; i < result.length; i++ )
-        {
-            result[i] = parameters[i].type();
-        }
-        return result;
-    }
-
-    MethodDeclaration declaration( ClassHandle handle )
-    {
-        return declaration.build( handle );
-    }
-
-    void generate( CodeBlock generator )
-    {
-        for ( Statement statement : statements )
-        {
-            statement.generate( generator );
-        }
-    }
-
-    private static MethodTemplate buildMethod( Builder builder, TypeReference returnType, String name )
-    {
-        return new MethodTemplate( builder, returnType, name );
-    }
-
-    private static MethodTemplate buildConstructor( Builder builder )
-    {
-        return new MethodTemplate( builder, TypeReference.VOID, "<init>" );
-    }
-
-    private final MethodDeclaration.Builder declaration;
-    private final Parameter[] parameters;
-    private final Statement[] statements;
-    private final TypeReference returnType;
-    private final String name;
-    private final int modifiers;
-
-    private MethodTemplate( Builder builder, TypeReference returnType, String name )
-    {
-        this.returnType = returnType;
-        this.name = name;
-        this.declaration = builder.declaration();
-        this.parameters = builder.parameters;
-        this.statements = builder.statements.toArray( new Statement[builder.statements.size()] );
-        this.modifiers = builder.modifiers;
     }
 }

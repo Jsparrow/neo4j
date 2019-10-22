@@ -46,7 +46,250 @@ import org.neo4j.string.UTF8;
 
 public class InternalJettyServletRequest extends Request
 {
-    private class Input extends ServletInputStream
+    private final Map<String, Object> headers;
+	private final Cookie[] cookies;
+	private final Input input;
+	private final BufferedReader inputReader;
+	private String contentType;
+	private final String method;
+	private final InternalJettyServletResponse response;
+	/** Contains metadata for the request, for example remote address and port. */
+    private final RequestData requestData;
+
+	public InternalJettyServletRequest( String method, String uri, String body, InternalJettyServletResponse res,
+            RequestData requestData ) throws UnsupportedEncodingException
+    {
+        this( method, new HttpURI( uri ), body, new Cookie[] {}, MediaType.APPLICATION_JSON,
+                StandardCharsets.UTF_8.name(), res, requestData );
+    }
+
+	public InternalJettyServletRequest( String method, HttpURI uri, String body, Cookie[] cookies, String contentType,
+            String encoding, InternalJettyServletResponse res, RequestData requestData ) throws UnsupportedEncodingException
+    {
+        super( null, null );
+
+        this.input = new Input( body );
+        this.inputReader = new BufferedReader( new StringReader( body ) );
+
+        this.contentType = contentType;
+        this.cookies = cookies;
+        this.method = method;
+        this.response = res;
+        this.requestData = requestData;
+
+        this.headers = new HashMap<>();
+
+        setCharacterEncoding( encoding );
+        setDispatcherType( DispatcherType.REQUEST );
+
+        MetaData.Request request = new MetaData.Request( new HttpFields() );
+        request.setMethod( method );
+        request.setURI( uri );
+        setMetaData( request );
+    }
+
+	@Override
+    public int getContentLength()
+    {
+        return input.length();
+    }
+
+	@Override
+    public String getContentType()
+    {
+        return contentType;
+    }
+
+	@Override
+    public void setContentType( String contentType )
+    {
+        this.contentType = contentType;
+    }
+
+	@Override
+    public long getContentRead()
+    {
+        return input.contentRead();
+    }
+
+	@Override
+    public ServletInputStream getInputStream()
+    {
+        return input;
+    }
+
+	@Override
+    public String getProtocol()
+    {
+        return "HTTP/1.1";
+    }
+
+	@Override
+    public BufferedReader getReader()
+    {
+        return inputReader;
+    }
+
+	@Override
+    public String getRemoteAddr()
+    {
+        return requestData.remoteAddress;
+    }
+
+	@Override
+    public String getRemoteHost()
+    {
+        throw new UnsupportedOperationException( "Remote host-name lookup might prove expensive, " +
+                "this should be explicitly considered." );
+    }
+
+	@Override
+    public boolean isSecure()
+    {
+        return requestData.isSecure;
+    }
+
+	@Override
+    public int getRemotePort()
+    {
+        return requestData.remotePort;
+    }
+
+	@Override
+    public String getLocalName()
+    {
+        return requestData.localName;
+    }
+
+	@Override
+    public String getLocalAddr()
+    {
+        return requestData.localAddress;
+    }
+
+	@Override
+    public int getLocalPort()
+    {
+        return requestData.localPort;
+    }
+
+	@Override
+    public String getAuthType()
+    {
+        return requestData.authType;
+    }
+
+	@Override
+    public Cookie[] getCookies()
+    {
+        return cookies;
+    }
+
+	public void addHeader( String header, String value )
+    {
+        headers.put( header, value );
+    }
+
+	@Override
+    public boolean isAsyncSupported()
+    {
+        return false;
+    }
+
+	@Override
+    public boolean isAsyncStarted()
+    {
+        return false;
+    }
+
+	@Override
+    public long getDateHeader( String name )
+    {
+        if ( headers.containsKey( name ) )
+        {
+            return (Long) headers.get( name );
+        }
+        return -1;
+    }
+
+	@Override
+    public String getHeader( String name )
+    {
+        if ( headers.containsKey( name ) )
+        {
+            Object value = headers.get( name );
+            if ( value instanceof String )
+            {
+                return (String) value;
+            }
+            else if ( value instanceof Collection )
+            {
+                return ( (Collection<?>) value ).iterator()
+                        .next()
+                        .toString();
+            }
+            else
+            {
+                return value.toString();
+            }
+        }
+
+        return null;
+    }
+
+	@Override
+    public Enumeration<String> getHeaders( String name )
+    {
+        if ( headers.containsKey( name ) )
+        {
+            Object value = headers.get( name );
+            if ( value instanceof Collection )
+            {
+                return Collections.enumeration( (Collection<String>) value );
+            }
+            else
+            {
+                return Collections.enumeration( Collections.singleton( (String) value ) );
+            }
+        }
+        return null;
+    }
+
+	@Override
+    public Enumeration<String> getHeaderNames()
+    {
+        return Collections.enumeration( headers.keySet() );
+    }
+
+	@Override
+    public int getIntHeader( String name )
+    {
+        if ( headers.containsKey( name ) )
+        {
+            return (Integer) headers.get( name );
+        }
+        return -1;
+    }
+
+	@Override
+    public String getMethod()
+    {
+        return method;
+    }
+
+	@Override
+    public Response getResponse()
+    {
+        return response;
+    }
+
+	@Override
+    public String toString()
+    {
+        return String.format( "%s %s %s%n%s", getMethod(), this.getHttpURI(), getProtocol(), getHttpFields() );
+    }
+
+	private class Input extends ServletInputStream
     {
 
         private final byte[] bytes;
@@ -109,250 +352,6 @@ public class InternalJettyServletRequest extends Request
                 // Ignore
             }
         }
-    }
-
-    private final Map<String, Object> headers;
-    private final Cookie[] cookies;
-    private final Input input;
-    private final BufferedReader inputReader;
-    private String contentType;
-    private final String method;
-    private final InternalJettyServletResponse response;
-
-    /** Contains metadata for the request, for example remote address and port. */
-    private final RequestData requestData;
-
-    public InternalJettyServletRequest( String method, String uri, String body, InternalJettyServletResponse res,
-            RequestData requestData ) throws UnsupportedEncodingException
-    {
-        this( method, new HttpURI( uri ), body, new Cookie[] {}, MediaType.APPLICATION_JSON,
-                StandardCharsets.UTF_8.name(), res, requestData );
-    }
-
-    public InternalJettyServletRequest( String method, HttpURI uri, String body, Cookie[] cookies, String contentType,
-            String encoding, InternalJettyServletResponse res, RequestData requestData ) throws UnsupportedEncodingException
-    {
-        super( null, null );
-
-        this.input = new Input( body );
-        this.inputReader = new BufferedReader( new StringReader( body ) );
-
-        this.contentType = contentType;
-        this.cookies = cookies;
-        this.method = method;
-        this.response = res;
-        this.requestData = requestData;
-
-        this.headers = new HashMap<>();
-
-        setCharacterEncoding( encoding );
-        setDispatcherType( DispatcherType.REQUEST );
-
-        MetaData.Request request = new MetaData.Request( new HttpFields() );
-        request.setMethod( method );
-        request.setURI( uri );
-        setMetaData( request );
-    }
-
-    @Override
-    public int getContentLength()
-    {
-        return input.length();
-    }
-
-    @Override
-    public String getContentType()
-    {
-        return contentType;
-    }
-
-    @Override
-    public void setContentType( String contentType )
-    {
-        this.contentType = contentType;
-    }
-
-    @Override
-    public long getContentRead()
-    {
-        return input.contentRead();
-    }
-
-    @Override
-    public ServletInputStream getInputStream()
-    {
-        return input;
-    }
-
-    @Override
-    public String getProtocol()
-    {
-        return "HTTP/1.1";
-    }
-
-    @Override
-    public BufferedReader getReader()
-    {
-        return inputReader;
-    }
-
-    @Override
-    public String getRemoteAddr()
-    {
-        return requestData.remoteAddress;
-    }
-
-    @Override
-    public String getRemoteHost()
-    {
-        throw new UnsupportedOperationException( "Remote host-name lookup might prove expensive, " +
-                "this should be explicitly considered." );
-    }
-
-    @Override
-    public boolean isSecure()
-    {
-        return requestData.isSecure;
-    }
-
-    @Override
-    public int getRemotePort()
-    {
-        return requestData.remotePort;
-    }
-
-    @Override
-    public String getLocalName()
-    {
-        return requestData.localName;
-    }
-
-    @Override
-    public String getLocalAddr()
-    {
-        return requestData.localAddress;
-    }
-
-    @Override
-    public int getLocalPort()
-    {
-        return requestData.localPort;
-    }
-
-    @Override
-    public String getAuthType()
-    {
-        return requestData.authType;
-    }
-
-    @Override
-    public Cookie[] getCookies()
-    {
-        return cookies;
-    }
-
-    public void addHeader( String header, String value )
-    {
-        headers.put( header, value );
-    }
-
-    @Override
-    public boolean isAsyncSupported()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean isAsyncStarted()
-    {
-        return false;
-    }
-
-    @Override
-    public long getDateHeader( String name )
-    {
-        if ( headers.containsKey( name ) )
-        {
-            return (Long) headers.get( name );
-        }
-        return -1;
-    }
-
-    @Override
-    public String getHeader( String name )
-    {
-        if ( headers.containsKey( name ) )
-        {
-            Object value = headers.get( name );
-            if ( value instanceof String )
-            {
-                return (String) value;
-            }
-            else if ( value instanceof Collection )
-            {
-                return ( (Collection<?>) value ).iterator()
-                        .next()
-                        .toString();
-            }
-            else
-            {
-                return value.toString();
-            }
-        }
-
-        return null;
-    }
-
-    @Override
-    public Enumeration<String> getHeaders( String name )
-    {
-        if ( headers.containsKey( name ) )
-        {
-            Object value = headers.get( name );
-            if ( value instanceof Collection )
-            {
-                return Collections.enumeration( (Collection<String>) value );
-            }
-            else
-            {
-                return Collections.enumeration( Collections.singleton( (String) value ) );
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public Enumeration<String> getHeaderNames()
-    {
-        return Collections.enumeration( headers.keySet() );
-    }
-
-    @Override
-    public int getIntHeader( String name )
-    {
-        if ( headers.containsKey( name ) )
-        {
-            return (Integer) headers.get( name );
-        }
-        return -1;
-    }
-
-    @Override
-    public String getMethod()
-    {
-        return method;
-    }
-
-    @Override
-    public Response getResponse()
-    {
-        return response;
-    }
-
-    @Override
-    public String toString()
-    {
-        return String.format( "%s %s %s\n%s", getMethod(), this.getHttpURI(), getProtocol(), getHttpFields() );
     }
 
     public static class RequestData

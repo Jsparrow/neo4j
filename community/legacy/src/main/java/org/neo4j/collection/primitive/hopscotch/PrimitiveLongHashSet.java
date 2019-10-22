@@ -86,17 +86,24 @@ public class PrimitiveLongHashSet extends AbstractLongHopScotchCollection<Object
     @Override
     public boolean equals( Object other )
     {
-        if ( typeAndSizeEqual( other ) )
-        {
-            PrimitiveLongHashSet that = (PrimitiveLongHashSet) other;
-            LongKeyEquality equality = new LongKeyEquality( that );
-            visitKeys( equality );
-            return equality.isEqual();
-        }
-        return false;
+        if (!typeAndSizeEqual( other )) {
+			return false;
+		}
+		PrimitiveLongHashSet that = (PrimitiveLongHashSet) other;
+		LongKeyEquality equality = new LongKeyEquality( that );
+		visitKeys( equality );
+		return equality.isEqual();
     }
 
-    private static class LongKeyEquality implements PrimitiveLongVisitor<RuntimeException>
+    @Override
+    public int hashCode()
+    {
+        HashCodeComputer hash = new HashCodeComputer();
+        visitKeys( hash );
+        return hash.hashCode();
+    }
+
+	private static class LongKeyEquality implements PrimitiveLongVisitor<RuntimeException>
     {
         private PrimitiveLongHashSet other;
         private boolean equal = true;
@@ -119,20 +126,12 @@ public class PrimitiveLongHashSet extends AbstractLongHopScotchCollection<Object
         }
     }
 
-    @Override
-    public int hashCode()
-    {
-        HashCodeComputer hash = new HashCodeComputer();
-        visitKeys( hash );
-        return hash.hashCode();
-    }
-
     private static class HashCodeComputer implements PrimitiveLongVisitor<RuntimeException>
     {
         private int hash = 1337;
 
         @Override
-        public boolean visited( long value ) throws RuntimeException
+        public boolean visited( long value )
         {
             hash += DEFAULT_HASHING.hashSingleValueToInt( value );
             return false;

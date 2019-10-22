@@ -58,13 +58,6 @@ public class StatementDeserializer extends PrefetchingIterator<Statement>
     private State state;
     private List<Neo4jError> errors;
 
-    private enum State
-    {
-        BEFORE_OUTER_ARRAY,
-        IN_BODY,
-        FINISHED
-    }
-
     public StatementDeserializer( InputStream input )
     {
         try
@@ -78,12 +71,12 @@ public class StatementDeserializer extends PrefetchingIterator<Statement>
         }
     }
 
-    public Iterator<Neo4jError> errors()
+	public Iterator<Neo4jError> errors()
     {
         return errors == null ? emptyIterator() : errors.iterator();
     }
 
-    @Override
+	@Override
     protected Statement fetchNextOrNull()
     {
         try
@@ -173,25 +166,25 @@ public class StatementDeserializer extends PrefetchingIterator<Statement>
         }
     }
 
-    private void discardValue( JsonParser input ) throws IOException
+	private void discardValue( JsonParser input ) throws IOException
     {
         // This could be done without building up an object
         input.readValueAs( Object.class );
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     private static Map<String, Object> readMap( JsonParser input ) throws IOException
     {
         return input.readValueAs( Map.class );
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     private static List<Object> readArray( JsonParser input ) throws IOException
     {
         return input.readValueAs( List.class );
     }
 
-    private void addError( Neo4jError error )
+	private void addError( Neo4jError error )
     {
         if ( errors == null )
         {
@@ -200,7 +193,7 @@ public class StatementDeserializer extends PrefetchingIterator<Statement>
         errors.add( error );
     }
 
-    private boolean beginsWithCorrectTokens() throws IOException
+	private boolean beginsWithCorrectTokens() throws IOException
     {
         List<JsonToken> expectedTokens = asList( START_OBJECT, FIELD_NAME, START_ARRAY );
         String expectedField = "statements";
@@ -225,14 +218,20 @@ public class StatementDeserializer extends PrefetchingIterator<Statement>
             }
             foundTokens.add( token );
         }
-        if ( !expectedTokens.equals( foundTokens ) )
-        {
-            addError( new Neo4jError(
-                    Status.Request.InvalidFormat,
-                    new DeserializationException( String.format( "Unable to deserialize request. " +
-                            "Expected %s, found %s.", expectedTokens, foundTokens ) ) ) );
-            return false;
-        }
-        return true;
+        if (expectedTokens.equals( foundTokens )) {
+			return true;
+		}
+		addError( new Neo4jError(
+		        Status.Request.InvalidFormat,
+		        new DeserializationException( String.format( "Unable to deserialize request. " +
+		                "Expected %s, found %s.", expectedTokens, foundTokens ) ) ) );
+		return false;
+    }
+
+	private enum State
+    {
+        BEFORE_OUTER_ARRAY,
+        IN_BODY,
+        FINISHED
     }
 }

@@ -42,15 +42,6 @@ import org.neo4j.storageengine.api.schema.IndexDescriptor;
  */
 public interface KernelTransaction extends Transaction, AssertOpen
 {
-    interface CloseListener
-    {
-        /**
-         * @param txId On success, the actual id of the current transaction if writes have been performed, 0 otherwise.
-         * On rollback, always -1.
-         */
-        void notify( long txId );
-    }
-
     /**
      * Acquires a new {@link Statement} for this transaction which allows for reading and writing data from and
      * to the underlying database. After the group of reads and writes have been performed the statement
@@ -60,7 +51,7 @@ public interface KernelTransaction extends Transaction, AssertOpen
      */
     Statement acquireStatement();
 
-    /**
+	/**
      * Create unique index which will be used to support uniqueness constraint.
      *
      * @param schema schema to create unique index for.
@@ -69,53 +60,53 @@ public interface KernelTransaction extends Transaction, AssertOpen
      */
     IndexDescriptor indexUniqueCreate( SchemaDescriptor schema, String provider ) throws SchemaKernelException;
 
-    /**
+	/**
      * @return the security context this transaction is currently executing in.
      * @throws NotInTransactionException if the transaction is closed.
      */
     SecurityContext securityContext();
 
-    /**
+	/**
      * @return the subject executing this transaction, or {@link AuthSubject#ANONYMOUS} if the transaction is closed.
      */
     AuthSubject subjectOrAnonymous();
 
-    /**
+	/**
      * @return The timestamp of the last transaction that was committed to the store when this transaction started.
      */
     long lastTransactionTimestampWhenStarted();
 
-    /**
+	/**
      * @return The id of the last transaction that was committed to the store when this transaction started.
      */
     long lastTransactionIdWhenStarted();
 
-    /**
+	/**
      * @return start time of this transaction, i.e. basically {@link System#currentTimeMillis()} when user called
      * {@link Kernel#beginTransaction(Type, LoginContext)}.
      */
     long startTime();
 
-    /**
+	/**
      * @return start time of this transaction, i.e. basically {@link System#nanoTime()} when user called
      * {@link org.neo4j.internal.kernel.api.Session#beginTransaction(Type)}.
      */
     long startTimeNanos();
 
-    /**
+	/**
      * Timeout for transaction in milliseconds.
      * @return transaction timeout in milliseconds.
      */
     long timeout();
 
-    /**
+	/**
      * Register a {@link CloseListener} to be invoked after commit, but before transaction events "after" hooks
      * are invoked.
      * @param listener {@link CloseListener} to get these notifications.
      */
     void registerCloseListener( CloseListener listener );
 
-    /**
+	/**
      * Kernel transaction type
      *
      * Implicit if created internally in the database
@@ -125,7 +116,7 @@ public interface KernelTransaction extends Transaction, AssertOpen
      */
     Type transactionType();
 
-    /**
+	/**
      * Return transaction id that assigned during transaction commit process.
      * @see org.neo4j.kernel.impl.api.TransactionCommitProcess
      * @return transaction id.
@@ -133,7 +124,7 @@ public interface KernelTransaction extends Transaction, AssertOpen
      */
     long getTransactionId();
 
-    /**
+	/**
      * Return transaction commit time (in millis) that assigned during transaction commit process.
      * @see org.neo4j.kernel.impl.api.TransactionCommitProcess
      * @return transaction commit time
@@ -141,7 +132,7 @@ public interface KernelTransaction extends Transaction, AssertOpen
      */
     long getCommitTime();
 
-    /**
+	/**
      * Temporarily override this transaction's SecurityContext. The override should be reverted using
      * the returned {@link Revertable}.
      *
@@ -150,50 +141,59 @@ public interface KernelTransaction extends Transaction, AssertOpen
      */
     Revertable overrideWith( SecurityContext context );
 
-    /**
+	/**
      * Clocks associated with this transaction.
      */
     ClockContext clocks();
 
-    /**
+	/**
      * USE WITH CAUTION:
      * The internal node cursor instance used to serve kernel API calls. If some kernel API call
      * is made while this cursor is used, it might get corrupted and return wrong results.
      */
     NodeCursor ambientNodeCursor();
 
-    /**
+	/**
      * USE WITH CAUTION:
      * The internal relationship scan cursor instance used to serve kernel API calls. If some kernel
      * API call is made while this cursor is used, it might get corrupted and return wrong results.
      */
     RelationshipScanCursor ambientRelationshipCursor();
 
-    /**
+	/**
      * USE WITH CAUTION:
      * The internal property cursor instance used to serve kernel API calls. If some kernel
      * API call is made while this cursor is used, it might get corrupted and return wrong results.
      */
     PropertyCursor ambientPropertyCursor();
 
-    /**
+	/**
      * Attaches a map of data to this transaction.
      * The data will be printed when listing queries and inserted in to the query log.
      * @param metaData The data to add.
      */
     void setMetaData( Map<String, Object> metaData );
 
-    /**
+	/**
      * Get a map of data that is attached to this transaction.
      * In cases when no metadata was set before, an empty map is returned.
      */
     Map<String, Object> getMetaData();
 
-    /**
+	/**
      * @return whether or not this transaction is a schema transaction. Type of transaction is decided
      * on first write operation, be it data or schema operation.
      */
     boolean isSchemaTransaction();
+
+	interface CloseListener
+    {
+        /**
+         * @param txId On success, the actual id of the current transaction if writes have been performed, 0 otherwise.
+         * On rollback, always -1.
+         */
+        void notify( long txId );
+    }
 
     @FunctionalInterface
     interface Revertable extends AutoCloseable

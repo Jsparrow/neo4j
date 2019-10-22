@@ -49,72 +49,72 @@ public class NativeLabelScanStoreUpdateIT
     @Rule
     public final TestName testName = new TestName();
 
-    private Label First;
-    private Label Second;
-    private Label Third;
+    private Label first;
+    private Label second;
+    private Label third;
 
     @Before
     public void setupLabels()
     {
-        First = Label.label( "First-" + testName.getMethodName() );
-        Second = Label.label( "Second-" + testName.getMethodName() );
-        Third = Label.label( "Third-" + testName.getMethodName() );
+        first = Label.label( "First-" + testName.getMethodName() );
+        second = Label.label( "Second-" + testName.getMethodName() );
+        third = Label.label( "Third-" + testName.getMethodName() );
     }
 
     @Test
     public void shouldGetNodesWithCreatedLabel()
     {
         // GIVEN
-        Node node1 = createLabeledNode( First );
-        Node node2 = createLabeledNode( Second );
-        Node node3 = createLabeledNode( Third );
-        Node node4 = createLabeledNode( First, Second, Third );
-        Node node5 = createLabeledNode( First, Third );
+        Node node1 = createLabeledNode( first );
+        Node node2 = createLabeledNode( second );
+        Node node3 = createLabeledNode( third );
+        Node node4 = createLabeledNode( first, second, third );
+        Node node5 = createLabeledNode( first, third );
 
         // THEN
         assertEquals(
                 asSet( node1, node4, node5 ),
-                Iterables.asSet( getAllNodesWithLabel( First ) ) );
+                Iterables.asSet( getAllNodesWithLabel( first ) ) );
         assertEquals(
                 asSet( node2, node4 ),
-                Iterables.asSet( getAllNodesWithLabel( Second ) ) );
+                Iterables.asSet( getAllNodesWithLabel( second ) ) );
         assertEquals(
                 asSet( node3, node4, node5 ),
-                Iterables.asSet( getAllNodesWithLabel( Third ) ) );
+                Iterables.asSet( getAllNodesWithLabel( third ) ) );
     }
 
     @Test
     public void shouldGetNodesWithAddedLabel()
     {
         // GIVEN
-        Node node1 = createLabeledNode( First );
-        Node node2 = createLabeledNode( Second );
-        Node node3 = createLabeledNode( Third );
-        Node node4 = createLabeledNode( First );
-        Node node5 = createLabeledNode( First );
+        Node node1 = createLabeledNode( first );
+        Node node2 = createLabeledNode( second );
+        Node node3 = createLabeledNode( third );
+        Node node4 = createLabeledNode( first );
+        Node node5 = createLabeledNode( first );
 
         // WHEN
-        addLabels( node4, Second, Third );
-        addLabels( node5, Third );
+        addLabels( node4, second, third );
+        addLabels( node5, third );
 
         // THEN
         assertEquals(
                 asSet( node1, node4, node5 ),
-                Iterables.asSet( getAllNodesWithLabel( First ) ) );
+                Iterables.asSet( getAllNodesWithLabel( first ) ) );
         assertEquals(
                 asSet( node2, node4 ),
-                Iterables.asSet( getAllNodesWithLabel( Second ) ) );
+                Iterables.asSet( getAllNodesWithLabel( second ) ) );
         assertEquals(
                 asSet( node3, node4, node5 ),
-                Iterables.asSet( getAllNodesWithLabel( Third ) ) );
+                Iterables.asSet( getAllNodesWithLabel( third ) ) );
     }
 
     @Test
     public void shouldGetNodesAfterDeletedNodes()
     {
         // GIVEN
-        Node node1 = createLabeledNode( First, Second );
-        Node node2 = createLabeledNode( First, Third );
+        Node node1 = createLabeledNode( first, second );
+        Node node2 = createLabeledNode( first, third );
 
         // WHEN
         deleteNode( node1 );
@@ -122,34 +122,34 @@ public class NativeLabelScanStoreUpdateIT
         // THEN
         assertEquals(
                 asSet( node2 ),
-                getAllNodesWithLabel( First ) );
+                getAllNodesWithLabel( first ) );
         assertEquals( emptySet(),
-                getAllNodesWithLabel( Second ) );
+                getAllNodesWithLabel( second ) );
         assertEquals(
                 asSet( node2 ),
-                getAllNodesWithLabel( Third ) );
+                getAllNodesWithLabel( third ) );
     }
 
     @Test
     public void shouldGetNodesAfterRemovedLabels()
     {
         // GIVEN
-        Node node1 = createLabeledNode( First, Second );
-        Node node2 = createLabeledNode( First, Third );
+        Node node1 = createLabeledNode( first, second );
+        Node node2 = createLabeledNode( first, third );
 
         // WHEN
-        removeLabels( node1, First );
-        removeLabels( node2, Third );
+        removeLabels( node1, first );
+        removeLabels( node2, third );
 
         // THEN
         assertEquals(
                 asSet( node2 ),
-                getAllNodesWithLabel( First ) );
+                getAllNodesWithLabel( first ) );
         assertEquals(
                 asSet( node1 ),
-                getAllNodesWithLabel( Second ) );
+                getAllNodesWithLabel( second ) );
         assertEquals( emptySet(),
-                getAllNodesWithLabel( Third ) );
+                getAllNodesWithLabel( third ) );
     }
 
     @Test

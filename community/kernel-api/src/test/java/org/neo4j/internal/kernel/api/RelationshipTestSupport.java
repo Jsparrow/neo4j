@@ -40,19 +40,32 @@ import static org.neo4j.graphdb.RelationshipType.withName;
 
 public class RelationshipTestSupport
 {
-    private RelationshipTestSupport()
+    private static Function<Node,StartRelationship>[] sparseDenseRels = Iterators.array(
+            loop( "FOO" ), // loops are the hardest, let's have two to try to interfere with outgoing/incoming code
+            outgoing( "FOO" ),
+            outgoing( "BAR" ),
+            outgoing( "BAR" ),
+            incoming( "FOO" ),
+            outgoing( "FOO" ),
+            incoming( "BAZ" ),
+            incoming( "BAR" ),
+            outgoing( "BAZ" ),
+            loop( "FOO" )
+    );
+
+	private RelationshipTestSupport()
     {
     }
 
-    static void someGraph( GraphDatabaseService graphDb )
+	static void someGraph( GraphDatabaseService graphDb )
     {
         Relationship dead;
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
-            Node a = graphDb.createNode(),
-                    b = graphDb.createNode(),
-                    c = graphDb.createNode(),
-                    d = graphDb.createNode();
+            Node a = graphDb.createNode();
+			Node b = graphDb.createNode();
+			Node c = graphDb.createNode();
+			Node d = graphDb.createNode();
 
             a.createRelationshipTo( a, withName( "ALPHA" ) );
             a.createRelationshipTo( b, withName( "BETA" ) );
@@ -88,7 +101,7 @@ public class RelationshipTestSupport
         }
     }
 
-    static StartNode sparse( GraphDatabaseService graphDb )
+	static StartNode sparse( GraphDatabaseService graphDb )
     {
         Node node;
         Map<String,List<StartRelationship>> relationshipMap;
@@ -101,7 +114,7 @@ public class RelationshipTestSupport
         return new StartNode( node.getId(), relationshipMap );
     }
 
-    static StartNode dense( GraphDatabaseService graphDb )
+	static StartNode dense( GraphDatabaseService graphDb )
     {
         Node node;
         Map<String,List<StartRelationship>> relationshipMap;
@@ -127,7 +140,7 @@ public class RelationshipTestSupport
         return new StartNode( node.getId(), relationshipMap );
     }
 
-    static Map<String,Integer> count(
+	static Map<String,Integer> count(
             org.neo4j.internal.kernel.api.Transaction transaction,
             RelationshipTraversalCursor relationship ) throws KernelException
     {
@@ -140,7 +153,7 @@ public class RelationshipTestSupport
         return counts;
     }
 
-    static void assertCount(
+	static void assertCount(
             org.neo4j.internal.kernel.api.Transaction transaction,
             RelationshipTraversalCursor relationship,
             Map<String,Integer> expectedCounts,
@@ -160,7 +173,92 @@ public class RelationshipTestSupport
         assertEquals( format( "expected number of relationships for key '%s'", key ), expectedCount, count );
     }
 
-    static class StartRelationship
+	static void assertCounts( Map<String,Integer> expectedCounts, Map<String,Integer> counts )
+    {
+        expectedCounts.entrySet().forEach(expected -> assertEquals(format("counts for relationship key '%s' are equal", expected.getKey()), expected.getValue(),
+				counts.get(expected.getKey())));
+    }
+
+	private static Map<String,List<StartRelationship>> buildSparseDenseRels( Node node )
+    {
+        Map<String,List<StartRelationship>> relationshipMap = new HashMap<>();
+        for ( Function<Node,StartRelationship> rel : sparseDenseRels )
+        {
+            StartRelationship r = rel.apply( node );
+            List<StartRelationship> relsOfType = relationshipMap.computeIfAbsent( computeKey( r ), key -> new ArrayList<>() );
+            relsOfType.add( r );
+        }
+        return relationshipMap;
+    }
+
+	private static String computeKey( StartRelationship r )
+    {
+        return computeKey( r.type.name(), r.direction );
+    }
+
+	private static String computeKey( org.neo4j.internal.kernel.api.Transaction transaction, RelationshipTraversalCursor r ) throws KernelException
+    {
+        Direction d;
+        if ( r.sourceNodeReference() == r.targetNodeReference() )
+        {
+            d = Direction.BOTH;
+        }
+        else if ( r.sourceNodeReference() == r.originNodeReference() )
+        {
+            d = Direction.OUTGOING;
+        }
+        else
+        {
+            d = Direction.INCOMING;
+        }
+
+        return computeKey( transaction.token().relationshipTypeName( r.type() ), d );
+    }
+
+	static String computeKey( String type, Direction direction )
+    {
+        return new StringBuilder().append(type).append("-").append(direction).toString();
+    }
+
+	private static Function<Node,StartRelationship> outgoing( String type )
+    {
+        return node ->
+        {
+            GraphDatabaseService db = node.getGraphDatabase();
+            RelationshipType relType = withName( type );
+            return new StartRelationship(
+                    node.createRelationshipTo( db.createNode(), relType ).getId(),
+                    Direction.OUTGOING,
+                    relType );
+        };
+    }
+
+	private static Function<Node,StartRelationship> incoming( String type )
+    {
+        return node ->
+        {
+            GraphDatabaseService db = node.getGraphDatabase();
+            RelationshipType relType = withName( type );
+            return new StartRelationship(
+                    db.createNode().createRelationshipTo( node, relType ).getId(),
+                    Direction.INCOMING,
+                    relType );
+        };
+    }
+
+	private static Function<Node,StartRelationship> loop( String type )
+    {
+        return node ->
+        {
+            RelationshipType relType = withName( type );
+            return new StartRelationship(
+                    node.createRelationshipTo( node, relType ).getId(),
+                    Direction.BOTH,
+                    relType );
+        };
+    }
+
+	static class StartRelationship
     {
         public final long id;
         public final Direction direction;
@@ -188,113 +286,8 @@ public class RelationshipTestSupport
         Map<String,Integer> expectedCounts()
         {
             Map<String,Integer> expectedCounts = new HashMap<>();
-            for ( Map.Entry<String,List<StartRelationship>> kv : relationships.entrySet() )
-            {
-                expectedCounts.put( kv.getKey(), relationships.get( kv.getKey() ).size() );
-            }
+            relationships.entrySet().forEach(kv -> expectedCounts.put(kv.getKey(), relationships.get(kv.getKey()).size()));
             return expectedCounts;
         }
-    }
-
-    static void assertCounts( Map<String,Integer> expectedCounts, Map<String,Integer> counts )
-    {
-        for ( Map.Entry<String, Integer> expected : expectedCounts.entrySet() )
-        {
-            assertEquals(
-                    format( "counts for relationship key '%s' are equal", expected.getKey() ),
-                    expected.getValue(), counts.get( expected.getKey()) );
-        }
-    }
-
-    private static Map<String,List<StartRelationship>> buildSparseDenseRels( Node node )
-    {
-        Map<String,List<StartRelationship>> relationshipMap = new HashMap<>();
-        for ( Function<Node,StartRelationship> rel : sparseDenseRels )
-        {
-            StartRelationship r = rel.apply( node );
-            List<StartRelationship> relsOfType = relationshipMap.computeIfAbsent( computeKey( r ), key -> new ArrayList<>() );
-            relsOfType.add( r );
-        }
-        return relationshipMap;
-    }
-
-    private static String computeKey( StartRelationship r )
-    {
-        return computeKey( r.type.name(), r.direction );
-    }
-
-    private static String computeKey( org.neo4j.internal.kernel.api.Transaction transaction, RelationshipTraversalCursor r ) throws KernelException
-    {
-        Direction d;
-        if ( r.sourceNodeReference() == r.targetNodeReference() )
-        {
-            d = Direction.BOTH;
-        }
-        else if ( r.sourceNodeReference() == r.originNodeReference() )
-        {
-            d = Direction.OUTGOING;
-        }
-        else
-        {
-            d = Direction.INCOMING;
-        }
-
-        return computeKey( transaction.token().relationshipTypeName( r.type() ), d );
-    }
-
-    static String computeKey( String type, Direction direction )
-    {
-        return type + "-" + direction;
-    }
-
-    private static Function<Node,StartRelationship>[] sparseDenseRels = Iterators.array(
-            loop( "FOO" ), // loops are the hardest, let's have two to try to interfere with outgoing/incoming code
-            outgoing( "FOO" ),
-            outgoing( "BAR" ),
-            outgoing( "BAR" ),
-            incoming( "FOO" ),
-            outgoing( "FOO" ),
-            incoming( "BAZ" ),
-            incoming( "BAR" ),
-            outgoing( "BAZ" ),
-            loop( "FOO" )
-    );
-
-    private static Function<Node,StartRelationship> outgoing( String type )
-    {
-        return node ->
-        {
-            GraphDatabaseService db = node.getGraphDatabase();
-            RelationshipType relType = withName( type );
-            return new StartRelationship(
-                    node.createRelationshipTo( db.createNode(), relType ).getId(),
-                    Direction.OUTGOING,
-                    relType );
-        };
-    }
-
-    private static Function<Node,StartRelationship> incoming( String type )
-    {
-        return node ->
-        {
-            GraphDatabaseService db = node.getGraphDatabase();
-            RelationshipType relType = withName( type );
-            return new StartRelationship(
-                    db.createNode().createRelationshipTo( node, relType ).getId(),
-                    Direction.INCOMING,
-                    relType );
-        };
-    }
-
-    private static Function<Node,StartRelationship> loop( String type )
-    {
-        return node ->
-        {
-            RelationshipType relType = withName( type );
-            return new StartRelationship(
-                    node.createRelationshipTo( node, relType ).getId(),
-                    Direction.BOTH,
-                    relType );
-        };
     }
 }

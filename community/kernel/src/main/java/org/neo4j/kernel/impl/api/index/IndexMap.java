@@ -76,16 +76,10 @@ public final class IndexMap implements Cloneable
         this.uniquenessConstraintsById = uniquenessConstraintsById;
         this.descriptorsByLabelThenProperty = new SchemaDescriptorLookupSet<>();
         this.descriptorsByReltypeThenProperty = new SchemaDescriptorLookupSet<>();
-        for ( SchemaDescriptor schema : indexesByDescriptor.keySet() )
-        {
-            addDescriptorToLookups( schema );
-        }
+        indexesByDescriptor.keySet().forEach(this::addDescriptorToLookups);
         this.constraintsByLabelThenProperty = new SchemaDescriptorLookupSet<>();
         this.constraintsByRelTypeThenProperty = new SchemaDescriptorLookupSet<>();
-        for ( IndexBackedConstraintDescriptor constraint : uniquenessConstraintsById.values() )
-        {
-            addConstraintToLookups( constraint );
-        }
+        uniquenessConstraintsById.values().forEach(this::addConstraintToLookups);
     }
 
     public IndexProxy getIndexProxy( long indexId )

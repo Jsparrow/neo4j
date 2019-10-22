@@ -32,7 +32,7 @@ public class KernelExtensionFailureStrategies
     private static FailedToBuildKernelExtensionException wrap( KernelExtensionFactory kernelExtensionFactory, UnsatisfiedDependencyException e )
     {
         return new FailedToBuildKernelExtensionException(
-                "Failed to build kernel extension " + kernelExtensionFactory + " due to a missing dependency: " + e.getMessage(), e );
+                new StringBuilder().append("Failed to build kernel extension ").append(kernelExtensionFactory).append(" due to a missing dependency: ").append(e.getMessage()).toString(), e );
     }
 
     private static FailedToBuildKernelExtensionException wrap( KernelExtensionFactory kernelExtensionFactory, Throwable e )

@@ -40,7 +40,11 @@ import java.util.Objects;
  */
 public class FeatureToggles
 {
-    /**
+    private FeatureToggles()
+    {
+    }
+
+	/**
      * Get the value of a {@code boolean} system property.
      *
      * The absolute name of the system property is computed based on the provided class and local name.
@@ -55,7 +59,7 @@ public class FeatureToggles
         return booleanProperty( name( location, name ), defaultValue );
     }
 
-    /**
+	/**
      * Get the value of a {@code boolean} system property.
      *
      * The absolute name of the system property is computed based on the package of the provided class and local name.
@@ -70,7 +74,7 @@ public class FeatureToggles
         return booleanProperty( name( location.getPackage(), name ), defaultValue );
     }
 
-    /**
+	/**
      * Get the value of a {@code long} system property.
      *
      * The absolute name of the system property is computed based on the provided class and local name.
@@ -85,7 +89,7 @@ public class FeatureToggles
         return Long.getLong( name( location, name ), defaultValue );
     }
 
-    /**
+	/**
      * Get the value of a {@code int} system property.
      *
      * The absolute name of the system property is computed based on the provided class and local name.
@@ -100,7 +104,7 @@ public class FeatureToggles
         return Integer.getInteger( name( location, name ), defaultValue );
     }
 
-    /**
+	/**
      * Get the value of a {@code double} system property.
      *
      * The absolute name of the system property is computed based on the provided class and local name.
@@ -127,7 +131,7 @@ public class FeatureToggles
         return defaultValue;
     }
 
-    /**
+	/**
      * Get the value of a {@link String} system property.
      * <p>
      * The absolute name of the system property is computed based on the provided class and local name.
@@ -143,7 +147,7 @@ public class FeatureToggles
         return propertyValue == null || propertyValue.isEmpty() ? defaultValue : propertyValue;
     }
 
-    /**
+	/**
      * Get the value of a {@code enum} system property.
      *
      * The absolute name of the system property is computed based on the provided class and local name.
@@ -159,7 +163,7 @@ public class FeatureToggles
         return enumProperty( defaultValue.getDeclaringClass(), name( location, name ), defaultValue );
     }
 
-    /**
+	/**
      * Set the value of a system property.
      * <p>
      * The name of the system property is computed based on the provided class and local name.
@@ -173,7 +177,7 @@ public class FeatureToggles
         System.setProperty( name( location, name ), Objects.toString( value ) );
     }
 
-    /**
+	/**
      * Clear the value of a system property.
      * <p>
      * The name of the system property is computed based on the provided class and local name.
@@ -186,7 +190,7 @@ public class FeatureToggles
         System.clearProperty( name( location, name ) );
     }
 
-    /**
+	/**
      * Helps creating a JVM parameter for setting a feature toggle of an arbitrary type.
      * Given value will be converted to string using {@link Objects#toString(Object)} method.
      *
@@ -200,38 +204,32 @@ public class FeatureToggles
         return toggle( name( location, name ), Objects.toString( value ) );
     }
 
-    // <implementation>
-
-    private static String toggle( String key, String value )
+	private static String toggle( String key, String value )
     {
-        return "-D" + key + "=" + value;
+        return new StringBuilder().append("-D").append(key).append("=").append(value).toString();
     }
 
-    private FeatureToggles()
+	private static String name( Class<?> location, String name )
     {
+        return new StringBuilder().append(location.getCanonicalName()).append(".").append(name).toString();
     }
 
-    private static String name( Class<?> location, String name )
+	private static String name( Package location, String name )
     {
-        return location.getCanonicalName() + "." + name;
+        return new StringBuilder().append(location.getName()).append(".").append(name).toString();
     }
 
-    private static String name( Package location, String name )
-    {
-        return location.getName() + "." + name;
-    }
-
-    private static boolean booleanProperty( String flag, boolean defaultValue )
+	private static boolean booleanProperty( String flag, boolean defaultValue )
     {
         return parseBoolean( System.getProperty( flag ), defaultValue );
     }
 
-    private static boolean parseBoolean( String value, boolean defaultValue )
+	private static boolean parseBoolean( String value, boolean defaultValue )
     {
         return defaultValue ? !"false".equalsIgnoreCase( value ) : "true".equalsIgnoreCase( value );
     }
 
-    private static <E extends Enum<E>> E enumProperty( Class<E> enumClass, String name, E defaultValue )
+	private static <E extends Enum<E>> E enumProperty( Class<E> enumClass, String name, E defaultValue )
     {
         try
         {
@@ -242,4 +240,8 @@ public class FeatureToggles
             return defaultValue;
         }
     }
+
+    // <implementation>
+
+    
 }

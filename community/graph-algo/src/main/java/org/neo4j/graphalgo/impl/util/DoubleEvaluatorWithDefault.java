@@ -30,7 +30,6 @@ public class DoubleEvaluatorWithDefault implements CostEvaluator<Double>
 
     public DoubleEvaluatorWithDefault( String costPropertyName, double defaultCost )
     {
-        super();
         this.costPropertyName = costPropertyName;
         this.defaultCost = defaultCost;
     }

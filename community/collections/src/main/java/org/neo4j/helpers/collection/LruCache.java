@@ -40,12 +40,11 @@ public class LruCache<K, E>
         protected boolean removeEldestEntry( Map.Entry<K, E> eldest )
         {
             // synchronization miss with old value on maxSize here is ok
-            if ( size() > maxSize )
-            {
-                elementCleaned( eldest.getValue() );
-                return true;
-            }
-            return false;
+			if (size() <= maxSize) {
+				return false;
+			}
+			elementCleaned( eldest.getValue() );
+			return true;
         }
     };
 
@@ -60,7 +59,7 @@ public class LruCache<K, E>
     {
         if ( name == null || maxSize < 1 )
         {
-            throw new IllegalArgumentException( "maxSize=" + maxSize + ", name=" + name );
+            throw new IllegalArgumentException( new StringBuilder().append("maxSize=").append(maxSize).append(", name=").append(name).toString() );
         }
         this.name = name;
         this.maxSize = maxSize;
@@ -85,7 +84,7 @@ public class LruCache<K, E>
     {
         if ( key == null || element == null )
         {
-            throw new IllegalArgumentException( "key=" + key + ", element=" + element );
+            throw new IllegalArgumentException( new StringBuilder().append("key=").append(key).append(", element=").append(element).toString() );
         }
         cache.put( key, element );
     }
@@ -110,10 +109,7 @@ public class LruCache<K, E>
 
     public synchronized void clear()
     {
-        for ( Map.Entry<K, E> keEntry : cache.entrySet() )
-        {
-            elementCleaned( keEntry.getValue() );
-        }
+        cache.entrySet().forEach(keEntry -> elementCleaned(keEntry.getValue()));
         cache.clear();
     }
 

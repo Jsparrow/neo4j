@@ -85,7 +85,7 @@ import static org.neo4j.test.rule.SuppressOutput.suppressAll;
 public class ManageNodeIT extends AbstractRestFunctionalDocTestBase
 {
     private static final long NON_EXISTENT_NODE_ID = 999999;
-    private static String NODE_URI_PATTERN = "^.*/node/[0-9]+$";
+    private static String nodeUriPattern = "^.*/node/[0-9]+$";
 
     private static FunctionalTestHelper functionalTestHelper;
     private static GraphDbHelper helper;
@@ -107,7 +107,7 @@ public class ManageNodeIT extends AbstractRestFunctionalDocTestBase
                 .response();
         assertTrue( response.getLocation()
                 .toString()
-                .matches( NODE_URI_PATTERN ) );
+                .matches( nodeUriPattern ) );
     }
 
     @Test
@@ -122,7 +122,7 @@ public class ManageNodeIT extends AbstractRestFunctionalDocTestBase
                 .response();
         assertTrue( response.getLocation()
                 .toString()
-                .matches( NODE_URI_PATTERN ) );
+                .matches( nodeUriPattern ) );
     }
 
     @Test
@@ -220,7 +220,7 @@ public class ManageNodeIT extends AbstractRestFunctionalDocTestBase
     {
         long node = helper.createNode();
         gen.get().expectedStatus( 204 )
-                .delete( functionalTestHelper.dataUri() + "node/" + node );
+                .delete( new StringBuilder().append(functionalTestHelper.dataUri()).append("node/").append(node).toString() );
     }
 
     @Test
@@ -252,7 +252,7 @@ public class ManageNodeIT extends AbstractRestFunctionalDocTestBase
         assertNotNull( jsonMap.get( "message" ) );
 
         gen.get().expectedStatus( 409 )
-                .delete( functionalTestHelper.dataUri() + "node/" + id );
+                .delete( new StringBuilder().append(functionalTestHelper.dataUri()).append("node/").append(id).toString() );
     }
 
     @Test
@@ -296,7 +296,7 @@ public class ManageNodeIT extends AbstractRestFunctionalDocTestBase
 
     private JaxRsResponse sendDeleteRequestToServer( final long id )
     {
-        return RestRequest.req().delete(functionalTestHelper.dataUri() + "node/" + id);
+        return RestRequest.req().delete(new StringBuilder().append(functionalTestHelper.dataUri()).append("node/").append(id).toString());
     }
 
     /*
@@ -355,7 +355,7 @@ public class ManageNodeIT extends AbstractRestFunctionalDocTestBase
 
             // When
             HTTP.Response res =
-                    HTTP.GET( functionalTestHelper.managementUri() + "/" + VersionAndEditionService.SERVER_PATH );
+                    HTTP.GET( new StringBuilder().append(functionalTestHelper.managementUri()).append("/").append(VersionAndEditionService.SERVER_PATH).toString() );
 
             // Then
             assertEquals( 200, res.status() );
@@ -396,9 +396,8 @@ public class ManageNodeIT extends AbstractRestFunctionalDocTestBase
 
         private JaxRsResponse exec( String command, String engine )
         {
-            return RestRequest.req().post( server.baseUri() + "db/manage/server/console", "{" +
-                    "\"engine\":\"" + engine + "\"," +
-                    "\"command\":\"" + command + "\\n\"}" );
+            return RestRequest.req().post( server.baseUri() + "db/manage/server/console", new StringBuilder().append("{").append("\"engine\":\"").append(engine).append("\",").append("\"command\":\"").append(command).append("\\n\"}")
+					.toString() );
         }
     }
 

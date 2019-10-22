@@ -24,10 +24,6 @@ package org.neo4j.internal.kernel.api;
  */
 public interface RelationshipGroupCursor extends SuspendableCursor<RelationshipGroupCursor.Position>
 {
-    abstract class Position extends CursorPosition<Position>
-    {
-    }
-
     /**
      * Find the first relationship group with a label greater than or equal to the provided label.
      * <p>
@@ -54,28 +50,32 @@ public interface RelationshipGroupCursor extends SuspendableCursor<RelationshipG
         return false;
     }
 
-    int type();
+	int type();
 
-    int outgoingCount();
+	int outgoingCount();
 
-    int incomingCount();
+	int incomingCount();
 
-    int loopCount();
+	int loopCount();
 
-    default int totalCount()
+	default int totalCount()
     {
         return outgoingCount() + incomingCount() + loopCount();
     }
 
-    void outgoing( RelationshipTraversalCursor cursor );
+	void outgoing( RelationshipTraversalCursor cursor );
 
-    void incoming( RelationshipTraversalCursor cursor );
+	void incoming( RelationshipTraversalCursor cursor );
 
-    void loops( RelationshipTraversalCursor cursor );
+	void loops( RelationshipTraversalCursor cursor );
 
-    long outgoingReference();
+	long outgoingReference();
 
-    long incomingReference();
+	long incomingReference();
 
-    long loopsReference();
+	long loopsReference();
+
+	abstract class Position extends CursorPosition<Position>
+    {
+    }
 }

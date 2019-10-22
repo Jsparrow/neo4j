@@ -61,22 +61,24 @@ import org.neo4j.kernel.impl.store.record.RelationshipTypeTokenRecord;
  */
 public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequence
 {
-    /**
+    Predicate<AbstractBaseRecord> IN_USE = AbstractBaseRecord::inUse;
+
+	/**
      * @return the {@link File} that backs this store.
      */
     File getStorageFile();
 
-    /**
+	/**
      * @return high id of this store, i.e an id higher than any in use record.
      */
     long getHighId();
 
-    /**
+	/**
      * @return highest id in use in this store.
      */
     long getHighestPossibleIdInUse();
 
-    /**
+	/**
      * Sets highest id in use for this store. This is for when records are applied to this store where
      * the ids have been generated through some other means. Having an up to date highest possible id
      * makes sure that closing this store truncates at the right place and that "all record scans" can
@@ -86,12 +88,12 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      */
     void setHighestPossibleIdInUse( long highestIdInUse );
 
-    /**
+	/**
      * @return a new record instance for receiving data by {@link #getRecord(long, AbstractBaseRecord, RecordLoad)}.
      */
     RECORD newRecord();
 
-    /**
+	/**
      * Reads a record from the store into {@code target}. Depending on {@link RecordLoad} given there will
      * be different behavior, although the {@code target} record will be marked with the specified
      * {@code id} after participating in this method call.
@@ -112,9 +114,9 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      * @return the record that was passed in, for convenience.
      * @throws InvalidRecordException if record not in use and the {@code mode} allows for throwing.
      */
-    RECORD getRecord( long id, RECORD target, RecordLoad mode ) throws InvalidRecordException;
+    RECORD getRecord( long id, RECORD target, RecordLoad mode );
 
-    /**
+	/**
      * Opens a {@link PageCursor} on this store, capable of reading records using
      * {@link #getRecordByCursor(long, AbstractBaseRecord, RecordLoad, PageCursor)}.
      * The caller is responsible for closing it when done with it.
@@ -124,7 +126,7 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      */
     PageCursor openPageCursorForReading( long id );
 
-    /**
+	/**
      * Reads a record from the store into {@code target}, see
      * {@link RecordStore#getRecord(long, AbstractBaseRecord, RecordLoad)}.
      * <p>
@@ -137,9 +139,9 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      * @param cursor the PageCursor to use for record loading.
      * @throws InvalidRecordException if record not in use and the {@code mode} allows for throwing.
      */
-    void getRecordByCursor( long id, RECORD target, RecordLoad mode, PageCursor cursor ) throws InvalidRecordException;
+    void getRecordByCursor( long id, RECORD target, RecordLoad mode, PageCursor cursor );
 
-    /**
+	/**
      * Reads a record from the store into {@code target}, see
      * {@link RecordStore#getRecord(long, AbstractBaseRecord, RecordLoad)}.
      * <p>
@@ -152,9 +154,9 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      * @param cursor the PageCursor to use for record loading.
      * @throws InvalidRecordException if record not in use and the {@code mode} allows for throwing.
      */
-    void nextRecordByCursor( RECORD target, RecordLoad mode, PageCursor cursor ) throws InvalidRecordException;
+    void nextRecordByCursor( RECORD target, RecordLoad mode, PageCursor cursor );
 
-    /**
+	/**
      * For stores that have other stores coupled underneath, the "top level" record will have a flag
      * saying whether or not it's light. Light means that no records from the coupled store have been loaded yet.
      * This method can load those records and enrich the target record with those, marking it as heavy.
@@ -163,7 +165,7 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      */
     void ensureHeavy( RECORD record );
 
-    /**
+	/**
      * Reads records that belong together, a chain of records that as a whole forms the entirety of a data item.
      *
      * @param firstId record id of the first record to start loading from.
@@ -171,9 +173,9 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      * @return {@link Collection} of records in the loaded chain.
      * @throws InvalidRecordException if some record not in use and the {@code mode} is allows for throwing.
      */
-    List<RECORD> getRecords( long firstId, RecordLoad mode ) throws InvalidRecordException;
+    List<RECORD> getRecords( long firstId, RecordLoad mode );
 
-    /**
+	/**
      * Returns another record id which the given {@code record} references, if it exists in a chain of records.
      *
      * @param record to read the "next" reference from.
@@ -182,7 +184,7 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      */
     long getNextRecordReference( RECORD record );
 
-    /**
+	/**
      * Updates this store with the contents of {@code record} at the record id
      * {@link AbstractBaseRecord#getId() specified} by the record. The whole record will be written if
      * the given record is {@link AbstractBaseRecord#inUse() in use}, not necessarily so if it's not in use.
@@ -192,7 +194,7 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      */
     void updateRecord( RECORD record );
 
-    /**
+	/**
      * Lets {@code record} be processed by {@link Processor}.
      *
      * @param processor {@link Processor} of records.
@@ -201,12 +203,12 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      */
     <FAILURE extends Exception> void accept( Processor<FAILURE> processor, RECORD record ) throws FAILURE;
 
-    /**
+	/**
      * @return number of bytes each record in this store occupies. All records in a store is of the same size.
      */
     int getRecordSize();
 
-    /**
+	/**
      * @deprecated since it's exposed through the generic {@link RecordStore} interface although only
      * applicable to one particular type of of implementation of it.
      * @return record "data" size, only applicable to dynamic record stores where record size may be specified
@@ -216,25 +218,25 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
     @Deprecated
     int getRecordDataSize();
 
-    /**
+	/**
      * @return underlying storage is assumed to work with pages. This method returns number of records that
      * will fit into each page.
      */
     int getRecordsPerPage();
 
-    /**
+	/**
      * Closes this store and releases any resource attached to it.
      */
     void close();
 
-    /**
+	/**
      * Flushes all pending {@link #updateRecord(AbstractBaseRecord) updates} to underlying storage.
      * This call is blocking and will ensure all updates since last call to this method are durable
      * once the call returns.
      */
     void flush();
 
-    /**
+	/**
      * Some stores may have meta data stored in the header of the store file. Since all records in a store
      * are of the same size the means of storing that meta data is to occupy one or more records at the
      * beginning of the store (0...).
@@ -243,7 +245,7 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      */
     int getNumberOfReservedLowIds();
 
-    /**
+	/**
      * Returns store header (see {@link #getNumberOfReservedLowIds()}) as {@code int}. Exposed like this
      * for convenience since all known store headers are ints.
      *
@@ -251,14 +253,14 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      */
     int getStoreHeaderInt();
 
-    /**
+	/**
      * Called once all changes to a record is ready to be converted into a command.
      *
      * @param record record to prepare, potentially updating it with more information before converting into a command.
      */
     void prepareForCommit( RECORD record );
 
-    /**
+	/**
      * Called once all changes to a record is ready to be converted into a command.
      * WARNING this is for advanced use, please consider using {@link #prepareForCommit(AbstractBaseRecord)} instead.
      *
@@ -267,7 +269,7 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      */
     void prepareForCommit( RECORD record, IdSequence idSequence );
 
-    /**
+	/**
      * Scan the given range of records both inclusive, and pass all the in-use ones to the given processor, one by one.
      *
      * The record passed to the NodeRecordScanner is reused instead of reallocated for every record, so it must be
@@ -277,176 +279,196 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
      */
     <EXCEPTION extends Exception> void scanAllRecords( Visitor<RECORD,EXCEPTION> visitor ) throws EXCEPTION;
 
-    void freeId( long id );
+	void freeId( long id );
 
-    Predicate<AbstractBaseRecord> IN_USE = AbstractBaseRecord::inUse;
+	/**
+     * Utility methods for reading records. These are not on the interface itself since it should be
+     * an explicit choice when to create the record instances passed into it.
+     * Also for mocking purposes it's less confusing and error prone having only a single method.
+     */
+    static <R extends AbstractBaseRecord> R getRecord( RecordStore<R> store, long id, RecordLoad mode )
+    {
+        R record = store.newRecord();
+        store.getRecord( id, record, mode );
+        return record;
+    }
 
-    class Delegator<R extends AbstractBaseRecord> implements RecordStore<R>
+	/**
+     * Utility methods for reading records. These are not on the interface itself since it should be
+     * an explicit choice when to create the record instances passed into it.
+     * Also for mocking purposes it's less confusing and error prone having only a single method.
+     */
+    static <R extends AbstractBaseRecord> R getRecord( RecordStore<R> store, long id )
+    {
+        return getRecord( store, id, RecordLoad.NORMAL );
+    }
+
+	class Delegator<R extends AbstractBaseRecord> implements RecordStore<R>
     {
         private final RecordStore<R> actual;
-
-        @Override
-        public void setHighestPossibleIdInUse( long highestIdInUse )
-        {
-            actual.setHighestPossibleIdInUse( highestIdInUse );
-        }
-
-        @Override
-        public R newRecord()
-        {
-            return actual.newRecord();
-        }
-
-        @Override
-        public R getRecord( long id, R target, RecordLoad mode ) throws InvalidRecordException
-        {
-            return actual.getRecord( id, target, mode );
-        }
-
-        @Override
-        public PageCursor openPageCursorForReading( long id )
-        {
-            return actual.openPageCursorForReading( id );
-        }
-
-        @Override
-        public void getRecordByCursor( long id, R target, RecordLoad mode, PageCursor cursor ) throws InvalidRecordException
-        {
-            actual.getRecordByCursor( id, target, mode, cursor );
-        }
-
-        @Override
-        public void nextRecordByCursor( R target, RecordLoad mode, PageCursor cursor ) throws InvalidRecordException
-        {
-            actual.nextRecordByCursor( target, mode, cursor );
-        }
-
-        @Override
-        public List<R> getRecords( long firstId, RecordLoad mode ) throws InvalidRecordException
-        {
-            return actual.getRecords( firstId, mode );
-        }
-
-        @Override
-        public long getNextRecordReference( R record )
-        {
-            return actual.getNextRecordReference( record );
-        }
 
         public Delegator( RecordStore<R> actual )
         {
             this.actual = actual;
         }
 
-        @Override
+		@Override
+        public void setHighestPossibleIdInUse( long highestIdInUse )
+        {
+            actual.setHighestPossibleIdInUse( highestIdInUse );
+        }
+
+		@Override
+        public R newRecord()
+        {
+            return actual.newRecord();
+        }
+
+		@Override
+        public R getRecord( long id, R target, RecordLoad mode )
+        {
+            return actual.getRecord( id, target, mode );
+        }
+
+		@Override
+        public PageCursor openPageCursorForReading( long id )
+        {
+            return actual.openPageCursorForReading( id );
+        }
+
+		@Override
+        public void getRecordByCursor( long id, R target, RecordLoad mode, PageCursor cursor )
+        {
+            actual.getRecordByCursor( id, target, mode, cursor );
+        }
+
+		@Override
+        public void nextRecordByCursor( R target, RecordLoad mode, PageCursor cursor )
+        {
+            actual.nextRecordByCursor( target, mode, cursor );
+        }
+
+		@Override
+        public List<R> getRecords( long firstId, RecordLoad mode )
+        {
+            return actual.getRecords( firstId, mode );
+        }
+
+		@Override
+        public long getNextRecordReference( R record )
+        {
+            return actual.getNextRecordReference( record );
+        }
+
+		@Override
         public long nextId()
         {
             return actual.nextId();
         }
 
-        @Override
+		@Override
         public IdRange nextIdBatch( int size )
         {
             return actual.nextIdBatch( size );
         }
 
-        @Override
+		@Override
         public File getStorageFile()
         {
             return actual.getStorageFile();
         }
 
-        @Override
+		@Override
         public long getHighId()
         {
             return actual.getHighId();
         }
 
-        @Override
+		@Override
         public long getHighestPossibleIdInUse()
         {
             return actual.getHighestPossibleIdInUse();
         }
 
-        @Override
+		@Override
         public void updateRecord( R record )
         {
             actual.updateRecord( record );
         }
 
-        @Override
+		@Override
         public <FAILURE extends Exception> void accept( Processor<FAILURE> processor, R record ) throws FAILURE
         {
             actual.accept( processor, record );
         }
 
-        @Override
+		@Override
         public int getRecordSize()
         {
             return actual.getRecordSize();
         }
 
-        @Override
+		@Override
         public int getRecordDataSize()
         {
             return actual.getRecordDataSize();
         }
 
-        @Override
+		@Override
         public int getRecordsPerPage()
         {
             return actual.getRecordsPerPage();
         }
 
-        @Override
+		@Override
         public int getStoreHeaderInt()
         {
             return actual.getStoreHeaderInt();
         }
 
-        @Override
+		@Override
         public void close()
         {
             actual.close();
         }
 
-        @Override
+		@Override
         public int getNumberOfReservedLowIds()
         {
             return actual.getNumberOfReservedLowIds();
         }
 
-        @Override
+		@Override
         public void flush()
         {
             actual.flush();
         }
 
-        @Override
+		@Override
         public void ensureHeavy( R record )
         {
             actual.ensureHeavy( record );
         }
 
-        @Override
+		@Override
         public void prepareForCommit( R record )
         {
             actual.prepareForCommit( record );
         }
 
-        @Override
+		@Override
         public void prepareForCommit( R record, IdSequence idSequence )
         {
             actual.prepareForCommit( record, idSequence );
         }
 
-        @Override
+		@Override
         public <EXCEPTION extends Exception> void scanAllRecords( Visitor<R,EXCEPTION> visitor ) throws EXCEPTION
         {
             actual.scanAllRecords( visitor );
         }
 
-        @Override
+		@Override
         public void freeId( long id )
         {
             actual.freeId( id );
@@ -533,27 +555,5 @@ public interface RecordStore<RECORD extends AbstractBaseRecord> extends IdSequen
                 progressListener.done();
             }
         }
-    }
-
-    /**
-     * Utility methods for reading records. These are not on the interface itself since it should be
-     * an explicit choice when to create the record instances passed into it.
-     * Also for mocking purposes it's less confusing and error prone having only a single method.
-     */
-    static <R extends AbstractBaseRecord> R getRecord( RecordStore<R> store, long id, RecordLoad mode )
-    {
-        R record = store.newRecord();
-        store.getRecord( id, record, mode );
-        return record;
-    }
-
-    /**
-     * Utility methods for reading records. These are not on the interface itself since it should be
-     * an explicit choice when to create the record instances passed into it.
-     * Also for mocking purposes it's less confusing and error prone having only a single method.
-     */
-    static <R extends AbstractBaseRecord> R getRecord( RecordStore<R> store, long id )
-    {
-        return getRecord( store, id, RecordLoad.NORMAL );
     }
 }

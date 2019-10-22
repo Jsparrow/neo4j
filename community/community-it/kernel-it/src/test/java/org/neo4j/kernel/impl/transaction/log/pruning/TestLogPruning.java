@@ -52,18 +52,13 @@ import static org.neo4j.graphdb.factory.GraphDatabaseSettings.keep_logical_logs;
 
 public class TestLogPruning
 {
-    private interface Extractor
-    {
-        int extract( long fromVersion ) throws IOException;
-    }
-
     private GraphDatabaseAPI db;
-    private FileSystemAbstraction fs;
-    private LogFiles files;
-    private int rotateEveryNTransactions;
-    private int performedTransactions;
+	private FileSystemAbstraction fs;
+	private LogFiles files;
+	private int rotateEveryNTransactions;
+	private int performedTransactions;
 
-    @After
+	@After
     public void after() throws Exception
     {
         if ( db != null )
@@ -73,7 +68,7 @@ public class TestLogPruning
         fs.close();
     }
 
-    @Test
+	@Test
     public void noPruning() throws Exception
     {
         newDb( "true", 2 );
@@ -86,12 +81,12 @@ public class TestLogPruning
         long currentVersion = files.getHighestLogVersion();
         for ( long version = 0; version < currentVersion; version++ )
         {
-            assertTrue( "Version " + version + " has been unexpectedly pruned",
+            assertTrue( new StringBuilder().append("Version ").append(version).append(" has been unexpectedly pruned").toString(),
                     fs.fileExists( files.getLogFileForVersion( version ) ) );
         }
     }
 
-    @Test
+	@Test
     public void pruneByFileSize() throws Exception
     {
         // Given
@@ -111,7 +106,7 @@ public class TestLogPruning
         assertTrue( totalTransactions >= 3 && totalTransactions < 4 );
     }
 
-    @Test
+	@Test
     public void pruneByFileCount() throws Exception
     {
         int logsToKeep = 5;
@@ -126,7 +121,7 @@ public class TestLogPruning
         // TODO we could verify, after the db has been shut down, that the file count is n.
     }
 
-    @Test
+	@Test
     public void pruneByTransactionCount() throws Exception
     {
         int transactionsToKeep = 100;
@@ -139,14 +134,14 @@ public class TestLogPruning
         }
 
         int transactionCount = transactionCount();
-        assertTrue( "Transaction count expected to be within " + transactionsToKeep + " <= txs <= " +
-                    (transactionsToKeep + transactionsPerLog) + ", but was " + transactionCount,
+        assertTrue( new StringBuilder().append("Transaction count expected to be within ").append(transactionsToKeep).append(" <= txs <= ").append(transactionsToKeep + transactionsPerLog).append(", but was ").append(transactionCount)
+				.toString(),
 
                 transactionCount >= transactionsToKeep &&
                 transactionCount <= (transactionsToKeep + transactionsPerLog) );
     }
 
-    @Test
+	@Test
     public void shouldKeepAtLeastOneTransactionAfterRotate() throws Exception
     {
         // Given
@@ -171,7 +166,7 @@ public class TestLogPruning
         assertThat( transactionCount(), greaterThanOrEqualTo( 1 ) );
     }
 
-    private GraphDatabaseAPI newDb( String logPruning, int rotateEveryNTransactions )
+	private GraphDatabaseAPI newDb( String logPruning, int rotateEveryNTransactions )
     {
         this.rotateEveryNTransactions = rotateEveryNTransactions;
         fs = new EphemeralFileSystemAbstraction();
@@ -184,7 +179,7 @@ public class TestLogPruning
         return db;
     }
 
-    private void doTransaction() throws IOException
+	private void doTransaction() throws IOException
     {
         if ( ++performedTransactions >= rotateEveryNTransactions )
         {
@@ -201,13 +196,13 @@ public class TestLogPruning
         checkPoint();
     }
 
-    private void checkPoint() throws IOException
+	private void checkPoint() throws IOException
     {
         TriggerInfo triggerInfo = new SimpleTriggerInfo( "test" );
         db.getDependencyResolver().resolveDependency( CheckPointer.class ).forceCheckPoint( triggerInfo );
     }
 
-    private int figureOutSampleTransactionSizeBytes() throws IOException
+	private int figureOutSampleTransactionSizeBytes() throws IOException
     {
         db = newDb( "true", 5 );
         doTransaction();
@@ -215,7 +210,7 @@ public class TestLogPruning
         return (int) fs.getFileSize( files.getLogFileForVersion( 0 ) );
     }
 
-    private int aggregateLogData( Extractor extractor ) throws IOException
+	private int aggregateLogData( Extractor extractor ) throws IOException
     {
         int total = 0;
         for ( long i = files.getHighestLogVersion(); i >= 0; i-- )
@@ -232,17 +227,17 @@ public class TestLogPruning
         return total;
     }
 
-    private int logCount() throws IOException
+	private int logCount() throws IOException
     {
         return aggregateLogData( from -> 1 );
     }
 
-    private int logFileSize() throws IOException
+	private int logFileSize() throws IOException
     {
         return aggregateLogData( from -> (int) fs.getFileSize( files.getLogFileForVersion( from ) ) );
     }
 
-    private int transactionCount() throws IOException
+	private int transactionCount() throws IOException
     {
         return aggregateLogData( version ->
         {
@@ -262,5 +257,10 @@ public class TestLogPruning
             }
             return counter;
         } );
+    }
+
+	private interface Extractor
+    {
+        int extract( long fromVersion ) throws IOException;
     }
 }

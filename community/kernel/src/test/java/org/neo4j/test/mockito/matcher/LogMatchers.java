@@ -146,8 +146,8 @@ public class LogMatchers
             @Override
             public void describeTo( Description description )
             {
-                description.appendText( "Start[" + "xid=<Any Xid>,master=" + masterId + ",me=" + localId
-                        + ",time=<Any Date>]" );
+                description.appendText( new StringBuilder().append("Start[").append("xid=<Any Xid>,master=").append(masterId).append(",me=").append(localId).append(",time=<Any Date>]")
+						.toString() );
             }
         };
     }

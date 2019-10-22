@@ -36,15 +36,19 @@ import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_RELATIONSHIP;
 
 class TwoPhaseNodeForRelationshipLocking
 {
-    private final ThrowingConsumer<Long,KernelException> relIdAction;
-
-    private long firstRelId;
-    private long[] sortedNodeIds;
     private static final long[] EMPTY = new long[0];
-    private final Locks.Client locks;
-    private final LockTracer lockTracer;
 
-    TwoPhaseNodeForRelationshipLocking(
+	private final ThrowingConsumer<Long,KernelException> relIdAction;
+
+	private long firstRelId;
+
+	private long[] sortedNodeIds;
+
+	private final Locks.Client locks;
+
+	private final LockTracer lockTracer;
+
+	TwoPhaseNodeForRelationshipLocking(
             ThrowingConsumer<Long,KernelException> relIdAction, Locks.Client locks,
             LockTracer lockTracer )
     {
@@ -53,7 +57,7 @@ class TwoPhaseNodeForRelationshipLocking
         this.lockTracer = lockTracer;
     }
 
-    void lockAllNodesAndConsumeRelationships( long nodeId, final Transaction transaction, NodeCursor nodes ) throws KernelException
+	void lockAllNodesAndConsumeRelationships( long nodeId, final Transaction transaction, NodeCursor nodes ) throws KernelException
     {
         boolean retry;
         do
@@ -87,7 +91,7 @@ class TwoPhaseNodeForRelationshipLocking
         while ( retry );
     }
 
-    private void collectAndSortNodeIds( long nodeId, Transaction transaction, NodeCursor nodes )
+	private void collectAndSortNodeIds( long nodeId, Transaction transaction, NodeCursor nodes )
     {
         final MutableLongSet nodeIdSet = new LongHashSet();
         nodeIdSet.add( nodeId );
@@ -117,30 +121,27 @@ class TwoPhaseNodeForRelationshipLocking
         this.sortedNodeIds = nodeIdSet.toSortedArray();
     }
 
-    private void lockAllNodes( long[] nodeIds )
+	private void lockAllNodes( long[] nodeIds )
     {
         locks.acquireExclusive( lockTracer, ResourceTypes.NODE, nodeIds );
     }
 
-    private void unlockAllNodes( long[] nodeIds )
+	private void unlockAllNodes( long[] nodeIds )
     {
         locks.releaseExclusive( ResourceTypes.NODE, nodeIds );
     }
 
-    private boolean performAction( long rel, boolean first )
+	private boolean performAction( long rel, boolean first )
             throws KernelException
     {
-        if ( first )
-        {
-            if ( rel != firstRelId )
-            {
-                // if the first relationship is not the same someone added some new rels, so we need to
-                // lock them all again
-                unlockAllNodes( sortedNodeIds );
-                sortedNodeIds = null;
-                return true;
-            }
-        }
+        boolean condition = first && rel != firstRelId;
+		if ( condition ) {
+		    // if the first relationship is not the same someone added some new rels, so we need to
+		    // lock them all again
+		    unlockAllNodes( sortedNodeIds );
+		    sortedNodeIds = null;
+		    return true;
+		}
 
         relIdAction.accept( rel );
         return false;

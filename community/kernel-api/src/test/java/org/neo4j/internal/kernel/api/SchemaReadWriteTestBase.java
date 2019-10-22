@@ -46,7 +46,17 @@ import static org.neo4j.internal.kernel.api.IndexReference.NO_INDEX;
 @SuppressWarnings( "Duplicates" )
 public abstract class SchemaReadWriteTestBase<G extends KernelAPIWriteTestSupport> extends KernelAPIWriteTestBase<G>
 {
-    private int label, label2, type, prop1, prop2, prop3;
+    private int label;
+
+	private int label2;
+
+	private int type;
+
+	private int prop1;
+
+	private int prop2;
+
+	private int prop3;
 
     @Rule
     public ExpectedException exception = ExpectedException.none();

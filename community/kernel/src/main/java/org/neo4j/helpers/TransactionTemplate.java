@@ -47,54 +47,13 @@ import org.neo4j.graphdb.TransientFailureException;
  */
 public class TransactionTemplate
 {
-    public interface Monitor
-    {
-        /**
-         * Called when an exception occur from the transactions.
-         *
-         * @param ex the exception thrown.
-         */
-        void failure( Throwable ex );
-
-        /**
-         * Called when the whole retry logic fails. Can be that all retries have failed or that the executing thread was
-         * interrupted.
-         *
-         * @param ex the last exception thrown when it failed.
-         */
-        void failed( Throwable ex );
-
-        /**
-         * Called when a retry is done.
-         */
-        void retrying();
-
-        class Adapter implements Monitor
-        {
-            @Override
-            public void failure( Throwable ex )
-            {
-            }
-
-            @Override
-            public void failed( Throwable ex )
-            {
-            }
-
-            @Override
-            public void retrying()
-            {
-            }
-        }
-    }
-
     private final GraphDatabaseService gds;
-    private final Monitor monitor;
-    private final int retries;
-    private final long backoff;
-    private final Predicate<Throwable> retryPredicate;
+	private final Monitor monitor;
+	private final int retries;
+	private final long backoff;
+	private final Predicate<Throwable> retryPredicate;
 
-    /**
+	/**
      * Creates a template for performing transactions with retry logic.
      * <p>
      * Default exceptions to retry on is everything except {@link Error} and {@link TransactionTerminatedException}.
@@ -109,7 +68,7 @@ public class TransactionTemplate
                 ex -> !Error.class.isInstance( ex ) && !TransactionTerminatedException.class.isInstance( ex ) );
     }
 
-    /**
+	/**
      * Create a template for performing transaction with retry logic.
      *
      * @param gds graph database to execute on.
@@ -140,32 +99,32 @@ public class TransactionTemplate
         this.retryPredicate = retryPredicate;
     }
 
-    public TransactionTemplate with( GraphDatabaseService gds )
+	public TransactionTemplate with( GraphDatabaseService gds )
     {
         return new TransactionTemplate( gds, monitor, retries, backoff, retryPredicate );
     }
 
-    public TransactionTemplate retries( int retries )
+	public TransactionTemplate retries( int retries )
     {
         return new TransactionTemplate( gds, monitor, retries, backoff, retryPredicate );
     }
 
-    public TransactionTemplate backoff( long backoff, TimeUnit unit )
+	public TransactionTemplate backoff( long backoff, TimeUnit unit )
     {
         return new TransactionTemplate( gds, monitor, retries, unit.toMillis( backoff ), retryPredicate );
     }
 
-    public TransactionTemplate monitor( Monitor monitor )
+	public TransactionTemplate monitor( Monitor monitor )
     {
         return new TransactionTemplate( gds, monitor, retries, backoff, retryPredicate );
     }
 
-    public TransactionTemplate retryOn( Predicate<Throwable> retryPredicate )
+	public TransactionTemplate retryOn( Predicate<Throwable> retryPredicate )
     {
         return new TransactionTemplate( gds, monitor, retries, backoff, retryPredicate );
     }
 
-    /**
+	/**
      * Executes a transaction with retry logic.
      *
      * @param txConsumer a consumer that takes transactions.
@@ -181,7 +140,7 @@ public class TransactionTemplate
         } );
     }
 
-    /**
+	/**
      * Executes a transaction with retry logic returning a result.
      *
      * @param txFunction function taking a transaction and producing a result.
@@ -190,7 +149,7 @@ public class TransactionTemplate
      * @throws TransactionFailureException if an error occurs other than those specified in {@link #retryOn(Predicate)}
      * or if the retry count was exceeded.
      */
-    public <T> T execute( Function<Transaction, T> txFunction ) throws TransactionFailureException
+    public <T> T execute( Function<Transaction, T> txFunction )
     {
         Throwable txEx;
         int retriesLeft = retries;
@@ -234,5 +193,46 @@ public class TransactionTemplate
 
         monitor.failed( txEx );
         throw new TransactionFailureException( "Failed", txEx );
+    }
+
+	public interface Monitor
+    {
+        /**
+         * Called when an exception occur from the transactions.
+         *
+         * @param ex the exception thrown.
+         */
+        void failure( Throwable ex );
+
+        /**
+         * Called when the whole retry logic fails. Can be that all retries have failed or that the executing thread was
+         * interrupted.
+         *
+         * @param ex the last exception thrown when it failed.
+         */
+        void failed( Throwable ex );
+
+        /**
+         * Called when a retry is done.
+         */
+        void retrying();
+
+        class Adapter implements Monitor
+        {
+            @Override
+            public void failure( Throwable ex )
+            {
+            }
+
+            @Override
+            public void failed( Throwable ex )
+            {
+            }
+
+            @Override
+            public void retrying()
+            {
+            }
+        }
     }
 }

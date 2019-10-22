@@ -35,11 +35,116 @@ import org.neo4j.storageengine.api.schema.LabelScanReader;
  */
 public interface LabelScanStore extends Lifecycle, ConsistencyCheckable
 {
-    interface Monitor
+    /**
+     * From the point a {@link LabelScanReader} is created till it's {@link LabelScanReader#close() closed} the
+     * contents it returns cannot change, i.e. it honors repeatable reads.
+     *
+     * @return a {@link LabelScanReader} capable of retrieving nodes for labels.
+     */
+    LabelScanReader newReader();
+
+	/**
+     * Acquire a writer for updating the store.
+     *
+     * @return {@link LabelScanWriter} which can modify the {@link LabelScanStore}.
+     */
+    LabelScanWriter newWriter();
+
+	/**
+     * Forces all changes to disk. Called at certain points from within Neo4j for example when
+     * rotating the logical log. After completion of this call there cannot be any essential state that
+     * hasn't been forced to disk.
+     *
+     * @throws UnderlyingStorageException if there was a problem forcing the state to persistent storage.
+     */
+    void force( IOLimiter limiter );
+
+	/**
+     * Acquire a reader for all {@link NodeLabelRange node label} ranges.
+     *
+     * @return the {@link AllEntriesLabelScanReader reader}.
+     */
+    AllEntriesLabelScanReader allNodeLabelRanges();
+
+	ResourceIterator<File> snapshotStoreFiles();
+
+	/**
+     * @return {@code true} if there's no data at all in this label scan store, otherwise {@code false}.
+     * @throws IOException on I/O error.
+     */
+    boolean isEmpty() throws IOException;
+
+	/**
+     * Initializes the store. After this has been called recovery updates can be processed.
+     */
+    @Override
+    void init() throws IOException;
+
+	/**
+     * Starts the store. After this has been called updates can be processed.
+     */
+    @Override
+    void start() throws IOException;
+
+	@Override
+    void stop();
+
+	/**
+     * Shuts down the store and all resources acquired by it.
+     */
+    @Override
+    void shutdown() throws IOException;
+
+	/**
+     * Drops any persistent storage backing this store.
+     *
+     * @throws IOException on I/O error.
+     */
+    void drop() throws IOException;
+
+	/**
+     * @return whether or not this index is read-only.
+     */
+    boolean isReadOnly();
+
+	/**
+     * @return whether or not there's an existing store present for this label scan store.
+     * @throws IOException on I/O error checking the presence of a store.
+     */
+    boolean hasStore();
+
+	/**
+     * Returns the path to label scan store, might be a directory or a file depending on the implementation.
+     *
+     * @return the directory or file where the label scan store is persisted.
+     */
+    File getLabelScanStoreFile();
+
+	interface Monitor
     {
         Monitor EMPTY = new Monitor.Adaptor();
 
-        class Adaptor implements Monitor
+        void init();
+
+		void noIndex();
+
+		void notValidIndex();
+
+		void rebuilding();
+
+		void rebuilt( long roughNodeCount );
+
+		void recoveryCleanupRegistered();
+
+		void recoveryCleanupStarted();
+
+		void recoveryCleanupFinished( long numberOfPagesVisited, long numberOfCleanedCrashPointers, long durationMillis );
+
+		void recoveryCleanupClosed();
+
+		void recoveryCleanupFailed( Throwable throwable );
+
+		class Adaptor implements Monitor
         {
             @Override
             public void init()
@@ -91,110 +196,5 @@ public interface LabelScanStore extends Lifecycle, ConsistencyCheckable
             {   // empty
             }
         }
-
-        void init();
-
-        void noIndex();
-
-        void notValidIndex();
-
-        void rebuilding();
-
-        void rebuilt( long roughNodeCount );
-
-        void recoveryCleanupRegistered();
-
-        void recoveryCleanupStarted();
-
-        void recoveryCleanupFinished( long numberOfPagesVisited, long numberOfCleanedCrashPointers, long durationMillis );
-
-        void recoveryCleanupClosed();
-
-        void recoveryCleanupFailed( Throwable throwable );
     }
-
-    /**
-     * From the point a {@link LabelScanReader} is created till it's {@link LabelScanReader#close() closed} the
-     * contents it returns cannot change, i.e. it honors repeatable reads.
-     *
-     * @return a {@link LabelScanReader} capable of retrieving nodes for labels.
-     */
-    LabelScanReader newReader();
-
-    /**
-     * Acquire a writer for updating the store.
-     *
-     * @return {@link LabelScanWriter} which can modify the {@link LabelScanStore}.
-     */
-    LabelScanWriter newWriter();
-
-    /**
-     * Forces all changes to disk. Called at certain points from within Neo4j for example when
-     * rotating the logical log. After completion of this call there cannot be any essential state that
-     * hasn't been forced to disk.
-     *
-     * @throws UnderlyingStorageException if there was a problem forcing the state to persistent storage.
-     */
-    void force( IOLimiter limiter ) throws UnderlyingStorageException;
-
-    /**
-     * Acquire a reader for all {@link NodeLabelRange node label} ranges.
-     *
-     * @return the {@link AllEntriesLabelScanReader reader}.
-     */
-    AllEntriesLabelScanReader allNodeLabelRanges();
-
-    ResourceIterator<File> snapshotStoreFiles();
-
-    /**
-     * @return {@code true} if there's no data at all in this label scan store, otherwise {@code false}.
-     * @throws IOException on I/O error.
-     */
-    boolean isEmpty() throws IOException;
-
-    /**
-     * Initializes the store. After this has been called recovery updates can be processed.
-     */
-    @Override
-    void init() throws IOException;
-
-    /**
-     * Starts the store. After this has been called updates can be processed.
-     */
-    @Override
-    void start() throws IOException;
-
-    @Override
-    void stop();
-
-    /**
-     * Shuts down the store and all resources acquired by it.
-     */
-    @Override
-    void shutdown() throws IOException;
-
-    /**
-     * Drops any persistent storage backing this store.
-     *
-     * @throws IOException on I/O error.
-     */
-    void drop() throws IOException;
-
-    /**
-     * @return whether or not this index is read-only.
-     */
-    boolean isReadOnly();
-
-    /**
-     * @return whether or not there's an existing store present for this label scan store.
-     * @throws IOException on I/O error checking the presence of a store.
-     */
-    boolean hasStore();
-
-    /**
-     * Returns the path to label scan store, might be a directory or a file depending on the implementation.
-     *
-     * @return the directory or file where the label scan store is persisted.
-     */
-    File getLabelScanStoreFile();
 }

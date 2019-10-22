@@ -28,16 +28,18 @@ import java.util.stream.Stream;
  */
 public class ProcedureCallContext
 {
-    private final String[] outputFieldNames;
-    private final boolean calledFromCypher;
+    /* Can be used for testing purposes */
+    public static ProcedureCallContext EMPTY = new ProcedureCallContext( new String[]{}, false );
+	private final String[] outputFieldNames;
+	private final boolean calledFromCypher;
 
-    public ProcedureCallContext( String[] outputFieldNames, boolean calledFromCypher )
+	public ProcedureCallContext( String[] outputFieldNames, boolean calledFromCypher )
     {
         this.outputFieldNames = outputFieldNames;
         this.calledFromCypher = calledFromCypher;
     }
 
-    /*
+	/*
      * Get a stream of all the field names the procedure was requested to yield
      */
     public Stream<String> outputFields()
@@ -45,7 +47,7 @@ public class ProcedureCallContext
         return Stream.of( outputFieldNames );
     }
 
-    /*
+	/*
      * Indicates whether the procedure was called via a complete Cypher stack.
      * Check this to make sure you are not in a testing environment.
      * When this is false, we cannot make use of the information in outputFields().
@@ -54,7 +56,4 @@ public class ProcedureCallContext
     {
         return calledFromCypher;
     }
-
-    /* Can be used for testing purposes */
-    public static ProcedureCallContext EMPTY = new ProcedureCallContext( new String[]{}, false );
 }

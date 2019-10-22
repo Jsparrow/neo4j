@@ -101,12 +101,23 @@ public final class RepresentationType
     final String listName;
     final Class<?> extend;
 
-    private RepresentationType( String valueName, String listName )
+    RepresentationType( String type )
+    {
+        if ( type == null )
+        {
+            throw new IllegalArgumentException( "type may not be null" );
+        }
+        this.valueName = type;
+        this.listName = type + "s";
+        this.extend = null;
+    }
+
+	private RepresentationType( String valueName, String listName )
     {
         this( valueName, listName, null );
     }
 
-    private RepresentationType( String valueName, String listName, Class<?> extend )
+	private RepresentationType( String valueName, String listName, Class<?> extend )
     {
         this.valueName = valueName;
         this.listName = listName;
@@ -125,29 +136,18 @@ public final class RepresentationType
         }
     }
 
-    RepresentationType( String type )
-    {
-        if ( type == null )
-        {
-            throw new IllegalArgumentException( "type may not be null" );
-        }
-        this.valueName = type;
-        this.listName = type + "s";
-        this.extend = null;
-    }
-
-    @Override
+	@Override
     public String toString()
     {
         return valueName;
     }
 
-    static RepresentationType valueOf( Class<? extends Number> type )
+	static RepresentationType valueOf( Class<? extends Number> type )
     {
         return types.get( type.getSimpleName().toLowerCase() );
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         if ( valueName == null )
@@ -157,7 +157,7 @@ public final class RepresentationType
         return valueName.hashCode();
     }
 
-    @Override
+	@Override
     public boolean equals( Object obj )
     {
         if ( obj instanceof RepresentationType )
@@ -185,7 +185,7 @@ public final class RepresentationType
         return false;
     }
 
-    static RepresentationType extended( Class<?> extend )
+	static RepresentationType extended( Class<?> extend )
     {
         return extended.get( extend );
     }

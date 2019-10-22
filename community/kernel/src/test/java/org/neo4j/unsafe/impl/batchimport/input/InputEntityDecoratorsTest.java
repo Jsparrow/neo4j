@@ -53,7 +53,7 @@ public class InputEntityDecoratorsTest
         InputEntityVisitor relationship = defaultRelationshipType( defaultType ).apply( entity );
 
         // WHEN
-        relationship( relationship, "source", 1, 0, NO_PROPERTIES, null, "start", "end", null, null );
+        relationship( relationship, NO_PROPERTIES, null, "start", "end", null, null );
 
         // THEN
         assertEquals( defaultType, entity.stringType );
@@ -68,7 +68,7 @@ public class InputEntityDecoratorsTest
 
         // WHEN
         String customType = "CUSTOM_TYPE";
-        relationship( relationship, "source", 1, 0, NO_PROPERTIES, null,
+        relationship( relationship, NO_PROPERTIES, null,
                 "start", "end", customType, null );
 
         // THEN
@@ -85,7 +85,7 @@ public class InputEntityDecoratorsTest
 
         // WHEN
         int typeId = 5;
-        relationship( relationship, "source", 1, 0, NO_PROPERTIES, null,
+        relationship( relationship, NO_PROPERTIES, null,
                 "start", "end", null, typeId );
 
         // THEN
@@ -101,7 +101,7 @@ public class InputEntityDecoratorsTest
         InputEntityVisitor node = additiveLabels( toAdd ).apply( entity );
 
         // WHEN
-        node( node, "source", 1, 0, "id", NO_PROPERTIES, null, NO_LABELS, null );
+        node( node, "id", NO_PROPERTIES, null, NO_LABELS, null );
 
         // THEN
         assertArrayEquals( toAdd, entity.labels() );
@@ -116,7 +116,7 @@ public class InputEntityDecoratorsTest
 
         // WHEN
         String[] nodeLabels = new String[] {"SomeOther"};
-        node( node, "source", 1, 0, "id", NO_PROPERTIES, null, nodeLabels, null );
+        node( node, "id", NO_PROPERTIES, null, nodeLabels, null );
 
         // THEN
         assertEquals( asSet( ArrayUtil.union( toAdd, nodeLabels ) ), asSet( entity.labels() ) );
@@ -131,7 +131,7 @@ public class InputEntityDecoratorsTest
 
         // WHEN
         long labelField = 123L;
-        node( node, "source", 1, 0, "id", NO_PROPERTIES, null, null, labelField );
+        node( node, "id", NO_PROPERTIES, null, null, labelField );
 
         // THEN
         assertEquals( 0, entity.labels().length );
@@ -157,8 +157,7 @@ public class InputEntityDecoratorsTest
         order.verifyNoMoreInteractions();
     }
 
-    private static void node( InputEntityVisitor entity, String sourceDescription,
-            long lineNumber, long position, Object id, Object[] properties, Long propertyId,
+    private static void node( InputEntityVisitor entity, Object id, Object[] properties, Long propertyId,
             String[] labels, Long labelField ) throws IOException
     {
         applyProperties( entity, properties, propertyId );
@@ -174,8 +173,7 @@ public class InputEntityDecoratorsTest
         entity.endOfEntity();
     }
 
-    private static void relationship( InputEntityVisitor entity, String sourceDescription, long lineNumber,
-            long position, Object[] properties, Long propertyId, Object startNode, Object endNode,
+    private static void relationship( InputEntityVisitor entity, Object[] properties, Long propertyId, Object startNode, Object endNode,
             String type, Integer typeId ) throws IOException
     {
         applyProperties( entity, properties, propertyId );

@@ -97,28 +97,9 @@ class HelpCommandTest
 
             helpCommand.execute();
 
-            assertEquals( String.format( "usage: neo4j-admin <command>%n" +
-                            "%n" +
-                            "Manage your Neo4j instance.%n" +
-                            "%n" +
-                            "environment variables:%n" +
-                            "    NEO4J_CONF    Path to directory which contains neo4j.conf.%n" +
-                            "    NEO4J_DEBUG   Set to anything to enable debug output.%n" +
-                            "    NEO4J_HOME    Neo4j home directory.%n" +
-                            "    HEAP_SIZE     Set JVM maximum heap size during command execution.%n" +
-                            "                  Takes a number and a unit, for example 512m.%n" +
-                            "%n" +
-                            "available commands:%n" +
-                            "%n" +
-                            "General%n" +
-                            "    bar%n" +
-                            "        null%n" +
-                            "    baz%n" +
-                            "        null%n" +
-                            "    foo%n" +
-                            "        null%n" +
-                            "%n" +
-                            "Use neo4j-admin help <command> for more details.%n" ),
+            assertEquals( String.format( new StringBuilder().append("usage: neo4j-admin <command>%n").append("%n").append("Manage your Neo4j instance.%n").append("%n").append("environment variables:%n").append("    NEO4J_CONF    Path to directory which contains neo4j.conf.%n").append("    NEO4J_DEBUG   Set to anything to enable debug output.%n").append("    NEO4J_HOME    Neo4j home directory.%n")
+					.append("    HEAP_SIZE     Set JVM maximum heap size during command execution.%n").append("                  Takes a number and a unit, for example 512m.%n").append("%n").append("available commands:%n").append("%n").append("General%n").append("    bar%n").append("        null%n").append("    baz%n")
+					.append("        null%n").append("    foo%n").append("        null%n").append("%n").append("Use neo4j-admin help <command> for more details.%n").toString() ),
                     baos.toString() );
         }
     }
@@ -143,19 +124,9 @@ class HelpCommandTest
                     ps::println, commandLocator );
             helpCommand.execute( "foobar" );
 
-            assertEquals( String.format( "usage: neo4j-admin foobar [--database=<name>]%n" +
-                            "%n" +
-                            "environment variables:%n" +
-                            "    NEO4J_CONF    Path to directory which contains neo4j.conf.%n" +
-                            "    NEO4J_DEBUG   Set to anything to enable debug output.%n" +
-                            "    NEO4J_HOME    Neo4j home directory.%n" +
-                            "    HEAP_SIZE     Set JVM maximum heap size during command execution.%n" +
-                            "                  Takes a number and a unit, for example 512m.%n" +
-                            "%n" +
-                            "This is a description of the foobar command.%n" +
-                            "%n" +
-                            "options:%n" +
-                            "  --database=<name>   Name of database. [default:" + GraphDatabaseSettings.DEFAULT_DATABASE_NAME + "]%n" ),
+            assertEquals( String.format( new StringBuilder().append("usage: neo4j-admin foobar [--database=<name>]%n").append("%n").append("environment variables:%n").append("    NEO4J_CONF    Path to directory which contains neo4j.conf.%n").append("    NEO4J_DEBUG   Set to anything to enable debug output.%n").append("    NEO4J_HOME    Neo4j home directory.%n").append("    HEAP_SIZE     Set JVM maximum heap size during command execution.%n").append("                  Takes a number and a unit, for example 512m.%n")
+					.append("%n").append("This is a description of the foobar command.%n").append("%n").append("options:%n").append("  --database=<name>   Name of database. [default:").append(GraphDatabaseSettings.DEFAULT_DATABASE_NAME).append("]%n")
+					.toString() ),
                     baos.toString() );
         }
     }

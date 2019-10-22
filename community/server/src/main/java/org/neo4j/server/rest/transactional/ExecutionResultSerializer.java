@@ -58,7 +58,19 @@ import static org.neo4j.server.rest.domain.JsonHelper.writeValue;
  */
 public class ExecutionResultSerializer
 {
-    public ExecutionResultSerializer( OutputStream output, URI baseUri, LogProvider logProvider,
+    private static final JsonFactory JSON_FACTORY = new JsonFactory().disable( JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM );
+
+	private State currentState = State.EMPTY;
+
+	private final JsonGenerator out;
+
+	private final URI baseUri;
+
+	private final Log log;
+
+	private final TransitionalPeriodTransactionMessContainer container;
+
+	public ExecutionResultSerializer( OutputStream output, URI baseUri, LogProvider logProvider,
             TransitionalPeriodTransactionMessContainer container )
     {
         this.baseUri = baseUri;
@@ -77,7 +89,7 @@ public class ExecutionResultSerializer
         this.out = generator;
     }
 
-    /**
+	/**
      * Will always get called at most once, and is the first method to get called. This method is not allowed
      * to throw exceptions. If there are network errors or similar, the handler should take appropriate action,
      * but never fail this method.
@@ -95,7 +107,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    /**
+	/**
      * Will get called at most once per statement. Throws IOException so that upstream executor can decide whether
      * to execute further statements.
      */
@@ -131,7 +143,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    public void notifications( Iterable<Notification> notifications ) throws IOException
+	public void notifications( Iterable<Notification> notifications ) throws IOException
     {
         //don't add anything if notifications are empty
         if ( !notifications.iterator().hasNext() )
@@ -176,7 +188,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    private void writePosition( InputPosition position ) throws IOException
+	private void writePosition( InputPosition position ) throws IOException
     {
         //do not add position if empty
         if ( position == InputPosition.empty )
@@ -197,7 +209,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    private void writeStats( QueryStatistics stats ) throws IOException
+	private void writeStats( QueryStatistics stats ) throws IOException
     {
         out.writeObjectFieldStart( "stats" );
         try
@@ -221,7 +233,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    private void writeRootPlanDescription( ExecutionPlanDescription planDescription ) throws IOException
+	private void writeRootPlanDescription( ExecutionPlanDescription planDescription ) throws IOException
     {
         out.writeObjectFieldStart( "plan" );
         try
@@ -242,7 +254,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    private void writePlanDescriptionObjectBody( ExecutionPlanDescription planDescription ) throws IOException
+	private void writePlanDescriptionObjectBody( ExecutionPlanDescription planDescription ) throws IOException
     {
         out.writeStringField( "operatorType", planDescription.getName() );
         writePlanArgs( planDescription );
@@ -271,7 +283,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    private void writePlanArgs( ExecutionPlanDescription planDescription ) throws IOException
+	private void writePlanArgs( ExecutionPlanDescription planDescription ) throws IOException
     {
         for ( Map.Entry<String, Object> entry : planDescription.getArguments().entrySet() )
         {
@@ -283,7 +295,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    private void writePlanIdentifiers( ExecutionPlanDescription planDescription ) throws IOException
+	private void writePlanIdentifiers( ExecutionPlanDescription planDescription ) throws IOException
     {
         out.writeArrayFieldStart( "identifiers" );
         for ( String id : planDescription.getIdentifiers() )
@@ -293,7 +305,7 @@ public class ExecutionResultSerializer
         out.writeEndArray();
     }
 
-    /**
+	/**
      * Will get called once if any errors occurred,
      * after {@link #statementResult(org.neo4j.graphdb.Result, boolean, ResultDataContent...)}  statementResults}
      * has been called This method is not allowed to throw exceptions. If there are network errors or similar, the
@@ -339,7 +351,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    public void transactionStatus( long expiryDate )
+	public void transactionStatus( long expiryDate )
     {
         try
         {
@@ -355,7 +367,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    /**
+	/**
      * This method must be called exactly once, and no method must be called after calling this method.
      * This method may not fail.
      */
@@ -377,7 +389,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    private ResultDataContentWriter configureWriters( ResultDataContent[] specifiers )
+	private ResultDataContentWriter configureWriters( ResultDataContent[] specifiers )
     {
         if ( specifiers == null || specifiers.length == 0 )
         {
@@ -395,49 +407,36 @@ public class ExecutionResultSerializer
         return new AggregatingWriter( writers );
     }
 
-    private enum State
+	private void ensureDocumentOpen() throws IOException
     {
-        EMPTY, DOCUMENT_OPEN, RESULTS_OPEN, RESULTS_CLOSED, ERRORS_WRITTEN
+        if (currentState != State.EMPTY) {
+			return;
+		}
+		out.writeStartObject();
+		currentState = State.DOCUMENT_OPEN;
     }
 
-    private State currentState = State.EMPTY;
-
-    private static final JsonFactory JSON_FACTORY = new JsonFactory().disable( JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM );
-    private final JsonGenerator out;
-    private final URI baseUri;
-    private final Log log;
-    private final TransitionalPeriodTransactionMessContainer container;
-
-    private void ensureDocumentOpen() throws IOException
-    {
-        if ( currentState == State.EMPTY )
-        {
-            out.writeStartObject();
-            currentState = State.DOCUMENT_OPEN;
-        }
-    }
-
-    private void ensureResultsFieldOpen() throws IOException
+	private void ensureResultsFieldOpen() throws IOException
     {
         ensureDocumentOpen();
-        if ( currentState == State.DOCUMENT_OPEN )
-        {
-            out.writeArrayFieldStart( "results" );
-            currentState = State.RESULTS_OPEN;
-        }
+        if (currentState != State.DOCUMENT_OPEN) {
+			return;
+		}
+		out.writeArrayFieldStart( "results" );
+		currentState = State.RESULTS_OPEN;
     }
 
-    private void ensureResultsFieldClosed() throws IOException
+	private void ensureResultsFieldClosed() throws IOException
     {
         ensureResultsFieldOpen();
-        if ( currentState == State.RESULTS_OPEN )
-        {
-            out.writeEndArray();
-            currentState = State.RESULTS_CLOSED;
-        }
+        if (currentState != State.RESULTS_OPEN) {
+			return;
+		}
+		out.writeEndArray();
+		currentState = State.RESULTS_CLOSED;
     }
 
-    private void writeRows( final Iterable<String> columns, Result data, final ResultDataContentWriter writer )
+	private void writeRows( final Iterable<String> columns, Result data, final ResultDataContentWriter writer )
             throws IOException
     {
         out.writeArrayFieldStart( "data" );
@@ -466,7 +465,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    private void writeColumns( Iterable<String> columns ) throws IOException
+	private void writeColumns( Iterable<String> columns ) throws IOException
     {
         try
         {
@@ -482,7 +481,7 @@ public class ExecutionResultSerializer
         }
     }
 
-    private IOException loggedIOException( IOException exception )
+	private IOException loggedIOException( IOException exception )
     {
         if ( Exceptions.contains( exception, "Broken pipe", IOException.class ) )
         {
@@ -493,5 +492,10 @@ public class ExecutionResultSerializer
             log.error( "Failed to generate JSON output.", exception );
         }
         return exception;
+    }
+
+	private enum State
+    {
+        EMPTY, DOCUMENT_OPEN, RESULTS_OPEN, RESULTS_CLOSED, ERRORS_WRITTEN
     }
 }

@@ -43,44 +43,43 @@ import java.util.function.Function;
 
 public class IndexReaderStub extends LeafReader
 {
-    private Fields fields;
-    private boolean allDeleted;
-    private String[] elements = new String[0];
-    private Function<String,NumericDocValues> ndvs = s -> DocValues.emptyNumeric();
-
-    private IOException throwOnFields;
-    private static FieldInfo DummyFieldInfo =
+    private static FieldInfo dummyFieldInfo =
             new FieldInfo( "id", 0, false, true, false, IndexOptions.DOCS,
                     DocValuesType.NONE, -1, Collections.emptyMap() );
+	private Fields fields;
+	private boolean allDeleted;
+	private String[] elements = new String[0];
+	private Function<String,NumericDocValues> ndvs = s -> DocValues.emptyNumeric();
+	private IOException throwOnFields;
 
-    public IndexReaderStub( Fields fields )
+	public IndexReaderStub( Fields fields )
     {
         this.fields = fields;
     }
 
-    public IndexReaderStub( final NumericDocValues ndv )
+	public IndexReaderStub( final NumericDocValues ndv )
     {
         this.ndvs = s -> ndv;
     }
 
-    public void setElements( String[] elements )
+	public void setElements( String[] elements )
     {
         this.elements = elements;
     }
 
-    @Override
+	@Override
     public void addCoreClosedListener( CoreClosedListener listener )
     {
 
     }
 
-    @Override
+	@Override
     public void removeCoreClosedListener( CoreClosedListener listener )
     {
 
     }
 
-    @Override
+	@Override
     public Fields fields() throws IOException
     {
         if ( throwOnFields != null )
@@ -92,55 +91,55 @@ public class IndexReaderStub extends LeafReader
         return fields;
     }
 
-    @Override
+	@Override
     public NumericDocValues getNumericDocValues( String field )
     {
         return ndvs.apply( field );
     }
 
-    @Override
+	@Override
     public BinaryDocValues getBinaryDocValues( String field )
     {
         return DocValues.emptyBinary();
     }
 
-    @Override
+	@Override
     public SortedDocValues getSortedDocValues( String field )
     {
         return DocValues.emptySorted();
     }
 
-    @Override
+	@Override
     public SortedNumericDocValues getSortedNumericDocValues( String field )
     {
         return DocValues.emptySortedNumeric( elements.length );
     }
 
-    @Override
+	@Override
     public SortedSetDocValues getSortedSetDocValues( String field )
     {
         return DocValues.emptySortedSet();
     }
 
-    @Override
+	@Override
     public Bits getDocsWithField( String field )
     {
         throw new RuntimeException( "Not yet implemented." );
     }
 
-    @Override
+	@Override
     public NumericDocValues getNormValues( String field )
     {
         return DocValues.emptyNumeric();
     }
 
-    @Override
+	@Override
     public FieldInfos getFieldInfos()
     {
         throw new RuntimeException( "Not yet implemented." );
     }
 
-    @Override
+	@Override
     public Bits getLiveDocs()
     {
         return new Bits()
@@ -163,41 +162,41 @@ public class IndexReaderStub extends LeafReader
         };
     }
 
-    @Override
+	@Override
     public void checkIntegrity()
     {
     }
 
-    @Override
+	@Override
     public Fields getTermVectors( int docID )
     {
         throw new RuntimeException( "Not yet implemented." );
     }
 
-    @Override
+	@Override
     public int numDocs()
     {
         return allDeleted ? 0 : elements.length;
     }
 
-    @Override
+	@Override
     public int maxDoc()
     {
         return Math.max( maxValue(), elements.length) + 1;
     }
 
-    @Override
+	@Override
     public void document( int docID, StoredFieldVisitor visitor ) throws IOException
     {
-        visitor.stringField( DummyFieldInfo, String.valueOf( docID ).getBytes( StandardCharsets.UTF_8 ) );
+        visitor.stringField( dummyFieldInfo, String.valueOf( docID ).getBytes( StandardCharsets.UTF_8 ) );
     }
 
-    @Override
+	@Override
     protected void doClose()
     {
     }
 
-    private int maxValue()
+	private int maxValue()
     {
         return Arrays.stream( elements )
                 .mapToInt( value ->  NumberUtils.toInt( value, 0 )).max().getAsInt();

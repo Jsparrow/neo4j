@@ -36,7 +36,7 @@ public class HostnamePort
     private final String host;
     private final int[] ports;
 
-    public HostnamePort( String hostnamePort ) throws IllegalArgumentException
+    public HostnamePort( String hostnamePort )
     {
         Objects.requireNonNull( hostnamePort );
 
@@ -206,20 +206,18 @@ public class HostnamePort
         }
 
         boolean isIPv6HostPort = hostnamePort.startsWith( "[" ) && hostnamePort.contains( "]" );
-        if ( isIPv6HostPort )
-        {
-            int splitIndex = hostnamePort.indexOf( ']' ) + 1;
-
-            String host = hostnamePort.substring( 0, splitIndex );
-            String port = hostnamePort.substring( splitIndex );
-            if ( StringUtils.isNotBlank( port ) )
-            {
-                port = port.substring( 1 ); // remove ':'
-                return new String[]{host, port};
-            }
-            return new String[]{host};
-        }
-        return hostnamePort.split( ":" );
+        if (!isIPv6HostPort) {
+			return hostnamePort.split( ":" );
+		}
+		int splitIndex = hostnamePort.indexOf( ']' ) + 1;
+		String host = hostnamePort.substring( 0, splitIndex );
+		String port = hostnamePort.substring( splitIndex );
+		if ( StringUtils.isNotBlank( port ) )
+		{
+		    port = port.substring( 1 ); // remove ':'
+		    return new String[]{host, port};
+		}
+		return new String[]{host};
     }
 
     @Override

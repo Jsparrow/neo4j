@@ -63,12 +63,12 @@ public class DefaultFileSystemWatcherService implements FileSystemWatcherService
     public synchronized void stop() throws Throwable
     {
         eventWatcher.stopWatching();
-        if ( watcher != null )
-        {
-            watcher.interrupt();
-            watcher.join();
-            watcher = null;
-        }
+        if (watcher == null) {
+			return;
+		}
+		watcher.interrupt();
+		watcher.join();
+		watcher = null;
     }
 
     @Override

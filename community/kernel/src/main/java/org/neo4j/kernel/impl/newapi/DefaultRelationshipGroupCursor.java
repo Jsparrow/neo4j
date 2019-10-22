@@ -103,12 +103,11 @@ class DefaultRelationshipGroupCursor implements RelationshipGroupCursor
             //here it may be tempting to do txTypes.clear()
             //however that will also clear the iterator
         }
-        if ( txTypeIterator != null && txTypeIterator.hasNext() )
-        {
-            storeCursor.setCurrent( txTypeIterator.next(), NO_ID, NO_ID, NO_ID );
-            return true;
-        }
-        return false;
+        if (!(txTypeIterator != null && txTypeIterator.hasNext())) {
+			return false;
+		}
+		storeCursor.setCurrent( txTypeIterator.next(), NO_ID, NO_ID, NO_ID );
+		return true;
     }
 
     /**
@@ -125,31 +124,30 @@ class DefaultRelationshipGroupCursor implements RelationshipGroupCursor
      */
     private void checkTxStateForUpdates()
     {
-        if ( read.hasTxStateWithChanges() )
-        {
-            NodeState nodeState = read.txState().getNodeState( storeCursor.getOwningNode() );
-            LongIterator addedRelationships = nodeState.getAddedRelationships();
-            while ( addedRelationships.hasNext() )
-            {
-                RelationshipState relationshipState = read.txState().getRelationshipState( addedRelationships.next() );
-                relationshipState.accept( ( relationshipId, typeId, startNodeId, endNodeId ) -> txTypes.add( typeId ) );
-            }
-        }
+        if (!read.hasTxStateWithChanges()) {
+			return;
+		}
+		NodeState nodeState = read.txState().getNodeState( storeCursor.getOwningNode() );
+		LongIterator addedRelationships = nodeState.getAddedRelationships();
+		while ( addedRelationships.hasNext() )
+		{
+		    RelationshipState relationshipState = read.txState().getRelationshipState( addedRelationships.next() );
+		    relationshipState.accept( ( relationshipId, typeId, startNodeId, endNodeId ) -> txTypes.add( typeId ) );
+		}
     }
 
     @Override
     public void close()
     {
-        if ( !isClosed() )
-        {
-            read = null;
-            storeCursor.reset();
-
-            if ( pool != null )
-            {
-                pool.accept( this );
-            }
-        }
+        if (isClosed()) {
+			return;
+		}
+		read = null;
+		storeCursor.reset();
+		if ( pool != null )
+		{
+		    pool.accept( this );
+		}
     }
 
     @Override
@@ -240,7 +238,7 @@ class DefaultRelationshipGroupCursor implements RelationshipGroupCursor
         }
         else
         {
-            return "RelationshipGroupCursor[id=" + storeCursor.groupReference() + ", " + storeCursor.toString() + "]";
+            return new StringBuilder().append("RelationshipGroupCursor[id=").append(storeCursor.groupReference()).append(", ").append(storeCursor.toString()).append("]").toString();
         }
     }
 

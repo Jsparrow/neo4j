@@ -84,7 +84,7 @@ public class JmxService implements AdvertisableService
 
     @GET
     @Path( DOMAINS_PATH )
-    public Response listDomains() throws NullPointerException
+    public Response listDomains()
     {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         ListRepresentation domains = ListRepresentation.strings( server.getDomains() );
@@ -99,14 +99,8 @@ public class JmxService implements AdvertisableService
 
         JmxDomainRepresentation domain = new JmxDomainRepresentation( domainName );
 
-        for ( Object objName : server.queryNames( null, null ) )
-        {
-            if ( objName.toString()
-                    .startsWith( domainName ) )
-            {
-                domain.addBean( (ObjectName) objName );
-            }
-        }
+        server.queryNames( null, null ).stream().filter(objName -> objName.toString()
+		        .startsWith( domainName )).forEach(objName -> domain.addBean((ObjectName) objName));
 
         return output.ok( domain );
     }
@@ -118,10 +112,7 @@ public class JmxService implements AdvertisableService
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 
         ArrayList<JmxMBeanRepresentation> beans = new ArrayList<>();
-        for ( Object objName : server.queryNames( createObjectName( domainName, objectName ), null ) )
-        {
-            beans.add( new JmxMBeanRepresentation( (ObjectName) objName ) );
-        }
+        server.queryNames( createObjectName( domainName, objectName ), null ).forEach(objName -> beans.add(new JmxMBeanRepresentation((ObjectName) objName)));
 
         return output.ok( new ListRepresentation( "bean", beans ) );
     }
@@ -130,7 +121,7 @@ public class JmxService implements AdvertisableService
     {
         try
         {
-            return new ObjectName( domainName + ":" + URLDecoder.decode( objectName, StandardCharsets.UTF_8.name() ) );
+            return new ObjectName( new StringBuilder().append(domainName).append(":").append(URLDecoder.decode( objectName, StandardCharsets.UTF_8.name() )).toString() );
         }
         catch ( MalformedObjectNameException | UnsupportedEncodingException e )
         {
@@ -155,10 +146,7 @@ public class JmxService implements AdvertisableService
             for ( Object queryObj : queries )
             {
                 assert queryObj instanceof String;
-                for ( Object objName : server.queryNames( new ObjectName( (String) queryObj ), null ) )
-                {
-                    beans.add( new JmxMBeanRepresentation( (ObjectName) objName ) );
-                }
+                server.queryNames( new ObjectName( (String) queryObj ), null ).forEach(objName -> beans.add(new JmxMBeanRepresentation((ObjectName) objName)));
             }
 
             return output.ok( new ListRepresentation( "jmxBean", beans ) );
@@ -185,8 +173,8 @@ public class JmxService implements AdvertisableService
     {
         Kernel kernelBean = database.getGraph().getDependencyResolver().resolveDependency( JmxKernelExtension.class )
                 .getSingleManagementBean( Kernel.class );
-        return Response.ok( "\"" + kernelBean.getMBeanQuery()
-                .toString() + "\"" )
+        return Response.ok( new StringBuilder().append("\"").append(kernelBean.getMBeanQuery()
+                .toString()).append("\"").toString() )
                 .type( MediaType.APPLICATION_JSON )
                 .build();
     }
@@ -205,13 +193,10 @@ public class JmxService implements AdvertisableService
 
     private static String dodgeStartingUnicodeMarker( String string )
     {
-        if ( string != null && string.length() > 0 )
-        {
-            if ( string.charAt( 0 ) == 0xfeff )
-            {
-                return string.substring( 1 );
-            }
-        }
+        boolean condition = string != null && string.length() > 0 && string.charAt( 0 ) == 0xfeff;
+		if ( condition ) {
+		    return string.substring( 1 );
+		}
         return string;
     }
 }

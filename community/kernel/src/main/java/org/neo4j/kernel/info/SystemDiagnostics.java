@@ -78,18 +78,14 @@ public enum SystemDiagnostics implements DiagnosticsProvider
             logger.log( "Free  memory: " + bytes( Runtime.getRuntime().freeMemory() ) );
             logger.log( "Total memory: " + bytes( Runtime.getRuntime().totalMemory() ) );
             logger.log( "Max   memory: " + bytes( Runtime.getRuntime().maxMemory() ) );
-            for ( GarbageCollectorMXBean gc : ManagementFactory.getGarbageCollectorMXBeans() )
-            {
-                logger.log( "Garbage Collector: " + gc.getName() + ": " + Arrays.toString( gc.getMemoryPoolNames() ) );
-            }
-            for ( MemoryPoolMXBean pool : ManagementFactory.getMemoryPoolMXBeans() )
-            {
+            ManagementFactory.getGarbageCollectorMXBeans().forEach(gc -> logger.log(new StringBuilder().append("Garbage Collector: ").append(gc.getName()).append(": ").append(Arrays.toString(gc.getMemoryPoolNames())).toString()));
+            ManagementFactory.getMemoryPoolMXBeans().forEach(pool -> {
                 MemoryUsage usage = pool.getUsage();
                 logger.log( String.format( "Memory Pool: %s (%s): committed=%s, used=%s, max=%s, threshold=%s",
                         pool.getName(), pool.getType(), usage == null ? "?" : bytes( usage.getCommitted() ),
                         usage == null ? "?" : bytes( usage.getUsed() ), usage == null ? "?" : bytes( usage.getMax() ),
                         pool.isUsageThresholdSupported() ? bytes( pool.getUsageThreshold() ) : "?" ) );
-            }
+            });
         }
     },
     OPERATING_SYSTEM( "Operating system information:" )
@@ -146,10 +142,7 @@ public enum SystemDiagnostics implements DiagnosticsProvider
                 classpath = buildClassPath( getClass().getClassLoader(),
                         new String[] { "classpath" }, runtime.getClassPath() );
             }
-            for ( String path : classpath )
-            {
-                logger.log( path );
-            }
+            classpath.forEach(logger::log);
         }
 
         private Collection<String> buildClassPath( ClassLoader loader, String[] pathKeys, String... classPaths )
@@ -187,10 +180,7 @@ public enum SystemDiagnostics implements DiagnosticsProvider
                 loader = loader.getParent();
             }
             List<String> result = new ArrayList<>( paths.size() );
-            for ( Map.Entry<String, String> path : paths.entrySet() )
-            {
-                result.add( " [" + path.getValue() + "] " + path.getKey() );
-            }
+            paths.entrySet().forEach(path -> result.add(new StringBuilder().append(" [").append(path.getValue()).append("] ").append(path.getKey()).toString()));
             return result;
         }
 
@@ -231,11 +221,11 @@ public enum SystemDiagnostics implements DiagnosticsProvider
                 {
                     String key = (String) property;
                     if ( key.startsWith( "java." ) || key.startsWith( "os." ) || key.endsWith( ".boot.class.path" ) ||
-                            key.equals( "line.separator" ) )
+                            "line.separator".equals( key ) )
                     {
                         continue;
                     }
-                    logger.log( key + " = " + System.getProperty( key ) );
+                    logger.log( new StringBuilder().append(key).append(" = ").append(System.getProperty( key )).toString() );
                 }
             }
         }
@@ -246,13 +236,8 @@ public enum SystemDiagnostics implements DiagnosticsProvider
         void dump( Logger logger )
         {
             Map<String,Integer> versions = new HashMap<>();
-            for ( String tz : ZoneRulesProvider.getAvailableZoneIds() )
-            {
-                for ( String version : ZoneRulesProvider.getVersions( tz ).keySet() )
-                {
-                    versions.compute( version, ( key, value ) -> value == null ? 1 : (value + 1) );
-                }
-            }
+            ZoneRulesProvider.getAvailableZoneIds().forEach(tz -> ZoneRulesProvider.getVersions(tz).keySet()
+					.forEach(version -> versions.compute(version, (key, value) -> value == null ? 1 : (value + 1))));
             String[] sorted = versions.keySet().toArray( new String[0] );
             Arrays.sort( sorted );
             for ( String tz : sorted )
@@ -364,11 +349,11 @@ public enum SystemDiagnostics implements DiagnosticsProvider
     @Override
     public void dump( DiagnosticsPhase phase, Logger logger )
     {
-        if ( phase.isInitialization() || phase.isExplicitlyRequested() )
-        {
-            logger.log( message );
-            dump( logger );
-        }
+        if (!(phase.isInitialization() || phase.isExplicitlyRequested())) {
+			return;
+		}
+		logger.log( message );
+		dump( logger );
     }
 
     abstract void dump( Logger logger );

@@ -61,10 +61,10 @@ public class SimpleNodeValueClient implements IndexProgressor.NodeValueClient
 
     private void closeProgressor()
     {
-        if ( progressor != null )
-        {
-            progressor.close();
-            progressor = null;
-        }
+        if (progressor == null) {
+			return;
+		}
+		progressor.close();
+		progressor = null;
     }
 }

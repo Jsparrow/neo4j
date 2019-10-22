@@ -44,8 +44,14 @@ public class AccidentalUniquenessConstraintViolationIT
 {
     private static final Label Foo = Label.label( "Foo" );
     private static final String BAR = "bar";
+	@Parameterized.Parameter
+    public Object value1;
+	@Parameterized.Parameter( 1 )
+    public Object value2;
+	@Rule
+    public final DatabaseRule db = new ImpermanentDatabaseRule();
 
-    @Parameterized.Parameters
+	@Parameterized.Parameters
     public static Collection<Object[]> data()
     {
         Collection<Object[]> data = new ArrayList<>();
@@ -54,15 +60,7 @@ public class AccidentalUniquenessConstraintViolationIT
         return data;
     }
 
-    @Parameterized.Parameter
-    public Object value1;
-    @Parameterized.Parameter( 1 )
-    public Object value2;
-
-    @Rule
-    public final DatabaseRule db = new ImpermanentDatabaseRule();
-
-    @Test
+	@Test
     public void shouldApplyChangesWithIntermediateConstraintViolations() throws Exception
     {
         // given

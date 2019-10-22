@@ -49,9 +49,7 @@ public class RecordChanges<RECORD,ADDITIONAL> implements RecordAccess<RECORD,ADD
     @Override
     public String toString()
     {
-        return "RecordChanges{" +
-               "recordChanges=" + recordChanges +
-               '}';
+        return new StringBuilder().append("RecordChanges{").append("recordChanges=").append(recordChanges).append('}').toString();
     }
 
     @Override
@@ -158,7 +156,8 @@ public class RecordChanges<RECORD,ADDITIONAL> implements RecordAccess<RECORD,ADD
         @Override
         public String toString()
         {
-            return "RecordChange{" + "record=" + record + "key=" + key + "created=" + created + '}';
+            return new StringBuilder().append("RecordChange{").append("record=").append(record).append("key=").append(key).append("created=")
+					.append(created).append('}').toString();
         }
 
         @Override
@@ -199,14 +198,14 @@ public class RecordChanges<RECORD,ADDITIONAL> implements RecordAccess<RECORD,ADD
 
         private void ensureHeavy()
         {
-            if ( !created )
-            {
-                loader.ensureHeavy( record );
-                if ( before != null )
-                {
-                    loader.ensureHeavy( before );
-                }
-            }
+            if (created) {
+				return;
+			}
+			loader.ensureHeavy( record );
+			if ( before != null )
+			{
+			    loader.ensureHeavy( before );
+			}
         }
 
         @Override

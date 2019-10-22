@@ -82,7 +82,7 @@ public class UdcSettings implements LoadableConfig
          * to detect that the default value has been used.
          */
         @SuppressWarnings( "RedundantStringConstructorCall" )
-        static final String AS_DEFAULT_VALUE = new String( TRUE );
+        static final String AS_DEFAULT_VALUE = TRUE;
 
         @Override
         public Boolean apply( String from )
@@ -90,7 +90,7 @@ public class UdcSettings implements LoadableConfig
             // Perform identity equality here to differentiate between the default value (which is explicitly allocated
             // as a new instance, and is thus known to be unique), and explicitly being configured as "true".
             //noinspection StringEquality
-            if ( from == AS_DEFAULT_VALUE ) // yes, this should really be ==
+            if ( from.equals(AS_DEFAULT_VALUE) ) // yes, this should really be ==
             { // the default value, as opposed to explicitly configured to "true"
                 // Should result in UDC being enabled, unless one of the other ways to configure explicitly disables it
                 String enabled = System.getProperty( udc_enabled.name() );
@@ -113,13 +113,11 @@ public class UdcSettings implements LoadableConfig
                 // if any other way of configuring UDC enables it, trust that instead.
                 String enabled = System.getProperty( udc_enabled.name() );
                 String disabled = System.getProperty( udc_disabled() );
-                if ( enabled == null || enabled.equalsIgnoreCase( FALSE ) )
-                { // the 'enabled' system property does nothing to enable UDC
-                    if ( disabled == null || disabled.equalsIgnoreCase( TRUE ) )
-                    { // the 'disabled' system property does nothing to enable UDC
-                        return Boolean.FALSE;
-                    }
-                }
+                boolean condition = (enabled == null || enabled.equalsIgnoreCase( FALSE )) && (disabled == null || disabled.equalsIgnoreCase( TRUE ));
+				// the 'enabled' system property does nothing to enable UDC
+				if ( condition ) { // the 'disabled' system property does nothing to enable UDC
+				    return Boolean.FALSE;
+				}
                 return Boolean.TRUE;
             }
             else

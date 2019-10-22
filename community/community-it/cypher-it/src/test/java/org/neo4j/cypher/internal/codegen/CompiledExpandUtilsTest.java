@@ -98,7 +98,9 @@ public class CompiledExpandUtilsTest
     {
         // GIVEN
         long node;
-        int in, out, loop;
+        int in;
+		int out;
+		int loop;
         try ( Transaction tx = transaction() )
         {
             Write write = tx.dataWrite();

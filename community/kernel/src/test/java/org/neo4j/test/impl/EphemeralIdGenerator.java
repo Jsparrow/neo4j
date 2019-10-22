@@ -41,7 +41,108 @@ import static java.lang.Integer.min;
 
 public class EphemeralIdGenerator implements IdGenerator
 {
-    public static class Factory implements IdGeneratorFactory
+    private final AtomicLong nextId = new AtomicLong();
+	private final IdType idType;
+	private final Queue<Long> freeList;
+	private final AtomicInteger freedButNotReturnableIdCount = new AtomicInteger();
+
+	public EphemeralIdGenerator( IdType idType, IdTypeConfiguration idTypeConfiguration )
+    {
+        this.idType = idType;
+        this.freeList = idType != null && idTypeConfiguration.allowAggressiveReuse() ? new ConcurrentLinkedQueue<>() : null;
+    }
+
+	@Override
+    public String toString()
+    {
+        return new StringBuilder().append(getClass().getSimpleName()).append("[").append(idType).append("]").toString();
+    }
+
+	@Override
+    public synchronized long nextId()
+    {
+        if ( freeList != null )
+        {
+            Long id = freeList.poll();
+            if ( id != null )
+            {
+                return id;
+            }
+        }
+        return nextId.getAndIncrement();
+    }
+
+	@Override
+    public synchronized IdRange nextIdBatch( int size )
+    {
+        long[] defragIds = PrimitiveLongCollections.EMPTY_LONG_ARRAY;
+        if ( freeList != null && !freeList.isEmpty() )
+        {
+            defragIds = new long[min( size, freeList.size() )];
+            for ( int i = 0; i < defragIds.length; i++ )
+            {
+                defragIds[i] = freeList.poll();
+            }
+            size -= defragIds.length;
+        }
+        return new IdRange( defragIds, nextId.getAndAdd( size ), size );
+    }
+
+	@Override
+    public void setHighId( long id )
+    {
+        nextId.set( id );
+    }
+
+	@Override
+    public long getHighId()
+    {
+        return nextId.get();
+    }
+
+	@Override
+    public void freeId( long id )
+    {
+        if ( freeList != null )
+        {
+            freeList.add( id );
+        }
+        else
+        {
+            freedButNotReturnableIdCount.getAndIncrement();
+        }
+    }
+
+	@Override
+    public void close()
+    {
+    }
+
+	@Override
+    public long getNumberOfIdsInUse()
+    {
+        long result = freeList == null ? nextId.get() : nextId.get() - freeList.size();
+        return result - freedButNotReturnableIdCount.get();
+    }
+
+	@Override
+    public long getDefragCount()
+    {
+        return 0;
+    }
+
+	@Override
+    public void delete()
+    {
+    }
+
+	@Override
+    public long getHighestPossibleIdInUse()
+    {
+        return nextId.get();
+    }
+
+	public static class Factory implements IdGeneratorFactory
     {
         protected final Map<IdType, IdGenerator> generators = new EnumMap<>( IdType.class );
         private final IdTypeConfigurationProvider
@@ -76,106 +177,5 @@ public class EphemeralIdGenerator implements IdGenerator
         {
             return generators.get( idType );
         }
-    }
-
-    private final AtomicLong nextId = new AtomicLong();
-    private final IdType idType;
-    private final Queue<Long> freeList;
-    private final AtomicInteger freedButNotReturnableIdCount = new AtomicInteger();
-
-    public EphemeralIdGenerator( IdType idType, IdTypeConfiguration idTypeConfiguration )
-    {
-        this.idType = idType;
-        this.freeList = idType != null && idTypeConfiguration.allowAggressiveReuse() ? new ConcurrentLinkedQueue<>() : null;
-    }
-
-    @Override
-    public String toString()
-    {
-        return getClass().getSimpleName() + "[" + idType + "]";
-    }
-
-    @Override
-    public synchronized long nextId()
-    {
-        if ( freeList != null )
-        {
-            Long id = freeList.poll();
-            if ( id != null )
-            {
-                return id;
-            }
-        }
-        return nextId.getAndIncrement();
-    }
-
-    @Override
-    public synchronized IdRange nextIdBatch( int size )
-    {
-        long[] defragIds = PrimitiveLongCollections.EMPTY_LONG_ARRAY;
-        if ( freeList != null && !freeList.isEmpty() )
-        {
-            defragIds = new long[min( size, freeList.size() )];
-            for ( int i = 0; i < defragIds.length; i++ )
-            {
-                defragIds[i] = freeList.poll();
-            }
-            size -= defragIds.length;
-        }
-        return new IdRange( defragIds, nextId.getAndAdd( size ), size );
-    }
-
-    @Override
-    public void setHighId( long id )
-    {
-        nextId.set( id );
-    }
-
-    @Override
-    public long getHighId()
-    {
-        return nextId.get();
-    }
-
-    @Override
-    public void freeId( long id )
-    {
-        if ( freeList != null )
-        {
-            freeList.add( id );
-        }
-        else
-        {
-            freedButNotReturnableIdCount.getAndIncrement();
-        }
-    }
-
-    @Override
-    public void close()
-    {
-    }
-
-    @Override
-    public long getNumberOfIdsInUse()
-    {
-        long result = freeList == null ? nextId.get() : nextId.get() - freeList.size();
-        return result - freedButNotReturnableIdCount.get();
-    }
-
-    @Override
-    public long getDefragCount()
-    {
-        return 0;
-    }
-
-    @Override
-    public void delete()
-    {
-    }
-
-    @Override
-    public long getHighestPossibleIdInUse()
-    {
-        return nextId.get();
     }
 }

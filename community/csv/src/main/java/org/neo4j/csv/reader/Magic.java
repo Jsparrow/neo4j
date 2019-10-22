@@ -40,7 +40,7 @@ public class Magic
     public static final Magic NONE = new Magic( "NONE", null, new byte[0] );
 
     private static final List<Magic> DEFINITIONS = new ArrayList<>();
-    private static int LONGEST;
+    private static int longest;
 
     /** First 4 bytes of a ZIP file have this signature. */
     public static final Magic ZIP = Magic.define( "ZIP", null, 0x50, 0x4b, 0x03, 0x04 );
@@ -54,7 +54,20 @@ public class Magic
     public static final Magic BOM_UTF_16_LE = define( "BOM_UTF_16_LE", StandardCharsets.UTF_16LE, 0xFF, 0xFE );
     public static final Magic BOM_UTF_8 = define( "BOM_UTF8", StandardCharsets.UTF_8, 0xEF, 0xBB, 0xBF );
 
-    /**
+	private final String description;
+
+	private final Charset encoding;
+
+	private final byte[] bytes;
+
+	private Magic( String description, Charset encoding, byte[] bytes )
+    {
+        this.description = description;
+        this.encoding = encoding;
+        this.bytes = bytes;
+    }
+
+	/**
      * Defines a magic signature which can later be detected in {@link #of(File)} and {@link #of(byte[])}.
      *
      * @param description description of the magic, typically which file it is.
@@ -74,11 +87,11 @@ public class Magic
 
         Magic magic = new Magic( description, impliesEncoding, bytes );
         DEFINITIONS.add( magic );
-        LONGEST = Math.max( LONGEST, bytes.length );
+        longest = Math.max( longest, bytes.length );
         return magic;
     }
 
-    /**
+	/**
      * Extracts and matches the magic of the header in the given {@code file}. If no magic matches
      * then {@link #NONE} is returned.
      *
@@ -90,7 +103,7 @@ public class Magic
     {
         try ( InputStream in = new FileInputStream( file ) )
         {
-            byte[] bytes = new byte[LONGEST];
+            byte[] bytes = new byte[longest];
             int read = in.read( bytes );
             if ( read > 0 )
             {
@@ -104,7 +117,7 @@ public class Magic
         return Magic.NONE;
     }
 
-    /**
+	/**
      * Matches the magic bytes with all defined and returns a match or {@link #NONE}.
      *
      * @param bytes magic bytes extracted from a file header.
@@ -112,33 +125,15 @@ public class Magic
      */
     public static Magic of( byte[] bytes )
     {
-        for ( Magic candidate : DEFINITIONS )
-        {
-            if ( candidate.matches( bytes ) )
-            {
-                return candidate;
-            }
-        }
-        return NONE;
+        return DEFINITIONS.stream().filter(candidate -> candidate.matches( bytes )).findFirst().orElse(NONE);
     }
 
-    public static int longest()
+	public static int longest()
     {
-        return LONGEST;
+        return longest;
     }
 
-    private final String description;
-    private final Charset encoding;
-    private final byte[] bytes;
-
-    private Magic( String description, Charset encoding, byte[] bytes )
-    {
-        this.description = description;
-        this.encoding = encoding;
-        this.bytes = bytes;
-    }
-
-    /**
+	/**
      * Tests whether or not a set of magic bytes matches this {@link Magic} signature.
      *
      * @param candidateBytes magic bytes to test.
@@ -160,7 +155,7 @@ public class Magic
         return true;
     }
 
-    /**
+	/**
      * @return number of bytes making up this magic signature.
      */
     public int length()
@@ -168,7 +163,7 @@ public class Magic
         return bytes.length;
     }
 
-    /**
+	/**
      * @return whether or not the presence of this {@link Magic} implies the contents of the file being
      * of a certain encoding. If {@code true} then {@link #encoding()} may be called to get the implied encoding.
      */
@@ -177,7 +172,7 @@ public class Magic
         return encoding != null;
     }
 
-    /**
+	/**
      * @return the encoding this magic signature implies, if {@link #impliesEncoding()} is {@code true},
      * otherwise throws {@link IllegalStateException}.
      */
@@ -190,15 +185,15 @@ public class Magic
         return encoding;
     }
 
-    byte[] bytes()
+	byte[] bytes()
     {
         // Defensive copy
         return Arrays.copyOf( bytes, bytes.length );
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return "Magic[" + description + ", " + Arrays.toString( bytes ) + "]";
+        return new StringBuilder().append("Magic[").append(description).append(", ").append(Arrays.toString( bytes )).append("]").toString();
     }
 }

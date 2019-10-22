@@ -33,7 +33,12 @@ import org.neo4j.graphdb.traversal.Paths;
  */
 public abstract class PathExpanders
 {
-    /**
+    private PathExpanders()
+    {
+        // you should never instantiate this
+    }
+
+	/**
      * A very permissive {@link PathExpander} that follows any type in any direction.
      *
      * @param <STATE> the type of the object that holds the state
@@ -45,7 +50,7 @@ public abstract class PathExpanders
         return StandardExpander.DEFAULT;
     }
 
-    /**
+	/**
      * A very permissive {@link PathExpander} that follows {@code type} relationships in any direction.
      *
      * @param type the type of relationships to expand in any direction
@@ -58,7 +63,7 @@ public abstract class PathExpanders
         return StandardExpander.create( type, Direction.BOTH );
     }
 
-    /**
+	/**
      * A very permissive {@link PathExpander} that follows any type in {@code direction}.
      *
      * @param direction the direction to follow relationships in
@@ -71,7 +76,7 @@ public abstract class PathExpanders
         return StandardExpander.create( direction );
     }
 
-    /**
+	/**
      * A very restricted {@link PathExpander} that follows {@code type} in {@code direction}.
      *
      * @param type the type of relationships to follow
@@ -85,7 +90,7 @@ public abstract class PathExpanders
         return StandardExpander.create( type, direction );
     }
 
-    /**
+	/**
      * A very restricted {@link PathExpander} that follows only the {@code type}/{@code direction} pairs that you list.
      *
      * @param type1 the type of relationships to follow in {@code direction1}
@@ -104,7 +109,7 @@ public abstract class PathExpanders
         return StandardExpander.create( type1, direction1, type2, direction2, more );
     }
 
-    /**
+	/**
      * An expander forcing constant relationship direction
      *
      * @param types types of relationships to follow
@@ -148,12 +153,7 @@ public abstract class PathExpanders
         };
     }
 
-    private PathExpanders()
-    {
-        // you should never instantiate this
-    }
-
-    /**
+	/**
      * A wrapper that uses {@link org.neo4j.graphdb.traversal.Paths.DefaultPathDescriptor} to print expanded paths.
      * All expanded paths will be printed using System.out.
      * @param source    {@link PathExpander} to wrap.
@@ -165,7 +165,7 @@ public abstract class PathExpanders
         return printingWrapper( source, new Paths.DefaultPathDescriptor() );
     }
 
-    /**
+	/**
      * A wrapper that uses {@link org.neo4j.graphdb.traversal.Paths.DefaultPathDescriptor}
      * to print expanded paths that fulfill {@link BiFunction} predicate.
      * Will use System.out as {@link PrintStream}.
@@ -181,7 +181,7 @@ public abstract class PathExpanders
         return printingWrapper( source, pred, new Paths.DefaultPathDescriptor() );
     }
 
-    /**
+	/**
      * A wrapper that uses {@link org.neo4j.graphdb.traversal.Paths.DefaultPathDescriptor} to print expanded paths
      * using given {@link org.neo4j.graphdb.traversal.Paths.PathDescriptor}.
      * All expanded paths will be printed.
@@ -198,7 +198,7 @@ public abstract class PathExpanders
         return printingWrapper( source, ( propertyContainers, stateBranchState ) -> Boolean.TRUE, descriptor );
     }
 
-    /**
+	/**
      * A wrapper that uses {@link org.neo4j.graphdb.traversal.Paths.DefaultPathDescriptor} to print expanded paths
      * that fulfill {@link BiFunction} predicate using given {@link org.neo4j.graphdb.traversal.Paths.PathDescriptor}.
      * Will use System.out as {@link PrintStream}.
@@ -216,7 +216,7 @@ public abstract class PathExpanders
         return printingWrapper( source, pred, descriptor, System.out );
     }
 
-    /**
+	/**
      * A wrapper that uses {@link org.neo4j.graphdb.traversal.Paths.DefaultPathDescriptor} to print expanded paths
      * that fulfill {@link BiFunction} predicate using given {@link org.neo4j.graphdb.traversal.Paths.PathDescriptor}.
      * @param source        {@link PathExpander} to wrap.

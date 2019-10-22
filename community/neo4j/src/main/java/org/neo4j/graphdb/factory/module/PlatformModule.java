@@ -302,10 +302,7 @@ public class PlatformModule
         builder.withRotationListener(
                 logProvider -> diagnosticsManager.dumpAll( logProvider.getLog( DiagnosticsManager.class ) ) );
 
-        for ( String debugContext : config.get( GraphDatabaseSettings.store_internal_debug_contexts ) )
-        {
-            builder.withLevel( debugContext, Level.DEBUG );
-        }
+        config.get( GraphDatabaseSettings.store_internal_debug_contexts ).forEach(debugContext -> builder.withLevel(debugContext, Level.DEBUG));
         builder.withDefaultLevel( config.get( GraphDatabaseSettings.store_internal_log_level ) )
                .withTimeZone( config.get( GraphDatabaseSettings.db_timezone ).getZoneId() );
 

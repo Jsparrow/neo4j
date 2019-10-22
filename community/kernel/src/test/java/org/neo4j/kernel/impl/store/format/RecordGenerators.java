@@ -31,24 +31,24 @@ import org.neo4j.kernel.impl.store.record.RelationshipTypeTokenRecord;
 
 public interface RecordGenerators
 {
-    interface Generator<RECORD extends AbstractBaseRecord>
+    Generator<NodeRecord> node();
+
+	Generator<RelationshipRecord> relationship();
+
+	Generator<PropertyRecord> property();
+
+	Generator<RelationshipGroupRecord> relationshipGroup();
+
+	Generator<RelationshipTypeTokenRecord> relationshipTypeToken();
+
+	Generator<PropertyKeyTokenRecord> propertyKeyToken();
+
+	Generator<LabelTokenRecord> labelToken();
+
+	Generator<DynamicRecord> dynamic();
+
+	interface Generator<RECORD extends AbstractBaseRecord>
     {
         RECORD get( int recordSize, RecordFormat<RECORD> format, long id );
     }
-
-    Generator<NodeRecord> node();
-
-    Generator<RelationshipRecord> relationship();
-
-    Generator<PropertyRecord> property();
-
-    Generator<RelationshipGroupRecord> relationshipGroup();
-
-    Generator<RelationshipTypeTokenRecord> relationshipTypeToken();
-
-    Generator<PropertyKeyTokenRecord> propertyKeyToken();
-
-    Generator<LabelTokenRecord> labelToken();
-
-    Generator<DynamicRecord> dynamic();
 }

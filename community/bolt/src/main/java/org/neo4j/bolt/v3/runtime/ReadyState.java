@@ -42,13 +42,12 @@ import static org.neo4j.values.storable.Values.stringArray;
  */
 public class ReadyState extends FailSafeBoltStateMachineState
 {
-    private BoltStateMachineState streamingState;
-    private BoltStateMachineState txReadyState;
-
     static final String FIELDS_KEY = "fields";
-    static final String FIRST_RECORD_AVAILABLE_KEY = "t_first";
+	static final String FIRST_RECORD_AVAILABLE_KEY = "t_first";
+	private BoltStateMachineState streamingState;
+	private BoltStateMachineState txReadyState;
 
-    @Override
+	@Override
     public BoltStateMachineState processUnsafe( RequestMessage message, StateMachineContext context ) throws Exception
     {
         if ( message instanceof RunMessage )
@@ -62,23 +61,23 @@ public class ReadyState extends FailSafeBoltStateMachineState
         return null;
     }
 
-    @Override
+	@Override
     public String name()
     {
         return "READY";
     }
 
-    public void setStreamingState( BoltStateMachineState streamingState )
+	public void setStreamingState( BoltStateMachineState streamingState )
     {
         this.streamingState = streamingState;
     }
 
-    public void setTransactionReadyState( BoltStateMachineState txReadyState )
+	public void setTransactionReadyState( BoltStateMachineState txReadyState )
     {
         this.txReadyState = txReadyState;
     }
 
-    private BoltStateMachineState processRunMessage( RunMessage message, StateMachineContext context ) throws KernelException
+	private BoltStateMachineState processRunMessage( RunMessage message, StateMachineContext context ) throws KernelException
     {
         long start = context.clock().millis();
         StatementProcessor statementProcessor = context.connectionState().getStatementProcessor();
@@ -92,14 +91,14 @@ public class ReadyState extends FailSafeBoltStateMachineState
         return streamingState;
     }
 
-    private BoltStateMachineState processBeginMessage( BeginMessage message, StateMachineContext context ) throws Exception
+	private BoltStateMachineState processBeginMessage( BeginMessage message, StateMachineContext context ) throws Exception
     {
         StatementProcessor statementProcessor = context.connectionState().getStatementProcessor();
         statementProcessor.beginTransaction( message.bookmark(), message.transactionTimeout(), message.transactionMetadata() );
         return txReadyState;
     }
 
-    @Override
+	@Override
     protected void assertInitialized()
     {
         checkState( streamingState != null, "Streaming state not set" );

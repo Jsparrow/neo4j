@@ -53,5 +53,5 @@ public interface ConstraintCreator
      * @throws ConstraintViolationException if creating this constraint would violate any
      * existing constraints.
      */
-    ConstraintDefinition create() throws ConstraintViolationException;
+    ConstraintDefinition create();
 }

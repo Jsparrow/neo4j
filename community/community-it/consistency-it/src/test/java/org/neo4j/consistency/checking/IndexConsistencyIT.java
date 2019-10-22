@@ -60,21 +60,27 @@ import static org.neo4j.test.TestLabels.LABEL_TWO;
 
 public class IndexConsistencyIT
 {
-    @Rule
+    private static final Label[] LABELS = new Label[]{LABEL_ONE, LABEL_TWO, LABEL_THREE};
+
+	private static final String PROPERTY_KEY = "numericProperty";
+
+	private static final double DELETE_RATIO = 0.2;
+
+	private static final double UPDATE_RATIO = 0.2;
+
+	private static final int NODE_COUNT_BASELINE = 10;
+
+	@Rule
     public final EmbeddedDatabaseRule db = new EmbeddedDatabaseRule();
 
-    @Rule
+	@Rule
     public final RandomRule random = new RandomRule();
 
-    private final AssertableLogProvider log = new AssertableLogProvider();
-    private static final Label[] LABELS = new Label[]{LABEL_ONE, LABEL_TWO, LABEL_THREE};
-    private static final String PROPERTY_KEY = "numericProperty";
-    private static final double DELETE_RATIO = 0.2;
-    private static final double UPDATE_RATIO = 0.2;
-    private static final int NODE_COUNT_BASELINE = 10;
-    private final FileFilter SOURCE_COPY_FILE_FILTER = file -> file.isDirectory() || file.getName().startsWith( "index" );
+	private final AssertableLogProvider log = new AssertableLogProvider();
 
-    @Test
+	private final FileFilter sourceCopyFileFilter = file -> file.isDirectory() || file.getName().startsWith( "index" );
+
+	@Test
     public void reportNotCleanNativeIndex() throws IOException, ConsistencyCheckIncompleteException
     {
         DatabaseLayout databaseLayout = db.databaseLayout();
@@ -82,7 +88,7 @@ public class IndexConsistencyIT
         resolveComponent( CheckPointer.class ).forceCheckPoint( new SimpleTriggerInfo( "forcedCheckpoint" ) );
         File indexesCopy = databaseLayout.file( "indexesCopy" );
         File indexSources = resolveComponent( DefaultIndexProviderMap.class ).getDefaultProvider().directoryStructure().rootDirectory();
-        copyRecursively( indexSources, indexesCopy, SOURCE_COPY_FILE_FILTER );
+        copyRecursively( indexSources, indexesCopy, sourceCopyFileFilter );
 
         try ( Transaction tx = db.beginTx() )
         {
@@ -100,7 +106,7 @@ public class IndexConsistencyIT
                 hasItem( containsString("WARN : Index was not properly shutdown and rebuild is required.") ) );
     }
 
-    @Test
+	@Test
     public void reportNotCleanNativeIndexWithCorrectData() throws IOException, ConsistencyCheckIncompleteException
     {
         DatabaseLayout databaseLayout = db.databaseLayout();
@@ -108,7 +114,7 @@ public class IndexConsistencyIT
         resolveComponent( CheckPointer.class ).forceCheckPoint( new SimpleTriggerInfo( "forcedCheckpoint" ) );
         File indexesCopy = databaseLayout.file( "indexesCopy" );
         File indexSources = resolveComponent( DefaultIndexProviderMap.class ).getDefaultProvider().directoryStructure().rootDirectory();
-        copyRecursively( indexSources, indexesCopy, SOURCE_COPY_FILE_FILTER );
+        copyRecursively( indexSources, indexesCopy, sourceCopyFileFilter );
 
         db.shutdownAndKeepStore();
 
@@ -120,23 +126,23 @@ public class IndexConsistencyIT
                 hasItem( containsString("WARN : Index was not properly shutdown and rebuild is required.") ) );
     }
 
-    private <T> T resolveComponent( Class<T> clazz )
+	private <T> T resolveComponent( Class<T> clazz )
     {
         return db.resolveDependency( clazz );
     }
 
-    private List<String> readReport( ConsistencyCheckService.Result result )
+	private List<String> readReport( ConsistencyCheckService.Result result )
             throws IOException
     {
         return Files.readAllLines( result.reportFile().toPath() );
     }
 
-    List<Pair<Long,Label[]>> someData()
+	List<Pair<Long,Label[]>> someData()
     {
         return someData( 50 );
     }
 
-    List<Pair<Long,Label[]>> someData( int numberOfModifications )
+	List<Pair<Long,Label[]>> someData( int numberOfModifications )
     {
         List<Pair<Long,Label[]>> existingNodes;
         existingNodes = new ArrayList<>();
@@ -158,7 +164,7 @@ public class IndexConsistencyIT
         return existingNodes;
     }
 
-    private List<Pair<Long,Label[]>> randomModifications( List<Pair<Long,Label[]>> existingNodes,
+	private List<Pair<Long,Label[]>> randomModifications( List<Pair<Long,Label[]>> existingNodes,
             int numberOfModifications )
     {
         for ( int i = 0; i < numberOfModifications; i++ )
@@ -180,21 +186,21 @@ public class IndexConsistencyIT
         return existingNodes;
     }
 
-    private void createNewNode( List<Pair<Long,Label[]>> existingNodes )
+	private void createNewNode( List<Pair<Long,Label[]>> existingNodes )
     {
         Label[] labels = randomLabels();
         Node node = createNewNode( labels );
         existingNodes.add( Pair.of( node.getId(), labels ) );
     }
 
-    private Node createNewNode( Label[] labels )
+	private Node createNewNode( Label[] labels )
     {
         Node node = db.createNode( labels );
         node.setProperty( PROPERTY_KEY, random.nextInt() );
         return node;
     }
 
-    private void modifyLabelsOnExistingNode( List<Pair<Long,Label[]>> existingNodes )
+	private void modifyLabelsOnExistingNode( List<Pair<Long,Label[]>> existingNodes )
     {
         int targetIndex = random.nextInt( existingNodes.size() );
         Pair<Long,Label[]> existingPair = existingNodes.get( targetIndex );
@@ -210,7 +216,7 @@ public class IndexConsistencyIT
         existingNodes.add( Pair.of( nodeId, newLabels ) );
     }
 
-    private void deleteExistingNode( List<Pair<Long,Label[]>> existingNodes )
+	private void deleteExistingNode( List<Pair<Long,Label[]>> existingNodes )
     {
         int targetIndex = random.nextInt( existingNodes.size() );
         Pair<Long,Label[]> existingPair = existingNodes.get( targetIndex );
@@ -219,7 +225,7 @@ public class IndexConsistencyIT
         existingNodes.remove( targetIndex );
     }
 
-    private Label[] randomLabels()
+	private Label[] randomLabels()
     {
         List<Label> labels = new ArrayList<>( LABELS.length );
         for ( Label label : LABELS )
@@ -232,7 +238,7 @@ public class IndexConsistencyIT
         return labels.toArray( new Label[labels.size()] );
     }
 
-    private ConsistencyCheckService.Result fullConsistencyCheck()
+	private ConsistencyCheckService.Result fullConsistencyCheck()
             throws ConsistencyCheckIncompleteException, IOException
     {
         try ( FileSystemAbstraction fsa = new DefaultFileSystemAbstraction() )

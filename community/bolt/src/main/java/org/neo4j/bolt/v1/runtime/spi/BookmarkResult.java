@@ -53,6 +53,6 @@ public class BookmarkResult implements BoltResult
     @Override
     public String toString()
     {
-        return "BookmarkResult{" + "bookmark=" + bookmark + '}';
+        return new StringBuilder().append("BookmarkResult{").append("bookmark=").append(bookmark).append('}').toString();
     }
 }

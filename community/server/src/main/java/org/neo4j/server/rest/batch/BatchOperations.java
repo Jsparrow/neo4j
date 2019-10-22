@@ -77,7 +77,7 @@ public abstract class BatchOperations
             {
                 throw new IllegalArgumentException( "expecting one value per header" );
             }
-            if ( !key.equals( "Accept" ) && !key.equals( "Content-Type" ) )
+            if ( !"Accept".equals( key ) && !"Content-Type".equals( key ) )
             {
                 res.addHeader( key, value.get( 0 ) );
             }

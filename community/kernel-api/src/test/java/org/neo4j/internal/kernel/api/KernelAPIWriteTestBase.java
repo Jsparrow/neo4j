@@ -74,11 +74,11 @@ public abstract class KernelAPIWriteTestBase<WriteSupport extends KernelAPIWrite
     @AfterClass
     public static void tearDown()
     {
-        if ( testSupport != null )
-        {
-            testSupport.tearDown();
-            folder.delete();
-            testSupport = null;
-        }
+        if (testSupport == null) {
+			return;
+		}
+		testSupport.tearDown();
+		folder.delete();
+		testSupport = null;
     }
 }

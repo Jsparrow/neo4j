@@ -40,6 +40,6 @@ public class IdPrettyPrinter
 
     public static String relationshipType( int id )
     {
-        return id == TokenRead.NO_TOKEN ? "" : ("[:type=" + id + "]");
+        return id == TokenRead.NO_TOKEN ? "" : (new StringBuilder().append("[:type=").append(id).append("]").toString());
     }
 }

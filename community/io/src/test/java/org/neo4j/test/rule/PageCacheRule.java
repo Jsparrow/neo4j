@@ -43,7 +43,142 @@ import org.neo4j.scheduler.ThreadPoolJobScheduler;
 
 public class PageCacheRule extends ExternalResource
 {
-    /**
+    protected JobScheduler jobScheduler;
+	protected PageCache pageCache;
+	final PageCacheConfig baseConfig;
+
+	public PageCacheRule()
+    {
+        this( config() );
+    }
+
+	public PageCacheRule( PageCacheConfig config )
+    {
+        this.baseConfig = config;
+    }
+
+	/**
+     * @return new {@link PageCacheConfig} instance.
+     */
+    public static PageCacheConfig config()
+    {
+        return new PageCacheConfig();
+    }
+
+	public PageCache getPageCache( FileSystemAbstraction fs )
+    {
+        return getPageCache( fs, config() );
+    }
+
+	/**
+     * Opens a new {@link PageCache} with the provided file system and config.
+     *
+     * @param fs {@link FileSystemAbstraction} to use for the {@link PageCache}.
+     * @param overriddenConfig specific {@link PageCacheConfig} overriding config provided in {@link PageCacheRule}
+     * constructor, if any.
+     * @return the opened {@link PageCache}.
+     */
+    public PageCache getPageCache( FileSystemAbstraction fs, PageCacheConfig overriddenConfig )
+    {
+        closeExistingPageCache();
+        Integer pageSize = selectConfig( baseConfig.pageSize, overriddenConfig.pageSize, null );
+        PageCacheTracer cacheTracer = selectConfig( baseConfig.tracer, overriddenConfig.tracer, PageCacheTracer.NULL );
+        PageCursorTracerSupplier cursorTracerSupplier = selectConfig(
+                baseConfig.pageCursorTracerSupplier,
+                overriddenConfig.pageCursorTracerSupplier,
+                PageCursorTracerSupplier.NULL );
+
+        SingleFilePageSwapperFactory factory = new SingleFilePageSwapperFactory();
+        factory.open( fs, Configuration.EMPTY );
+        VersionContextSupplier contextSupplier = EmptyVersionContextSupplier.EMPTY;
+        MemoryAllocator mman = MemoryAllocator.createAllocator( selectConfig( baseConfig.memory, overriddenConfig.memory, "8 MiB" ),
+                new LocalMemoryTracker() );
+        initializeJobScheduler();
+        if ( pageSize != null )
+        {
+            pageCache = new MuninnPageCache( factory, mman, pageSize, cacheTracer, cursorTracerSupplier, contextSupplier, jobScheduler );
+        }
+        else
+        {
+            pageCache = new MuninnPageCache( factory, mman, cacheTracer, cursorTracerSupplier, contextSupplier, jobScheduler );
+        }
+        pageCachePostConstruct( overriddenConfig );
+        return pageCache;
+    }
+
+	protected void initializeJobScheduler()
+    {
+        jobScheduler = new ThreadPoolJobScheduler();
+    }
+
+	protected static <T> T selectConfig( T base, T overridden, T defaultValue )
+    {
+        return ObjectUtils.firstNonNull( base, overridden, defaultValue );
+    }
+
+	protected void pageCachePostConstruct( PageCacheConfig overriddenConfig )
+    {
+        if ( selectConfig( baseConfig.inconsistentReads, overriddenConfig.inconsistentReads, true ) )
+        {
+            AtomicBoolean controller = selectConfig( baseConfig.nextReadIsInconsistent,
+                    overriddenConfig.nextReadIsInconsistent, null );
+            Adversary adversary = controller != null
+                    ? new AtomicBooleanInconsistentReadAdversary( controller )
+                    : new RandomInconsistentReadAdversary();
+            pageCache = new AdversarialPageCache( pageCache, adversary );
+        }
+        if ( selectConfig( baseConfig.accessChecks, overriddenConfig.accessChecks, false ) )
+        {
+            pageCache = new AccessCheckingPageCache( pageCache );
+        }
+    }
+
+	protected void closeExistingPageCache()
+    {
+        closePageCache( "Failed to stop existing PageCache prior to creating a new one." );
+        closeJobScheduler( "Failed to stop existing job scheduler prior to creating a new one." );
+    }
+
+	@Override
+    protected void after( boolean success )
+    {
+        closePageCache( "Failed to stop PageCache after test." );
+        closeJobScheduler( "Failed to stop job scheduler after test." );
+    }
+
+	private void closeJobScheduler( String errorMessage )
+    {
+        if (jobScheduler == null) {
+			return;
+		}
+		try
+		{
+		    jobScheduler.close();
+		}
+		catch ( Exception e )
+		{
+		    throw new RuntimeException( errorMessage, e );
+		}
+		jobScheduler = null;
+    }
+
+	private void closePageCache( String errorMessage )
+    {
+        if (pageCache == null) {
+			return;
+		}
+		try
+		{
+		    pageCache.close();
+		}
+		catch ( Exception e )
+		{
+		    throw new AssertionError( errorMessage, e );
+		}
+		pageCache = null;
+    }
+
+	/**
      * Class to alter behavior and configuration of {@link PageCache} instances opened in this rule.
      */
     public static final class PageCacheConfig
@@ -148,141 +283,6 @@ public class PageCacheRule extends ExternalResource
         {
             this.memory = memory;
             return this;
-        }
-    }
-
-    /**
-     * @return new {@link PageCacheConfig} instance.
-     */
-    public static PageCacheConfig config()
-    {
-        return new PageCacheConfig();
-    }
-
-    protected JobScheduler jobScheduler;
-    protected PageCache pageCache;
-    final PageCacheConfig baseConfig;
-
-    public PageCacheRule()
-    {
-        this( config() );
-    }
-
-    public PageCacheRule( PageCacheConfig config )
-    {
-        this.baseConfig = config;
-    }
-
-    public PageCache getPageCache( FileSystemAbstraction fs )
-    {
-        return getPageCache( fs, config() );
-    }
-
-    /**
-     * Opens a new {@link PageCache} with the provided file system and config.
-     *
-     * @param fs {@link FileSystemAbstraction} to use for the {@link PageCache}.
-     * @param overriddenConfig specific {@link PageCacheConfig} overriding config provided in {@link PageCacheRule}
-     * constructor, if any.
-     * @return the opened {@link PageCache}.
-     */
-    public PageCache getPageCache( FileSystemAbstraction fs, PageCacheConfig overriddenConfig )
-    {
-        closeExistingPageCache();
-        Integer pageSize = selectConfig( baseConfig.pageSize, overriddenConfig.pageSize, null );
-        PageCacheTracer cacheTracer = selectConfig( baseConfig.tracer, overriddenConfig.tracer, PageCacheTracer.NULL );
-        PageCursorTracerSupplier cursorTracerSupplier = selectConfig(
-                baseConfig.pageCursorTracerSupplier,
-                overriddenConfig.pageCursorTracerSupplier,
-                PageCursorTracerSupplier.NULL );
-
-        SingleFilePageSwapperFactory factory = new SingleFilePageSwapperFactory();
-        factory.open( fs, Configuration.EMPTY );
-        VersionContextSupplier contextSupplier = EmptyVersionContextSupplier.EMPTY;
-        MemoryAllocator mman = MemoryAllocator.createAllocator( selectConfig( baseConfig.memory, overriddenConfig.memory, "8 MiB" ),
-                new LocalMemoryTracker() );
-        initializeJobScheduler();
-        if ( pageSize != null )
-        {
-            pageCache = new MuninnPageCache( factory, mman, pageSize, cacheTracer, cursorTracerSupplier, contextSupplier, jobScheduler );
-        }
-        else
-        {
-            pageCache = new MuninnPageCache( factory, mman, cacheTracer, cursorTracerSupplier, contextSupplier, jobScheduler );
-        }
-        pageCachePostConstruct( overriddenConfig );
-        return pageCache;
-    }
-
-    protected void initializeJobScheduler()
-    {
-        jobScheduler = new ThreadPoolJobScheduler();
-    }
-
-    protected static <T> T selectConfig( T base, T overridden, T defaultValue )
-    {
-        return ObjectUtils.firstNonNull( base, overridden, defaultValue );
-    }
-
-    protected void pageCachePostConstruct( PageCacheConfig overriddenConfig )
-    {
-        if ( selectConfig( baseConfig.inconsistentReads, overriddenConfig.inconsistentReads, true ) )
-        {
-            AtomicBoolean controller = selectConfig( baseConfig.nextReadIsInconsistent,
-                    overriddenConfig.nextReadIsInconsistent, null );
-            Adversary adversary = controller != null
-                    ? new AtomicBooleanInconsistentReadAdversary( controller )
-                    : new RandomInconsistentReadAdversary();
-            pageCache = new AdversarialPageCache( pageCache, adversary );
-        }
-        if ( selectConfig( baseConfig.accessChecks, overriddenConfig.accessChecks, false ) )
-        {
-            pageCache = new AccessCheckingPageCache( pageCache );
-        }
-    }
-
-    protected void closeExistingPageCache()
-    {
-        closePageCache( "Failed to stop existing PageCache prior to creating a new one." );
-        closeJobScheduler( "Failed to stop existing job scheduler prior to creating a new one." );
-    }
-
-    @Override
-    protected void after( boolean success )
-    {
-        closePageCache( "Failed to stop PageCache after test." );
-        closeJobScheduler( "Failed to stop job scheduler after test." );
-    }
-
-    private void closeJobScheduler( String errorMessage )
-    {
-        if ( jobScheduler != null )
-        {
-            try
-            {
-                jobScheduler.close();
-            }
-            catch ( Exception e )
-            {
-                throw new RuntimeException( errorMessage, e );
-            }
-            jobScheduler = null;
-        }
-    }
-
-    private void closePageCache( String errorMessage )
-    {
-        if ( pageCache != null )
-        {
-            try
-            {
-                pageCache.close();
-            }
-            catch ( Exception e )
-            {
-                throw new AssertionError( errorMessage, e );
-            }
-            pageCache = null;
         }
     }
 

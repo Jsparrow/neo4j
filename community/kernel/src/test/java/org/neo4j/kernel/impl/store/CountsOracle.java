@@ -32,40 +32,30 @@ import static org.neo4j.register.Registers.newDoubleLongRegister;
 
 public class CountsOracle
 {
-    public static class Node
-    {
-        private final long[] labels;
-
-        private Node( long[] labels )
-        {
-            this.labels = labels;
-        }
-    }
-
     private final CountsRecordState state = new CountsRecordState();
 
-    public Node node( long... labels )
+	public Node node( long... labels )
     {
         state.addNode( labels );
         return new Node( labels );
     }
 
-    public void relationship( Node start, int type, Node end )
+	public void relationship( Node start, int type, Node end )
     {
         state.addRelationship( start.labels, type, end.labels );
     }
 
-    public void indexUpdatesAndSize( long indexId, long updates, long size )
+	public void indexUpdatesAndSize( long indexId, long updates, long size )
     {
         state.replaceIndexUpdateAndSize( indexId, updates, size );
     }
 
-    public void indexSampling( long indexId, long unique, long size )
+	public void indexSampling( long indexId, long unique, long size )
     {
         state.replaceIndexSample( indexId, unique, size );
     }
 
-    public void update( CountsTracker target, long txId )
+	public void update( CountsTracker target, long txId )
     {
         try ( CountsAccessor.Updater updater = target.apply( txId ).get();
               CountsAccessor.IndexStatsUpdater stats = target.updateIndexCounts() )
@@ -74,12 +64,12 @@ public class CountsOracle
         }
     }
 
-    public void update( CountsOracle target )
+	public void update( CountsOracle target )
     {
         state.accept( new CountsAccessor.Initializer( target.state, target.state ) );
     }
 
-    public <Tracker extends CountsVisitor.Visitable & CountsAccessor> void verify( final Tracker tracker )
+	public <Tracker extends CountsVisitor.Visitable & CountsAccessor> void verify( final Tracker tracker )
     {
         CountsRecordState seenState = new CountsRecordState();
         final CountsAccessor.Initializer initializer = new CountsAccessor.Initializer( seenState, seenState );
@@ -120,15 +110,22 @@ public class CountsOracle
                 assertEquals( "Should be able to read visited state.", output.readSecond(), size );
             }
         } );
-        if ( !differences.isEmpty() )
+        if (differences.isEmpty()) {
+			return;
+		}
+		StringBuilder errors = new StringBuilder()
+		        .append( "Counts differ in " ).append( differences.size() ).append( " places..." );
+		differences.forEach(difference -> errors.append("\n\t").append(difference));
+		throw new AssertionError( errors.toString() );
+    }
+
+	public static class Node
+    {
+        private final long[] labels;
+
+        private Node( long[] labels )
         {
-            StringBuilder errors = new StringBuilder()
-                    .append( "Counts differ in " ).append( differences.size() ).append( " places..." );
-            for ( CountsRecordState.Difference difference : differences )
-            {
-                errors.append( "\n\t" ).append( difference );
-            }
-            throw new AssertionError( errors.toString() );
+            this.labels = labels;
         }
     }
 }

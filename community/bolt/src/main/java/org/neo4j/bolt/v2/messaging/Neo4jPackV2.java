@@ -134,8 +134,7 @@ public class Neo4jPackV2 extends Neo4jPackV1
             }
             else
             {
-                throw new IllegalArgumentException( "Point with 2D or 3D coordinate expected, " +
-                                                    "got crs=" + crs + ", coordinate=" + Arrays.toString( coordinate ) );
+                throw new IllegalArgumentException( new StringBuilder().append("Point with 2D or 3D coordinate expected, ").append("got crs=").append(crs).append(", coordinate=").append(Arrays.toString( coordinate )).toString() );
             }
         }
 

@@ -43,7 +43,7 @@ import static java.util.Optional.empty;
 public class SslPolicyConfigValidator implements SettingGroup<Object>
 {
     @Override
-    public Map<String,String> validate( Map<String,String> params, Consumer<String> warningConsumer ) throws InvalidSettingException
+    public Map<String,String> validate( Map<String,String> params, Consumer<String> warningConsumer )
     {
         Map<String,String> validatedParams = new HashMap<>();
 

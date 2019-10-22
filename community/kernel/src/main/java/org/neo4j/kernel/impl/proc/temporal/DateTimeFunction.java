@@ -118,17 +118,13 @@ class DateTimeFunction extends TemporalFunction<DateTimeValue>
         @Override
         public AnyValue apply( Context ctx, AnyValue[] input ) throws ProcedureException
         {
-            if ( input != null && input.length == 2 )
-            {
-                if ( input[0] instanceof IntegralValue && input[1] instanceof IntegralValue )
-                {
-                    IntegralValue seconds = (IntegralValue) input[0];
-                    IntegralValue nanoseconds = (IntegralValue) input[1];
-                    return DateTimeValue.ofEpoch(seconds, nanoseconds);
-                }
-            }
-            throw new ProcedureException( Status.Procedure.ProcedureCallFailed, "Invalid call signature for " + getClass().getSimpleName() +
-                ": Provided input was " + Arrays.toString( input ) );
+            boolean condition = input != null && input.length == 2 && input[0] instanceof IntegralValue && input[1] instanceof IntegralValue;
+			if ( condition ) {
+			    IntegralValue seconds = (IntegralValue) input[0];
+			    IntegralValue nanoseconds = (IntegralValue) input[1];
+			    return DateTimeValue.ofEpoch(seconds, nanoseconds);
+			}
+            throw new ProcedureException( Status.Procedure.ProcedureCallFailed, new StringBuilder().append("Invalid call signature for ").append(getClass().getSimpleName()).append(": Provided input was ").append(Arrays.toString( input )).toString() );
         }
     }
 
@@ -156,16 +152,12 @@ class DateTimeFunction extends TemporalFunction<DateTimeValue>
         @Override
         public AnyValue apply( Context ctx, AnyValue[] input ) throws ProcedureException
         {
-            if ( input != null && input.length == 1 )
-            {
-                if ( input[0] instanceof IntegralValue  )
-                {
-                    IntegralValue milliseconds = (IntegralValue) input[0];
-                    return DateTimeValue.ofEpochMillis( milliseconds );
-                }
-            }
-            throw new ProcedureException( Status.Procedure.ProcedureCallFailed, "Invalid call signature for " + getClass().getSimpleName() +
-                    ": Provided input was " + Arrays.toString( input ) );
+            boolean condition = input != null && input.length == 1 && input[0] instanceof IntegralValue;
+			if ( condition ) {
+			    IntegralValue milliseconds = (IntegralValue) input[0];
+			    return DateTimeValue.ofEpochMillis( milliseconds );
+			}
+            throw new ProcedureException( Status.Procedure.ProcedureCallFailed, new StringBuilder().append("Invalid call signature for ").append(getClass().getSimpleName()).append(": Provided input was ").append(Arrays.toString( input )).toString() );
         }
     }
 }

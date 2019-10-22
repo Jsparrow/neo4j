@@ -133,7 +133,7 @@ public class GraphDatabaseSettings implements LoadableConfig
     @Internal
     @Deprecated
     public static final Setting<File> database_path = derivedSetting( "unsupported.dbms.directories.database",
-            databases_root_path, active_database, ( parent, child ) -> new File( parent, child ), PATH );
+            databases_root_path, active_database, File::new, PATH );
 
     @Title( "Read only database" )
     @Description( "Only allow read operations from this Neo4j instance. " +
@@ -644,8 +644,361 @@ public class GraphDatabaseSettings implements LoadableConfig
     @Internal
     public static final Setting<Boolean> enable_native_schema_index =
             setting( "unsupported.dbms.enable_native_schema_index", BOOLEAN, TRUE );
+	@Description(
+            "Index provider to use for newly created schema indexes. " +
+            "An index provider may store different value types in separate physical indexes. " +
+            "lucene-1.0: Spatial and temporal value types are stored in native indexes, remaining value types in Lucene index. " +
+            "lucene+native-1.0: Spatial, temporal and number value types are stored in native indexes and remaining value types in Lucene index. " +
+            "lucene+native-2.0: Spatial, temporal, number and string value types are stored in native indexes and remaining value types in Lucene index. " +
+            "native-btree-1.0: All value types and arrays of all value types, even composite keys, are stored in one native index. " +
+            "A native index has faster updates, less heap and CPU usage compared to a Lucene index. " +
+            "A native index has these limitations: " +
+            "Index key (be it single or composite) size limit of 4039 bytes - transaction resulting in index key surpassing that will fail. " +
+            "Reduced performance of CONTAINS and ENDS WITH string index queries, compared to a Lucene index." )
+    public static final Setting<String> default_schema_provider = setting( "dbms.index.default_schema_provider", STRING, NATIVE_BTREE10.providerName() );
+	@Description( "Location where Neo4j keeps the logical transaction logs." )
+    public static final Setting<File> logical_logs_location =
+            pathSetting( "dbms.directories.tx_log", "", database_path );
+	// Store settings
+    @Description( "Make Neo4j keep the logical transaction logs for being able to backup the database. " +
+            "Can be used for specifying the threshold to prune logical logs after. For example \"10 days\" will " +
+            "prune logical logs that only contains transactions older than 10 days from the current time, " +
+            "or \"100k txs\" will keep the 100k latest transactions and prune any older transactions." )
+    @Dynamic
+    public static final Setting<String> keep_logical_logs =
+            buildSetting( "dbms.tx_log.rotation.retention_policy", STRING, "7 days" ).constraint( illegalValueMessage(
+                    new StringBuilder().append("must be `true`, `false` or of format `<number><optional unit> <type>`. ").append("Valid units are `k`, `M` and `G`. ").append("Valid types are `files`, `size`, `txs`, `entries`, `hours` and `days`. ").append("For example, `100M size` will limiting logical log space on disk to 100Mb,").append(" or `200k txs` will limiting the number of transactions to keep to 200 000").toString(), matches(
+                            "^(true|keep_all|false|keep_none|(\\d+[KkMmGg]?( (files|size|txs|entries|hours|days))))$" ) ) )
+                    .build();
+	@Description( "Specifies at which file size the logical log will auto-rotate. Minimum accepted value is 1M. " )
+    @Dynamic
+    public static final Setting<Long> logical_log_rotation_threshold =
+            buildSetting( "dbms.tx_log.rotation.size", BYTES, "250M" ).constraint( min( ByteUnit.mebiBytes( 1 ) ) ).build();
+	@Description( "If `true`, Neo4j will abort recovery if any errors are encountered in the logical log. Setting " +
+            "this to `false` will allow Neo4j to restore as much as possible from the corrupted log files and ignore " +
+            "the rest, but, the integrity of the database might be compromised." )
+    @Internal
+    public static final Setting<Boolean> fail_on_corrupted_log_files = setting("unsupported.dbms.tx_log.fail_on_corrupted_log_files", BOOLEAN, TRUE );
+	@Description( "Use a quick approach for rebuilding the ID generators. This give quicker recovery time, " +
+            "but will limit the ability to reuse the space of deleted entities." )
+    @Internal
+    public static final Setting<Boolean> rebuild_idgenerators_fast =
+            setting( "unsupported.dbms.id_generator_fast_rebuild_enabled", BOOLEAN, TRUE );
+	@Description( "Specifies if engine should run cypher query based on a snapshot of accessed data. " +
+            "Query will be restarted in case if concurrent modification of data will be detected." )
+    @Internal
+    public static final Setting<Boolean> snapshot_query = setting( "unsupported.dbms.query.snapshot", BOOLEAN, FALSE );
+	@Description( "Specifies number or retries that query engine will do to execute query based on " +
+            "stable accessed data snapshot before giving up." )
+    @Internal
+    public static final Setting<Integer> snapshot_query_retries = buildSetting( "unsupported.dbms.query.snapshot.retries",
+            INTEGER, "5" ).constraint( range( 1, Integer.MAX_VALUE ) ).build();
+	// Store memory settings
+    @Description( "Target size for pages of mapped memory. If set to 0, then a reasonable default is chosen, " +
+                 "depending on the storage device used." )
+    @Internal
+    @Deprecated
+    public static final Setting<Long> mapped_memory_page_size =
+            setting( "unsupported.dbms.memory.pagecache.pagesize", BYTES, "0" );
+	@SuppressWarnings( "unchecked" )
+    @Description( "The amount of memory to use for mapping the store files, in bytes (or kilobytes with the 'k' " +
+                  "suffix, megabytes with 'm' and gigabytes with 'g'). If Neo4j is running on a dedicated server, " +
+                  "then it is generally recommended to leave about 2-4 gigabytes for the operating system, give the " +
+                  "JVM enough heap to hold all your transaction state and query context, and then leave the rest for " +
+                  "the page cache. If no page cache memory is configured, then a heuristic setting is computed based " +
+                  "on available system resources." )
+    public static final Setting<String> pagecache_memory =
+            buildSetting( "dbms.memory.pagecache.size", STRING, null ).build();
+	@Description( "Specify which page swapper to use for doing paged IO. " +
+                  "This is only used when integrating with proprietary storage technology." )
+    public static final Setting<String> pagecache_swapper =
+            setting( "dbms.memory.pagecache.swapper", STRING, null );
+	@Internal
+    @Description( "The profiling frequency for the page cache. Accurate profiles allow the page cache to do active " +
+                  "warmup after a restart, reducing the mean time to performance. " +
+                  "This feature available in Neo4j Enterprise Edition." )
+    public static final Setting<Duration> pagecache_warmup_profiling_interval =
+            setting( "unsupported.dbms.memory.pagecache.warmup.profile.interval", DURATION, "1m" );
+	@Internal
+    @Description( "Page cache can be configured to perform usage sampling of loaded pages that can be used to construct active load profile. " +
+            "According to that profile pages can be reloaded on the restart, replication, etc. " +
+            "This setting allows disabling that behavior. " +
+            "This feature available in Neo4j Enterprise Edition." )
+    public static final Setting<Boolean> pagecache_warmup_enabled = setting( "unsupported.dbms.memory.pagecache.warmup.enable", BOOLEAN, TRUE );
+	@Description( "Allows the enabling or disabling of the file watcher service." +
+            " This is an auxiliary service but should be left enabled in almost all cases." )
+    public static final Setting<Boolean> filewatcher_enabled = setting( "dbms.filewatcher.enabled", BOOLEAN, TRUE );
+	/**
+     * Block size properties values depends from selected record format.
+     * We can't figured out record format until it will be selected by corresponding edition.
+     * As soon as we will figure it out properties will be re-evaluated and overwritten, except cases of user
+     * defined value.
+     */
+    @Description( "Specifies the block size for storing strings. This parameter is only honored when the store is " +
+            "created, otherwise it is ignored. " +
+            "Note that each character in a string occupies two bytes, meaning that e.g a block size of 120 will hold " +
+            "a 60 character long string before overflowing into a second block. " +
+            "Also note that each block carries a ~10B of overhead so record size on disk will be slightly larger " +
+            "than the configured block size" )
+    @Internal
+    public static final Setting<Integer> string_block_size = buildSetting( "unsupported.dbms.block_size.strings", INTEGER,
+            "0" ).constraint( min( 0 ) ).build();
+	@Description( "Specifies the block size for storing arrays. This parameter is only honored when the store is " +
+            "created, otherwise it is ignored. " +
+            "Also note that each block carries a ~10B of overhead so record size on disk will be slightly larger " +
+            "than the configured block size" )
+    @Internal
+    public static final Setting<Integer> array_block_size = buildSetting( "unsupported.dbms.block_size.array_properties",
+            INTEGER, "0" ).constraint( min( 0 ) ).build();
+	@Description( "Specifies the block size for storing labels exceeding in-lined space in node record. " +
+            "This parameter is only honored when the store is created, otherwise it is ignored. " +
+            "Also note that each block carries a ~10B of overhead so record size on disk will be slightly larger " +
+            "than the configured block size" )
+    @Internal
+    public static final Setting<Integer> label_block_size = buildSetting( "unsupported.dbms.block_size.labels", INTEGER,
+            "0" ).constraint( min( 0 ) ).build();
+	@Description( "Specifies the size of id batches local to each transaction when committing. " +
+            "Committing a transaction which contains changes most often results in new data records being created. " +
+            "For each record a new id needs to be generated from an id generator. " +
+            "It's more efficient to allocate a batch of ids from the contended id generator, which the transaction " +
+            "holds and generates ids from while creating these new records. " +
+            "This setting specifies how big those batches are. " +
+            "Remaining ids are freed back to id generator on clean shutdown." )
+    @Internal
+    public static final Setting<Integer> record_id_batch_size = buildSetting( "unsupported.dbms.record_id_batch_size", INTEGER,
+            "20" ).constraint( range( 1, 1_000 ) ).build();
+	@Description( "An identifier that uniquely identifies this graph database instance within this JVM. " +
+            "Defaults to an auto-generated number depending on how many instance are started in this JVM." )
+    @Internal
+    public static final Setting<String> forced_kernel_id = buildSetting( "unsupported.dbms.kernel_id", STRING, NO_DEFAULT ).constraint(
+            illegalValueMessage( "has to be a valid kernel identifier", matches( "[a-zA-Z0-9]*" ) ) ).build();
+	@Internal
+    public static final Setting<Duration> vm_pause_monitor_measurement_duration =
+            setting( "unsupported.vm_pause_monitor.measurement_duration", DURATION, "100ms" );
+	@Internal
+    public static final Setting<Duration> vm_pause_monitor_stall_alert_threshold =
+            setting( "unsupported.vm_pause_monitor.stall_alert_threshold", DURATION, "100ms" );
+	@Description( "Relationship count threshold for considering a node to be dense" )
+    public static final Setting<Integer> dense_node_threshold =
+            buildSetting( "dbms.relationship_grouping_threshold", INTEGER, "50" ).constraint( min( 1 ) ).build();
+	@Description( "Log executed queries that take longer than the configured threshold, dbms.logs.query.threshold. " +
+            "Log entries are by default written to the file _query.log_ located in the Logs directory. " +
+            "For location of the Logs directory, see <<file-locations>>. " +
+            "This feature is available in the Neo4j Enterprise Edition." )
+    @Dynamic
+    public static final Setting<Boolean> log_queries =
+            setting( "dbms.logs.query.enabled", BOOLEAN, FALSE );
+	@Description( "Send user logs to the process stdout. " +
+            "If this is disabled then logs will instead be sent to the file _neo4j.log_ located in the logs directory. " +
+            "For location of the Logs directory, see <<file-locations>>." )
+    public static final Setting<Boolean> store_user_log_to_stdout = setting( "dbms.logs.user.stdout_enabled", BOOLEAN, TRUE );
+	@Description( "Path of the logs directory." )
+    public static final Setting<File> logs_directory = pathSetting( "dbms.directories.logs", "logs" );
+	@Description( "Path to the query log file." )
+    public static final Setting<File> log_queries_filename = derivedSetting( "dbms.logs.query.path",
+            logs_directory,
+            logs -> new File( logs, "query.log" ),
+            PATH );
+	@Description( "Path to the user log file." )
+    public static final Setting<File> store_user_log_path =
+            derivedSetting( "dbms.logs.user.path", logs_directory, logs -> new File( logs, "neo4j.log" ), PATH );
+	@Description( "Path to the debug log file." )
+    public static final Setting<File> store_internal_log_path = derivedSetting( "dbms.logs.debug.path",
+            logs_directory,
+            logs -> new File( logs, "debug.log" ),
+            PATH );
+	@Description( "Log parameters for the executed queries being logged." )
+    @Dynamic
+    public static final Setting<Boolean> log_queries_parameter_logging_enabled =
+            setting( "dbms.logs.query.parameter_logging_enabled", BOOLEAN, TRUE );
+	@Description( "Log detailed time information for the executed queries being logged. Requires `dbms.track_query_cpu_time=true`" )
+    @Dynamic
+    public static final Setting<Boolean> log_queries_detailed_time_logging_enabled =
+            setting( "dbms.logs.query.time_logging_enabled", BOOLEAN, FALSE );
+	@Description( "Log allocated bytes for the executed queries being logged. " +
+            "The logged number is cumulative over the duration of the query, " +
+            "i.e. for memory intense or long-running queries the value may be larger " +
+            "than the current memory allocation. Requires `dbms.track_query_allocation=true`" )
+    @Dynamic
+    public static final Setting<Boolean> log_queries_allocation_logging_enabled =
+            setting( "dbms.logs.query.allocation_logging_enabled", BOOLEAN, FALSE );
+	@Description( "Logs which runtime that was used to run the query" )
+    @Dynamic
+    public static final Setting<Boolean> log_queries_runtime_logging_enabled =
+            setting( "dbms.logs.query.runtime_logging_enabled", BOOLEAN, FALSE );
+	@Description( "Log page hits and page faults for the executed queries being logged." )
+    @Dynamic
+    public static final Setting<Boolean> log_queries_page_detail_logging_enabled =
+            setting( "dbms.logs.query.page_logging_enabled", BOOLEAN, FALSE );
+	@Description( "If the execution of query takes more time than this threshold, the query is logged - " +
+                 "provided query logging is enabled. Defaults to 0 seconds, that is all queries are logged." )
+    @Dynamic
+    public static final Setting<Duration> log_queries_threshold =
+            setting( "dbms.logs.query.threshold", DURATION, "0s" );
+	@Description( "The file size in bytes at which the query log will auto-rotate. If set to zero then no rotation " +
+            "will occur. Accepts a binary suffix `k`, `m` or `g`." )
+    @Dynamic
+    public static final Setting<Long> log_queries_rotation_threshold = buildSetting( "dbms.logs.query.rotation.size",
+            BYTES, "20m" ).constraint( range( 0L, Long.MAX_VALUE ) ).build();
+	@Description( "Maximum number of history files for the query log." )
+    @Dynamic
+    public static final Setting<Integer> log_queries_max_archives = buildSetting( "dbms.logs.query.rotation.keep_number",
+            INTEGER, "7" ).constraint( min( 1 ) ).build();
+	@Description( "Specifies number of operations that batch inserter will try to group into one batch before " +
+                  "flushing data into underlying storage." )
+    @Internal
+    public static final Setting<Integer> batch_inserter_batch_size = setting( "unsupported.tools.batch_inserter.batch_size", INTEGER,
+            "10000" );
+	/**
+     * @deprecated - lucene label index has been removed, thus 'native' is only viable option and this setting is not needed.
+     */
+    @Deprecated
+    @Description( "Backend to use for label --> nodes index" )
+    @Internal
+    public static final Setting<String> label_index =
+            setting( "dbms.label_index", optionsIgnoreCase( LabelIndex.NATIVE.name(), LabelIndex.AUTO.name() ),
+                    LabelIndex.NATIVE.name() );
+	@Description( "Enable auth requirement to access Neo4j." )
+    public static final Setting<Boolean> auth_enabled = setting( "dbms.security.auth_enabled", BOOLEAN, FALSE );
+	@Internal
+    public static final Setting<File> auth_store =
+            pathSetting( "unsupported.dbms.security.auth_store.location", NO_DEFAULT );
+	@Description( "The maximum number of unsuccessful authentication attempts before imposing a user lock for the configured amount of time." +
+                  "The locked out user will not be able to log in until the lock period expires, even if correct credentials are provided. " +
+                  "Setting this configuration option to values less than 3 is not recommended because it might make it easier for an attacker " +
+                  "to brute force the password." )
+    public static final Setting<Integer> auth_max_failed_attempts =
+            buildSetting( "dbms.security.auth_max_failed_attempts", INTEGER, "3" ).constraint( min( 0 ) ).build();
+	@Description( "The amount of time user account should be locked after a configured number of unsuccessful authentication attempts. " +
+                  "The locked out user will not be able to log in until the lock period expires, even if correct credentials are provided. " +
+                  "Setting this configuration option to a low value is not recommended because it might make it easier for an attacker to " +
+                  "brute force the password." )
+    public static final Setting<Duration> auth_lock_time =
+            buildSetting( "dbms.security.auth_lock_time", DURATION, "5s" ).constraint( min( Duration.ofSeconds( 0 ) ) ).build();
+	@Description( "A list of procedures and user defined functions (comma separated) that are allowed full access to " +
+            "the database. The list may contain both fully-qualified procedure names, and partial names with the " +
+            "wildcard '*'. Note that this enables these procedures to bypass security. Use with caution." )
+    public static final Setting<String> procedure_unrestricted =
+            setting( "dbms.security.procedures.unrestricted", Settings.STRING, "" );
+	@Description( "Specifies whether or not dbms.killQueries produces a verbose output, with information about which queries were not found" )
+    public static final Setting<Boolean> kill_query_verbose =
+            setting( "dbms.procedures.kill_query_verbose", BOOLEAN, TRUE );
+	@Deprecated
+    @Description( "Whether or not to release the exclusive schema lock is while building uniqueness constraints index" )
+    @Internal
+    public static final Setting<Boolean> release_schema_lock_while_building_constraint = setting(
+            "unsupported.dbms.schema.release_lock_while_building_constraint", BOOLEAN, FALSE );
+	@Description( "A list of procedures (comma separated) that are to be loaded. " +
+            "The list may contain both fully-qualified procedure names, and partial names with the wildcard '*'. " +
+            "If this setting is left empty no procedures will be loaded." )
+    public static final Setting<String> procedure_whitelist =
+            setting( "dbms.security.procedures.whitelist", Settings.STRING, "*" );
+    // Bolt Settings
+	@Description( "Default network interface to listen for incoming connections. " +
+            "To listen for connections on all interfaces, use \"0.0.0.0\". " +
+            "To bind specific connectors to a specific network interfaces, " +
+            "specify the +listen_address+ properties for the specific connector." )
+    public static final Setting<String> default_listen_address =
+            setting( "dbms.connectors.default_listen_address", STRING, "127.0.0.1" );
+	@Description( "Default hostname or IP address the server uses to advertise itself to its connectors. " +
+            "To advertise a specific hostname or IP address for a specific connector, " +
+            "specify the +advertised_address+ property for the specific connector." )
+    public static final Setting<String> default_advertised_address =
+            setting( "dbms.connectors.default_advertised_address", STRING, "localhost" );
+	@Description( "Whether to apply network level outbound network buffer based throttling" )
+    @Internal
+    public static final Setting<Boolean> bolt_outbound_buffer_throttle = setting( "unsupported.dbms.bolt.outbound_buffer_throttle", BOOLEAN, TRUE );
+	@Description( "When the size (in bytes) of outbound network buffers, used by bolt's network layer, " +
+            "grows beyond this value bolt channel will advertise itself as unwritable and will block " +
+            "related processing thread until it becomes writable again." )
+    @Internal
+    public static final Setting<Integer> bolt_outbound_buffer_throttle_high_water_mark =
+            buildSetting( "unsupported.dbms.bolt.outbound_buffer_throttle.high_watermark", INTEGER, String.valueOf( ByteUnit.kibiBytes( 512 ) ) ).constraint(
+                    range( (int) ByteUnit.kibiBytes( 64 ), Integer.MAX_VALUE ) ).build();
+	@Description( "When the size (in bytes) of outbound network buffers, previously advertised as unwritable, " +
+            "gets below this value bolt channel will re-advertise itself as writable and blocked processing " +
+            "thread will resume execution." )
+    @Internal
+    public static final Setting<Integer> bolt_outbound_buffer_throttle_low_water_mark =
+            buildSetting( "unsupported.dbms.bolt.outbound_buffer_throttle.low_watermark", INTEGER, String.valueOf( ByteUnit.kibiBytes( 128 ) ) ).constraint(
+                    range( (int) ByteUnit.kibiBytes( 16 ), Integer.MAX_VALUE ) ).build();
+	@Description( "When the total time outbound network buffer based throttle lock is held exceeds this value, " +
+            "the corresponding bolt channel will be aborted. Setting " +
+            "this to 0 will disable this behaviour." )
+    @Internal
+    public static final Setting<Duration> bolt_outbound_buffer_throttle_max_duration =
+            buildSetting( "unsupported.dbms.bolt.outbound_buffer_throttle.max_duration", DURATION, "15m" ).constraint(
+                    min( Duration.ofSeconds( 30 ) ) ).build();
+	@Description( "When the number of queued inbound messages grows beyond this value, reading from underlying " +
+            "channel will be paused (no more inbound messages will be available) until queued number of " +
+            "messages drops below the configured low watermark value." )
+    @Internal
+    public static final Setting<Integer> bolt_inbound_message_throttle_high_water_mark =
+            buildSetting( "unsupported.dbms.bolt.inbound_message_throttle.high_watermark", INTEGER, String.valueOf( 300 ) ).constraint(
+                    range( 1, Integer.MAX_VALUE ) ).build();
+	@Description( "When the number of queued inbound messages, previously reached configured high watermark value, " +
+            "drops below this value, reading from underlying channel will be enabled and any pending messages " +
+            "will start queuing again." )
+    @Internal
+    public static final Setting<Integer> bolt_inbound_message_throttle_low_water_mark =
+            buildSetting( "unsupported.dbms.bolt.inbound_message_throttle.low_watermark", INTEGER, String.valueOf( 100 ) ).constraint(
+                    range( 1, Integer.MAX_VALUE ) ).build();
+	@Description( "Specify the SSL policy to use for the encrypted bolt connections." )
+    public static final Setting<String> bolt_ssl_policy = setting( "bolt.ssl_policy", STRING, LEGACY_POLICY_NAME );
+	@Description( "Create an archive of an index before re-creating it if failing to load on startup." )
+    @Internal
+    public static final Setting<Boolean> archive_failed_index = setting(
+            "unsupported.dbms.index.archive_failed", BOOLEAN, FALSE );
+	// Needed to validate config, accessed via reflection
+    @SuppressWarnings( "unused" )
+    public static final BoltConnectorValidator boltValidator = new BoltConnectorValidator();
+	// Needed to validate config, accessed via reflection
+    @SuppressWarnings( "unused" )
+    public static final SslPolicyConfigValidator sslPolicyConfigValidator = new SslPolicyConfigValidator();
+	@Description( "The maximum amount of time to wait for the database state represented by the bookmark." )
+    public static final Setting<Duration> bookmark_ready_timeout = buildSetting(
+            "dbms.transaction.bookmark_ready_timeout", DURATION, "30s" ).constraint( min( Duration.ofSeconds( 1 ) ) ).build();
+	@Description( "Defines whether memory for transaction state should be allocated on- or off-heap." )
+    public static final Setting<TransactionStateMemoryAllocation> tx_state_memory_allocation = buildSetting(
+            "dbms.tx_state.memory_allocation",
+            optionsIgnoreCase( TransactionStateMemoryAllocation.class ),
+            TransactionStateMemoryAllocation.ON_HEAP.name() ).build();
+	@Description( "The maximum amount of off-heap memory that can be used to store transaction state data; it's a total amount of memory " +
+            "shared across all active transactions. Zero means 'unlimited'. Used when dbms.tx_state.memory_allocation is set to 'OFF_HEAP'." )
+    public static final Setting<Long> tx_state_max_off_heap_memory = buildSetting(
+            "dbms.tx_state.max_off_heap_memory", BYTES, "2G" )
+            .constraint( min( 0L ) )
+            .build();
+	@Description( "Defines the maximum size of an off-heap memory block that can be cached to speed up allocations for transaction state data. " +
+            "The value must be a power of 2." )
+    public static final Setting<Long> tx_state_off_heap_max_cacheable_block_size = buildSetting(
+            "dbms.tx_state.off_heap.max_cacheable_block_size", BYTES, "512k" )
+            .constraint( min( kibiBytes( 4 ) ) )
+            .constraint( powerOf2() )
+            .build();
+	@Description( "Defines the size of the off-heap memory blocks cache. The cache will contain this number of blocks for each block size " +
+            "that is power of two. Thus, maximum amount of memory used by blocks cache can be calculated as " +
+            "2 * dbms.tx_state.off_heap.max_cacheable_block_size * dbms.tx_state.off_heap.block_cache_size" )
+    public static final Setting<Integer> tx_state_off_heap_block_cache_size = buildSetting(
+            "dbms.tx_state.off_heap.block_cache_size", INTEGER, "128" )
+            .constraint( min( 16 ) )
+            .build();
+	// Needed to validate config, accessed via reflection
+    @SuppressWarnings( "unused" )
+    public static final HttpConnectorValidator httpValidator = new HttpConnectorValidator();
 
-    public enum SchemaIndex
+	/**
+     * @param key connection identifier.
+     * @return a new connector setting instance.
+     * @deprecated use {@link org.neo4j.kernel.configuration.BoltConnector} instead. This will be removed in 4.0.
+     */
+    @Deprecated
+    public static BoltConnector boltConnector( String key )
+    {
+        return new BoltConnector( key );
+    }
+
+	public enum SchemaIndex
     {
         NATIVE_BTREE10( "native-btree", "1.0", false ),
         NATIVE20( "lucene+native", "2.0", true ),
@@ -687,257 +1040,11 @@ public class GraphDatabaseSettings implements LoadableConfig
 
         private static String toProviderName( String providerName, String providerVersion )
         {
-            return providerName + "-" + providerVersion;
+            return new StringBuilder().append(providerName).append("-").append(providerVersion).toString();
         }
     }
 
-    @Description(
-            "Index provider to use for newly created schema indexes. " +
-            "An index provider may store different value types in separate physical indexes. " +
-            "lucene-1.0: Spatial and temporal value types are stored in native indexes, remaining value types in Lucene index. " +
-            "lucene+native-1.0: Spatial, temporal and number value types are stored in native indexes and remaining value types in Lucene index. " +
-            "lucene+native-2.0: Spatial, temporal, number and string value types are stored in native indexes and remaining value types in Lucene index. " +
-            "native-btree-1.0: All value types and arrays of all value types, even composite keys, are stored in one native index. " +
-            "A native index has faster updates, less heap and CPU usage compared to a Lucene index. " +
-            "A native index has these limitations: " +
-            "Index key (be it single or composite) size limit of 4039 bytes - transaction resulting in index key surpassing that will fail. " +
-            "Reduced performance of CONTAINS and ENDS WITH string index queries, compared to a Lucene index." )
-    public static final Setting<String> default_schema_provider = setting( "dbms.index.default_schema_provider", STRING, NATIVE_BTREE10.providerName() );
-
-    @Description( "Location where Neo4j keeps the logical transaction logs." )
-    public static final Setting<File> logical_logs_location =
-            pathSetting( "dbms.directories.tx_log", "", database_path );
-
-    // Store settings
-    @Description( "Make Neo4j keep the logical transaction logs for being able to backup the database. " +
-            "Can be used for specifying the threshold to prune logical logs after. For example \"10 days\" will " +
-            "prune logical logs that only contains transactions older than 10 days from the current time, " +
-            "or \"100k txs\" will keep the 100k latest transactions and prune any older transactions." )
-    @Dynamic
-    public static final Setting<String> keep_logical_logs =
-            buildSetting( "dbms.tx_log.rotation.retention_policy", STRING, "7 days" ).constraint( illegalValueMessage(
-                    "must be `true`, `false` or of format `<number><optional unit> <type>`. " +
-                            "Valid units are `k`, `M` and `G`. " +
-                            "Valid types are `files`, `size`, `txs`, `entries`, `hours` and `days`. " +
-                            "For example, `100M size` will limiting logical log space on disk to 100Mb," +
-                            " or `200k txs` will limiting the number of transactions to keep to 200 000", matches(
-                            "^(true|keep_all|false|keep_none|(\\d+[KkMmGg]?( (files|size|txs|entries|hours|days))))$" ) ) )
-                    .build();
-
-    @Description( "Specifies at which file size the logical log will auto-rotate. Minimum accepted value is 1M. " )
-    @Dynamic
-    public static final Setting<Long> logical_log_rotation_threshold =
-            buildSetting( "dbms.tx_log.rotation.size", BYTES, "250M" ).constraint( min( ByteUnit.mebiBytes( 1 ) ) ).build();
-
-    @Description( "If `true`, Neo4j will abort recovery if any errors are encountered in the logical log. Setting " +
-            "this to `false` will allow Neo4j to restore as much as possible from the corrupted log files and ignore " +
-            "the rest, but, the integrity of the database might be compromised." )
-    @Internal
-    public static final Setting<Boolean> fail_on_corrupted_log_files = setting("unsupported.dbms.tx_log.fail_on_corrupted_log_files", BOOLEAN, TRUE );
-
-    @Description( "Use a quick approach for rebuilding the ID generators. This give quicker recovery time, " +
-            "but will limit the ability to reuse the space of deleted entities." )
-    @Internal
-    public static final Setting<Boolean> rebuild_idgenerators_fast =
-            setting( "unsupported.dbms.id_generator_fast_rebuild_enabled", BOOLEAN, TRUE );
-
-    @Description( "Specifies if engine should run cypher query based on a snapshot of accessed data. " +
-            "Query will be restarted in case if concurrent modification of data will be detected." )
-    @Internal
-    public static final Setting<Boolean> snapshot_query = setting( "unsupported.dbms.query.snapshot", BOOLEAN, FALSE );
-
-    @Description( "Specifies number or retries that query engine will do to execute query based on " +
-            "stable accessed data snapshot before giving up." )
-    @Internal
-    public static final Setting<Integer> snapshot_query_retries = buildSetting( "unsupported.dbms.query.snapshot.retries",
-            INTEGER, "5" ).constraint( range( 1, Integer.MAX_VALUE ) ).build();
-
-    // Store memory settings
-    @Description( "Target size for pages of mapped memory. If set to 0, then a reasonable default is chosen, " +
-                 "depending on the storage device used." )
-    @Internal
-    @Deprecated
-    public static final Setting<Long> mapped_memory_page_size =
-            setting( "unsupported.dbms.memory.pagecache.pagesize", BYTES, "0" );
-
-    @SuppressWarnings( "unchecked" )
-    @Description( "The amount of memory to use for mapping the store files, in bytes (or kilobytes with the 'k' " +
-                  "suffix, megabytes with 'm' and gigabytes with 'g'). If Neo4j is running on a dedicated server, " +
-                  "then it is generally recommended to leave about 2-4 gigabytes for the operating system, give the " +
-                  "JVM enough heap to hold all your transaction state and query context, and then leave the rest for " +
-                  "the page cache. If no page cache memory is configured, then a heuristic setting is computed based " +
-                  "on available system resources." )
-    public static final Setting<String> pagecache_memory =
-            buildSetting( "dbms.memory.pagecache.size", STRING, null ).build();
-
-    @Description( "Specify which page swapper to use for doing paged IO. " +
-                  "This is only used when integrating with proprietary storage technology." )
-    public static final Setting<String> pagecache_swapper =
-            setting( "dbms.memory.pagecache.swapper", STRING, null );
-
-    @Internal
-    @Description( "The profiling frequency for the page cache. Accurate profiles allow the page cache to do active " +
-                  "warmup after a restart, reducing the mean time to performance. " +
-                  "This feature available in Neo4j Enterprise Edition." )
-    public static final Setting<Duration> pagecache_warmup_profiling_interval =
-            setting( "unsupported.dbms.memory.pagecache.warmup.profile.interval", DURATION, "1m" );
-
-    @Internal
-    @Description( "Page cache can be configured to perform usage sampling of loaded pages that can be used to construct active load profile. " +
-            "According to that profile pages can be reloaded on the restart, replication, etc. " +
-            "This setting allows disabling that behavior. " +
-            "This feature available in Neo4j Enterprise Edition." )
-    public static final Setting<Boolean> pagecache_warmup_enabled = setting( "unsupported.dbms.memory.pagecache.warmup.enable", BOOLEAN, TRUE );
-
-    @Description( "Allows the enabling or disabling of the file watcher service." +
-            " This is an auxiliary service but should be left enabled in almost all cases." )
-    public static final Setting<Boolean> filewatcher_enabled = setting( "dbms.filewatcher.enabled", BOOLEAN, TRUE );
-
-    /**
-     * Block size properties values depends from selected record format.
-     * We can't figured out record format until it will be selected by corresponding edition.
-     * As soon as we will figure it out properties will be re-evaluated and overwritten, except cases of user
-     * defined value.
-     */
-    @Description( "Specifies the block size for storing strings. This parameter is only honored when the store is " +
-            "created, otherwise it is ignored. " +
-            "Note that each character in a string occupies two bytes, meaning that e.g a block size of 120 will hold " +
-            "a 60 character long string before overflowing into a second block. " +
-            "Also note that each block carries a ~10B of overhead so record size on disk will be slightly larger " +
-            "than the configured block size" )
-    @Internal
-    public static final Setting<Integer> string_block_size = buildSetting( "unsupported.dbms.block_size.strings", INTEGER,
-            "0" ).constraint( min( 0 ) ).build();
-
-    @Description( "Specifies the block size for storing arrays. This parameter is only honored when the store is " +
-            "created, otherwise it is ignored. " +
-            "Also note that each block carries a ~10B of overhead so record size on disk will be slightly larger " +
-            "than the configured block size" )
-    @Internal
-    public static final Setting<Integer> array_block_size = buildSetting( "unsupported.dbms.block_size.array_properties",
-            INTEGER, "0" ).constraint( min( 0 ) ).build();
-
-    @Description( "Specifies the block size for storing labels exceeding in-lined space in node record. " +
-            "This parameter is only honored when the store is created, otherwise it is ignored. " +
-            "Also note that each block carries a ~10B of overhead so record size on disk will be slightly larger " +
-            "than the configured block size" )
-    @Internal
-    public static final Setting<Integer> label_block_size = buildSetting( "unsupported.dbms.block_size.labels", INTEGER,
-            "0" ).constraint( min( 0 ) ).build();
-
-    @Description( "Specifies the size of id batches local to each transaction when committing. " +
-            "Committing a transaction which contains changes most often results in new data records being created. " +
-            "For each record a new id needs to be generated from an id generator. " +
-            "It's more efficient to allocate a batch of ids from the contended id generator, which the transaction " +
-            "holds and generates ids from while creating these new records. " +
-            "This setting specifies how big those batches are. " +
-            "Remaining ids are freed back to id generator on clean shutdown." )
-    @Internal
-    public static final Setting<Integer> record_id_batch_size = buildSetting( "unsupported.dbms.record_id_batch_size", INTEGER,
-            "20" ).constraint( range( 1, 1_000 ) ).build();
-
-    @Description( "An identifier that uniquely identifies this graph database instance within this JVM. " +
-            "Defaults to an auto-generated number depending on how many instance are started in this JVM." )
-    @Internal
-    public static final Setting<String> forced_kernel_id = buildSetting( "unsupported.dbms.kernel_id", STRING, NO_DEFAULT ).constraint(
-            illegalValueMessage( "has to be a valid kernel identifier", matches( "[a-zA-Z0-9]*" ) ) ).build();
-
-    @Internal
-    public static final Setting<Duration> vm_pause_monitor_measurement_duration =
-            setting( "unsupported.vm_pause_monitor.measurement_duration", DURATION, "100ms" );
-
-    @Internal
-    public static final Setting<Duration> vm_pause_monitor_stall_alert_threshold =
-            setting( "unsupported.vm_pause_monitor.stall_alert_threshold", DURATION, "100ms" );
-
-    @Description( "Relationship count threshold for considering a node to be dense" )
-    public static final Setting<Integer> dense_node_threshold =
-            buildSetting( "dbms.relationship_grouping_threshold", INTEGER, "50" ).constraint( min( 1 ) ).build();
-
-    @Description( "Log executed queries that take longer than the configured threshold, dbms.logs.query.threshold. " +
-            "Log entries are by default written to the file _query.log_ located in the Logs directory. " +
-            "For location of the Logs directory, see <<file-locations>>. " +
-            "This feature is available in the Neo4j Enterprise Edition." )
-    @Dynamic
-    public static final Setting<Boolean> log_queries =
-            setting( "dbms.logs.query.enabled", BOOLEAN, FALSE );
-
-    @Description( "Send user logs to the process stdout. " +
-            "If this is disabled then logs will instead be sent to the file _neo4j.log_ located in the logs directory. " +
-            "For location of the Logs directory, see <<file-locations>>." )
-    public static final Setting<Boolean> store_user_log_to_stdout = setting( "dbms.logs.user.stdout_enabled", BOOLEAN, TRUE );
-
-    @Description( "Path of the logs directory." )
-    public static final Setting<File> logs_directory = pathSetting( "dbms.directories.logs", "logs" );
-
-    @Description( "Path to the query log file." )
-    public static final Setting<File> log_queries_filename = derivedSetting( "dbms.logs.query.path",
-            logs_directory,
-            logs -> new File( logs, "query.log" ),
-            PATH );
-
-    @Description( "Path to the user log file." )
-    public static final Setting<File> store_user_log_path =
-            derivedSetting( "dbms.logs.user.path", logs_directory, logs -> new File( logs, "neo4j.log" ), PATH );
-
-    @Description( "Path to the debug log file." )
-    public static final Setting<File> store_internal_log_path = derivedSetting( "dbms.logs.debug.path",
-            logs_directory,
-            logs -> new File( logs, "debug.log" ),
-            PATH );
-
-    @Description( "Log parameters for the executed queries being logged." )
-    @Dynamic
-    public static final Setting<Boolean> log_queries_parameter_logging_enabled =
-            setting( "dbms.logs.query.parameter_logging_enabled", BOOLEAN, TRUE );
-
-    @Description( "Log detailed time information for the executed queries being logged. Requires `dbms.track_query_cpu_time=true`" )
-    @Dynamic
-    public static final Setting<Boolean> log_queries_detailed_time_logging_enabled =
-            setting( "dbms.logs.query.time_logging_enabled", BOOLEAN, FALSE );
-
-    @Description( "Log allocated bytes for the executed queries being logged. " +
-            "The logged number is cumulative over the duration of the query, " +
-            "i.e. for memory intense or long-running queries the value may be larger " +
-            "than the current memory allocation. Requires `dbms.track_query_allocation=true`" )
-    @Dynamic
-    public static final Setting<Boolean> log_queries_allocation_logging_enabled =
-            setting( "dbms.logs.query.allocation_logging_enabled", BOOLEAN, FALSE );
-
-    @Description( "Logs which runtime that was used to run the query" )
-    @Dynamic
-    public static final Setting<Boolean> log_queries_runtime_logging_enabled =
-            setting( "dbms.logs.query.runtime_logging_enabled", BOOLEAN, FALSE );
-
-    @Description( "Log page hits and page faults for the executed queries being logged." )
-    @Dynamic
-    public static final Setting<Boolean> log_queries_page_detail_logging_enabled =
-            setting( "dbms.logs.query.page_logging_enabled", BOOLEAN, FALSE );
-
-    @Description( "If the execution of query takes more time than this threshold, the query is logged - " +
-                 "provided query logging is enabled. Defaults to 0 seconds, that is all queries are logged." )
-    @Dynamic
-    public static final Setting<Duration> log_queries_threshold =
-            setting( "dbms.logs.query.threshold", DURATION, "0s" );
-
-    @Description( "The file size in bytes at which the query log will auto-rotate. If set to zero then no rotation " +
-            "will occur. Accepts a binary suffix `k`, `m` or `g`." )
-    @Dynamic
-    public static final Setting<Long> log_queries_rotation_threshold = buildSetting( "dbms.logs.query.rotation.size",
-            BYTES, "20m" ).constraint( range( 0L, Long.MAX_VALUE ) ).build();
-
-    @Description( "Maximum number of history files for the query log." )
-    @Dynamic
-    public static final Setting<Integer> log_queries_max_archives = buildSetting( "dbms.logs.query.rotation.keep_number",
-            INTEGER, "7" ).constraint( min( 1 ) ).build();
-
-    @Description( "Specifies number of operations that batch inserter will try to group into one batch before " +
-                  "flushing data into underlying storage." )
-    @Internal
-    public static final Setting<Integer> batch_inserter_batch_size = setting( "unsupported.tools.batch_inserter.batch_size", INTEGER,
-            "10000" );
-
-    /**
+	/**
      * @deprecated - lucene label index has been removed.
      */
     @Deprecated
@@ -959,188 +1066,15 @@ public class GraphDatabaseSettings implements LoadableConfig
         AUTO
     }
 
-    /**
-     * @deprecated - lucene label index has been removed, thus 'native' is only viable option and this setting is not needed.
-     */
-    @Deprecated
-    @Description( "Backend to use for label --> nodes index" )
-    @Internal
-    public static final Setting<String> label_index =
-            setting( "dbms.label_index", optionsIgnoreCase( LabelIndex.NATIVE.name(), LabelIndex.AUTO.name() ),
-                    LabelIndex.NATIVE.name() );
-
-    // Security settings
-
-    @Description( "Enable auth requirement to access Neo4j." )
-    public static final Setting<Boolean> auth_enabled = setting( "dbms.security.auth_enabled", BOOLEAN, FALSE );
-
-    @Internal
-    public static final Setting<File> auth_store =
-            pathSetting( "unsupported.dbms.security.auth_store.location", NO_DEFAULT );
-
-    @Description( "The maximum number of unsuccessful authentication attempts before imposing a user lock for the configured amount of time." +
-                  "The locked out user will not be able to log in until the lock period expires, even if correct credentials are provided. " +
-                  "Setting this configuration option to values less than 3 is not recommended because it might make it easier for an attacker " +
-                  "to brute force the password." )
-    public static final Setting<Integer> auth_max_failed_attempts =
-            buildSetting( "dbms.security.auth_max_failed_attempts", INTEGER, "3" ).constraint( min( 0 ) ).build();
-
-    @Description( "The amount of time user account should be locked after a configured number of unsuccessful authentication attempts. " +
-                  "The locked out user will not be able to log in until the lock period expires, even if correct credentials are provided. " +
-                  "Setting this configuration option to a low value is not recommended because it might make it easier for an attacker to " +
-                  "brute force the password." )
-    public static final Setting<Duration> auth_lock_time =
-            buildSetting( "dbms.security.auth_lock_time", DURATION, "5s" ).constraint( min( Duration.ofSeconds( 0 ) ) ).build();
-
-    @Description( "A list of procedures and user defined functions (comma separated) that are allowed full access to " +
-            "the database. The list may contain both fully-qualified procedure names, and partial names with the " +
-            "wildcard '*'. Note that this enables these procedures to bypass security. Use with caution." )
-    public static final Setting<String> procedure_unrestricted =
-            setting( "dbms.security.procedures.unrestricted", Settings.STRING, "" );
-
-    @Description( "Specifies whether or not dbms.killQueries produces a verbose output, with information about which queries were not found" )
-    public static final Setting<Boolean> kill_query_verbose =
-            setting( "dbms.procedures.kill_query_verbose", BOOLEAN, TRUE );
-
-    @Deprecated
-    @Description( "Whether or not to release the exclusive schema lock is while building uniqueness constraints index" )
-    @Internal
-    public static final Setting<Boolean> release_schema_lock_while_building_constraint = setting(
-            "unsupported.dbms.schema.release_lock_while_building_constraint", BOOLEAN, FALSE );
-
-    @Description( "A list of procedures (comma separated) that are to be loaded. " +
-            "The list may contain both fully-qualified procedure names, and partial names with the wildcard '*'. " +
-            "If this setting is left empty no procedures will be loaded." )
-    public static final Setting<String> procedure_whitelist =
-            setting( "dbms.security.procedures.whitelist", Settings.STRING, "*" );
-    // Bolt Settings
-
-    @Description( "Default network interface to listen for incoming connections. " +
-            "To listen for connections on all interfaces, use \"0.0.0.0\". " +
-            "To bind specific connectors to a specific network interfaces, " +
-            "specify the +listen_address+ properties for the specific connector." )
-    public static final Setting<String> default_listen_address =
-            setting( "dbms.connectors.default_listen_address", STRING, "127.0.0.1" );
-
-    @Description( "Default hostname or IP address the server uses to advertise itself to its connectors. " +
-            "To advertise a specific hostname or IP address for a specific connector, " +
-            "specify the +advertised_address+ property for the specific connector." )
-    public static final Setting<String> default_advertised_address =
-            setting( "dbms.connectors.default_advertised_address", STRING, "localhost" );
-
-    @Description( "Whether to apply network level outbound network buffer based throttling" )
-    @Internal
-    public static final Setting<Boolean> bolt_outbound_buffer_throttle = setting( "unsupported.dbms.bolt.outbound_buffer_throttle", BOOLEAN, TRUE );
-
-    @Description( "When the size (in bytes) of outbound network buffers, used by bolt's network layer, " +
-            "grows beyond this value bolt channel will advertise itself as unwritable and will block " +
-            "related processing thread until it becomes writable again." )
-    @Internal
-    public static final Setting<Integer> bolt_outbound_buffer_throttle_high_water_mark =
-            buildSetting( "unsupported.dbms.bolt.outbound_buffer_throttle.high_watermark", INTEGER, String.valueOf( ByteUnit.kibiBytes( 512 ) ) ).constraint(
-                    range( (int) ByteUnit.kibiBytes( 64 ), Integer.MAX_VALUE ) ).build();
-
-    @Description( "When the size (in bytes) of outbound network buffers, previously advertised as unwritable, " +
-            "gets below this value bolt channel will re-advertise itself as writable and blocked processing " +
-            "thread will resume execution." )
-    @Internal
-    public static final Setting<Integer> bolt_outbound_buffer_throttle_low_water_mark =
-            buildSetting( "unsupported.dbms.bolt.outbound_buffer_throttle.low_watermark", INTEGER, String.valueOf( ByteUnit.kibiBytes( 128 ) ) ).constraint(
-                    range( (int) ByteUnit.kibiBytes( 16 ), Integer.MAX_VALUE ) ).build();
-
-    @Description( "When the total time outbound network buffer based throttle lock is held exceeds this value, " +
-            "the corresponding bolt channel will be aborted. Setting " +
-            "this to 0 will disable this behaviour." )
-    @Internal
-    public static final Setting<Duration> bolt_outbound_buffer_throttle_max_duration =
-            buildSetting( "unsupported.dbms.bolt.outbound_buffer_throttle.max_duration", DURATION, "15m" ).constraint(
-                    min( Duration.ofSeconds( 30 ) ) ).build();
-
-    @Description( "When the number of queued inbound messages grows beyond this value, reading from underlying " +
-            "channel will be paused (no more inbound messages will be available) until queued number of " +
-            "messages drops below the configured low watermark value." )
-    @Internal
-    public static final Setting<Integer> bolt_inbound_message_throttle_high_water_mark =
-            buildSetting( "unsupported.dbms.bolt.inbound_message_throttle.high_watermark", INTEGER, String.valueOf( 300 ) ).constraint(
-                    range( 1, Integer.MAX_VALUE ) ).build();
-
-    @Description( "When the number of queued inbound messages, previously reached configured high watermark value, " +
-            "drops below this value, reading from underlying channel will be enabled and any pending messages " +
-            "will start queuing again." )
-    @Internal
-    public static final Setting<Integer> bolt_inbound_message_throttle_low_water_mark =
-            buildSetting( "unsupported.dbms.bolt.inbound_message_throttle.low_watermark", INTEGER, String.valueOf( 100 ) ).constraint(
-                    range( 1, Integer.MAX_VALUE ) ).build();
-
-    @Description( "Specify the SSL policy to use for the encrypted bolt connections." )
-    public static final Setting<String> bolt_ssl_policy = setting( "bolt.ssl_policy", STRING, LEGACY_POLICY_NAME );
-
-    @Description( "Create an archive of an index before re-creating it if failing to load on startup." )
-    @Internal
-    public static final Setting<Boolean> archive_failed_index = setting(
-            "unsupported.dbms.index.archive_failed", BOOLEAN, FALSE );
-
-    // Needed to validate config, accessed via reflection
-    @SuppressWarnings( "unused" )
-    public static final BoltConnectorValidator boltValidator = new BoltConnectorValidator();
-
-    // Needed to validate config, accessed via reflection
-    @SuppressWarnings( "unused" )
-    public static final SslPolicyConfigValidator sslPolicyConfigValidator = new SslPolicyConfigValidator();
-
-    @Description( "The maximum amount of time to wait for the database state represented by the bookmark." )
-    public static final Setting<Duration> bookmark_ready_timeout = buildSetting(
-            "dbms.transaction.bookmark_ready_timeout", DURATION, "30s" ).constraint( min( Duration.ofSeconds( 1 ) ) ).build();
-
-    public enum TransactionStateMemoryAllocation
+	public enum TransactionStateMemoryAllocation
     {
         ON_HEAP,
         OFF_HEAP
     }
 
-    @Description( "Defines whether memory for transaction state should be allocated on- or off-heap." )
-    public static final Setting<TransactionStateMemoryAllocation> tx_state_memory_allocation = buildSetting(
-            "dbms.tx_state.memory_allocation",
-            optionsIgnoreCase( TransactionStateMemoryAllocation.class ),
-            TransactionStateMemoryAllocation.ON_HEAP.name() ).build();
+    
 
-    @Description( "The maximum amount of off-heap memory that can be used to store transaction state data; it's a total amount of memory " +
-            "shared across all active transactions. Zero means 'unlimited'. Used when dbms.tx_state.memory_allocation is set to 'OFF_HEAP'." )
-    public static final Setting<Long> tx_state_max_off_heap_memory = buildSetting(
-            "dbms.tx_state.max_off_heap_memory", BYTES, "2G" )
-            .constraint( min( 0L ) )
-            .build();
-
-    @Description( "Defines the maximum size of an off-heap memory block that can be cached to speed up allocations for transaction state data. " +
-            "The value must be a power of 2." )
-    public static final Setting<Long> tx_state_off_heap_max_cacheable_block_size = buildSetting(
-            "dbms.tx_state.off_heap.max_cacheable_block_size", BYTES, "512k" )
-            .constraint( min( kibiBytes( 4 ) ) )
-            .constraint( powerOf2() )
-            .build();
-
-    @Description( "Defines the size of the off-heap memory blocks cache. The cache will contain this number of blocks for each block size " +
-            "that is power of two. Thus, maximum amount of memory used by blocks cache can be calculated as " +
-            "2 * dbms.tx_state.off_heap.max_cacheable_block_size * dbms.tx_state.off_heap.block_cache_size" )
-    public static final Setting<Integer> tx_state_off_heap_block_cache_size = buildSetting(
-            "dbms.tx_state.off_heap.block_cache_size", INTEGER, "128" )
-            .constraint( min( 16 ) )
-            .build();
-
-    // Needed to validate config, accessed via reflection
-    @SuppressWarnings( "unused" )
-    public static final HttpConnectorValidator httpValidator = new HttpConnectorValidator();
-
-    /**
-     * @param key connection identifier.
-     * @return a new connector setting instance.
-     * @deprecated use {@link org.neo4j.kernel.configuration.BoltConnector} instead. This will be removed in 4.0.
-     */
-    @Deprecated
-    public static BoltConnector boltConnector( String key )
-    {
-        return new BoltConnector( key );
-    }
+    // Security settings
 
     /**
      * @deprecated see {@link org.neo4j.kernel.configuration.Connector} instead. This will be removed in 4.0.
@@ -1170,14 +1104,14 @@ public class GraphDatabaseSettings implements LoadableConfig
             type = group.scope( setting( "type", optionsObeyCase( ConnectorType.class ), NO_DEFAULT ) );
         }
 
-        public enum ConnectorType
-        {
-            BOLT, HTTP
-        }
-
         public String key()
         {
             return group.groupKey;
+        }
+
+		public enum ConnectorType
+        {
+            BOLT, HTTP
         }
     }
 

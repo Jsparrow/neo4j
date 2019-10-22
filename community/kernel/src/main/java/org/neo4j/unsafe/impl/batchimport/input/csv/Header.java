@@ -33,7 +33,36 @@ import org.neo4j.values.storable.CSVHeaderInformation;
  */
 public class Header implements Cloneable
 {
-    public interface Factory
+    private final Entry[] entries;
+
+	public Header( Entry... entries )
+    {
+        this.entries = entries;
+    }
+
+	public Entry[] entries()
+    {
+        return entries;
+    }
+
+	@Override
+    public String toString()
+    {
+        return Arrays.toString( entries );
+    }
+
+	@Override
+    public Header clone()
+    {
+        Entry[] entries = new Entry[this.entries.length];
+        for ( int i = 0; i < entries.length; i++ )
+        {
+            entries[i] = this.entries[i].clone();
+        }
+        return new Header( entries );
+    }
+
+	public interface Factory
     {
         /**
          * @param dataSeeker {@link CharSeeker} containing the data. Usually there's a header for us
@@ -50,35 +79,6 @@ public class Header implements Cloneable
          * will be read from the top of the data stream.
          */
         boolean isDefined();
-    }
-
-    private final Entry[] entries;
-
-    public Header( Entry... entries )
-    {
-        this.entries = entries;
-    }
-
-    public Entry[] entries()
-    {
-        return entries;
-    }
-
-    @Override
-    public String toString()
-    {
-        return Arrays.toString( entries );
-    }
-
-    @Override
-    public Header clone()
-    {
-        Entry[] entries = new Entry[this.entries.length];
-        for ( int i = 0; i < entries.length; i++ )
-        {
-            entries[i] = this.entries[i].clone();
-        }
-        return new Header( entries );
     }
 
     public static class Entry implements Cloneable
@@ -113,14 +113,13 @@ public class Header implements Cloneable
         {
             if ( optionalParameter == null )
             {
-                return (name != null ? name : "") + ":" + (type == Type.PROPERTY ? extractor.name().toLowerCase() : type.name()) +
-                        (group() != Group.GLOBAL ? "(" + group().name() + ")" : "");
+                return new StringBuilder().append(name != null ? name : "").append(":").append(type == Type.PROPERTY ? extractor.name().toLowerCase() : type.name())
+						.append(group() != Group.GLOBAL ? "(" + group().name() + ")" : "").toString();
             }
             else
             {
-                return (name != null ? name : "") + ":" +
-                        (type == Type.PROPERTY ? extractor.name().toLowerCase() + "[" + optionalParameter + "]" : type.name()) +
-                        (group() != Group.GLOBAL ? "(" + group().name() + ")" : "");
+                return new StringBuilder().append(name != null ? name : "").append(":").append(type == Type.PROPERTY ? extractor.name().toLowerCase() + "[" + optionalParameter + "]" : type.name())
+						.append(group() != Group.GLOBAL ? "(" + group().name() + ")" : "").toString();
             }
         }
 

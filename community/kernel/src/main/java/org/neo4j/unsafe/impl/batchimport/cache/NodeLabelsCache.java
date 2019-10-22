@@ -31,33 +31,19 @@ import static org.neo4j.kernel.impl.util.Bits.bitsFromLongs;
  */
 public class NodeLabelsCache implements MemoryStatsVisitor.Visitable, AutoCloseable
 {
-    public static class Client
-    {
-        private final long[] labelScratch;
-        private final Bits labelBits;
-        private final long[] fieldScratch = new long[1];
-        private final Bits fieldBits = bitsFromLongs( fieldScratch );
-
-        public Client( int worstCaseLongsNeeded )
-        {
-            this.labelScratch = new long[worstCaseLongsNeeded];
-            this.labelBits = bitsFromLongs( labelScratch );
-        }
-    }
-
     private final LongArray cache;
-    private final LongArray spillOver;
-    private long spillOverIndex;
-    private final int bitsPerLabel;
-    private final int worstCaseLongsNeeded;
-    private final Client putClient;
+	private final LongArray spillOver;
+	private long spillOverIndex;
+	private final int bitsPerLabel;
+	private final int worstCaseLongsNeeded;
+	private final Client putClient;
 
-    public NodeLabelsCache( NumberArrayFactory cacheFactory, int highLabelId )
+	public NodeLabelsCache( NumberArrayFactory cacheFactory, int highLabelId )
     {
         this( cacheFactory, highLabelId, 10_000_000 );
     }
 
-    public NodeLabelsCache( NumberArrayFactory cacheFactory, int highLabelId, int chunkSize )
+	public NodeLabelsCache( NumberArrayFactory cacheFactory, int highLabelId, int chunkSize )
     {
         this.cache = cacheFactory.newDynamicLongArray( chunkSize, 0 );
         this.spillOver = cacheFactory.newDynamicLongArray( chunkSize / 5, 0 ); // expect way less of these
@@ -66,7 +52,7 @@ public class NodeLabelsCache implements MemoryStatsVisitor.Visitable, AutoClosea
         this.putClient = new Client( worstCaseLongsNeeded );
     }
 
-    /**
+	/**
      * @return a new {@link Client} used in {@link #get(Client, long, int[])}. {@link Client} contains
      * mutable state and so each thread calling {@link #get(Client, long, int[])} must create their own
      * client instance once and (re)use it for every get-call they do.
@@ -76,7 +62,7 @@ public class NodeLabelsCache implements MemoryStatsVisitor.Visitable, AutoClosea
         return new Client( worstCaseLongsNeeded );
     }
 
-    /**
+	/**
      * Keeps label ids for the given node id. Labels ids are int[] really, but by accident they arrive
      * from the store disguised as long[]. When looping over them there can be assumed that they are ints.
      *
@@ -120,7 +106,7 @@ public class NodeLabelsCache implements MemoryStatsVisitor.Visitable, AutoClosea
         }
     }
 
-    /**
+	/**
      * Write labels for a node into {@code target}. If target isn't big enough it will grow.
      * The target, intact or grown, will be returned.
      *
@@ -161,14 +147,14 @@ public class NodeLabelsCache implements MemoryStatsVisitor.Visitable, AutoClosea
         return target;
     }
 
-    @Override
+	@Override
     public void acceptMemoryStatsVisitor( MemoryStatsVisitor visitor )
     {
         cache.acceptMemoryStatsVisitor( visitor );
         spillOver.acceptMemoryStatsVisitor( visitor );
     }
 
-    private void decode( Bits bits, int length, int[] target )
+	private void decode( Bits bits, int length, int[] target )
     {
         for ( int i = 0; i < length; i++ )
         {
@@ -181,17 +167,31 @@ public class NodeLabelsCache implements MemoryStatsVisitor.Visitable, AutoClosea
         }
     }
 
-    private static int[] ensureCapacity( int[] target, int capacity )
+	private static int[] ensureCapacity( int[] target, int capacity )
     {
         return capacity > target.length
                 ? new int[capacity]
                 : target;
     }
 
-    @Override
+	@Override
     public void close()
     {
         cache.close();
         spillOver.close();
+    }
+
+	public static class Client
+    {
+        private final long[] labelScratch;
+        private final Bits labelBits;
+        private final long[] fieldScratch = new long[1];
+        private final Bits fieldBits = bitsFromLongs( fieldScratch );
+
+        public Client( int worstCaseLongsNeeded )
+        {
+            this.labelScratch = new long[worstCaseLongsNeeded];
+            this.labelBits = bitsFromLongs( labelScratch );
+        }
     }
 }

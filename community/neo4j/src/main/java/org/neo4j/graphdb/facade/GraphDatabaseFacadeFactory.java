@@ -90,52 +90,17 @@ import static org.neo4j.kernel.api.proc.Context.SECURITY_CONTEXT;
  */
 public class GraphDatabaseFacadeFactory
 {
-    public interface Dependencies
-    {
-        /**
-         * Allowed to be null. Null means that no external {@link org.neo4j.kernel.monitoring.Monitors} was created,
-         * let the
-         * database create its own monitors instance.
-         */
-        Monitors monitors();
-
-        LogProvider userLogProvider();
-
-        Iterable<Class<?>> settingsClasses();
-
-        Iterable<KernelExtensionFactory<?>> kernelExtensions();
-
-        Map<String,URLAccessRule> urlAccessRules();
-
-        Iterable<QueryEngineProvider> executionEngines();
-
-        /**
-         * Collection of command executors to start running once the db is started
-         */
-        Iterable<Pair<DeferredExecutor,Group>> deferredExecutors();
-
-        /**
-         * Simple callback for providing a global availability guard to top level components
-         * once it is created by {@link GraphDatabaseFacadeFactory#initFacade(File, Config, Dependencies, GraphDatabaseFacade)}.
-         * By default this callback is a no-op
-         */
-        default AvailabilityGuardInstaller availabilityGuardInstaller()
-        {
-            return availabilityGuard -> {};
-        }
-    }
-
     protected final DatabaseInfo databaseInfo;
-    private final Function<PlatformModule,AbstractEditionModule> editionFactory;
+	private final Function<PlatformModule,AbstractEditionModule> editionFactory;
 
-    public GraphDatabaseFacadeFactory( DatabaseInfo databaseInfo,
+	public GraphDatabaseFacadeFactory( DatabaseInfo databaseInfo,
             Function<PlatformModule,AbstractEditionModule> editionFactory )
     {
         this.databaseInfo = databaseInfo;
         this.editionFactory = editionFactory;
     }
 
-    /**
+	/**
      * Instantiate a graph database given configuration and dependencies.
      *
      * @param storeDir the directory where the Neo4j data store is located
@@ -148,7 +113,7 @@ public class GraphDatabaseFacadeFactory
         return initFacade( storeDir, config, dependencies, new GraphDatabaseFacade() );
     }
 
-    /**
+	/**
      * Instantiate a graph database given configuration, dependencies, and a custom implementation of {@link org
      * .neo4j.kernel.impl.factory.GraphDatabaseFacade}.
      *
@@ -164,7 +129,7 @@ public class GraphDatabaseFacadeFactory
         return initFacade( storeDir, Config.defaults( params ), dependencies, graphDatabaseFacade );
     }
 
-    /**
+	/**
      * Instantiate a graph database given configuration, dependencies, and a custom implementation of {@link org
      * .neo4j.kernel.impl.factory.GraphDatabaseFacade}.
      *
@@ -228,8 +193,7 @@ public class GraphDatabaseFacadeFactory
         }
         catch ( final Throwable throwable )
         {
-            error = new RuntimeException( "Error starting " + getClass().getName() + ", " +
-                    platform.storeLayout.storeDirectory(), throwable );
+            error = new RuntimeException( new StringBuilder().append("Error starting ").append(getClass().getName()).append(", ").append(platform.storeLayout.storeDirectory()).toString(), throwable );
         }
         finally
         {
@@ -255,7 +219,7 @@ public class GraphDatabaseFacadeFactory
         return databaseFacade;
     }
 
-    /**
+	/**
      * Create the platform module. Override to replace with custom module.
      */
     protected PlatformModule createPlatform( File storeDir, Config config, final Dependencies dependencies )
@@ -263,7 +227,7 @@ public class GraphDatabaseFacadeFactory
         return new PlatformModule( storeDir, config, databaseInfo, dependencies );
     }
 
-    private static Procedures setupProcedures( PlatformModule platform, AbstractEditionModule editionModule, GraphDatabaseFacade facade )
+	private static Procedures setupProcedures( PlatformModule platform, AbstractEditionModule editionModule, GraphDatabaseFacade facade )
     {
         File pluginDir = platform.config.get( GraphDatabaseSettings.plugin_dir );
         Log internalLog = platform.logging.getInternalLog( Procedures.class );
@@ -317,10 +281,45 @@ public class GraphDatabaseFacadeFactory
         return procedures;
     }
 
-    private static BoltServer createBoltServer( PlatformModule platform, AbstractEditionModule edition, DatabaseManager databaseManager )
+	private static BoltServer createBoltServer( PlatformModule platform, AbstractEditionModule edition, DatabaseManager databaseManager )
     {
         return new BoltServer( databaseManager, platform.jobScheduler,
                 platform.connectorPortRegister, edition.getConnectionTracker(), platform.usageData, platform.config, platform.clock, platform.monitors,
                 platform.logging, platform.dependencies );
+    }
+
+	public interface Dependencies
+    {
+        /**
+         * Allowed to be null. Null means that no external {@link org.neo4j.kernel.monitoring.Monitors} was created,
+         * let the
+         * database create its own monitors instance.
+         */
+        Monitors monitors();
+
+        LogProvider userLogProvider();
+
+        Iterable<Class<?>> settingsClasses();
+
+        Iterable<KernelExtensionFactory<?>> kernelExtensions();
+
+        Map<String,URLAccessRule> urlAccessRules();
+
+        Iterable<QueryEngineProvider> executionEngines();
+
+        /**
+         * Collection of command executors to start running once the db is started
+         */
+        Iterable<Pair<DeferredExecutor,Group>> deferredExecutors();
+
+        /**
+         * Simple callback for providing a global availability guard to top level components
+         * once it is created by {@link GraphDatabaseFacadeFactory#initFacade(File, Config, Dependencies, GraphDatabaseFacade)}.
+         * By default this callback is a no-op
+         */
+        default AvailabilityGuardInstaller availabilityGuardInstaller()
+        {
+            return availabilityGuard -> {};
+        }
     }
 }

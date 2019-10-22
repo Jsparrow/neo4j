@@ -184,12 +184,7 @@ public class NotificationAcceptanceTest extends NotificationTestSupport
                 "CYPHER planner=cost EXPLAIN MATCH (a)-->(x)<--(b) USING JOIN ON x RETURN a, b" );
 
         Stream.of( "CYPHER 2.3", "CYPHER 3.1", "CYPHER 3.5" ).forEach( version ->
-        {
-            for ( String query : queries )
-            {
-                assertNotifications( version + query, containsNoItem( joinHintUnsupportedWarning ) );
-            }
-        } );
+        queries.forEach(query -> assertNotifications(version + query, containsNoItem(joinHintUnsupportedWarning))) );
     }
 
     @Test
@@ -215,8 +210,7 @@ public class NotificationAcceptanceTest extends NotificationTestSupport
     @Test
     public void shouldWarnOnEachUnfulfillableIndexHint()
     {
-        String query = " EXPLAIN MATCH (n:Person), (m:Party), (k:Animal) " + "USING INDEX n:Person(name) " + "USING INDEX m:Party(city) " +
-                "USING INDEX k:Animal(species) " + "WHERE n.name = 'John' AND m.city = 'Reykjavik' AND k.species = 'Sloth' " + "RETURN n";
+        String query = new StringBuilder().append(" EXPLAIN MATCH (n:Person), (m:Party), (k:Animal) ").append("USING INDEX n:Person(name) ").append("USING INDEX m:Party(city) ").append("USING INDEX k:Animal(species) ").append("WHERE n.name = 'John' AND m.city = 'Reykjavik' AND k.species = 'Sloth' ").append("RETURN n").toString();
 
         Stream.of( "CYPHER 2.3", "CYPHER 3.1", "CYPHER 3.5" ).forEach( version ->
         {

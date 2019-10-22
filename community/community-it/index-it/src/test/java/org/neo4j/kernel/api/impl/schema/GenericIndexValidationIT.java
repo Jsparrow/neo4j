@@ -73,14 +73,12 @@ public class GenericIndexValidationIT
     private static final int KEY_SIZE_LIMIT = TreeNodeDynamicSize.keyValueSizeCapFromPageSize( PageCache.PAGE_SIZE );
     private static final int ESTIMATED_OVERHEAD_PER_SLOT = 2;
     private static final int WIGGLE_ROOM = 50;
-
-    @Rule
+	@ClassRule
+    public static RandomRule random = new RandomRule();
+	@Rule
     public DatabaseRule db = new EmbeddedDatabaseRule().withSetting( default_schema_provider, NATIVE_BTREE10.providerName() );
 
-    @ClassRule
-    public static RandomRule random = new RandomRule();
-
-    /**
+	/**
      * Key size validation test for single type.
      *
      * Validate that we handle index reads and writes correctly for dynamically sized values (arrays and strings)
@@ -134,50 +132,7 @@ public class GenericIndexValidationIT
         }
     }
 
-    private class BinarySearch
-    {
-        private int longestSuccessful;
-        private int minArrayLength;
-        private int maxArrayLength = 1;
-        private int arrayLength = 1;
-        private boolean foundMaxLimit;
-
-        boolean finished()
-        {
-            // When arrayLength is stable on minArrayLength, our binary search for max limit is finished
-            return arrayLength == minArrayLength;
-        }
-
-        void progress( boolean wasAbleToWrite )
-        {
-            if ( wasAbleToWrite )
-            {
-                longestSuccessful = Math.max( arrayLength, longestSuccessful );
-                if ( !foundMaxLimit )
-                {
-                    // We continue to double the max limit until we find some upper limit
-                    minArrayLength = arrayLength;
-                    maxArrayLength *= 2;
-                    arrayLength = maxArrayLength;
-                }
-                else
-                {
-                    // We where able to write so we can move min limit up to current array length
-                    minArrayLength = arrayLength;
-                    arrayLength = (minArrayLength + maxArrayLength) / 2;
-                }
-            }
-            else
-            {
-                foundMaxLimit = true;
-                // We where not able to write so we take max limit down to current array length
-                maxArrayLength = arrayLength;
-                arrayLength = (minArrayLength + maxArrayLength) / 2;
-            }
-        }
-    }
-
-    /**
+	/**
      * Key size validation test for mixed types in composite index.
      *
      * Validate that we handle index reads and writes correctly for
@@ -235,7 +190,7 @@ public class GenericIndexValidationIT
         }
     }
 
-    private void setProperties( String[] propKeys, Object[] propValues, Node node )
+	private void setProperties( String[] propKeys, Object[] propValues, Node node )
     {
         for ( int propKey = 0; propKey < propKeys.length; propKey++ )
         {
@@ -243,18 +198,18 @@ public class GenericIndexValidationIT
         }
     }
 
-    private String[] generatePropertyKeys( int numberOfSlots )
+	private String[] generatePropertyKeys( int numberOfSlots )
     {
         String[] propKeys = new String[numberOfSlots];
         for ( int i = 0; i < numberOfSlots; i++ )
         {
             // Use different property keys for each iteration
-            propKeys[i] = PROP_KEYS[i] + "numberOfSlots" + numberOfSlots;
+            propKeys[i] = new StringBuilder().append(PROP_KEYS[i]).append("numberOfSlots").append(numberOfSlots).toString();
         }
         return propKeys;
     }
 
-    private Object[] generatePropertyValues( String[] propKeys, int keySizeLimitPerSlot, int wiggleRoomPerSlot )
+	private Object[] generatePropertyValues( String[] propKeys, int keySizeLimitPerSlot, int wiggleRoomPerSlot )
     {
         Object[] propValues = new Object[propKeys.length];
         for ( int propKey = 0; propKey < propKeys.length; propKey++ )
@@ -265,12 +220,12 @@ public class GenericIndexValidationIT
         return propValues;
     }
 
-    private void verifyReadExpected( String propKey, Object propValue, long expectedNodeId, boolean ableToWrite )
+	private void verifyReadExpected( String propKey, Object propValue, long expectedNodeId, boolean ableToWrite )
     {
         verifyReadExpected( new String[]{propKey}, new Object[]{propValue}, expectedNodeId, ableToWrite );
     }
 
-    private void verifyReadExpected( String[] propKeys, Object[] propValues, long expectedNodeId, boolean ableToWrite )
+	private void verifyReadExpected( String[] propKeys, Object[] propValues, long expectedNodeId, boolean ableToWrite )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -295,7 +250,7 @@ public class GenericIndexValidationIT
         }
     }
 
-    private void createIndex( String... propKeys )
+	private void createIndex( String... propKeys )
     {
         try ( Transaction tx = db.beginTx() )
         {
@@ -314,31 +269,7 @@ public class GenericIndexValidationIT
         }
     }
 
-    private class SuccessAndFail
-    {
-        boolean atLeastOneSuccess;
-        boolean atLeastOneFail;
-
-        void ableToWrite( boolean ableToWrite )
-        {
-            if ( ableToWrite )
-            {
-                atLeastOneSuccess = true;
-            }
-            else
-            {
-                atLeastOneFail = true;
-            }
-        }
-
-        void verifyBothSuccessAndFail()
-        {
-            assertTrue( "not a single successful write, need to adjust parameters", atLeastOneSuccess );
-            assertTrue( "not a single failed write, need to adjust parameters", atLeastOneFail );
-        }
-    }
-
-    private enum NamedDynamicValueGenerator
+	private enum NamedDynamicValueGenerator
     {
         string( Byte.BYTES, 4036, i -> random.randomValues().nextAlphaNumericTextValue( i, i ).stringValue() ),
         byteArray( SIZE_NUMBER_BYTE, 4035, i -> random.randomValues().nextByteArrayRaw( i, i ) ),
@@ -402,6 +333,73 @@ public class GenericIndexValidationIT
         private interface DynamicValueGenerator
         {
             Object dynamicValue( int arrayLength );
+        }
+    }
+
+    private class BinarySearch
+    {
+        private int longestSuccessful;
+        private int minArrayLength;
+        private int maxArrayLength = 1;
+        private int arrayLength = 1;
+        private boolean foundMaxLimit;
+
+        boolean finished()
+        {
+            // When arrayLength is stable on minArrayLength, our binary search for max limit is finished
+            return arrayLength == minArrayLength;
+        }
+
+        void progress( boolean wasAbleToWrite )
+        {
+            if ( wasAbleToWrite )
+            {
+                longestSuccessful = Math.max( arrayLength, longestSuccessful );
+                if ( !foundMaxLimit )
+                {
+                    // We continue to double the max limit until we find some upper limit
+                    minArrayLength = arrayLength;
+                    maxArrayLength *= 2;
+                    arrayLength = maxArrayLength;
+                }
+                else
+                {
+                    // We where able to write so we can move min limit up to current array length
+                    minArrayLength = arrayLength;
+                    arrayLength = (minArrayLength + maxArrayLength) / 2;
+                }
+            }
+            else
+            {
+                foundMaxLimit = true;
+                // We where not able to write so we take max limit down to current array length
+                maxArrayLength = arrayLength;
+                arrayLength = (minArrayLength + maxArrayLength) / 2;
+            }
+        }
+    }
+
+    private class SuccessAndFail
+    {
+        boolean atLeastOneSuccess;
+        boolean atLeastOneFail;
+
+        void ableToWrite( boolean ableToWrite )
+        {
+            if ( ableToWrite )
+            {
+                atLeastOneSuccess = true;
+            }
+            else
+            {
+                atLeastOneFail = true;
+            }
+        }
+
+        void verifyBothSuccessAndFail()
+        {
+            assertTrue( "not a single successful write, need to adjust parameters", atLeastOneSuccess );
+            assertTrue( "not a single failed write, need to adjust parameters", atLeastOneFail );
         }
     }
 }

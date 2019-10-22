@@ -25,19 +25,18 @@ import org.neo4j.kernel.api.exceptions.InvalidArgumentsException;
 
 class Sections
 {
-    private Sections()
+    static final String GRAPH_COUNTS = "GRAPH COUNTS";
+	static final String TOKENS = "TOKENS";
+	static final String META = "META";
+	static final String QUERIES = "QUERIES";
+	private static final String[] SECTIONS = {GRAPH_COUNTS, TOKENS, QUERIES};
+	private static final String NAMES = Arrays.toString( SECTIONS );
+
+	private Sections()
     { // only static methods
     }
 
-    static final String GRAPH_COUNTS = "GRAPH COUNTS";
-    static final String TOKENS = "TOKENS";
-    static final String META = "META";
-    static final String QUERIES = "QUERIES";
-
-    private static final String[] SECTIONS = {GRAPH_COUNTS, TOKENS, QUERIES};
-    private static final String NAMES = Arrays.toString( SECTIONS );
-
-    static InvalidArgumentsException unknownSectionException( String section )
+	static InvalidArgumentsException unknownSectionException( String section )
     {
         return new InvalidArgumentsException( String.format( "Unknown section '%s', known sections are %s",
                                                              section, NAMES ) );

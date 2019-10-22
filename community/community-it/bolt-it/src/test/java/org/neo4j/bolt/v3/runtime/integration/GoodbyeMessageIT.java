@@ -109,9 +109,7 @@ public class GoodbyeMessageIT extends BoltV3TransportBase
         connection.send( util.chunk( new RunMessage( "I am sending you to failed state!" ) ) );
         assertThat( connection, util.eventuallyReceives(
                 msgFailure( Status.Statement.SyntaxError,
-                        String.format( "Invalid input 'I': expected <init> (line 1, column 1 (offset: 0))%n" +
-                                "\"I am sending you to failed state!\"%n" +
-                                " ^" ) ) ) );
+                        String.format( new StringBuilder().append("Invalid input 'I': expected <init> (line 1, column 1 (offset: 0))%n").append("\"I am sending you to failed state!\"%n").append(" ^").toString() ) ) ) );
         // you shall be in the failed state now
         connection.send( util.chunk( GOODBYE_MESSAGE ) );
 

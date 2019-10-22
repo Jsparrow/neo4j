@@ -216,43 +216,15 @@ public class ExplicitIndexProxy<T extends PropertyContainer> implements Index<T>
         }
     };
 
-    interface Type<T extends PropertyContainer>
-    {
-        Class<T> getEntityType();
+	protected final String name;
 
-        T entity( long id, GraphDatabaseService graphDatabaseService );
+	protected final Type<T> type;
 
-        IndexHits<T> get( KernelTransaction operations, String name, String key, Object value,
-                GraphDatabaseService gds ) throws ExplicitIndexNotFoundKernelException;
+	protected final Supplier<KernelTransaction> txBridge;
 
-        IndexHits<T> query( KernelTransaction operations, String name, String key, Object queryOrQueryObject,
-                GraphDatabaseService gds ) throws ExplicitIndexNotFoundKernelException;
+	private final GraphDatabaseService gds;
 
-        IndexHits<T> query( KernelTransaction transaction, String name, Object queryOrQueryObject,
-                GraphDatabaseService gds ) throws ExplicitIndexNotFoundKernelException;
-
-        void add( ExplicitIndexWrite operations, String name, long id, String key, Object value )
-                throws ExplicitIndexNotFoundKernelException, EntityNotFoundException;
-
-        void remove( ExplicitIndexWrite operations, String name, long id, String key, Object value )
-                throws ExplicitIndexNotFoundKernelException;
-
-        void remove( ExplicitIndexWrite operations, String name, long id, String key )
-                throws ExplicitIndexNotFoundKernelException;
-
-        void remove( ExplicitIndexWrite operations, String name, long id ) throws ExplicitIndexNotFoundKernelException;
-
-        void drop( ExplicitIndexWrite operations, String name ) throws ExplicitIndexNotFoundKernelException;
-
-        long id( PropertyContainer entity );
-    }
-
-    protected final String name;
-    protected final Type<T> type;
-    protected final Supplier<KernelTransaction> txBridge;
-    private final GraphDatabaseService gds;
-
-    public ExplicitIndexProxy( String name, Type<T> type, GraphDatabaseService gds,
+	public ExplicitIndexProxy( String name, Type<T> type, GraphDatabaseService gds,
                              Supplier<KernelTransaction> txBridge )
     {
         this.name = name;
@@ -261,19 +233,19 @@ public class ExplicitIndexProxy<T extends PropertyContainer> implements Index<T>
         this.txBridge = txBridge;
     }
 
-    @Override
+	@Override
     public String getName()
     {
         return name;
     }
 
-    @Override
+	@Override
     public Class<T> getEntityType()
     {
         return type.getEntityType();
     }
 
-    @Override
+	@Override
     public IndexHits<T> get( String key, Object value )
     {
         KernelTransaction ktx = txBridge.get();
@@ -283,17 +255,17 @@ public class ExplicitIndexProxy<T extends PropertyContainer> implements Index<T>
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( type + " index '" + name + "' doesn't exist" );
+            throw new NotFoundException( new StringBuilder().append(type).append(" index '").append(name).append("' doesn't exist").toString() );
         }
     }
 
-    private IndexHits<T> internalGet( String key, Object value, KernelTransaction ktx )
+	private IndexHits<T> internalGet( String key, Object value, KernelTransaction ktx )
             throws ExplicitIndexNotFoundKernelException
     {
         return type.get( ktx, name, key, value, gds );
     }
 
-    @Override
+	@Override
     public IndexHits<T> query( String key, Object queryOrQueryObject )
     {
         KernelTransaction ktx = txBridge.get();
@@ -303,11 +275,11 @@ public class ExplicitIndexProxy<T extends PropertyContainer> implements Index<T>
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( type + " index '" + name + "' doesn't exist" );
+            throw new NotFoundException( new StringBuilder().append(type).append(" index '").append(name).append("' doesn't exist").toString() );
         }
     }
 
-    @Override
+	@Override
     public IndexHits<T> query( Object queryOrQueryObject )
     {
         KernelTransaction ktx = txBridge.get();
@@ -317,23 +289,23 @@ public class ExplicitIndexProxy<T extends PropertyContainer> implements Index<T>
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( type + " index '" + name + "' doesn't exist" );
+            throw new NotFoundException( new StringBuilder().append(type).append(" index '").append(name).append("' doesn't exist").toString() );
         }
     }
 
-    @Override
+	@Override
     public boolean isWriteable()
     {
         return true;
     }
 
-    @Override
+	@Override
     public GraphDatabaseService getGraphDatabase()
     {
         return gds;
     }
 
-    @Override
+	@Override
     public void add( T entity, String key, Object value )
     {
         KernelTransaction ktx = txBridge.get();
@@ -351,11 +323,11 @@ public class ExplicitIndexProxy<T extends PropertyContainer> implements Index<T>
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( type + " index '" + name + "' doesn't exist" );
+            throw new NotFoundException( new StringBuilder().append(type).append(" index '").append(name).append("' doesn't exist").toString() );
         }
     }
 
-    @Override
+	@Override
     public void remove( T entity, String key, Object value )
     {
         KernelTransaction ktx = txBridge.get();
@@ -369,11 +341,11 @@ public class ExplicitIndexProxy<T extends PropertyContainer> implements Index<T>
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( type + " index '" + name + "' doesn't exist" );
+            throw new NotFoundException( new StringBuilder().append(type).append(" index '").append(name).append("' doesn't exist").toString() );
         }
     }
 
-    @Override
+	@Override
     public void remove( T entity, String key )
     {
         KernelTransaction ktx = txBridge.get();
@@ -387,11 +359,11 @@ public class ExplicitIndexProxy<T extends PropertyContainer> implements Index<T>
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( type + " index '" + name + "' doesn't exist" );
+            throw new NotFoundException( new StringBuilder().append(type).append(" index '").append(name).append("' doesn't exist").toString() );
         }
     }
 
-    @Override
+	@Override
     public void remove( T entity )
     {
         KernelTransaction ktx = txBridge.get();
@@ -405,17 +377,17 @@ public class ExplicitIndexProxy<T extends PropertyContainer> implements Index<T>
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( type + " index '" + name + "' doesn't exist" );
+            throw new NotFoundException( new StringBuilder().append(type).append(" index '").append(name).append("' doesn't exist").toString() );
         }
     }
 
-    private void internalRemove( KernelTransaction ktx, long id )
+	private void internalRemove( KernelTransaction ktx, long id )
             throws InvalidTransactionTypeKernelException, ExplicitIndexNotFoundKernelException
     {
         type.remove( ktx.indexWrite(), name, id );
     }
 
-    @Override
+	@Override
     public void delete()
     {
         KernelTransaction ktx = txBridge.get();
@@ -429,11 +401,11 @@ public class ExplicitIndexProxy<T extends PropertyContainer> implements Index<T>
         }
         catch ( ExplicitIndexNotFoundKernelException e )
         {
-            throw new NotFoundException( type + " index '" + name + "' doesn't exist" );
+            throw new NotFoundException( new StringBuilder().append(type).append(" index '").append(name).append("' doesn't exist").toString() );
         }
     }
 
-    @Override
+	@Override
     public T putIfAbsent( T entity, String key, Object value )
     {
         KernelTransaction ktx = txBridge.get();
@@ -475,16 +447,47 @@ public class ExplicitIndexProxy<T extends PropertyContainer> implements Index<T>
         }
     }
 
-    private void internalAdd( T entity, String key, Object value, KernelTransaction transaction ) throws EntityNotFoundException,
+	private void internalAdd( T entity, String key, Object value, KernelTransaction transaction ) throws EntityNotFoundException,
             InvalidTransactionTypeKernelException, ExplicitIndexNotFoundKernelException
     {
         type.add( transaction.indexWrite(), name, type.id( entity ), key, value );
     }
 
-    @Override
+	@Override
     public String toString()
     {
-        return "Index[" + type + ", " + name + "]";
+        return new StringBuilder().append("Index[").append(type).append(", ").append(name).append("]").toString();
+    }
+
+    interface Type<T extends PropertyContainer>
+    {
+        Class<T> getEntityType();
+
+        T entity( long id, GraphDatabaseService graphDatabaseService );
+
+        IndexHits<T> get( KernelTransaction operations, String name, String key, Object value,
+                GraphDatabaseService gds ) throws ExplicitIndexNotFoundKernelException;
+
+        IndexHits<T> query( KernelTransaction operations, String name, String key, Object queryOrQueryObject,
+                GraphDatabaseService gds ) throws ExplicitIndexNotFoundKernelException;
+
+        IndexHits<T> query( KernelTransaction transaction, String name, Object queryOrQueryObject,
+                GraphDatabaseService gds ) throws ExplicitIndexNotFoundKernelException;
+
+        void add( ExplicitIndexWrite operations, String name, long id, String key, Object value )
+                throws ExplicitIndexNotFoundKernelException, EntityNotFoundException;
+
+        void remove( ExplicitIndexWrite operations, String name, long id, String key, Object value )
+                throws ExplicitIndexNotFoundKernelException;
+
+        void remove( ExplicitIndexWrite operations, String name, long id, String key )
+                throws ExplicitIndexNotFoundKernelException;
+
+        void remove( ExplicitIndexWrite operations, String name, long id ) throws ExplicitIndexNotFoundKernelException;
+
+        void drop( ExplicitIndexWrite operations, String name ) throws ExplicitIndexNotFoundKernelException;
+
+        long id( PropertyContainer entity );
     }
 
     private abstract static class AbstractCursorWrappingIndexHits<T extends PropertyContainer> implements IndexHits<T>

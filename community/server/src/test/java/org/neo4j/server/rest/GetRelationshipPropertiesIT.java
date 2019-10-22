@@ -63,7 +63,7 @@ public class GetRelationshipPropertiesIT extends AbstractRestFunctionalTestBase
         Map<String, Object> map = new HashMap<>();
         map.put( "foo", "bar" );
         helper.setRelationshipProperties( relationship, map );
-        baseRelationshipUri = functionalTestHelper.dataUri() + "relationship/" + relationship + "/properties/";
+        baseRelationshipUri = new StringBuilder().append(functionalTestHelper.dataUri()).append("relationship/").append(relationship).append("/properties/").toString();
     }
 
     @Test
@@ -71,8 +71,7 @@ public class GetRelationshipPropertiesIT extends AbstractRestFunctionalTestBase
     {
         long relId = helper.createRelationship( "LIKES" );
         helper.setRelationshipProperties( relId, Collections.singletonMap( "foo", "bar" ) );
-        JaxRsResponse response = RestRequest.req().get( functionalTestHelper.dataUri() + "relationship/" + relId
-                + "/properties" );
+        JaxRsResponse response = RestRequest.req().get( new StringBuilder().append(functionalTestHelper.dataUri()).append("relationship/").append(relId).append("/properties").toString() );
         assertEquals( 200, response.getStatus() );
         assertNotNull( response.getHeaders()
                 .get( "Content-Length" ) );
@@ -93,8 +92,7 @@ public class GetRelationshipPropertiesIT extends AbstractRestFunctionalTestBase
     {
         long relId = helper.createRelationship( "LIKES" );
         helper.setRelationshipProperties( relId, Collections.singletonMap( "foo", "bar" ) );
-        JaxRsResponse response = RestRequest.req().get( functionalTestHelper.dataUri() + "relationship/" + relId
-                + "/properties" );
+        JaxRsResponse response = RestRequest.req().get( new StringBuilder().append(functionalTestHelper.dataUri()).append("relationship/").append(relId).append("/properties").toString() );
         assertThat( response.getType().toString(), containsString( MediaType.APPLICATION_JSON ) );
         response.close();
     }
@@ -135,8 +133,7 @@ public class GetRelationshipPropertiesIT extends AbstractRestFunctionalTestBase
     {
         // Given
         String node = HTTP.POST( server().baseUri().resolve( "db/data/node" ).toString() ).location();
-        String rel = HTTP.POST( node + "/relationships", quotedJson( "{'to':'" + node + "', " +
-                "'type':'LOVES'}" ) ).location();
+        String rel = HTTP.POST( node + "/relationships", quotedJson( new StringBuilder().append("{'to':'").append(node).append("', ").append("'type':'LOVES'}").toString() ) ).location();
 
         // When
         HTTP.Response res = HTTP.GET( rel + "/properties" );

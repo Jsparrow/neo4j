@@ -202,7 +202,7 @@ class PartitionedIndexStorageTest
             for ( Map.Entry<File,Directory> directory : directories.entrySet() )
             {
                 int current = parseInt( directory.getKey().getName() );
-                assertTrue( current > previous, "Wanted directory " + current + " to have higher id than previous " + previous );
+                assertTrue( current > previous, new StringBuilder().append("Wanted directory ").append(current).append(" to have higher id than previous ").append(previous).toString() );
                 previous = current;
             }
         }

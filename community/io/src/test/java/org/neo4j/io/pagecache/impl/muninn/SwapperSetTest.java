@@ -94,8 +94,7 @@ class SwapperSetTest
         set.free( id );
         if ( !ids.add( id ) )
         {
-            fail( "Expected ids.add( id ) to return true for id " + id + " in iteration " + i +
-                  " but it instead returned false" );
+            fail( new StringBuilder().append("Expected ids.add( id ) to return true for id ").append(id).append(" in iteration ").append(i).append(" but it instead returned false").toString() );
         }
     }
 
@@ -150,7 +149,7 @@ class SwapperSetTest
         set.vacuum( vacuumedIds::addAll );
         if ( !vacuumedIds.isEmpty() )
         {
-            throw new AssertionError( "Vacuum found id " + vacuumedIds + " when it should have found nothing" );
+            throw new AssertionError( new StringBuilder().append("Vacuum found id ").append(vacuumedIds).append(" when it should have found nothing").toString() );
         }
     }
 

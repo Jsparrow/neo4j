@@ -53,96 +53,7 @@ public class XForwardFilterTest
 {
     private static final String X_FORWARD_HOST_HEADER_KEY = "X-Forwarded-Host";
     private static final String X_FORWARD_PROTO_HEADER_KEY = "X-Forwarded-Proto";
-
-    @Test
-    public void shouldSetTheBaseUriToTheSameValueAsTheXForwardHostHeader()
-    {
-        // given
-        final String xForwardHostAndPort = "jimwebber.org:1234";
-
-        XForwardFilter filter = new XForwardFilter();
-
-        InBoundHeaders headers = new InBoundHeaders();
-        headers.add( X_FORWARD_HOST_HEADER_KEY, xForwardHostAndPort );
-
-        ContainerRequest request = new ContainerRequest( WEB_APPLICATION, "GET",
-                URI.create( "http://iansrobinson.com" ), URI.create( "http://iansrobinson.com/foo/bar" ),
-                headers, INPUT_STREAM );
-
-        // when
-        ContainerRequest result = filter.filter( request );
-
-        // then
-        assertThat( result.getBaseUri().toString(), containsString( xForwardHostAndPort ) );
-    }
-
-    @Test
-    public void shouldSetTheRequestUriToTheSameValueAsTheXForwardHostHeader()
-    {
-        // given
-        final String xForwardHostAndPort = "jimwebber.org:1234";
-
-        XForwardFilter filter = new XForwardFilter();
-
-        InBoundHeaders headers = new InBoundHeaders();
-        headers.add( X_FORWARD_HOST_HEADER_KEY, xForwardHostAndPort );
-
-        ContainerRequest request = new ContainerRequest( WEB_APPLICATION, "GET",
-                URI.create( "http://iansrobinson.com" ), URI.create( "http://iansrobinson.com/foo/bar" ),
-                headers, INPUT_STREAM );
-
-        // when
-        ContainerRequest result = filter.filter( request );
-
-        // then
-        assertTrue( result.getRequestUri().toString().startsWith( "http://" + xForwardHostAndPort ) );
-    }
-
-    @Test
-    public void shouldSetTheBaseUriToTheSameProtocolAsTheXForwardProtoHeader()
-    {
-        // given
-        final String theProtocol = "https";
-
-        XForwardFilter filter = new XForwardFilter();
-
-        InBoundHeaders headers = new InBoundHeaders();
-        headers.add( X_FORWARD_PROTO_HEADER_KEY, theProtocol );
-
-        ContainerRequest request = new ContainerRequest( WEB_APPLICATION, "GET",
-                URI.create( "http://jimwebber.org:1234" ), URI.create( "http://jimwebber.org:1234/foo/bar" ),
-                headers, INPUT_STREAM );
-
-        // when
-        ContainerRequest result = filter.filter( request );
-
-        // then
-        assertThat( result.getBaseUri().getScheme(), containsString( theProtocol ) );
-    }
-
-    @Test
-    public void shouldSetTheRequestUriToTheSameProtocolAsTheXForwardProtoHeader()
-    {
-        // given
-        final String theProtocol = "https";
-
-        XForwardFilter filter = new XForwardFilter();
-
-        InBoundHeaders headers = new InBoundHeaders();
-        headers.add( X_FORWARD_PROTO_HEADER_KEY, theProtocol );
-
-        ContainerRequest request = new ContainerRequest( WEB_APPLICATION, "GET",
-                URI.create( "http://jimwebber.org:1234" ), URI.create( "http://jimwebber.org:1234/foo/bar" ),
-                headers, INPUT_STREAM );
-
-        // when
-        ContainerRequest result = filter.filter( request );
-
-        // then
-        assertThat( result.getBaseUri().getScheme(), containsString( theProtocol ) );
-    }
-
-    //Mocking WebApplication leads to flakiness on ibm-jdk, hence
+	//Mocking WebApplication leads to flakiness on ibm-jdk, hence
     //we use a manual mock instead
     private static final WebApplication WEB_APPLICATION = new WebApplication()
     {
@@ -153,14 +64,13 @@ public class XForwardFilterTest
         }
 
         @Override
-        public void initiate( ResourceConfig resourceConfig ) throws IllegalArgumentException, ContainerException
+        public void initiate( ResourceConfig resourceConfig )
         {
 
         }
 
         @Override
         public void initiate( ResourceConfig resourceConfig, IoCComponentProviderFactory ioCComponentProviderFactory )
-                throws IllegalArgumentException, ContainerException
         {
 
         }
@@ -262,8 +172,7 @@ public class XForwardFilterTest
 
         }
     };
-
-    //Using mockito to mock arguments to ContainerRequest leads to flakiness
+	//Using mockito to mock arguments to ContainerRequest leads to flakiness
     //on ibm jdk, hence the manual mocks
     private static final InputStream INPUT_STREAM = new InputStream()
     {
@@ -273,4 +182,92 @@ public class XForwardFilterTest
             return 0;
         }
     };
+
+	@Test
+    public void shouldSetTheBaseUriToTheSameValueAsTheXForwardHostHeader()
+    {
+        // given
+        final String xForwardHostAndPort = "jimwebber.org:1234";
+
+        XForwardFilter filter = new XForwardFilter();
+
+        InBoundHeaders headers = new InBoundHeaders();
+        headers.add( X_FORWARD_HOST_HEADER_KEY, xForwardHostAndPort );
+
+        ContainerRequest request = new ContainerRequest( WEB_APPLICATION, "GET",
+                URI.create( "http://iansrobinson.com" ), URI.create( "http://iansrobinson.com/foo/bar" ),
+                headers, INPUT_STREAM );
+
+        // when
+        ContainerRequest result = filter.filter( request );
+
+        // then
+        assertThat( result.getBaseUri().toString(), containsString( xForwardHostAndPort ) );
+    }
+
+	@Test
+    public void shouldSetTheRequestUriToTheSameValueAsTheXForwardHostHeader()
+    {
+        // given
+        final String xForwardHostAndPort = "jimwebber.org:1234";
+
+        XForwardFilter filter = new XForwardFilter();
+
+        InBoundHeaders headers = new InBoundHeaders();
+        headers.add( X_FORWARD_HOST_HEADER_KEY, xForwardHostAndPort );
+
+        ContainerRequest request = new ContainerRequest( WEB_APPLICATION, "GET",
+                URI.create( "http://iansrobinson.com" ), URI.create( "http://iansrobinson.com/foo/bar" ),
+                headers, INPUT_STREAM );
+
+        // when
+        ContainerRequest result = filter.filter( request );
+
+        // then
+        assertTrue( result.getRequestUri().toString().startsWith( "http://" + xForwardHostAndPort ) );
+    }
+
+	@Test
+    public void shouldSetTheBaseUriToTheSameProtocolAsTheXForwardProtoHeader()
+    {
+        // given
+        final String theProtocol = "https";
+
+        XForwardFilter filter = new XForwardFilter();
+
+        InBoundHeaders headers = new InBoundHeaders();
+        headers.add( X_FORWARD_PROTO_HEADER_KEY, theProtocol );
+
+        ContainerRequest request = new ContainerRequest( WEB_APPLICATION, "GET",
+                URI.create( "http://jimwebber.org:1234" ), URI.create( "http://jimwebber.org:1234/foo/bar" ),
+                headers, INPUT_STREAM );
+
+        // when
+        ContainerRequest result = filter.filter( request );
+
+        // then
+        assertThat( result.getBaseUri().getScheme(), containsString( theProtocol ) );
+    }
+
+	@Test
+    public void shouldSetTheRequestUriToTheSameProtocolAsTheXForwardProtoHeader()
+    {
+        // given
+        final String theProtocol = "https";
+
+        XForwardFilter filter = new XForwardFilter();
+
+        InBoundHeaders headers = new InBoundHeaders();
+        headers.add( X_FORWARD_PROTO_HEADER_KEY, theProtocol );
+
+        ContainerRequest request = new ContainerRequest( WEB_APPLICATION, "GET",
+                URI.create( "http://jimwebber.org:1234" ), URI.create( "http://jimwebber.org:1234/foo/bar" ),
+                headers, INPUT_STREAM );
+
+        // when
+        ContainerRequest result = filter.filter( request );
+
+        // then
+        assertThat( result.getBaseUri().getScheme(), containsString( theProtocol ) );
+    }
 }

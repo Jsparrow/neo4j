@@ -422,7 +422,7 @@ public class InProcessServerBuilderIT
         }
         if ( !foundKey )
         {
-            fail( "No config key '" + key + "'." );
+            fail( new StringBuilder().append("No config key '").append(key).append("'.").toString() );
         }
     }
 

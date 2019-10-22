@@ -77,10 +77,7 @@ public abstract class ExtensionTestBase
 
         assert_().about( javaSource() ).that( sproc ).processedWith( processor() ).compilesWithoutError()
                 .withWarningCount( 2 ).withWarningContaining(
-                "@org.neo4j.procedure.Context usage warning: found unsupported restricted type <org.neo4j.kernel.internal" +
-                ".GraphDatabaseAPI> on BadContextRestrictedTypeField#notOfficiallySupported.\n" +
-                "  The procedure will not load unless declared via the configuration option 'dbms.security.procedures.unrestricted'.\n" +
-                "  You can ignore this warning by passing the option -AIgnoreContextWarnings to the Java compiler" )
+                new StringBuilder().append("@org.neo4j.procedure.Context usage warning: found unsupported restricted type <org.neo4j.kernel.internal").append(".GraphDatabaseAPI> on BadContextRestrictedTypeField#notOfficiallySupported.\n").append("  The procedure will not load unless declared via the configuration option 'dbms.security.procedures.unrestricted'.\n").append("  You can ignore this warning by passing the option -AIgnoreContextWarnings to the Java compiler").toString() )
                 .in( sproc ).onLine( 35 );
     }
 
@@ -102,13 +99,9 @@ public abstract class ExtensionTestBase
 
         assert_().about( javaSource() ).that( sproc ).processedWith( processor() ).failsToCompile().withErrorCount( 1 )
                 .withErrorContaining(
-                        "@org.neo4j.procedure.Context usage error: found unknown type <java.lang.String> on field " +
-                                "BadContextUnsupportedTypeError#foo, expected one of: <" +
-                                GraphDatabaseService.class.getName() + ">, <" +
-                                Log.class.getName() + ">, <" +
-                                TerminationGuard.class.getName() + ">, <" +
-                                SecurityContext.class.getName() + ">, <" +
-                                ProcedureTransaction.class.getName() + ">" )
+                        new StringBuilder().append("@org.neo4j.procedure.Context usage error: found unknown type <java.lang.String> on field ").append("BadContextUnsupportedTypeError#foo, expected one of: <").append(GraphDatabaseService.class.getName()).append(">, <").append(Log.class.getName())
+								.append(">, <").append(TerminationGuard.class.getName()).append(">, <").append(SecurityContext.class.getName()).append(">, <").append(ProcedureTransaction.class.getName())
+								.append(">").toString() )
                 .in( sproc ).onLine( 33 );
     }
 }

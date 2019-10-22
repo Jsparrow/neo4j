@@ -191,7 +191,7 @@ class SequenceLockStressIT
                     if ( sumA != sumB )
                     {
                         throw new AssertionError(
-                                "Inconsistent exclusive lock. 'Sum A' = " + sumA + ", 'Sum B' = " + sumB );
+                                new StringBuilder().append("Inconsistent exclusive lock. 'Sum A' = ").append(sumA).append(", 'Sum B' = ").append(sumB).toString() );
                     }
                 }
             }
@@ -204,8 +204,7 @@ class SequenceLockStressIT
         {
             readers.add( executor.submit( reader ) );
         }
-        for ( int i = 0; i < data.length; i++ )
-        {
+        for (int[] aData : data) {
             writers.add( executor.submit( writer ) );
         }
 

@@ -36,18 +36,18 @@ import org.neo4j.test.server.HTTP;
 public class RestRequest
 {
 
-    private final URI baseUri;
     private static final Client DEFAULT_CLIENT = Client.create();
-    private final Client client;
-    private MediaType accept = MediaType.APPLICATION_JSON_TYPE;
-    private Map<String,String> headers = new HashMap<>();
+	private final URI baseUri;
+	private final Client client;
+	private MediaType accept = MediaType.APPLICATION_JSON_TYPE;
+	private Map<String,String> headers = new HashMap<>();
 
-    public RestRequest( URI baseUri )
+	public RestRequest( URI baseUri )
     {
         this( baseUri, null, null );
     }
 
-    public RestRequest( URI baseUri, String username, String password )
+	public RestRequest( URI baseUri, String username, String password )
     {
         this.baseUri = uriWithoutSlash( baseUri );
         if ( username != null )
@@ -61,18 +61,18 @@ public class RestRequest
         }
     }
 
-    public RestRequest( URI uri, Client client )
+	public RestRequest( URI uri, Client client )
     {
         this.baseUri = uriWithoutSlash( uri );
         this.client = client;
     }
 
-    public RestRequest()
+	public RestRequest()
     {
         this( null );
     }
 
-    private URI uriWithoutSlash( URI uri )
+	private URI uriWithoutSlash( URI uri )
     {
         if ( uri == null )
         {
@@ -82,12 +82,12 @@ public class RestRequest
         return uriString.endsWith( "/" ) ? uri( uriString.substring( 0, uriString.length() - 1 ) ) : uri;
     }
 
-    private Builder builder( String path )
+	private Builder builder( String path )
     {
         return builder( path, accept );
     }
 
-    private Builder builder( String path, final MediaType accept )
+	private Builder builder( String path, final MediaType accept )
     {
         WebResource resource = client.resource( uri( pathOrAbsolute( path ) ) );
         Builder builder = resource.accept( accept );
@@ -102,31 +102,31 @@ public class RestRequest
         return builder;
     }
 
-    private String pathOrAbsolute( String path )
+	private String pathOrAbsolute( String path )
     {
         if ( path.startsWith( "http://" ) )
         {
             return path;
         }
-        return baseUri + "/" + path;
+        return new StringBuilder().append(baseUri).append("/").append(path).toString();
     }
 
-    public JaxRsResponse get( String path )
+	public JaxRsResponse get( String path )
     {
         return JaxRsResponse.extractFrom( HTTP.sanityCheck( builder( path ).get( ClientResponse.class ) ) );
     }
 
-    public JaxRsResponse delete( String path )
+	public JaxRsResponse delete( String path )
     {
         return JaxRsResponse.extractFrom( HTTP.sanityCheck( builder( path ).delete( ClientResponse.class ) ) );
     }
 
-    public JaxRsResponse post( String path, String data )
+	public JaxRsResponse post( String path, String data )
     {
         return post( path, data, MediaType.APPLICATION_JSON_TYPE );
     }
 
-    public JaxRsResponse post( String path, String data, final MediaType mediaType )
+	public JaxRsResponse post( String path, String data, final MediaType mediaType )
     {
         Builder builder = builder( path );
         if ( data != null )
@@ -140,7 +140,7 @@ public class RestRequest
         return JaxRsResponse.extractFrom( HTTP.sanityCheck( builder.post( ClientResponse.class ) ) );
     }
 
-    public JaxRsResponse put( String path, String data )
+	public JaxRsResponse put( String path, String data )
     {
         Builder builder = builder( path );
         if ( data != null )
@@ -150,7 +150,7 @@ public class RestRequest
         return new JaxRsResponse( HTTP.sanityCheck( builder.put( ClientResponse.class ) ) );
     }
 
-    private URI uri( String uri )
+	private URI uri( String uri )
     {
         try
         {
@@ -162,45 +162,45 @@ public class RestRequest
         }
     }
 
-    public JaxRsResponse get()
+	public JaxRsResponse get()
     {
         return get( "" );
     }
 
-    public JaxRsResponse get( String path, final MediaType acceptType )
+	public JaxRsResponse get( String path, final MediaType acceptType )
     {
         Builder builder = builder( path, acceptType );
         return JaxRsResponse.extractFrom( HTTP.sanityCheck( builder.get( ClientResponse.class ) ) );
     }
 
-    public static RestRequest req()
+	public static RestRequest req()
     {
         return new RestRequest();
     }
 
-    public JaxRsResponse delete( URI location )
+	public JaxRsResponse delete( URI location )
     {
         return delete( location.toString() );
     }
 
-    public JaxRsResponse put( URI uri, String data )
+	public JaxRsResponse put( URI uri, String data )
     {
         return put( uri.toString(), data );
     }
 
-    public RestRequest accept( MediaType accept )
+	public RestRequest accept( MediaType accept )
     {
         this.accept = accept;
         return this;
     }
 
-    public RestRequest header( String header, String value )
+	public RestRequest header( String header, String value )
     {
         this.headers.put( header, value );
         return this;
     }
 
-    public RestRequest host( String hostname )
+	public RestRequest host( String hostname )
     {
         // 'host' is one of a handful of so-called restricted headers (wrongly!).
         // Need to rectify that with a property change.
@@ -208,7 +208,7 @@ public class RestRequest
         return this;
     }
 
-    public Map<String,String> getHeaders()
+	public Map<String,String> getHeaders()
     {
         return headers;
     }

@@ -36,9 +36,9 @@ import static org.neo4j.kernel.configuration.Settings.listenAddress;
 
 public class AdvertisedAddressSettingsTest
 {
-    private static Setting<ListenSocketAddress> listen_address_setting = listenAddress( "listen_address", 1234 );
-    private static Setting<AdvertisedSocketAddress> advertised_address_setting =
-            advertisedAddress( "advertised_address", listen_address_setting );
+    private static Setting<ListenSocketAddress> listenAddressSetting = listenAddress( "listen_address", 1234 );
+    private static Setting<AdvertisedSocketAddress> advertisedAddressSetting =
+            advertisedAddress( "advertised_address", listenAddressSetting );
 
     @Test
     public void shouldParseExplicitSettingValueWhenProvided()
@@ -46,10 +46,10 @@ public class AdvertisedAddressSettingsTest
         // given
         Map<String,String> config = stringMap(
                 GraphDatabaseSettings.default_advertised_address.name(), "server1.example.com",
-                advertised_address_setting.name(), "server1.internal:4000" );
+                advertisedAddressSetting.name(), "server1.internal:4000" );
 
         // when
-        AdvertisedSocketAddress advertisedSocketAddress = advertised_address_setting.apply( config::get );
+        AdvertisedSocketAddress advertisedSocketAddress = advertisedAddressSetting.apply( config::get );
 
         // then
         assertEquals( "server1.internal", advertisedSocketAddress.getHostname() );
@@ -64,7 +64,7 @@ public class AdvertisedAddressSettingsTest
                 GraphDatabaseSettings.default_advertised_address.name(), "server1.example.com" );
 
         // when
-        AdvertisedSocketAddress advertisedSocketAddress = advertised_address_setting.apply( config::get );
+        AdvertisedSocketAddress advertisedSocketAddress = advertisedAddressSetting.apply( config::get );
 
         // then
         assertEquals( "server1.example.com", advertisedSocketAddress.getHostname() );
@@ -77,10 +77,10 @@ public class AdvertisedAddressSettingsTest
         // given
         Map<String,String> config = stringMap(
                 GraphDatabaseSettings.default_advertised_address.name(), "server1.example.com",
-                advertised_address_setting.name(), ":4000" );
+                advertisedAddressSetting.name(), ":4000" );
 
         // when
-        AdvertisedSocketAddress advertisedSocketAddress = advertised_address_setting.apply( config::get );
+        AdvertisedSocketAddress advertisedSocketAddress = advertisedAddressSetting.apply( config::get );
 
         // then
         assertEquals( "server1.example.com", advertisedSocketAddress.getHostname() );

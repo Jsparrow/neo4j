@@ -36,7 +36,42 @@ import org.neo4j.values.storable.Value;
  */
 public interface Input
 {
-    interface Estimates
+    /**
+     * Provides all node data for an import.
+     *
+     * @return an {@link InputIterator} which will provide all node data for the whole import.
+     */
+    InputIterable nodes();
+
+	/**
+     * Provides all relationship data for an import.
+     *
+     * @return an {@link InputIterator} which will provide all relationship data for the whole import.
+     */
+    InputIterable relationships();
+
+	/**
+     * @return {@link IdMapper} which will get populated by {@link NodeImporter}
+     * and later queried by {@link RelationshipImporter}
+     * to resolve potentially temporary input node ids to actual node ids in the database.
+     * @param numberArrayFactory The factory for creating data-structures to use for caching internally in the IdMapper.
+     */
+    IdMapper idMapper( NumberArrayFactory numberArrayFactory );
+
+	/**
+     * @return a {@link Collector} capable of writing bad relationships
+     * and duplicate nodes to an output stream for later handling.
+     */
+    Collector badCollector();
+
+	/**
+     * @param valueSizeCalculator for calculating property sizes on disk.
+     * @return {@link Estimates} for this input w/o reading through it entirely.
+     * @throws IOException on I/O error.
+     */
+    Estimates calculateEstimates( ToIntFunction<Value[]> valueSizeCalculator ) throws IOException;
+
+	interface Estimates
     {
         /**
          * @return estimated number of nodes for the entire input.
@@ -80,39 +115,4 @@ public interface Input
          */
         long numberOfNodeLabels();
     }
-
-    /**
-     * Provides all node data for an import.
-     *
-     * @return an {@link InputIterator} which will provide all node data for the whole import.
-     */
-    InputIterable nodes();
-
-    /**
-     * Provides all relationship data for an import.
-     *
-     * @return an {@link InputIterator} which will provide all relationship data for the whole import.
-     */
-    InputIterable relationships();
-
-    /**
-     * @return {@link IdMapper} which will get populated by {@link NodeImporter}
-     * and later queried by {@link RelationshipImporter}
-     * to resolve potentially temporary input node ids to actual node ids in the database.
-     * @param numberArrayFactory The factory for creating data-structures to use for caching internally in the IdMapper.
-     */
-    IdMapper idMapper( NumberArrayFactory numberArrayFactory );
-
-    /**
-     * @return a {@link Collector} capable of writing bad relationships
-     * and duplicate nodes to an output stream for later handling.
-     */
-    Collector badCollector();
-
-    /**
-     * @param valueSizeCalculator for calculating property sizes on disk.
-     * @return {@link Estimates} for this input w/o reading through it entirely.
-     * @throws IOException on I/O error.
-     */
-    Estimates calculateEstimates( ToIntFunction<Value[]> valueSizeCalculator ) throws IOException;
 }

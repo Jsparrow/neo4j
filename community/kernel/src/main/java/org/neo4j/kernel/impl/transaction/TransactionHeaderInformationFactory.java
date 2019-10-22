@@ -25,8 +25,6 @@ import org.neo4j.kernel.impl.api.TransactionHeaderInformation;
 
 public interface TransactionHeaderInformationFactory
 {
-    TransactionHeaderInformation create();
-
     TransactionHeaderInformationFactory DEFAULT = new TransactionHeaderInformationFactory.WithRandomBytes()
     {
         private static final int NO_ID = -1;
@@ -38,7 +36,9 @@ public interface TransactionHeaderInformationFactory
         }
     };
 
-    abstract class WithRandomBytes implements TransactionHeaderInformationFactory
+	TransactionHeaderInformation create();
+
+	abstract class WithRandomBytes implements TransactionHeaderInformationFactory
     {
         private static final int ADDITIONAL_HEADER_SIZE = 8;
 

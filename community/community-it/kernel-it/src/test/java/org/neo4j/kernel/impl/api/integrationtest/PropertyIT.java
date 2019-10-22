@@ -88,7 +88,7 @@ public class PropertyIT extends KernelIntegrationTest
         }
         catch ( EntityNotFoundException e )
         {
-            assertThat( e.getMessage(), equalTo( "Unable to load RELATIONSHIP with id " + rel + "." ) );
+            assertThat( e.getMessage(), equalTo( new StringBuilder().append("Unable to load RELATIONSHIP with id ").append(rel).append(".").toString() ) );
         }
         commit();
     }

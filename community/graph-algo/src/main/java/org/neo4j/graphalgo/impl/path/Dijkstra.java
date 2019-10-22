@@ -258,12 +258,11 @@ public class Dijkstra implements PathFinder<WeightedPath>
                 nextState += costEvaluator.getCost( path.lastRelationship(), OUTGOING );
                 state.setState( nextState );
             }
-            if ( path.endNode().equals( endNode ) )
-            {
-                shortestSoFar.setValue( Math.min( shortestSoFar.doubleValue(), nextState ) );
-                return Evaluation.INCLUDE_AND_PRUNE;
-            }
-            return Evaluation.EXCLUDE_AND_CONTINUE;
+            if (!path.endNode().equals( endNode )) {
+				return Evaluation.EXCLUDE_AND_CONTINUE;
+			}
+			shortestSoFar.setValue( Math.min( shortestSoFar.doubleValue(), nextState ) );
+			return Evaluation.INCLUDE_AND_PRUNE;
         }
     }
 

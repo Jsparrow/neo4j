@@ -31,11 +31,11 @@ public class ThisShouldNotHappenError extends Error
 {
     public ThisShouldNotHappenError( String developer, String message )
     {
-        super( "Developer: " + developer + " claims that: " + message );
+        super( new StringBuilder().append("Developer: ").append(developer).append(" claims that: ").append(message).toString() );
     }
 
     public ThisShouldNotHappenError( String developer, String message, Throwable cause )
     {
-        super( "Developer: " + developer + " claims that: " + message, cause );
+        super( new StringBuilder().append("Developer: ").append(developer).append(" claims that: ").append(message).toString(), cause );
     }
 }

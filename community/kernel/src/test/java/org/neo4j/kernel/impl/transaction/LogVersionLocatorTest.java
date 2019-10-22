@@ -79,8 +79,7 @@ public class LogVersionLocatorTest
         catch ( NoSuchTransactionException e )
         {
             assertEquals(
-                    "Unable to find transaction " + txId + " in any of my logical logs: " +
-                            "Couldn't find any log containing " + txId,
+                    new StringBuilder().append("Unable to find transaction ").append(txId).append(" in any of my logical logs: ").append("Couldn't find any log containing ").append(txId).toString(),
                     e.getMessage()
             );
         }
@@ -104,8 +103,7 @@ public class LogVersionLocatorTest
         catch ( NoSuchTransactionException e )
         {
             assertEquals(
-                    "Unable to find transaction " + txId + " in any of my logical logs: " +
-                            "Couldn't find any log containing " + txId,
+                    new StringBuilder().append("Unable to find transaction ").append(txId).append(" in any of my logical logs: ").append("Couldn't find any log containing ").append(txId).toString(),
                     e.getMessage()
             );
         }

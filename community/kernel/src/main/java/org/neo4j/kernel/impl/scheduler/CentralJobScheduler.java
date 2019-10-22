@@ -54,21 +54,6 @@ public class CentralJobScheduler extends LifecycleAdapter implements JobSchedule
 
     private volatile boolean started;
 
-    private static class TopLevelGroup extends ThreadGroup
-    {
-        TopLevelGroup()
-        {
-            super( "Neo4j-" + INSTANCE_COUNTER.incrementAndGet() );
-        }
-
-        public void setName( String name ) throws Exception
-        {
-            Field field = ThreadGroup.class.getDeclaredField( "name" );
-            field.setAccessible( true );
-            field.set( this, name );
-        }
-    }
-
     protected CentralJobScheduler()
     {
         workStealingExecutors = new ConcurrentHashMap<>( 1 );
@@ -83,7 +68,7 @@ public class CentralJobScheduler extends LifecycleAdapter implements JobSchedule
         schedulerThread.setPriority( priority );
     }
 
-    @Override
+	@Override
     public void setTopLevelGroupName( String name )
     {
         try
@@ -95,53 +80,53 @@ public class CentralJobScheduler extends LifecycleAdapter implements JobSchedule
         }
     }
 
-    @Override
+	@Override
     public void init()
     {
-        if ( !started )
-        {
-            schedulerThread.start();
-            started = true;
-        }
+        if (started) {
+			return;
+		}
+		schedulerThread.start();
+		started = true;
     }
 
-    @Override
+	@Override
     public Executor executor( Group group )
     {
         return job -> schedule( group, job );
     }
 
-    @Override
+	@Override
     public ExecutorService workStealingExecutor( Group group, int parallelism )
     {
         return workStealingExecutor( group, parallelism, false );
     }
 
-    @Override
+	@Override
     public ExecutorService workStealingExecutorAsyncMode( Group group, int parallelism )
     {
         return workStealingExecutor( group, parallelism, true );
     }
 
-    private ExecutorService workStealingExecutor( Group group, int parallelism, boolean asyncMode )
+	private ExecutorService workStealingExecutor( Group group, int parallelism, boolean asyncMode )
     {
         return workStealingExecutors.computeIfAbsent( group, g -> createNewWorkStealingExecutor( g, parallelism, asyncMode ) );
     }
 
-    @Override
+	@Override
     public ThreadFactory threadFactory( Group group )
     {
         return pools.getThreadPool( group ).getThreadFactory();
     }
 
-    private ExecutorService createNewWorkStealingExecutor( Group group, int parallelism, boolean asyncMode )
+	private ExecutorService createNewWorkStealingExecutor( Group group, int parallelism, boolean asyncMode )
     {
         ForkJoinPool.ForkJoinWorkerThreadFactory factory =
                 new GroupedDaemonThreadFactory( group, topLevelGroup );
         return new ForkJoinPool( parallelism, factory, null, asyncMode );
     }
 
-    @Override
+	@Override
     public JobHandle schedule( Group group, Runnable job )
     {
         if ( !started )
@@ -151,26 +136,26 @@ public class CentralJobScheduler extends LifecycleAdapter implements JobSchedule
         return pools.submit( group, job );
     }
 
-    @Override
+	@Override
     public JobHandle scheduleRecurring( Group group, final Runnable runnable, long period, TimeUnit timeUnit )
     {
         return scheduleRecurring( group, runnable, 0, period, timeUnit );
     }
 
-    @Override
+	@Override
     public JobHandle scheduleRecurring( Group group, Runnable runnable, long initialDelay, long period, TimeUnit unit )
     {
         return scheduler.submit(
                 group, runnable, unit.toNanos( initialDelay ), unit.toNanos( period ) );
     }
 
-    @Override
+	@Override
     public JobHandle schedule( Group group, final Runnable runnable, long initialDelay, TimeUnit unit )
     {
         return scheduler.submit( group, runnable, unit.toNanos( initialDelay ), 0 );
     }
 
-    @Override
+	@Override
     public void shutdown()
     {
         started = false;
@@ -195,13 +180,13 @@ public class CentralJobScheduler extends LifecycleAdapter implements JobSchedule
         }
     }
 
-    @Override
+	@Override
     public void close()
     {
         shutdown();
     }
 
-    private InterruptedException shutDownScheduler()
+	private InterruptedException shutDownScheduler()
     {
         scheduler.stop();
         try
@@ -215,7 +200,7 @@ public class CentralJobScheduler extends LifecycleAdapter implements JobSchedule
         return null;
     }
 
-    private InterruptedException shutdownPool( ExecutorService pool, InterruptedException exception )
+	private InterruptedException shutdownPool( ExecutorService pool, InterruptedException exception )
     {
         if ( pool != null )
         {
@@ -230,5 +215,20 @@ public class CentralJobScheduler extends LifecycleAdapter implements JobSchedule
             }
         }
         return exception;
+    }
+
+	private static class TopLevelGroup extends ThreadGroup
+    {
+        TopLevelGroup()
+        {
+            super( "Neo4j-" + INSTANCE_COUNTER.incrementAndGet() );
+        }
+
+        public void setName( String name ) throws Exception
+        {
+            Field field = ThreadGroup.class.getDeclaredField( "name" );
+            field.setAccessible( true );
+            field.set( this, name );
+        }
     }
 }

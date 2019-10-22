@@ -86,9 +86,8 @@ public class VersionAwareLogEntryReader<SOURCE extends ReadableClosablePositionA
                         // didn't throw exception doesn't mean that it's a sane entry.
                         if ( !logEntryMakesSense( entry ) )
                         {
-                            throw new IllegalArgumentException( "Log entry " + entry + " which was read after " +
-                                    "a bad section of " + skipped + " bytes was read successfully, but " +
-                                    "its contents is unrealistic, so treating as part of bad section" );
+                            throw new IllegalArgumentException( new StringBuilder().append("Log entry ").append(entry).append(" which was read after ").append("a bad section of ").append(skipped)
+									.append(" bytes was read successfully, but ").append("its contents is unrealistic, so treating as part of bad section").toString() );
                         }
                         invalidLogEntryHandler.bytesSkipped( skipped );
                         skipped = 0;
@@ -101,8 +100,8 @@ public class VersionAwareLogEntryReader<SOURCE extends ReadableClosablePositionA
                 catch ( Exception e )
                 {   // Tag all other exceptions with log position and other useful information
                     LogPosition position = positionMarker.newPosition();
-                    e = withMessage( e, e.getMessage() + ". At position " + position +
-                            " and entry version " + version );
+                    e = withMessage( e, new StringBuilder().append(e.getMessage()).append(". At position ").append(position).append(" and entry version ").append(version)
+							.toString() );
 
                     if ( channelSupportsPositioning( channel ) &&
                             invalidLogEntryHandler.handleInvalidEntry( e, position ) )

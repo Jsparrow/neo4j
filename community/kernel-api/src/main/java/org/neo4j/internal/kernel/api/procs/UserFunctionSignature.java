@@ -124,7 +124,31 @@ public final class UserFunctionSignature
             return String.format( "%s(%s) :: (%s)", name, strInSig, strOutSig );
     }
 
-    public static class Builder
+    public static Builder functionSignature( String... namespaceAndName )
+    {
+        String[] namespace = namespaceAndName.length > 1 ?
+                             Arrays.copyOf( namespaceAndName, namespaceAndName.length - 1 ) :
+                             new String[0];
+        String name = namespaceAndName[namespaceAndName.length - 1];
+        return functionSignature( namespace, name );
+    }
+
+	public static Builder functionSignature( QualifiedName name )
+    {
+        return new Builder( name.namespace(), name.name() );
+    }
+
+	public static Builder functionSignature( String[] namespace, String name )
+    {
+        return new Builder( namespace, name );
+    }
+
+	public static QualifiedName procedureName( String... namespaceAndName )
+    {
+        return functionSignature( namespaceAndName ).build().name();
+    }
+
+	public static class Builder
     {
         private final QualifiedName name;
         private final List<FieldSignature> inputSignature = new LinkedList<>();
@@ -178,29 +202,5 @@ public final class UserFunctionSignature
             }
             return new UserFunctionSignature( name, inputSignature, outputType, deprecated, allowed, description, false  );
         }
-    }
-
-    public static Builder functionSignature( String... namespaceAndName )
-    {
-        String[] namespace = namespaceAndName.length > 1 ?
-                             Arrays.copyOf( namespaceAndName, namespaceAndName.length - 1 ) :
-                             new String[0];
-        String name = namespaceAndName[namespaceAndName.length - 1];
-        return functionSignature( namespace, name );
-    }
-
-    public static Builder functionSignature( QualifiedName name )
-    {
-        return new Builder( name.namespace(), name.name() );
-    }
-
-    public static Builder functionSignature( String[] namespace, String name )
-    {
-        return new Builder( namespace, name );
-    }
-
-    public static QualifiedName procedureName( String... namespaceAndName )
-    {
-        return functionSignature( namespaceAndName ).build().name();
     }
 }

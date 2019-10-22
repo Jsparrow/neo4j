@@ -59,69 +59,84 @@ public final class LocalDateTimeValue extends TemporalValue<LocalDateTime,LocalD
 {
     public static final LocalDateTimeValue MIN_VALUE = new LocalDateTimeValue( LocalDateTime.MIN );
     public static final LocalDateTimeValue MAX_VALUE = new LocalDateTimeValue( LocalDateTime.MAX );
+	static final LocalDateTime DEFAULT_LOCAL_DATE_TIME =
+            LocalDateTime.of( TemporalFields.year.defaultValue, TemporalFields.month.defaultValue,
+                    TemporalFields.day.defaultValue, TemporalFields.hour.defaultValue,
+                    TemporalFields.minute.defaultValue );
+	private static final Pattern PATTERN = Pattern.compile(
+            new StringBuilder().append(DATE_PATTERN).append("(?<time>T").append(TIME_PATTERN).append(")?").toString(),
+            Pattern.CASE_INSENSITIVE );
+	private final LocalDateTime value;
+	private final long epochSecondsInUTC;
 
-    public static LocalDateTimeValue localDateTime( DateValue date, LocalTimeValue time )
+	private LocalDateTimeValue( LocalDateTime value )
+    {
+        this.value = value;
+        this.epochSecondsInUTC = this.value.toEpochSecond(UTC);
+    }
+
+	public static LocalDateTimeValue localDateTime( DateValue date, LocalTimeValue time )
     {
         return new LocalDateTimeValue( LocalDateTime.of( date.temporal(), time.temporal() ) );
     }
 
-    public static LocalDateTimeValue localDateTime(
+	public static LocalDateTimeValue localDateTime(
             int year, int month, int day, int hour, int minute, int second, int nanoOfSecond )
     {
         return new LocalDateTimeValue( assertValidArgument( () -> LocalDateTime.of( year, month, day, hour, minute, second, nanoOfSecond ) ) );
     }
 
-    public static LocalDateTimeValue localDateTime( LocalDateTime value )
+	public static LocalDateTimeValue localDateTime( LocalDateTime value )
     {
         return new LocalDateTimeValue( requireNonNull( value, "LocalDateTime" ) );
     }
 
-    public static LocalDateTimeValue localDateTime( long epochSecond, long nano )
+	public static LocalDateTimeValue localDateTime( long epochSecond, long nano )
     {
         return new LocalDateTimeValue( localDateTimeRaw( epochSecond, nano ) );
     }
 
-    public static LocalDateTime localDateTimeRaw( long epochSecond, long nano )
+	public static LocalDateTime localDateTimeRaw( long epochSecond, long nano )
     {
         return assertValidArgument( () -> ofInstant( ofEpochSecond( epochSecond, nano ), UTC ) );
     }
 
-    public static LocalDateTimeValue parse( CharSequence text )
+	public static LocalDateTimeValue parse( CharSequence text )
     {
         return parse( LocalDateTimeValue.class, PATTERN, LocalDateTimeValue::parse, text );
     }
 
-    public static LocalDateTimeValue parse( TextValue text )
+	public static LocalDateTimeValue parse( TextValue text )
     {
         return parse( LocalDateTimeValue.class, PATTERN, LocalDateTimeValue::parse, text );
     }
 
-    public static LocalDateTimeValue now( Clock clock )
+	public static LocalDateTimeValue now( Clock clock )
     {
         return new LocalDateTimeValue( LocalDateTime.now( clock ) );
     }
 
-    public static LocalDateTimeValue now( Clock clock, String timezone )
+	public static LocalDateTimeValue now( Clock clock, String timezone )
     {
         return now( clock.withZone( parseZoneName( timezone ) ) );
     }
 
-    public static LocalDateTimeValue now( Clock clock, Supplier<ZoneId> defaultZone )
+	public static LocalDateTimeValue now( Clock clock, Supplier<ZoneId> defaultZone )
     {
         return now( clock.withZone( defaultZone.get() ) );
     }
 
-    public static LocalDateTimeValue build( MapValue map, Supplier<ZoneId> defaultZone )
+	public static LocalDateTimeValue build( MapValue map, Supplier<ZoneId> defaultZone )
     {
         return StructureBuilder.build( builder( defaultZone ), map );
     }
 
-    public static LocalDateTimeValue select( AnyValue from, Supplier<ZoneId> defaultZone )
+	public static LocalDateTimeValue select( AnyValue from, Supplier<ZoneId> defaultZone )
     {
         return builder( defaultZone ).selectDateTime( from );
     }
 
-    public static LocalDateTimeValue truncate(
+	public static LocalDateTimeValue truncate(
             TemporalUnit unit,
             TemporalValue input,
             MapValue fields,
@@ -155,12 +170,7 @@ public final class LocalDateTimeValue extends TemporalValue<LocalDateTime,LocalD
         }
     }
 
-    static final LocalDateTime DEFAULT_LOCAL_DATE_TIME =
-            LocalDateTime.of( TemporalFields.year.defaultValue, TemporalFields.month.defaultValue,
-                    TemporalFields.day.defaultValue, TemporalFields.hour.defaultValue,
-                    TemporalFields.minute.defaultValue );
-
-    static DateTimeValue.DateTimeBuilder<LocalDateTimeValue> builder( Supplier<ZoneId> defaultZone )
+	static DateTimeValue.DateTimeBuilder<LocalDateTimeValue> builder( Supplier<ZoneId> defaultZone )
     {
         return new DateTimeValue.DateTimeBuilder<LocalDateTimeValue>( defaultZone )
         {
@@ -271,16 +281,7 @@ public final class LocalDateTimeValue extends TemporalValue<LocalDateTime,LocalD
         };
     }
 
-    private final LocalDateTime value;
-    private final long epochSecondsInUTC;
-
-    private LocalDateTimeValue( LocalDateTime value )
-    {
-        this.value = value;
-        this.epochSecondsInUTC = this.value.toEpochSecond(UTC);
-    }
-
-    @Override
+	@Override
     int unsafeCompareTo( Value other )
     {
         LocalDateTimeValue that = (LocalDateTimeValue) other;
@@ -292,131 +293,127 @@ public final class LocalDateTimeValue extends TemporalValue<LocalDateTime,LocalD
         return cmp;
     }
 
-    @Override
+	@Override
     public String getTypeName()
     {
         return "LocalDateTime";
     }
 
-    @Override
+	@Override
     LocalDateTime temporal()
     {
         return value;
     }
 
-    @Override
+	@Override
     LocalDate getDatePart()
     {
         return value.toLocalDate();
     }
 
-    @Override
+	@Override
     LocalTime getLocalTimePart()
     {
         return value.toLocalTime();
     }
 
-    @Override
+	@Override
     OffsetTime getTimePart( Supplier<ZoneId> defaultZone )
     {
         ZoneOffset currentOffset = assertValidArgument( () -> ZonedDateTime.ofInstant( Instant.now(), defaultZone.get() ) ).getOffset();
         return OffsetTime.of(value.toLocalTime(), currentOffset);
     }
 
-    @Override
+	@Override
     ZoneId getZoneId( Supplier<ZoneId> defaultZone )
     {
         return defaultZone.get();
     }
 
-    @Override
+	@Override
     ZoneId getZoneId()
     {
         throw new UnsupportedTemporalUnitException( String.format( "Cannot get the timezone of: %s", this ) );
     }
 
-    @Override
+	@Override
     ZoneOffset getZoneOffset()
     {
         throw new UnsupportedTemporalUnitException( String.format( "Cannot get the offset of: %s", this ) );
     }
 
-    @Override
+	@Override
     public boolean supportsTimeZone()
     {
         return false;
     }
 
-    @Override
+	@Override
     boolean hasTime()
     {
         return true;
     }
 
-    @Override
+	@Override
     public boolean equals( Value other )
     {
         return other instanceof LocalDateTimeValue && value.equals( ((LocalDateTimeValue) other).value );
     }
 
-    @Override
+	@Override
     public <E extends Exception> void writeTo( ValueWriter<E> writer ) throws E
     {
         writer.writeLocalDateTime( value );
     }
 
-    @Override
+	@Override
     public String prettyPrint()
     {
         return assertPrintable( () -> value.format( DateTimeFormatter.ISO_LOCAL_DATE_TIME ) );
     }
 
-    @Override
+	@Override
     public ValueGroup valueGroup()
     {
         return ValueGroup.LOCAL_DATE_TIME;
     }
 
-    @Override
+	@Override
     protected int computeHash()
     {
         return value.toInstant( UTC ).hashCode();
     }
 
-    @Override
+	@Override
     public <T> T map( ValueMapper<T> mapper )
     {
         return mapper.mapLocalDateTime( this );
     }
 
-    @Override
+	@Override
     public LocalDateTimeValue add( DurationValue duration )
     {
         return replacement( assertValidArithmetic( () -> value.plus( duration ) ) );
     }
 
-    @Override
+	@Override
     public LocalDateTimeValue sub( DurationValue duration )
     {
         return replacement( assertValidArithmetic( () -> value.minus( duration ) ) );
     }
 
-    @Override
+	@Override
     LocalDateTimeValue replacement( LocalDateTime dateTime )
     {
         return dateTime == value ? this : new LocalDateTimeValue( dateTime );
     }
 
-    private static final Pattern PATTERN = Pattern.compile(
-            DATE_PATTERN + "(?<time>T" + TIME_PATTERN + ")?",
-            Pattern.CASE_INSENSITIVE );
-
-    private static LocalDateTimeValue parse( Matcher matcher )
+	private static LocalDateTimeValue parse( Matcher matcher )
     {
         return localDateTime( LocalDateTime.of( parseDate( matcher ), optTime( matcher ) ) );
     }
 
-    static LocalTime optTime( Matcher matcher )
+	static LocalTime optTime( Matcher matcher )
     {
         return matcher.group( "time" ) != null ? parseTime( matcher ) : LocalTime.MIN;
     }

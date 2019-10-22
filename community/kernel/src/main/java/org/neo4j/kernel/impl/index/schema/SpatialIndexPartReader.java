@@ -100,12 +100,12 @@ public class SpatialIndexPartReader<VALUE extends NativeIndexValue> extends Nati
             if ( !rangePredicate.crs().equals( spatial.crs ) )
             {
                 throw new IllegalArgumentException(
-                        "IndexQuery on spatial index with mismatching CoordinateReferenceSystem: " + rangePredicate.crs() + " != " + spatial.crs );
+                        new StringBuilder().append("IndexQuery on spatial index with mismatching CoordinateReferenceSystem: ").append(rangePredicate.crs()).append(" != ").append(spatial.crs).toString() );
             }
             startSeekForRange( cursor, rangePredicate, predicates );
             break;
         default:
-            throw new IllegalArgumentException( "IndexQuery of type " + predicate.type() + " is not supported." );
+            throw new IllegalArgumentException( new StringBuilder().append("IndexQuery of type ").append(predicate.type()).append(" is not supported.").toString() );
         }
     }
 

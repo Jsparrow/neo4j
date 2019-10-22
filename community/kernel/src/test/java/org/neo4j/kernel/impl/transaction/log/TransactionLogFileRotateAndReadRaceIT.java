@@ -58,19 +58,18 @@ import static org.junit.Assert.assertTrue;
  */
 public class TransactionLogFileRotateAndReadRaceIT
 {
-    private final TestDirectory directory = TestDirectory.testDirectory();
-    private final LifeRule life = new LifeRule( true );
-    private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
-    private final OtherThreadRule<Void> t2 = new OtherThreadRule<>( getClass().getName() + "-T2" );
-    @Rule
-    public final RuleChain rules = RuleChain.outerRule( directory ).around( life ).around( t2 ).around( fileSystemRule );
-
     // If any of these limits are reached the test ends, that or if there's a failure of course
     private static final long LIMIT_TIME = SECONDS.toMillis( 5 );
-    private static final int LIMIT_ROTATIONS = 500;
-    private static final int LIMIT_READS = 1_000;
+	private static final int LIMIT_ROTATIONS = 500;
+	private static final int LIMIT_READS = 1_000;
+	private final TestDirectory directory = TestDirectory.testDirectory();
+	private final LifeRule life = new LifeRule( true );
+	private final DefaultFileSystemRule fileSystemRule = new DefaultFileSystemRule();
+	private final OtherThreadRule<Void> t2 = new OtherThreadRule<>( getClass().getName() + "-T2" );
+	@Rule
+    public final RuleChain rules = RuleChain.outerRule( directory ).around( life ).around( t2 ).around( fileSystemRule );
 
-    @Test
+	@Test
     public void shouldNotSeeEmptyLogFileWhenReadingTransactionStream() throws Exception
     {
         // GIVEN
@@ -134,7 +133,7 @@ public class TransactionLogFileRotateAndReadRaceIT
         // THEN simply getting here means this was successful
     }
 
-    private void deplete( ReadableLogChannel reader )
+	private void deplete( ReadableLogChannel reader )
     {
         byte[] dataChunk = new byte[100];
         try

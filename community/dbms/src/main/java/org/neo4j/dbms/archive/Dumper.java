@@ -54,20 +54,20 @@ public class Dumper
     private final List<ArchiveOperation> operations;
     private final ArchiveProgressPrinter progressPrinter;
 
-    @VisibleForTesting
-    Dumper()
-    {
-        operations = new ArrayList<>();
-        progressPrinter = new ArchiveProgressPrinter( null );
-    }
-
     public Dumper( PrintStream output )
     {
         operations = new ArrayList<>();
         progressPrinter = new ArchiveProgressPrinter( output );
     }
 
-    public void dump( Path dbPath, Path transactionalLogsPath, Path archive, CompressionFormat format, Predicate<Path> exclude ) throws IOException
+	@VisibleForTesting
+    Dumper()
+    {
+        operations = new ArrayList<>();
+        progressPrinter = new ArchiveProgressPrinter( null );
+    }
+
+	public void dump( Path dbPath, Path transactionalLogsPath, Path archive, CompressionFormat format, Predicate<Path> exclude ) throws IOException
     {
         checkWritableDirectory( archive.getParent() );
         operations.clear();
@@ -79,11 +79,10 @@ public class Dumper
         }
 
         progressPrinter.reset();
-        for ( ArchiveOperation operation : operations )
-        {
+        operations.forEach(operation -> {
             progressPrinter.maxBytes += operation.size;
             progressPrinter.maxFiles += operation.isFile ? 1 : 0;
-        }
+        });
 
         try ( ArchiveOutputStream stream = openArchiveOut( archive, format );
               Resource ignore = progressPrinter.startPrinting() )
@@ -95,7 +94,7 @@ public class Dumper
         }
     }
 
-    private void visitPath( Path transactionalLogsPath, Predicate<Path> exclude ) throws IOException
+	private void visitPath( Path transactionalLogsPath, Predicate<Path> exclude ) throws IOException
     {
         Files.walkFileTree( transactionalLogsPath,
                 onlyMatching( not( exclude ),
@@ -105,7 +104,7 @@ public class Dumper
                                                 justContinue() ) ) ) ) );
     }
 
-    private ArchiveOutputStream openArchiveOut( Path archive, CompressionFormat format ) throws IOException
+	private ArchiveOutputStream openArchiveOut( Path archive, CompressionFormat format ) throws IOException
     {
         // StandardOpenOption.CREATE_NEW is important here because it atomically asserts that the file doesn't
         // exist as it is opened, avoiding a TOCTOU race condition which results in a security vulnerability. I
@@ -126,7 +125,7 @@ public class Dumper
         return tarball;
     }
 
-    /**
+	/**
      * @see Loader#readArchiveMetadata(InputStream)
      */
     void writeArchiveMetadata( OutputStream stream ) throws IOException
@@ -137,22 +136,22 @@ public class Dumper
         metadata.writeLong( progressPrinter.maxBytes );
     }
 
-    private void dumpFile( Path root, Path file ) throws IOException
+	private void dumpFile( Path root, Path file ) throws IOException
     {
         withEntry( stream -> writeFile( file, stream ), root, file );
     }
 
-    private void dumpDirectory( Path root, Path dir ) throws IOException
+	private void dumpDirectory( Path root, Path dir ) throws IOException
     {
         withEntry( stream -> {}, root, dir );
     }
 
-    private void withEntry( ThrowingConsumer<ArchiveOutputStream, IOException> operation, Path root, Path file ) throws IOException
+	private void withEntry( ThrowingConsumer<ArchiveOutputStream, IOException> operation, Path root, Path file ) throws IOException
     {
         operations.add( new ArchiveOperation( operation, root, file ) );
     }
 
-    private void writeFile( Path file, ArchiveOutputStream archiveStream ) throws IOException
+	private void writeFile( Path file, ArchiveOutputStream archiveStream ) throws IOException
     {
         try ( InputStream in = Files.newInputStream( file ) )
         {
@@ -160,7 +159,7 @@ public class Dumper
         }
     }
 
-    private static class ArchiveOperation
+	private static class ArchiveOperation
     {
         final ThrowingConsumer<ArchiveOutputStream, IOException> operation;
         final long size;

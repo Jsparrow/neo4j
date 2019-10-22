@@ -21,14 +21,13 @@ package org.neo4j.kernel.impl.transaction.log.entry;
 
 public class LogEntryByteCodes
 {
-    private LogEntryByteCodes()
+    // Real entries
+    public static final byte TX_START = (byte) 1;
+	public static final byte COMMAND = (byte) 3;
+	public static final byte TX_COMMIT = (byte) 5;
+	public static final byte CHECK_POINT = (byte) 7;
+	private LogEntryByteCodes()
     {
         throw new AssertionError(); // no instances are allowed
     }
-
-    // Real entries
-    public static final byte TX_START = (byte) 1;
-    public static final byte COMMAND = (byte) 3;
-    public static final byte TX_COMMIT = (byte) 5;
-    public static final byte CHECK_POINT = (byte) 7;
 }

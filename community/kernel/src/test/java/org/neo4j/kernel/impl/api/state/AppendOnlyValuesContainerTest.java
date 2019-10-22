@@ -286,18 +286,16 @@ class AppendOnlyValuesContainerTest
         }
 
         toRemove.shuffleThis(rnd.random() );
-        for ( final ObjectLongPair<Value> valueRefPair : toRemove )
-        {
+        toRemove.forEach((final ObjectLongPair<Value> valueRefPair) -> {
             final Value removed = container.remove( valueRefPair.getTwo() );
             assertEquals( valueRefPair.getOne(), removed );
             assertThrows( IllegalArgumentException.class, () -> container.remove( valueRefPair.getTwo() ) );
             assertThrows( IllegalArgumentException.class, () -> container.get( valueRefPair.getTwo() ) );
-        }
+        });
 
-        for ( final ObjectLongPair<Value> valueRefPair : valueRefPairs )
-        {
+        valueRefPairs.forEach((final ObjectLongPair<Value> valueRefPair) -> {
             final Value actualValue = container.get( valueRefPair.getTwo() );
             assertEquals( valueRefPair.getOne(), actualValue );
-        }
+        });
     }
 }

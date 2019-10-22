@@ -59,7 +59,7 @@ public class TestConcurrentRelationshipChainLoadingIssue
     private void tryToTriggerRelationshipLoadingStoppingMidWay( int denseNodeThreshold ) throws Throwable
     {
         GraphDatabaseAPI db = (GraphDatabaseAPI) new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
-                .setConfig( dense_node_threshold, "" + denseNodeThreshold )
+                .setConfig( dense_node_threshold, Integer.toString(denseNodeThreshold) )
                 .newGraphDatabase();
         Node node = createNodeWithRelationships( db );
 

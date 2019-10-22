@@ -70,8 +70,6 @@ public class DelegatingPrincipal implements Principal
     @Override
     public String toString()
     {
-        return "DelegatingPrincipal{" +
-                "username='" + username + '\'' +
-                '}';
+        return new StringBuilder().append("DelegatingPrincipal{").append("username='").append(username).append('\'').append('}').toString();
     }
 }

@@ -52,12 +52,6 @@ public class IndexTxStateUpdater
 
     // LABEL CHANGES
 
-    public enum LabelChangeType
-    {
-        ADDED_LABEL,
-        REMOVED_LABEL
-    }
-
     /**
      * A label has been changed, figure out what updates are needed to tx state.
      *
@@ -73,96 +67,94 @@ public class IndexTxStateUpdater
 
         // Check all indexes of the changed label
         Collection<SchemaDescriptor> indexes = indexingService.getRelatedIndexes( new long[]{labelId}, existingPropertyKeyIds, NODE );
-        if ( !indexes.isEmpty() )
-        {
-            MutableIntObjectMap<Value> materializedProperties = IntObjectMaps.mutable.empty();
-            for ( SchemaDescriptor index : indexes )
-            {
-                int[] indexPropertyIds = index.schema().getPropertyIds();
-                Value[] values = getValueTuple( node, propertyCursor, NO_SUCH_PROPERTY_KEY, NO_VALUE, indexPropertyIds, materializedProperties );
-                switch ( changeType )
-                {
-                case ADDED_LABEL:
-                    indexingService.validateBeforeCommit( index.schema(), values );
-                    read.txState().indexDoUpdateEntry( index.schema(), node.nodeReference(), null, ValueTuple.of( values ) );
-                    break;
-                case REMOVED_LABEL:
-                    read.txState().indexDoUpdateEntry( index.schema(), node.nodeReference(), ValueTuple.of( values ), null );
-                    break;
-                default:
-                    throw new IllegalStateException( changeType + " is not a supported event" );
-                }
-            }
-        }
+        if (indexes.isEmpty()) {
+			return;
+		}
+		MutableIntObjectMap<Value> materializedProperties = IntObjectMaps.mutable.empty();
+		for ( SchemaDescriptor index : indexes )
+		{
+		    int[] indexPropertyIds = index.schema().getPropertyIds();
+		    Value[] values = getValueTuple( node, propertyCursor, NO_SUCH_PROPERTY_KEY, NO_VALUE, indexPropertyIds, materializedProperties );
+		    switch ( changeType )
+		    {
+		    case ADDED_LABEL:
+		        indexingService.validateBeforeCommit( index.schema(), values );
+		        read.txState().indexDoUpdateEntry( index.schema(), node.nodeReference(), null, ValueTuple.of( values ) );
+		        break;
+		    case REMOVED_LABEL:
+		        read.txState().indexDoUpdateEntry( index.schema(), node.nodeReference(), ValueTuple.of( values ), null );
+		        break;
+		    default:
+		        throw new IllegalStateException( changeType + " is not a supported event" );
+		    }
+		}
     }
 
-    private boolean noSchemaChangedInTx()
+	private boolean noSchemaChangedInTx()
     {
         return !(read.txState().hasChanges() && !read.txState().hasDataChanges());
     }
 
-    //PROPERTY CHANGES
-
-    void onPropertyAdd( NodeCursor node, PropertyCursor propertyCursor, long[] labels, int propertyKeyId, int[] existingPropertyKeyIds, Value value )
+	void onPropertyAdd( NodeCursor node, PropertyCursor propertyCursor, long[] labels, int propertyKeyId, int[] existingPropertyKeyIds, Value value )
     {
         assert noSchemaChangedInTx();
         Collection<SchemaDescriptor> indexes = indexingService.getRelatedIndexes( labels, propertyKeyId, NODE );
-        if ( !indexes.isEmpty() )
-        {
-            MutableIntObjectMap<Value> materializedProperties = IntObjectMaps.mutable.empty();
-            NodeSchemaMatcher.onMatchingSchema( indexes.iterator(), propertyKeyId, existingPropertyKeyIds,
-                    index ->
-                    {
-                        Value[] values = getValueTuple( node, propertyCursor, propertyKeyId, value, index.schema().getPropertyIds(), materializedProperties );
-                        indexingService.validateBeforeCommit( index.schema(), values );
-                        read.txState().indexDoUpdateEntry( index.schema(), node.nodeReference(), null, ValueTuple.of( values ) );
-                    } );
-        }
+        if (indexes.isEmpty()) {
+			return;
+		}
+		MutableIntObjectMap<Value> materializedProperties = IntObjectMaps.mutable.empty();
+		NodeSchemaMatcher.onMatchingSchema( indexes.iterator(), propertyKeyId, existingPropertyKeyIds,
+		        index ->
+		        {
+		            Value[] values = getValueTuple( node, propertyCursor, propertyKeyId, value, index.schema().getPropertyIds(), materializedProperties );
+		            indexingService.validateBeforeCommit( index.schema(), values );
+		            read.txState().indexDoUpdateEntry( index.schema(), node.nodeReference(), null, ValueTuple.of( values ) );
+		        } );
     }
 
-    void onPropertyRemove( NodeCursor node, PropertyCursor propertyCursor, long[] labels, int propertyKeyId, int[] existingPropertyKeyIds, Value value )
+	void onPropertyRemove( NodeCursor node, PropertyCursor propertyCursor, long[] labels, int propertyKeyId, int[] existingPropertyKeyIds, Value value )
     {
         assert noSchemaChangedInTx();
         Collection<SchemaDescriptor> indexes = indexingService.getRelatedIndexes( labels, propertyKeyId, NODE );
-        if ( !indexes.isEmpty() )
-        {
-            MutableIntObjectMap<Value> materializedProperties = IntObjectMaps.mutable.empty();
-            NodeSchemaMatcher.onMatchingSchema( indexes.iterator(), propertyKeyId, existingPropertyKeyIds,
-                    index ->
-                    {
-                        Value[] values = getValueTuple( node, propertyCursor, propertyKeyId, value, index.schema().getPropertyIds(), materializedProperties );
-                        read.txState().indexDoUpdateEntry( index.schema(), node.nodeReference(), ValueTuple.of( values ), null );
-                    } );
-        }
+        if (indexes.isEmpty()) {
+			return;
+		}
+		MutableIntObjectMap<Value> materializedProperties = IntObjectMaps.mutable.empty();
+		NodeSchemaMatcher.onMatchingSchema( indexes.iterator(), propertyKeyId, existingPropertyKeyIds,
+		        index ->
+		        {
+		            Value[] values = getValueTuple( node, propertyCursor, propertyKeyId, value, index.schema().getPropertyIds(), materializedProperties );
+		            read.txState().indexDoUpdateEntry( index.schema(), node.nodeReference(), ValueTuple.of( values ), null );
+		        } );
     }
 
-    void onPropertyChange( NodeCursor node, PropertyCursor propertyCursor, long[] labels, int propertyKeyId, int[] existingPropertyKeyIds,
+	void onPropertyChange( NodeCursor node, PropertyCursor propertyCursor, long[] labels, int propertyKeyId, int[] existingPropertyKeyIds,
             Value beforeValue, Value afterValue )
     {
         assert noSchemaChangedInTx();
         Collection<SchemaDescriptor> indexes = indexingService.getRelatedIndexes( labels, propertyKeyId, NODE );
-        if ( !indexes.isEmpty() )
-        {
-            MutableIntObjectMap<Value> materializedProperties = IntObjectMaps.mutable.empty();
-            NodeSchemaMatcher.onMatchingSchema( indexes.iterator(), propertyKeyId, existingPropertyKeyIds,
-                    index ->
-                    {
-                        int[] propertyIds = index.getPropertyIds();
-                        Value[] valuesAfter = getValueTuple( node, propertyCursor, propertyKeyId, afterValue, propertyIds, materializedProperties );
+        if (indexes.isEmpty()) {
+			return;
+		}
+		MutableIntObjectMap<Value> materializedProperties = IntObjectMaps.mutable.empty();
+		NodeSchemaMatcher.onMatchingSchema( indexes.iterator(), propertyKeyId, existingPropertyKeyIds,
+		        index ->
+		        {
+		            int[] propertyIds = index.getPropertyIds();
+		            Value[] valuesAfter = getValueTuple( node, propertyCursor, propertyKeyId, afterValue, propertyIds, materializedProperties );
 
-                        // The valuesBefore tuple is just like valuesAfter, except is has the afterValue instead of the beforeValue
-                        Value[] valuesBefore = valuesAfter.clone();
-                        int k = ArrayUtils.indexOf( propertyIds, propertyKeyId );
-                        valuesBefore[k] = beforeValue;
+		            // The valuesBefore tuple is just like valuesAfter, except is has the afterValue instead of the beforeValue
+		            Value[] valuesBefore = valuesAfter.clone();
+		            int k = ArrayUtils.indexOf( propertyIds, propertyKeyId );
+		            valuesBefore[k] = beforeValue;
 
-                        indexingService.validateBeforeCommit( index, valuesAfter );
-                        read.txState().indexDoUpdateEntry( index, node.nodeReference(),
-                                ValueTuple.of( valuesBefore ), ValueTuple.of( valuesAfter ) );
-                    } );
-        }
+		            indexingService.validateBeforeCommit( index, valuesAfter );
+		            read.txState().indexDoUpdateEntry( index, node.nodeReference(),
+		                    ValueTuple.of( valuesBefore ), ValueTuple.of( valuesAfter ) );
+		        } );
     }
 
-    private Value[] getValueTuple( NodeCursor node, PropertyCursor propertyCursor,
+	private Value[] getValueTuple( NodeCursor node, PropertyCursor propertyCursor,
             int changedPropertyKeyId, Value changedValue, int[] indexPropertyIds,
             MutableIntObjectMap<Value> materializedValues )
     {
@@ -204,4 +196,14 @@ public class IndexTxStateUpdater
 
         return values;
     }
+
+	public enum LabelChangeType
+    {
+        ADDED_LABEL,
+        REMOVED_LABEL
+    }
+
+    //PROPERTY CHANGES
+
+    
 }

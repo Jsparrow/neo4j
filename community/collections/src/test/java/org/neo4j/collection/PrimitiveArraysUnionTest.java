@@ -40,8 +40,18 @@ public class PrimitiveArraysUnionTest
     private static final long SEED = ThreadLocalRandom.current().nextLong();
     private static final Random random = new Random( SEED );
     private static final int MINIMUM_RANDOM_SIZE = 10;
+	private final int[] lhs;
+	private final int[] rhs;
+	private final int[] expected;
 
-    @Parameterized.Parameters( name = "{0}" )
+	public PrimitiveArraysUnionTest( Input input )
+    {
+        this.lhs = input.lhs;
+        this.rhs = input.rhs;
+        this.expected = input.expected;
+    }
+
+	@Parameterized.Parameters( name = "{0}" )
     public static Iterable<Object[]> parameters()
     {
         List<Object[]> inputs = Stream.generate( PrimitiveArraysUnionTest::randomInput ).limit( 300 )
@@ -66,18 +76,7 @@ public class PrimitiveArraysUnionTest
         return inputs;
     }
 
-    private final int[] lhs;
-    private final int[] rhs;
-    private final int[] expected;
-
-    public PrimitiveArraysUnionTest( Input input )
-    {
-        this.lhs = input.lhs;
-        this.rhs = input.rhs;
-        this.expected = input.expected;
-    }
-
-    @Test
+	@Test
     public void testUnion()
     {
         int[] actual = union( lhs, rhs );
@@ -91,9 +90,55 @@ public class PrimitiveArraysUnionTest
         }
     }
 
-    private static Input.Lhs lhs( int... lhs )
+	private static Input.Lhs lhs( int... lhs )
     {
         return new Input.Lhs( lhs );
+    }
+
+	private static Object[] randomInput()
+    {
+        int randomArraySize = MINIMUM_RANDOM_SIZE + random.nextInt( 100 );
+        int lhsSize = random.nextInt( randomArraySize );
+        int rhsSize = randomArraySize - lhsSize;
+
+        int[] resultValues = new int[randomArraySize];
+        int[] lhs = new int[lhsSize];
+        int[] rhs = new int[rhsSize];
+
+        int lhsSideItems = 0;
+        int rhsSideItems = 0;
+
+        int index = 0;
+        int value = random.nextInt( 10 );
+        do
+        {
+            if ( random.nextBoolean() )
+            {
+                if ( rhsSideItems < rhsSize )
+                {
+                    rhs[rhsSideItems++] = value;
+                }
+                else
+                {
+                    lhs[lhsSideItems++] = value;
+                }
+            }
+            else
+            {
+                if ( lhsSideItems < lhsSize )
+                {
+                    lhs[lhsSideItems++] = value;
+                }
+                else
+                {
+                    rhs[rhsSideItems++] = value;
+                }
+            }
+            resultValues[index++] = value;
+            value += 1 + random.nextInt( 10 );
+        }
+        while ( index < randomArraySize );
+        return new Object[]{new Input( lhs, rhs, resultValues )};
     }
 
     static class Input
@@ -161,51 +206,5 @@ public class PrimitiveArraysUnionTest
                 return new Object[] {new Input( lhs, rhs, rhs )};
             }
         }
-    }
-
-    private static Object[] randomInput()
-    {
-        int randomArraySize = MINIMUM_RANDOM_SIZE + random.nextInt( 100 );
-        int lhsSize = random.nextInt( randomArraySize );
-        int rhsSize = randomArraySize - lhsSize;
-
-        int[] resultValues = new int[randomArraySize];
-        int[] lhs = new int[lhsSize];
-        int[] rhs = new int[rhsSize];
-
-        int lhsSideItems = 0;
-        int rhsSideItems = 0;
-
-        int index = 0;
-        int value = random.nextInt( 10 );
-        do
-        {
-            if ( random.nextBoolean() )
-            {
-                if ( rhsSideItems < rhsSize )
-                {
-                    rhs[rhsSideItems++] = value;
-                }
-                else
-                {
-                    lhs[lhsSideItems++] = value;
-                }
-            }
-            else
-            {
-                if ( lhsSideItems < lhsSize )
-                {
-                    lhs[lhsSideItems++] = value;
-                }
-                else
-                {
-                    rhs[rhsSideItems++] = value;
-                }
-            }
-            resultValues[index++] = value;
-            value += 1 + random.nextInt( 10 );
-        }
-        while ( index < randomArraySize );
-        return new Object[]{new Input( lhs, rhs, resultValues )};
     }
 }

@@ -106,21 +106,17 @@ public class ServerTestUtils
     public static void writeConfigToFile( Map<String, String> properties, File file )
     {
         Properties props = loadProperties( file );
-        for ( Map.Entry<String, String> entry : properties.entrySet() )
-        {
-            props.setProperty( entry.getKey(), entry.getValue() );
-        }
+        properties.entrySet().forEach(entry -> props.setProperty(entry.getKey(), entry.getValue()));
         storeProperties( file, props );
     }
 
     public static String asOneLine( Map<String, String> properties )
     {
         StringBuilder builder = new StringBuilder();
-        for ( Map.Entry<String, String> property : properties.entrySet() )
-        {
+        properties.entrySet().forEach(property -> {
             builder.append( builder.length() > 0 ? "," : "" );
             builder.append( property.getKey() ).append( "=" ).append( property.getValue() );
-        }
+        });
         return builder.toString();
     }
 
@@ -182,14 +178,9 @@ public class ServerTestUtils
 
     public static File createTempConfigFile( File parentDir )
     {
-        File file = new File( parentDir, "test-" + new Random().nextInt() + ".properties" );
+        File file = new File( parentDir, new StringBuilder().append("test-").append(new Random().nextInt()).append(".properties").toString() );
         file.deleteOnExit();
         return file;
-    }
-
-    public interface BlockWithCSVFileURL
-    {
-        void execute( String url ) throws Exception;
     }
 
     public static void withCSVFile( int rowCount, BlockWithCSVFileURL block ) throws Exception
@@ -214,7 +205,7 @@ public class ServerTestUtils
         }
     }
 
-    public static void verifyConnector( GraphDatabaseService db, String name, boolean enabled )
+	public static void verifyConnector( GraphDatabaseService db, String name, boolean enabled )
     {
         HostnamePort address = connectorAddress( db, name );
         if ( enabled )
@@ -228,13 +219,13 @@ public class ServerTestUtils
         }
     }
 
-    public static HostnamePort connectorAddress( GraphDatabaseService db, String name )
+	public static HostnamePort connectorAddress( GraphDatabaseService db, String name )
     {
         ConnectorPortRegister portRegister = ((GraphDatabaseAPI) db).getDependencyResolver().resolveDependency( ConnectorPortRegister.class );
         return portRegister.getLocalAddress( name );
     }
 
-    private static boolean canConnectToSocket( String host, int port )
+	private static boolean canConnectToSocket( String host, int port )
     {
         try
         {
@@ -245,5 +236,10 @@ public class ServerTestUtils
         {
             return false;
         }
+    }
+
+	public interface BlockWithCSVFileURL
+    {
+        void execute( String url ) throws Exception;
     }
 }

@@ -39,13 +39,12 @@ import static org.neo4j.server.rest.web.RestfulGraphDatabase.PATH_AUTO_INDEX;
 
 public final class FunctionalTestHelper
 {
-    private final NeoServer server;
-    private final GraphDbHelper helper;
-
     public static final Client CLIENT = Client.create();
-    private RestRequest request;
+	private final NeoServer server;
+	private final GraphDbHelper helper;
+	private RestRequest request;
 
-    public FunctionalTestHelper( NeoServer server )
+	public FunctionalTestHelper( NeoServer server )
     {
         if ( server.getDatabase() == null )
         {
@@ -56,7 +55,7 @@ public final class FunctionalTestHelper
         this.request = new RestRequest( server.baseUri().resolve( "db/data/" ) );
     }
 
-    public static Matcher<String[]> arrayContains( final String element )
+	public static Matcher<String[]> arrayContains( final String element )
     {
         return new TypeSafeMatcher<String[]>()
         {
@@ -95,52 +94,52 @@ public final class FunctionalTestHelper
         };
     }
 
-    public GraphDbHelper getGraphDbHelper()
+	public GraphDbHelper getGraphDbHelper()
     {
         return helper;
     }
 
-    public String dataUri()
+	public String dataUri()
     {
         return server.baseUri().toString() + "db/data/";
     }
 
-    public String nodeUri()
+	public String nodeUri()
     {
         return dataUri() + "node";
     }
 
-    public String nodeUri( long id )
+	public String nodeUri( long id )
     {
-        return nodeUri() + "/" + id;
+        return new StringBuilder().append(nodeUri()).append("/").append(id).toString();
     }
 
-    public String nodePropertiesUri( long id )
+	public String nodePropertiesUri( long id )
     {
         return nodeUri( id ) + "/properties";
     }
 
-    public String nodePropertyUri( long id, String key )
+	public String nodePropertyUri( long id, String key )
     {
-        return nodePropertiesUri( id ) + "/" + key;
+        return new StringBuilder().append(nodePropertiesUri( id )).append("/").append(key).toString();
     }
 
-    String relationshipUri()
+	String relationshipUri()
     {
         return dataUri() + "relationship";
     }
 
-    public String relationshipUri( long id )
+	public String relationshipUri( long id )
     {
-        return relationshipUri() + "/" + id;
+        return new StringBuilder().append(relationshipUri()).append("/").append(id).toString();
     }
 
-    public String relationshipPropertiesUri( long id )
+	public String relationshipPropertiesUri( long id )
     {
         return relationshipUri( id ) + "/properties";
     }
 
-    public String relationshipsUri( long nodeId, String dir, String... types )
+	public String relationshipsUri( long nodeId, String dir, String... types )
     {
         StringBuilder typesString = new StringBuilder();
         for ( String type : types )
@@ -148,75 +147,74 @@ public final class FunctionalTestHelper
             typesString.append( typesString.length() > 0 ? "&" : "" );
             typesString.append( type );
         }
-        return nodeUri( nodeId ) + "/relationships/" + dir + "/" + typesString;
+        return new StringBuilder().append(nodeUri( nodeId )).append("/relationships/").append(dir).append("/").append(typesString).toString();
     }
 
-    public String indexUri()
+	public String indexUri()
     {
         return dataUri() + "index/";
     }
 
-    public String nodeIndexUri()
+	public String nodeIndexUri()
     {
         return indexUri() + "node/";
     }
 
-    public String relationshipIndexUri()
+	public String relationshipIndexUri()
     {
         return indexUri() + "relationship/";
     }
 
-    public String managementUri()
+	public String managementUri()
     {
         return server.baseUri()
                 .toString() + "db/manage";
     }
 
-    public String indexNodeUri( String indexName )
+	public String indexNodeUri( String indexName )
     {
         return nodeIndexUri() + indexName;
     }
 
-    public String indexNodeUri( String indexName, String key, Object value )
+	public String indexNodeUri( String indexName, String key, Object value )
     {
-        return indexNodeUri( indexName ) + "/" + key + "/" + value;
+        return new StringBuilder().append(indexNodeUri( indexName )).append("/").append(key).append("/").append(value).toString();
     }
 
-    public String indexRelationshipUri( String indexName )
+	public String indexRelationshipUri( String indexName )
     {
         return relationshipIndexUri() + indexName;
     }
 
-    public String indexRelationshipUri( String indexName, String key, Object value )
+	public String indexRelationshipUri( String indexName, String key, Object value )
     {
-        return indexRelationshipUri( indexName ) + "/" + key + "/" + value;
+        return new StringBuilder().append(indexRelationshipUri( indexName )).append("/").append(key).append("/").append(value).toString();
     }
 
-    public String extensionUri()
+	public String extensionUri()
     {
         return dataUri() + "ext";
     }
 
-    public JaxRsResponse get( String path )
+	public JaxRsResponse get( String path )
     {
         return request.get( path );
     }
 
-    public long getNodeIdFromUri( String nodeUri )
+	public long getNodeIdFromUri( String nodeUri )
     {
         return Long.valueOf( nodeUri.substring( nodeUri.lastIndexOf( '/' ) + 1, nodeUri.length() ) );
     }
 
-    public long getRelationshipIdFromUri( String relationshipUri )
+	public long getRelationshipIdFromUri( String relationshipUri )
     {
         return getNodeIdFromUri( relationshipUri );
     }
 
-    public Map<String, Object> removeAnyAutoIndex( Map<String, Object> map )
+	public Map<String, Object> removeAnyAutoIndex( Map<String, Object> map )
     {
         Map<String, Object> result = new HashMap<>();
-        for ( Map.Entry<String, Object> entry : map.entrySet() )
-        {
+        map.entrySet().forEach(entry -> {
             Map<?, ?> innerMap = (Map<?,?>) entry.getValue();
             String template = innerMap.get( "template" ).toString();
             if ( !template.contains( PATH_AUTO_INDEX.replace("{type}", RestfulGraphDatabase.NODE_AUTO_INDEX_TYPE) ) &&
@@ -225,11 +223,11 @@ public final class FunctionalTestHelper
             {
                 result.put( entry.getKey(), entry.getValue() );
             }
-        }
+        });
         return result;
     }
 
-    public URI baseUri()
+	public URI baseUri()
     {
         return server.baseUri();
     }

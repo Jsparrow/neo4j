@@ -30,7 +30,62 @@ import java.util.List;
 @Deprecated
 public class ProcessFailureException extends Exception
 {
-    public static final class Entry implements Serializable
+    private final Entry[] causes;
+
+	public ProcessFailureException( List<Entry> causes )
+    {
+        super( "Monitored process failed" + message( causes ), cause( causes ) );
+        this.causes = causes.toArray( new Entry[0] );
+    }
+
+	private static String message( List<Entry> causes )
+    {
+        if ( causes.isEmpty() )
+        {
+            return ".";
+        }
+        if ( causes.size() == 1 )
+        {
+            return new StringBuilder().append(" in '").append(causes.get( 0 ).part).append("'.").toString();
+        }
+        StringBuilder result = new StringBuilder( ":" );
+        causes.forEach(entry -> result.append("\n\t").append(entry));
+        return result.toString();
+    }
+
+	@SuppressWarnings( "ThrowableResultOfMethodCallIgnored" )
+    private static Throwable cause( List<Entry> causes )
+    {
+        return causes.size() >= 1 ? causes.get( 0 ).failure : null;
+    }
+
+	@Override
+    public void printStackTrace( PrintStream s )
+    {
+        super.printStackTrace( s );
+        printAllCauses( new PrintWriter( s, true ) );
+    }
+
+	@Override
+    public void printStackTrace( PrintWriter s )
+    {
+        super.printStackTrace( s );
+        printAllCauses( s );
+    }
+
+	public void printAllCauses( PrintWriter writer )
+    {
+        if (getCause() != null) {
+			return;
+		}
+		for ( Entry entry : causes )
+		{
+		    entry.failure.printStackTrace( writer );
+		}
+		writer.flush();
+    }
+
+	public static final class Entry implements Serializable
     {
         private final String part;
         private final Throwable failure;
@@ -44,65 +99,7 @@ public class ProcessFailureException extends Exception
         @Override
         public String toString()
         {
-            return "In '" + part + "': " + failure;
-        }
-    }
-
-    private final Entry[] causes;
-
-    public ProcessFailureException( List<Entry> causes )
-    {
-        super( "Monitored process failed" + message( causes ), cause( causes ) );
-        this.causes = causes.toArray( new Entry[0] );
-    }
-
-    private static String message( List<Entry> causes )
-    {
-        if ( causes.isEmpty() )
-        {
-            return ".";
-        }
-        if ( causes.size() == 1 )
-        {
-            return " in '" + causes.get( 0 ).part + "'.";
-        }
-        StringBuilder result = new StringBuilder( ":" );
-        for ( Entry entry : causes )
-        {
-            result.append( "\n\t" ).append( entry );
-        }
-        return result.toString();
-    }
-
-    @SuppressWarnings( "ThrowableResultOfMethodCallIgnored" )
-    private static Throwable cause( List<Entry> causes )
-    {
-        return causes.size() >= 1 ? causes.get( 0 ).failure : null;
-    }
-
-    @Override
-    public void printStackTrace( PrintStream s )
-    {
-        super.printStackTrace( s );
-        printAllCauses( new PrintWriter( s, true ) );
-    }
-
-    @Override
-    public void printStackTrace( PrintWriter s )
-    {
-        super.printStackTrace( s );
-        printAllCauses( s );
-    }
-
-    public void printAllCauses( PrintWriter writer )
-    {
-        if ( getCause() == null )
-        {
-            for ( Entry entry : causes )
-            {
-                entry.failure.printStackTrace( writer );
-            }
-            writer.flush();
+            return new StringBuilder().append("In '").append(part).append("': ").append(failure).toString();
         }
     }
 }

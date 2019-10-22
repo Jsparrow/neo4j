@@ -36,14 +36,9 @@ import static org.neo4j.graphdb.traversal.Evaluators.lastRelationshipTypeIs;
 
 public class TestEvaluators extends TraversalTestBase
 {
-    private enum Types implements RelationshipType
-    {
-        A,B,C
-    }
-
     private Transaction tx;
 
-    @Before
+	@Before
     public void createGraph()
     {
         /*
@@ -61,13 +56,13 @@ public class TestEvaluators extends TraversalTestBase
         tx = beginTx();
     }
 
-    @After
+	@After
     public void tearDown()
     {
         tx.close();
     }
 
-    @Test
+	@Test
     public void lastRelationshipTypeEvaluator()
     {
         Node a = getNodeWithName( "a" );
@@ -80,7 +75,7 @@ public class TestEvaluators extends TraversalTestBase
                 "a,b,c,d,e", "a,f,g", "a,b,h", "a,b,h,i,k" );
     }
 
-    @Test
+	@Test
     public void endNodeIs()
     {
         Node a = getNodeWithName( "a" );
@@ -93,7 +88,7 @@ public class TestEvaluators extends TraversalTestBase
         expectPaths( getGraphDb().traversalDescription().evaluator( includeWhereEndNodeIs( g ) ).traverse( a ), "a,f,g" );
     }
 
-    @Test
+	@Test
     public void depths()
     {
         Node a = getNodeWithName( "a" );
@@ -102,5 +97,10 @@ public class TestEvaluators extends TraversalTestBase
                 "a,b,h", "a,b,h,i", "a,b,h,i,k", "a,b,c", "a,b,c,d", "a,b,c,d,e", "a,b,c,d,e,j" );
         expectPaths( getGraphDb().traversalDescription().evaluator( Evaluators.toDepth( 2 ) ).traverse( a ), "a", "a,b", "a,b,c",
                 "a,b,h", "a,f", "a,f,g" );
+    }
+
+	private enum Types implements RelationshipType
+    {
+        A,B,C
     }
 }

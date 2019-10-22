@@ -36,25 +36,15 @@ import org.neo4j.kernel.impl.store.record.RelationshipTypeTokenRecord;
  */
 public interface RecordFormats
 {
-    abstract class Factory extends Service
-    {
-        public Factory( String key, String... altKeys )
-        {
-            super( key, altKeys );
-        }
-
-        public abstract RecordFormats newInstance();
-    }
-
     String storeVersion();
 
-    /**
+	/**
      * @return the neo4j version where this format was introduced. It is almost certainly NOT the only version of
      * neo4j where this format is used.
      */
     String introductionVersion();
 
-    /**
+	/**
      * Generation of this format, format family local int value which should be incrementing along with
      * releases, e.g. store version, e.g. official versions of the product. Use to determine generation of particular
      * format and to be able to find newest of among them.
@@ -70,45 +60,45 @@ public interface RecordFormats
      */
     int generation();
 
-    RecordFormat<NodeRecord> node();
+	RecordFormat<NodeRecord> node();
 
-    RecordFormat<RelationshipGroupRecord> relationshipGroup();
+	RecordFormat<RelationshipGroupRecord> relationshipGroup();
 
-    RecordFormat<RelationshipRecord> relationship();
+	RecordFormat<RelationshipRecord> relationship();
 
-    RecordFormat<PropertyRecord> property();
+	RecordFormat<PropertyRecord> property();
 
-    RecordFormat<LabelTokenRecord> labelToken();
+	RecordFormat<LabelTokenRecord> labelToken();
 
-    RecordFormat<PropertyKeyTokenRecord> propertyKeyToken();
+	RecordFormat<PropertyKeyTokenRecord> propertyKeyToken();
 
-    RecordFormat<RelationshipTypeTokenRecord> relationshipTypeToken();
+	RecordFormat<RelationshipTypeTokenRecord> relationshipTypeToken();
 
-    RecordFormat<DynamicRecord> dynamic();
+	RecordFormat<DynamicRecord> dynamic();
 
-    RecordFormat<MetaDataRecord> metaData();
+	RecordFormat<MetaDataRecord> metaData();
 
-    /**
+	/**
      * Use when comparing one format to another, for example for migration purposes.
      *
      * @return array of {@link Capability capabilities} for comparison.
      */
     Capability[] capabilities();
 
-    /**
+	/**
      * @param capability {@link Capability} to check for.
      * @return whether or not this format has a certain {@link Capability}.
      */
     boolean hasCapability( Capability capability );
 
-    /**
+	/**
      * Get format family to which this format belongs to.
      * @return format family
      * @see FormatFamily
      */
     FormatFamily getFormatFamily();
 
-    /**
+	/**
      * Whether or not changes in the {@code other} format, compared to this format, for the given {@code type}, are compatible.
      *
      * @param other {@link RecordFormats} to check compatibility with.
@@ -117,9 +107,19 @@ public interface RecordFormats
      */
     boolean hasCompatibleCapabilities( RecordFormats other, CapabilityType type );
 
-    /**
+	/**
      * Record format name
      * @return name of record format
      */
     String name();
+
+	abstract class Factory extends Service
+    {
+        public Factory( String key, String... altKeys )
+        {
+            super( key, altKeys );
+        }
+
+        public abstract RecordFormats newInstance();
+    }
 }

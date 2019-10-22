@@ -76,11 +76,10 @@ class PrimitiveLongObjectMapRIT
 
     private static void fullVerification( Maps target, Random random )
     {
-        for ( Map.Entry<Long, Integer> entry: target.normalMap.entrySet() )
-        {
+        target.normalMap.entrySet().forEach(entry -> {
             assertTrue( target.map.containsKey( entry.getKey() ) );
             assertEquals( entry.getValue(), target.map.get( entry.getKey() ) );
-        }
+        });
 
         for ( int i = 0; i < target.normalMap.size(); i++ )
         {
@@ -90,8 +89,7 @@ class PrimitiveLongObjectMapRIT
 
     private static Printable given()
     {
-        return out -> out.println( PrimitiveLongObjectMap.class.getSimpleName() + "<Integer> map = " +
-                Primitive.class.getSimpleName() + ".longObjectMap();" );
+        return out -> out.println( new StringBuilder().append(PrimitiveLongObjectMap.class.getSimpleName()).append("<Integer> map = ").append(Primitive.class.getSimpleName()).append(".longObjectMap();").toString() );
     }
 
     private static ActionFactory<Maps, String> actionFactory( final Random random )
@@ -146,7 +144,13 @@ class PrimitiveLongObjectMapRIT
         return value;
     }
 
-    private static class AddAction implements Action<Maps, String>
+    private static String capitilize( boolean bool )
+    {
+        String string = Boolean.valueOf( bool ).toString();
+        return string.substring( 0, 1 ).toUpperCase() + string.substring( 1 ).toLowerCase();
+    }
+
+	private static class AddAction implements Action<Maps, String>
     {
         private final long key;
         private final Integer value;
@@ -182,8 +186,8 @@ class PrimitiveLongObjectMapRIT
                             (valueAfter != null && valueAfter.equals( value )) &
                             existsAfter &
                             (sizeAfter == actualSizeAfter);
-            return ok ? null : "" + key + ":" + value + "," + existingValue + "," + existedBefore +
-                    "," + previous + "," + existsAfter;
+            return ok ? null : new StringBuilder().append(Long.toString(key)).append(":").append(value).append(",").append(existingValue).append(",")
+					.append(existedBefore).append(",").append(previous).append(",").append(existsAfter).toString();
         }
 
         @Override
@@ -191,7 +195,7 @@ class PrimitiveLongObjectMapRIT
         {
             Integer existingValue = source.normalMap.get( key );
 
-            String addition = "map.put( " + key + ", " + value + " );";
+            String addition = new StringBuilder().append("map.put( ").append(key).append(", ").append(value).append(" );").toString();
             if ( includeChecks )
             {
                 boolean existing = existingValue != null;
@@ -207,7 +211,8 @@ class PrimitiveLongObjectMapRIT
                 out.println( format( "assertEquals( \"%s\", %d, sizeBefore );",
                         "Size before put should have been " + actualSizeBefore, actualSizeBefore ) );
                 out.println( format( "assert%s( \"%s\", existedBefore );", capitilize( existing ),
-                        key + " should " + (existing ? "" : "not ") + "exist before putting here" ) );
+                        new StringBuilder().append(key).append(" should ").append(existing ? "" : "not ").append("exist before putting here")
+								.toString() ) );
                 if ( existing )
                 {
                     out.println( format( "assertEquals( \"%s\", (Integer)%d, valueBefore );",
@@ -264,8 +269,8 @@ class PrimitiveLongObjectMapRIT
                             (existing ? valueBefore.equals( existingValue ) : valueBefore == null) &
                             (existing ? removed.equals( existingValue ) : removed == null) &
                             (valueAfter == null) & !existsAfter;
-            return ok ? null : "" + key + "," + existingValue + "," + existedBefore +
-                    "," + removed + "," + existsAfter;
+            return ok ? null : new StringBuilder().append(Long.toString(key)).append(",").append(existingValue).append(",").append(existedBefore).append(",")
+					.append(removed).append(",").append(existsAfter).toString();
         }
 
         @Override
@@ -273,7 +278,7 @@ class PrimitiveLongObjectMapRIT
         {
             Integer existingValue = source.normalMap.get( key );
 
-            String removal = "map.remove( " + key + " );";
+            String removal = new StringBuilder().append("map.remove( ").append(key).append(" );").toString();
             if ( includeChecks )
             {
                 boolean existing = existingValue != null;
@@ -284,7 +289,8 @@ class PrimitiveLongObjectMapRIT
                 out.println( format( "Integer valueAfter = map.get( %d );", key ) );
 
                 out.println( format( "assert%s( \"%s\", existedBefore );", capitilize( existing ),
-                        key + " should " + (existing ? "" : "not ") + "exist before putting here" ) );
+                        new StringBuilder().append(key).append(" should ").append(existing ? "" : "not ").append("exist before putting here")
+								.toString() ) );
                 if ( existing )
                 {
                     out.println( format( "assertEquals( \"%s\", (Integer)%d, valueBefore );",
@@ -309,12 +315,6 @@ class PrimitiveLongObjectMapRIT
                 out.println( removal );
             }
         }
-    }
-
-    private static String capitilize( boolean bool )
-    {
-        String string = Boolean.valueOf( bool ).toString();
-        return string.substring( 0, 1 ).toUpperCase() + string.substring( 1 ).toLowerCase();
     }
 
     private static class Maps implements TestResource

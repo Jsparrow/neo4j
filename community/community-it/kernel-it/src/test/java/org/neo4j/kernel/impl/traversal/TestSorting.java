@@ -76,15 +76,12 @@ public class TestSorting extends TraversalTestBase
         List<String> allNames = new ArrayList<>( asList( abraham, george, dan, zack, andreas, nicholas ) );
         Collections.sort( allNames );
         List<Node> all = new ArrayList<>();
-        for ( String name : allNames )
-        {
-            all.add( getNodeWithName( name ) );
-        }
+        allNames.forEach(name -> all.add(getNodeWithName(name)));
         return all;
     }
 
     private static String triplet( String i, String type, String you )
     {
-        return i + " " + type + " " + you;
+        return new StringBuilder().append(i).append(" ").append(type).append(" ").append(you).toString();
     }
 }

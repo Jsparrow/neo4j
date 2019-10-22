@@ -91,10 +91,7 @@ public class ConcurrentCreateDropIndexIT
             List<IndexDefinition> indexes = asList( db.schema().getIndexes() );
             assertEquals( threads, indexes.size() );
             Set<String> labels = new HashSet<>();
-            for ( IndexDefinition index : indexes )
-            {
-                assertTrue( labels.add( single( index.getLabels() ).name() ) );
-            }
+            indexes.forEach(index -> assertTrue(labels.add(single(index.getLabels()).name())));
             tx.success();
         }
     }
@@ -115,10 +112,7 @@ public class ConcurrentCreateDropIndexIT
 
         // WHEN dropping them
         Race race = new Race();
-        for ( IndexDefinition index : indexes )
-        {
-            race.addContestant( indexDrop( index ), 1 );
-        }
+        indexes.forEach(index -> race.addContestant(indexDrop(index), 1));
         race.go();
 
         // THEN they should all be observed as dropped in the end
@@ -153,10 +147,7 @@ public class ConcurrentCreateDropIndexIT
             expectedIndexedLabels.add( label( drops + i ).name() );
             race.addContestant( indexCreate( drops + i ), 1 );
         }
-        for ( IndexDefinition index : indexesToDrop )
-        {
-            race.addContestant( indexDrop( index ), 1 );
-        }
+        indexesToDrop.forEach(index -> race.addContestant(indexDrop(index), 1));
         race.go();
 
         // THEN they should all be observed as dropped in the end
@@ -166,10 +157,7 @@ public class ConcurrentCreateDropIndexIT
             assertEquals( creates, indexes.size() );
             tx.success();
 
-            for ( IndexDefinition index : indexes )
-            {
-                assertTrue( expectedIndexedLabels.remove( single( index.getLabels() ).name() ) );
-            }
+            indexes.forEach(index -> assertTrue(expectedIndexedLabels.remove(single(index.getLabels()).name())));
         }
     }
 

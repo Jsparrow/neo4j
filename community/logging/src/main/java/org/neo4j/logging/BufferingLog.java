@@ -46,64 +46,9 @@ import javax.annotation.Nonnull;
  */
 public class BufferingLog extends AbstractLog
 {
-    private interface LogMessage
-    {
-        void replayInto( Log other );
-
-        void printTo( PrintWriter pw );
-    }
-
     private final Queue<LogMessage> buffer = new LinkedList<>();
 
-    private abstract class BufferingLogger implements Logger
-    {
-        @Override
-        public void log( @Nonnull String message )
-        {
-            LogMessage logMessage = buildMessage( message );
-            synchronized ( buffer )
-            {
-                buffer.add( logMessage );
-            }
-        }
-
-        protected abstract LogMessage buildMessage( @Nonnull String message );
-
-        @Override
-        public void log( @Nonnull final String message, @Nonnull final Throwable throwable )
-        {
-            LogMessage logMessage = buildMessage( message, throwable );
-            synchronized ( buffer )
-            {
-                buffer.add( logMessage );
-            }
-        }
-
-        protected abstract LogMessage buildMessage( String message, Throwable throwable );
-
-        @Override
-        public void log( @Nonnull String format, @Nonnull Object... arguments )
-        {
-            LogMessage logMessage = buildMessage( format, arguments );
-            synchronized ( buffer )
-            {
-                buffer.add( logMessage );
-            }
-        }
-
-        protected abstract LogMessage buildMessage( String message, Object... arguments );
-
-        @Override
-        public void bulk( @Nonnull Consumer<Logger> consumer )
-        {
-            synchronized ( buffer )
-            {
-                consumer.accept( this );
-            }
-        }
-    }
-
-    private final Logger debugLogger = new BufferingLogger()
+	private final Logger debugLogger = new BufferingLogger()
     {
         @Override
         public LogMessage buildMessage( @Nonnull final String message )
@@ -164,7 +109,7 @@ public class BufferingLog extends AbstractLog
         }
     };
 
-    private final Logger infoLogger = new BufferingLogger()
+	private final Logger infoLogger = new BufferingLogger()
     {
         @Override
         public LogMessage buildMessage( @Nonnull final String message )
@@ -225,7 +170,7 @@ public class BufferingLog extends AbstractLog
         }
     };
 
-    private final Logger warnLogger = new BufferingLogger()
+	private final Logger warnLogger = new BufferingLogger()
     {
         @Override
         public LogMessage buildMessage( @Nonnull final String message )
@@ -286,7 +231,7 @@ public class BufferingLog extends AbstractLog
         }
     };
 
-    private final Logger errorLogger = new BufferingLogger()
+	private final Logger errorLogger = new BufferingLogger()
     {
         @Override
         public LogMessage buildMessage( @Nonnull final String message )
@@ -347,41 +292,41 @@ public class BufferingLog extends AbstractLog
         }
     };
 
-    @Override
+	@Override
     public boolean isDebugEnabled()
     {
         return true;
     }
 
-    @Nonnull
+	@Nonnull
     @Override
     public Logger debugLogger()
     {
         return this.debugLogger;
     }
 
-    @Nonnull
+	@Nonnull
     @Override
     public Logger infoLogger()
     {
         return infoLogger;
     }
 
-    @Nonnull
+	@Nonnull
     @Override
     public Logger warnLogger()
     {
         return warnLogger;
     }
 
-    @Nonnull
+	@Nonnull
     @Override
     public Logger errorLogger()
     {
         return errorLogger;
     }
 
-    @Override
+	@Override
     public void bulk( @Nonnull Consumer<Log> consumer )
     {
         synchronized ( buffer )
@@ -390,7 +335,7 @@ public class BufferingLog extends AbstractLog
         }
     }
 
-    /**
+	/**
      * Replays buffered messages and clears the buffer.
      *
      * @param other the log to reply into
@@ -408,18 +353,70 @@ public class BufferingLog extends AbstractLog
         }
     }
 
-    @Override
+	@Override
     public String toString()
     {
         synchronized ( buffer )
         {
             StringWriter stringWriter = new StringWriter();
             PrintWriter sb = new PrintWriter( stringWriter );
-            for ( LogMessage message : buffer )
-            {
-                message.printTo( sb );
-            }
+            buffer.forEach(message -> message.printTo(sb));
             return stringWriter.toString();
+        }
+    }
+
+	private interface LogMessage
+    {
+        void replayInto( Log other );
+
+        void printTo( PrintWriter pw );
+    }
+
+    private abstract class BufferingLogger implements Logger
+    {
+        @Override
+        public void log( @Nonnull String message )
+        {
+            LogMessage logMessage = buildMessage( message );
+            synchronized ( buffer )
+            {
+                buffer.add( logMessage );
+            }
+        }
+
+        protected abstract LogMessage buildMessage( @Nonnull String message );
+
+        @Override
+        public void log( @Nonnull final String message, @Nonnull final Throwable throwable )
+        {
+            LogMessage logMessage = buildMessage( message, throwable );
+            synchronized ( buffer )
+            {
+                buffer.add( logMessage );
+            }
+        }
+
+        protected abstract LogMessage buildMessage( String message, Throwable throwable );
+
+        @Override
+        public void log( @Nonnull String format, @Nonnull Object... arguments )
+        {
+            LogMessage logMessage = buildMessage( format, arguments );
+            synchronized ( buffer )
+            {
+                buffer.add( logMessage );
+            }
+        }
+
+        protected abstract LogMessage buildMessage( String message, Object... arguments );
+
+        @Override
+        public void bulk( @Nonnull Consumer<Logger> consumer )
+        {
+            synchronized ( buffer )
+            {
+                consumer.accept( this );
+            }
         }
     }
 }

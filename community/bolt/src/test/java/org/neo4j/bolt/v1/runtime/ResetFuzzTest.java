@@ -154,11 +154,7 @@ public class ResetFuzzTest
         }
         catch ( AssertionError e )
         {
-            throw new AssertionError( String.format( "Expected session to return to good state after RESET, but " +
-                                                     "assertion failed: %s.%n" +
-                                                     "Seed: %s%n" +
-                                                     "Messages sent:%n" +
-                                                     "%s",
+            throw new AssertionError( String.format( new StringBuilder().append("Expected session to return to good state after RESET, but ").append("assertion failed: %s.%n").append("Seed: %s%n").append("Messages sent:%n").append("%s").toString(),
                     e.getMessage(), seed, Iterables.toString( sent, "\n" ) ), e );
         }
     }

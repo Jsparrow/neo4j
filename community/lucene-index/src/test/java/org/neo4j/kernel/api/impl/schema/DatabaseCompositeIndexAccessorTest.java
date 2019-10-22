@@ -62,6 +62,7 @@ import static org.junit.Assert.fail;
 import static org.neo4j.helpers.collection.Iterators.asSet;
 import static org.neo4j.internal.kernel.api.IndexQuery.exact;
 import static org.neo4j.test.rule.concurrent.ThreadingRule.waitingWhileIn;
+import java.util.Collections;
 
 @RunWith( Parameterized.class )
 public class DatabaseCompositeIndexAccessorTest
@@ -70,24 +71,22 @@ public class DatabaseCompositeIndexAccessorTest
     private static final int PROP_ID2 = 2;
     private static final IndexDescriptor DESCRIPTOR = TestIndexDescriptorFactory.forLabel( 0, PROP_ID1, PROP_ID2 );
     private static final Config config = Config.defaults();
-    @Rule
-    public final ThreadingRule threading = new ThreadingRule();
-    @ClassRule
+	@ClassRule
     public static final EphemeralFileSystemRule fileSystemRule = new EphemeralFileSystemRule();
-
-    @Parameterized.Parameter
+	private static final IndexDescriptor SCHEMA_INDEX_DESCRIPTOR = TestIndexDescriptorFactory.forLabel( 0, PROP_ID1, PROP_ID2 );
+	private static final IndexDescriptor UNIQUE_SCHEMA_INDEX_DESCRIPTOR = TestIndexDescriptorFactory.uniqueForLabel( 1, PROP_ID1, PROP_ID2 );
+	@Rule
+    public final ThreadingRule threading = new ThreadingRule();
+	@Parameterized.Parameter
     public IOFunction<DirectoryFactory,LuceneIndexAccessor> accessorFactory;
+	private LuceneIndexAccessor accessor;
+	private final long nodeId = 1;
+	private final long nodeId2 = 2;
+	private final Object[] values = {"value1", "values2"};
+	private final Object[] values2 = {40, 42};
+	private DirectoryFactory.InMemoryDirectoryFactory dirFactory;
 
-    private LuceneIndexAccessor accessor;
-    private final long nodeId = 1;
-    private final long nodeId2 = 2;
-    private final Object[] values = {"value1", "values2"};
-    private final Object[] values2 = {40, 42};
-    private DirectoryFactory.InMemoryDirectoryFactory dirFactory;
-    private static final IndexDescriptor SCHEMA_INDEX_DESCRIPTOR = TestIndexDescriptorFactory.forLabel( 0, PROP_ID1, PROP_ID2 );
-    private static final IndexDescriptor UNIQUE_SCHEMA_INDEX_DESCRIPTOR = TestIndexDescriptorFactory.uniqueForLabel( 1, PROP_ID1, PROP_ID2 );
-
-    @Parameterized.Parameters( name = "{0}" )
+	@Parameterized.Parameters( name = "{0}" )
     public static Collection<IOFunction<DirectoryFactory,LuceneIndexAccessor>[]> implementations()
     {
         final File dir = new File( "dir" );
@@ -119,28 +118,28 @@ public class DatabaseCompositeIndexAccessorTest
         );
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     private static IOFunction<DirectoryFactory,LuceneIndexAccessor>[] arg(
             IOFunction<DirectoryFactory,LuceneIndexAccessor> foo )
     {
         return new IOFunction[]{foo};
     }
 
-    @Before
+	@Before
     public void before() throws IOException
     {
         dirFactory = new DirectoryFactory.InMemoryDirectoryFactory();
         accessor = accessorFactory.apply( dirFactory );
     }
 
-    @After
+	@After
     public void after() throws IOException
     {
         accessor.close();
         dirFactory.close();
     }
 
-    @Test
+	@Test
     public void indexReaderShouldSupportScan() throws Exception
     {
         // GIVEN
@@ -157,13 +156,13 @@ public class DatabaseCompositeIndexAccessorTest
         reader.close();
     }
 
-    @Test
+	@Test
     public void multipleIndexReadersFromDifferentPointsInTimeCanSeeDifferentResults() throws Exception
     {
         // WHEN
-        updateAndCommit( asList( add( nodeId, values ) ) );
+        updateAndCommit( Collections.singletonList( add( nodeId, values ) ) );
         IndexReader firstReader = accessor.newReader();
-        updateAndCommit( asList( add( nodeId2, values2 ) ) );
+        updateAndCommit( Collections.singletonList( add( nodeId2, values2 ) ) );
         IndexReader secondReader = accessor.newReader();
 
         // THEN
@@ -179,7 +178,7 @@ public class DatabaseCompositeIndexAccessorTest
         secondReader.close();
     }
 
-    @Test
+	@Test
     public void canAddNewData() throws Exception
     {
         // WHEN
@@ -192,14 +191,14 @@ public class DatabaseCompositeIndexAccessorTest
         reader.close();
     }
 
-    @Test
+	@Test
     public void canChangeExistingData() throws Exception
     {
         // GIVEN
-        updateAndCommit( asList( add( nodeId, values ) ) );
+        updateAndCommit( Collections.singletonList( add( nodeId, values ) ) );
 
         // WHEN
-        updateAndCommit( asList( change( nodeId, values, values2 ) ) );
+        updateAndCommit( Collections.singletonList( change( nodeId, values, values2 ) ) );
         IndexReader reader = accessor.newReader();
 
         // THEN
@@ -210,14 +209,14 @@ public class DatabaseCompositeIndexAccessorTest
         reader.close();
     }
 
-    @Test
+	@Test
     public void canRemoveExistingData() throws Exception
     {
         // GIVEN
         updateAndCommit( asList( add( nodeId, values ), add( nodeId2, values2 ) ) );
 
         // WHEN
-        updateAndCommit( asList( remove( nodeId, values ) ) );
+        updateAndCommit( Collections.singletonList( remove( nodeId, values ) ) );
         IndexReader reader = accessor.newReader();
 
         // THEN
@@ -228,7 +227,7 @@ public class DatabaseCompositeIndexAccessorTest
         reader.close();
     }
 
-    @Test
+	@Test
     public void shouldStopSamplingWhenIndexIsDropped() throws Exception
     {
         // given
@@ -260,22 +259,22 @@ public class DatabaseCompositeIndexAccessorTest
         }
     }
 
-    private IndexEntryUpdate<?> add( long nodeId, Object... values )
+	private IndexEntryUpdate<?> add( long nodeId, Object... values )
     {
         return IndexQueryHelper.add( nodeId, SCHEMA_INDEX_DESCRIPTOR.schema(), values );
     }
 
-    private IndexEntryUpdate<?> remove( long nodeId, Object... values )
+	private IndexEntryUpdate<?> remove( long nodeId, Object... values )
     {
         return IndexQueryHelper.remove( nodeId, SCHEMA_INDEX_DESCRIPTOR.schema(), values );
     }
 
-    private IndexEntryUpdate<?> change( long nodeId, Object[] valuesBefore, Object[] valuesAfter )
+	private IndexEntryUpdate<?> change( long nodeId, Object[] valuesBefore, Object[] valuesAfter )
     {
         return IndexQueryHelper.change( nodeId, SCHEMA_INDEX_DESCRIPTOR.schema(), valuesBefore, valuesAfter );
     }
 
-    private void updateAndCommit( List<IndexEntryUpdate<?>> nodePropertyUpdates )
+	private void updateAndCommit( List<IndexEntryUpdate<?>> nodePropertyUpdates )
             throws IOException, IndexEntryConflictException
     {
         try ( IndexUpdater updater = accessor.newUpdater( IndexUpdateMode.ONLINE ) )

@@ -191,7 +191,7 @@ public class ServerUserLogTest
     {
         List<String> lines = suppress.getOutputVoice().lines();
         // Remove empty lines
-        return lines.stream().filter( line -> !line.equals( "" ) ).collect( Collectors.toList() );
+        return lines.stream().filter( line -> !"".equals( line ) ).collect( Collectors.toList() );
     }
 
     private ServerBootstrapper getServerBootstrapper()
@@ -244,7 +244,7 @@ public class ServerUserLogTest
 
     private List<String> readUserLogFile( File homeDir ) throws IOException
     {
-        return Files.readAllLines( getUserLogFileLocation( homeDir ) ).stream().filter( line -> !line.equals( "" ) ).collect( Collectors.toList() );
+        return Files.readAllLines( getUserLogFileLocation( homeDir ) ).stream().filter( line -> !"".equals( line ) ).collect( Collectors.toList() );
     }
 
     private Path getUserLogFileLocation( File homeDir )

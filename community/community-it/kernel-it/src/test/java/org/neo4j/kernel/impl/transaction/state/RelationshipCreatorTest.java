@@ -132,7 +132,6 @@ public class RelationshipCreatorTest
 
         @Override
         public void acquireExclusive( LockTracer tracer, ResourceType resourceType, long... resourceIds )
-                throws AcquireLockTimeoutException
         {
             assertEquals( ResourceTypes.RELATIONSHIP, resourceType );
             for ( long resourceId : resourceIds )
@@ -143,7 +142,7 @@ public class RelationshipCreatorTest
 
         protected void changingRelationship( long relId )
         {   // Called by tracking record proxies
-            assertTrue( "Tried to change relationship " + relId + " without this transaction having it locked",
+            assertTrue( new StringBuilder().append("Tried to change relationship ").append(relId).append(" without this transaction having it locked").toString(),
                     relationshipLocksAcquired.contains( relId ) );
             changedRelationships.add( relId );
         }

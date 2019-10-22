@@ -74,10 +74,7 @@ class PrimitiveLongSetRIT
 
     private static void fullVerification( Sets target, Random random )
     {
-        for ( Long value: target.normalSet )
-        {
-            assertTrue( target.set.contains( value ) );
-        }
+        target.normalSet.forEach(value -> assertTrue(target.set.contains(value)));
 
         for ( int i = 0; i < target.normalSet.size(); i++ )
         {
@@ -87,8 +84,7 @@ class PrimitiveLongSetRIT
 
     private static Printable given()
     {
-        return out -> out.println( PrimitiveLongSet.class.getSimpleName() + " set = " +
-                Primitive.class.getSimpleName() + ".longSet();" );
+        return out -> out.println( new StringBuilder().append(PrimitiveLongSet.class.getSimpleName()).append(" set = ").append(Primitive.class.getSimpleName()).append(".longSet();").toString() );
     }
 
     private static ActionFactory<Sets, String> actionFactory( final Random random )
@@ -142,7 +138,13 @@ class PrimitiveLongSetRIT
         return value;
     }
 
-    private static class AddAction implements Action<Sets, String>
+    private static String capitilize( boolean bool )
+    {
+        String string = Boolean.valueOf( bool ).toString();
+        return string.substring( 0, 1 ).toUpperCase() + string.substring( 1 ).toLowerCase();
+    }
+
+	private static class AddAction implements Action<Sets, String>
     {
         private final long value;
 
@@ -165,7 +167,8 @@ class PrimitiveLongSetRIT
                 target.normalSet.add( value );
 
                 boolean ok = (existedBefore == alreadyExisting) & (added == !alreadyExisting) & existsAfter;
-                return ok ? null : "" + value + alreadyExisting + "," + existedBefore + "," + added + "," + existsAfter;
+                return ok ? null : new StringBuilder().append(Long.toString(value)).append(alreadyExisting).append(",").append(existedBefore).append(",")
+						.append(added).append(",").append(existsAfter).toString();
             }
             catch ( Exception e )
             {
@@ -177,16 +180,18 @@ class PrimitiveLongSetRIT
         public void printAsCode( Sets source, LinePrinter out, boolean includeChecks )
         {
             boolean alreadyExisting = source.normalSet.contains( value );
-            String addition = "set.add( " + value + "L );";
+            String addition = new StringBuilder().append("set.add( ").append(value).append("L );").toString();
             if ( includeChecks )
             {
                 out.println( format( "boolean existedBefore = set.contains( %dL );", value ) );
                 out.println( format( "boolean added = %s", addition ) );
                 out.println( format( "boolean existsAfter = set.contains( %dL );", value ) );
                 out.println( format( "assert%s( \"%s\", existedBefore );", capitilize( alreadyExisting ),
-                        value + " should " + (alreadyExisting ? "" : "not ") + "exist before adding here" ) );
+                        new StringBuilder().append(value).append(" should ").append(alreadyExisting ? "" : "not ").append("exist before adding here")
+								.toString() ) );
                 out.println( format( "assert%s( \"%s\", added );", capitilize( !alreadyExisting ),
-                        value + " should " + (!alreadyExisting ? "" : "not ") + "be reported as added here" ) );
+                        new StringBuilder().append(value).append(" should ").append(!alreadyExisting ? "" : "not ").append("be reported as added here")
+								.toString() ) );
                 out.println( format( "assertTrue( \"%s\", existsAfter );", value + " should exist" ) );
             }
             else
@@ -218,7 +223,8 @@ class PrimitiveLongSetRIT
                 target.normalSet.remove( value );
 
                 boolean ok = (existedBefore == alreadyExisting) & (removed == alreadyExisting) & !existsAfter;
-                return ok ? null : "" + value + alreadyExisting + "," + existedBefore + "," + removed + "," + existsAfter;
+                return ok ? null : new StringBuilder().append(Long.toString(value)).append(alreadyExisting).append(",").append(existedBefore).append(",")
+						.append(removed).append(",").append(existsAfter).toString();
             }
             catch ( Exception e )
             {
@@ -230,16 +236,18 @@ class PrimitiveLongSetRIT
         public void printAsCode( Sets source, LinePrinter out, boolean includeChecks )
         {
             boolean alreadyExisting = source.normalSet.contains( value );
-            String removal = "set.remove( " + value + "L );";
+            String removal = new StringBuilder().append("set.remove( ").append(value).append("L );").toString();
             if ( includeChecks )
             {
                 out.println( format( "boolean existedBefore = set.contains( %dL );", value ) );
                 out.println( format( "boolean removed = %s", removal ) );
                 out.println( format( "boolean existsAfter = set.contains( %dL );", value ) );
                 out.println( format( "assert%s( \"%s\", existedBefore );", capitilize( alreadyExisting ),
-                        value + " should " + (alreadyExisting ? "" : "not ") + "exist before removing here" ) );
+                        new StringBuilder().append(value).append(" should ").append(alreadyExisting ? "" : "not ").append("exist before removing here")
+								.toString() ) );
                 out.println( format( "assert%s( \"%s\", removed );", capitilize( alreadyExisting ),
-                        value + " should " + (alreadyExisting ? "" : "not ") + "be reported as removed here" ) );
+                        new StringBuilder().append(value).append(" should ").append(alreadyExisting ? "" : "not ").append("be reported as removed here")
+								.toString() ) );
                 out.println( format( "assertFalse( \"%s\", existsAfter );",
                         value + " should not exist" ) );
             }
@@ -248,12 +256,6 @@ class PrimitiveLongSetRIT
                 out.println( removal );
             }
         }
-    }
-
-    private static String capitilize( boolean bool )
-    {
-        String string = Boolean.valueOf( bool ).toString();
-        return string.substring( 0, 1 ).toUpperCase() + string.substring( 1 ).toLowerCase();
     }
 
     private static class Sets implements TestResource

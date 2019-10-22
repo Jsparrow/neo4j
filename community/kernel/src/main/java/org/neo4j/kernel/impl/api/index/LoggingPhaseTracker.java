@@ -68,25 +68,23 @@ public class LoggingPhaseTracker implements PhaseTracker
         {
             throw new IllegalStateException( "Trying to report a new phase after phase tracker has been stopped." );
         }
-        if ( phase != currentPhase )
-        {
-            long now = logCurrentTime();
-            currentPhase = phase;
-            timeEnterPhase = now;
-
-            if ( lastPeriodReport == -1 )
-            {
-                lastPeriodReport = now;
-            }
-
-            long millisSinceLastPeriodReport = now - lastPeriodReport;
-            if ( millisSinceLastPeriodReport >= periodInterval )
-            {
-                // Report period
-                periodReport( millisSinceLastPeriodReport );
-                lastPeriodReport = now;
-            }
-        }
+        if (phase == currentPhase) {
+			return;
+		}
+		long now = logCurrentTime();
+		currentPhase = phase;
+		timeEnterPhase = now;
+		if ( lastPeriodReport == -1 )
+		{
+		    lastPeriodReport = now;
+		}
+		long millisSinceLastPeriodReport = now - lastPeriodReport;
+		if ( millisSinceLastPeriodReport >= periodInterval )
+		{
+		    // Report period
+		    periodReport( millisSinceLastPeriodReport );
+		    lastPeriodReport = now;
+		}
     }
 
     @Override
@@ -112,23 +110,21 @@ public class LoggingPhaseTracker implements PhaseTracker
     {
         String periodReportString = periodReportString( millisSinceLastPerioReport );
         String mainReportString = mainReportString( "Total" );
-        log.debug( MESSAGE_PREFIX + mainReportString + ", " + periodReportString );
+        log.debug( new StringBuilder().append(MESSAGE_PREFIX).append(mainReportString).append(", ").append(periodReportString).toString() );
     }
 
     private String mainReportString( String title )
     {
         StringJoiner joiner = new StringJoiner( ", ", title + ": ", "" );
         times.values().forEach( logger ->
-        {
-            reportToJoiner( joiner, logger );
-        } );
+        reportToJoiner(joiner, logger) );
         return joiner.toString();
     }
 
     private String periodReportString( long millisSinceLastPeriodReport )
     {
         long secondsSinceLastPeriodReport = TimeUnit.MILLISECONDS.toSeconds( millisSinceLastPeriodReport );
-        StringJoiner joiner = new StringJoiner( ", ", "Last " + secondsSinceLastPeriodReport + " sec: ", "" );
+        StringJoiner joiner = new StringJoiner( ", ", new StringBuilder().append("Last ").append(secondsSinceLastPeriodReport).append(" sec: ").toString(), "" );
         times.values().stream()
                 .map( Logger::period )
                 .forEach( period ->
@@ -171,7 +167,8 @@ public class LoggingPhaseTracker implements PhaseTracker
             periodCounter.reset();
         }
 
-        void log( long timeMillis )
+        @Override
+		void log( long timeMillis )
         {
             super.log( timeMillis );
             periodCounter.log( timeMillis );

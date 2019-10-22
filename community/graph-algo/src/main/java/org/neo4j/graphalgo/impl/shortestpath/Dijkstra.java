@@ -76,57 +76,14 @@ public class Dijkstra<CostType> implements
     protected long maxNodesToTraverse = -1;
     protected long numberOfNodesTraversed;
     protected CostType maxCost;
-
-    /**
-     * @return True if the set limits for the calculation has been reached (but
-     *         not exceeded)
-     */
-    protected boolean limitReached()
-    {
-        return maxRelationShipsToTraverse >= 0 && numberOfTraversedRelationShips >= maxRelationShipsToTraverse ||
-                maxNodesToTraverse >= 0 && numberOfNodesTraversed >= maxNodesToTraverse;
-    }
-
-    protected boolean limitReached( CostType cost1, CostType cost2 )
-    {
-        if ( maxCost != null )
-        {
-            CostType totalCost = costAccumulator.addCosts( cost1, cost2 );
-            if ( costComparator.compare( totalCost, maxCost ) > 0 )
-            {
-                foundPathsMiddleNodes = null;
-                foundPathsCost = null;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    // Result data
+	// Result data
     protected boolean doneCalculation;
-    protected Set<Node> foundPathsMiddleNodes;
-    protected CostType foundPathsCost;
-    protected HashMap<Node, List<Relationship>> predecessors1 = new HashMap<>();
-    protected HashMap<Node, List<Relationship>> predecessors2 = new HashMap<>();
+	protected Set<Node> foundPathsMiddleNodes;
+	protected CostType foundPathsCost;
+	protected HashMap<Node, List<Relationship>> predecessors1 = new HashMap<>();
+	protected HashMap<Node, List<Relationship>> predecessors2 = new HashMap<>();
 
-    /**
-     * Resets the result data to force the computation to be run again when some
-     * result is asked for.
-     */
-    @Override
-    public void reset()
-    {
-        doneCalculation = false;
-        foundPathsMiddleNodes = null;
-        predecessors1 = new HashMap<>();
-        predecessors2 = new HashMap<>();
-        // Limits
-        numberOfTraversedRelationShips = 0;
-        numberOfNodesTraversed = 0;
-    }
-
-    /**
+	/**
      * @param startCost Starting cost for both the start node and the end node
      * @param startNode the start node
      * @param endNode the end node
@@ -143,7 +100,6 @@ public class Dijkstra<CostType> implements
             Comparator<CostType> costComparator, Direction relationDirection,
             RelationshipType... costRelationTypes )
     {
-        super();
         this.startCost = startCost;
         this.startNode = startNode;
         this.endNode = endNode;
@@ -152,6 +108,411 @@ public class Dijkstra<CostType> implements
         this.costEvaluator = costEvaluator;
         this.costAccumulator = costAccumulator;
         this.costComparator = costComparator;
+    }
+
+	/**
+     * @return True if the set limits for the calculation has been reached (but
+     *         not exceeded)
+     */
+    protected boolean limitReached()
+    {
+        return maxRelationShipsToTraverse >= 0 && numberOfTraversedRelationShips >= maxRelationShipsToTraverse ||
+                maxNodesToTraverse >= 0 && numberOfNodesTraversed >= maxNodesToTraverse;
+    }
+
+	protected boolean limitReached( CostType cost1, CostType cost2 )
+    {
+        if ( maxCost != null )
+        {
+            CostType totalCost = costAccumulator.addCosts( cost1, cost2 );
+            if ( costComparator.compare( totalCost, maxCost ) > 0 )
+            {
+                foundPathsMiddleNodes = null;
+                foundPathsCost = null;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+	/**
+     * Resets the result data to force the computation to be run again when some
+     * result is asked for.
+     */
+    @Override
+    public void reset()
+    {
+        doneCalculation = false;
+        foundPathsMiddleNodes = null;
+        predecessors1 = new HashMap<>();
+        predecessors2 = new HashMap<>();
+        // Limits
+        numberOfTraversedRelationShips = 0;
+        numberOfNodesTraversed = 0;
+    }
+
+	/**
+     * Same as calculate(), but will set the flag to calculate all shortest
+     * paths. It sets the flag and then calls calculate, so inheriting classes
+     * only need to override calculate().
+     *
+     * @return
+     */
+    public boolean calculateMultiple()
+    {
+        if ( !calculateAllShortestPaths )
+        {
+            reset();
+            calculateAllShortestPaths = true;
+        }
+        return calculate();
+    }
+
+	/**
+     * Makes the main calculation If some limit is set, the shortest path(s)
+     * that could be found within those limits will be calculated.
+     *
+     * @return True if a path was found.
+     */
+    public boolean calculate()
+    {
+        // Do this first as a general error check since this is supposed to be
+        // called whenever a result is asked for.
+        if ( startNode == null || endNode == null )
+        {
+            throw new RuntimeException( "Start or end node undefined." );
+        }
+        // Don't do it more than once
+        if ( doneCalculation )
+        {
+            return true;
+        }
+        doneCalculation = true;
+        // Special case when path length is zero
+        if ( startNode.equals( endNode ) )
+        {
+            foundPathsMiddleNodes = new HashSet<>();
+            foundPathsMiddleNodes.add( startNode );
+            foundPathsCost = costAccumulator.addCosts( startCost, startCost );
+            return true;
+        }
+        HashMap<Node, CostType> seen1 = new HashMap<>();
+        HashMap<Node, CostType> seen2 = new HashMap<>();
+        HashMap<Node, CostType> dists1 = new HashMap<>();
+        HashMap<Node, CostType> dists2 = new HashMap<>();
+        DijkstraIterator iter1 = new DijkstraIterator( startNode, predecessors1,
+                seen1, seen2, dists1, dists2, false );
+        DijkstraIterator iter2 = new DijkstraIterator( endNode, predecessors2,
+                seen2, seen1, dists2, dists1, true );
+        Node node1 = null;
+        Node node2 = null;
+        while ( iter1.hasNext() && iter2.hasNext() )
+        {
+            if ( limitReached() )
+            {
+                break;
+            }
+            if ( iter1.hasNext() )
+            {
+                node1 = iter1.next();
+                if ( node1 == null )
+                {
+                    break;
+                }
+            }
+            if ( limitReached() )
+            {
+                break;
+            }
+            if ( !iter1.isDone() && iter2.hasNext() )
+            {
+                node2 = iter2.next();
+                if ( node2 == null )
+                {
+                    break;
+                }
+            }
+            if ( limitReached( seen1.get( node1 ), seen2.get( node2 ) ) )
+            {
+                break;
+            }
+            if ( iter1.isDone() || iter2.isDone() ) // A path was found
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+	/**
+     * @return The cost for the found path(s).
+     */
+    @Override
+    public CostType getCost()
+    {
+        if ( startNode == null || endNode == null )
+        {
+            throw new RuntimeException( "Start or end node undefined." );
+        }
+        calculate();
+        return foundPathsCost;
+    }
+
+	/**
+     * @return All the found paths or null.
+     */
+    @Override
+    public List<List<PropertyContainer>> getPaths()
+    {
+        if ( startNode == null || endNode == null )
+        {
+            throw new RuntimeException( "Start or end node undefined." );
+        }
+        calculateMultiple();
+        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
+        {
+            return Collections.emptyList();
+        }
+
+        List<List<PropertyContainer>> paths = new LinkedList<>();
+        foundPathsMiddleNodes.forEach(middleNode -> {
+            List<List<PropertyContainer>> paths1 = Util.constructAllPathsToNode(
+                    middleNode, predecessors1, true, false );
+            List<List<PropertyContainer>> paths2 = Util.constructAllPathsToNode(
+                    middleNode, predecessors2, false, true );
+            // Combine them
+			// Add to collection
+			// For all combinations...
+			paths1.forEach(part1 -> paths2.forEach(part2 -> {
+				LinkedList<PropertyContainer> path = new LinkedList<>();
+				path.addAll(part1);
+				path.addAll(part2);
+				paths.add(path);
+			}));
+        });
+
+        return paths;
+    }
+
+	/**
+     * @return All the found paths or null.
+     */
+    @Override
+    public List<List<Node>> getPathsAsNodes()
+    {
+        if ( startNode == null || endNode == null )
+        {
+            throw new RuntimeException( "Start or end node undefined." );
+        }
+        calculateMultiple();
+        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
+        {
+            return null;
+        }
+
+        List<List<Node>> paths = new LinkedList<>();
+        foundPathsMiddleNodes.forEach(middleNode -> {
+            List<List<Node>> paths1 = Util.constructAllPathsToNodeAsNodes(
+                    middleNode, predecessors1, true, false );
+            List<List<Node>> paths2 = Util.constructAllPathsToNodeAsNodes(
+                    middleNode, predecessors2, false, true );
+            // Combine them
+			// Add to collection
+			// For all combinations...
+			paths1.forEach(part1 -> paths2.forEach(part2 -> {
+				LinkedList<Node> path = new LinkedList<>();
+				path.addAll(part1);
+				path.addAll(part2);
+				paths.add(path);
+			}));
+        });
+
+        return paths;
+    }
+
+	/**
+     * @return All the found paths or null.
+     */
+    @Override
+    public List<List<Relationship>> getPathsAsRelationships()
+    {
+        if ( startNode == null || endNode == null )
+        {
+            throw new RuntimeException( "Start or end node undefined." );
+        }
+        calculateMultiple();
+        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
+        {
+            return null;
+        }
+
+        List<List<Relationship>> paths = new LinkedList<>();
+        foundPathsMiddleNodes.forEach(middleNode -> {
+            List<List<Relationship>> paths1 = Util.constructAllPathsToNodeAsRelationships(
+                    middleNode, predecessors1, false );
+            List<List<Relationship>> paths2 = Util.constructAllPathsToNodeAsRelationships(
+                    middleNode, predecessors2, true );
+            // Combine them
+			// Add to collection
+			// For all combinations...
+			paths1.forEach(part1 -> paths2.forEach(part2 -> {
+				LinkedList<Relationship> path = new LinkedList<>();
+				path.addAll(part1);
+				path.addAll(part2);
+				paths.add(path);
+			}));
+        });
+
+        return paths;
+    }
+
+	/**
+     * @return One of the shortest paths found or null.
+     */
+    @Override
+    public List<PropertyContainer> getPath()
+    {
+        if ( startNode == null || endNode == null )
+        {
+            throw new RuntimeException( "Start or end node undefined." );
+        }
+        calculate();
+        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
+        {
+            return null;
+        }
+        Node middleNode = foundPathsMiddleNodes.iterator().next();
+        LinkedList<PropertyContainer> path = new LinkedList<>();
+        path.addAll( Util.constructSinglePathToNode( middleNode, predecessors1,
+                true, false ) );
+        path.addAll( Util.constructSinglePathToNode( middleNode, predecessors2,
+                false, true ) );
+        return path;
+    }
+
+	/**
+     * @return One of the shortest paths found or null.
+     */
+    @Override
+    public List<Node> getPathAsNodes()
+    {
+        if ( startNode == null || endNode == null )
+        {
+            throw new RuntimeException( "Start or end node undefined." );
+        }
+        calculate();
+        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
+        {
+            return null;
+        }
+        Node middleNode = foundPathsMiddleNodes.iterator().next();
+        LinkedList<Node> pathNodes = new LinkedList<>();
+        pathNodes.addAll( Util.constructSinglePathToNodeAsNodes( middleNode,
+                predecessors1, true, false ) );
+        pathNodes.addAll( Util.constructSinglePathToNodeAsNodes( middleNode,
+                predecessors2, false, true ) );
+        return pathNodes;
+    }
+
+	/**
+     * @return One of the shortest paths found or null.
+     */
+    @Override
+    public List<Relationship> getPathAsRelationships()
+    {
+        if ( startNode == null || endNode == null )
+        {
+            throw new RuntimeException( "Start or end node undefined." );
+        }
+        calculate();
+        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
+        {
+            return null;
+        }
+        Node middleNode = foundPathsMiddleNodes.iterator().next();
+        List<Relationship> path = new LinkedList<>();
+        path.addAll( Util.constructSinglePathToNodeAsRelationships( middleNode,
+                predecessors1, false ) );
+        path.addAll( Util.constructSinglePathToNodeAsRelationships( middleNode,
+                predecessors2, true ) );
+        return path;
+    }
+
+	/**
+     * This sets the maximum depth in the form of a maximum number of
+     * relationships to follow.
+     *
+     * @param maxRelationShipsToTraverse
+     */
+    public void limitMaxRelationShipsToTraverse( long maxRelationShipsToTraverse )
+    {
+        this.maxRelationShipsToTraverse = maxRelationShipsToTraverse;
+    }
+
+	/**
+     * This sets the maximum depth in the form of a maximum number of nodes to
+     * scan.
+     *
+     * @param maxNodesToTraverse
+     */
+    public void limitMaxNodesToTraverse( long maxNodesToTraverse )
+    {
+        this.maxNodesToTraverse = maxNodesToTraverse;
+    }
+
+	/**
+     * Set the end node. Will reset the calculation.
+     *
+     * @param endNode the endNode to set
+     */
+    @Override
+    public void setEndNode( Node endNode )
+    {
+        reset();
+        this.endNode = endNode;
+    }
+
+	/**
+     * Set the start node. Will reset the calculation.
+     *
+     * @param startNode the startNode to set
+     */
+    @Override
+    public void setStartNode( Node startNode )
+    {
+        this.startNode = startNode;
+        reset();
+    }
+
+	/**
+     * @return the relationDirection
+     */
+    @Override
+    public Direction getDirection()
+    {
+        return relationDirection;
+    }
+
+	/**
+     * @return the costRelationType
+     */
+    @Override
+    public RelationshipType[] getRelationshipTypes()
+    {
+        return costRelationTypes;
+    }
+
+	/**
+     * Set the evaluator for pruning the paths when the maximum cost is
+     * exceeded.
+     *
+     * @param maxCost
+     */
+    public void limitMaxCostToTraverse( CostType maxCost )
+    {
+        this.maxCost = maxCost;
     }
 
     /**
@@ -189,7 +550,6 @@ public class Dijkstra<CostType> implements
                 HashMap<Node, CostType> myDistances,
                 HashMap<Node, CostType> otherDistances, boolean backwards )
         {
-            super();
             this.startNode = startNode;
             this.predecessors = predecessors;
             this.mySeen = mySeen;
@@ -207,11 +567,11 @@ public class Dijkstra<CostType> implements
         {
             if ( backwards )
             {
-                if ( relationDirection.equals( Direction.INCOMING ) )
+                if ( relationDirection == Direction.INCOMING )
                 {
                     return Direction.OUTGOING;
                 }
-                if ( relationDirection.equals( Direction.OUTGOING ) )
+                if ( relationDirection == Direction.OUTGOING )
                 {
                     return Direction.INCOMING;
                 }
@@ -256,32 +616,32 @@ public class Dijkstra<CostType> implements
                 HashMap<Node, CostType> otherSideDistances )
         {
             // Found a path?
-            if ( otherSideDistances.containsKey( currentNode ) )
-            {
-                // Is it better than previously found paths?
-                CostType otherCost = otherSideDistances.get( currentNode );
-                CostType newTotalCost = costAccumulator.addCosts( currentCost,
-                        otherCost );
-                if ( foundPathsMiddleNodes == null )
-                {
-                    foundPathsMiddleNodes = new HashSet<>();
-                }
-                // No previous path found, or equally good one found?
-                if ( foundPathsMiddleNodes.size() == 0
-                     || costComparator.compare( foundPathsCost, newTotalCost ) == 0 )
-                {
-                    foundPathsCost = newTotalCost; // in case we had no
-                    // previous path
-                    foundPathsMiddleNodes.add( currentNode );
-                }
-                // New better path found?
-                else if ( costComparator.compare( foundPathsCost, newTotalCost ) > 0 )
-                {
-                    foundPathsMiddleNodes.clear();
-                    foundPathsCost = newTotalCost;
-                    foundPathsMiddleNodes.add( currentNode );
-                }
-            }
+			if (!otherSideDistances.containsKey( currentNode )) {
+				return;
+			}
+			// Is it better than previously found paths?
+			CostType otherCost = otherSideDistances.get( currentNode );
+			CostType newTotalCost = costAccumulator.addCosts( currentCost,
+			        otherCost );
+			if ( foundPathsMiddleNodes == null )
+			{
+			    foundPathsMiddleNodes = new HashSet<>();
+			}
+			// No previous path found, or equally good one found?
+			if ( foundPathsMiddleNodes.size() == 0
+			     || costComparator.compare( foundPathsCost, newTotalCost ) == 0 )
+			{
+			    foundPathsCost = newTotalCost; // in case we had no
+			    // previous path
+			    foundPathsMiddleNodes.add( currentNode );
+			}
+			// New better path found?
+			else if ( costComparator.compare( foundPathsCost, newTotalCost ) > 0 )
+			{
+			    foundPathsMiddleNodes.clear();
+			    foundPathsCost = newTotalCost;
+			    foundPathsMiddleNodes.add( currentNode );
+			}
         }
 
         @Override
@@ -437,383 +797,5 @@ public class Dijkstra<CostType> implements
             }
             return allShortestPathsHasBeenFound;
         }
-    }
-
-    /**
-     * Same as calculate(), but will set the flag to calculate all shortest
-     * paths. It sets the flag and then calls calculate, so inheriting classes
-     * only need to override calculate().
-     *
-     * @return
-     */
-    public boolean calculateMultiple()
-    {
-        if ( !calculateAllShortestPaths )
-        {
-            reset();
-            calculateAllShortestPaths = true;
-        }
-        return calculate();
-    }
-
-    /**
-     * Makes the main calculation If some limit is set, the shortest path(s)
-     * that could be found within those limits will be calculated.
-     *
-     * @return True if a path was found.
-     */
-    public boolean calculate()
-    {
-        // Do this first as a general error check since this is supposed to be
-        // called whenever a result is asked for.
-        if ( startNode == null || endNode == null )
-        {
-            throw new RuntimeException( "Start or end node undefined." );
-        }
-        // Don't do it more than once
-        if ( doneCalculation )
-        {
-            return true;
-        }
-        doneCalculation = true;
-        // Special case when path length is zero
-        if ( startNode.equals( endNode ) )
-        {
-            foundPathsMiddleNodes = new HashSet<>();
-            foundPathsMiddleNodes.add( startNode );
-            foundPathsCost = costAccumulator.addCosts( startCost, startCost );
-            return true;
-        }
-        HashMap<Node, CostType> seen1 = new HashMap<>();
-        HashMap<Node, CostType> seen2 = new HashMap<>();
-        HashMap<Node, CostType> dists1 = new HashMap<>();
-        HashMap<Node, CostType> dists2 = new HashMap<>();
-        DijkstraIterator iter1 = new DijkstraIterator( startNode, predecessors1,
-                seen1, seen2, dists1, dists2, false );
-        DijkstraIterator iter2 = new DijkstraIterator( endNode, predecessors2,
-                seen2, seen1, dists2, dists1, true );
-        Node node1 = null;
-        Node node2 = null;
-        while ( iter1.hasNext() && iter2.hasNext() )
-        {
-            if ( limitReached() )
-            {
-                break;
-            }
-            if ( iter1.hasNext() )
-            {
-                node1 = iter1.next();
-                if ( node1 == null )
-                {
-                    break;
-                }
-            }
-            if ( limitReached() )
-            {
-                break;
-            }
-            if ( !iter1.isDone() && iter2.hasNext() )
-            {
-                node2 = iter2.next();
-                if ( node2 == null )
-                {
-                    break;
-                }
-            }
-            if ( limitReached( seen1.get( node1 ), seen2.get( node2 ) ) )
-            {
-                break;
-            }
-            if ( iter1.isDone() || iter2.isDone() ) // A path was found
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @return The cost for the found path(s).
-     */
-    @Override
-    public CostType getCost()
-    {
-        if ( startNode == null || endNode == null )
-        {
-            throw new RuntimeException( "Start or end node undefined." );
-        }
-        calculate();
-        return foundPathsCost;
-    }
-
-    /**
-     * @return All the found paths or null.
-     */
-    @Override
-    public List<List<PropertyContainer>> getPaths()
-    {
-        if ( startNode == null || endNode == null )
-        {
-            throw new RuntimeException( "Start or end node undefined." );
-        }
-        calculateMultiple();
-        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
-        {
-            return Collections.emptyList();
-        }
-
-        List<List<PropertyContainer>> paths = new LinkedList<>();
-        for ( Node middleNode : foundPathsMiddleNodes )
-        {
-            List<List<PropertyContainer>> paths1 = Util.constructAllPathsToNode(
-                    middleNode, predecessors1, true, false );
-            List<List<PropertyContainer>> paths2 = Util.constructAllPathsToNode(
-                    middleNode, predecessors2, false, true );
-            // For all combinations...
-            for ( List<PropertyContainer> part1 : paths1 )
-            {
-                for ( List<PropertyContainer> part2 : paths2 )
-                {
-                    // Combine them
-                    LinkedList<PropertyContainer> path = new LinkedList<>();
-                    path.addAll( part1 );
-                    path.addAll( part2 );
-                    // Add to collection
-                    paths.add( path );
-                }
-            }
-        }
-
-        return paths;
-    }
-
-    /**
-     * @return All the found paths or null.
-     */
-    @Override
-    public List<List<Node>> getPathsAsNodes()
-    {
-        if ( startNode == null || endNode == null )
-        {
-            throw new RuntimeException( "Start or end node undefined." );
-        }
-        calculateMultiple();
-        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
-        {
-            return null;
-        }
-
-        List<List<Node>> paths = new LinkedList<>();
-        for ( Node middleNode : foundPathsMiddleNodes )
-        {
-            List<List<Node>> paths1 = Util.constructAllPathsToNodeAsNodes(
-                    middleNode, predecessors1, true, false );
-            List<List<Node>> paths2 = Util.constructAllPathsToNodeAsNodes(
-                    middleNode, predecessors2, false, true );
-            // For all combinations...
-            for ( List<Node> part1 : paths1 )
-            {
-                for ( List<Node> part2 : paths2 )
-                {
-                    // Combine them
-                    LinkedList<Node> path = new LinkedList<>();
-                    path.addAll( part1 );
-                    path.addAll( part2 );
-                    // Add to collection
-                    paths.add( path );
-                }
-            }
-        }
-
-        return paths;
-    }
-
-    /**
-     * @return All the found paths or null.
-     */
-    @Override
-    public List<List<Relationship>> getPathsAsRelationships()
-    {
-        if ( startNode == null || endNode == null )
-        {
-            throw new RuntimeException( "Start or end node undefined." );
-        }
-        calculateMultiple();
-        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
-        {
-            return null;
-        }
-
-        List<List<Relationship>> paths = new LinkedList<>();
-        for ( Node middleNode : foundPathsMiddleNodes )
-        {
-            List<List<Relationship>> paths1 = Util.constructAllPathsToNodeAsRelationships(
-                    middleNode, predecessors1, false );
-            List<List<Relationship>> paths2 = Util.constructAllPathsToNodeAsRelationships(
-                    middleNode, predecessors2, true );
-            // For all combinations...
-            for ( List<Relationship> part1 : paths1 )
-            {
-                for ( List<Relationship> part2 : paths2 )
-                {
-                    // Combine them
-                    LinkedList<Relationship> path = new LinkedList<>();
-                    path.addAll( part1 );
-                    path.addAll( part2 );
-                    // Add to collection
-                    paths.add( path );
-                }
-            }
-        }
-
-        return paths;
-    }
-
-    /**
-     * @return One of the shortest paths found or null.
-     */
-    @Override
-    public List<PropertyContainer> getPath()
-    {
-        if ( startNode == null || endNode == null )
-        {
-            throw new RuntimeException( "Start or end node undefined." );
-        }
-        calculate();
-        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
-        {
-            return null;
-        }
-        Node middleNode = foundPathsMiddleNodes.iterator().next();
-        LinkedList<PropertyContainer> path = new LinkedList<>();
-        path.addAll( Util.constructSinglePathToNode( middleNode, predecessors1,
-                true, false ) );
-        path.addAll( Util.constructSinglePathToNode( middleNode, predecessors2,
-                false, true ) );
-        return path;
-    }
-
-    /**
-     * @return One of the shortest paths found or null.
-     */
-    @Override
-    public List<Node> getPathAsNodes()
-    {
-        if ( startNode == null || endNode == null )
-        {
-            throw new RuntimeException( "Start or end node undefined." );
-        }
-        calculate();
-        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
-        {
-            return null;
-        }
-        Node middleNode = foundPathsMiddleNodes.iterator().next();
-        LinkedList<Node> pathNodes = new LinkedList<>();
-        pathNodes.addAll( Util.constructSinglePathToNodeAsNodes( middleNode,
-                predecessors1, true, false ) );
-        pathNodes.addAll( Util.constructSinglePathToNodeAsNodes( middleNode,
-                predecessors2, false, true ) );
-        return pathNodes;
-    }
-
-    /**
-     * @return One of the shortest paths found or null.
-     */
-    @Override
-    public List<Relationship> getPathAsRelationships()
-    {
-        if ( startNode == null || endNode == null )
-        {
-            throw new RuntimeException( "Start or end node undefined." );
-        }
-        calculate();
-        if ( foundPathsMiddleNodes == null || foundPathsMiddleNodes.size() == 0 )
-        {
-            return null;
-        }
-        Node middleNode = foundPathsMiddleNodes.iterator().next();
-        List<Relationship> path = new LinkedList<>();
-        path.addAll( Util.constructSinglePathToNodeAsRelationships( middleNode,
-                predecessors1, false ) );
-        path.addAll( Util.constructSinglePathToNodeAsRelationships( middleNode,
-                predecessors2, true ) );
-        return path;
-    }
-
-    /**
-     * This sets the maximum depth in the form of a maximum number of
-     * relationships to follow.
-     *
-     * @param maxRelationShipsToTraverse
-     */
-    public void limitMaxRelationShipsToTraverse( long maxRelationShipsToTraverse )
-    {
-        this.maxRelationShipsToTraverse = maxRelationShipsToTraverse;
-    }
-
-    /**
-     * This sets the maximum depth in the form of a maximum number of nodes to
-     * scan.
-     *
-     * @param maxNodesToTraverse
-     */
-    public void limitMaxNodesToTraverse( long maxNodesToTraverse )
-    {
-        this.maxNodesToTraverse = maxNodesToTraverse;
-    }
-
-    /**
-     * Set the end node. Will reset the calculation.
-     *
-     * @param endNode the endNode to set
-     */
-    @Override
-    public void setEndNode( Node endNode )
-    {
-        reset();
-        this.endNode = endNode;
-    }
-
-    /**
-     * Set the start node. Will reset the calculation.
-     *
-     * @param startNode the startNode to set
-     */
-    @Override
-    public void setStartNode( Node startNode )
-    {
-        this.startNode = startNode;
-        reset();
-    }
-
-    /**
-     * @return the relationDirection
-     */
-    @Override
-    public Direction getDirection()
-    {
-        return relationDirection;
-    }
-
-    /**
-     * @return the costRelationType
-     */
-    @Override
-    public RelationshipType[] getRelationshipTypes()
-    {
-        return costRelationTypes;
-    }
-
-    /**
-     * Set the evaluator for pruning the paths when the maximum cost is
-     * exceeded.
-     *
-     * @param maxCost
-     */
-    public void limitMaxCostToTraverse( CostType maxCost )
-    {
-        this.maxCost = maxCost;
     }
 }

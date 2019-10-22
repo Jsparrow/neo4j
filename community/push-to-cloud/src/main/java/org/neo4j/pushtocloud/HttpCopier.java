@@ -174,9 +174,7 @@ public class HttpCopier implements PushToCloudCommand.Copier
                     statusProgress.add( 2 );
                     break;
                 case "loading failed":
-                    throw new CommandFailed( "We're sorry, something has gone wrong. We did not recognize the file you uploaded as a valid Neo4j dump file. " +
-                            "Please check the file and try again. If you have received this error after confirming the type of file being uploaded," +
-                            "please open a support case." );
+                    throw new CommandFailed( new StringBuilder().append("We're sorry, something has gone wrong. We did not recognize the file you uploaded as a valid Neo4j dump file. ").append("Please check the file and try again. If you have received this error after confirming the type of file being uploaded,").append("please open a support case.").toString() );
                 default:
                     throw new CommandFailed( String.format( "We're sorry, something has failed during the loading of your database. " +
                             "Please try again and if this problem persists, please open up a support case. Database status: %s", status ) );
@@ -504,7 +502,7 @@ public class HttpCopier implements PushToCloudCommand.Copier
         int dashIndex = range.indexOf( '-' );
         if ( !range.startsWith( "bytes=" ) || dashIndex == -1 )
         {
-            throw new CommandFailed( "Unexpected response when asking where to resume upload from. got '" + range + "'" );
+            throw new CommandFailed( new StringBuilder().append("Unexpected response when asking where to resume upload from. got '").append(range).append("'").toString() );
         }
         return Long.parseLong( range.substring( dashIndex + 1 ) ) + 1;
     }
@@ -517,11 +515,11 @@ public class HttpCopier implements PushToCloudCommand.Copier
             if ( input != null )
             {
                 input = input.toLowerCase();
-                if ( input.equals( "yes" ) || input.equals( "y" ) || input.equals( "true" ) )
+                if ( "yes".equals( input ) || "y".equals( input ) || "true".equals( input ) )
                 {
                     return true;
                 }
-                if ( input.equals( "no" ) || input.equals( "n" ) || input.equals( "false" ) )
+                if ( "no".equals( input ) || "n".equals( input ) || "false".equals( input ) )
                 {
                     return false;
                 }
@@ -541,7 +539,7 @@ public class HttpCopier implements PushToCloudCommand.Copier
         try ( InputStream responseData = connection.getInputStream() )
         {
             String json = new String( toByteArray( responseData ), UTF_8 );
-            debug( verbose, "Got json '" + json + "' back expecting to contain the signed URL" );
+            debug( verbose, new StringBuilder().append("Got json '").append(json).append("' back expecting to contain the signed URL").toString() );
             return parseJsonUsingJacksonParser( json, SignedURIBody.class ).SignedURI;
         }
     }
@@ -561,24 +559,19 @@ public class HttpCopier implements PushToCloudCommand.Copier
 
     private void debugResponse( boolean verbose, HttpURLConnection connection, boolean successful ) throws IOException
     {
-        if ( verbose )
-        {
-            debug( true, "=== Unexpected response ===" );
-            debug( true, "Response message: " + connection.getResponseMessage() );
-            debug( true, "Response headers:" );
-            connection.getHeaderFields().forEach( ( key, value1 ) ->
-            {
-                for ( String value : value1 )
-                {
-                    debug( true, "  " + key + ": " + value );
-                }
-            } );
-            try ( InputStream responseData = successful ? connection.getInputStream() : connection.getErrorStream() )
-            {
-                String responseString = new String( toByteArray( responseData ), UTF_8 );
-                debug( true, "Error response data: " + responseString );
-            }
-        }
+        if (!verbose) {
+			return;
+		}
+		debug( true, "=== Unexpected response ===" );
+		debug( true, "Response message: " + connection.getResponseMessage() );
+		debug( true, "Response headers:" );
+		connection.getHeaderFields().forEach( ( key, value1 ) ->
+		value1.forEach(value -> debug(true, new StringBuilder().append("  ").append(key).append(": ").append(value).toString())) );
+		try ( InputStream responseData = successful ? connection.getInputStream() : connection.getErrorStream() )
+		{
+		    String responseString = new String( toByteArray( responseData ), UTF_8 );
+		    debug( true, "Error response data: " + responseString );
+		}
     }
 
     private static long calculateCrc32HashOfFile( Path source ) throws IOException
@@ -603,7 +596,7 @@ public class HttpCopier implements PushToCloudCommand.Copier
         }
         catch ( MalformedURLException e )
         {
-            throw new RuntimeException( "Malformed URL '" + urlString + "'", e );
+            throw new RuntimeException( new StringBuilder().append("Malformed URL '").append(urlString).append("'").toString(), e );
         }
     }
 
@@ -626,17 +619,13 @@ public class HttpCopier implements PushToCloudCommand.Copier
     private CommandFailed resumePossibleErrorResponse( HttpURLConnection connection, Path dump, String boltUri ) throws IOException
     {
         debugErrorResponse( true, connection );
-        return new CommandFailed( "We encountered a problem while communicating to the Neo4j cloud system. \n" +
-                "You can re-try using the existing dump by running this command: \n" +
-                String.format( "neo4j-admin push-to-cloud --%s=%s --$s=%s", ARG_DUMP, dump.toFile().getAbsolutePath(), ARG_BOLT_URI, boltUri ) );
+        return new CommandFailed( new StringBuilder().append("We encountered a problem while communicating to the Neo4j cloud system. \n").append("You can re-try using the existing dump by running this command: \n").append(String.format( "neo4j-admin push-to-cloud --%s=%s --$s=%s", ARG_DUMP, dump.toFile().getAbsolutePath(), ARG_BOLT_URI, boltUri )).toString() );
     }
 
     private CommandFailed updatePluginErrorResponse( HttpURLConnection connection ) throws IOException
     {
         debugErrorResponse( true, connection );
-        return new CommandFailed( "We encountered a problem while communicating to the Neo4j cloud system. " +
-                "Please check that you are using the latest version of the push-to-cloud plugin and upgrade if necessary. " +
-                "If this problem persists after upgrading, please contact support and attach the logs shown below to your ticket in the support portal." );
+        return new CommandFailed( new StringBuilder().append("We encountered a problem while communicating to the Neo4j cloud system. ").append("Please check that you are using the latest version of the push-to-cloud plugin and upgrade if necessary. ").append("If this problem persists after upgrading, please contact support and attach the logs shown below to your ticket in the support portal.").toString() );
     }
 
     private CommandFailed unexpectedResponse( boolean verbose, HttpURLConnection connection, String requestDescription ) throws IOException

@@ -118,10 +118,7 @@ public class PrimitiveLongCollections
     public static MutableLongSet asSet( Collection<Long> collection )
     {
         final MutableLongSet set = new LongHashSet( collection.size() );
-        for ( Long next : collection )
-        {
-            set.add( next );
-        }
+        collection.forEach(set::add);
         return set;
     }
 
@@ -191,16 +188,15 @@ public class PrimitiveLongCollections
             @Override
             protected boolean fetchNext()
             {
-                if ( iterator.hasNext() )
-                {
-                    Long nextValue = iterator.next();
-                    if ( null == nextValue )
-                    {
-                        throw new IllegalArgumentException( "Cannot convert null Long to primitive long" );
-                    }
-                    return next( nextValue.longValue() );
-                }
-                return false;
+                if (!iterator.hasNext()) {
+					return false;
+				}
+				Long nextValue = iterator.next();
+				if ( null == nextValue )
+				{
+				    throw new IllegalArgumentException( "Cannot convert null Long to primitive long" );
+				}
+				return next( nextValue.longValue() );
             }
         };
     }
@@ -336,8 +332,7 @@ public class PrimitiveLongCollections
     {
         if ( !collection.add( item ) )
         {
-            throw new IllegalStateException( "Encountered an already added item:" + item +
-                    " when adding items uniquely to a collection:" + collection );
+            throw new IllegalStateException( new StringBuilder().append("Encountered an already added item:").append(item).append(" when adding items uniquely to a collection:").append(collection).toString() );
         }
     }
 
@@ -368,7 +363,15 @@ public class PrimitiveLongCollections
         return uniqueIndex < values.length ? Arrays.copyOf( values, uniqueIndex ) : values;
     }
 
-    /**
+    public static MutableLongSet mergeToSet( LongIterable a, LongIterable b )
+    {
+        final MutableLongSet set = new LongHashSet( a.size() + b.size() );
+        set.addAll( a );
+        set.addAll( b );
+        return set;
+    }
+
+	/**
      * Base iterator for simpler implementations of {@link LongIterator}s.
      */
     public abstract static class PrimitiveLongBaseIterator implements LongIterator
@@ -510,13 +513,5 @@ public class PrimitiveLongCollections
                 current++;
             }
         }
-    }
-
-    public static MutableLongSet mergeToSet( LongIterable a, LongIterable b )
-    {
-        final MutableLongSet set = new LongHashSet( a.size() + b.size() );
-        set.addAll( a );
-        set.addAll( b );
-        return set;
     }
 }

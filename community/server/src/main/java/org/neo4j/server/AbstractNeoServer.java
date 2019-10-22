@@ -113,7 +113,7 @@ public abstract class AbstractNeoServer implements NeoServer
             Pattern.compile( "/browser.*" ),
             Pattern.compile( "/" )
     };
-    public static final String NEO4J_IS_STARTING_MESSAGE = "======== Neo4j " + Version.getNeo4jVersion() + " ========";
+    public static final String NEO4J_IS_STARTING_MESSAGE = new StringBuilder().append("======== Neo4j ").append(Version.getNeo4jVersion()).append(" ========").toString();
 
     protected final LogProvider userLogProvider;
     private final Log log;
@@ -144,10 +144,6 @@ public abstract class AbstractNeoServer implements NeoServer
     private AsyncRequestLog requestLog;
     private final Supplier<AvailabilityGuard> availabilityGuardSupplier;
 
-    protected abstract Iterable<ServerModule> createServerModules();
-
-    protected abstract WebServer createWebServer();
-
     public AbstractNeoServer( Config config, GraphFactory graphFactory, Dependencies dependencies )
     {
         this.config = config;
@@ -172,8 +168,12 @@ public abstract class AbstractNeoServer implements NeoServer
         life.add( new ServerComponentsLifecycleAdapter() );
     }
 
-    @Override
-    public void start() throws ServerStartupException
+	protected abstract Iterable<ServerModule> createServerModules();
+
+	protected abstract WebServer createWebServer();
+
+	@Override
+    public void start()
     {
         try
         {
@@ -188,17 +188,17 @@ public abstract class AbstractNeoServer implements NeoServer
         }
     }
 
-    public DependencyResolver getDependencyResolver()
+	public DependencyResolver getDependencyResolver()
     {
         return dependencyResolver;
     }
 
-    protected DatabaseActions createDatabaseActions()
+	protected DatabaseActions createDatabaseActions()
     {
         return new DatabaseActions( database.getGraph() );
     }
 
-    private TransactionFacade createTransactionalActions()
+	private TransactionFacade createTransactionalActions()
     {
         final long timeoutMillis = getTransactionTimeoutMillis();
         final Clock clock = Clocks.systemClock();
@@ -223,7 +223,7 @@ public abstract class AbstractNeoServer implements NeoServer
         );
     }
 
-    /**
+	/**
      * We are going to ensure the minimum timeout is 2 seconds. The timeout value is communicated to the user in
      * seconds rounded down, meaning if a user set a 1 second timeout, he would be told there was less than 1 second
      * remaining before he would need to renew the timeout.
@@ -234,7 +234,7 @@ public abstract class AbstractNeoServer implements NeoServer
         return Math.max( timeout, MINIMUM_TIMEOUT + ROUNDING_SECOND );
     }
 
-    /**
+	/**
      * Use this method to register server modules from subclasses
      */
     protected final void registerModule( ServerModule module )
@@ -242,31 +242,28 @@ public abstract class AbstractNeoServer implements NeoServer
         serverModules.add( module );
     }
 
-    private void startModules()
+	private void startModules()
     {
-        for ( ServerModule module : serverModules )
-        {
-            module.start();
-        }
+        serverModules.forEach(ServerModule::start);
     }
 
-    private void stopModules()
+	private void stopModules()
     {
         new RunCarefully( map( module -> module::stop, serverModules ) ).run();
     }
 
-    private void clearModules()
+	private void clearModules()
     {
         serverModules.clear();
     }
 
-    @Override
+	@Override
     public Config getConfig()
     {
         return config;
     }
 
-    protected void configureWebServer()
+	protected void configureWebServer()
     {
         webServer.setHttpAddress( httpListenAddress );
         webServer.setHttpsAddress( httpsListenAddress );
@@ -275,14 +272,14 @@ public abstract class AbstractNeoServer implements NeoServer
         webServer.setDefaultInjectables( createDefaultInjectables() );
 
         String sslPolicyName = config.get( ServerSettings.ssl_policy );
-        if ( sslPolicyName != null )
-        {
-            SslPolicy sslPolicy = sslPolicyFactorySupplier.get().getPolicy( sslPolicyName );
-            webServer.setSslPolicy( sslPolicy );
-        }
+        if (sslPolicyName == null) {
+			return;
+		}
+		SslPolicy sslPolicy = sslPolicyFactorySupplier.get().getPolicy( sslPolicyName );
+		webServer.setSslPolicy( sslPolicy );
     }
 
-    protected void startWebServer() throws Exception
+	protected void startWebServer() throws Exception
     {
         try
         {
@@ -300,33 +297,33 @@ public abstract class AbstractNeoServer implements NeoServer
         }
     }
 
-    private void registerHttpAddressAfterStartup()
+	private void registerHttpAddressAfterStartup()
     {
-        if ( httpConnector != null )
-        {
-            InetSocketAddress localHttpAddress = webServer.getLocalHttpAddress();
-            connectorPortRegister.register( httpConnector.key(), localHttpAddress );
-            if ( httpAdvertisedAddress.getPort() == 0 )
-            {
-                httpAdvertisedAddress = new AdvertisedSocketAddress( localHttpAddress.getHostString(), localHttpAddress.getPort() );
-            }
-        }
+        if (httpConnector == null) {
+			return;
+		}
+		InetSocketAddress localHttpAddress = webServer.getLocalHttpAddress();
+		connectorPortRegister.register( httpConnector.key(), localHttpAddress );
+		if ( httpAdvertisedAddress.getPort() == 0 )
+		{
+		    httpAdvertisedAddress = new AdvertisedSocketAddress( localHttpAddress.getHostString(), localHttpAddress.getPort() );
+		}
     }
 
-    private void registerHttpsAddressAfterStartup()
+	private void registerHttpsAddressAfterStartup()
     {
-        if ( httpsConnector != null )
-        {
-            InetSocketAddress localHttpsAddress = webServer.getLocalHttpsAddress();
-            connectorPortRegister.register( httpsConnector.key(), localHttpsAddress );
-            if ( httpsAdvertisedAddress.getPort() == 0 )
-            {
-                httpsAdvertisedAddress = new AdvertisedSocketAddress( localHttpsAddress.getHostString(), localHttpsAddress.getPort() );
-            }
-        }
+        if (httpsConnector == null) {
+			return;
+		}
+		InetSocketAddress localHttpsAddress = webServer.getLocalHttpsAddress();
+		connectorPortRegister.register( httpsConnector.key(), localHttpsAddress );
+		if ( httpsAdvertisedAddress.getPort() == 0 )
+		{
+		    httpsAdvertisedAddress = new AdvertisedSocketAddress( localHttpsAddress.getHostString(), localHttpsAddress.getPort() );
+		}
     }
 
-    private void setUpHttpLogging() throws IOException
+	private void setUpHttpLogging() throws IOException
     {
         if ( !getConfig().get( http_logging_enabled ) )
         {
@@ -342,19 +339,19 @@ public abstract class AbstractNeoServer implements NeoServer
         webServer.setRequestLog( requestLog );
     }
 
-    protected Pattern[] getUriWhitelist()
+	protected Pattern[] getUriWhitelist()
     {
         return DEFAULT_URI_WHITELIST;
     }
 
-    @Override
+	@Override
     public void stop()
     {
         tryShutdownAvailabiltyGuard();
         life.stop();
     }
 
-    private void tryShutdownAvailabiltyGuard()
+	private void tryShutdownAvailabiltyGuard()
     {
         AvailabilityGuard guard = availabilityGuardSupplier.get();
         if ( guard != null )
@@ -363,7 +360,7 @@ public abstract class AbstractNeoServer implements NeoServer
         }
     }
 
-    private void stopWebServer() throws Exception
+	private void stopWebServer() throws Exception
     {
         if ( webServer != null )
         {
@@ -375,19 +372,19 @@ public abstract class AbstractNeoServer implements NeoServer
         }
     }
 
-    @Override
+	@Override
     public Database getDatabase()
     {
         return database;
     }
 
-    @Override
+	@Override
     public TransactionRegistry getTransactionRegistry()
     {
         return transactionRegistry;
     }
 
-    @Override
+	@Override
     public URI baseUri()
     {
         return httpAdvertisedAddress != null
@@ -395,18 +392,18 @@ public abstract class AbstractNeoServer implements NeoServer
                : uriBuilder.buildURI( httpsAdvertisedAddress, true );
     }
 
-    public Optional<URI> httpsUri()
+	public Optional<URI> httpsUri()
     {
         return Optional.ofNullable( httpsAdvertisedAddress )
                 .map( address -> uriBuilder.buildURI( address, true ) );
     }
 
-    public WebServer getWebServer()
+	public WebServer getWebServer()
     {
         return webServer;
     }
 
-    @Override
+	@Override
     public PluginManager getExtensionManager()
     {
         RESTApiModule module = getModule( RESTApiModule.class );
@@ -417,7 +414,7 @@ public abstract class AbstractNeoServer implements NeoServer
         return null;
     }
 
-    protected Collection<InjectableProvider<?>> createDefaultInjectables()
+	protected Collection<InjectableProvider<?>> createDefaultInjectables()
     {
         Collection<InjectableProvider<?>> singletons = new ArrayList<>();
 
@@ -451,26 +448,18 @@ public abstract class AbstractNeoServer implements NeoServer
         return singletons;
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     private <T extends ServerModule> T getModule( Class<T> clazz )
     {
-        for ( ServerModule sm : serverModules )
-        {
-            if ( sm.getClass() == clazz )
-            {
-                return (T) sm;
-            }
-        }
-
-        return null;
+        return serverModules.stream().filter(sm -> sm.getClass() == clazz).findFirst().map(sm -> (T) sm).orElse(null);
     }
 
-    protected <T> T resolveDependency( Class<T> type )
+	protected <T> T resolveDependency( Class<T> type )
     {
         return dependencyResolver.resolveDependency( type );
     }
 
-    private static void verifyConnectorsConfiguration( Config config )
+	private static void verifyConnectorsConfiguration( Config config )
     {
         HttpConnector httpConnector = findConnector( config, Encryption.NONE );
         HttpConnector httpsConnector = findConnector( config, Encryption.TLS );
@@ -481,7 +470,7 @@ public abstract class AbstractNeoServer implements NeoServer
         }
     }
 
-    private static HttpConnector findConnector( Config config, Encryption encryption )
+	private static HttpConnector findConnector( Config config, Encryption encryption )
     {
         return config.enabledHttpConnectors()
                 .stream()
@@ -490,17 +479,17 @@ public abstract class AbstractNeoServer implements NeoServer
                 .orElse( null );
     }
 
-    private static ListenSocketAddress listenAddressFor( Config config, HttpConnector connector )
+	private static ListenSocketAddress listenAddressFor( Config config, HttpConnector connector )
     {
         return connector == null ? null : config.get( connector.listen_address );
     }
 
-    private static AdvertisedSocketAddress advertisedAddressFor( Config config, HttpConnector connector )
+	private static AdvertisedSocketAddress advertisedAddressFor( Config config, HttpConnector connector )
     {
         return connector == null ? null : config.get( connector.advertised_address );
     }
 
-    private class ServerDependenciesLifeCycleAdapter extends LifecycleAdapter
+	private class ServerDependenciesLifeCycleAdapter extends LifecycleAdapter
     {
         @Override
         public void start()

@@ -78,20 +78,16 @@ public class StandardBranchCollisionDetector implements BranchCollisionDetector
         if ( !otherCollections.isEmpty() )
         {
             Collection<Path> foundPaths = new ArrayList<>();
-            for ( TraversalBranch otherBranch : otherCollections )
-            {
+            otherCollections.forEach(otherBranch -> {
                 TraversalBranch startPath = index == 0 ? branch : otherBranch;
                 TraversalBranch endPath = index == 0 ? otherBranch : branch;
                 BidirectionalTraversalBranchPath path = new BidirectionalTraversalBranchPath(
                         startPath, endPath );
-                if ( isAcceptablePath( path ) )
-                {
-                    if ( returnedPaths.add( path ) && includePath( path, startPath, endPath ) )
-                    {
-                        foundPaths.add( path );
-                    }
-                }
-            }
+                boolean condition = isAcceptablePath( path ) && returnedPaths.add( path ) && includePath( path, startPath, endPath );
+				if ( condition ) {
+				    foundPaths.add( path );
+				}
+            });
 
             if ( !foundPaths.isEmpty() )
             {

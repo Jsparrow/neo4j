@@ -72,6 +72,6 @@ public class SimpleHit<KEY,VALUE> implements Hit<KEY,VALUE>
     @Override
     public String toString()
     {
-        return "[" + key + "," + value + "]";
+        return new StringBuilder().append("[").append(key).append(",").append(value).append("]").toString();
     }
 }

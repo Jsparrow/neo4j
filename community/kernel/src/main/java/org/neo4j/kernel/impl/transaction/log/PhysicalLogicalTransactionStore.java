@@ -114,8 +114,7 @@ public class PhysicalLogicalTransactionStore implements LogicalTransactionStore
         {
             throw new NoSuchTransactionException(
                     transactionIdToStartFrom,
-                    "Log position acquired, but couldn't find the log file itself. Perhaps it just recently was " +
-                    "deleted? [" + e.getMessage() + "]",
+                    new StringBuilder().append("Log position acquired, but couldn't find the log file itself. Perhaps it just recently was ").append("deleted? [").append(e.getMessage()).append("]").toString(),
                     e );
         }
     }

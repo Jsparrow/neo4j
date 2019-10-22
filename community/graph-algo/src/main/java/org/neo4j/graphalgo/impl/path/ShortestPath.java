@@ -25,7 +25,6 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,11 +75,6 @@ public class ShortestPath implements PathFinder<Path>
     private ShortestPathPredicate predicate;
     private DataMonitor dataMonitor;
 
-    public interface ShortestPathPredicate
-    {
-        boolean test( Path path );
-    }
-
     /**
      * Constructs a new shortest path algorithm.
      * @param maxDepth the maximum depth for the traversal. Returned paths
@@ -93,13 +87,13 @@ public class ShortestPath implements PathFinder<Path>
         this( maxDepth, expander, Integer.MAX_VALUE );
     }
 
-    public ShortestPath( int maxDepth, PathExpander expander, ShortestPathPredicate predicate )
+	public ShortestPath( int maxDepth, PathExpander expander, ShortestPathPredicate predicate )
     {
         this( maxDepth, expander );
         this.predicate = predicate;
     }
 
-    /**
+	/**
      * Constructs a new shortest path algorithm.
      * @param maxDepth the maximum depth for the traversal. Returned paths
      * will never have a greater {@link Path#length()} than {@code maxDepth}.
@@ -115,33 +109,33 @@ public class ShortestPath implements PathFinder<Path>
         this.maxResultCount = maxResultCount;
     }
 
-    @Override
+	@Override
     public Iterable<Path> findAllPaths( Node start, Node end )
     {
         return internalPaths( start, end, false );
     }
 
-    @Override
+	@Override
     public Path findSinglePath( Node start, Node end )
     {
         Iterator<Path> paths = internalPaths( start, end, true ).iterator();
         return paths.hasNext() ? paths.next() : null;
     }
 
-    private void resolveMonitor( Node node )
+	private void resolveMonitor( Node node )
     {
-        if ( dataMonitor == null )
-        {
-            GraphDatabaseService service = node.getGraphDatabase();
-            if ( service instanceof GraphDatabaseFacade )
-            {
-                Monitors monitors = ((GraphDatabaseFacade) service).getDependencyResolver().resolveDependency( Monitors.class );
-                dataMonitor = monitors.newMonitor( DataMonitor.class );
-            }
-        }
+        if (dataMonitor != null) {
+			return;
+		}
+		GraphDatabaseService service = node.getGraphDatabase();
+		if ( service instanceof GraphDatabaseFacade )
+		{
+		    Monitors monitors = ((GraphDatabaseFacade) service).getDependencyResolver().resolveDependency( Monitors.class );
+		    dataMonitor = monitors.newMonitor( DataMonitor.class );
+		}
     }
 
-    private Iterable<Path> internalPaths( Node start, Node end, boolean stopAsap )
+	private Iterable<Path> internalPaths( Node start, Node end, boolean stopAsap )
     {
         lastMetadata = new Metadata();
         if ( start.equals( end ) )
@@ -168,10 +162,218 @@ public class ShortestPath implements PathFinder<Path>
         }
     }
 
-    @Override
+	@Override
     public TraversalMetadata metadata()
     {
         return lastMetadata;
+    }
+
+	private void goOneStep( DirectionData directionData, DirectionData otherSide, Hits hits, DirectionData startSide,
+            boolean stopAsap )
+    {
+        if ( !directionData.hasNext() )
+        {
+            // We can not go any deeper from this direction. Possibly disconnected nodes.
+            otherSide.finishCurrentLayerThenStop = true;
+            return;
+        }
+        Node nextNode = directionData.next();
+        LevelData otherSideHit = otherSide.visitedNodes.get( nextNode );
+        if (otherSideHit == null) {
+			return;
+		}
+		// This is a hit
+		int depth = directionData.currentDepth + otherSideHit.depth;
+		if ( directionData.sharedFrozenDepth.intValue() == NULL )
+		{
+		    directionData.sharedFrozenDepth.setValue( depth );
+		}
+		if ( depth <= directionData.sharedFrozenDepth.intValue() )
+		{
+		    directionData.haveFoundSomething = true;
+		    if ( depth < directionData.sharedFrozenDepth.intValue() )
+		    {
+		        directionData.sharedFrozenDepth.setValue( depth );
+		        // TODO Is it really ok to just stop the other side here?
+		        // I'm basing that decision on that it was the other side
+		        // which found the deeper paths (correct assumption?)
+		        otherSide.stop = true;
+		    }
+		    // Add it to the list of hits
+		    DirectionData startSideData = directionData == startSide ? directionData : otherSide;
+		    DirectionData endSideData = directionData == startSide ? otherSide : directionData;
+		    Hit hit = new Hit( startSideData, endSideData, nextNode );
+		    Node start = startSide.startNode;
+		    Node end = (startSide == directionData) ? otherSide.startNode : directionData.startNode;
+		    monitorData( startSide, (otherSide == startSide) ? directionData : otherSide, nextNode );
+		    // NOTE: Applying the filter-condition could give the wrong results with allShortestPaths,
+		    // so only use it for singleShortestPath
+		    if ( !stopAsap || filterPaths( hitToPaths( hit, start, end, stopAsap ) ).size() > 0 )
+		    {
+		        if ( hits.add( hit, depth ) >= maxResultCount )
+		        {
+		            directionData.stop = true;
+		            otherSide.stop = true;
+		            lastMetadata.paths++;
+		        }
+		        else if ( stopAsap )
+		        {   // This side found a hit, but wait for the other side to complete its current depth
+		            // to see if it finds a shorter path. (i.e. stop this side and freeze the depth).
+		            // but only if the other side has not stopped, otherwise we might miss shorter paths
+		            if ( otherSide.stop )
+		            {
+		                return;
+		            }
+		            directionData.stop = true;
+		        }
+		    }
+		    else
+		    {
+		        directionData.haveFoundSomething = false;
+		        directionData.sharedFrozenDepth.setValue( NULL );
+		        otherSide.stop = false;
+		    }
+		}
+    }
+
+	private void monitorData( DirectionData directionData, DirectionData otherSide, Node connectingNode )
+    {
+        resolveMonitor( directionData.startNode );
+        if ( dataMonitor != null )
+        {
+            dataMonitor.monitorData( directionData.visitedNodes, directionData.nextNodes, otherSide.visitedNodes,
+                    otherSide.nextNodes, connectingNode );
+        }
+    }
+
+	private Collection<Path> filterPaths( Collection<Path> paths )
+    {
+        if ( predicate == null )
+        {
+            return paths;
+        }
+        else
+        {
+            Collection<Path> filteredPaths = new ArrayList<>();
+            paths.stream().filter(predicate::test).forEach(filteredPaths::add);
+            return filteredPaths;
+        }
+    }
+
+	protected Node filterNextLevelNodes( Node nextNode )
+    {
+        // We need to be able to override this method from Cypher, so it must exist in this concrete class.
+        // And we also need it to do nothing but still work when not overridden.
+        return nextNode;
+    }
+
+	private static Collection<Path> hitsToPaths( Collection<Hit> depthHits, Node start, Node end, boolean stopAsap, int maxResultCount )
+    {
+        LinkedHashMap<String,Path> paths = new LinkedHashMap<>();
+        for ( Hit hit : depthHits )
+        {
+            for ( Path path : hitToPaths( hit, start, end, stopAsap ) )
+            {
+                paths.put( path.toString(), path );
+                if ( paths.size() >= maxResultCount )
+                {
+                    break;
+                }
+            }
+        }
+        return paths.values();
+    }
+
+	private static Collection<Path> hitToPaths( Hit hit, Node start, Node end, boolean stopAsap )
+    {
+        Collection<Path> paths = new ArrayList<>();
+        Iterable<LinkedList<Relationship>> startPaths = getPaths( hit.connectingNode, hit.start, stopAsap );
+        Iterable<LinkedList<Relationship>> endPaths = getPaths( hit.connectingNode, hit.end, stopAsap );
+        for ( LinkedList<Relationship> startPath : startPaths )
+        {
+            PathImpl.Builder startBuilder = toBuilder( start, startPath );
+            for ( LinkedList<Relationship> endPath : endPaths )
+            {
+                PathImpl.Builder endBuilder = toBuilder( end, endPath );
+                Path path = startBuilder.build( endBuilder );
+                paths.add( path );
+            }
+        }
+        return paths;
+    }
+
+	private static Iterable<LinkedList<Relationship>> getPaths( Node connectingNode, DirectionData data,
+            boolean stopAsap )
+    {
+        LevelData levelData = data.visitedNodes.get( connectingNode );
+        if ( levelData.depth == 0 )
+        {
+            Collection<LinkedList<Relationship>> result = new ArrayList<>();
+            result.add( new LinkedList<>() );
+            return result;
+        }
+        Collection<PathData> set = new ArrayList<>();
+        GraphDatabaseService graphDb = data.startNode.getGraphDatabase();
+        for ( long rel : levelData.relsToHere )
+        {
+            set.add( new PathData( connectingNode, new LinkedList<>( Collections.singletonList( graphDb
+                    .getRelationshipById( rel ) ) ) ) );
+            if ( stopAsap )
+            {
+                break;
+            }
+        }
+        for ( int i = 0; i < levelData.depth - 1; i++ )
+        {
+            // One level
+            Collection<PathData> nextSet = new ArrayList<>();
+            for ( PathData entry : set )
+            {
+                // One path...
+                Node otherNode = entry.rels.getFirst().getOtherNode( entry.node );
+                LevelData otherLevelData = data.visitedNodes.get( otherNode );
+                int counter = 0;
+                for ( long rel : otherLevelData.relsToHere )
+                {
+                    // ...may split into several paths
+                    LinkedList<Relationship> rels = ++counter == otherLevelData.relsToHere.length ?
+                    // This is a little optimization which reduces number of
+                    // lists being copied
+                            entry.rels
+                            : new LinkedList<>( entry.rels );
+                    rels.addFirst( graphDb.getRelationshipById( rel ) );
+                    nextSet.add( new PathData( otherNode, rels ) );
+                    if ( stopAsap )
+                    {
+                        break;
+                    }
+                }
+            }
+            set = nextSet;
+        }
+        return new IterableWrapper<LinkedList<Relationship>,PathData>( set )
+        {
+            @Override
+            protected LinkedList<Relationship> underlyingObjectToObject( PathData object )
+            {
+                return object.rels;
+            }
+        };
+    }
+
+	private static Builder toBuilder( Node startNode, LinkedList<Relationship> rels )
+    {
+        PathImpl.Builder builder = new PathImpl.Builder( startNode );
+        for ( Relationship rel : rels )
+        {
+            builder = builder.push( rel );
+        }
+        return builder;
+    }
+
+	public interface ShortestPathPredicate
+    {
+        boolean test( Path path );
     }
 
     // Few long-lived instances
@@ -207,105 +409,6 @@ public class ShortestPath implements PathFinder<Path>
             }
             Hit o = (Hit) obj;
             return connectingNode.equals( o.connectingNode );
-        }
-    }
-
-    private void goOneStep( DirectionData directionData, DirectionData otherSide, Hits hits, DirectionData startSide,
-            boolean stopAsap )
-    {
-        if ( !directionData.hasNext() )
-        {
-            // We can not go any deeper from this direction. Possibly disconnected nodes.
-            otherSide.finishCurrentLayerThenStop = true;
-            return;
-        }
-        Node nextNode = directionData.next();
-        LevelData otherSideHit = otherSide.visitedNodes.get( nextNode );
-        if ( otherSideHit != null )
-        {
-            // This is a hit
-            int depth = directionData.currentDepth + otherSideHit.depth;
-
-            if ( directionData.sharedFrozenDepth.intValue() == NULL )
-            {
-                directionData.sharedFrozenDepth.setValue( depth );
-            }
-            if ( depth <= directionData.sharedFrozenDepth.intValue() )
-            {
-                directionData.haveFoundSomething = true;
-                if ( depth < directionData.sharedFrozenDepth.intValue() )
-                {
-                    directionData.sharedFrozenDepth.setValue( depth );
-                    // TODO Is it really ok to just stop the other side here?
-                    // I'm basing that decision on that it was the other side
-                    // which found the deeper paths (correct assumption?)
-                    otherSide.stop = true;
-                }
-                // Add it to the list of hits
-                DirectionData startSideData = directionData == startSide ? directionData : otherSide;
-                DirectionData endSideData = directionData == startSide ? otherSide : directionData;
-                Hit hit = new Hit( startSideData, endSideData, nextNode );
-                Node start = startSide.startNode;
-                Node end = (startSide == directionData) ? otherSide.startNode : directionData.startNode;
-                monitorData( startSide, (otherSide == startSide) ? directionData : otherSide, nextNode );
-                // NOTE: Applying the filter-condition could give the wrong results with allShortestPaths,
-                // so only use it for singleShortestPath
-                if ( !stopAsap || filterPaths( hitToPaths( hit, start, end, stopAsap ) ).size() > 0 )
-                {
-                    if ( hits.add( hit, depth ) >= maxResultCount )
-                    {
-                        directionData.stop = true;
-                        otherSide.stop = true;
-                        lastMetadata.paths++;
-                    }
-                    else if ( stopAsap )
-                    {   // This side found a hit, but wait for the other side to complete its current depth
-                        // to see if it finds a shorter path. (i.e. stop this side and freeze the depth).
-                        // but only if the other side has not stopped, otherwise we might miss shorter paths
-                        if ( otherSide.stop )
-                        {
-                            return;
-                        }
-                        directionData.stop = true;
-                    }
-                }
-                else
-                {
-                    directionData.haveFoundSomething = false;
-                    directionData.sharedFrozenDepth.setValue( NULL );
-                    otherSide.stop = false;
-                }
-            }
-        }
-    }
-
-    private void monitorData( DirectionData directionData, DirectionData otherSide, Node connectingNode )
-    {
-        resolveMonitor( directionData.startNode );
-        if ( dataMonitor != null )
-        {
-            dataMonitor.monitorData( directionData.visitedNodes, directionData.nextNodes, otherSide.visitedNodes,
-                    otherSide.nextNodes, connectingNode );
-        }
-    }
-
-    private Collection<Path> filterPaths( Collection<Path> paths )
-    {
-        if ( predicate == null )
-        {
-            return paths;
-        }
-        else
-        {
-            Collection<Path> filteredPaths = new ArrayList<>();
-            for ( Path path : paths )
-            {
-                if ( predicate.test( path ) )
-                {
-                    filteredPaths.add( path );
-                }
-            }
-            return filteredPaths;
         }
     }
 
@@ -440,13 +543,10 @@ public class ShortestPath implements PathFinder<Path>
             {
                 return null;
             }
-            if ( !this.nextRelationships.hasNext() )
-            {
-                if ( canGoDeeper() )
-                {
-                    prepareNextLevel();
-                }
-            }
+            boolean condition = !this.nextRelationships.hasNext() && canGoDeeper();
+			if ( condition ) {
+			    prepareNextLevel();
+			}
             return this.nextRelationships.hasNext() ? this.nextRelationships.next() : null;
         }
     }
@@ -530,13 +630,6 @@ public class ShortestPath implements PathFinder<Path>
         }
     }
 
-    protected Node filterNextLevelNodes( Node nextNode )
-    {
-        // We need to be able to override this method from Cypher, so it must exist in this concrete class.
-        // And we also need it to do nothing but still work when not overridden.
-        return nextNode;
-    }
-
     // Many long-lived instances
     public static class LevelData
     {
@@ -609,110 +702,6 @@ public class ShortestPath implements PathFinder<Path>
             this.rels = rels;
             this.node = node;
         }
-    }
-
-    private static Collection<Path> hitsToPaths( Collection<Hit> depthHits, Node start, Node end, boolean stopAsap, int maxResultCount )
-    {
-        LinkedHashMap<String,Path> paths = new LinkedHashMap<>();
-        for ( Hit hit : depthHits )
-        {
-            for ( Path path : hitToPaths( hit, start, end, stopAsap ) )
-            {
-                paths.put( path.toString(), path );
-                if ( paths.size() >= maxResultCount )
-                {
-                    break;
-                }
-            }
-        }
-        return paths.values();
-    }
-
-    private static Collection<Path> hitToPaths( Hit hit, Node start, Node end, boolean stopAsap )
-    {
-        Collection<Path> paths = new ArrayList<>();
-        Iterable<LinkedList<Relationship>> startPaths = getPaths( hit.connectingNode, hit.start, stopAsap );
-        Iterable<LinkedList<Relationship>> endPaths = getPaths( hit.connectingNode, hit.end, stopAsap );
-        for ( LinkedList<Relationship> startPath : startPaths )
-        {
-            PathImpl.Builder startBuilder = toBuilder( start, startPath );
-            for ( LinkedList<Relationship> endPath : endPaths )
-            {
-                PathImpl.Builder endBuilder = toBuilder( end, endPath );
-                Path path = startBuilder.build( endBuilder );
-                paths.add( path );
-            }
-        }
-        return paths;
-    }
-
-    private static Iterable<LinkedList<Relationship>> getPaths( Node connectingNode, DirectionData data,
-            boolean stopAsap )
-    {
-        LevelData levelData = data.visitedNodes.get( connectingNode );
-        if ( levelData.depth == 0 )
-        {
-            Collection<LinkedList<Relationship>> result = new ArrayList<>();
-            result.add( new LinkedList<>() );
-            return result;
-        }
-        Collection<PathData> set = new ArrayList<>();
-        GraphDatabaseService graphDb = data.startNode.getGraphDatabase();
-        for ( long rel : levelData.relsToHere )
-        {
-            set.add( new PathData( connectingNode, new LinkedList<>( Arrays.asList( graphDb
-                    .getRelationshipById( rel ) ) ) ) );
-            if ( stopAsap )
-            {
-                break;
-            }
-        }
-        for ( int i = 0; i < levelData.depth - 1; i++ )
-        {
-            // One level
-            Collection<PathData> nextSet = new ArrayList<>();
-            for ( PathData entry : set )
-            {
-                // One path...
-                Node otherNode = entry.rels.getFirst().getOtherNode( entry.node );
-                LevelData otherLevelData = data.visitedNodes.get( otherNode );
-                int counter = 0;
-                for ( long rel : otherLevelData.relsToHere )
-                {
-                    // ...may split into several paths
-                    LinkedList<Relationship> rels = ++counter == otherLevelData.relsToHere.length ?
-                    // This is a little optimization which reduces number of
-                    // lists being copied
-                            entry.rels
-                            : new LinkedList<>( entry.rels );
-                    rels.addFirst( graphDb.getRelationshipById( rel ) );
-                    nextSet.add( new PathData( otherNode, rels ) );
-                    if ( stopAsap )
-                    {
-                        break;
-                    }
-                }
-            }
-            set = nextSet;
-        }
-        return new IterableWrapper<LinkedList<Relationship>,PathData>( set )
-        {
-            @Override
-            protected LinkedList<Relationship> underlyingObjectToObject( PathData object )
-            {
-                return object.rels;
-            }
-        };
-    }
-
-    private static Builder toBuilder( Node startNode, LinkedList<Relationship> rels )
-    {
-        PathImpl.Builder builder = new PathImpl.Builder( startNode );
-        for ( Relationship rel : rels )
-        {
-            builder = builder.push( rel );
-        }
-        return builder;
     }
 
     private static class Metadata implements TraversalMetadata

@@ -98,11 +98,10 @@ public abstract class JaxRsServletHolderFactory
     {
         StringBuilder sb = new StringBuilder();
 
-        for ( String str : packageNames )
-        {
+        packageNames.forEach(str -> {
             sb.append( str );
             sb.append( ", " );
-        }
+        });
 
         String result = sb.toString();
         return result.substring( 0, result.length() - 2 );

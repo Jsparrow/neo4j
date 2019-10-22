@@ -28,16 +28,16 @@ import static java.lang.String.format;
 
 public class NoSuchConstraintException extends SchemaKernelException
 {
-    private final ConstraintDescriptor constraint;
     private static final String message = "No such constraint %s.";
+	private final ConstraintDescriptor constraint;
 
-    public NoSuchConstraintException( ConstraintDescriptor constraint )
+	public NoSuchConstraintException( ConstraintDescriptor constraint )
     {
         super( Status.Schema.ConstraintNotFound, format( message, constraint ) );
         this.constraint = constraint;
     }
 
-    @Override
+	@Override
     public String getUserMessage( TokenNameLookup tokenNameLookup )
     {
         return format( message, constraint.userDescription( tokenNameLookup ) );

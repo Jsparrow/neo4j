@@ -31,7 +31,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -42,6 +41,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.neo4j.helpers.collection.MapUtil.map;
+import java.util.Collections;
 
 public class RepresentationFormatRepositoryTest
 {
@@ -70,7 +70,7 @@ public class RepresentationFormatRepositoryTest
     @Test
     public void canProvideJsonOutputFormat()
     {
-        OutputFormat format = repository.outputFormat( asList( MediaType.APPLICATION_JSON_TYPE ), null, null );
+        OutputFormat format = repository.outputFormat( Collections.singletonList( MediaType.APPLICATION_JSON_TYPE ), null, null );
         assertNotNull( format );
         assertEquals( "\"test\"", format.assemble( ValueRepresentation.string( "test" ) ) );
     }
@@ -84,7 +84,7 @@ public class RepresentationFormatRepositoryTest
         Mockito.verify( responseBuilder, never() ).entity( isA( StreamingOutput.class ) );
         when( responseBuilder.type( ArgumentMatchers.<MediaType>any() ) ).thenReturn( responseBuilder );
         when( responseBuilder.build() ).thenReturn( null );
-        OutputFormat format = repository.outputFormat( asList( MediaType.TEXT_HTML_TYPE ),
+        OutputFormat format = repository.outputFormat( Collections.singletonList( MediaType.TEXT_HTML_TYPE ),
                 new URI( "http://some.host" ), streamingHeader() );
         assertNotNull( format );
         format.response( responseBuilder, new ExceptionRepresentation( new RuntimeException() ) );
@@ -96,7 +96,7 @@ public class RepresentationFormatRepositoryTest
         Response response = mock( Response.class );
         final AtomicReference<StreamingOutput> ref = new AtomicReference<>();
         final Response.ResponseBuilder responseBuilder = mockResponseBuilder( response, ref );
-        OutputFormat format = repository.outputFormat( asList( MediaType.APPLICATION_JSON_TYPE ), null,
+        OutputFormat format = repository.outputFormat( Collections.singletonList( MediaType.APPLICATION_JSON_TYPE ), null,
                 streamingHeader() );
         assertNotNull( format );
         Response returnedResponse = format.response( responseBuilder, new MapRepresentation( map( "a", "test" ) ) );

@@ -71,11 +71,11 @@ abstract class IndexReference
 
     void disposeSearcher() throws IOException
     {
-        if ( !searcherIsClosed )
-        {
-            searcher.getIndexReader().close();
-            searcherIsClosed = true;
-        }
+        if (searcherIsClosed) {
+			return;
+		}
+		searcher.getIndexReader().close();
+		searcherIsClosed = true;
     }
 
     void detachOrClose() throws IOException

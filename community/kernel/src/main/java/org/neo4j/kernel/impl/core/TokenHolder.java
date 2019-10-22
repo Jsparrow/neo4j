@@ -30,9 +30,9 @@ public interface TokenHolder
     String TYPE_RELATIONSHIP_TYPE = "RelationshipType";
     String TYPE_LABEL = "Label";
 
-    void setInitialTokens( List<NamedToken> tokens ) throws NonUniqueTokenException;
+    void setInitialTokens( List<NamedToken> tokens );
 
-    void addToken( NamedToken token ) throws NonUniqueTokenException;
+    void addToken( NamedToken token );
 
     /**
      * Get the id of the token by the given name, or create a new id for the token if it does not have one already,

@@ -82,13 +82,12 @@ class DefaultRelationshipScanCursor extends DefaultRelationshipCursor<StorageRel
     @Override
     public void close()
     {
-        if ( !isClosed() )
-        {
-            read = null;
-            storeCursor.close();
-
-            pool.accept( this );
-        }
+        if (isClosed()) {
+			return;
+		}
+		read = null;
+		storeCursor.close();
+		pool.accept( this );
     }
 
     @Override
@@ -106,10 +105,8 @@ class DefaultRelationshipScanCursor extends DefaultRelationshipCursor<StorageRel
         }
         else
         {
-            return "RelationshipScanCursor[id=" + storeCursor.entityReference() +
-                    ", open state with: single=" + single +
-                    ", type=" + type +
-                    ", " + storeCursor.toString() + "]";
+            return new StringBuilder().append("RelationshipScanCursor[id=").append(storeCursor.entityReference()).append(", open state with: single=").append(single).append(", type=").append(type)
+					.append(", ").append(storeCursor.toString()).append("]").toString();
         }
     }
 

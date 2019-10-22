@@ -77,9 +77,8 @@ public class BoltConnectorValidator extends ConnectorValidator
         case "address":
             setting = listenAddress( settingName, 7687 );
             setting.setDeprecated( true );
-            setting.setReplacement( "dbms.connector." + name + ".listen_address" );
-            setting.setDescription( "Address the connector should bind to. Deprecated and replaced by "
-                    + setting.replacement().get() + "." );
+            setting.setReplacement( new StringBuilder().append("dbms.connector.").append(name).append(".listen_address").toString() );
+            setting.setDescription( new StringBuilder().append("Address the connector should bind to. Deprecated and replaced by ").append(setting.replacement().get()).append(".").toString() );
             break;
         case "listen_address":
             setting = listenAddress( settingName, 7687 );

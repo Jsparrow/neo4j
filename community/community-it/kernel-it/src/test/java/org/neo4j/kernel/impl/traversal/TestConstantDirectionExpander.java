@@ -30,14 +30,9 @@ import org.neo4j.graphdb.Transaction;
 
 public class TestConstantDirectionExpander extends TraversalTestBase
 {
-    private enum Types implements RelationshipType
-    {
-        A, B
-    }
-
     private Transaction tx;
 
-    @Before
+	@Before
     public void createGraph()
     {
         /*
@@ -47,13 +42,13 @@ public class TestConstantDirectionExpander extends TraversalTestBase
         tx = beginTx();
     }
 
-    @After
+	@After
     public void tearDown()
     {
         tx.close();
     }
 
-    @Test
+	@Test
     public void pathWithConstantDirection()
     {
         Node l = getNodeWithName( "l" );
@@ -74,5 +69,10 @@ public class TestConstantDirectionExpander extends TraversalTestBase
                         PathExpanders.forConstantDirectionWithTypes( Types.B ) )
                 .traverse( q ), "q", "q,p", "q,p,o" );
 
+    }
+
+	private enum Types implements RelationshipType
+    {
+        A, B
     }
 }

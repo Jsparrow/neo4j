@@ -69,21 +69,18 @@ public class CommunityLockAcquisitionTimeoutIT
 
     @ClassRule
     public static final TestDirectory directory = TestDirectory.testDirectory();
-    @Rule
+	private static final int TEST_TIMEOUT = 5000;
+	private static final String TEST_PROPERTY_NAME = "a";
+	private static final Label marker = Label.label( "marker" );
+	private static final FakeClock fakeClock = Clocks.fakeClock();
+	private static GraphDatabaseService database;
+	@Rule
     public final ExpectedException expectedException = ExpectedException.none();
-
-    private final OtherThreadExecutor<Void> secondTransactionExecutor =
+	private final OtherThreadExecutor<Void> secondTransactionExecutor =
             new OtherThreadExecutor<>( "transactionExecutor", null );
-    private final OtherThreadExecutor<Void> clockExecutor = new OtherThreadExecutor<>( "clockExecutor", null );
+	private final OtherThreadExecutor<Void> clockExecutor = new OtherThreadExecutor<>( "clockExecutor", null );
 
-    private static final int TEST_TIMEOUT = 5000;
-    private static final String TEST_PROPERTY_NAME = "a";
-    private static final Label marker = Label.label( "marker" );
-    private static final FakeClock fakeClock = Clocks.fakeClock();
-
-    private static GraphDatabaseService database;
-
-    @BeforeClass
+	@BeforeClass
     public static void setUp()
     {
         CustomClockFacadeFactory facadeFactory = new CustomClockFacadeFactory();
@@ -96,27 +93,24 @@ public class CommunityLockAcquisitionTimeoutIT
         createTestNode( marker );
     }
 
-    @AfterClass
+	@AfterClass
     public static void tearDownClass()
     {
         database.shutdown();
     }
 
-    @After
+	@After
     public void tearDown()
     {
         secondTransactionExecutor.close();
         clockExecutor.close();
     }
 
-    @Test( timeout = TEST_TIMEOUT )
+	@Test( timeout = TEST_TIMEOUT )
     public void timeoutOnAcquiringExclusiveLock() throws Exception
     {
         expectedException.expect( new RootCauseMatcher<>( LockAcquisitionTimeoutException.class,
-                "The transaction has been terminated. " +
-                        "Retry your operation in a new transaction, and you should see a successful result. " +
-                        "Unable to acquire lock within configured timeout (dbms.lock.acquisition.timeout). " +
-                        "Unable to acquire lock for resource: NODE with id: 0 within 2000 millis." ) );
+                new StringBuilder().append("The transaction has been terminated. ").append("Retry your operation in a new transaction, and you should see a successful result. ").append("Unable to acquire lock within configured timeout (dbms.lock.acquisition.timeout). ").append("Unable to acquire lock for resource: NODE with id: 0 within 2000 millis.").toString() ) );
 
         try ( Transaction ignored = database.beginTx() )
         {
@@ -146,14 +140,11 @@ public class CommunityLockAcquisitionTimeoutIT
         }
     }
 
-    @Test( timeout = TEST_TIMEOUT )
+	@Test( timeout = TEST_TIMEOUT )
     public void timeoutOnAcquiringSharedLock() throws Exception
     {
         expectedException.expect( new RootCauseMatcher<>( LockAcquisitionTimeoutException.class,
-                "The transaction has been terminated. " +
-                        "Retry your operation in a new transaction, and you should see a successful result. " +
-                        "Unable to acquire lock within configured timeout (dbms.lock.acquisition.timeout). " +
-                        "Unable to acquire lock for resource: LABEL with id: 1 within 2000 millis." ) );
+                new StringBuilder().append("The transaction has been terminated. ").append("Retry your operation in a new transaction, and you should see a successful result. ").append("Unable to acquire lock within configured timeout (dbms.lock.acquisition.timeout). ").append("Unable to acquire lock for resource: LABEL with id: 1 within 2000 millis.").toString() ) );
 
         try ( Transaction ignored = database.beginTx() )
         {
@@ -184,27 +175,27 @@ public class CommunityLockAcquisitionTimeoutIT
         }
     }
 
-    protected Locks getLockManager()
+	protected Locks getLockManager()
     {
         return getDependencyResolver().resolveDependency( CommunityLockManger.class );
     }
 
-    protected DependencyResolver getDependencyResolver()
+	protected DependencyResolver getDependencyResolver()
     {
         return ((GraphDatabaseAPI) database).getDependencyResolver();
     }
 
-    protected Predicate<OtherThreadExecutor.WaitDetails> exclusiveLockWaitingPredicate()
+	protected Predicate<OtherThreadExecutor.WaitDetails> exclusiveLockWaitingPredicate()
     {
         return waitDetails -> waitDetails.isAt( CommunityLockClient.class, "acquireExclusive" );
     }
 
-    protected Predicate<OtherThreadExecutor.WaitDetails> sharedLockWaitingPredicate()
+	protected Predicate<OtherThreadExecutor.WaitDetails> sharedLockWaitingPredicate()
     {
         return waitDetails -> waitDetails.isAt( CommunityLockClient.class, "acquireShared" );
     }
 
-    private static void createTestNode( Label marker )
+	private static void createTestNode( Label marker )
     {
         try ( Transaction transaction = database.beginTx() )
         {
@@ -212,7 +203,6 @@ public class CommunityLockAcquisitionTimeoutIT
             transaction.success();
         }
     }
-
     private static class CustomClockTestGraphDatabaseFactory extends TestGraphDatabaseFactory
     {
         private GraphDatabaseFacadeFactory customFacadeFactory;

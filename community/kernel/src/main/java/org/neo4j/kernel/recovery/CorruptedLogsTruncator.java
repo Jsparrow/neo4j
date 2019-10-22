@@ -73,12 +73,12 @@ public class CorruptedLogsTruncator
     {
         long recoveredTransactionLogVersion = positionAfterLastRecoveredTransaction.getLogVersion();
         long recoveredTransactionOffset = positionAfterLastRecoveredTransaction.getByteOffset();
-        if ( isRecoveredLogCorrupted( recoveredTransactionLogVersion, recoveredTransactionOffset ) ||
-                haveMoreRecentLogFiles( recoveredTransactionLogVersion ) )
-        {
-            backupCorruptedContent( recoveredTransactionLogVersion, recoveredTransactionOffset );
-            truncateLogFiles( recoveredTransactionLogVersion, recoveredTransactionOffset );
-        }
+        if (!(isRecoveredLogCorrupted( recoveredTransactionLogVersion, recoveredTransactionOffset ) ||
+                haveMoreRecentLogFiles( recoveredTransactionLogVersion ))) {
+			return;
+		}
+		backupCorruptedContent( recoveredTransactionLogVersion, recoveredTransactionOffset );
+		truncateLogFiles( recoveredTransactionLogVersion, recoveredTransactionOffset );
     }
 
     private void truncateLogFiles( long recoveredTransactionLogVersion, long recoveredTransactionOffset )

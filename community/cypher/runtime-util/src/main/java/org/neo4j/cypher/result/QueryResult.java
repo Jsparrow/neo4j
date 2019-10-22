@@ -35,7 +35,17 @@ public interface QueryResult
     <E extends Exception> void accept( QueryResultVisitor<E> visitor )
             throws E;
 
-    interface QueryResultVisitor<E extends Exception>
+    QueryExecutionType executionType();
+
+	QueryStatistics queryStatistics();
+
+	ExecutionPlanDescription executionPlanDescription();
+
+	Iterable<Notification> getNotifications();
+
+	void close();
+
+	interface QueryResultVisitor<E extends Exception>
     {
         boolean visit( Record row ) throws E;
     }
@@ -45,14 +55,4 @@ public interface QueryResult
         AnyValue[] fields();
         default void release() {}
     }
-
-    QueryExecutionType executionType();
-
-    QueryStatistics queryStatistics();
-
-    ExecutionPlanDescription executionPlanDescription();
-
-    Iterable<Notification> getNotifications();
-
-    void close();
 }

@@ -31,13 +31,8 @@ class UpdateLock extends ReentrantReadWriteLock
     @Override
     public String toString()
     {
-        return "AbstractKeyValyeStore-UpdateLock[owner = " + getOwner() +
-                ", is write locked = " + isWriteLocked() +
-                ", writer holds count = " + getWriteHoldCount() +
-                ", read holds count = " + getReadHoldCount() +
-                ", readers count = " + getReadLockCount() +
-                ", threads waiting for write lock = " + getQueuedWriterThreads() +
-                ", threads waiting for read lock = " + getQueuedReaderThreads() +
-                "] " + super.toString();
+        return new StringBuilder().append("AbstractKeyValyeStore-UpdateLock[owner = ").append(getOwner()).append(", is write locked = ").append(isWriteLocked()).append(", writer holds count = ").append(getWriteHoldCount())
+				.append(", read holds count = ").append(getReadHoldCount()).append(", readers count = ").append(getReadLockCount()).append(", threads waiting for write lock = ").append(getQueuedWriterThreads()).append(", threads waiting for read lock = ")
+				.append(getQueuedReaderThreads()).append("] ").append(super.toString()).toString();
     }
 }

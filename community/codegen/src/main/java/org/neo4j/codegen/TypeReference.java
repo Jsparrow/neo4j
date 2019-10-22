@@ -30,12 +30,57 @@ import static java.util.Collections.unmodifiableList;
 
 public class TypeReference
 {
-    public static Bound extending( Class<?> type )
+    public static final TypeReference VOID =
+            new TypeReference( "", "void", true, false, false, "", void.class.getModifiers() );
+	public static final TypeReference OBJECT =
+            new TypeReference( "java.lang", "Object", false, false, false, "", Object.class.getModifiers() );
+	public static final TypeReference BOOLEAN =
+            new TypeReference( "", "boolean", true, false, false, "", boolean.class.getModifiers() );
+	public static final TypeReference INT =
+            new TypeReference( "", "int", true, false, false, "", int.class.getModifiers() );
+	public static final TypeReference LONG =
+            new TypeReference( "", "long", true, false, false, "", long.class.getModifiers() );
+	public static final TypeReference DOUBLE =
+            new TypeReference( "", "double", true, false, false, "", double.class.getModifiers() );
+	public static final TypeReference BOOLEAN_ARRAY =
+            new TypeReference( "", "boolean", false, true, false, "", boolean.class.getModifiers() );
+	public static final TypeReference INT_ARRAY =
+            new TypeReference( "", "int", false, true, false, "", int.class.getModifiers() );
+	public static final TypeReference LONG_ARRAY =
+            new TypeReference( "", "long", false, true, false, "", long.class.getModifiers() );
+	public static final TypeReference DOUBLE_ARRAY =
+            new TypeReference( "", "double", false, true, false, "", double.class.getModifiers() );
+	public static final TypeReference VALUE =
+            new TypeReference( "org.neo4j.values", "AnyValue", false, false, false, "", AnyValue.class.getModifiers() );
+	static final TypeReference[] NO_TYPES = new TypeReference[0];
+	private final String packageName;
+	private final String name;
+	private final TypeReference[] parameters;
+	private final boolean isPrimitive;
+	private final boolean isArray;
+	private final boolean isTypeParameter;
+	private final String declaringClassName;
+	private final int modifiers;
+
+	TypeReference( String packageName, String name, boolean isPrimitive, boolean isArray,
+            boolean isTypeParameter, String declaringClassName, int modifiers, TypeReference... parameters )
+    {
+        this.packageName = packageName;
+        this.name = name;
+        this.isPrimitive = isPrimitive;
+        this.isArray = isArray;
+        this.isTypeParameter = isTypeParameter;
+        this.declaringClassName = declaringClassName;
+        this.modifiers = modifiers;
+        this.parameters = parameters;
+    }
+
+	public static Bound extending( Class<?> type )
     {
         return extending( typeReference( type ) );
     }
 
-    public static Bound extending( final TypeReference type )
+	public static Bound extending( final TypeReference type )
     {
         return new Bound( type )
         {
@@ -53,7 +98,7 @@ public class TypeReference
         };
     }
 
-    public static TypeReference typeReference( Class<?> type )
+	public static TypeReference typeReference( Class<?> type )
     {
         if ( type == void.class )
         {
@@ -105,34 +150,34 @@ public class TypeReference
                 declaringClassName, type.getModifiers() );
     }
 
-    public static TypeReference typeParameter( String name )
+	public static TypeReference typeParameter( String name )
     {
         return new TypeReference( "", name, false, false, true, "", Modifier.PUBLIC );
     }
 
-    public static TypeReference arrayOf( TypeReference type )
+	public static TypeReference arrayOf( TypeReference type )
     {
         return new TypeReference( type.packageName, type.name, false, true, false, type.declaringClassName, type.modifiers );
     }
 
-    public static TypeReference parameterizedType( Class<?> base, Class<?>... parameters )
+	public static TypeReference parameterizedType( Class<?> base, Class<?>... parameters )
     {
         return parameterizedType( typeReference( base ), typeReferences( parameters ) );
     }
 
-    public static TypeReference parameterizedType( Class<?> base, TypeReference... parameters )
+	public static TypeReference parameterizedType( Class<?> base, TypeReference... parameters )
     {
         return parameterizedType( typeReference( base ), parameters );
     }
 
-    public static TypeReference parameterizedType( TypeReference base, TypeReference... parameters )
+	public static TypeReference parameterizedType( TypeReference base, TypeReference... parameters )
     {
         return new TypeReference( base.packageName, base.name, false, base.isArray(), false,
                 base.declaringClassName,
                 base.modifiers, parameters );
     }
 
-    public static TypeReference[] typeReferences( Class<?> first, Class<?>[] more )
+	public static TypeReference[] typeReferences( Class<?> first, Class<?>[] more )
     {
         TypeReference[] result = new TypeReference[more.length + 1];
         result[0] = typeReference( first );
@@ -143,7 +188,7 @@ public class TypeReference
         return result;
     }
 
-    public static TypeReference[] typeReferences( Class<?>[] types )
+	public static TypeReference[] typeReferences( Class<?>[] types )
     {
         TypeReference[] result = new TypeReference[types.length];
         for ( int i = 0; i < result.length; i++ )
@@ -153,118 +198,72 @@ public class TypeReference
         return result;
     }
 
-    private final String packageName;
-    private final String name;
-    private final TypeReference[] parameters;
-    private final boolean isPrimitive;
-    private final boolean isArray;
-    private final boolean isTypeParameter;
-    private final String declaringClassName;
-    private final int modifiers;
-
-    public static final TypeReference VOID =
-            new TypeReference( "", "void", true, false, false, "", void.class.getModifiers() );
-    public static final TypeReference OBJECT =
-            new TypeReference( "java.lang", "Object", false, false, false, "", Object.class.getModifiers() );
-    public static final TypeReference BOOLEAN =
-            new TypeReference( "", "boolean", true, false, false, "", boolean.class.getModifiers() );
-    public static final TypeReference INT =
-            new TypeReference( "", "int", true, false, false, "", int.class.getModifiers() );
-    public static final TypeReference LONG =
-            new TypeReference( "", "long", true, false, false, "", long.class.getModifiers() );
-    public static final TypeReference DOUBLE =
-            new TypeReference( "", "double", true, false, false, "", double.class.getModifiers() );
-    public static final TypeReference BOOLEAN_ARRAY =
-            new TypeReference( "", "boolean", false, true, false, "", boolean.class.getModifiers() );
-    public static final TypeReference INT_ARRAY =
-            new TypeReference( "", "int", false, true, false, "", int.class.getModifiers() );
-    public static final TypeReference LONG_ARRAY =
-            new TypeReference( "", "long", false, true, false, "", long.class.getModifiers() );
-    public static final TypeReference DOUBLE_ARRAY =
-            new TypeReference( "", "double", false, true, false, "", double.class.getModifiers() );
-    public static final TypeReference VALUE =
-            new TypeReference( "org.neo4j.values", "AnyValue", false, false, false, "", AnyValue.class.getModifiers() );
-    static final TypeReference[] NO_TYPES = new TypeReference[0];
-
-    TypeReference( String packageName, String name, boolean isPrimitive, boolean isArray,
-            boolean isTypeParameter, String declaringClassName, int modifiers, TypeReference... parameters )
-    {
-        this.packageName = packageName;
-        this.name = name;
-        this.isPrimitive = isPrimitive;
-        this.isArray = isArray;
-        this.isTypeParameter = isTypeParameter;
-        this.declaringClassName = declaringClassName;
-        this.modifiers = modifiers;
-        this.parameters = parameters;
-    }
-
-    public String packageName()
+	public String packageName()
     {
         return packageName;
     }
 
-    public String name()
+	public String name()
     {
         return name;
     }
 
-    public String simpleName()
+	public String simpleName()
     {
         return isArray ? name + "[]" : name;
     }
 
-    public boolean isPrimitive()
+	public boolean isPrimitive()
     {
         return isPrimitive;
     }
 
-    public boolean isTypeParameter()
+	public boolean isTypeParameter()
     {
         return isTypeParameter;
     }
 
-    public boolean isGeneric()
+	public boolean isGeneric()
     {
         return parameters == null || parameters.length > 0;
     }
 
-    public List<TypeReference> parameters()
+	public List<TypeReference> parameters()
     {
         return unmodifiableList( asList( parameters ) );
     }
 
-    public String fullName()
+	public String fullName()
     {
         return writeTo( new StringBuilder() ).toString();
     }
 
-    public boolean isArray()
+	public boolean isArray()
     {
         return isArray;
     }
 
-    public boolean isVoid()
+	public boolean isVoid()
     {
         return this == VOID;
     }
 
-    public boolean isInnerClass()
+	public boolean isInnerClass()
     {
         return !declaringClassName.isEmpty();
     }
 
-    public String declaringClassName()
+	public String declaringClassName()
     {
         return declaringClassName;
     }
 
-    public int modifiers()
+	public int modifiers()
     {
         return modifiers;
     }
 
-    @Override
+	@Override
     public boolean equals( Object o )
     {
         if ( this == o )
@@ -312,7 +311,7 @@ public class TypeReference
 
     }
 
-    @Override
+	@Override
     public int hashCode()
     {
         int result = packageName != null ? packageName.hashCode() : 0;
@@ -326,13 +325,13 @@ public class TypeReference
         return result;
     }
 
-    @Override
+	@Override
     public String toString()
     {
         return writeTo( new StringBuilder().append( "TypeReference[" ) ).append( ']' ).toString();
     }
 
-    StringBuilder writeTo( StringBuilder result )
+	StringBuilder writeTo( StringBuilder result )
     {
         if ( !packageName.isEmpty() )
         {
@@ -361,7 +360,7 @@ public class TypeReference
         return result;
     }
 
-    public abstract static class Bound
+	public abstract static class Bound
     {
         private final TypeReference type;
 

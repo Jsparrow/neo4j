@@ -46,13 +46,14 @@ import static org.neo4j.values.storable.Values.stringValue;
 @SuppressWarnings( "Duplicates" )
 public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> extends KernelAPIWriteTestBase<G>
 {
-    @Rule
+    private static final String propertyKey = "prop";
+
+	private static final String labelName = "Town";
+
+	@Rule
     public ExpectedException exception = ExpectedException.none();
 
-    private static final String propertyKey = "prop";
-    private static final String labelName = "Town";
-
-    @Test
+	@Test
     public void shouldCreateNode() throws Exception
     {
         long node;
@@ -68,7 +69,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         }
     }
 
-    @Test
+	@Test
     public void shouldRollbackOnFailure() throws Exception
     {
         long node;
@@ -89,7 +90,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         }
     }
 
-    @Test
+	@Test
     public void shouldRemoveNode() throws Exception
     {
         long node = createNode();
@@ -113,7 +114,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         }
     }
 
-    @Test
+	@Test
     public void shouldNotRemoveNodeThatDoesNotExist() throws Exception
     {
         long node = 0;
@@ -131,7 +132,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         // should not crash
     }
 
-    @Test
+	@Test
     public void shouldAddLabelNode() throws Exception
     {
         // Given
@@ -149,7 +150,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertLabels( node, labelName );
     }
 
-    @Test
+	@Test
     public void shouldAddLabelNodeOnce() throws Exception
     {
         long node = createNodeWithLabel( labelName );
@@ -164,7 +165,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertLabels( node, labelName );
     }
 
-    @Test
+	@Test
     public void shouldRemoveLabel() throws Exception
     {
         long nodeId = createNodeWithLabel( labelName );
@@ -179,7 +180,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertNoLabels( nodeId );
     }
 
-    @Test
+	@Test
     public void shouldNotAddLabelToNonExistingNode() throws Exception
     {
         long node = 1337L;
@@ -192,7 +193,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         }
     }
 
-    @Test
+	@Test
     public void shouldRemoveLabelOnce() throws Exception
     {
         int labelId;
@@ -215,7 +216,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertNoLabels( nodeId );
     }
 
-    @Test
+	@Test
     public void shouldAddPropertyToNode() throws Exception
     {
         // Given
@@ -233,7 +234,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertProperty( node, propertyKey, "hello" );
     }
 
-    @Test
+	@Test
     public void shouldRollbackSetNodeProperty() throws Exception
     {
         // Given
@@ -251,7 +252,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertNoProperty( node, propertyKey );
     }
 
-    @Test
+	@Test
     public void shouldThrowWhenSettingPropertyOnDeletedNode() throws Exception
     {
         // Given
@@ -271,7 +272,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         }
     }
 
-    @Test
+	@Test
     public void shouldUpdatePropertyToNode() throws Exception
     {
         // Given
@@ -290,7 +291,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertProperty( node, propertyKey, "hello" );
     }
 
-    @Test
+	@Test
     public void shouldRemovePropertyFromNode() throws Exception
     {
         // Given
@@ -309,7 +310,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertNoProperty( node, propertyKey );
     }
 
-    @Test
+	@Test
     public void shouldRemoveNonExistingPropertyFromNode() throws Exception
     {
         // Given
@@ -327,7 +328,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertNoProperty( node, propertyKey );
     }
 
-    @Test
+	@Test
     public void shouldRemovePropertyFromNodeTwice() throws Exception
     {
         // Given
@@ -348,7 +349,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertNoProperty( node, propertyKey );
     }
 
-    @Test
+	@Test
     public void shouldUpdatePropertyToNodeInTransaction() throws Exception
     {
         // Given
@@ -368,7 +369,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertProperty( node, propertyKey, 1337 );
     }
 
-    @Test
+	@Test
     public void shouldRemoveReSetAndTwiceRemovePropertyOnNode() throws Exception
     {
         // given
@@ -390,7 +391,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertNoProperty( node, propertyKey );
     }
 
-    @Test
+	@Test
     public void shouldNotWriteWhenSettingPropertyToSameValue() throws Exception
     {
         // Given
@@ -406,7 +407,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         assertThat( tx.closeTransaction(), equalTo( Transaction.READ_ONLY ) );
     }
 
-    @Test
+	@Test
     public void shouldSetAndReadLargeByteArrayPropertyToNode() throws Exception
     {
         // Given
@@ -436,9 +437,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         }
     }
 
-    // HELPERS
-
-    private long createNode()
+	private long createNode()
     {
         long node;
         try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
@@ -449,7 +448,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         return node;
     }
 
-    private void deleteNode( long node )
+	private void deleteNode( long node )
     {
         try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
         {
@@ -458,7 +457,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         }
     }
 
-    private long createNodeWithLabel( String labelName )
+	private long createNodeWithLabel( String labelName )
     {
         long node;
         try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
@@ -469,7 +468,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         return node;
     }
 
-    private long createNodeWithProperty( String propertyKey, Object value )
+	private long createNodeWithProperty( String propertyKey, Object value )
     {
         Node node;
         try ( org.neo4j.graphdb.Transaction ctx = graphDb.beginTx() )
@@ -481,7 +480,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         return node.getId();
     }
 
-    private void assertNoLabels( long nodeId )
+	private void assertNoLabels( long nodeId )
     {
         try ( org.neo4j.graphdb.Transaction ignore = graphDb.beginTx() )
         {
@@ -489,7 +488,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         }
     }
 
-    private void assertLabels( long nodeId, String label )
+	private void assertLabels( long nodeId, String label )
     {
         try ( org.neo4j.graphdb.Transaction ignore = graphDb.beginTx() )
         {
@@ -497,7 +496,7 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         }
     }
 
-    private void assertNoProperty( long node, String propertyKey )
+	private void assertNoProperty( long node, String propertyKey )
     {
         try ( org.neo4j.graphdb.Transaction ignore = graphDb.beginTx() )
         {
@@ -505,11 +504,15 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         }
     }
 
-    private void assertProperty( long node, String propertyKey, Object value )
+	private void assertProperty( long node, String propertyKey, Object value )
     {
         try ( org.neo4j.graphdb.Transaction ignore = graphDb.beginTx() )
         {
             assertThat( graphDb.getNodeById( node ).getProperty( propertyKey ), equalTo( value ) );
         }
     }
+
+    // HELPERS
+
+    
 }

@@ -131,19 +131,16 @@ public class LabelScanStoreTxApplyRaceIT
                         nodeHeads.set( guy, node );
                         tx.success();
                     }
-                    if ( random.nextFloat() < CHANCE_TO_DELETE_BY_SAME_THREAD )
-                    {
-                        // Most of the time delete in this thread
-                        if ( nodeHeads.getAndSet( guy, null ) != null )
-                        {
-                            try ( Transaction tx = db.beginTx() )
-                            {
-                                node.delete();
-                                tx.success();
-                            }
-                        }
-                        // Otherwise there will be other threads sitting there waiting for these nodes and deletes them if they can
-                    }
+                    boolean condition = random.nextFloat() < CHANCE_TO_DELETE_BY_SAME_THREAD && nodeHeads.getAndSet( guy, null ) != null;
+					// Most of the time delete in this thread
+					if ( condition ) {
+					    try ( Transaction tx = db.beginTx() )
+					    {
+					        node.delete();
+					        tx.success();
+					    }
+					}
+					// Otherwise there will be other threads sitting there waiting for these nodes and deletes them if they can
                 }
             }
 

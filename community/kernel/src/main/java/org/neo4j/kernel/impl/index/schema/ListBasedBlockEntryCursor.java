@@ -34,12 +34,11 @@ class ListBasedBlockEntryCursor<KEY,VALUE> implements BlockEntryCursor<KEY,VALUE
     @Override
     public boolean next()
     {
-        if ( entries.hasNext() )
-        {
-            next = entries.next();
-            return true;
-        }
-        return false;
+        if (!entries.hasNext()) {
+			return false;
+		}
+		next = entries.next();
+		return true;
     }
 
     @Override

@@ -109,15 +109,6 @@ public class RelationshipCountsProcessorTest
         verify( countsUpdater ).incrementRelationshipCount( ANY, 0, 2, 1L );
     }
 
-    private class IsNonNegativeLong implements ArgumentMatcher<Long>
-    {
-        @Override
-        public boolean matches( Long argument )
-        {
-            return argument != null && argument >= 0;
-        }
-    }
-
     private RelationshipRecord record( long startNode, int type, long endNode )
     {
         RelationshipRecord record = new RelationshipRecord( 0 );
@@ -126,5 +117,14 @@ public class RelationshipCountsProcessorTest
         record.setSecondNode( endNode );
         record.setType( type );
         return record;
+    }
+
+	private class IsNonNegativeLong implements ArgumentMatcher<Long>
+    {
+        @Override
+        public boolean matches( Long argument )
+        {
+            return argument != null && argument >= 0;
+        }
     }
 }

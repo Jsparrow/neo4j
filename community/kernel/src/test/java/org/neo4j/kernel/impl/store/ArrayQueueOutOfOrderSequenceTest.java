@@ -43,7 +43,7 @@ import static org.junit.Assert.fail;
 
 public class ArrayQueueOutOfOrderSequenceTest
 {
-    private final long[] EMPTY_META = new long[]{42L};
+    private final long[] emptyMeta = new long[]{42L};
 
     @Test
     public void shouldExposeGapFreeSequenceSingleThreaded()
@@ -159,13 +159,13 @@ public class ArrayQueueOutOfOrderSequenceTest
     @Test
     public void highestEverSeenTest()
     {
-        final OutOfOrderSequence sequence = new ArrayQueueOutOfOrderSequence( 0, 5, EMPTY_META );
+        final OutOfOrderSequence sequence = new ArrayQueueOutOfOrderSequence( 0, 5, emptyMeta );
         assertEquals( 0L, sequence.highestEverSeen() );
 
-        sequence.offer( 1L, EMPTY_META );
+        sequence.offer( 1L, emptyMeta );
         assertEquals( 1L, sequence.highestEverSeen() );
 
-        sequence.offer( 42L, EMPTY_META );
+        sequence.offer( 42L, emptyMeta );
         assertEquals( 42L, sequence.highestEverSeen() );
     }
 
@@ -174,7 +174,7 @@ public class ArrayQueueOutOfOrderSequenceTest
     {
         // given
         long timeout = 10;
-        final OutOfOrderSequence sequence = new ArrayQueueOutOfOrderSequence( 3, 5, EMPTY_META );
+        final OutOfOrderSequence sequence = new ArrayQueueOutOfOrderSequence( 3, 5, emptyMeta );
 
         long startTime = System.currentTimeMillis();
         try
@@ -196,7 +196,7 @@ public class ArrayQueueOutOfOrderSequenceTest
     public void shouldBeAbleToReturnImmediatelyWhenNumberAvailable() throws Exception
     {
         // given
-        final OutOfOrderSequence sequence = new ArrayQueueOutOfOrderSequence( 4, 5, EMPTY_META );
+        final OutOfOrderSequence sequence = new ArrayQueueOutOfOrderSequence( 4, 5, emptyMeta );
 
         // when
         sequence.await( 4, 0 );
@@ -209,7 +209,7 @@ public class ArrayQueueOutOfOrderSequenceTest
     {
         // given
         final Semaphore done = new Semaphore( 0 );
-        final OutOfOrderSequence sequence = new ArrayQueueOutOfOrderSequence( 3, 5, EMPTY_META );
+        final OutOfOrderSequence sequence = new ArrayQueueOutOfOrderSequence( 3, 5, emptyMeta );
 
         Thread numberWaiter = new Thread( () ->
         {
@@ -228,9 +228,9 @@ public class ArrayQueueOutOfOrderSequenceTest
         numberWaiter.start();
 
         assertFalse( done.tryAcquire( 10, TimeUnit.MILLISECONDS ) );
-        sequence.offer( 4, EMPTY_META );
+        sequence.offer( 4, emptyMeta );
         assertFalse( done.tryAcquire( 10, TimeUnit.MILLISECONDS ) );
-        sequence.offer( 5, EMPTY_META );
+        sequence.offer( 5, emptyMeta );
         assertTrue( done.tryAcquire( 10_000, TimeUnit.MILLISECONDS ) );
 
         numberWaiter.join();

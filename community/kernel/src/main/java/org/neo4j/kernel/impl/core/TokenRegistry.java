@@ -62,30 +62,29 @@ public class TokenRegistry
     private void putAndEnsureUnique( Map<String,Integer> nameToId, NamedToken token )
     {
         Integer previous = nameToId.putIfAbsent( token.name(), token.id() );
-        if ( previous != null && previous != token.id() )
-        {
-            // since we optimistically put token into a map before, now we need to remove it.
-            idToToken.remove( token.id(), token );
-            throw new NonUniqueTokenException( tokenType, token.name(), token.id(), previous );
-        }
+        if (!(previous != null && previous != token.id())) {
+			return;
+		}
+		// since we optimistically put token into a map before, now we need to remove it.
+		idToToken.remove( token.id(), token );
+		throw new NonUniqueTokenException( tokenType, token.name(), token.id(), previous );
     }
 
-    public void putAll( List<NamedToken> tokens ) throws NonUniqueTokenException
+    public void putAll( List<NamedToken> tokens )
     {
         Map<String, Integer> newNameToId = new HashMap<>();
         Map<Integer, NamedToken> newIdToToken = new HashMap<>();
 
-        for ( NamedToken token : tokens )
-        {
+        tokens.forEach(token -> {
             newIdToToken.put( token.id(), token );
             putAndEnsureUnique( newNameToId, token );
-        }
+        });
 
         idToToken.putAll( newIdToToken );
         nameToId.putAll( newNameToId );
     }
 
-    public void put( NamedToken token ) throws NonUniqueTokenException
+    public void put( NamedToken token )
     {
         idToToken.put( token.id(), token );
         putAndEnsureUnique( nameToId, token );

@@ -94,13 +94,9 @@ public class UserFunctionProcessorTest extends ExtensionTestBase
                 assert_().about( javaSource() ).that( function ).processedWith( processor() ).failsToCompile()
                         .withErrorCount( 3 );
 
-        compilation.withErrorContaining( "Unsupported parameter type " +
-                "<java.util.List<java.util.List<java.util.Map<java.lang.String,java.lang.Thread>>>>" +
-                " of procedure|function BadGenericInputUserFunction#doSomething" ).in( function ).onLine( 36 );
+        compilation.withErrorContaining( new StringBuilder().append("Unsupported parameter type ").append("<java.util.List<java.util.List<java.util.Map<java.lang.String,java.lang.Thread>>>>").append(" of procedure|function BadGenericInputUserFunction#doSomething").toString() ).in( function ).onLine( 36 );
 
-        compilation.withErrorContaining( "Unsupported parameter type " +
-                "<java.util.Map<java.lang.String,java.util.List<java.util.concurrent.ExecutorService>>>" +
-                " of procedure|function BadGenericInputUserFunction#doSomething2" ).in( function ).onLine( 42 );
+        compilation.withErrorContaining( new StringBuilder().append("Unsupported parameter type ").append("<java.util.Map<java.lang.String,java.util.List<java.util.concurrent.ExecutorService>>>").append(" of procedure|function BadGenericInputUserFunction#doSomething2").toString() ).in( function ).onLine( 42 );
 
         compilation.withErrorContaining(
                 "Unsupported parameter type <java.util.Map> of procedure|function BadGenericInputUserFunction#doSomething3" )

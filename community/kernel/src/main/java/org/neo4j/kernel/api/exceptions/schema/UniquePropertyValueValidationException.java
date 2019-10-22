@@ -47,7 +47,14 @@ public class UniquePropertyValueValidationException extends ConstraintValidation
         this.conflicts = conflicts;
     }
 
-    private static IndexEntryConflictException buildCauseChain( Set<IndexEntryConflictException> conflicts )
+    public UniquePropertyValueValidationException( IndexBackedConstraintDescriptor constraint,
+            ConstraintValidationException.Phase phase, Throwable cause )
+    {
+        super( constraint, phase, phase == Phase.VERIFICATION ? "Existing data" : "New data", cause );
+        this.conflicts = Collections.emptySet();
+    }
+
+	private static IndexEntryConflictException buildCauseChain( Set<IndexEntryConflictException> conflicts )
     {
         IndexEntryConflictException chainedConflicts = null;
         for ( IndexEntryConflictException conflict : conflicts )
@@ -57,14 +64,7 @@ public class UniquePropertyValueValidationException extends ConstraintValidation
         return chainedConflicts;
     }
 
-    public UniquePropertyValueValidationException( IndexBackedConstraintDescriptor constraint,
-            ConstraintValidationException.Phase phase, Throwable cause )
-    {
-        super( constraint, phase, phase == Phase.VERIFICATION ? "Existing data" : "New data", cause );
-        this.conflicts = Collections.emptySet();
-    }
-
-    @Override
+	@Override
     public String getUserMessage( TokenNameLookup tokenNameLookup )
     {
         SchemaDescriptor schema = constraint.schema();
@@ -81,7 +81,7 @@ public class UniquePropertyValueValidationException extends ConstraintValidation
         return message.toString();
     }
 
-    public Set<IndexEntryConflictException> conflicts()
+	public Set<IndexEntryConflictException> conflicts()
     {
         return conflicts;
     }

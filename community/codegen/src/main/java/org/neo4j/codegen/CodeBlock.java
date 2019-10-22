@@ -93,11 +93,11 @@ public class CodeBlock implements AutoCloseable
 
     protected void endBlock()
     {
-        if ( !done )
-        {
-            emitter.endBlock();
-            done = true;
-        }
+        if (done) {
+			return;
+		}
+		emitter.endBlock();
+		done = true;
     }
 
     public void expression( Expression expression )

@@ -64,11 +64,11 @@ class WritableIndexReference extends IndexReference
 
     private void disposeWriter() throws IOException
     {
-        if ( !writerIsClosed )
-        {
-            writer.close();
-            writerIsClosed = true;
-        }
+        if (writerIsClosed) {
+			return;
+		}
+		writer.close();
+		writerIsClosed = true;
     }
 
     boolean isWriterClosed()

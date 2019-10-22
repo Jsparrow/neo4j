@@ -43,6 +43,6 @@ public final class ReflectionUtil
                 return;
             }
         }
-        throw new IllegalArgumentException( "Method '" + methodName + "' does not exist in class " + owner );
+        throw new IllegalArgumentException( new StringBuilder().append("Method '").append(methodName).append("' does not exist in class ").append(owner).toString() );
     }
 }

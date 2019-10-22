@@ -116,20 +116,6 @@ class FusionIndexReader extends FusionIndexBase<IndexReader> implements IndexRea
         }
     }
 
-    private static final class InnerException extends RuntimeException
-    {
-        private InnerException( IndexNotApplicableKernelException e )
-        {
-            super( e );
-        }
-
-        @Override
-        public synchronized IndexNotApplicableKernelException getCause()
-        {
-            return (IndexNotApplicableKernelException) super.getCause();
-        }
-    }
-
     @Override
     public void distinctValues( IndexProgressor.NodeValueClient cursor, NodePropertyAccessor propertyAccessor, boolean needsValues )
     {
@@ -138,7 +124,7 @@ class FusionIndexReader extends FusionIndexBase<IndexReader> implements IndexRea
         instanceSelector.forAll( reader -> reader.distinctValues( multiProgressor, propertyAccessor, needsValues ) );
     }
 
-    @Override
+	@Override
     public boolean hasFullValuePrecision( IndexQuery... predicates )
     {
         IndexSlot slot = slotSelector.selectSlot( predicates, IndexQuery::valueGroup );
@@ -154,6 +140,20 @@ class FusionIndexReader extends FusionIndexBase<IndexReader> implements IndexRea
                 throw new IllegalStateException( "Selected IndexReader null for predicates " + Arrays.toString( predicates ) );
             }
             return true;
+        }
+    }
+
+	private static final class InnerException extends RuntimeException
+    {
+        private InnerException( IndexNotApplicableKernelException e )
+        {
+            super( e );
+        }
+
+        @Override
+        public synchronized IndexNotApplicableKernelException getCause()
+        {
+            return (IndexNotApplicableKernelException) super.getCause();
         }
     }
 }

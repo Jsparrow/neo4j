@@ -79,10 +79,7 @@ public final class IndexSample
     @Override
     public String toString()
     {
-        return "IndexSample{" +
-               "indexSize=" + indexSize +
-               ", uniqueValues=" + uniqueValues +
-               ", sampleSize=" + sampleSize +
-               '}';
+        return new StringBuilder().append("IndexSample{").append("indexSize=").append(indexSize).append(", uniqueValues=").append(uniqueValues).append(", sampleSize=").append(sampleSize)
+				.append('}').toString();
     }
 }

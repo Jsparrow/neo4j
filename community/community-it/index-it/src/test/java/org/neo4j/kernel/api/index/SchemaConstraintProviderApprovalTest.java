@@ -59,7 +59,92 @@ import static org.neo4j.test.mockito.matcher.Neo4jMatchers.createConstraint;
 @RunWith( value = Parameterized.class )
 public abstract class SchemaConstraintProviderApprovalTest
 {
-    // These are the values that will be checked.
+    private static Map<TestValue, Set<Object>> noIndexRun;
+	private static Map<TestValue, Set<Object>> constraintRun;
+	public static final String LABEL = "Person";
+	public static final String PROPERTY_KEY = "name";
+	public static final Function<Node, Object> PROPERTY_EXTRACTOR = node ->
+    {
+        Object value = node.getProperty( PROPERTY_KEY );
+        if ( value.getClass().isArray() )
+        {
+            return new ArrayEqualityObject( value );
+        }
+        return value;
+    };
+	private final TestValue currentValue;
+
+	public SchemaConstraintProviderApprovalTest( TestValue value )
+    {
+        currentValue = value;
+    }
+
+	@Parameters( name = "{0}" )
+    public static Collection<TestValue> data()
+    {
+        return Arrays.asList( TestValue.values() );
+    }
+
+	@BeforeClass
+    public static void init()
+    {
+        GraphDatabaseService db = new TestGraphDatabaseFactory().newImpermanentDatabase();
+        for ( TestValue value : TestValue.values() )
+        {
+            createNode( db, PROPERTY_KEY, value.value );
+        }
+
+        noIndexRun = runFindByLabelAndProperty( db );
+        createConstraint( db, label( LABEL ), PROPERTY_KEY );
+        constraintRun = runFindByLabelAndProperty( db );
+        db.shutdown();
+    }
+
+	@Test
+    public void test()
+    {
+        Set<Object> noIndexResult = Iterables.asSet( noIndexRun.get( currentValue ) );
+        Set<Object> constraintResult = Iterables.asSet( constraintRun.get( currentValue ) );
+
+        String errorMessage = currentValue.toString();
+
+        assertEquals( errorMessage, noIndexResult, constraintResult );
+    }
+
+	private static Map<TestValue, Set<Object>> runFindByLabelAndProperty( GraphDatabaseService db )
+    {
+        HashMap<TestValue, Set<Object>> results = new HashMap<>();
+        try ( Transaction tx = db.beginTx() )
+        {
+            for ( TestValue value : TestValue.values() )
+            {
+                addToResults( db, results, value );
+            }
+            tx.success();
+        }
+        return results;
+    }
+
+	private static Node createNode( GraphDatabaseService db, String propertyKey, Object value )
+    {
+        try ( Transaction tx = db.beginTx() )
+        {
+            Node node = db.createNode( label( LABEL ) );
+            node.setProperty( propertyKey, value );
+            tx.success();
+            return node;
+        }
+    }
+
+	private static void addToResults( GraphDatabaseService db, HashMap<TestValue, Set<Object>> results,
+                                      TestValue value )
+    {
+        ResourceIterator<Node> foundNodes = db.findNodes( label( LABEL ), PROPERTY_KEY, value.value );
+        Set<Object> propertyValues = asSet( Iterators.map( PROPERTY_EXTRACTOR, foundNodes ) );
+        results.put( value, propertyValues );
+    }
+
+	// These are the values that will be checked.
     public enum TestValue
     {
         BOOLEAN_TRUE( true ),
@@ -112,94 +197,7 @@ public abstract class SchemaConstraintProviderApprovalTest
         }
     }
 
-    private static Map<TestValue, Set<Object>> noIndexRun;
-    private static Map<TestValue, Set<Object>> constraintRun;
-
-    private final TestValue currentValue;
-
-    public SchemaConstraintProviderApprovalTest( TestValue value )
-    {
-        currentValue = value;
-    }
-
-    @Parameters( name = "{0}" )
-    public static Collection<TestValue> data()
-    {
-        return Arrays.asList( TestValue.values() );
-    }
-
-    @BeforeClass
-    public static void init()
-    {
-        GraphDatabaseService db = new TestGraphDatabaseFactory().newImpermanentDatabase();
-        for ( TestValue value : TestValue.values() )
-        {
-            createNode( db, PROPERTY_KEY, value.value );
-        }
-
-        noIndexRun = runFindByLabelAndProperty( db );
-        createConstraint( db, label( LABEL ), PROPERTY_KEY );
-        constraintRun = runFindByLabelAndProperty( db );
-        db.shutdown();
-    }
-
-    public static final String LABEL = "Person";
-    public static final String PROPERTY_KEY = "name";
-    public static final Function<Node, Object> PROPERTY_EXTRACTOR = node ->
-    {
-        Object value = node.getProperty( PROPERTY_KEY );
-        if ( value.getClass().isArray() )
-        {
-            return new ArrayEqualityObject( value );
-        }
-        return value;
-    };
-
-    @Test
-    public void test()
-    {
-        Set<Object> noIndexResult = Iterables.asSet( noIndexRun.get( currentValue ) );
-        Set<Object> constraintResult = Iterables.asSet( constraintRun.get( currentValue ) );
-
-        String errorMessage = currentValue.toString();
-
-        assertEquals( errorMessage, noIndexResult, constraintResult );
-    }
-
-    private static Map<TestValue, Set<Object>> runFindByLabelAndProperty( GraphDatabaseService db )
-    {
-        HashMap<TestValue, Set<Object>> results = new HashMap<>();
-        try ( Transaction tx = db.beginTx() )
-        {
-            for ( TestValue value : TestValue.values() )
-            {
-                addToResults( db, results, value );
-            }
-            tx.success();
-        }
-        return results;
-    }
-
-    private static Node createNode( GraphDatabaseService db, String propertyKey, Object value )
-    {
-        try ( Transaction tx = db.beginTx() )
-        {
-            Node node = db.createNode( label( LABEL ) );
-            node.setProperty( propertyKey, value );
-            tx.success();
-            return node;
-        }
-    }
-
-    private static void addToResults( GraphDatabaseService db, HashMap<TestValue, Set<Object>> results,
-                                      TestValue value )
-    {
-        ResourceIterator<Node> foundNodes = db.findNodes( label( LABEL ), PROPERTY_KEY, value.value );
-        Set<Object> propertyValues = asSet( Iterators.map( PROPERTY_EXTRACTOR, foundNodes ) );
-        results.put( value, propertyValues );
-    }
-
-    private static class ArrayEqualityObject
+	private static class ArrayEqualityObject
     {
         private final Object array;
 

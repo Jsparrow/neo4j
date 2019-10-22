@@ -233,7 +233,12 @@ public class BasicAuthenticationTest
         return new HasStatus( status );
     }
 
-    static class HasStatus extends TypeSafeMatcher<Status.HasStatus>
+    static CredentialsClearedMatcher isCleared()
+    {
+        return new CredentialsClearedMatcher();
+    }
+
+	static class HasStatus extends TypeSafeMatcher<Status.HasStatus>
     {
         private Status status;
 
@@ -263,29 +268,22 @@ public class BasicAuthenticationTest
         }
     }
 
-    static CredentialsClearedMatcher isCleared()
-    {
-        return new CredentialsClearedMatcher();
-    }
-
     static class CredentialsClearedMatcher extends BaseMatcher<byte[]>
     {
         @Override
         public boolean matches( Object o )
         {
-            if ( o instanceof byte[] )
-            {
-                byte[] bytes = (byte[]) o;
-                for ( int i = 0; i < bytes.length; i++ )
-                {
-                    if ( bytes[i] != (byte) 0 )
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            return false;
+            if (!(o instanceof byte[])) {
+				return false;
+			}
+			byte[] bytes = (byte[]) o;
+			for (byte aByte : bytes) {
+			    if ( aByte != (byte) 0 )
+			    {
+			        return false;
+			    }
+			}
+			return true;
         }
 
         @Override

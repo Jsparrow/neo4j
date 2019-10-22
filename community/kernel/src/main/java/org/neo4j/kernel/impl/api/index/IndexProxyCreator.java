@@ -115,9 +115,7 @@ class IndexProxyCreator
         }
         catch ( IOException e )
         {
-            logProvider.getLog( getClass() ).error( "Failed to open index: " + descriptor.getId() +
-                                                    " (" + descriptor.userDescription( tokenNameLookup ) +
-                                                    "), requesting re-population.", e );
+            logProvider.getLog( getClass() ).error( new StringBuilder().append("Failed to open index: ").append(descriptor.getId()).append(" (").append(descriptor.userDescription( tokenNameLookup )).append("), requesting re-population.").toString(), e );
             return createRecoveringIndexProxy( descriptor );
         }
     }

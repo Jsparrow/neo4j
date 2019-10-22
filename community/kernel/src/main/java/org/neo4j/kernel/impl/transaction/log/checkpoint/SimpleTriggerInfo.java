@@ -39,8 +39,8 @@ public class SimpleTriggerInfo implements TriggerInfo
     @Override
     public String describe( long transactionId )
     {
-        String info = description == null ? triggerName : triggerName + " for " + description;
-        return "Checkpoint triggered by \"" + info + "\" @ txId: " + transactionId;
+        String info = description == null ? triggerName : new StringBuilder().append(triggerName).append(" for ").append(description).toString();
+        return new StringBuilder().append("Checkpoint triggered by \"").append(info).append("\" @ txId: ").append(transactionId).toString();
     }
 
     @Override

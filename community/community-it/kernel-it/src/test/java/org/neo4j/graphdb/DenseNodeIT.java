@@ -267,7 +267,7 @@ public class DenseNodeIT
         for ( int i = 0; i < numberOfRelationships; i++ )
         {
             root.createRelationshipTo( db.createNode(), RelationshipType.withName( "Type" + (i % 4) ) )
-                    .setProperty( "" + i, i );
+                    .setProperty( Integer.toString(i), i );
 
         }
     }
@@ -278,7 +278,7 @@ public class DenseNodeIT
         for ( int i = 0; i < numberOfRelationships; i++ )
         {
             source.createRelationshipTo( sink, RelationshipType.withName( "Type" + (i % 4) ) )
-                    .setProperty( "" + i, i );
+                    .setProperty( Integer.toString(i), i );
 
         }
     }

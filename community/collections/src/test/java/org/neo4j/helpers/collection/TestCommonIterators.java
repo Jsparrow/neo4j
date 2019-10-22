@@ -40,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import java.util.Collections;
 
 class TestCommonIterators
 {
@@ -64,23 +65,23 @@ class TestCommonIterators
 
         // first Iterable
         assertEquals( object, Iterables.first( asList( object, object2 ) ) );
-        assertEquals( object, Iterables.first( asList( object ) ) );
-        assertThrows( NoSuchElementException.class, () -> Iterables.first( asList() ) );
+        assertEquals( object, Iterables.first( Collections.singletonList( object ) ) );
+        assertThrows( NoSuchElementException.class, () -> Iterables.first( Collections.emptyList() ) );
 
         // first Iterator
         assertEquals( object, Iterators.first( asList( object, object2 ).iterator() ) );
-        assertEquals( object, Iterators.first( asList( object ).iterator() ) );
-        assertThrows( NoSuchElementException.class, () -> Iterators.first( asList().iterator() ) );
+        assertEquals( object, Iterators.first( Collections.singletonList( object ).iterator() ) );
+        assertThrows( NoSuchElementException.class, () -> Iterators.first( Collections.emptyList().iterator() ) );
 
         // firstOrNull Iterable
         assertEquals( object, Iterables.firstOrNull( asList( object, object2 ) ) );
-        assertEquals( object, Iterables.firstOrNull( asList( object ) ) );
-        assertNull( Iterables.firstOrNull( asList() ) );
+        assertEquals( object, Iterables.firstOrNull( Collections.singletonList( object ) ) );
+        assertNull( Iterables.firstOrNull( Collections.emptyList() ) );
 
         // firstOrNull Iterator
         assertEquals( object, Iterators.firstOrNull( asList( object, object2 ).iterator() ) );
-        assertEquals( object, Iterators.firstOrNull( asList( object ).iterator() ) );
-        assertNull( Iterators.firstOrNull( asList().iterator() ) );
+        assertEquals( object, Iterators.firstOrNull( Collections.singletonList( object ).iterator() ) );
+        assertNull( Iterators.firstOrNull( Collections.emptyList().iterator() ) );
     }
 
     @Test
@@ -91,23 +92,23 @@ class TestCommonIterators
 
         // last Iterable
         assertEquals( object2, Iterables.last( asList( object, object2 ) ) );
-        assertEquals( object, Iterables.last( asList( object ) ) );
-        assertThrows( NoSuchElementException.class, () -> Iterables.last( asList() ) );
+        assertEquals( object, Iterables.last( Collections.singletonList( object ) ) );
+        assertThrows( NoSuchElementException.class, () -> Iterables.last( Collections.emptyList() ) );
 
         // last Iterator
         assertEquals( object2, Iterators.last( asList( object, object2 ).iterator() ) );
-        assertEquals( object, Iterators.last( asList( object ).iterator() ) );
-        assertThrows( NoSuchElementException.class, () -> Iterators.last( asList().iterator() ) );
+        assertEquals( object, Iterators.last( Collections.singletonList( object ).iterator() ) );
+        assertThrows( NoSuchElementException.class, () -> Iterators.last( Collections.emptyList().iterator() ) );
 
         // lastOrNull Iterable
         assertEquals( object2, Iterables.lastOrNull( asList( object, object2 ) ) );
-        assertEquals( object, Iterables.lastOrNull( asList( object ) ) );
-        assertNull( Iterables.lastOrNull( asList() ) );
+        assertEquals( object, Iterables.lastOrNull( Collections.singletonList( object ) ) );
+        assertNull( Iterables.lastOrNull( Collections.emptyList() ) );
 
         // lastOrNull Iterator
         assertEquals( object2, Iterators.lastOrNull( asList( object, object2 ).iterator() ) );
-        assertEquals( object, Iterators.lastOrNull( asList( object ).iterator() ) );
-        assertNull( Iterators.lastOrNull( asList().iterator() ) );
+        assertEquals( object, Iterators.lastOrNull( Collections.singletonList( object ).iterator() ) );
+        assertNull( Iterators.lastOrNull( Collections.emptyList().iterator() ) );
     }
 
     @Test
@@ -117,23 +118,23 @@ class TestCommonIterators
         Object object2 = new Object();
 
         // single Iterable
-        assertEquals( object, Iterables.single( asList( object ) ) );
-        assertThrows( NoSuchElementException.class, () ->  Iterables.single( asList() ) );
+        assertEquals( object, Iterables.single( Collections.singletonList( object ) ) );
+        assertThrows( NoSuchElementException.class, () ->  Iterables.single( Collections.emptyList() ) );
         assertThrows( NoSuchElementException.class, () -> Iterables.single( asList( object, object2 ) ) );
 
         // single Iterator
-        assertEquals( object, Iterators.single( asList( object ).iterator() ) );
-        assertThrows( NoSuchElementException.class, () -> Iterators.single( asList().iterator() ) );
+        assertEquals( object, Iterators.single( Collections.singletonList( object ).iterator() ) );
+        assertThrows( NoSuchElementException.class, () -> Iterators.single( Collections.emptyList().iterator() ) );
         assertThrows( NoSuchElementException.class, () -> Iterators.single( asList( object, object2 ).iterator() ) );
 
         // singleOrNull Iterable
-        assertEquals( object, Iterables.singleOrNull( asList( object ) ) );
-        assertNull( Iterables.singleOrNull( asList() ) );
+        assertEquals( object, Iterables.singleOrNull( Collections.singletonList( object ) ) );
+        assertNull( Iterables.singleOrNull( Collections.emptyList() ) );
         assertThrows( NoSuchElementException.class, () -> Iterables.singleOrNull( asList( object, object2 ) ) );
 
         // singleOrNull Iterator
-        assertEquals( object, Iterators.singleOrNull( asList( object ).iterator() ) );
-        assertNull( Iterators.singleOrNull( asList().iterator() ) );
+        assertEquals( object, Iterators.singleOrNull( Collections.singletonList( object ).iterator() ) );
+        assertNull( Iterators.singleOrNull( Collections.emptyList().iterator() ) );
         assertThrows( NoSuchElementException.class, () -> Iterators.singleOrNull( asList( object, object2 ).iterator() ) );
     }
 

@@ -36,18 +36,6 @@ public class TransactionExecutionStatistic
     private final long pageFaults;
     private final long pageHits;
 
-    private TransactionExecutionStatistic()
-    {
-        heapAllocatedBytes = null;
-        directAllocatedBytes = null;
-        cpuTimeMillis = null;
-        waitTimeMillis = -1;
-        elapsedTimeMillis = -1;
-        idleTimeMillis = null;
-        pageFaults = 0;
-        pageHits = 0;
-    }
-
     public TransactionExecutionStatistic( KernelTransactionImplementation tx, SystemNanoClock clock, long startTimeMillis )
     {
         long nowMillis = clock.millis();
@@ -63,47 +51,59 @@ public class TransactionExecutionStatistic
         this.idleTimeMillis = this.cpuTimeMillis != null ? elapsedTimeMillis - this.cpuTimeMillis - waitTimeMillis : null;
     }
 
-    public Long getHeapAllocatedBytes()
+	private TransactionExecutionStatistic()
+    {
+        heapAllocatedBytes = null;
+        directAllocatedBytes = null;
+        cpuTimeMillis = null;
+        waitTimeMillis = -1;
+        elapsedTimeMillis = -1;
+        idleTimeMillis = null;
+        pageFaults = 0;
+        pageHits = 0;
+    }
+
+	public Long getHeapAllocatedBytes()
     {
         return heapAllocatedBytes;
     }
 
-    public Long getDirectAllocatedBytes()
+	public Long getDirectAllocatedBytes()
     {
         return directAllocatedBytes;
     }
 
-    public Long getCpuTimeMillis()
+	public Long getCpuTimeMillis()
     {
         return cpuTimeMillis;
     }
 
-    public long getWaitTimeMillis()
+	public long getWaitTimeMillis()
     {
         return waitTimeMillis;
     }
 
-    public long getElapsedTimeMillis()
+	public long getElapsedTimeMillis()
     {
         return elapsedTimeMillis;
     }
 
-    public Long getIdleTimeMillis()
+	public Long getIdleTimeMillis()
     {
         return idleTimeMillis;
     }
 
-    public long getPageHits()
+	public long getPageHits()
     {
         return pageHits;
     }
 
-    public long getPageFaults()
+	public long getPageFaults()
     {
         return pageFaults;
     }
 
-    private static Long nullIfNegative( long value )
+	private static Long nullIfNegative( long value )
     {
         return value >= 0 ? value : null;
     }

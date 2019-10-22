@@ -74,11 +74,7 @@ public class MediaTypeNotSupportedException extends WebApplicationException
         }
         else
         {
-            for ( MediaType type : supported )
-            {
-                message.append( "\n * " )
-                        .append( type );
-            }
+            supported.forEach(type -> message.append("\n * ").append(type));
         }
         return message.toString();
     }

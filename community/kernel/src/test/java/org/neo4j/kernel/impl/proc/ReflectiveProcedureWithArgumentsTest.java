@@ -108,9 +108,7 @@ public class ReflectiveProcedureWithArgumentsTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( String.format("Argument at position 0 in method `listCoolPeople` " +
-                                 "is missing an `@Name` annotation.%n" +
-                                 "Please add the annotation, recompile the class and try again." ));
+        exception.expectMessage( String.format(new StringBuilder().append("Argument at position 0 in method `listCoolPeople` ").append("is missing an `@Name` annotation.%n").append("Please add the annotation, recompile the class and try again.").toString() ));
 
         // When
         compile( ClassWithProcedureWithoutAnnotatedArgs.class );
@@ -134,15 +132,19 @@ public class ReflectiveProcedureWithArgumentsTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( String.format("Argument `a` at position 0 in `defaultValues` with%n" +
-                "type `long` cannot be converted to a Neo4j type: Default value `forty-two` could not be parsed as a " +
-                "Long" ));
+        exception.expectMessage( String.format(new StringBuilder().append("Argument `a` at position 0 in `defaultValues` with%n").append("type `long` cannot be converted to a Neo4j type: Default value `forty-two` could not be parsed as a ").append("Long").toString() ));
 
         // When
         compile( ClassWithProcedureWithBadlyTypedDefault.class );
     }
 
-    public static class MyOutputRecord
+    private List<CallableProcedure> compile( Class<?> clazz ) throws KernelException
+    {
+        return new ReflectiveProcedureCompiler( new TypeMappers(), new ComponentRegistry(), new ComponentRegistry(),
+                NullLog.getInstance(), ProcedureConfig.DEFAULT ).compileProcedure( clazz, null, true );
+    }
+
+	public static class MyOutputRecord
     {
         public String name;
 
@@ -157,7 +159,7 @@ public class ReflectiveProcedureWithArgumentsTest
         @Procedure
         public Stream<MyOutputRecord> listCoolPeople( @Name( "name" ) String name, @Name( "age" ) long age )
         {
-            return Stream.of( new MyOutputRecord( name + " is " + age + " years old." ) );
+            return Stream.of( new MyOutputRecord( new StringBuilder().append(name).append(" is ").append(age).append(" years old.").toString() ) );
         }
     }
 
@@ -167,14 +169,12 @@ public class ReflectiveProcedureWithArgumentsTest
         public Stream<MyOutputRecord> listCoolPeople( @Name( "names" ) List<String> names,
                                                       @Name( "age" ) List<Long> ages )
         {
-            Iterator<String> nameIterator = names.iterator();
             Iterator<Long> ageIterator = ages.iterator();
             List<MyOutputRecord> result = new ArrayList<>( names.size() );
-            while ( nameIterator.hasNext() )
-            {
+            names.forEach(name -> {
                 long age = ageIterator.hasNext() ? ageIterator.next() : -1;
-                result.add( new MyOutputRecord( nameIterator.next() + " is " + age + " years old." ) );
-            }
+                result.add( new MyOutputRecord( new StringBuilder().append(name).append(" is ").append(age).append(" years old.").toString() ) );
+            });
             return result.stream();
         }
     }
@@ -184,7 +184,7 @@ public class ReflectiveProcedureWithArgumentsTest
         @Procedure
         public Stream<MyOutputRecord> listCoolPeople( String name, int age )
         {
-            return Stream.of( new MyOutputRecord( name + " is " + age + " years old." ) );
+            return Stream.of( new MyOutputRecord( new StringBuilder().append(name).append(" is ").append(age).append(" years old.").toString() ) );
         }
     }
 
@@ -215,11 +215,5 @@ public class ReflectiveProcedureWithArgumentsTest
         {
             return Stream.empty();
         }
-    }
-
-    private List<CallableProcedure> compile( Class<?> clazz ) throws KernelException
-    {
-        return new ReflectiveProcedureCompiler( new TypeMappers(), new ComponentRegistry(), new ComponentRegistry(),
-                NullLog.getInstance(), ProcedureConfig.DEFAULT ).compileProcedure( clazz, null, true );
     }
 }

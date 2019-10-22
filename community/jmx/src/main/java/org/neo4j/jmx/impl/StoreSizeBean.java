@@ -373,22 +373,6 @@ public final class StoreSizeBean extends ManagementBeanProvider
             return FileUtils.size( fs, file );
         }
 
-        private class TotalSizeVersionVisitor implements LogVersionVisitor
-        {
-            private long totalSize;
-
-            long getTotalSize()
-            {
-                return totalSize;
-            }
-
-            @Override
-            public void visit( File file, long logVersion )
-            {
-                totalSize += FileUtils.size( fs, file );
-            }
-        }
-
         /**
          * Count the total file size, including id files, of {@link DatabaseFile}s.
          * Missing files will be counted as 0 bytes.
@@ -405,6 +389,22 @@ public final class StoreSizeBean extends ManagementBeanProvider
                 size += databaseLayout.idFile( store ).map( this::sizeOf ).orElse( 0L );
             }
             return size;
+        }
+
+		private class TotalSizeVersionVisitor implements LogVersionVisitor
+        {
+            private long totalSize;
+
+            long getTotalSize()
+            {
+                return totalSize;
+            }
+
+            @Override
+            public void visit( File file, long logVersion )
+            {
+                totalSize += FileUtils.size( fs, file );
+            }
         }
     }
 }

@@ -45,74 +45,11 @@ import static org.neo4j.helpers.collection.MapUtil.stringMap;
 
 public abstract class AbstractLuceneIndexTest
 {
-    @Rule
-    public final TestName testname = new TestName();
     @ClassRule
     public static TestDirectory testDirectory = TestDirectory.testDirectory( AbstractLuceneIndexTest.class );
-    protected static GraphDatabaseService graphDb;
-    protected Transaction tx;
-
-    @BeforeClass
-    public static void setUpStuff()
-    {
-        graphDb = new TestGraphDatabaseFactory().newEmbeddedDatabase( testDirectory.storeDir() );
-    }
-
-    @AfterClass
-    public static void tearDownStuff()
-    {
-        graphDb.shutdown();
-    }
-
-    @After
-    public void commitTx()
-    {
-        finishTx( true );
-    }
-
-    public void rollbackTx()
-    {
-        finishTx( false );
-    }
-
-    public void finishTx( boolean success )
-    {
-        if ( tx != null )
-        {
-            if ( success )
-            {
-                tx.success();
-            }
-            tx.close();
-            tx = null;
-        }
-    }
-
-    @Before
-    public void beginTx()
-    {
-        if ( tx == null )
-        {
-            tx = graphDb.beginTx();
-        }
-    }
-
-    void restartTx()
-    {
-        commitTx();
-        beginTx();
-    }
-
-    protected interface EntityCreator<T extends PropertyContainer>
-    {
-        T create( Object... properties );
-
-        void delete( T entity );
-    }
-
-    private static final RelationshipType TEST_TYPE = RelationshipType.withName( "TEST_TYPE" );
-
-    protected static final EntityCreator<Node> NODE_CREATOR = new EntityCreator<Node>()
+	protected static GraphDatabaseService graphDb;
+	private static final RelationshipType TEST_TYPE = RelationshipType.withName( "TEST_TYPE" );
+	protected static final EntityCreator<Node> NODE_CREATOR = new EntityCreator<Node>()
     {
         @Override
         public Node create( Object... properties )
@@ -128,7 +65,7 @@ public abstract class AbstractLuceneIndexTest
             entity.delete();
         }
     };
-    protected static final EntityCreator<Relationship> RELATIONSHIP_CREATOR =
+	protected static final EntityCreator<Relationship> RELATIONSHIP_CREATOR =
             new EntityCreator<Relationship>()
             {
                 @Override
@@ -145,42 +82,100 @@ public abstract class AbstractLuceneIndexTest
                     entity.delete();
                 }
             };
+	@Rule
+    public final TestName testname = new TestName();
+	protected Transaction tx;
 
-    private static void setProperties( PropertyContainer entity, Object... properties )
+	@BeforeClass
+    public static void setUpStuff()
     {
-        for ( Map.Entry<String, Object> entry : MapUtil.map( properties ).entrySet() )
+        graphDb = new TestGraphDatabaseFactory().newEmbeddedDatabase( testDirectory.storeDir() );
+    }
+
+	@AfterClass
+    public static void tearDownStuff()
+    {
+        graphDb.shutdown();
+    }
+
+	@After
+    public void commitTx()
+    {
+        finishTx( true );
+    }
+
+	public void rollbackTx()
+    {
+        finishTx( false );
+    }
+
+	public void finishTx( boolean success )
+    {
+        if (tx == null) {
+			return;
+		}
+		if ( success )
+		{
+		    tx.success();
+		}
+		tx.close();
+		tx = null;
+    }
+
+	@Before
+    public void beginTx()
+    {
+        if ( tx == null )
         {
-            entity.setProperty( entry.getKey(), entry.getValue() );
+            tx = graphDb.beginTx();
         }
     }
 
-    protected Index<Node> nodeIndex()
+	void restartTx()
+    {
+        commitTx();
+        beginTx();
+    }
+
+	private static void setProperties( PropertyContainer entity, Object... properties )
+    {
+        MapUtil.map( properties ).entrySet().forEach(entry -> entity.setProperty(entry.getKey(), entry.getValue()));
+    }
+
+	protected Index<Node> nodeIndex()
     {
         return nodeIndex( currentIndexName(), stringMap() );
     }
 
-    protected Index<Node> nodeIndex( Map<String, String> config )
+	protected Index<Node> nodeIndex( Map<String, String> config )
     {
         return nodeIndex( currentIndexName(), config );
     }
 
-    protected Index<Node> nodeIndex( String name, Map<String, String> config )
+	protected Index<Node> nodeIndex( String name, Map<String, String> config )
     {
         return graphDb.index().forNodes( name, config );
     }
 
-    protected RelationshipIndex relationshipIndex( Map<String, String> config )
+	protected RelationshipIndex relationshipIndex( Map<String, String> config )
     {
         return relationshipIndex( currentIndexName(), config );
     }
 
-    protected RelationshipIndex relationshipIndex( String name, Map<String, String> config )
+	protected RelationshipIndex relationshipIndex( String name, Map<String, String> config )
     {
         return graphDb.index().forRelationships( name, config );
     }
 
-    protected String currentIndexName()
+	protected String currentIndexName()
     {
         return testname.getMethodName();
+    }
+
+	protected interface EntityCreator<T extends PropertyContainer>
+    {
+        T create( Object... properties );
+
+        void delete( T entity );
     }
 }

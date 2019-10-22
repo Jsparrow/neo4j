@@ -29,25 +29,25 @@ import org.neo4j.kernel.impl.store.record.TokenRecord;
 
 public abstract class CommandReading
 {
-    public interface DynamicRecordAdder<T>
-    {
-        void add( T target, DynamicRecord record );
-    }
-
     public static final DynamicRecordAdder<PropertyBlock> PROPERTY_BLOCK_DYNAMIC_RECORD_ADDER = ( target, record ) ->
     {
         record.setCreated();
         target.addValueRecord( record );
     };
 
-    public static final DynamicRecordAdder<Collection<DynamicRecord>> COLLECTION_DYNAMIC_RECORD_ADDER = Collection::add;
+	public static final DynamicRecordAdder<Collection<DynamicRecord>> COLLECTION_DYNAMIC_RECORD_ADDER = Collection::add;
 
-    public static final DynamicRecordAdder<PropertyRecord> PROPERTY_DELETED_DYNAMIC_RECORD_ADDER = ( target, record ) ->
+	public static final DynamicRecordAdder<PropertyRecord> PROPERTY_DELETED_DYNAMIC_RECORD_ADDER = ( target, record ) ->
     {
         assert !record.inUse() : record + " is kinda weird";
         target.addDeletedRecord( record );
     };
 
-    public static final DynamicRecordAdder<PropertyKeyTokenRecord> PROPERTY_INDEX_DYNAMIC_RECORD_ADDER =
+	public static final DynamicRecordAdder<PropertyKeyTokenRecord> PROPERTY_INDEX_DYNAMIC_RECORD_ADDER =
             TokenRecord::addNameRecord;
+
+	public interface DynamicRecordAdder<T>
+    {
+        void add( T target, DynamicRecord record );
+    }
 }

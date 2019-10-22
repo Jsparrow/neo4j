@@ -250,19 +250,19 @@ public class Neo4jPackV1 implements Neo4jPack
 
             int size = nodeIndexes.size();
             packListHeader( size );
-            if ( size > 0 )
-            {
-                NodeValue node = nodes[0];
-                for ( long id : nodeIndexes.keys() )
-                {
-                    int i = 1;
-                    while ( node.id() != id )
-                    {
-                        node = nodes[i++];
-                    }
-                    node.writeTo( this );
-                }
-            }
+            if (size <= 0) {
+				return;
+			}
+			NodeValue node = nodes[0];
+			for ( long id : nodeIndexes.keys() )
+			{
+			    int i = 1;
+			    while ( node.id() != id )
+			    {
+			        node = nodes[i++];
+			    }
+			    node.writeTo( this );
+			}
         }
 
         private void writeRelationshipsForPath( RelationshipValue[] relationships ) throws IOException
@@ -435,9 +435,7 @@ public class Neo4jPackV1 implements Neo4jPack
 
         void throwUnsupportedTypeError( String type ) throws BoltIOException
         {
-            throw new BoltIOException( Status.Request.Invalid, type + " is not supported as a return type in Bolt protocol version 1. " +
-                                                               "Please make sure driver supports at least protocol version 2. " +
-                                                               "Driver upgrade is most likely required." );
+            throw new BoltIOException( Status.Request.Invalid, new StringBuilder().append(type).append(" is not supported as a return type in Bolt protocol version 1. ").append("Please make sure driver supports at least protocol version 2. ").append("Driver upgrade is most likely required.").toString() );
         }
     }
 
@@ -571,7 +569,7 @@ public class Neo4jPackV1 implements Neo4jPack
                         val = unpack();
                         if ( map.add( key, val ) != null )
                         {
-                            throw new BoltIOException( Status.Request.Invalid, "Duplicate map key `" + key + "`." );
+                            throw new BoltIOException( Status.Request.Invalid, new StringBuilder().append("Duplicate map key `").append(key).append("`.").toString() );
                         }
                         break;
                     case NULL:
@@ -602,7 +600,7 @@ public class Neo4jPackV1 implements Neo4jPack
                     AnyValue val = unpack();
                     if ( map.add( key, val ) != null )
                     {
-                        throw new BoltIOException( Status.Request.Invalid, "Duplicate map key `" + key + "`." );
+                        throw new BoltIOException( Status.Request.Invalid, new StringBuilder().append("Duplicate map key `").append(key).append("`.").toString() );
                     }
                 }
             }

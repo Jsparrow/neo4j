@@ -61,7 +61,8 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
     public void shouldSeeSingleRelationshipInTransaction() throws Exception
     {
         int label;
-        long n1, n2;
+        long n1;
+		long n2;
         try ( Transaction tx = beginTransaction() )
         {
             n1 = tx.dataWrite().nodeCreate();
@@ -97,7 +98,9 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
     public void shouldNotSeeSingleRelationshipWhichWasDeletedInTransaction() throws Exception
     {
         int label;
-        long n1, n2, r;
+        long n1;
+		long n2;
+		long r;
         try ( Transaction tx = beginTransaction() )
         {
             n1 = tx.dataWrite().nodeCreate();
@@ -129,7 +132,8 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
         final int nRelationshipsInStore = 10;
 
         int type;
-        long n1, n2;
+        long n1;
+		long n2;
 
         try ( Transaction tx = beginTransaction() )
         {
@@ -160,7 +164,9 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
         final int nRelationshipsInStore = 5 + 1 + 5;
 
         int type;
-        long n1, n2, r;
+        long n1;
+		long n2;
+		long r;
         try ( Transaction tx = beginTransaction() )
         {
             n1 = tx.dataWrite().nodeCreate();
@@ -189,7 +195,8 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
     @Test
     public void shouldSeeRelationshipInTransaction() throws Exception
     {
-        long n1, n2;
+        long n1;
+		long n2;
         try ( Transaction tx = beginTransaction() )
         {
             n1 = tx.dataWrite().nodeCreate();
@@ -220,7 +227,9 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
     @Test
     public void shouldNotSeeRelationshipDeletedInTransaction() throws Exception
     {
-        long n1, n2, r;
+        long n1;
+		long n2;
+		long r;
         try ( Transaction tx = beginTransaction() )
         {
             n1 = tx.dataWrite().nodeCreate();
@@ -251,7 +260,8 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
     @Test
     public void shouldSeeRelationshipInTransactionBeforeCursorInitialization() throws Exception
     {
-        long n1, n2;
+        long n1;
+		long n2;
         try ( Transaction tx = beginTransaction() )
         {
             n1 = tx.dataWrite().nodeCreate();
@@ -852,7 +862,8 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
     {
         long start;
         long existingRelationship;
-        int one, bulk;
+        int one;
+		int bulk;
         try ( Transaction tx = beginTransaction() )
         {
             Write write = tx.dataWrite();
@@ -966,7 +977,8 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
         long start;
         long end;
         long existingRelationship;
-        int type, bulk;
+        int type;
+		int bulk;
         try ( Transaction tx = beginTransaction() )
         {
             Write write = tx.dataWrite();
@@ -1328,7 +1340,9 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
     {
         // Given
         long relationship;
-        int prop1, prop2, prop3;
+        int prop1;
+		int prop2;
+		int prop3;
         try ( Transaction tx = beginTransaction() )
         {
             Write write = tx.dataWrite();
@@ -1426,13 +1440,6 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
         assertEquals( expectedCount, count );
     }
 
-    enum RelationshipDirection
-    {
-        OUT,
-        IN,
-        LOOP
-    }
-
     private void assertCount( int count, RelationshipDirection direction, Consumer<RelationshipGroupCursor> asserter )
             throws Exception
     {
@@ -1467,7 +1474,7 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
         }
     }
 
-    private void createRelationship( RelationshipDirection direction, long start, int type, Write write )
+	private void createRelationship( RelationshipDirection direction, long start, int type, Write write )
             throws EntityNotFoundException
     {
         switch ( direction )
@@ -1484,5 +1491,12 @@ public abstract class RelationshipTransactionStateTestBase<G extends KernelAPIWr
         default:
             throw new IllegalStateException( "Checkstyle, you win again!" );
         }
+    }
+
+	enum RelationshipDirection
+    {
+        OUT,
+        IN,
+        LOOP
     }
 }

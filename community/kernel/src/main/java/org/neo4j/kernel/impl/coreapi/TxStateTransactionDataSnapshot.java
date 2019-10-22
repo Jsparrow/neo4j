@@ -460,12 +460,8 @@ public class TxStateTransactionDataSnapshot implements TransactionData
         @Override
         public String toString()
         {
-            return "NodePropertyEntryView{" +
-                    "nodeId=" + nodeId +
-                    ", key='" + key + '\'' +
-                    ", newValue=" + newValue +
-                    ", oldValue=" + oldValue +
-                    '}';
+            return new StringBuilder().append("NodePropertyEntryView{").append("nodeId=").append(nodeId).append(", key='").append(key).append('\'').append(", newValue=")
+					.append(newValue).append(", oldValue=").append(oldValue).append('}').toString();
         }
     }
 
@@ -515,12 +511,8 @@ public class TxStateTransactionDataSnapshot implements TransactionData
         @Override
         public String toString()
         {
-            return "RelationshipPropertyEntryView{" +
-                    "relId=" + relationship.getId() +
-                    ", key='" + key + '\'' +
-                    ", newValue=" + newValue +
-                    ", oldValue=" + oldValue +
-                    '}';
+            return new StringBuilder().append("RelationshipPropertyEntryView{").append("relId=").append(relationship.getId()).append(", key='").append(key).append('\'')
+					.append(", newValue=").append(newValue).append(", oldValue=").append(oldValue).append('}').toString();
         }
     }
 
@@ -550,10 +542,7 @@ public class TxStateTransactionDataSnapshot implements TransactionData
         @Override
         public String toString()
         {
-            return "LabelEntryView{" +
-                    "nodeId=" + nodeId +
-                    ", label=" + label +
-                    '}';
+            return new StringBuilder().append("LabelEntryView{").append("nodeId=").append(nodeId).append(", label=").append(label).append('}').toString();
         }
     }
 }

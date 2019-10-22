@@ -203,7 +203,7 @@ public abstract class IndexAccessorCompatibility extends IndexProviderCompatibil
         for ( int i = 0; i < length; i++ )
         {
             int compare = Values.COMPARATOR.compare( o1[i], o2[i] );
-            assertThat( "expected less than or equal to but was " + Arrays.toString( o1 ) + " and " + Arrays.toString( o2 ),
+            assertThat( new StringBuilder().append("expected less than or equal to but was ").append(Arrays.toString( o1 )).append(" and ").append(Arrays.toString( o2 )).toString(),
                     compare, lessThanOrEqualTo( 0 ) );
             if ( compare != 0 )
             {
@@ -226,16 +226,14 @@ public abstract class IndexAccessorCompatibility extends IndexProviderCompatibil
         for ( int i = 0; i < values.length; i++ )
         {
             IndexQuery predicate = predicates[i];
-            if ( predicate.valueGroup() == ValueGroup.GEOMETRY || predicate.valueGroup() == ValueGroup.GEOMETRY_ARRAY ||
-                    (predicate.valueGroup() == ValueGroup.NUMBER && !testSuite.supportFullValuePrecisionForNumbers()) )
-            {
-                if ( !predicates[i].acceptsValue( values[i] ) )
-                {
-                    return false;
-                }
-            }
-            // else there's no functional need to let values, other than those of GEOMETRY type, to pass through the IndexQuery filtering
-            // avoiding this filtering will have testing be more strict in what index readers returns.
+            boolean condition = (predicate.valueGroup() == ValueGroup.GEOMETRY || predicate.valueGroup() == ValueGroup.GEOMETRY_ARRAY ||
+                    (predicate.valueGroup() == ValueGroup.NUMBER && !testSuite.supportFullValuePrecisionForNumbers())) && !predicates[i].acceptsValue( values[i] );
+			// avoiding this filtering will have testing be more strict in what index readers returns.
+			// else there's no functional need to let values, other than those of GEOMETRY type, to pass through the IndexQuery filtering
+			if ( condition )
+			 {
+			    return false;
+			}
         }
         return true;
     }

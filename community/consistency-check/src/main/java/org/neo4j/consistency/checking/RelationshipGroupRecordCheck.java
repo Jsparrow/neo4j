@@ -47,7 +47,18 @@ public class RelationshipGroupRecordCheck implements
         fields = Collections.unmodifiableList( list );
     }
 
-    private enum NodeField implements
+    @Override
+    public void check( RelationshipGroupRecord record,
+            CheckerEngine<RelationshipGroupRecord, RelationshipGroupConsistencyReport> engine, RecordAccess records )
+    {
+        if ( !record.inUse() )
+        {
+            return;
+        }
+        fields.forEach(field -> field.checkConsistency(record, engine, records));
+    }
+
+	private enum NodeField implements
             RecordField<RelationshipGroupRecord, RelationshipGroupConsistencyReport>,
             ComparativeRecordChecker<RelationshipGroupRecord, NodeRecord, RelationshipGroupConsistencyReport>
     {
@@ -84,7 +95,7 @@ public class RelationshipGroupRecordCheck implements
         }
     }
 
-    private enum RelationshipTypeField implements
+	private enum RelationshipTypeField implements
             RecordField<RelationshipGroupRecord, RelationshipGroupConsistencyReport>,
             ComparativeRecordChecker<RelationshipGroupRecord,RelationshipTypeTokenRecord,RelationshipGroupConsistencyReport>
     {
@@ -123,7 +134,7 @@ public class RelationshipGroupRecordCheck implements
         }
     }
 
-    private enum GroupField implements
+	private enum GroupField implements
             RecordField<RelationshipGroupRecord, RelationshipGroupConsistencyReport>,
             ComparativeRecordChecker<RelationshipGroupRecord, RelationshipGroupRecord, RelationshipGroupConsistencyReport>
     {
@@ -169,7 +180,7 @@ public class RelationshipGroupRecordCheck implements
         }
     }
 
-    private enum RelationshipField implements
+	private enum RelationshipField implements
             RecordField<RelationshipGroupRecord, RelationshipGroupConsistencyReport>,
             ComparativeRecordChecker<RelationshipGroupRecord, RelationshipRecord, RelationshipGroupConsistencyReport>
     {
@@ -311,19 +322,5 @@ public class RelationshipGroupRecordCheck implements
         protected abstract boolean isFirstInChain( RelationshipRecord referred );
 
         protected abstract void relationshipNotInUse( RelationshipGroupConsistencyReport report );
-    }
-
-    @Override
-    public void check( RelationshipGroupRecord record,
-            CheckerEngine<RelationshipGroupRecord, RelationshipGroupConsistencyReport> engine, RecordAccess records )
-    {
-        if ( !record.inUse() )
-        {
-            return;
-        }
-        for ( RecordField<RelationshipGroupRecord, RelationshipGroupConsistencyReport> field : fields )
-        {
-            field.checkConsistency( record, engine, records );
-        }
     }
 }

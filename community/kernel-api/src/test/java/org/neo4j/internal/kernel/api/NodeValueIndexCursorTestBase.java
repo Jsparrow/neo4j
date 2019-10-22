@@ -64,11 +64,25 @@ public abstract class NodeValueIndexCursorTestBase<G extends KernelAPIReadTestSu
         extends KernelAPIReadTestBase<G>
 {
     private static final int TOTAL_NODE_COUNT = 37;
-    private static long strOne, strTwo1, strTwo2, strThree1, strThree2, strThree3;
-    private static long boolTrue, num5, num6, num12a, num12b;
+    private static long strOne;
+	private static long strTwo1;
+	private static long strTwo2;
+	private static long strThree1;
+	private static long strThree2;
+	private static long strThree3;
+    private static long boolTrue;
+	private static long num5;
+	private static long num6;
+	private static long num12a;
+	private static long num12b;
     private static long strOneNoLabel;
-    private static long joeDalton, williamDalton, jackDalton, averellDalton;
-    private static long date891, date892, date86;
+    private static long joeDalton;
+	private static long williamDalton;
+	private static long jackDalton;
+	private static long averellDalton;
+    private static long date891;
+	private static long date892;
+	private static long date86;
     private static long[] nodesOfAllPropertyTypes;
     private static long whateverPoint;
 
@@ -849,11 +863,11 @@ public abstract class NodeValueIndexCursorTestBase<G extends KernelAPIReadTestSu
                 switch ( indexOrder )
                 {
                 case ASCENDING:
-                    assertTrue( "Requested ordering " + indexOrder + " was not respected.",
+                    assertTrue( new StringBuilder().append("Requested ordering ").append(indexOrder).append(" was not respected.").toString(),
                             Values.COMPARATOR.compare( currentValue, storedValue ) <= 0 );
                     break;
                 case DESCENDING:
-                    assertTrue( "Requested ordering " + indexOrder + " was not respected.",
+                    assertTrue( new StringBuilder().append("Requested ordering ").append(indexOrder).append(" was not respected.").toString(),
                             Values.COMPARATOR.compare( currentValue, storedValue ) >= 0 );
                     break;
                 case NONE:
@@ -876,14 +890,14 @@ public abstract class NodeValueIndexCursorTestBase<G extends KernelAPIReadTestSu
         uniqueIds.clear();
         for ( int i = 0; i < nodes; i++ )
         {
-            assertTrue( "at least " + nodes + " nodes, was " + uniqueIds.size(), node.next() );
+            assertTrue( new StringBuilder().append("at least ").append(nodes).append(" nodes, was ").append(uniqueIds.size()).toString(), node.next() );
             long nodeReference = node.nodeReference();
             assertTrue( "all nodes are unique", uniqueIds.add( nodeReference ) );
 
             // Assert has value capability
-            if ( IndexValueCapability.YES.equals( expectValue ) )
+            if ( IndexValueCapability.YES == expectValue )
             {
-                assertTrue( "Value capability said index would have value for " + expectValue + ", but didn't", node.hasValue() );
+                assertTrue( new StringBuilder().append("Value capability said index would have value for ").append(expectValue).append(", but didn't").toString(), node.hasValue() );
             }
 
             // Assert has correct value
@@ -895,7 +909,7 @@ public abstract class NodeValueIndexCursorTestBase<G extends KernelAPIReadTestSu
             }
         }
 
-        assertFalse( "no more than " + nodes + " nodes", node.next() );
+        assertFalse( new StringBuilder().append("no more than ").append(nodes).append(" nodes").toString(), node.next() );
     }
 
     private void assertFoundNodesAndNoValue( NodeValueIndexCursor node, int nodes, MutableLongSet uniqueIds )
@@ -903,7 +917,7 @@ public abstract class NodeValueIndexCursorTestBase<G extends KernelAPIReadTestSu
         uniqueIds.clear();
         for ( int i = 0; i < nodes; i++ )
         {
-            assertTrue( "at least " + nodes + " nodes, was " + uniqueIds.size(), node.next() );
+            assertTrue( new StringBuilder().append("at least ").append(nodes).append(" nodes, was ").append(uniqueIds.size()).toString(), node.next() );
             long nodeReference = node.nodeReference();
             assertTrue( "all nodes are unique", uniqueIds.add( nodeReference ) );
 
@@ -913,7 +927,7 @@ public abstract class NodeValueIndexCursorTestBase<G extends KernelAPIReadTestSu
             // potentially containing some NO_VALUE values.
         }
 
-        assertFalse( "no more than " + nodes + " nodes", node.next() );
+        assertFalse( new StringBuilder().append("no more than ").append(nodes).append(" nodes").toString(), node.next() );
     }
 
     private void assertFoundNodesAndValue( NodeValueIndexCursor node, MutableLongSet uniqueIds, IndexValueCapability expectValue, boolean indexProvidesValues,

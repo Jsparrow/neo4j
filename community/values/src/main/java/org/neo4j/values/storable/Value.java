@@ -171,16 +171,15 @@ public abstract class Value extends AnyValue
         {
             return ((SequenceValue) this).ternaryEquality( (SequenceValue) other );
         }
-        if ( other instanceof Value && ((Value) other).valueGroup() == valueGroup() )
-        {
-            Value otherValue = (Value) other;
-            if ( this.isNaN() || otherValue.isNaN() )
-            {
-                return null;
-            }
-            return equals( otherValue );
-        }
-        return Boolean.FALSE;
+        if (!(other instanceof Value && ((Value) other).valueGroup() == valueGroup())) {
+			return Boolean.FALSE;
+		}
+		Value otherValue = (Value) other;
+		if ( this.isNaN() || otherValue.isNaN() )
+		{
+		    return null;
+		}
+		return equals( otherValue );
     }
 
     abstract int unsafeCompareTo( Value other );

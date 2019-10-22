@@ -91,17 +91,24 @@ public class PrimitiveIntObjectHashMap<VALUE> extends AbstractIntHopScotchCollec
     @Override
     public boolean equals( Object other )
     {
-        if ( typeAndSizeEqual( other ) )
-        {
-            PrimitiveIntObjectHashMap<?> that = (PrimitiveIntObjectHashMap<?>) other;
-            IntObjEquality<VALUE> equality = new IntObjEquality<>( that );
-            visitEntries( equality );
-            return equality.isEqual();
-        }
-        return false;
+        if (!typeAndSizeEqual( other )) {
+			return false;
+		}
+		PrimitiveIntObjectHashMap<?> that = (PrimitiveIntObjectHashMap<?>) other;
+		IntObjEquality<VALUE> equality = new IntObjEquality<>( that );
+		visitEntries( equality );
+		return equality.isEqual();
     }
 
-    private static class IntObjEquality<T> implements PrimitiveIntObjectVisitor<T, RuntimeException>
+    @Override
+    public int hashCode()
+    {
+        HashCodeComputer<VALUE> hash = new HashCodeComputer<>();
+        visitEntries( hash );
+        return hash.hashCode();
+    }
+
+	private static class IntObjEquality<T> implements PrimitiveIntObjectVisitor<T, RuntimeException>
     {
         private PrimitiveIntObjectHashMap other;
         private boolean equal = true;
@@ -125,20 +132,12 @@ public class PrimitiveIntObjectHashMap<VALUE> extends AbstractIntHopScotchCollec
         }
     }
 
-    @Override
-    public int hashCode()
-    {
-        HashCodeComputer<VALUE> hash = new HashCodeComputer<>();
-        visitEntries( hash );
-        return hash.hashCode();
-    }
-
     private static class HashCodeComputer<T> implements PrimitiveIntObjectVisitor<T, RuntimeException>
     {
         private int hash = 1337;
 
         @Override
-        public boolean visited( int key, T value ) throws RuntimeException
+        public boolean visited( int key, T value )
         {
             hash += DEFAULT_HASHING.hashSingleValueToInt( key + value.hashCode() );
             return false;

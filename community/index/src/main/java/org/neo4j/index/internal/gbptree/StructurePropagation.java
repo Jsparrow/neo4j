@@ -85,81 +85,101 @@ package org.neo4j.index.internal.gbptree;
  */
 class StructurePropagation<KEY>
 {
-    /* <CONTENT> */
+    static final StructureUpdate UPDATE_LEFT_CHILD = ( sp, childId ) ->
+    {
+        sp.hasLeftChildUpdate = true;
+        sp.leftChild = childId;
+    };
+
+	static final StructureUpdate UPDATE_MID_CHILD = ( sp, childId ) ->
+    {
+        sp.hasMidChildUpdate = true;
+        sp.midChild = childId;
+    };
+
+	static final StructureUpdate UPDATE_RIGHT_CHILD = ( sp, childId ) ->
+    {
+        sp.hasRightChildUpdate = true;
+        sp.rightChild = childId;
+    };
+
+	/* <CONTENT> */
     // Below are the "content" of structure propagation
     /**
      * See {@link #keyReplaceStrategy}.
      */
     final KEY leftKey;
 
-    /**
+	/**
      * See {@link #keyReplaceStrategy}.
      */
     final KEY rightKey;
 
-    /**
+	/**
      * See {@link #keyReplaceStrategy}.
      */
     final KEY bubbleKey;
 
-    /**
+	/**
      * New version of left sibling to mid child.
      */
     long leftChild;
 
-    /**
+	/**
      * New version of the child that was traversed to/through while traversing down the tree.
      */
     long midChild;
 
-    /**
+	/**
      * New right sibling to {@link #midChild}, depending on {@link #hasRightKeyInsert} this can be simple replace of an insert.
      */
     long rightChild;
     /* </CONTENT> */
 
-    /* <ACTIONS> */
+	/* <ACTIONS> */
     // Below are the actions, deciding what the content of structure propagation should be used for.
     /**
      * Left child pointer needs to be replaced by {@link #leftChild}.
      */
     boolean hasLeftChildUpdate;
 
-    /**
+	/**
      * Right child pointer needs to be replaced by {@link #rightChild} OR, if {@link #hasRightKeyInsert} is true
      * {@link #rightChild} should be inserted as a completely new additional child, moving old right child to the right.
      */
     boolean hasRightChildUpdate;
 
-    /**
+	/**
      * Mid child pointer needs to be replaced by {@link #midChild}.
      */
     boolean hasMidChildUpdate;
 
-    /**
+	/**
      * {@link #rightKey} should be inserted at right keys position (not replacing old right key).
      */
     boolean hasRightKeyInsert;
     /* </ACTIONS> */
 
-    /**
+	/**
      * Depending on keyReplaceStrategy either {@link KeyReplaceStrategy#REPLACE replace} left / right key with
      * {@link #leftKey} / {@link #rightKey} or replace left / right key by {@link #bubbleKey} (with strategy
      * {@link KeyReplaceStrategy#BUBBLE bubble} rightmost from subtree). In the case of bubble, {@link #leftKey} / {@link #rightKey}
      * is used to find "common ancestor" of leaves involved in merge. See {@link org.neo4j.index.internal.gbptree}.
      */
     KeyReplaceStrategy keyReplaceStrategy;
-    boolean hasLeftKeyReplace;
-    boolean hasRightKeyReplace;
 
-    StructurePropagation( KEY leftKey, KEY rightKey, KEY bubbleKey )
+	boolean hasLeftKeyReplace;
+
+	boolean hasRightKeyReplace;
+
+	StructurePropagation( KEY leftKey, KEY rightKey, KEY bubbleKey )
     {
         this.leftKey = leftKey;
         this.rightKey = rightKey;
         this.bubbleKey = bubbleKey;
     }
 
-    /**
+	/**
      * Clear booleans indicating change has occurred.
      */
     void clear()
@@ -172,31 +192,13 @@ class StructurePropagation<KEY>
         hasRightKeyReplace = false;
     }
 
-    interface StructureUpdate
-    {
-        void update( StructurePropagation structurePropagation, long childId );
-    }
-
-    static final StructureUpdate UPDATE_LEFT_CHILD = ( sp, childId ) ->
-    {
-        sp.hasLeftChildUpdate = true;
-        sp.leftChild = childId;
-    };
-
-    static final StructureUpdate UPDATE_MID_CHILD = ( sp, childId ) ->
-    {
-        sp.hasMidChildUpdate = true;
-        sp.midChild = childId;
-    };
-
-    static final StructureUpdate UPDATE_RIGHT_CHILD = ( sp, childId ) ->
-    {
-        sp.hasRightChildUpdate = true;
-        sp.rightChild = childId;
-    };
-
-    enum KeyReplaceStrategy
+	enum KeyReplaceStrategy
     {
         REPLACE, BUBBLE
+    }
+
+	interface StructureUpdate
+    {
+        void update( StructurePropagation structurePropagation, long childId );
     }
 }

@@ -37,7 +37,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -101,22 +100,26 @@ import static org.neo4j.test.mockito.mock.SpatialMocks.mockWGS84_3D;
 public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
 {
 
-    private ExecutionResultSerializer getSerializerWith( OutputStream output )
+    private static final Map<String,Object> NO_ARGS = Collections.emptyMap();
+	private static final Set<String> NO_IDS = Collections.emptySet();
+	private static final List<ExecutionPlanDescription> NO_PLANS = Collections.emptyList();
+
+	private ExecutionResultSerializer getSerializerWith( OutputStream output )
     {
         return getSerializerWith( output, null );
     }
 
-    private ExecutionResultSerializer getSerializerWith( OutputStream output, String uri )
+	private ExecutionResultSerializer getSerializerWith( OutputStream output, String uri )
     {
         return getSerializerWith( output, uri, NullLogProvider.getInstance() );
     }
 
-    private ExecutionResultSerializer getSerializerWith( OutputStream output, String uri, LogProvider logProvider )
+	private ExecutionResultSerializer getSerializerWith( OutputStream output, String uri, LogProvider logProvider )
     {
         return new ExecutionResultSerializer( output, uri == null ? null : URI.create( uri ), logProvider, TPTPMC );
     }
 
-    @Test
+	@Test
     public void shouldSerializeResponseWithCommitUriOnly() throws Exception
     {
         // given
@@ -132,7 +135,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         assertEquals( "{\"commit\":\"commit/uri/1\",\"results\":[],\"errors\":[]}", result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeResponseWithCommitUriAndResults() throws Exception
     {
         // given
@@ -154,7 +157,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
                       "\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}],\"errors\":[]}", result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeResponseWithResultsOnly() throws Exception
     {
         // given
@@ -175,7 +178,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
                       "\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}],\"errors\":[]}", result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeResponseWithCommitUriAndResultsAndErrors() throws Exception
     {
         // given
@@ -189,18 +192,16 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         // when
         serializer.transactionCommitUri( URI.create( "commit/uri/1" ) );
         serializer.statementResult( executionResult, false );
-        serializer.errors( asList( new Neo4jError( Status.Request.InvalidFormat, new Exception( "cause1" ) ) ) );
+        serializer.errors( Collections.singletonList( new Neo4jError( Status.Request.InvalidFormat, new Exception( "cause1" ) ) ) );
         serializer.finish();
 
         // then
         String result = output.toString( UTF_8.name() );
-        assertEquals( "{\"commit\":\"commit/uri/1\",\"results\":[{\"columns\":[\"column1\",\"column2\"]," +
-                      "\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}]," +
-                      "\"errors\":[{\"code\":\"Neo.ClientError.Request.InvalidFormat\",\"message\":\"cause1\"}]}",
+        assertEquals( new StringBuilder().append("{\"commit\":\"commit/uri/1\",\"results\":[{\"columns\":[\"column1\",\"column2\"],").append("\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}],").append("\"errors\":[{\"code\":\"Neo.ClientError.Request.InvalidFormat\",\"message\":\"cause1\"}]}").toString(),
                       result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeResponseWithResultsAndErrors() throws Exception
     {
         // given
@@ -213,18 +214,16 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
 
         // when
         serializer.statementResult( executionResult, false );
-        serializer.errors( asList( new Neo4jError( Status.Request.InvalidFormat, new Exception( "cause1" ) ) ) );
+        serializer.errors( Collections.singletonList( new Neo4jError( Status.Request.InvalidFormat, new Exception( "cause1" ) ) ) );
         serializer.finish();
 
         // then
         String result = output.toString( UTF_8.name() );
-        assertEquals( "{\"results\":[{\"columns\":[\"column1\",\"column2\"]," +
-                      "\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}]," +
-                      "\"errors\":[{\"code\":\"Neo.ClientError.Request.InvalidFormat\",\"message\":\"cause1\"}]}",
+        assertEquals( new StringBuilder().append("{\"results\":[{\"columns\":[\"column1\",\"column2\"],").append("\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}],").append("\"errors\":[{\"code\":\"Neo.ClientError.Request.InvalidFormat\",\"message\":\"cause1\"}]}").toString(),
                       result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeResponseWithCommitUriAndErrors() throws Exception
     {
         // given
@@ -233,7 +232,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
 
         // when
         serializer.transactionCommitUri( URI.create( "commit/uri/1" ) );
-        serializer.errors( asList( new Neo4jError( Status.Request.InvalidFormat, new Exception( "cause1" ) ) ) );
+        serializer.errors( Collections.singletonList( new Neo4jError( Status.Request.InvalidFormat, new Exception( "cause1" ) ) ) );
         serializer.finish();
 
         // then
@@ -242,7 +241,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
                       "\"message\":\"cause1\"}]}", result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeResponseWithErrorsOnly() throws Exception
     {
         // given
@@ -250,7 +249,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         ExecutionResultSerializer serializer = getSerializerWith( output );
 
         // when
-        serializer.errors( asList( new Neo4jError( Status.Request.InvalidFormat, new Exception( "cause1" ) ) ) );
+        serializer.errors( Collections.singletonList( new Neo4jError( Status.Request.InvalidFormat, new Exception( "cause1" ) ) ) );
         serializer.finish();
 
         // then
@@ -260,7 +259,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
                 result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeResponseWithNoCommitUriResultsOrErrors() throws Exception
     {
         // given
@@ -275,7 +274,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         assertEquals( "{\"results\":[],\"errors\":[]}", result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeResponseWithMultipleResultRows() throws Exception
     {
         // given
@@ -294,13 +293,10 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
 
         // then
         String result = output.toString( UTF_8.name() );
-        assertEquals( "{\"results\":[{\"columns\":[\"column1\",\"column2\"]," +
-                      "\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}," +
-                      "{\"row\":[\"value3\",\"value4\"],\"meta\":[null,null]}]}]," +
-                      "\"errors\":[]}", result );
+        assertEquals( new StringBuilder().append("{\"results\":[{\"columns\":[\"column1\",\"column2\"],").append("\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]},").append("{\"row\":[\"value3\",\"value4\"],\"meta\":[null,null]}]}],").append("\"errors\":[]}").toString(), result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeResponseWithMultipleResults() throws Exception
     {
         // given
@@ -321,13 +317,10 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
 
         // then
         String result = output.toString( UTF_8.name() );
-        assertEquals( "{\"results\":[" +
-                "{\"columns\":[\"column1\",\"column2\"],\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}," +
-                "{\"columns\":[\"column3\",\"column4\"],\"data\":[{\"row\":[\"value3\",\"value4\"],\"meta\":[null,null]}]}]," +
-                "\"errors\":[]}", result );
+        assertEquals( new StringBuilder().append("{\"results\":[").append("{\"columns\":[\"column1\",\"column2\"],\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]},").append("{\"columns\":[\"column3\",\"column4\"],\"data\":[{\"row\":[\"value3\",\"value4\"],\"meta\":[null,null]}]}],").append("\"errors\":[]}").toString(), result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeNodeAsMapOfProperties() throws Exception
     {
         // given
@@ -348,13 +341,10 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
 
         // then
         String result = output.toString( UTF_8.name() );
-        assertEquals( "{\"results\":[{\"columns\":[\"node\"]," +
-                      "\"data\":[{\"row\":[{\"a\":12,\"b\":true,\"c\":[1,0,1,2],\"d\":[1,0,1,2],\"e\":[\"a\",\"b\",\"ääö\"]}]," +
-                      "\"meta\":[{\"id\":1,\"type\":\"node\",\"deleted\":false}]}]}]," +
-                      "\"errors\":[]}", result );
+        assertEquals( new StringBuilder().append("{\"results\":[{\"columns\":[\"node\"],").append("\"data\":[{\"row\":[{\"a\":12,\"b\":true,\"c\":[1,0,1,2],\"d\":[1,0,1,2],\"e\":[\"a\",\"b\",\"ääö\"]}],").append("\"meta\":[{\"id\":1,\"type\":\"node\",\"deleted\":false}]}]}],").append("\"errors\":[]}").toString(), result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeNestedEntities() throws Exception
     {
         // given
@@ -377,16 +367,10 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
 
         // then
         String result = output.toString( UTF_8.name() );
-        assertEquals( "{\"results\":[{\"columns\":[\"nested\"]," +
-                "\"data\":[{\"row\":[{\"edge\":{\"baz\":\"quux\"},\"node\":{\"foo\":12}," +
-                "\"path\":[{\"foo\":12},{\"baz\":\"quux\"},{\"bar\":false}]}]," +
-                "\"meta\":[{\"id\":1,\"type\":\"relationship\",\"deleted\":false}," +
-                "{\"id\":1,\"type\":\"node\",\"deleted\":false},[{\"id\":1,\"type\":\"node\",\"deleted\":false}," +
-                "{\"id\":1,\"type\":\"relationship\",\"deleted\":false},{\"id\":2,\"type\":\"node\",\"deleted\":false}]]}]}]," +
-                "\"errors\":[]}", result );
+        assertEquals( new StringBuilder().append("{\"results\":[{\"columns\":[\"nested\"],").append("\"data\":[{\"row\":[{\"edge\":{\"baz\":\"quux\"},\"node\":{\"foo\":12},").append("\"path\":[{\"foo\":12},{\"baz\":\"quux\"},{\"bar\":false}]}],").append("\"meta\":[{\"id\":1,\"type\":\"relationship\",\"deleted\":false},").append("{\"id\":1,\"type\":\"node\",\"deleted\":false},[{\"id\":1,\"type\":\"node\",\"deleted\":false},").append("{\"id\":1,\"type\":\"relationship\",\"deleted\":false},{\"id\":2,\"type\":\"node\",\"deleted\":false}]]}]}],").append("\"errors\":[]}").toString(), result );
     }
 
-    @Test
+	@Test
     public void shouldSerializePathAsListOfMapsOfProperties() throws Exception
     {
         // given
@@ -402,14 +386,10 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
 
         // then
         String result = output.toString( UTF_8.name() );
-        assertEquals( "{\"results\":[{\"columns\":[\"path\"]," +
-                "\"data\":[{\"row\":[[{\"key1\":\"value1\"},{\"key2\":\"value2\"},{\"key3\":\"value3\"}]]," +
-                "\"meta\":[[{\"id\":1,\"type\":\"node\",\"deleted\":false}," +
-                "{\"id\":1,\"type\":\"relationship\",\"deleted\":false},{\"id\":2,\"type\":\"node\",\"deleted\":false}]]}]}]," +
-                "\"errors\":[]}", result );
+        assertEquals( new StringBuilder().append("{\"results\":[{\"columns\":[\"path\"],").append("\"data\":[{\"row\":[[{\"key1\":\"value1\"},{\"key2\":\"value2\"},{\"key3\":\"value3\"}]],").append("\"meta\":[[{\"id\":1,\"type\":\"node\",\"deleted\":false},").append("{\"id\":1,\"type\":\"relationship\",\"deleted\":false},{\"id\":2,\"type\":\"node\",\"deleted\":false}]]}]}],").append("\"errors\":[]}").toString(), result );
     }
 
-    @Test
+	@Test
     public void shouldSerializePointsAsListOfMapsOfProperties() throws Exception
     {
         // given
@@ -428,28 +408,13 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
 
         // then
         String result = output.toString( UTF_8.name() );
-        assertEquals( "{\"results\":[{\"columns\":[\"geom\"],\"data\":[" +
-                      "{\"row\":[{\"type\":\"Point\",\"coordinates\":[12.3,45.6],\"crs\":" +
-                        "{\"srid\":4326,\"name\":\"WGS-84\",\"type\":\"link\",\"properties\":" +
-                          "{\"href\":\"http://spatialreference.org/ref/epsg/4326/ogcwkt/\",\"type\":\"ogcwkt\"}" +
-                        "}}],\"meta\":[{\"type\":\"point\"}]}," +
-                      "{\"row\":[{\"type\":\"Point\",\"coordinates\":[123.0,456.0],\"crs\":" +
-                        "{\"srid\":7203,\"name\":\"cartesian\",\"type\":\"link\",\"properties\":" +
-                          "{\"href\":\"http://spatialreference.org/ref/sr-org/7203/ogcwkt/\",\"type\":\"ogcwkt\"}" +
-                        "}}],\"meta\":[{\"type\":\"point\"}]}," +
-                      "{\"row\":[{\"type\":\"Point\",\"coordinates\":[12.3,45.6,78.9],\"crs\":" +
-                        "{\"srid\":4979,\"name\":\"WGS-84-3D\",\"type\":\"link\",\"properties\":" +
-                          "{\"href\":\"http://spatialreference.org/ref/epsg/4979/ogcwkt/\",\"type\":\"ogcwkt\"}" +
-                        "}}],\"meta\":[{\"type\":\"point\"}]}," +
-                      "{\"row\":[{\"type\":\"Point\",\"coordinates\":[123.0,456.0,789.0],\"crs\":" +
-                        "{\"srid\":9157,\"name\":\"cartesian-3D\",\"type\":\"link\",\"properties\":" +
-                          "{\"href\":\"http://spatialreference.org/ref/sr-org/9157/ogcwkt/\",\"type\":\"ogcwkt\"}" +
-                        "}}],\"meta\":[{\"type\":\"point\"}]}" +
-                        "]}],\"errors\":[]}",
+        assertEquals( new StringBuilder().append("{\"results\":[{\"columns\":[\"geom\"],\"data\":[").append("{\"row\":[{\"type\":\"Point\",\"coordinates\":[12.3,45.6],\"crs\":").append("{\"srid\":4326,\"name\":\"WGS-84\",\"type\":\"link\",\"properties\":").append("{\"href\":\"http://spatialreference.org/ref/epsg/4326/ogcwkt/\",\"type\":\"ogcwkt\"}").append("}}],\"meta\":[{\"type\":\"point\"}]},").append("{\"row\":[{\"type\":\"Point\",\"coordinates\":[123.0,456.0],\"crs\":").append("{\"srid\":7203,\"name\":\"cartesian\",\"type\":\"link\",\"properties\":").append("{\"href\":\"http://spatialreference.org/ref/sr-org/7203/ogcwkt/\",\"type\":\"ogcwkt\"}")
+				.append("}}],\"meta\":[{\"type\":\"point\"}]},").append("{\"row\":[{\"type\":\"Point\",\"coordinates\":[12.3,45.6,78.9],\"crs\":").append("{\"srid\":4979,\"name\":\"WGS-84-3D\",\"type\":\"link\",\"properties\":").append("{\"href\":\"http://spatialreference.org/ref/epsg/4979/ogcwkt/\",\"type\":\"ogcwkt\"}").append("}}],\"meta\":[{\"type\":\"point\"}]},").append("{\"row\":[{\"type\":\"Point\",\"coordinates\":[123.0,456.0,789.0],\"crs\":").append("{\"srid\":9157,\"name\":\"cartesian-3D\",\"type\":\"link\",\"properties\":").append("{\"href\":\"http://spatialreference.org/ref/sr-org/9157/ogcwkt/\",\"type\":\"ogcwkt\"}").append("}}],\"meta\":[{\"type\":\"point\"}]}")
+				.append("]}],\"errors\":[]}").toString(),
                 result );
     }
 
-    @Test
+	@Test
     public void shouldSerializeTemporalAsListOfMapsOfProperties() throws Exception
     {
         // given
@@ -470,18 +435,12 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
 
         // then
         String result = output.toString( UTF_8.name() );
-        assertEquals( "{\"results\":[{\"columns\":[\"temporal\"],\"data\":[" +
-                        "{\"row\":[\"2018-03-12\"],\"meta\":[{\"type\":\"date\"}]}," +
-                        "{\"row\":[\"2018-03-12T13:02:10.000000010+01:00[UTC+01:00]\"],\"meta\":[{\"type\":\"datetime\"}]}," +
-                        "{\"row\":[\"12:02:04.000000071Z\"],\"meta\":[{\"type\":\"time\"}]}," +
-                        "{\"row\":[\"2018-03-12T13:02:10.000000010\"],\"meta\":[{\"type\":\"localdatetime\"}]}," +
-                        "{\"row\":[\"13:02:10.000000010\"],\"meta\":[{\"type\":\"localtime\"}]}," +
-                        "{\"row\":[\"PT12H\"],\"meta\":[{\"type\":\"duration\"}]}" +
-                        "]}],\"errors\":[]}",
+        assertEquals( new StringBuilder().append("{\"results\":[{\"columns\":[\"temporal\"],\"data\":[").append("{\"row\":[\"2018-03-12\"],\"meta\":[{\"type\":\"date\"}]},").append("{\"row\":[\"2018-03-12T13:02:10.000000010+01:00[UTC+01:00]\"],\"meta\":[{\"type\":\"datetime\"}]},").append("{\"row\":[\"12:02:04.000000071Z\"],\"meta\":[{\"type\":\"time\"}]},").append("{\"row\":[\"2018-03-12T13:02:10.000000010\"],\"meta\":[{\"type\":\"localdatetime\"}]},").append("{\"row\":[\"13:02:10.000000010\"],\"meta\":[{\"type\":\"localtime\"}]},").append("{\"row\":[\"PT12H\"],\"meta\":[{\"type\":\"duration\"}]}").append("]}],\"errors\":[]}")
+				.toString(),
                 result );
     }
 
-    @Test
+	@Test
     public void shouldErrorWhenSerializingUnknownGeometryType() throws Exception
     {
         // given
@@ -502,21 +461,15 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         }
         catch ( RuntimeException e )
         {
-            serializer.errors( asList( new Neo4jError( Status.Statement.ExecutionFailed, e ) ) );
+            serializer.errors( Collections.singletonList( new Neo4jError( Status.Statement.ExecutionFailed, e ) ) );
         }
 
         // then
         String result = output.toString( UTF_8.name() );
-        assertThat( result, startsWith( "{\"results\":[{\"columns\":[\"geom\"],\"data\":[" +
-                "{\"row\":[{\"type\":\"LineString\",\"coordinates\":[[1.0,2.0],[2.0,3.0]],\"crs\":" +
-                "{\"srid\":7203,\"name\":\"cartesian\",\"type\":\"link\",\"properties\":" +
-                "{\"href\":\"http://spatialreference.org/ref/sr-org/7203/ogcwkt/\",\"type\":\"ogcwkt\"}}}],\"meta\":[]}]}]," +
-                "\"errors\":[{\"code\":\"Neo.DatabaseError.Statement.ExecutionFailed\"," +
-                "\"message\":\"Unsupported Geometry type: type=MockGeometry, value=LineString\"," +
-                "\"stackTrace\":\"java.lang.IllegalArgumentException: Unsupported Geometry type: type=MockGeometry, value=LineString" ) );
+        assertThat( result, startsWith( new StringBuilder().append("{\"results\":[{\"columns\":[\"geom\"],\"data\":[").append("{\"row\":[{\"type\":\"LineString\",\"coordinates\":[[1.0,2.0],[2.0,3.0]],\"crs\":").append("{\"srid\":7203,\"name\":\"cartesian\",\"type\":\"link\",\"properties\":").append("{\"href\":\"http://spatialreference.org/ref/sr-org/7203/ogcwkt/\",\"type\":\"ogcwkt\"}}}],\"meta\":[]}]}],").append("\"errors\":[{\"code\":\"Neo.DatabaseError.Statement.ExecutionFailed\",").append("\"message\":\"Unsupported Geometry type: type=MockGeometry, value=LineString\",").append("\"stackTrace\":\"java.lang.IllegalArgumentException: Unsupported Geometry type: type=MockGeometry, value=LineString").toString() ) );
     }
 
-    @Test
+	@Test
     public void shouldProduceWellFormedJsonEvenIfResultIteratorThrowsExceptionOnNext() throws Exception
     {
         // given
@@ -540,21 +493,18 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         }
         catch ( RuntimeException e )
         {
-            serializer.errors( asList( new Neo4jError( Status.Statement.ExecutionFailed, e ) ) );
+            serializer.errors( Collections.singletonList( new Neo4jError( Status.Statement.ExecutionFailed, e ) ) );
         }
         serializer.finish();
 
         // then
         String result = output.toString( UTF_8.name() );
         assertEquals(
-                "{\"results\":[{\"columns\":[\"column1\",\"column2\"]," +
-                        "\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}]," +
-                        "\"errors\":[{\"code\":\"Neo.DatabaseError.Statement.ExecutionFailed\"," +
-                        "\"message\":\"Stuff went wrong!\",\"stackTrace\":***}]}",
+                new StringBuilder().append("{\"results\":[{\"columns\":[\"column1\",\"column2\"],").append("\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}],").append("\"errors\":[{\"code\":\"Neo.DatabaseError.Statement.ExecutionFailed\",").append("\"message\":\"Stuff went wrong!\",\"stackTrace\":***}]}").toString(),
                 replaceStackTrace( result, "***" ) );
     }
 
-    @Test
+	@Test
     public void shouldProduceWellFormedJsonEvenIfResultIteratorThrowsExceptionOnHasNext() throws Exception
     {
         // given
@@ -579,21 +529,18 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         }
         catch ( RuntimeException e )
         {
-            serializer.errors( asList( new Neo4jError( Status.Statement.ExecutionFailed, e ) ) );
+            serializer.errors( Collections.singletonList( new Neo4jError( Status.Statement.ExecutionFailed, e ) ) );
         }
         serializer.finish();
 
         // then
         String result = output.toString( UTF_8.name() );
         assertEquals(
-                "{\"results\":[{\"columns\":[\"column1\",\"column2\"]," +
-                        "\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}]," +
-                "\"errors\":[{\"code\":\"Neo.DatabaseError.Statement.ExecutionFailed\",\"message\":\"Stuff went wrong!\"," +
-                "\"stackTrace\":***}]}",
+                new StringBuilder().append("{\"results\":[{\"columns\":[\"column1\",\"column2\"],").append("\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}],").append("\"errors\":[{\"code\":\"Neo.DatabaseError.Statement.ExecutionFailed\",\"message\":\"Stuff went wrong!\",").append("\"stackTrace\":***}]}").toString(),
                 replaceStackTrace( result, "***" ) );
     }
 
-    @Test
+	@Test
     public void shouldProduceResultStreamWithGraphEntries() throws Exception
     {
         // given
@@ -627,12 +574,8 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
                 "\"startNode\":\"0\",\"endNode\":\"1\",\"properties\":{\"name\":\"rel0\"}}]}";
         String rel1 = "\"relationships\":[{\"id\":\"1\",\"type\":\"LOVES\"," +
                 "\"startNode\":\"2\",\"endNode\":\"3\",\"properties\":{\"name\":\"rel1\"}}]}";
-        String row0 = "{\"row\":[{\"name\":\"node0\"},{\"name\":\"rel0\"}]," +
-                "\"meta\":[{\"id\":0,\"type\":\"node\",\"deleted\":false}," +
-                "{\"id\":0,\"type\":\"relationship\",\"deleted\":false}],\"graph\":{\"nodes\":[";
-        String row1 = "{\"row\":[{\"name\":\"node2\"},{\"name\":\"rel1\"}]," +
-                "\"meta\":[{\"id\":2,\"type\":\"node\",\"deleted\":false}," +
-                "{\"id\":1,\"type\":\"relationship\",\"deleted\":false}],\"graph\":{\"nodes\":[";
+        String row0 = new StringBuilder().append("{\"row\":[{\"name\":\"node0\"},{\"name\":\"rel0\"}],").append("\"meta\":[{\"id\":0,\"type\":\"node\",\"deleted\":false},").append("{\"id\":0,\"type\":\"relationship\",\"deleted\":false}],\"graph\":{\"nodes\":[").toString();
+        String row1 = new StringBuilder().append("{\"row\":[{\"name\":\"node2\"},{\"name\":\"rel1\"}],").append("\"meta\":[{\"id\":2,\"type\":\"node\",\"deleted\":false},").append("{\"id\":1,\"type\":\"relationship\",\"deleted\":false}],\"graph\":{\"nodes\":[").toString();
         int n0 = result.indexOf( node0 );
         int n1 = result.indexOf( node1 );
         int n2 = result.indexOf( node2 );
@@ -651,7 +594,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         assertTrue( "result should contain rel1 after node2 and node3", r1 > n2 && r1 > n3 );
     }
 
-    @Test
+	@Test
     public void shouldProduceResultStreamWithLegacyRestFormat() throws Exception
     {
         // given
@@ -697,7 +640,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         assertEquals( "http://base.uri/relationship/1", jsonMap.get( "r1" ).get( "self" ).getTextValue() );
     }
 
-    @Test
+	@Test
     public void shouldProduceResultStreamWithLegacyRestFormatAndNestedMaps() throws Exception
     {
         // given
@@ -727,7 +670,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         assertEquals( "GO!", jsonMap.get( "one" ).get( "two" ).get( 1 ).get( "three" ).asText() );
     }
 
-    @Test
+	@Test
     public void shouldSerializePlanWithoutChildButAllKindsOfSupportedArguments() throws Exception
     {
         // given
@@ -744,7 +687,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         args.put( "number", 1 );
         args.put( "double", 2.3 );
         args.put( "listOfInts", asList(1, 2, 3) );
-        args.put( "listOfListOfInts", asList( asList(1, 2, 3) ) );
+        args.put( "listOfListOfInts", Collections.singletonList( asList(1, 2, 3) ) );
 
         // when
         ExecutionPlanDescription planDescription = mockedPlanDescription( operatorType, NO_IDS, args, NO_PLANS );
@@ -768,7 +711,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         assertEquals( args.get( "listOfListOfInts" ), rootMap.get( "listOfListOfInts" ) );
     }
 
-    @Test
+	@Test
     public void shouldSerializePlanWithoutChildButWithIdentifiers() throws Exception
     {
         // given
@@ -799,7 +742,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         assertEquals( asList( id2, id1, id3 ), rootMap.get( "identifiers" ) );
     }
 
-    @Test
+	@Test
     public void shouldSerializePlanWithChildren() throws Exception
     {
         // given
@@ -840,7 +783,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         assertEquals( asSet( asSet( leftId ), asSet( rightId ) ), identifiers );
     }
 
-    private Set<String> identifiersOf( JsonNode root )
+	private Set<String> identifiersOf( JsonNode root )
     {
         Set<String> parentIds = new HashSet<>();
         for ( JsonNode id : root.get( "identifiers" ) )
@@ -850,11 +793,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         return parentIds;
     }
 
-    private static final Map<String,Object> NO_ARGS = Collections.emptyMap();
-    private static final Set<String> NO_IDS = Collections.emptySet();
-    private static final List<ExecutionPlanDescription> NO_PLANS = Collections.emptyList();
-
-    private ExecutionPlanDescription mockedPlanDescription( String operatorType,
+	private ExecutionPlanDescription mockedPlanDescription( String operatorType,
                                                             Set<String> identifiers,
                                                             Map<String,Object> args,
                                                             List<ExecutionPlanDescription> children )
@@ -867,7 +806,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         return planDescription;
     }
 
-    private JsonNode assertIsPlanRoot( String result ) throws JsonParseException
+	private JsonNode assertIsPlanRoot( String result ) throws JsonParseException
     {
         JsonNode json = jsonNode( result );
         JsonNode results = json.get( "results" ).get( 0 );
@@ -881,7 +820,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         return root;
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     private Map<String, ?> planRootMap( String resultString ) throws JsonParseException
     {
         Map<String, ?> resultMap = (Map<String, ?>) ((List<?>) ((Map<String, ?>) (readJson( resultString ))).get("results")).get( 0 );
@@ -889,7 +828,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         return (Map<String, ?>) (planMap.get("root"));
     }
 
-    @Test
+	@Test
     public void shouldLogIOErrors()
     {
         // given
@@ -908,7 +847,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         );
     }
 
-    @Test
+	@Test
     public void shouldAbbreviateWellKnownIOErrors()
     {
         // given
@@ -926,7 +865,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         );
     }
 
-    @Test
+	@Test
     public void shouldReturnNotifications() throws IOException
     {
         // given
@@ -934,7 +873,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         ExecutionResultSerializer serializer = getSerializerWith( output );
 
         Notification notification = NotificationCode.CARTESIAN_PRODUCT.notification( new InputPosition( 1, 2, 3 ) );
-        List<Notification> notifications = Arrays.asList( notification );
+        List<Notification> notifications = Collections.singletonList( notification );
         Result executionResult = mockExecutionResult( null, notifications, map(
                 "column1", "value1",
                 "column2", "value2" ) );
@@ -949,19 +888,11 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         String result = output.toString( UTF_8.name() );
 
         assertEquals(
-                "{\"commit\":\"commit/uri/1\",\"results\":[{\"columns\":[\"column1\",\"column2\"]," +
-                        "\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}],\"notifications\":[{\"code\":\"Neo" +
-                        ".ClientNotification.Statement.CartesianProductWarning\",\"severity\":\"WARNING\",\"title\":\"This " +
-                        "query builds a cartesian product between disconnected patterns.\",\"description\":\"If a " +
-                        "part of a query contains multiple disconnected patterns, this will build a cartesian product" +
-                        " between all those parts. This may produce a large amount of data and slow down query " +
-                        "processing. While occasionally intended, it may often be possible to reformulate the query " +
-                        "that avoids the use of this cross product, perhaps by adding a relationship between the " +
-                        "different parts or by using OPTIONAL MATCH\",\"position\":{\"offset\":1,\"line\":2," +
-                        "\"column\":3}}],\"errors\":[]}", result );
+                new StringBuilder().append("{\"commit\":\"commit/uri/1\",\"results\":[{\"columns\":[\"column1\",\"column2\"],").append("\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}],\"notifications\":[{\"code\":\"Neo").append(".ClientNotification.Statement.CartesianProductWarning\",\"severity\":\"WARNING\",\"title\":\"This ").append("query builds a cartesian product between disconnected patterns.\",\"description\":\"If a ").append("part of a query contains multiple disconnected patterns, this will build a cartesian product").append(" between all those parts. This may produce a large amount of data and slow down query ").append("processing. While occasionally intended, it may often be possible to reformulate the query ")
+						.append("that avoids the use of this cross product, perhaps by adding a relationship between the ").append("different parts or by using OPTIONAL MATCH\",\"position\":{\"offset\":1,\"line\":2,").append("\"column\":3}}],\"errors\":[]}").toString(), result );
     }
 
-    @Test
+	@Test
     public void shouldNotReturnNotificationsWhenEmptyNotifications() throws IOException
     {
         // given
@@ -987,7 +918,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
                         "\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}],\"errors\":[]}", result );
     }
 
-    @Test
+	@Test
     public void shouldNotReturnPositionWhenEmptyPosition() throws IOException
     {
         // given
@@ -996,7 +927,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
 
         Notification notification = NotificationCode.CARTESIAN_PRODUCT.notification( InputPosition.empty );
 
-        List<Notification> notifications = Arrays.asList( notification );
+        List<Notification> notifications = Collections.singletonList( notification );
         Result executionResult = mockExecutionResult( null, notifications, map(
                 "column1", "value1",
                 "column2", "value2" ) );
@@ -1011,30 +942,23 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         String result = output.toString( UTF_8.name() );
 
         assertEquals(
-                "{\"commit\":\"commit/uri/1\",\"results\":[{\"columns\":[\"column1\",\"column2\"]," +
-                        "\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}],\"notifications\":[{\"code\":\"Neo" +
-                        ".ClientNotification.Statement.CartesianProductWarning\",\"severity\":\"WARNING\",\"title\":\"This " +
-                        "query builds a cartesian product between disconnected patterns.\",\"description\":\"If a " +
-                        "part of a query contains multiple disconnected patterns, this will build a cartesian product" +
-                        " between all those parts. This may produce a large amount of data and slow down query " +
-                        "processing. While occasionally intended, it may often be possible to reformulate the query " +
-                        "that avoids the use of this cross product, perhaps by adding a relationship between the " +
-                        "different parts or by using OPTIONAL MATCH\"}],\"errors\":[]}", result );
+                new StringBuilder().append("{\"commit\":\"commit/uri/1\",\"results\":[{\"columns\":[\"column1\",\"column2\"],").append("\"data\":[{\"row\":[\"value1\",\"value2\"],\"meta\":[null,null]}]}],\"notifications\":[{\"code\":\"Neo").append(".ClientNotification.Statement.CartesianProductWarning\",\"severity\":\"WARNING\",\"title\":\"This ").append("query builds a cartesian product between disconnected patterns.\",\"description\":\"If a ").append("part of a query contains multiple disconnected patterns, this will build a cartesian product").append(" between all those parts. This may produce a large amount of data and slow down query ").append("processing. While occasionally intended, it may often be possible to reformulate the query ")
+						.append("that avoids the use of this cross product, perhaps by adding a relationship between the ").append("different parts or by using OPTIONAL MATCH\"}],\"errors\":[]}").toString(), result );
     }
 
-    @SafeVarargs
+	@SafeVarargs
     private static Result mockExecutionResult( Map<String, Object>... rows )
     {
         return mockExecutionResult( null, rows );
     }
 
-    @SafeVarargs
+	@SafeVarargs
     private static Result mockExecutionResult( ExecutionPlanDescription planDescription, Map<String,Object>... rows )
     {
         return mockExecutionResult( planDescription, Collections.emptyList(), rows );
     }
 
-    @SafeVarargs
+	@SafeVarargs
     private static Result mockExecutionResult( ExecutionPlanDescription planDescription,
             Iterable<Notification> notifications, Map<String, Object>... rows )
     {
@@ -1066,7 +990,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         return executionResult;
     }
 
-    private static void mockAccept( Result mock )
+	private static void mockAccept( Result mock )
     {
         doAnswer( invocation ->
         {
@@ -1081,7 +1005,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
                .accept( (Result.ResultVisitor<RuntimeException>) any( Result.ResultVisitor.class ) );
     }
 
-    private static Path mockPath( Map<String, Object> startNodeProperties, Map<String, Object> relationshipProperties,
+	private static Path mockPath( Map<String, Object> startNodeProperties, Map<String, Object> relationshipProperties,
                                   Map<String,Object> endNodeProperties )
     {
         Node startNode = node( 1, properties( startNodeProperties ) );
@@ -1091,7 +1015,7 @@ public class ExecutionResultSerializerTest extends TxStateCheckerTestSupport
         return path( startNode, Link.link( relationship, endNode ) );
     }
 
-    private String replaceStackTrace( String json, String matchableStackTrace )
+	private String replaceStackTrace( String json, String matchableStackTrace )
     {
         return json.replaceAll( "\"stackTrace\":\"[^\"]*\"", "\"stackTrace\":" + matchableStackTrace );
     }

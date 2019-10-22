@@ -167,11 +167,7 @@ public interface NotificationDetail
                 public String value()
                 {
                     return String.format(
-                            "Binding a variable length relationship pattern to a variable ('%s') is deprecated and "
-                                    + "will be unsupported in a future version. The recommended way is to bind the "
-                                    + "whole path to a variable, then extract the relationships:%n"
-                                    + "\tMATCH p = (...)-[...]-(...)%n"
-                                    + "\tWITH *, relationships(p) AS %s",
+                            new StringBuilder().append("Binding a variable length relationship pattern to a variable ('%s') is deprecated and ").append("will be unsupported in a future version. The recommended way is to bind the ").append("whole path to a variable, then extract the relationships:%n").append("\tMATCH p = (...)-[...]-(...)%n").append("\tWITH *, relationships(p) AS %s").toString(),
                             element, element );
                 }
 

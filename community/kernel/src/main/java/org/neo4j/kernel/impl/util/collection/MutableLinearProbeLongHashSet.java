@@ -75,13 +75,12 @@ class MutableLinearProbeLongHashSet extends AbstractLinearProbeLongHashSet imple
             hasZero = true;
             return hadZero != hasZero;
         }
-        if ( element == 1 )
-        {
-            final boolean hadOne = hasOne;
-            hasOne = true;
-            return hadOne != hasOne;
-        }
-        return addToMemory( element );
+        if (element != 1) {
+			return addToMemory( element );
+		}
+		final boolean hadOne = hasOne;
+		hasOne = true;
+		return hadOne != hasOne;
     }
 
     @Override
@@ -115,13 +114,12 @@ class MutableLinearProbeLongHashSet extends AbstractLinearProbeLongHashSet imple
             hasZero = false;
             return hadZero != hasZero;
         }
-        if ( element == 1 )
-        {
-            final boolean hadOne = hasOne;
-            hasOne = false;
-            return hadOne != hasOne;
-        }
-        return removeFromMemory( element );
+        if (element != 1) {
+			return removeFromMemory( element );
+		}
+		final boolean hadOne = hasOne;
+		hasOne = false;
+		return hadOne != hasOne;
     }
 
     @Override
@@ -179,20 +177,20 @@ class MutableLinearProbeLongHashSet extends AbstractLinearProbeLongHashSet imple
     public void close()
     {
         ++modCount;
-        if ( memory != null )
-        {
-            frozenCopies.forEachKeyMultiValues( ( mem, copies ) ->
-            {
-                mem.free();
-                copies.forEach( FrozenCopy::invalidate );
-            } );
-            if ( !frozenCopies.containsKey( memory ) )
-            {
-                memory.free();
-            }
-            memory = null;
-            frozenCopies.clear();
-        }
+        if (memory == null) {
+			return;
+		}
+		frozenCopies.forEachKeyMultiValues( ( mem, copies ) ->
+		{
+		    mem.free();
+		    copies.forEach( FrozenCopy::invalidate );
+		} );
+		if ( !frozenCopies.containsKey( memory ) )
+		{
+		    memory.free();
+		}
+		memory = null;
+		frozenCopies.clear();
     }
 
     @Override
@@ -356,11 +354,11 @@ class MutableLinearProbeLongHashSet extends AbstractLinearProbeLongHashSet imple
 
     private void copyIfFrozen()
     {
-        if ( frozen )
-        {
-            frozen = false;
-            memory = memory.copy();
-        }
+        if (!frozen) {
+			return;
+		}
+		frozen = false;
+		memory = memory.copy();
     }
 
     class FrozenCopy extends AbstractLinearProbeLongHashSet

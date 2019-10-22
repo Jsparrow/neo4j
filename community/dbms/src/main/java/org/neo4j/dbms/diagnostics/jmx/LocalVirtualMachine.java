@@ -80,7 +80,7 @@ public class LocalVirtualMachine
         catch ( Exception e )
         {
             // ibm jdk uses a separate exception
-            if ( e.getClass().getCanonicalName().equals( "com.ibm.tools.attach.AttachNotSupportedException" ) )
+            if ( "com.ibm.tools.attach.AttachNotSupportedException".equals( e.getClass().getCanonicalName() ) )
             {
                 throw new IOException( e );
             }

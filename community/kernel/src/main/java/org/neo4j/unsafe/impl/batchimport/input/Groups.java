@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Arrays.asList;
+import java.util.Collections;
 
 /**
  * Mapping from name to {@link Group}. Assigns proper {@link Group#id() ids} to created groups.
@@ -35,7 +35,7 @@ public class Groups
     static final int LOWEST_NONGLOBAL_ID = 1;
 
     private final Map<String,Group> byName = new HashMap<>();
-    private final List<Group> byId = new ArrayList<>( asList( Group.GLOBAL ) );
+    private final List<Group> byId = new ArrayList<>( Collections.singletonList( Group.GLOBAL ) );
     private int nextId = LOWEST_NONGLOBAL_ID;
 
     /**
@@ -76,7 +76,7 @@ public class Groups
         Group group = byName.get( name );
         if ( group == null )
         {
-            throw new HeaderException( "Group '" + name + "' not found. Available groups are: " + groupNames() );
+            throw new HeaderException( new StringBuilder().append("Group '").append(name).append("' not found. Available groups are: ").append(groupNames()).toString() );
         }
         return group;
     }
@@ -85,7 +85,7 @@ public class Groups
     {
         if ( id < 0 || id >= byId.size() )
         {
-            throw new HeaderException( "Group with id " + id + " not found" );
+            throw new HeaderException( new StringBuilder().append("Group with id ").append(id).append(" not found").toString() );
         }
         return byId.get( id );
     }

@@ -63,7 +63,8 @@ public class ServerHelper
 
     private static void removeLogs( NeoServer server )
     {
-        File logDir = new File( server.getDatabase().getLocation() + File.separator + ".." + File.separator + "log" );
+        File logDir = new File( new StringBuilder().append(server.getDatabase().getLocation()).append(File.separator).append("..").append(File.separator).append("log")
+				.toString() );
         try
         {
             FileUtils.deleteDirectory( logDir );
@@ -183,16 +184,10 @@ public class ServerHelper
                 }
             }
 
-            for ( String k : indexManager.getNodeAutoIndexer().getAutoIndexedProperties() )
-            {
-                indexManager.getNodeAutoIndexer().stopAutoIndexingProperty( k );
-            }
+            indexManager.getNodeAutoIndexer().getAutoIndexedProperties().forEach(k -> indexManager.getNodeAutoIndexer().stopAutoIndexingProperty(k));
             indexManager.getNodeAutoIndexer().setEnabled( false );
 
-            for ( String k : indexManager.getRelationshipAutoIndexer().getAutoIndexedProperties() )
-            {
-                indexManager.getRelationshipAutoIndexer().stopAutoIndexingProperty( k );
-            }
+            indexManager.getRelationshipAutoIndexer().getAutoIndexedProperties().forEach(k -> indexManager.getRelationshipAutoIndexer().stopAutoIndexingProperty(k));
             indexManager.getRelationshipAutoIndexer().setEnabled( false );
         }
     }

@@ -79,12 +79,6 @@ import org.neo4j.kernel.lifecycle.LifecycleAdapter;
  */
 public class LuceneDataSource extends LifecycleAdapter
 {
-    public abstract static class Configuration
-    {
-        public static final Setting<Integer> lucene_searcher_cache_size = GraphDatabaseSettings.lucene_searcher_cache_size;
-        public static final Setting<Boolean> ephemeral = GraphDatabaseSettings.ephemeral;
-    }
-
     /**
      * Default {@link Analyzer} for fulltext parsing.
      */
@@ -105,23 +99,37 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     };
 
-    public static final Analyzer WHITESPACE_ANALYZER = new WhitespaceAnalyzer();
-    public static final Analyzer KEYWORD_ANALYZER = new KeywordAnalyzer();
-    private final DatabaseLayout directoryStructure;
-    private final Config config;
-    private final FileSystemAbstraction fileSystemAbstraction;
-    private final OperationalMode operationalMode;
-    private IndexClockCache indexSearchers;
-    private File baseStorePath;
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private final IndexConfigStore indexStore;
-    private IndexTypeCache typeCache;
-    private boolean readOnly;
-    private boolean closed;
-    private IndexReferenceFactory indexReferenceFactory;
-    private Map<IndexIdentifier,Map<String,DocValuesType>> indexTypeMap;
+	public static final Analyzer WHITESPACE_ANALYZER = new WhitespaceAnalyzer();
 
-    /**
+	public static final Analyzer KEYWORD_ANALYZER = new KeywordAnalyzer();
+
+	private final DatabaseLayout directoryStructure;
+
+	private final Config config;
+
+	private final FileSystemAbstraction fileSystemAbstraction;
+
+	private final OperationalMode operationalMode;
+
+	private IndexClockCache indexSearchers;
+
+	private File baseStorePath;
+
+	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+
+	private final IndexConfigStore indexStore;
+
+	private IndexTypeCache typeCache;
+
+	private boolean readOnly;
+
+	private boolean closed;
+
+	private IndexReferenceFactory indexReferenceFactory;
+
+	private Map<IndexIdentifier,Map<String,DocValuesType>> indexTypeMap;
+
+	/**
      * Constructs this data source.
      */
     public LuceneDataSource( DatabaseLayout directoryStructure, Config config, IndexConfigStore indexStore,
@@ -135,7 +143,7 @@ public class LuceneDataSource extends LifecycleAdapter
         this.operationalMode = operationalMode;
     }
 
-    @Override
+	@Override
     public void init()
     {
         LuceneFilesystemFacade filesystemFacade =
@@ -153,7 +161,7 @@ public class LuceneDataSource extends LifecycleAdapter
         closed = false;
     }
 
-    void assertValidType( String key, Object value, IndexIdentifier identifier ) throws ExplicitIndexNotFoundKernelException
+	void assertValidType( String key, Object value, IndexIdentifier identifier ) throws ExplicitIndexNotFoundKernelException
     {
         DocValuesType expectedType;
         String expectedTypeName;
@@ -184,7 +192,7 @@ public class LuceneDataSource extends LifecycleAdapter
         }
 
         DocValuesType actualType = stringDocValuesTypeMap.putIfAbsent( key, expectedType );
-        if ( actualType != null && !actualType.equals( DocValuesType.NONE ) && !actualType.equals( expectedType ) )
+        if ( actualType != null && actualType != DocValuesType.NONE && actualType != expectedType )
         {
             throw new IllegalArgumentException( String.format(
                     "Cannot index '%s' for key '%s', since this key has been used to index %s. Raw value of the index type is %s",
@@ -193,17 +201,17 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    public static File getLuceneIndexStoreDirectory( DatabaseLayout directoryStructure )
+	public static File getLuceneIndexStoreDirectory( DatabaseLayout directoryStructure )
     {
         return directoryStructure.file( "index" );
     }
 
-    IndexType getType( IndexIdentifier identifier, boolean recovery ) throws ExplicitIndexNotFoundKernelException
+	IndexType getType( IndexIdentifier identifier, boolean recovery ) throws ExplicitIndexNotFoundKernelException
     {
         return typeCache.getIndexType( identifier, recovery );
     }
 
-    @Override
+	@Override
     public void shutdown() throws IOException
     {
         synchronized ( this )
@@ -221,13 +229,13 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    private synchronized IndexReference[] getAllIndexes()
+	private synchronized IndexReference[] getAllIndexes()
     {
         Collection<IndexReference> indexReferences = indexSearchers.values();
         return indexReferences.toArray( new IndexReference[0] );
     }
 
-    void force()
+	void force()
     {
         if ( readOnly )
         {
@@ -246,49 +254,49 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    void getReadLock()
+	void getReadLock()
     {
         lock.readLock().lock();
     }
 
-    void releaseReadLock()
+	void releaseReadLock()
     {
         lock.readLock().unlock();
     }
 
-    void getWriteLock()
+	void getWriteLock()
     {
         lock.writeLock().lock();
     }
 
-    void releaseWriteLock()
+	void releaseWriteLock()
     {
         lock.writeLock().unlock();
     }
 
-    private static File getFileDirectory( File storeDir, IndexEntityType type )
+	private static File getFileDirectory( File storeDir, IndexEntityType type )
     {
         File path = new File( storeDir, "lucene" );
         String extra = type.nameToLowerCase();
         return new File( path, extra );
     }
 
-    static File getFileDirectory( File storeDir, IndexIdentifier identifier )
+	static File getFileDirectory( File storeDir, IndexIdentifier identifier )
     {
         return new File( getFileDirectory( storeDir, identifier.entityType ), identifier.indexName );
     }
 
-    static Directory getDirectory( File storeDir, IndexIdentifier identifier ) throws IOException
+	static Directory getDirectory( File storeDir, IndexIdentifier identifier ) throws IOException
     {
         return FSDirectory.open( getFileDirectory( storeDir, identifier ).toPath() );
     }
 
-    static TopFieldCollector scoringCollector( Sort sorting, int n ) throws IOException
+	static TopFieldCollector scoringCollector( Sort sorting, int n ) throws IOException
     {
         return TopFieldCollector.create( sorting, n, false, true, false );
     }
 
-    IndexReference getIndexSearcher( IndexIdentifier identifier ) throws ExplicitIndexNotFoundKernelException
+	IndexReference getIndexSearcher( IndexIdentifier identifier ) throws ExplicitIndexNotFoundKernelException
     {
         assertNotClosed();
         IndexReference searcher = indexSearchers.get( identifier );
@@ -314,7 +322,7 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    private void assertNotClosed()
+	private void assertNotClosed()
     {
         if ( closed )
         {
@@ -322,7 +330,7 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    private synchronized IndexReference syncGetIndexSearcher( IndexIdentifier identifier )
+	private synchronized IndexReference syncGetIndexSearcher( IndexIdentifier identifier )
             throws ExplicitIndexNotFoundKernelException
     {
         try
@@ -335,13 +343,12 @@ public class LuceneDataSource extends LifecycleAdapter
                 ConcurrentHashMap<String,DocValuesType> fieldTypes = new ConcurrentHashMap<>();
                 IndexSearcher searcher = indexReference.getSearcher();
                 List<LeafReaderContext> leaves = searcher.getTopReaderContext().leaves();
-                for ( LeafReaderContext leafReaderContext : leaves )
-                {
+                leaves.forEach(leafReaderContext -> {
                     for ( FieldInfo fieldInfo : leafReaderContext.reader().getFieldInfos() )
                     {
                         fieldTypes.put( fieldInfo.name, fieldInfo.getDocValuesType() );
                     }
-                }
+                });
                 indexTypeMap.put( identifier, fieldTypes );
             }
             else
@@ -363,7 +370,7 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    private IndexReference refreshSearcherIfNeeded( IndexReference searcher ) throws ExplicitIndexNotFoundKernelException
+	private IndexReference refreshSearcherIfNeeded( IndexReference searcher ) throws ExplicitIndexNotFoundKernelException
     {
         if ( searcher.checkAndClearStale() )
         {
@@ -376,7 +383,7 @@ public class LuceneDataSource extends LifecycleAdapter
         return searcher;
     }
 
-    void invalidateIndexSearcher( IndexIdentifier identifier )
+	void invalidateIndexSearcher( IndexIdentifier identifier )
     {
         IndexReference searcher = indexSearchers.get( identifier );
         if ( searcher != null )
@@ -385,7 +392,7 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    void deleteIndex( IndexIdentifier identifier, boolean recovery ) throws IOException
+	void deleteIndex( IndexIdentifier identifier, boolean recovery ) throws IOException
     {
         if ( readOnly )
         {
@@ -403,7 +410,7 @@ public class LuceneDataSource extends LifecycleAdapter
         typeCache.invalidate( identifier );
     }
 
-    static Document findDocument( IndexType type, IndexSearcher searcher, long entityId )
+	static Document findDocument( IndexType type, IndexSearcher searcher, long entityId )
     {
         try
         {
@@ -420,20 +427,13 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    static boolean documentIsEmpty( Document document )
+	static boolean documentIsEmpty( Document document )
     {
         List<IndexableField> fields = document.getFields();
-        for ( IndexableField field : fields )
-        {
-            if ( LuceneExplicitIndex.isValidKey( field.name() ) )
-            {
-                return false;
-            }
-        }
-        return true;
+        return fields.stream().noneMatch(field -> LuceneExplicitIndex.isValidKey( field.name() ));
     }
 
-    private synchronized void closeIndex( IndexIdentifier identifier )
+	private synchronized void closeIndex( IndexIdentifier identifier )
     {
         try
         {
@@ -449,7 +449,7 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    private ResourceIterator<File> listWritableStoreFiles() throws IOException
+	private ResourceIterator<File> listWritableStoreFiles() throws IOException
     {
         final Collection<File> files = new ArrayList<>();
         final Collection<Pair<SnapshotDeletionPolicy,IndexCommit>> snapshots = new ArrayList<>();
@@ -478,10 +478,7 @@ public class LuceneDataSource extends LifecycleAdapter
                 commit = deletionPolicy.snapshot();
             }
 
-            for ( String fileName : commit.getFileNames() )
-            {
-                files.add( new File( indexDirectory, fileName ) );
-            }
+            commit.getFileNames().forEach(fileName -> files.add(new File(indexDirectory, fileName)));
             snapshots.add( Pair.of( deletionPolicy, commit ) );
         }
         return new PrefetchingResourceIterator<File>()
@@ -526,7 +523,7 @@ public class LuceneDataSource extends LifecycleAdapter
         };
     }
 
-    private ResourceIterator<File> listReadOnlyStoreFiles() throws IOException
+	private ResourceIterator<File> listReadOnlyStoreFiles() throws IOException
     {
         // In read-only mode we don't need to take a snapshot, because the index will not be modified.
         final Collection<File> files = new ArrayList<>();
@@ -539,16 +536,13 @@ public class LuceneDataSource extends LifecycleAdapter
             {
                 DirectoryReader directoryReader = (DirectoryReader) indexReader;
                 IndexCommit commit = directoryReader.getIndexCommit();
-                for ( String fileName : commit.getFileNames() )
-                {
-                    files.add( new File( indexDirectory, fileName ) );
-                }
+                commit.getFileNames().forEach(fileName -> files.add(new File(indexDirectory, fileName)));
             }
         }
         return Iterators.asResourceIterator( files.iterator() );
     }
 
-    ResourceIterator<File> listStoreFiles() throws IOException
+	ResourceIterator<File> listStoreFiles() throws IOException
     {
         if ( readOnly )
         {
@@ -560,7 +554,7 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    private void makeSureAllIndexesAreInstantiated()
+	private void makeSureAllIndexesAreInstantiated()
     {
         for ( String name : indexStore.getNames( Node.class ) )
         {
@@ -580,7 +574,7 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    private void ensureInstantiated( IndexIdentifier identifier )
+	private void ensureInstantiated( IndexIdentifier identifier )
     {
         try
         {
@@ -593,12 +587,12 @@ public class LuceneDataSource extends LifecycleAdapter
         }
     }
 
-    private boolean isReadOnly( Config config, OperationalMode operationalMode )
+	private boolean isReadOnly( Config config, OperationalMode operationalMode )
     {
         return config.get( GraphDatabaseSettings.read_only ) && (OperationalMode.single == operationalMode);
     }
 
-    enum LuceneFilesystemFacade
+	enum LuceneFilesystemFacade
     {
         FS
         {
@@ -621,7 +615,7 @@ public class LuceneDataSource extends LifecycleAdapter
                     {
                         cleanWriteLocks( file );
                     }
-                    else if ( file.getName().equals( "write.lock" ) )
+                    else if ( "write.lock".equals( file.getName() ) )
                     {
                         boolean success = file.delete();
                         assert success;
@@ -673,5 +667,11 @@ public class LuceneDataSource extends LifecycleAdapter
         abstract File ensureDirectoryExists( FileSystemAbstraction fileSystem, File path );
 
         abstract void cleanWriteLocks( File path );
+    }
+
+	public abstract static class Configuration
+    {
+        public static final Setting<Integer> lucene_searcher_cache_size = GraphDatabaseSettings.lucene_searcher_cache_size;
+        public static final Setting<Boolean> ephemeral = GraphDatabaseSettings.ephemeral;
     }
 }

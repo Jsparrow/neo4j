@@ -27,11 +27,11 @@ public abstract class SourceVisitor implements CodeGeneratorOption
     @Override
     public final void applyTo( Object target )
     {
-        if ( target instanceof Configuration )
-        {
-            Configuration configuration = (Configuration) target;
-            configuration.withSourceVisitor( this );
-        }
+        if (!(target instanceof Configuration)) {
+			return;
+		}
+		Configuration configuration = (Configuration) target;
+		configuration.withSourceVisitor( this );
     }
 
     protected abstract void visitSource( TypeReference reference, CharSequence sourceCode );

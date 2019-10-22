@@ -139,7 +139,7 @@ public class ConsoleService implements AdvertisableService
         catch ( Exception e )
         {
             List<Representation> list = new ArrayList<>(
-                    asList( ValueRepresentation.string( e.getClass() + " : " + e.getMessage() + "\n" ),
+                    asList( ValueRepresentation.string( new StringBuilder().append(e.getClass()).append(" : ").append(e.getMessage()).append("\n").toString() ),
                             ValueRepresentation.string( null ) ) );
             return output.ok( new ListRepresentation( RepresentationType.STRING, list ) );
         }

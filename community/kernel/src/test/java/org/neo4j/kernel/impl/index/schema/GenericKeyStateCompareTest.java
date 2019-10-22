@@ -118,12 +118,11 @@ class GenericKeyStateCompareTest
         allValues.sort( Values.COMPARATOR );
 
         List<GenericKey> states = new ArrayList<>();
-        for ( Value value : allValues )
-        {
+        allValues.forEach(value -> {
             GenericKey state = new GenericKey( null );
             state.writeValue( value, NativeIndexKey.Inclusion.NEUTRAL );
             states.add( state );
-        }
+        });
         Collections.shuffle( states );
         states.sort( GenericKey::compareValueTo );
         List<Value> sortedStatesAsValues = states.stream().map( GenericKey::asValue ).collect( Collectors.toList() );

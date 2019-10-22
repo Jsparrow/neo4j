@@ -90,6 +90,7 @@ public class RecordedBoltResponse
     @Override
     public String toString()
     {
-        return "RecordedBoltResponse{" + "records=" + records + ", response=" + response + ", metadata=" + metadata + '}';
+        return new StringBuilder().append("RecordedBoltResponse{").append("records=").append(records).append(", response=").append(response).append(", metadata=").append(metadata)
+				.append('}').toString();
     }
 }

@@ -88,30 +88,28 @@ public final class RelationshipKey implements CountsKey
         {
             return true;
         }
-        if ( o instanceof RelationshipKey )
-        {
-            RelationshipKey that = (RelationshipKey) o;
-            return endLabelId == that.endLabelId && startLabelId == that.startLabelId && typeId == that.typeId;
-        }
-        return false;
+        if (!(o instanceof RelationshipKey)) {
+			return false;
+		}
+		RelationshipKey that = (RelationshipKey) o;
+		return endLabelId == that.endLabelId && startLabelId == that.startLabelId && typeId == that.typeId;
     }
 
     @Override
     public int compareTo( CountsKey other )
     {
-        if ( other instanceof RelationshipKey )
-        {
-            RelationshipKey that = (RelationshipKey) other;
-            if ( this.typeId != that.typeId )
-            {
-                return Integer.compare( this.typeId, that.typeId );
-            }
-            if ( this.startLabelId != that.startLabelId )
-            {
-                return Integer.compare( this.startLabelId, that.startLabelId );
-            }
-            return Integer.compare( this.endLabelId, that.endLabelId );
-        }
-        return recordType().compareTo( other.recordType() );
+        if (!(other instanceof RelationshipKey)) {
+			return recordType().compareTo( other.recordType() );
+		}
+		RelationshipKey that = (RelationshipKey) other;
+		if ( this.typeId != that.typeId )
+		{
+		    return Integer.compare( this.typeId, that.typeId );
+		}
+		if ( this.startLabelId != that.startLabelId )
+		{
+		    return Integer.compare( this.startLabelId, that.startLabelId );
+		}
+		return Integer.compare( this.endLabelId, that.endLabelId );
     }
 }

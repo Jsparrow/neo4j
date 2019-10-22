@@ -123,7 +123,19 @@ public class VmPauseMonitor
         return currentThread().isInterrupted();
     }
 
-    public static class VmPauseInfo
+    private static GcStats getGcStats()
+    {
+        long time = 0;
+        long count = 0;
+        for ( GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans() )
+        {
+            time += gcBean.getCollectionTime();
+            count += gcBean.getCollectionCount();
+        }
+        return new GcStats( time, count );
+    }
+
+	public static class VmPauseInfo
     {
         private final long pauseTime;
         private final long gcTime;
@@ -146,18 +158,6 @@ public class VmPauseMonitor
         {
             return format( "{pauseTime=%d, gcTime=%d, gcCount=%d}", pauseTime, gcTime, gcCount );
         }
-    }
-
-    private static GcStats getGcStats()
-    {
-        long time = 0;
-        long count = 0;
-        for ( GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans() )
-        {
-            time += gcBean.getCollectionTime();
-            count += gcBean.getCollectionCount();
-        }
-        return new GcStats( time, count );
     }
 
     private static class GcStats

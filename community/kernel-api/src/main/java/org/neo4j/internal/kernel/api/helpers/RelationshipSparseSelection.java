@@ -28,20 +28,13 @@ import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
  */
 abstract class RelationshipSparseSelection
 {
-    private enum Dir
-    {
-        OUT,
-        IN,
-        BOTH
-    }
-
     protected RelationshipTraversalCursor cursor;
-    private int[] types;
-    private Dir targetDirection;
-    private boolean onRelationship;
-    private boolean firstNext;
+	private int[] types;
+	private Dir targetDirection;
+	private boolean onRelationship;
+	private boolean firstNext;
 
-    /**
+	/**
      * Traverse all outgoing relationships including loops of the provided relationship types.
      *
      * @param relationshipCursor Relationship traversal cursor to use. Pre-initialized on node.
@@ -51,7 +44,7 @@ abstract class RelationshipSparseSelection
         init( relationshipCursor, null, Dir.OUT );
     }
 
-    /**
+	/**
      * Traverse all outgoing relationships including loops of the provided relationship types.
      *
      * @param relationshipCursor Relationship traversal cursor to use. Pre-initialized on node.
@@ -64,7 +57,7 @@ abstract class RelationshipSparseSelection
         init( relationshipCursor, types, Dir.OUT );
     }
 
-    /**
+	/**
      * Traverse all incoming relationships including loops of the provided relationship types.
      *
      * @param relationshipCursor Relationship traversal cursor to use. Pre-initialized on node.
@@ -74,7 +67,7 @@ abstract class RelationshipSparseSelection
         init( relationshipCursor, null, Dir.IN );
     }
 
-    /**
+	/**
      * Traverse all incoming relationships including loops of the provided relationship types.
      *
      * @param relationshipCursor Relationship traversal cursor to use. Pre-initialized on node.
@@ -87,7 +80,7 @@ abstract class RelationshipSparseSelection
         init( relationshipCursor, types, Dir.IN );
     }
 
-    /**
+	/**
      * Traverse all relationships of the provided relationship types.
      *
      * @param relationshipCursor Relationship traversal cursor to use. Pre-initialized on node.
@@ -97,7 +90,7 @@ abstract class RelationshipSparseSelection
         init( relationshipCursor, null, Dir.BOTH );
     }
 
-    /**
+	/**
      * Traverse all relationships of the provided relationship types.
      *
      * @param relationshipCursor Relationship traversal cursor to use. Pre-initialized on node.
@@ -110,7 +103,7 @@ abstract class RelationshipSparseSelection
         init( relationshipCursor, types, Dir.BOTH );
     }
 
-    private void init( RelationshipTraversalCursor relationshipCursor, int[] types, Dir targetDirection )
+	private void init( RelationshipTraversalCursor relationshipCursor, int[] types, Dir targetDirection )
     {
         this.cursor = relationshipCursor;
         this.types = types;
@@ -119,7 +112,7 @@ abstract class RelationshipSparseSelection
         this.firstNext = true;
     }
 
-    /**
+	/**
      * Fetch the next valid relationship.
      *
      * @return True is a valid relationship was found
@@ -138,19 +131,19 @@ abstract class RelationshipSparseSelection
         return onRelationship;
     }
 
-    private boolean correctDirection()
+	private boolean correctDirection()
     {
         return targetDirection == Dir.BOTH ||
                 (targetDirection == Dir.OUT && cursor.originNodeReference() == cursor.sourceNodeReference()) ||
                 (targetDirection == Dir.IN && cursor.originNodeReference() == cursor.targetNodeReference());
     }
 
-    private boolean correctType()
+	private boolean correctType()
     {
         return types == null || ArrayUtils.contains( types, cursor.type() );
     }
 
-    public void close()
+	public void close()
     {
         try
         {
@@ -163,5 +156,12 @@ abstract class RelationshipSparseSelection
         {
             cursor = null;
         }
+    }
+
+	private enum Dir
+    {
+        OUT,
+        IN,
+        BOTH
     }
 }

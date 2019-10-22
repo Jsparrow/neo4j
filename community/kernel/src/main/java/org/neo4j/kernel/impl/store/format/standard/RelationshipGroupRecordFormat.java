@@ -54,31 +54,28 @@ public class RelationshipGroupRecordFormat extends BaseOneByteHeaderRecordFormat
         long headerByte = cursor.getByte();
         boolean inUse = isInUse( (byte) headerByte );
         record.setInUse( inUse );
-        if ( mode.shouldLoad( inUse ) )
-        {
-            // [    ,xxx ] high firstIn bits
-            // [ xxx,    ] high firstLoop bits
-            long highByte = cursor.getByte();
-
-            int type = cursor.getShort() & 0xFFFF;
-            long nextLowBits = cursor.getInt() & 0xFFFFFFFFL;
-            long nextOutLowBits = cursor.getInt() & 0xFFFFFFFFL;
-            long nextInLowBits = cursor.getInt() & 0xFFFFFFFFL;
-            long nextLoopLowBits = cursor.getInt() & 0xFFFFFFFFL;
-            long owningNode = (cursor.getInt() & 0xFFFFFFFFL) | (((long)cursor.getByte()) << 32);
-
-            long nextMod = (headerByte & 0xE) << 31;
-            long nextOutMod = (headerByte & 0x70) << 28;
-            long nextInMod = (highByte & 0xE) << 31;
-            long nextLoopMod = (highByte & 0x70) << 28;
-
-            record.initialize( inUse, type,
-                    BaseRecordFormat.longFromIntAndMod( nextOutLowBits, nextOutMod ),
-                    BaseRecordFormat.longFromIntAndMod( nextInLowBits, nextInMod ),
-                    BaseRecordFormat.longFromIntAndMod( nextLoopLowBits, nextLoopMod ),
-                    owningNode,
-                    BaseRecordFormat.longFromIntAndMod( nextLowBits, nextMod ) );
-        }
+        if (!mode.shouldLoad( inUse )) {
+			return;
+		}
+		// [    ,xxx ] high firstIn bits
+		// [ xxx,    ] high firstLoop bits
+		long highByte = cursor.getByte();
+		int type = cursor.getShort() & 0xFFFF;
+		long nextLowBits = cursor.getInt() & 0xFFFFFFFFL;
+		long nextOutLowBits = cursor.getInt() & 0xFFFFFFFFL;
+		long nextInLowBits = cursor.getInt() & 0xFFFFFFFFL;
+		long nextLoopLowBits = cursor.getInt() & 0xFFFFFFFFL;
+		long owningNode = (cursor.getInt() & 0xFFFFFFFFL) | (((long)cursor.getByte()) << 32);
+		long nextMod = (headerByte & 0xE) << 31;
+		long nextOutMod = (headerByte & 0x70) << 28;
+		long nextInMod = (highByte & 0xE) << 31;
+		long nextLoopMod = (highByte & 0x70) << 28;
+		record.initialize( inUse, type,
+		        BaseRecordFormat.longFromIntAndMod( nextOutLowBits, nextOutMod ),
+		        BaseRecordFormat.longFromIntAndMod( nextInLowBits, nextInMod ),
+		        BaseRecordFormat.longFromIntAndMod( nextLoopLowBits, nextLoopMod ),
+		        owningNode,
+		        BaseRecordFormat.longFromIntAndMod( nextLowBits, nextMod ) );
     }
 
     @Override

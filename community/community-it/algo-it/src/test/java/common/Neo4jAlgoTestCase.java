@@ -55,11 +55,6 @@ public abstract class Neo4jAlgoTestCase
     protected static SimpleGraphBuilder graph;
     protected Transaction tx;
 
-    public enum MyRelTypes implements RelationshipType
-    {
-        R1, R2, R3
-    }
-
     @BeforeClass
     public static void setUpGraphDb()
     {
@@ -67,19 +62,19 @@ public abstract class Neo4jAlgoTestCase
         graph = new SimpleGraphBuilder( graphDb, MyRelTypes.R1 );
     }
 
-    @Before
+	@Before
     public void setUpTransaction()
     {
         tx = graphDb.beginTx();
     }
 
-    @AfterClass
+	@AfterClass
     public static void tearDownGraphDb()
     {
         graphDb.shutdown();
     }
 
-    @After
+	@After
     public void tearDownTransactionAndGraph()
     {
         graph.clear();
@@ -87,18 +82,18 @@ public abstract class Neo4jAlgoTestCase
         tx.close();
     }
 
-    protected void assertPathDef( Path path, String... names )
+	protected void assertPathDef( Path path, String... names )
     {
         int i = 0;
         for ( Node node : path.nodes() )
         {
-            assertEquals( "Wrong node " + i + " in " + getPathDef( path ),
+            assertEquals( new StringBuilder().append("Wrong node ").append(i).append(" in ").append(getPathDef( path )).toString(),
                     names[i++], node.getProperty( SimpleGraphBuilder.KEY_ID ) );
         }
         assertEquals( names.length, i );
     }
 
-    protected void assertPath( Path path, String commaSeparatedNodePath )
+	protected void assertPath( Path path, String commaSeparatedNodePath )
     {
         String[] nodeIds = commaSeparatedNodePath.split( "," );
         Node[] nodes = new Node[nodeIds.length];
@@ -111,35 +106,34 @@ public abstract class Neo4jAlgoTestCase
         assertPath( path, nodes );
     }
 
-    protected void assertPath( Path path, Node... nodes )
+	protected void assertPath( Path path, Node... nodes )
     {
         int i = 0;
         for ( Node node : path.nodes() )
         {
-            assertEquals( "Wrong node " + i + " in " + getPathDef( path ),
+            assertEquals( new StringBuilder().append("Wrong node ").append(i).append(" in ").append(getPathDef( path )).toString(),
                     nodes[i++].getProperty( SimpleGraphBuilder.KEY_ID ), node.getProperty( SimpleGraphBuilder.KEY_ID ) );
         }
         assertEquals( nodes.length, i );
     }
 
-    protected <E> void assertContains( Iterable<E> actual, E... expected )
+	protected <E> void assertContains( Iterable<E> actual, E... expected )
     {
         Set<E> expectation = new HashSet<>( Arrays.asList( expected ) );
         for ( E element : actual )
         {
             if ( !expectation.remove( element ) )
             {
-                fail( "unexpected element <" + element + ">" );
+                fail( new StringBuilder().append("unexpected element <").append(element).append(">").toString() );
             }
         }
         if ( !expectation.isEmpty() )
         {
-            fail( "the expected elements <" + expectation
-                  + "> were not contained" );
+            fail( new StringBuilder().append("the expected elements <").append(expectation).append("> were not contained").toString() );
         }
     }
 
-    public String getPathDef( Path path )
+	public String getPathDef( Path path )
     {
         StringBuilder builder = new StringBuilder();
         for ( Node node : path.nodes() )
@@ -153,7 +147,7 @@ public abstract class Neo4jAlgoTestCase
         return builder.toString();
     }
 
-    public void assertPaths( Iterable<? extends Path> paths, List<String> pathDefs )
+	public void assertPaths( Iterable<? extends Path> paths, List<String> pathDefs )
     {
         List<String> unexpectedDefs = new ArrayList<>();
         try ( ResourceIterator<? extends Path> iterator = Iterators.asResourceIterator( paths.iterator() ) )
@@ -174,17 +168,16 @@ public abstract class Neo4jAlgoTestCase
                 }
             }
         }
-        assertTrue( "These unexpected paths were found: " + unexpectedDefs +
-                ". In addition these expected paths weren't found:" + pathDefs, unexpectedDefs.isEmpty() );
+        assertTrue( new StringBuilder().append("These unexpected paths were found: ").append(unexpectedDefs).append(". In addition these expected paths weren't found:").append(pathDefs).toString(), unexpectedDefs.isEmpty() );
         assertTrue( "These were expected, but not found: " + pathDefs.toString(), pathDefs.isEmpty() );
     }
 
-    public void assertPaths( Iterable<? extends Path> paths, String... pathDefinitions )
+	public void assertPaths( Iterable<? extends Path> paths, String... pathDefinitions )
     {
         assertPaths( paths, new ArrayList<>( Arrays.asList( pathDefinitions ) ) );
     }
 
-    public void assertPathsWithPaths( Iterable<? extends Path> actualPaths, Path... expectedPaths )
+	public void assertPathsWithPaths( Iterable<? extends Path> actualPaths, Path... expectedPaths )
     {
         List<String> pathDefs = new ArrayList<>( );
         for ( Path path : expectedPaths )
@@ -194,23 +187,27 @@ public abstract class Neo4jAlgoTestCase
         assertPaths( actualPaths, pathDefs );
     }
 
-    public void assertPathDef( Path expected, Path actual )
+	public void assertPathDef( Path expected, Path actual )
     {
         int expectedLength = expected.length();
         int actualLength = actual.length();
-        assertEquals( "Actual path length " + actualLength + " differ from expected path length " + expectedLength,
+        assertEquals( new StringBuilder().append("Actual path length ").append(actualLength).append(" differ from expected path length ").append(expectedLength).toString(),
                 expectedLength, actualLength );
         Iterator<Node> expectedNodes = expected.nodes().iterator();
         Iterator<Node> actualNodes = actual.nodes().iterator();
         int position = 0;
         while ( expectedNodes.hasNext() && actualNodes.hasNext() )
         {
-            assertEquals( "Path differ on position " + position +
-                          ". Expected " + getPathDef( expected ) +
-                          ", actual " + getPathDef( actual ),
+            assertEquals( new StringBuilder().append("Path differ on position ").append(position).append(". Expected ").append(getPathDef( expected )).append(", actual ").append(getPathDef( actual ))
+					.toString(),
                     expectedNodes.next().getProperty( SimpleGraphBuilder.KEY_ID ),
                     actualNodes.next().getProperty( SimpleGraphBuilder.KEY_ID ) );
             position++;
         }
+    }
+
+	public enum MyRelTypes implements RelationshipType
+    {
+        R1, R2, R3
     }
 }

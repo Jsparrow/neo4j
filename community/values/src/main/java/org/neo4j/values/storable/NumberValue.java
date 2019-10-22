@@ -38,7 +38,7 @@ public abstract class NumberValue extends ScalarValue
             return ((FloatingPointValue) value).doubleValue();
         }
         throw new IllegalArgumentException(
-                name + " must be a number value, but was a " + value.getClass().getSimpleName() );
+                new StringBuilder().append(name).append(" must be a number value, but was a ").append(value.getClass().getSimpleName()).toString() );
     }
 
     public abstract double doubleValue();

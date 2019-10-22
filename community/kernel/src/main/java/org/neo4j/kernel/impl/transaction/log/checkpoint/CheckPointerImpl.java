@@ -185,7 +185,7 @@ public class CheckPointerImpl extends LifecycleAdapter implements CheckPointer
             databaseHealth.assertHealthy( IOException.class );
             appender.checkPoint( logPosition, event );
             threshold.checkPointHappened( lastClosedTransactionId );
-            msgLog.info( prefix + " checkpoint completed in " + duration( currentTimeMillis() - startTime ) );
+            msgLog.info( new StringBuilder().append(prefix).append(" checkpoint completed in ").append(duration( currentTimeMillis() - startTime )).toString() );
             /*
              * Prune up to the version pointed from the latest check point,
              * since it might be an earlier version than the current log version.

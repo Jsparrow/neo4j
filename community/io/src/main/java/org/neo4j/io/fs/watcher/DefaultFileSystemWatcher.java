@@ -124,10 +124,7 @@ public class DefaultFileSystemWatcher implements FileWatcher
         String context = getContext( watchEvent );
         if ( StringUtils.isNotEmpty( context ) )
         {
-            for ( FileWatchEventListener listener : listeners )
-            {
-                listener.fileModified( context );
-            }
+            listeners.forEach(listener -> listener.fileModified(context));
         }
     }
 
@@ -136,10 +133,7 @@ public class DefaultFileSystemWatcher implements FileWatcher
         String context = getContext( watchEvent );
         if ( StringUtils.isNotEmpty( context ) )
         {
-            for ( FileWatchEventListener listener : listeners )
-            {
-                listener.fileDeleted( context );
-            }
+            listeners.forEach(listener -> listener.fileDeleted(context));
         }
     }
 

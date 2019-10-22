@@ -43,8 +43,8 @@ import static org.neo4j.unsafe.impl.internal.dragons.UnsafeUtil.getFieldOffset;
  */
 public abstract class ForkedProcessorStep<T> extends AbstractStep<T>
 {
-    private final long COMPLETED_PROCESSORS_OFFSET = getFieldOffset( Unit.class, "completedProcessors" );
-    private final long PROCESSING_TIME_OFFSET = getFieldOffset( Unit.class, "processingTime" );
+    private final long completedProcessorsOffset = getFieldOffset( Unit.class, "completedProcessors" );
+    private final long processingTimeOffset = getFieldOffset( Unit.class, "processingTime" );
 
     private final Object[] forkedProcessors;
     private volatile int numberOfForkedProcessors;
@@ -154,7 +154,14 @@ public abstract class ForkedProcessorStep<T> extends AbstractStep<T>
         downstreamIdleTime.add( downstream.receive( unit.ticket, unit.batch ) );
     }
 
-    // One unit of work. Contains the batch along with ticket and meta state during processing such
+    @Override
+    public void close() throws Exception
+    {
+        Arrays.fill( forkedProcessors, null );
+        super.close();
+    }
+
+	// One unit of work. Contains the batch along with ticket and meta state during processing such
     // as how many processors are done with this batch and link to next batch in the queue.
     class Unit
     {
@@ -190,9 +197,9 @@ public abstract class ForkedProcessorStep<T> extends AbstractStep<T>
 
         void processorDone( long time )
         {
-            UnsafeUtil.getAndAddLong( this, PROCESSING_TIME_OFFSET, time );
-            int prevCompletedProcessors = UnsafeUtil.getAndAddInt( this, COMPLETED_PROCESSORS_OFFSET, 1 );
-            assert prevCompletedProcessors < processors : prevCompletedProcessors + " vs " + processors + " for " + ticket;
+            UnsafeUtil.getAndAddLong( this, processingTimeOffset, time );
+            int prevCompletedProcessors = UnsafeUtil.getAndAddInt( this, completedProcessorsOffset, 1 );
+            assert prevCompletedProcessors < processors : new StringBuilder().append(prevCompletedProcessors).append(" vs ").append(processors).append(" for ").append(ticket).toString();
         }
 
         @Override
@@ -264,7 +271,7 @@ public abstract class ForkedProcessorStep<T> extends AbstractStep<T>
 
         ForkedProcessor( int id, Unit startingUnit )
         {
-            super( name() + "-" + id );
+            super( new StringBuilder().append(name()).append("-").append(id).toString() );
             this.id = id;
             this.current = startingUnit;
             start();
@@ -305,12 +312,5 @@ public abstract class ForkedProcessorStep<T> extends AbstractStep<T>
                 issuePanic( e, false );
             }
         }
-    }
-
-    @Override
-    public void close() throws Exception
-    {
-        Arrays.fill( forkedProcessors, null );
-        super.close();
     }
 }

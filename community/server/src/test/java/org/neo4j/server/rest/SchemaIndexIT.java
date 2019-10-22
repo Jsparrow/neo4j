@@ -52,7 +52,9 @@ import static org.neo4j.test.mockito.matcher.Neo4jMatchers.containsOnly;
 
 public class SchemaIndexIT extends AbstractRestFunctionalTestBase
 {
-    @Documented( "Create index.\n" +
+    private final Factory<String> labels =  UniqueStrings.withPrefix( "label" );
+	private final Factory<String> properties =  UniqueStrings.withPrefix( "property" );
+	@Documented( "Create index.\n" +
                  "\n" +
                  "This will start a background job in the database that will create and populate the index.\n" +
                  "You can check the status of your index by listing all the indexes for the relevant label." )
@@ -82,7 +84,7 @@ public class SchemaIndexIT extends AbstractRestFunctionalTestBase
         assertThat( serialized, equalTo( index ) );
     }
 
-    @Documented( "List indexes for a label." )
+	@Documented( "List indexes for a label." )
     @Test
     @GraphDescription.Graph( nodes = {} )
     public void get_indexes_for_label() throws Exception
@@ -108,7 +110,7 @@ public class SchemaIndexIT extends AbstractRestFunctionalTestBase
         assertThat( serializedList, hasItem( index ) );
     }
 
-    private List<Map<String,Object>> retryOnStillPopulating( Callable<String> callable ) throws Exception
+	private List<Map<String,Object>> retryOnStillPopulating( Callable<String> callable ) throws Exception
     {
         long endTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis( 1 );
         List<Map<String,Object>> serializedList;
@@ -118,31 +120,24 @@ public class SchemaIndexIT extends AbstractRestFunctionalTestBase
             serializedList = jsonToList( result );
             if ( System.currentTimeMillis() > endTime )
             {
-                fail( "Indexes didn't populate correctly, last result '" + result + "'" );
+                fail( new StringBuilder().append("Indexes didn't populate correctly, last result '").append(result).append("'").toString() );
             }
         }
         while ( stillPopulating( serializedList ) );
         return serializedList;
     }
 
-    private boolean stillPopulating( List<Map<String,Object>> serializedList )
+	private boolean stillPopulating( List<Map<String,Object>> serializedList )
     {
         // We've created an index. That HTTP call for creating the index will return
-        // immediately and indexing continue in the background. Querying the index endpoint
-        // while index is populating gives back additional information like population progress.
-        // This test below will look at the response of a "get index" result and if still populating
-        // then return true so that caller may retry the call later.
-        for ( Map<String,Object> map : serializedList )
-        {
-            if ( map.containsKey( "population_progress" ) )
-            {
-                return true;
-            }
-        }
-        return false;
+		// immediately and indexing continue in the background. Querying the index endpoint
+		// while index is populating gives back additional information like population progress.
+		// This test below will look at the response of a "get index" result and if still populating
+		// then return true so that caller may retry the call later.
+		return serializedList.stream().anyMatch(map -> map.containsKey( "population_progress" ));
     }
 
-    @SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
     @Documented( "Get all indexes." )
     @Test
     @GraphDescription.Graph( nodes = {} )
@@ -173,7 +168,7 @@ public class SchemaIndexIT extends AbstractRestFunctionalTestBase
         assertThat( serializedList, hasItems( index1, index2 ) );
     }
 
-    @Documented( "Drop index" )
+	@Documented( "Drop index" )
     @Test
     @GraphDescription.Graph( nodes = {} )
     public void drop_index()
@@ -193,7 +188,7 @@ public class SchemaIndexIT extends AbstractRestFunctionalTestBase
         assertThat( Neo4jMatchers.getIndexes( graphdb(), label( labelName ) ), not( containsOnly( schemaIndex ) ) );
     }
 
-    /**
+	/**
      * Create an index for a label and property key which already exists.
      */
     @Test
@@ -210,7 +205,7 @@ public class SchemaIndexIT extends AbstractRestFunctionalTestBase
                 .post( getSchemaIndexLabelUri( labelName ) );
     }
 
-    @Test
+	@Test
     public void drop_non_existent_index()
     {
         String labelName = labels.newInstance();
@@ -221,7 +216,7 @@ public class SchemaIndexIT extends AbstractRestFunctionalTestBase
                 .delete( getSchemaIndexLabelPropertyUri( labelName, propertyKey ) );
     }
 
-    @Test
+	@Test
     public void create_compound_index()
     {
         Map<String,Object> definition = map( "property_keys", asList( properties.newInstance(), properties.newInstance()) );
@@ -232,7 +227,7 @@ public class SchemaIndexIT extends AbstractRestFunctionalTestBase
                 .post( getSchemaIndexLabelUri( labels.newInstance() ) );
     }
 
-    private IndexDefinition createIndex( String labelName, String propertyKey )
+	private IndexDefinition createIndex( String labelName, String propertyKey )
     {
         try ( Transaction tx = graphdb().beginTx() )
         {
@@ -242,7 +237,4 @@ public class SchemaIndexIT extends AbstractRestFunctionalTestBase
             return indexDefinition;
         }
     }
-
-    private final Factory<String> labels =  UniqueStrings.withPrefix( "label" );
-    private final Factory<String> properties =  UniqueStrings.withPrefix( "property" );
 }

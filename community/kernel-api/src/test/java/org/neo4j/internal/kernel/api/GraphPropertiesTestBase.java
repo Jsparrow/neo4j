@@ -100,7 +100,9 @@ public abstract class GraphPropertiesTestBase<G extends KernelAPIWriteTestSuppor
     @Test
     public void shouldBeAbleToReadExistingGraphProperties() throws Exception
     {
-        int prop1, prop2, prop3;
+        int prop1;
+		int prop2;
+		int prop3;
         try ( Transaction tx = beginTransaction() )
         {
             prop1 = tx.tokenWrite().propertyKeyGetOrCreateForName( "prop1" );

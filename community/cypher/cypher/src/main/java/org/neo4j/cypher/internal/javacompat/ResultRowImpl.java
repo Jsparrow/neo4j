@@ -27,10 +27,13 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ResultRowImpl implements Result.ResultRow
 {
-    private Map<String,Object> results;
+    private static final Logger logger = LoggerFactory.getLogger(ResultRowImpl.class);
+	private Map<String,Object> results;
 
     public ResultRowImpl( Map<String,Object> results )
     {
@@ -94,7 +97,7 @@ public class ResultRowImpl implements Result.ResultRow
         Object value = results.get( key );
         if ( value == null && !results.containsKey( key ) )
         {
-            throw new IllegalArgumentException( "No column \"" + key + "\" exists" );
+            throw new IllegalArgumentException( new StringBuilder().append("No column \"").append(key).append("\" exists").toString() );
         }
         try
         {
@@ -102,7 +105,8 @@ public class ResultRowImpl implements Result.ResultRow
         }
         catch ( ClassCastException e )
         {
-            String message = String.format( "The current item in column \"%s\" is not a %s; it's \"%s\"",
+            logger.error(e.getMessage(), e);
+			String message = String.format( "The current item in column \"%s\" is not a %s; it's \"%s\"",
                     key, type.getSimpleName(), value );
             throw new NoSuchElementException( message );
         }

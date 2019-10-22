@@ -34,17 +34,25 @@ import static org.junit.Assert.fail;
 
 public final class AssertingStructureBuilder<Input, Result> implements StructureBuilder<Input,Result>
 {
-    public static <I, O> AssertingStructureBuilder<I,O> asserting( StructureBuilder<I,O> builder )
+    private final Map<String,Input> input = new LinkedHashMap<>();
+	private final StructureBuilder<Input,Result> builder;
+
+	private AssertingStructureBuilder( StructureBuilder<Input,Result> builder )
+    {
+        this.builder = builder;
+    }
+
+	public static <I, O> AssertingStructureBuilder<I,O> asserting( StructureBuilder<I,O> builder )
     {
         return new AssertingStructureBuilder<>( builder );
     }
 
-    public static Matcher<Exception> exception( Class<? extends Exception> type, String message )
+	public static Matcher<Exception> exception( Class<? extends Exception> type, String message )
     {
         return exception( type, equalTo( message ) );
     }
 
-    public static Matcher<Exception> exception( Class<? extends Exception> type, Matcher<String> message )
+	public static Matcher<Exception> exception( Class<? extends Exception> type, Matcher<String> message )
     {
         return new TypeSafeMatcher<Exception>( type )
         {
@@ -63,27 +71,16 @@ public final class AssertingStructureBuilder<Input, Result> implements Structure
         };
     }
 
-    private final Map<String,Input> input = new LinkedHashMap<>();
-    private final StructureBuilder<Input,Result> builder;
-
-    private AssertingStructureBuilder( StructureBuilder<Input,Result> builder )
-    {
-        this.builder = builder;
-    }
-
-    public void assertThrows( Class<? extends Exception> type, String message )
+	public void assertThrows( Class<? extends Exception> type, String message )
     {
         assertThrows( exception( type, message ) );
     }
 
-    public void assertThrows( Matcher<Exception> matches )
+	public void assertThrows( Matcher<Exception> matches )
     {
         try
         {
-            for ( Map.Entry<String,Input> entry : input.entrySet() )
-            {
-                builder.add( entry.getKey(), entry.getValue() );
-            }
+            input.entrySet().forEach(entry -> builder.add(entry.getKey(), entry.getValue()));
             builder.build();
         }
         catch ( Exception expected )
@@ -94,14 +91,14 @@ public final class AssertingStructureBuilder<Input, Result> implements Structure
         fail( "expected exception" );
     }
 
-    @Override
+	@Override
     public AssertingStructureBuilder<Input,Result> add( String field, Input value )
     {
         input.put( field, value );
         return this;
     }
 
-    @Override
+	@Override
     public Result build()
     {
         throw new UnsupportedOperationException( "do not use this method" );

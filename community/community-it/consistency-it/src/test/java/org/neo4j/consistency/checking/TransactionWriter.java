@@ -157,20 +157,14 @@ public class TransactionWriter
     public void createSchema( Collection<DynamicRecord> beforeRecord, Collection<DynamicRecord> afterRecord,
             SchemaRule rule )
     {
-        for ( DynamicRecord record : afterRecord )
-        {
-            record.setCreated();
-        }
+        afterRecord.forEach(DynamicRecord::setCreated);
         updateSchema( beforeRecord, afterRecord, rule );
     }
 
     public void updateSchema( Collection<DynamicRecord> beforeRecords, Collection<DynamicRecord> afterRecords,
             SchemaRule rule )
     {
-        for ( DynamicRecord record : afterRecords )
-        {
-            record.setInUse( true );
-        }
+        afterRecords.forEach(record -> record.setInUse(true));
         addSchema( beforeRecords, afterRecords, rule );
     }
 
@@ -308,18 +302,9 @@ public class TransactionWriter
 
     private void prepareForCommit()
     {
-        for ( Command.NodeCommand command : nodeCommands )
-        {
-            neoStores.getNodeStore().prepareForCommit( command.getAfter() );
-        }
-        for ( Command.RelationshipCommand command : relationshipCommands )
-        {
-            neoStores.getRelationshipStore().prepareForCommit( command.getAfter() );
-        }
-        for ( Command.RelationshipGroupCommand command : relationshipGroupCommands )
-        {
-            neoStores.getRelationshipGroupStore().prepareForCommit( command.getAfter() );
-        }
+        nodeCommands.forEach(command -> neoStores.getNodeStore().prepareForCommit(command.getAfter()));
+        relationshipCommands.forEach(command -> neoStores.getRelationshipStore().prepareForCommit(command.getAfter()));
+        relationshipGroupCommands.forEach(command -> neoStores.getRelationshipGroupStore().prepareForCommit(command.getAfter()));
     }
 
     private List<StorageCommand> allCommands()

@@ -23,7 +23,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,19 +51,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.neo4j.server.helpers.FunctionalTestHelper.CLIENT;
+import java.util.Collections;
 
 public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
 {
     private static FunctionalTestHelper functionalTestHelper;
     private static GraphDbHelper helper;
     private static RestRequest request;
+	private final Factory<String> indexes = UniqueStrings.withPrefix( "index" );
 
-    private enum MyRelationshipTypes implements RelationshipType
-    {
-        KNOWS
-    }
-
-    @BeforeClass
+	@BeforeClass
     public static void setupServer()
     {
         functionalTestHelper = new FunctionalTestHelper( server() );
@@ -72,7 +68,7 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         request = RestRequest.req();
     }
 
-    /**
+	/**
      * POST ${org.neo4j.server.rest.web}/index/relationship {
      * "name":"index-name" "config":{ // optional map of index configuration
      * params "key1":"value1", "key2":"value2" } }
@@ -101,7 +97,7 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         assertEquals( Status.CREATED.getStatusCode(), response.getStatus() );
         String indexUri = response.getHeaders().get( "Location" ).get( 0 );
         assertNotNull( indexUri );
-        assertEquals( Arrays.asList( (Long) relationshipId ), helper.getIndexedRelationships( indexName, key, value ) );
+        assertEquals( Collections.singletonList( (Long) relationshipId ), helper.getIndexedRelationships( indexName, key, value ) );
         // Get the relationship from the indexed URI (Location in header)
         response = httpGet( indexUri );
         assertEquals( 200, response.getStatus() );
@@ -110,18 +106,19 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         assertNotNull( map.get( "self" ) );
     }
 
-    @Test
+	@Test
     public void shouldGet404WhenRequestingIndexUriWhichDoesntExist()
     {
         String key = "key3";
         String value = "value";
         String indexName = indexes.newInstance();
-        String indexUri = functionalTestHelper.relationshipIndexUri() + indexName + "/" + key + "/" + value;
+        String indexUri = new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(indexName).append("/").append(key).append("/").append(value)
+				.toString();
         JaxRsResponse response = httpGet( indexUri );
         assertEquals( Status.NOT_FOUND.getStatusCode(), response.getStatus() );
     }
 
-    @Test
+	@Test
     public void shouldGet404WhenDeletingNonExistentIndex()
     {
         String indexName = indexes.newInstance();
@@ -130,7 +127,7 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         assertEquals( Status.NOT_FOUND.getStatusCode(), response.getStatus() );
     }
 
-    @Test
+	@Test
     public void shouldGet200AndArrayOfRelationshipRepsWhenGettingFromIndex() throws JsonParseException
     {
         final long startNode = helper.createNode();
@@ -148,7 +145,7 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         assertEquals( 201, createRelationshipResponse.getStatus() );
         String relationshipLocation2 = createRelationshipResponse.getHeaders().get( HttpHeaders.LOCATION ).get( 0 );
         String indexName = indexes.newInstance();
-        JaxRsResponse indexCreationResponse = httpPostIndexRelationshipRoot( "{\"name\":\"" + indexName + "\"}" );
+        JaxRsResponse indexCreationResponse = httpPostIndexRelationshipRoot( new StringBuilder().append("{\"name\":\"").append(indexName).append("\"}").toString() );
         assertEquals( 201, indexCreationResponse.getStatus() );
         JaxRsResponse indexedRelationshipResponse = httpPostIndexRelationshipNameKeyValue( indexName,
                 functionalTestHelper.getRelationshipIdFromUri( relationshipLocation1 ), key, value );
@@ -176,7 +173,7 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldGet200WhenGettingRelationshipFromIndexWithNoHits()
     {
         String indexName = indexes.newInstance();
@@ -186,7 +183,7 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         assertEquals( 200, response.getStatus() );
     }
 
-    @Test
+	@Test
     public void shouldGet200WhenQueryingIndex()
     {
         String indexName = indexes.newInstance();
@@ -195,11 +192,11 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         long relationship = helper.createRelationship( "TYPE" );
         helper.addRelationshipToIndex( indexName, key, value, relationship );
         JaxRsResponse response = RestRequest.req().get(
-                functionalTestHelper.indexRelationshipUri( indexName ) + "?query=" + key + ":" + value );
+                new StringBuilder().append(functionalTestHelper.indexRelationshipUri( indexName )).append("?query=").append(key).append(":").append(value).toString() );
         assertEquals( 200, response.getStatus() );
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToRemoveIndexing()
     {
         String key1 = "kvkey1";
@@ -219,22 +216,23 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         assertEquals( 1, helper.getIndexedRelationships( indexName, key2, value1 ).size() );
         assertEquals( 1, helper.getIndexedRelationships( indexName, key2, value2 ).size() );
         JaxRsResponse response = RestRequest.req().delete(
-                functionalTestHelper.relationshipIndexUri() + indexName + "/" + key1 + "/" + value1 + "/"
-                        + relationship );
+                new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(indexName).append("/").append(key1).append("/")
+						.append(value1).append("/").append(relationship).toString() );
         assertEquals( 204, response.getStatus() );
         assertEquals( 0, helper.getIndexedRelationships( indexName, key1, value1 ).size() );
         assertEquals( 1, helper.getIndexedRelationships( indexName, key1, value2 ).size() );
         assertEquals( 1, helper.getIndexedRelationships( indexName, key2, value1 ).size() );
         assertEquals( 1, helper.getIndexedRelationships( indexName, key2, value2 ).size() );
         response = RestRequest.req().delete(
-                functionalTestHelper.relationshipIndexUri() + indexName + "/" + key2 + "/" + relationship );
+                new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(indexName).append("/").append(key2).append("/")
+						.append(relationship).toString() );
         assertEquals( 204, response.getStatus() );
         assertEquals( 0, helper.getIndexedRelationships( indexName, key1, value1 ).size() );
         assertEquals( 1, helper.getIndexedRelationships( indexName, key1, value2 ).size() );
         assertEquals( 0, helper.getIndexedRelationships( indexName, key2, value1 ).size() );
         assertEquals( 0, helper.getIndexedRelationships( indexName, key2, value2 ).size() );
         response = RestRequest.req().delete(
-                functionalTestHelper.relationshipIndexUri() + indexName + "/" + relationship );
+                new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(indexName).append("/").append(relationship).toString() );
         assertEquals( 204, response.getStatus() );
         assertEquals( 0, helper.getIndexedRelationships( indexName, key1, value1 ).size() );
         assertEquals( 0, helper.getIndexedRelationships( indexName, key1, value2 ).size() );
@@ -246,7 +244,7 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         assertFalse( asList( helper.getRelationshipIndexes() ).contains( indexName ) );
     }
 
-    @Test
+	@Test
     public void shouldBeAbleToIndexValuesContainingSpaces() throws Exception
     {
         final long startNodeId = helper.createNode();
@@ -276,7 +274,7 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         response.close();
     }
 
-    @Test
+	@Test
     public void shouldRespondWith400WhenSendingCorruptJson()
     {
         final String indexName = indexes.newInstance();
@@ -287,7 +285,7 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         assertEquals( 400, response.getStatus() );
     }
 
-    @Documented( "Get or create unique relationship (create).\n" +
+	@Documented( "Get or create unique relationship (create).\n" +
                  "\n" +
                  "Create a unique relationship in an index.\n" +
                  "If a relationship matching the given key and value already exists in the index, it will be returned.\n" +
@@ -307,14 +305,12 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
         gen.get()
                 .expectedStatus( 201 /* created */)
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
-                .payload( "{\"key\": \"" + key + "\", \"value\":\"" + value +
-                          "\", \"start\": \"" + functionalTestHelper.nodeUri( start ) +
-                          "\", \"end\": \"" + functionalTestHelper.nodeUri( end ) +
-                          "\", \"type\": \"" + type + "\"}" )
-                .post( functionalTestHelper.relationshipIndexUri() + index + "/?uniqueness=get_or_create" );
+                .payload( new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\":\"").append(value).append("\", \"start\": \"").append(functionalTestHelper.nodeUri( start ))
+						.append("\", \"end\": \"").append(functionalTestHelper.nodeUri( end )).append("\", \"type\": \"").append(type).append("\"}").toString() )
+                .post( new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(index).append("/?uniqueness=get_or_create").toString() );
     }
 
-    @Documented( "Get or create unique relationship (existing).\n" +
+	@Documented( "Get or create unique relationship (existing).\n" +
                  "\n" +
                  "Here, in case\n" +
                  "of an already existing relationship, the sent data is ignored and the\n" +
@@ -339,14 +335,13 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
                 .expectedStatus( 200 /* existing */)
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
                 .payload(
-                        "{\"key\": \"" + key + "\", \"value\": \"" + value + "\", \"start\": \""
-                                + functionalTestHelper.nodeUri( helper.createNode() ) + "\", \"end\": \""
-                                + functionalTestHelper.nodeUri( helper.createNode() ) + "\", \"type\":\""
-                                + MyRelationshipTypes.KNOWS + "\"}" )
-                .post( functionalTestHelper.relationshipIndexUri() + index + "?uniqueness=get_or_create" );
+                        new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"start\": \"")
+								.append(functionalTestHelper.nodeUri( helper.createNode() )).append("\", \"end\": \"").append(functionalTestHelper.nodeUri( helper.createNode() )).append("\", \"type\":\"").append(MyRelationshipTypes.KNOWS)
+								.append("\"}").toString() )
+                .post( new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(index).append("?uniqueness=get_or_create").toString() );
     }
 
-    @Documented( "Create a unique relationship or return fail (create).\n" +
+	@Documented( "Create a unique relationship or return fail (create).\n" +
                  "\n" +
                  "Here, in case\n" +
                  "of an already existing relationship, an error should be returned. In this\n" +
@@ -363,17 +358,16 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
                 .expectedStatus( 201 /* created */)
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
                 .payload(
-                        "{\"key\": \"" + key + "\", \"value\": \"" + value + "\", \"start\": \""
-                                + functionalTestHelper.nodeUri( helper.createNode() ) + "\", \"end\": \""
-                                + functionalTestHelper.nodeUri( helper.createNode() ) + "\", \"type\":\""
-                                + MyRelationshipTypes.KNOWS + "\"}" )
-                .post( functionalTestHelper.relationshipIndexUri() + index + "?uniqueness=create_or_fail" );
+                        new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"start\": \"")
+								.append(functionalTestHelper.nodeUri( helper.createNode() )).append("\", \"end\": \"").append(functionalTestHelper.nodeUri( helper.createNode() )).append("\", \"type\":\"").append(MyRelationshipTypes.KNOWS)
+								.append("\"}").toString() )
+                .post( new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(index).append("?uniqueness=create_or_fail").toString() );
         MultivaluedMap<String, String> headers = response.response().getHeaders();
         Map<String, Object> result = JsonHelper.jsonToMap( response.entity() );
         assertEquals( result.get( "indexed" ), headers.getFirst( "Location" ) );
     }
 
-    @Documented( "Create a unique relationship or return fail (fail).\n" +
+	@Documented( "Create a unique relationship or return fail (fail).\n" +
                  "\n" +
                  "Here, in case\n" +
                  "of an already existing relationship, an error should be returned. In this\n" +
@@ -398,14 +392,13 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
                 .expectedStatus( 409 /* conflict */)
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
                 .payload(
-                        "{\"key\": \"" + key + "\", \"value\": \"" + value + "\", \"start\": \""
-                                + functionalTestHelper.nodeUri( helper.createNode() ) + "\", \"end\": \""
-                                + functionalTestHelper.nodeUri( helper.createNode() ) + "\", \"type\":\""
-                                + MyRelationshipTypes.KNOWS + "\"}" )
-                .post( functionalTestHelper.relationshipIndexUri() + index + "?uniqueness=create_or_fail" );
+                        new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"start\": \"")
+								.append(functionalTestHelper.nodeUri( helper.createNode() )).append("\", \"end\": \"").append(functionalTestHelper.nodeUri( helper.createNode() )).append("\", \"type\":\"").append(MyRelationshipTypes.KNOWS)
+								.append("\"}").toString() )
+                .post( new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(index).append("?uniqueness=create_or_fail").toString() );
     }
 
-    @Documented( "Add an existing relationship to a unique index (not indexed).\n" +
+	@Documented( "Add an existing relationship to a unique index (not indexed).\n" +
                  "\n" +
                  "If a relationship matching the given key and value already exists in the index, it will be returned.\n" +
                  "If not, an `HTTP 409` (conflict) status will be returned in this case, as we are using `create_or_fail`.\n" +
@@ -424,17 +417,13 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
                 .expectedStatus( 201 /* created */)
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
                 .payload(
-                        "{\"key\": \""
-                                + key
-                                + "\", \"value\": \""
-                                + value
-                                + "\", \"uri\":\""
-                                + functionalTestHelper.relationshipUri( helper.createRelationship( "KNOWS",
-                                helper.createNode(), helper.createNode() ) ) + "\"}" )
-                .post( functionalTestHelper.relationshipIndexUri() + index + "?uniqueness=create_or_fail" );
+                        new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"uri\":\"")
+								.append(functionalTestHelper.relationshipUri( helper.createRelationship( "KNOWS",
+                                helper.createNode(), helper.createNode() ) )).append("\"}").toString() )
+                .post( new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(index).append("?uniqueness=create_or_fail").toString() );
     }
 
-    @Documented( "Add an existing relationship to a unique index (already indexed)." )
+	@Documented( "Add an existing relationship to a unique index (already indexed)." )
     @Test
     public void put_relationship_if_absent_only_fail()
     {
@@ -467,12 +456,12 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
                 .expectedStatus( 409 /* conflict */)
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
                 .payload(
-                        "{\"key\": \"" + key + "\", \"value\": \"" + value + "\", \"uri\":\""
-                                + functionalTestHelper.relationshipUri( rel.getId() ) + "\"}" )
-                .post( functionalTestHelper.relationshipIndexUri() + index + "?uniqueness=create_or_fail" );
+                        new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"uri\":\"")
+								.append(functionalTestHelper.relationshipUri( rel.getId() )).append("\"}").toString() )
+                .post( new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(index).append("?uniqueness=create_or_fail").toString() );
     }
 
-    @Test
+	@Test
     public void already_indexed_relationship_should_not_fail_on_create_or_fail()
     {
         // Given
@@ -496,12 +485,12 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
                 .expectedStatus( 201 )
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
                 .payload(
-                        "{\"key\": \"" + key + "\", \"value\": \"" + value + "\", \"uri\":\""
-                                + functionalTestHelper.relationshipUri( rel.getId() ) + "\"}" )
-                .post( functionalTestHelper.relationshipIndexUri() + index + "?uniqueness=create_or_fail" );
+                        new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"uri\":\"")
+								.append(functionalTestHelper.relationshipUri( rel.getId() )).append("\"}").toString() )
+                .post( new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(index).append("?uniqueness=create_or_fail").toString() );
     }
 
-    /**
+	/**
      * This can be safely removed in version 1.11 an onwards.
      */
     @Test
@@ -524,53 +513,55 @@ public class IndexRelationshipIT extends AbstractRestFunctionalTestBase
                 .expectedStatus( 200 /* conflict */)
                 .payloadType( MediaType.APPLICATION_JSON_TYPE )
                 .payload(
-                        "{\"key\": \"" + key + "\", \"value\": \"" + value + "\", \"start\": \""
-                                + functionalTestHelper.nodeUri( helper.createNode() ) + "\", \"end\": \""
-                                + functionalTestHelper.nodeUri( helper.createNode() ) + "\", \"type\":\""
-                                + MyRelationshipTypes.KNOWS + "\"}" )
-                .post( functionalTestHelper.relationshipIndexUri() + index + "?unique" );
+                        new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"start\": \"")
+								.append(functionalTestHelper.nodeUri( helper.createNode() )).append("\", \"end\": \"").append(functionalTestHelper.nodeUri( helper.createNode() )).append("\", \"type\":\"").append(MyRelationshipTypes.KNOWS)
+								.append("\"}").toString() )
+                .post( new StringBuilder().append(functionalTestHelper.relationshipIndexUri()).append(index).append("?unique").toString() );
     }
 
-    private JaxRsResponse httpPostIndexRelationshipRoot( String jsonIndexSpecification )
+	private JaxRsResponse httpPostIndexRelationshipRoot( String jsonIndexSpecification )
     {
         return RestRequest.req().post( functionalTestHelper.relationshipIndexUri(), jsonIndexSpecification );
     }
 
-    private JaxRsResponse httpGetIndexRelationshipNameKeyValue( String indexName, String key, String value )
+	private JaxRsResponse httpGetIndexRelationshipNameKeyValue( String indexName, String key, String value )
     {
         return RestRequest.req().get( functionalTestHelper.indexRelationshipUri( indexName, key, value ) );
     }
 
-    private JaxRsResponse httpPostIndexRelationshipNameKeyValue( String indexName, long relationshipId, String key,
+	private JaxRsResponse httpPostIndexRelationshipNameKeyValue( String indexName, long relationshipId, String key,
             String value )
     {
         return RestRequest.req().post( functionalTestHelper.indexRelationshipUri( indexName ),
                 createJsonStringFor( relationshipId, key, value ) );
     }
 
-    private String createJsonStringFor( final long relationshipId, final String key, final String value )
+	private String createJsonStringFor( final long relationshipId, final String key, final String value )
     {
-        return "{\"key\": \"" + key + "\", \"value\": \"" + value + "\", \"uri\": \""
-               + functionalTestHelper.relationshipUri( relationshipId ) + "\"}";
+        return new StringBuilder().append("{\"key\": \"").append(key).append("\", \"value\": \"").append(value).append("\", \"uri\": \"").append(functionalTestHelper.relationshipUri( relationshipId ))
+				.append("\"}").toString();
     }
 
-    private JaxRsResponse httpGet( String indexUri )
+	private JaxRsResponse httpGet( String indexUri )
     {
         return request.get( indexUri );
     }
 
-    private JaxRsResponse httpPostCreateRelationship( long startNode, String jsonString )
+	private JaxRsResponse httpPostCreateRelationship( long startNode, String jsonString )
     {
-        return RestRequest.req().post( functionalTestHelper.dataUri() + "node/" + startNode + "/relationships",
+        return RestRequest.req().post( new StringBuilder().append(functionalTestHelper.dataUri()).append("node/").append(startNode).append("/relationships").toString(),
                 jsonString );
     }
 
-    private String jsonRelationshipCreationSpecification( String relationshipName, long endNode, String key,
+	private String jsonRelationshipCreationSpecification( String relationshipName, long endNode, String key,
             String value )
     {
-        return "{\"to\" : \"" + functionalTestHelper.dataUri() + "node/" + endNode + "\"," + "\"type\" : \""
-               + relationshipName + "\", " + "\"data\" : {\"" + key + "\" : \"" + value + "\"}}";
+        return new StringBuilder().append("{\"to\" : \"").append(functionalTestHelper.dataUri()).append("node/").append(endNode).append("\",").append("\"type\" : \"")
+				.append(relationshipName).append("\", ").append("\"data\" : {\"").append(key).append("\" : \"").append(value).append("\"}}").toString();
     }
 
-    private final Factory<String> indexes = UniqueStrings.withPrefix( "index" );
+	private enum MyRelationshipTypes implements RelationshipType
+    {
+        KNOWS
+    }
 }

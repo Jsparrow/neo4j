@@ -24,10 +24,6 @@ import org.neo4j.kernel.lifecycle.Lifecycle;
 
 public interface UserManagerSupplier extends Lifecycle
 {
-    UserManager getUserManager( AuthSubject authSubject, boolean isUserManager );
-
-    UserManager getUserManager();
-
     UserManagerSupplier NO_AUTH = new UserManagerSupplier()
     {
         @Override
@@ -62,4 +58,8 @@ public interface UserManagerSupplier extends Lifecycle
             return UserManager.NO_AUTH;
         }
     };
+
+	UserManager getUserManager( AuthSubject authSubject, boolean isUserManager );
+
+	UserManager getUserManager();
 }

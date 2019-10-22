@@ -219,8 +219,7 @@ public enum Uniqueness implements UniquenessFactory
                 && !( parameter instanceof Float || parameter instanceof Double );
         if ( !isDecimalNumber )
         {
-            throw new IllegalArgumentException( "Doesn't accept non-decimal values"
-                    + ", like '" + parameter + "'" );
+            throw new IllegalArgumentException( new StringBuilder().append("Doesn't accept non-decimal values").append(", like '").append(parameter).append("'").toString() );
         }
     }
 }

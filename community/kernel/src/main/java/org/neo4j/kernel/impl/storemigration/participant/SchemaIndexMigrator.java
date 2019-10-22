@@ -56,15 +56,15 @@ public class SchemaIndexMigrator extends AbstractStoreMigrationParticipant
     {
         RecordFormats from = RecordFormatSelector.selectForVersion( versionToMigrateFrom );
         RecordFormats to = RecordFormatSelector.selectForVersion( versionToMigrateTo );
-        if ( !from.hasCompatibleCapabilities( to, CapabilityType.INDEX ) )
-        {
-            schemaIndexDirectory = indexProvider.directoryStructure().rootDirectory();
-            if ( schemaIndexDirectory != null )
-            {
-                deleteObsoleteIndexes = true;
-            }
-            // else this schema index provider doesn't have any persistent storage to delete.
-        }
+        if (from.hasCompatibleCapabilities( to, CapabilityType.INDEX )) {
+			return;
+		}
+		schemaIndexDirectory = indexProvider.directoryStructure().rootDirectory();
+		if ( schemaIndexDirectory != null )
+		{
+		    deleteObsoleteIndexes = true;
+		}
+		// else this schema index provider doesn't have any persistent storage to delete.
     }
 
     @Override

@@ -253,8 +253,7 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
                     if ( pageCursor.checkAndClearBoundsFlag() )
                     {
                         throw new UnderlyingStorageException(
-                                "Out of page bounds when writing header; page size too small: " + pageCache.pageSize() +
-                                        " bytes." );
+                                new StringBuilder().append("Out of page bounds when writing header; page size too small: ").append(pageCache.pageSize()).append(" bytes.").toString() );
                     }
                 }
             }
@@ -293,8 +292,7 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
                     if ( pageCursor.checkAndClearBoundsFlag() )
                     {
                         throw new UnderlyingStorageException(
-                                "Out of page bounds when reading header; page size too small: " +
-                                pageCache.pageSize() + " bytes." );
+                                new StringBuilder().append("Out of page bounds when reading header; page size too small: ").append(pageCache.pageSize()).append(" bytes.").toString() );
                     }
                 }
                 else
@@ -450,7 +448,7 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
             throw new InvalidRecordException( "Illegal blockSize: " + blockSize );
         }
 
-        log.info( "Rebuilding id generator for[" + getStorageFile() + "] ..." );
+        log.info( new StringBuilder().append("Rebuilding id generator for[").append(getStorageFile()).append("] ...").toString() );
         closeIdGenerator();
         createIdGenerator( idFile );
         openIdGenerator();
@@ -475,15 +473,15 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
             throw new UnderlyingStorageException( "Unable to rebuild id generator " + getStorageFile(), e );
         }
 
-        log.info( "[" + getStorageFile() + "] high id=" + getHighId() + " (defragged=" + defraggedCount + ")" );
-        log.info( getStorageFile() + " rebuild id generator, highId=" + getHighId() +
-                  " defragged count=" + defraggedCount );
+        log.info( new StringBuilder().append("[").append(getStorageFile()).append("] high id=").append(getHighId()).append(" (defragged=").append(defraggedCount)
+				.append(")").toString() );
+        log.info( new StringBuilder().append(getStorageFile()).append(" rebuild id generator, highId=").append(getHighId()).append(" defragged count=").append(defraggedCount).toString() );
 
-        if ( !fastRebuild )
-        {
-            closeIdGenerator();
-            openIdGenerator();
-        }
+        if (fastRebuild) {
+			return;
+		}
+		closeIdGenerator();
+		openIdGenerator();
     }
 
     protected boolean isOnlyFastIdGeneratorRebuildEnabled( Config config )
@@ -550,7 +548,7 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
         if ( cursor.checkAndClearBoundsFlag() )
         {
             throw new UnderlyingStorageException(
-                    "Out of bounds access on page " + cursor.getCurrentPageId() + " detected while scanning the " + storageFile + " file for deleted records" );
+                    new StringBuilder().append("Out of bounds access on page ").append(cursor.getCurrentPageId()).append(" detected while scanning the ").append(storageFile).append(" file for deleted records").toString() );
         }
     }
 
@@ -673,12 +671,12 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
      */
     void makeStoreOk()
     {
-        if ( !storeOk )
-        {
-            rebuildIdGenerator();
-            storeOk = true;
-            causeOfStoreNotOk = null;
-        }
+        if (storeOk) {
+			return;
+		}
+		rebuildIdGenerator();
+		storeOk = true;
+		causeOfStoreNotOk = null;
     }
 
     /**
@@ -850,7 +848,7 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
     {
         if ( pagedFile == null )
         {
-            throw new IllegalStateException( this + " for file '" + storageFile + "' is closed" );
+            throw new IllegalStateException( new StringBuilder().append(this).append(" for file '").append(storageFile).append("' is closed").toString() );
         }
     }
 
@@ -949,7 +947,7 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
 
     void logVersions( Logger logger )
     {
-        logger.log( "  " + getTypeDescriptor() + " " + storeVersion );
+        logger.log( new StringBuilder().append("  ").append(getTypeDescriptor()).append(" ").append(storeVersion).toString() );
     }
 
     void logIdUsage( Logger logger )
@@ -986,12 +984,12 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
      */
     final void deleteIdGenerator()
     {
-        if ( idGenerator != null )
-        {
-            idGenerator.delete();
-            idGenerator = null;
-            setStoreNotOk( new IllegalStateException( "IdGenerator is not initialized" ) );
-        }
+        if (idGenerator == null) {
+			return;
+		}
+		idGenerator.delete();
+		idGenerator = null;
+		setStoreNotOk( new IllegalStateException( "IdGenerator is not initialized" ) );
     }
 
     @Override
@@ -1031,7 +1029,7 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
     }
 
     @Override
-    public void getRecordByCursor( long id, RECORD record, RecordLoad mode, PageCursor cursor ) throws UnderlyingStorageException
+    public void getRecordByCursor( long id, RECORD record, RecordLoad mode, PageCursor cursor )
     {
         try
         {
@@ -1063,7 +1061,7 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
     }
 
     @Override
-    public void nextRecordByCursor( RECORD record, RecordLoad mode, PageCursor cursor ) throws UnderlyingStorageException
+    public void nextRecordByCursor( RECORD record, RecordLoad mode, PageCursor cursor )
     {
         if ( cursor.getCurrentPageId() < -1 )
         {
@@ -1227,10 +1225,8 @@ public abstract class CommonAbstractStore<RECORD extends AbstractBaseRecord,HEAD
     static String buildOutOfBoundsExceptionMessage( AbstractBaseRecord record, long pageId, int offset, int recordSize,
             int pageSize, String filename )
     {
-        return "Access to record " + record + " went out of bounds of the page. The record size is " +
-               recordSize + " bytes, and the access was at offset " + offset + " bytes into page " +
-               pageId + ", and the pages have a capacity of " + pageSize + " bytes. " +
-               "The mapped store file in question is " + filename;
+        return new StringBuilder().append("Access to record ").append(record).append(" went out of bounds of the page. The record size is ").append(recordSize).append(" bytes, and the access was at offset ").append(offset).append(" bytes into page ")
+				.append(pageId).append(", and the pages have a capacity of ").append(pageSize).append(" bytes. ").append("The mapped store file in question is ").append(filename).toString();
     }
 
     private void verifyAfterReading( RECORD record, RecordLoad mode )

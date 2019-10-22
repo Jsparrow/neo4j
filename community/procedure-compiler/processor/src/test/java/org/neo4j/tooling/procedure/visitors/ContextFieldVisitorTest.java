@@ -48,13 +48,8 @@ import static org.assertj.core.api.Assertions.tuple;
 public class ContextFieldVisitorTest
 {
     private static final org.assertj.core.groups.Tuple UNKNOWN_CONTEXT_ERROR_MSG = tuple( Diagnostic.Kind.ERROR,
-            "@org.neo4j.procedure.Context usage error: found unknown type <java.lang.String> on field " +
-            "UnknownContextType#unsupportedType, expected one of: <" +
-                    GraphDatabaseService.class.getName() + ">, <" +
-                    Log.class.getName() + ">, <" +
-                    TerminationGuard.class.getName() + ">, <" +
-                    SecurityContext.class.getName() + ">, <" +
-                    ProcedureTransaction.class.getName() + ">" );
+            new StringBuilder().append("@org.neo4j.procedure.Context usage error: found unknown type <java.lang.String> on field ").append("UnknownContextType#unsupportedType, expected one of: <").append(GraphDatabaseService.class.getName()).append(">, <").append(Log.class.getName()).append(">, <")
+					.append(TerminationGuard.class.getName()).append(">, <").append(SecurityContext.class.getName()).append(">, <").append(ProcedureTransaction.class.getName()).append(">").toString() );
 
     @Rule
     public CompilationRule compilationRule = new CompilationRule();
@@ -165,9 +160,7 @@ public class ContextFieldVisitorTest
     private String warning( String fieldType, String fieldName )
     {
         return String.format(
-                "@org.neo4j.procedure.Context usage warning: found unsupported restricted type <%s> on %2$s.\n" +
-                "The procedure will not load unless declared via the configuration option 'dbms.security.procedures.unrestricted'.\n" +
-                "You can ignore this warning by passing the option -AIgnoreContextWarnings to the Java compiler",
+                new StringBuilder().append("@org.neo4j.procedure.Context usage warning: found unsupported restricted type <%s> on %2$s.\n").append("The procedure will not load unless declared via the configuration option 'dbms.security.procedures.unrestricted'.\n").append("You can ignore this warning by passing the option -AIgnoreContextWarnings to the Java compiler").toString(),
                 fieldType, fieldName );
     }
 }

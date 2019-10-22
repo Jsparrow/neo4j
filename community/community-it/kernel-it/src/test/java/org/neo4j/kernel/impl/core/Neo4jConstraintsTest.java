@@ -72,11 +72,9 @@ public class Neo4jConstraintsTest extends AbstractNeo4jTestCase
         Node node2 = getGraphDb().createNode();
         node1.createRelationshipTo( node2, MyRelTypes.TEST );
         node1.delete();
-        try
+        try (Transaction tx = getTransaction())
         {
-            Transaction tx = getTransaction();
             tx.success();
-            tx.close();
             fail( "Should not validate" );
         }
         catch ( Exception e )
@@ -94,11 +92,9 @@ public class Neo4jConstraintsTest extends AbstractNeo4jTestCase
         node1.createRelationshipTo( node2, MyRelTypes.TEST );
         node2.delete();
         node1.delete();
-        try
+        try (Transaction tx = getTransaction())
         {
-            Transaction tx = getTransaction();
             tx.success();
-            tx.close();
             fail( "Should not validate" );
         }
         catch ( Exception e )
@@ -182,12 +178,10 @@ public class Neo4jConstraintsTest extends AbstractNeo4jTestCase
         Node node = getGraphDb().createNode();
         node.setProperty( key, 1 );
         node.delete();
-        try
+        try (Transaction tx = getTransaction())
         {
             node.removeProperty( key );
-            Transaction tx = getTransaction();
             tx.success();
-            tx.close();
             fail( "Change property on deleted node should not validate" );
         }
         catch ( Exception e )
@@ -202,12 +196,10 @@ public class Neo4jConstraintsTest extends AbstractNeo4jTestCase
         Node node = getGraphDb().createNode();
         node.setProperty( key, 1 );
         node.delete();
-        try
+        try (Transaction tx = getTransaction())
         {
             node.setProperty( key, 2 );
-            Transaction tx = getTransaction();
             tx.success();
-            tx.close();
             fail( "Change property on deleted node should not validate" );
         }
         catch ( Exception e )
@@ -223,12 +215,10 @@ public class Neo4jConstraintsTest extends AbstractNeo4jTestCase
         Node node2 = getGraphDb().createNode();
         Relationship rel = node1.createRelationshipTo( node2, MyRelTypes.TEST );
         rel.delete();
-        try
+        try (Transaction tx = getTransaction())
         {
             rel.setProperty( key, 1 );
-            Transaction tx = getTransaction();
             tx.success();
-            tx.close();
             fail( "Add property on deleted rel should not validate" );
         }
         catch ( Exception e )
@@ -246,12 +236,10 @@ public class Neo4jConstraintsTest extends AbstractNeo4jTestCase
         Relationship rel = node1.createRelationshipTo( node2, MyRelTypes.TEST );
         rel.setProperty( key, 1 );
         rel.delete();
-        try
+        try (Transaction tx = getTransaction())
         {
             rel.removeProperty( key );
-            Transaction tx = getTransaction();
             tx.success();
-            tx.close();
             fail( "Remove property on deleted rel should not validate" );
         }
         catch ( Exception e )
@@ -270,12 +258,10 @@ public class Neo4jConstraintsTest extends AbstractNeo4jTestCase
         Relationship rel = node1.createRelationshipTo( node2, MyRelTypes.TEST );
         rel.setProperty( key, 1 );
         rel.delete();
-        try
+        try (Transaction tx = getTransaction())
         {
             rel.setProperty( key, 2 );
-            Transaction tx = getTransaction();
             tx.success();
-            tx.close();
             fail( "Change property on deleted rel should not validate" );
         }
         catch ( Exception e )
@@ -291,12 +277,10 @@ public class Neo4jConstraintsTest extends AbstractNeo4jTestCase
     {
         Node node1 = getGraphDb().createNode();
         node1.delete();
-        try
+        try (Transaction tx = getTransaction())
         {
             node1.delete();
-            Transaction tx = getTransaction();
             tx.success();
-            tx.close();
             fail( "Should not validate" );
         }
         catch ( Exception e )
@@ -314,12 +298,10 @@ public class Neo4jConstraintsTest extends AbstractNeo4jTestCase
         rel.delete();
         node1.delete();
         node2.delete();
-        try
+        try (Transaction tx = getTransaction())
         {
             rel.delete();
-            Transaction tx = getTransaction();
             tx.success();
-            tx.close();
             fail( "Should not validate" );
         }
         catch ( Exception e )
@@ -367,11 +349,9 @@ public class Neo4jConstraintsTest extends AbstractNeo4jTestCase
         catch ( Exception e )
         { // good
         }
-        try
+        try (Transaction tx = getTransaction())
         {
-            Transaction tx = getTransaction();
             tx.success();
-            tx.close();
             fail( "Shouldn't validate" );
         }
         catch ( Exception e )

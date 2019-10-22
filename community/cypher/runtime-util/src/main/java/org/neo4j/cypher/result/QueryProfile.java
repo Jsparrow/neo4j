@@ -24,7 +24,9 @@ package org.neo4j.cypher.result;
  */
 public interface QueryProfile
 {
-    /**
+    QueryProfile NONE = operatorId -> OperatorProfile.NONE;
+
+	/**
      * Get profile for specific operator.
      *
      * Note: the operator should really be type as an [[org.neo4j.cypher.internal.v3_5.util.attribution.Id]],
@@ -35,6 +37,4 @@ public interface QueryProfile
      * @param operatorId operator id
      */
     OperatorProfile operatorProfile( int operatorId );
-
-    QueryProfile NONE = operatorId -> OperatorProfile.NONE;
 }

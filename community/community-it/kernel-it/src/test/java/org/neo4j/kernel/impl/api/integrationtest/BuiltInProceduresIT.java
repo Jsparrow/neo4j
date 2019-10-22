@@ -189,9 +189,7 @@ public class BuiltInProceduresIT extends KernelIntegrationTest
                 proc( "dbms.listConfig", "(searchString =  :: STRING?) :: (name :: STRING?, description :: STRING?, value :: STRING?, dynamic :: BOOLEAN?)",
                         "List the currently active config of Neo4j.", "DBMS" ),
                 proc( "db.constraints", "() :: (description :: STRING?)", "List all constraints in the database.", "READ" ),
-                proc( "db.indexes", "() :: (description :: STRING?, indexName :: STRING?, tokenNames :: LIST? OF STRING?, properties :: " +
-                                "LIST? OF STRING?, state :: STRING?, type :: STRING?, progress :: FLOAT?, provider :: MAP?, id :: INTEGER?, " +
-                                "failureMessage :: STRING?)",
+                proc( "db.indexes", new StringBuilder().append("() :: (description :: STRING?, indexName :: STRING?, tokenNames :: LIST? OF STRING?, properties :: ").append("LIST? OF STRING?, state :: STRING?, type :: STRING?, progress :: FLOAT?, provider :: MAP?, id :: INTEGER?, ").append("failureMessage :: STRING?)").toString(),
                         "List all indexes in the database.", "READ" ),
                 proc( "db.awaitIndex", "(index :: STRING?, timeOutSeconds = 300 :: INTEGER?) :: VOID",
                         "Wait for an index to come online (for example: CALL db.awaitIndex(\":Person(name)\")).", "READ" ),
@@ -202,7 +200,7 @@ public class BuiltInProceduresIT extends KernelIntegrationTest
                 proc( "db.resampleOutdatedIndexes", "() :: VOID", "Schedule resampling of all outdated indexes.", "READ" ),
                 proc( "db.propertyKeys", "() :: (propertyKey :: STRING?)", "List all property keys in the database.", "READ" ),
                 proc( "db.labels", "() :: (label :: STRING?)", "List all labels in the database.", "READ" ),
-                proc( "db.schema", "() :: (nodes :: LIST? OF NODE?, relationships :: LIST? " + "OF " + "RELATIONSHIP?)",
+                proc( "db.schema", new StringBuilder().append("() :: (nodes :: LIST? OF NODE?, relationships :: LIST? ").append("OF ").append("RELATIONSHIP?)").toString(),
                         "Show the schema of the data.", "READ" ),
                 proc( "db.schema.visualization","() :: (nodes :: LIST? OF NODE?, relationships :: LIST? OF RELATIONSHIP?)",
                         "Visualize the schema of the data. Replaces db.schema.", "READ" ),
@@ -279,9 +277,7 @@ public class BuiltInProceduresIT extends KernelIntegrationTest
                                 "YIELD index, providerName, status", "SCHEMA" ),
                 proc( "db.createUniquePropertyConstraint", "(index :: STRING?, providerName :: STRING?) :: " +
                                 "(index :: STRING?, providerName :: STRING?, status :: STRING?)",
-                        "Create a unique property constraint with index backed by specified index provider " +
-                                "(for example: CALL db.createUniquePropertyConstraint(\":Person(name)\", \"lucene+native-2.0\")) - " +
-                                "YIELD index, providerName, status", "SCHEMA" ),
+                        new StringBuilder().append("Create a unique property constraint with index backed by specified index provider ").append("(for example: CALL db.createUniquePropertyConstraint(\":Person(name)\", \"lucene+native-2.0\")) - ").append("YIELD index, providerName, status").toString(), "SCHEMA" ),
                 proc( "db.index.fulltext.awaitEventuallyConsistentIndexRefresh", "() :: VOID",
                         "Wait for the updates from recently committed transactions to be applied to any eventually-consistent fulltext indexes.", "READ" ),
                 proc( "db.index.fulltext.awaitIndex", "(index :: STRING?, timeOutSeconds = 300 :: INTEGER?) :: VOID",

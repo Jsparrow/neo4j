@@ -196,15 +196,14 @@ class DefaultNodeCursor implements NodeCursor
     @Override
     public void close()
     {
-        if ( !isClosed() )
-        {
-            read = null;
-            hasChanges = HasChanges.MAYBE;
-            addedNodes = ImmutableEmptyLongIterator.INSTANCE;
-            storeCursor.reset();
-
-            pool.accept( this );
-        }
+        if (isClosed()) {
+			return;
+		}
+		read = null;
+		hasChanges = HasChanges.MAYBE;
+		addedNodes = ImmutableEmptyLongIterator.INSTANCE;
+		storeCursor.reset();
+		pool.accept( this );
     }
 
     @Override
@@ -259,7 +258,7 @@ class DefaultNodeCursor implements NodeCursor
         }
         else
         {
-            return "NodeCursor[id=" + nodeReference() + ", " + storeCursor.toString() + "]";
+            return new StringBuilder().append("NodeCursor[id=").append(nodeReference()).append(", ").append(storeCursor.toString()).append("]").toString();
         }
     }
 

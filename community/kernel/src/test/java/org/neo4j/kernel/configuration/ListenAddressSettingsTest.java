@@ -35,9 +35,9 @@ import static org.neo4j.kernel.configuration.Settings.listenAddress;
 
 public class ListenAddressSettingsTest
 {
-    private static Setting<ListenSocketAddress> legacy_address_setting = listenAddress( "address", 1234 );
-    private static Setting<ListenSocketAddress> listen_address_setting =
-            legacyFallback( legacy_address_setting, listenAddress( "listen_address", 1234 ) );
+    private static Setting<ListenSocketAddress> legacyAddressSetting = listenAddress( "address", 1234 );
+    private static Setting<ListenSocketAddress> listenAddressSetting =
+            legacyFallback( legacyAddressSetting, listenAddress( "listen_address", 1234 ) );
 
     @Test
     public void shouldParseExplicitSettingValueWhenProvided()
@@ -45,10 +45,10 @@ public class ListenAddressSettingsTest
         // given
         Map<String,String> config = stringMap(
                 GraphDatabaseSettings.default_listen_address.name(), "server1.example.com",
-                listen_address_setting.name(), "server1.internal:4000" );
+                listenAddressSetting.name(), "server1.internal:4000" );
 
         // when
-        ListenSocketAddress listenSocketAddress = listen_address_setting.apply( config::get );
+        ListenSocketAddress listenSocketAddress = listenAddressSetting.apply( config::get );
 
         // then
         assertEquals( "server1.internal", listenSocketAddress.getHostname() );
@@ -63,7 +63,7 @@ public class ListenAddressSettingsTest
                 GraphDatabaseSettings.default_listen_address.name(), "server1.example.com" );
 
         // when
-        ListenSocketAddress listenSocketAddress = listen_address_setting.apply( config::get );
+        ListenSocketAddress listenSocketAddress = listenAddressSetting.apply( config::get );
 
         // then
         assertEquals( "server1.example.com", listenSocketAddress.getHostname() );
@@ -76,10 +76,10 @@ public class ListenAddressSettingsTest
         // given
         Map<String,String> config = stringMap(
                 GraphDatabaseSettings.default_listen_address.name(), "server1.example.com",
-                listen_address_setting.name(), ":4000" );
+                listenAddressSetting.name(), ":4000" );
 
         // when
-        ListenSocketAddress listenSocketAddress = listen_address_setting.apply( config::get );
+        ListenSocketAddress listenSocketAddress = listenAddressSetting.apply( config::get );
 
         // then
         assertEquals( "server1.example.com", listenSocketAddress.getHostname() );

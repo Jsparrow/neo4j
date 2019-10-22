@@ -30,29 +30,21 @@ import static org.neo4j.kernel.impl.newapi.References.clearEncoding;
 
 class RecordRelationshipTraversalCursor extends RecordRelationshipCursor implements StorageRelationshipTraversalCursor
 {
-    private enum GroupState
-    {
-        INCOMING,
-        OUTGOING,
-        LOOP,
-        NONE
-    }
-
     private long originNodeReference;
-    private long next;
-    private Record buffer;
-    private PageCursor pageCursor;
-    private final RecordRelationshipGroupCursor group;
-    private GroupState groupState;
-    private boolean open;
+	private long next;
+	private Record buffer;
+	private PageCursor pageCursor;
+	private final RecordRelationshipGroupCursor group;
+	private GroupState groupState;
+	private boolean open;
 
-    RecordRelationshipTraversalCursor( RelationshipStore relationshipStore, RelationshipGroupStore groupStore )
+	RecordRelationshipTraversalCursor( RelationshipStore relationshipStore, RelationshipGroupStore groupStore )
     {
         super( relationshipStore );
         this.group = new RecordRelationshipGroupCursor( relationshipStore, groupStore );
     }
 
-    @Override
+	@Override
     public void init( long nodeReference, long reference )
     {
         /* There are basically two ways a relationship traversal cursor can be initialized:
@@ -81,7 +73,7 @@ class RecordRelationshipTraversalCursor extends RecordRelationshipCursor impleme
         open = true;
     }
 
-    /*
+	/*
      * Normal traversal. Traversal returns mixed types and directions.
      */
     private void chain( long nodeReference, long reference )
@@ -96,7 +88,7 @@ class RecordRelationshipTraversalCursor extends RecordRelationshipCursor impleme
         this.next = reference;
     }
 
-    /*
+	/*
      * Reference to a group record. Traversal returns mixed types and directions.
      */
     private void groups( long nodeReference, long groupReference )
@@ -108,10 +100,11 @@ class RecordRelationshipTraversalCursor extends RecordRelationshipCursor impleme
         group.direct( nodeReference, groupReference );
     }
 
-    @Override
+	@Override
     public long neighbourNodeReference()
     {
-        final long source = sourceNodeReference(), target = targetNodeReference();
+        final long source = sourceNodeReference();
+		final long target = targetNodeReference();
         if ( source == originNodeReference )
         {
             return target;
@@ -126,13 +119,13 @@ class RecordRelationshipTraversalCursor extends RecordRelationshipCursor impleme
         }
     }
 
-    @Override
+	@Override
     public long originNodeReference()
     {
         return originNodeReference;
     }
 
-    @Override
+	@Override
     public boolean next()
     {
         if ( hasBufferedData() )
@@ -160,7 +153,7 @@ class RecordRelationshipTraversalCursor extends RecordRelationshipCursor impleme
         return true;
     }
 
-    private boolean nextBuffered()
+	private boolean nextBuffered()
     {
         buffer = buffer.next;
         if ( !hasBufferedData() )
@@ -177,7 +170,7 @@ class RecordRelationshipTraversalCursor extends RecordRelationshipCursor impleme
         return true;
     }
 
-    private void traverseDenseNode()
+	private void traverseDenseNode()
     {
         while ( next == NO_ID )
         {
@@ -246,9 +239,10 @@ class RecordRelationshipTraversalCursor extends RecordRelationshipCursor impleme
         }
     }
 
-    private void computeNext()
+	private void computeNext()
     {
-        final long source = sourceNodeReference(), target = targetNodeReference();
+        final long source = sourceNodeReference();
+		final long target = targetNodeReference();
         if ( source == originNodeReference )
         {
             next = getFirstNextRel();
@@ -263,7 +257,7 @@ class RecordRelationshipTraversalCursor extends RecordRelationshipCursor impleme
         }
     }
 
-    private void copyFromBuffer()
+	private void copyFromBuffer()
     {
         this.setId( buffer.id );
         this.setType( buffer.type );
@@ -272,30 +266,30 @@ class RecordRelationshipTraversalCursor extends RecordRelationshipCursor impleme
         this.setSecondNode( buffer.secondNode );
     }
 
-    private boolean traversingDenseNode()
+	private boolean traversingDenseNode()
     {
         return groupState != GroupState.NONE;
     }
 
-    @Override
+	@Override
     public void reset()
     {
-        if ( open )
-        {
-            open = false;
-            buffer = null;
-            resetState();
-        }
+        if (!open) {
+			return;
+		}
+		open = false;
+		buffer = null;
+		resetState();
     }
 
-    private void resetState()
+	private void resetState()
     {
         setId( next = NO_ID );
         groupState = GroupState.NONE;
         buffer = null;
     }
 
-    @Override
+	@Override
     public void close()
     {
         if ( pageCursor != null )
@@ -307,7 +301,7 @@ class RecordRelationshipTraversalCursor extends RecordRelationshipCursor impleme
         group.close();
     }
 
-    @Override
+	@Override
     public String toString()
     {
         if ( !open )
@@ -327,19 +321,25 @@ class RecordRelationshipTraversalCursor extends RecordRelationshipCursor impleme
             {
                 mode = mode + "regular";
             }
-            return "RelationshipTraversalCursor[id=" + getId() +
-                    ", open state with: " + dense +
-                    ", next=" + next + ", " + mode +
-                    ", underlying record=" + super.toString() + "]";
+            return new StringBuilder().append("RelationshipTraversalCursor[id=").append(getId()).append(", open state with: ").append(dense).append(", next=").append(next)
+					.append(", ").append(mode).append(", underlying record=").append(super.toString()).append("]").toString();
         }
     }
 
-    private boolean hasBufferedData()
+	private boolean hasBufferedData()
     {
         return buffer != null;
     }
 
-    /*
+	private enum GroupState
+    {
+        INCOMING,
+        OUTGOING,
+        LOOP,
+        NONE
+    }
+
+	/*
      * Record is both a data holder for buffering data from a RelationshipRecord
      * as well as a linked list over the records in the group.
      */

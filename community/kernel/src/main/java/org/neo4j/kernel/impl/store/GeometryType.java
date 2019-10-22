@@ -108,7 +108,7 @@ public enum GeometryType
                     else
                     {
                         throw new InvalidRecordException(
-                                "Point array with unexpected type. Actual:" + dataValue.getClass().getSimpleName() + ". Expected: FloatingPointArray." );
+                                new StringBuilder().append("Point array with unexpected type. Actual:").append(dataValue.getClass().getSimpleName()).append(". Expected: FloatingPointArray.").toString() );
                     }
                 }
             };
@@ -247,8 +247,7 @@ public enum GeometryType
         if ( dimension > GeometryType.getMaxSupportedDimensions() )
         {
             throw new UnsupportedOperationException(
-                    "Points with more than " + GeometryType.getMaxSupportedDimensions() +
-                    " dimensions are not supported" );
+                    new StringBuilder().append("Points with more than ").append(GeometryType.getMaxSupportedDimensions()).append(" dimensions are not supported").toString() );
         }
         CoordinateReferenceSystem crs = CoordinateReferenceSystem.get( getCRSTable( firstBlock ), getCRSCode( firstBlock ) );
         return find( gtype ).decode( crs, dimension, valueBlocks, offset );
@@ -260,8 +259,7 @@ public enum GeometryType
         {
             // One property block can only contains at most 4x8 byte parts, one for header and 3 for coordinates
             throw new UnsupportedOperationException(
-                    "Points with more than " + GeometryType.getMaxSupportedDimensions() +
-                    " dimensions are not supported" );
+                    new StringBuilder().append("Points with more than ").append(GeometryType.getMaxSupportedDimensions()).append(" dimensions are not supported").toString() );
         }
 
         int idBits = StandardFormatSettings.PROPERTY_TOKEN_MAXIMUM_ID_BITS;
@@ -290,11 +288,11 @@ public enum GeometryType
             if ( dimension != points[i].coordinate().length )
             {
                 throw new IllegalArgumentException(
-                        "Attempting to store array of points with inconsistent dimension. Point " + i + " has a different dimension." );
+                        new StringBuilder().append("Attempting to store array of points with inconsistent dimension. Point ").append(i).append(" has a different dimension.").toString() );
             }
             if ( !crs.equals( points[i].getCoordinateReferenceSystem() ) )
             {
-                throw new IllegalArgumentException( "Attempting to store array of points with inconsistent CRS. Point " + i + " has a different CRS." );
+                throw new IllegalArgumentException( new StringBuilder().append("Attempting to store array of points with inconsistent CRS. Point ").append(i).append(" has a different CRS.").toString() );
             }
         }
 

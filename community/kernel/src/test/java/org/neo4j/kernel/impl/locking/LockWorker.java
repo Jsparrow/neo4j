@@ -54,9 +54,9 @@ public class LockWorker extends OtherThreadExecutor<LockWorkerState>
         return perform( new AcquireLockCommand()
         {
             @Override
-            protected void acquireLock( LockWorkerState state ) throws AcquireLockTimeoutException
+            protected void acquireLock( LockWorkerState state )
             {
-                state.doing( "+R " + resource + ", wait:" + wait );
+                state.doing( new StringBuilder().append("+R ").append(resource).append(", wait:").append(wait).toString() );
                 state.client.acquireShared( LockTracer.NONE, NODE, resource );
                 state.done();
             }
@@ -68,9 +68,9 @@ public class LockWorker extends OtherThreadExecutor<LockWorkerState>
         return perform( new AcquireLockCommand()
         {
             @Override
-            protected void acquireLock( LockWorkerState state ) throws AcquireLockTimeoutException
+            protected void acquireLock( LockWorkerState state )
             {
-                state.doing( "+W " + resource + ", wait:" + wait );
+                state.doing( new StringBuilder().append("+W ").append(resource).append(", wait:").append(wait).toString() );
                 state.client.acquireExclusive( LockTracer.NONE, NODE, resource );
                 state.done();
             }
@@ -127,6 +127,6 @@ public class LockWorker extends OtherThreadExecutor<LockWorkerState>
             return null;
         }
 
-        protected abstract void acquireLock( LockWorkerState state ) throws AcquireLockTimeoutException;
+        protected abstract void acquireLock( LockWorkerState state );
     }
 }

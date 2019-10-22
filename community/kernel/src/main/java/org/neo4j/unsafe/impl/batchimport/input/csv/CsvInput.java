@@ -59,17 +59,27 @@ public class CsvInput implements Input
 {
     private static final long ESTIMATE_SAMPLE_SIZE = mebiBytes( 1 );
 
-    private final Iterable<DataFactory> nodeDataFactory;
-    private final Header.Factory nodeHeaderFactory;
-    private final Iterable<DataFactory> relationshipDataFactory;
-    private final Header.Factory relationshipHeaderFactory;
-    private final IdType idType;
-    private final Configuration config;
-    private final Collector badCollector;
-    private final Monitor monitor;
-    private final Groups groups;
+	public static final Monitor NO_MONITOR = source -> {};
 
-    /**
+	private final Iterable<DataFactory> nodeDataFactory;
+
+	private final Header.Factory nodeHeaderFactory;
+
+	private final Iterable<DataFactory> relationshipDataFactory;
+
+	private final Header.Factory relationshipHeaderFactory;
+
+	private final IdType idType;
+
+	private final Configuration config;
+
+	private final Collector badCollector;
+
+	private final Monitor monitor;
+
+	private final Groups groups;
+
+	/**
      * @param nodeDataFactory multiple {@link DataFactory} instances providing data, each {@link DataFactory}
      * specifies an input group with its own header, extracted by the {@code nodeHeaderFactory}. From the outside
      * it looks like one stream of nodes.
@@ -92,7 +102,7 @@ public class CsvInput implements Input
                 monitor, new Groups() );
     }
 
-    CsvInput(
+	CsvInput(
             Iterable<DataFactory> nodeDataFactory, Header.Factory nodeHeaderFactory,
             Iterable<DataFactory> relationshipDataFactory, Header.Factory relationshipHeaderFactory,
             IdType idType, Configuration config, Collector badCollector, Monitor monitor, Groups groups )
@@ -113,7 +123,7 @@ public class CsvInput implements Input
         warnAboutDuplicateSourceFiles();
     }
 
-    /**
+	/**
      * Verifies so that all headers in input files looks sane:
      * <ul>
      * <li>node/relationship headers can be parsed correctly</li>
@@ -152,7 +162,7 @@ public class CsvInput implements Input
         }
     }
 
-    private void warnAboutDuplicateSourceFiles()
+	private void warnAboutDuplicateSourceFiles()
     {
         try
         {
@@ -166,7 +176,7 @@ public class CsvInput implements Input
         }
     }
 
-    private void warnAboutDuplicateSourceFiles( Set<String> seenSourceFiles, Iterable<DataFactory> dataFactories ) throws IOException
+	private void warnAboutDuplicateSourceFiles( Set<String> seenSourceFiles, Iterable<DataFactory> dataFactories ) throws IOException
     {
         for ( DataFactory dataFactory : dataFactories )
         {
@@ -181,7 +191,7 @@ public class CsvInput implements Input
         }
     }
 
-    private void warnAboutDuplicateSourceFiles( Set<String> seenSourceFiles, CharReadable source )
+	private void warnAboutDuplicateSourceFiles( Set<String> seenSourceFiles, CharReadable source )
     {
         String sourceDescription = source.sourceDescription();
         if ( !seenSourceFiles.add( sourceDescription ) )
@@ -190,7 +200,7 @@ public class CsvInput implements Input
         }
     }
 
-    private static void assertSaneConfiguration( Configuration config )
+	private static void assertSaneConfiguration( Configuration config )
     {
         Map<Character,String> delimiters = new HashMap<>();
         delimiters.put( config.delimiter(), "delimiter" );
@@ -198,46 +208,46 @@ public class CsvInput implements Input
         checkUniqueCharacter( delimiters, config.quotationCharacter(), "quotation character" );
     }
 
-    private static void checkUniqueCharacter( Map<Character,String> characters, char character, String characterDescription )
+	private static void checkUniqueCharacter( Map<Character,String> characters, char character, String characterDescription )
     {
         String conflict = characters.put( character, characterDescription );
         if ( conflict != null )
         {
-            throw new IllegalArgumentException( "Character '" + character + "' specified by " + characterDescription +
-                    " is the same as specified by " + conflict );
+            throw new IllegalArgumentException( new StringBuilder().append("Character '").append(character).append("' specified by ").append(characterDescription).append(" is the same as specified by ").append(conflict)
+					.toString() );
         }
     }
 
-    @Override
+	@Override
     public InputIterable nodes()
     {
         return () -> stream( nodeDataFactory, nodeHeaderFactory );
     }
 
-    @Override
+	@Override
     public InputIterable relationships()
     {
         return () -> stream( relationshipDataFactory, relationshipHeaderFactory );
     }
 
-    private InputIterator stream( Iterable<DataFactory> data, Header.Factory headerFactory )
+	private InputIterator stream( Iterable<DataFactory> data, Header.Factory headerFactory )
     {
         return new CsvGroupInputIterator( data.iterator(), headerFactory, idType, config, badCollector, groups );
     }
 
-    @Override
+	@Override
     public IdMapper idMapper( NumberArrayFactory numberArrayFactory )
     {
         return idType.idMapper( numberArrayFactory, groups );
     }
 
-    @Override
+	@Override
     public Collector badCollector()
     {
         return badCollector;
     }
 
-    @Override
+	@Override
     public Estimates calculateEstimates( ToIntFunction<Value[]> valueSizeCalculator ) throws IOException
     {
         long[] nodeSample = sample( nodeDataFactory, nodeHeaderFactory, valueSizeCalculator, node -> node.labels().length );
@@ -249,7 +259,7 @@ public class CsvInput implements Input
                 nodeSample[3] );
     }
 
-    private long[] sample( Iterable<DataFactory> dataFactories, Header.Factory headerFactory,
+	private long[] sample( Iterable<DataFactory> dataFactories, Header.Factory headerFactory,
             ToIntFunction<Value[]> valueSizeCalculator, ToIntFunction<InputEntity> additionalCalculator ) throws IOException
     {
         long[] estimates = new long[4]; // [entity count, property count, property size, labels (for nodes only)]
@@ -313,8 +323,6 @@ public class CsvInput implements Input
          */
         void duplicateSourceFile( String sourceFile );
     }
-
-    public static final Monitor NO_MONITOR = source -> {};
 
     public static class PrintingMonitor implements Monitor
     {

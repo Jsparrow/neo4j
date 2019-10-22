@@ -80,11 +80,10 @@ public class NestedIndexReadersIT
                 assertRoundOfNodes( iterators );
             }
 
-            for ( ResourceIterator<Node> reader : iterators )
-            {
+            iterators.forEach(reader -> {
                 assertFalse( reader.hasNext() );
                 reader.close();
-            }
+            });
 
             tx.success();
         }
@@ -131,11 +130,10 @@ public class NestedIndexReadersIT
 
             assertRoundOfNodes( iterators );
 
-            for ( ResourceIterator<Node> reader : iterators )
-            {
+            iterators.forEach(reader -> {
                 assertFalse( reader.hasNext() );
                 reader.close();
-            }
+            });
 
             tx.success();
         }
@@ -175,7 +173,7 @@ public class NestedIndexReadersIT
         assertTrue( reader.hasNext() );
         Node node = reader.next();
         assertTrue( node.hasLabel( LABEL ) );
-        assertEquals( "Expected node " + node + " (returned by index reader) to have 'id' property w/ value " + id,
+        assertEquals( new StringBuilder().append("Expected node ").append(node).append(" (returned by index reader) to have 'id' property w/ value ").append(id).toString(),
                 id, node.getProperty( KEY ) );
     }
 

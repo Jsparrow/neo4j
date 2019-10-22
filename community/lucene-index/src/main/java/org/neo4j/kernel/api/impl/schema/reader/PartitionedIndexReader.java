@@ -135,20 +135,6 @@ public class PartitionedIndexReader extends AbstractIndexReader
         }
     }
 
-    private static final class InnerException extends RuntimeException
-    {
-        private InnerException( IndexNotApplicableKernelException e )
-        {
-            super( e );
-        }
-
-        @Override
-        public synchronized IndexNotApplicableKernelException getCause()
-        {
-            return (IndexNotApplicableKernelException) super.getCause();
-        }
-    }
-
     @Override
     public long countIndexedNodes( long nodeId, int[] propertyKeyIds, Value... propertyValues )
     {
@@ -157,7 +143,7 @@ public class PartitionedIndexReader extends AbstractIndexReader
                 .sum();
     }
 
-    @Override
+	@Override
     public IndexSampler createSampler()
     {
         List<IndexSampler> indexSamplers = indexReaders.parallelStream()
@@ -166,7 +152,7 @@ public class PartitionedIndexReader extends AbstractIndexReader
         return new AggregatingIndexSampler( indexSamplers );
     }
 
-    @Override
+	@Override
     public void close()
     {
         try
@@ -179,11 +165,25 @@ public class PartitionedIndexReader extends AbstractIndexReader
         }
     }
 
-    private PrimitiveLongResourceIterator partitionedOperation(
+	private PrimitiveLongResourceIterator partitionedOperation(
             Function<SimpleIndexReader,PrimitiveLongResourceIterator> readerFunction )
     {
         return PrimitiveLongResourceCollections.concat( indexReaders.parallelStream()
                 .map( readerFunction )
                 .collect( Collectors.toList() ) );
+    }
+
+	private static final class InnerException extends RuntimeException
+    {
+        private InnerException( IndexNotApplicableKernelException e )
+        {
+            super( e );
+        }
+
+        @Override
+        public synchronized IndexNotApplicableKernelException getCause()
+        {
+            return (IndexNotApplicableKernelException) super.getCause();
+        }
     }
 }

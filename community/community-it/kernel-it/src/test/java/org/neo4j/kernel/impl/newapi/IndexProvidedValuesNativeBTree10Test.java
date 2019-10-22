@@ -47,7 +47,7 @@ import static org.neo4j.graphdb.Label.label;
 public class IndexProvidedValuesNativeBTree10Test extends KernelAPIReadTestBase<ReadTestSupport>
 {
     @SuppressWarnings( "FieldCanBeLocal" )
-    private static int N_NODES = 10000;
+    private static int nNodes = 10000;
 
     @Rule
     public RandomRule randomRule = new RandomRule();
@@ -84,7 +84,7 @@ public class IndexProvidedValuesNativeBTree10Test extends KernelAPIReadTestBase<
 
             ValueType[] allExceptNonSortable = RandomValues.excluding( ValueType.STRING, ValueType.STRING_ARRAY );
 
-            for ( int i = 0; i < N_NODES; i++ )
+            for ( int i = 0; i < nNodes; i++ )
             {
                 Node node = graphDb.createNode( label( "Node" ) );
                 Value propValue = randomValues.nextValueOfTypes( allExceptNonSortable );

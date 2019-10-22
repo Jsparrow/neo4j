@@ -89,20 +89,17 @@ public class TransactionErrorIT extends AbstractRestFunctionalTestBase
     public void begin_and_execute_periodic_commit_that_fails() throws Exception
     {
         File file = File.createTempFile("begin_and_execute_periodic_commit_that_fails", ".csv").getAbsoluteFile();
-        try
+        try (PrintStream out = new PrintStream(new FileOutputStream(file)))
         {
-            PrintStream out = new PrintStream( new FileOutputStream( file ) );
             out.println("1");
             out.println("2");
             out.println("0");
             out.println("3");
-            out.close();
-
             String url = file.toURI().toURL().toString().replace("\\", "\\\\");
-            String query = "USING PERIODIC COMMIT 1 LOAD CSV FROM \\\"" + url + "\\\" AS line CREATE ({name: 1/toInt(line[0])});";
+            String query = new StringBuilder().append("USING PERIODIC COMMIT 1 LOAD CSV FROM \\\"").append(url).append("\\\" AS line CREATE ({name: 1/toInt(line[0])});").toString();
 
             // begin and execute and commit
-            HTTP.RawPayload payload = quotedJson("{ 'statements': [ { 'statement': '" + query + "' } ] }");
+            HTTP.RawPayload payload = quotedJson(new StringBuilder().append("{ 'statements': [ { 'statement': '").append(query).append("' } ] }").toString());
             HTTP.Response response = POST( txCommitUri(), payload);
 
             assertThat( response.status(), equalTo( 200 ) );
